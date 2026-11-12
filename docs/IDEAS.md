@@ -20,11 +20,29 @@ wrong, unfinished or owed a check; this file holds what might be nice.
   other work. Say who and when.
 
 Where an idea came from TODO, "was:" names the original, kept word for word in
-TODO.md under *The open list before the 16 October prune* in `# Done`, which
-often has the how-to already worked out.
+DONE.md under *The open list before the 16 October prune*, which
+often has the how-to already worked out. Ideas marked "from TODO, 11 November
+2026" left the open list at that day's prune; their originals are under *The
+open list before the 11 November 2026 prune*.
 
 ## Ways to play
 
+- **The rest of the penalty rules**: an unplayable ball (Rule 19), a
+  provisional (18.3), yellow penalty areas, and choosing the drop spot by hand.
+  RESEARCH *Penalty relief* lists what was left out and why. Medium. (from
+  TODO, 11 November 2026; was: same heading)
+- **Rate courses by more than their length.** The sim handicap rates on
+  yardage alone; the generator knows the water, sand, trees and slopes, and
+  the USGA's obstacle factors would make a hard course rate hard. The placed
+  bogey-rating formula wants checking against the Course Rating manual too.
+  Medium. (from TODO, 11 November 2026; was: same heading)
+- **WHS soft and hard caps, and exceptional scores**, once profiles carry a
+  year of history. Small. (from TODO, 11 November 2026; was: same heading)
+- **A friend's challenge, the leftovers**: a row for the friend's card in the
+  downloaded scorecard (CSV); a friend's round on a code made from the course
+  of the week counting as the course of the week; a way to delete a kept
+  challenge (the 20 newest are kept). Small each. (from TODO, 11 November
+  2026; was: *Leftovers, if wanted*)
 - **Stableford, foursomes and net scoring.** Stableford (points per hole, so a
   blow-up hole costs little), foursomes (alternate shot) and net scores off the
   sim handicap the game already keeps. Match play has no handicaps today.
@@ -65,6 +83,20 @@ often has the how-to already worked out.
 
 ## Around a round
 
+- **The round's three highlights, and XP that flies to the golfer's card.**
+  Round complete naming the longest drive and the closest approach; the XP
+  earned flying across to the card it belongs to. Drawn in the 1.0 mockups,
+  never built. Small each. (from TODO, 11 November 2026; was: *Phase 2 (shot
+  moments)*)
+- **A flyover of the real course as its card's picture**, for the course of
+  the week and the course about to play: captured the first time the course
+  is built or saved, stored and played back. The cards show the tiny model
+  meanwhile. Medium. (from TODO, 11 November 2026; was: *Tiny course models on
+  every card*)
+- **Accessibility, the rest**: keyboard-only play end to end and readability
+  settings. Already there: arrows and a controller through the menus, reduced
+  motion on the cards, Text size, and the nine-size reach check. Medium.
+  (from TODO, 11 November 2026; was: *Accessibility*)
 - **A caddie's club suggestion.** "Plays like" already works out what the shot
   plays like; matching that against the golfer's own bag distances suggests a
   club. Small. (Claude, 16 October 2026)
@@ -85,7 +117,7 @@ often has the how-to already worked out.
   and normals (or the inverted-hull trick on trees and rocks) would give the
   cartoon look ink lines round crowns, trunks and stones. The cheap version --
   darkening a surface where it turns from the eye -- was tried in the cartoon
-  overhaul and showed nothing (CARTOON_OVERHAUL *Lighting*, round 10): trunks
+  overhaul and showed nothing (history/CARTOON_OVERHAUL.md *Lighting*, round 10): trunks
   are already dark and stones small. A real pass costs a frame the branch is
   already over main by. The inverted hull is now on the tee furniture only
   (0.8 cm, rounds 16-17), where it costs nothing; on trees and rocks it would
@@ -117,6 +149,38 @@ often has the how-to already worked out.
   models in tools/blender/meshy_game.py. Noticed by Claude, 6 November 2026.
 
 ## Under the hood
+
+- **Tell the launch monitor the distance to the hole** (`DistanceToTarget`),
+  so a device can switch itself into putting mode. Blocked on units: a wrong
+  guess switches modes at the wrong distance; it needs the connector's
+  documentation or a measured test. Small once known. (from TODO, 11 November
+  2026; was: same heading)
+- **More natural pond siting.** At high Water settings about one pond per
+  hole is placed however many are asked for. Prefer existing low ground, let
+  ponds share a basin, add wetlands and reeds. Generation: a
+  `GENERATOR_VERSION` bump. Medium. (from TODO, 11 November 2026; was: same
+  heading)
+- **The builder's trace, reviewed and learning.** A review layer in the editor
+  showing each cell's source, an automatic alignment nudge after a picture is
+  lined up, and a classifier learnt from the player's corrections -- all in
+  the study's design (COURSE_BUILDER, *LIDAR first, the picture as fallback*).
+  Large. (from TODO, 11 November 2026; was: *The trace has no review layer in
+  the editor*)
+- **Stamp a green's contours in the builder**, beyond what the brush can do.
+  Medium. (from TODO, 11 November 2026; was: *The editor cannot stamp a
+  green's contours beyond the brush*)
+- **Separate main.js concerns**: studio, round settings, scorecard, input and
+  monitor, presentation. Keep IDs and accessible names; no framework move for
+  file size alone. Large. (from TODO, 11 November 2026; was: same heading)
+- **Wet and windy days as course conditions.** A fourth setting, or presets
+  that include it: dew and rain slow a green by a foot or two of Stimp and
+  soften everything. The ball model would take it as it is (it is the three
+  conditions moved together); what is missing is the look. Medium.
+  (Claude, 11 November 2026)
+- **Grain on the greens.** Putting with or against the grain moves a
+  Stimpmeter roll by 24 to 30 in (Penn State); bermuda landscapes would have
+  it. No published directional model exists, so it would be placed. Medium.
+  (Claude, 11 November 2026)
 
 - **Washington's surveys listed in the builder, through the bridge.** The
   Washington Lidar Portal answers what covers a box only to its own page,

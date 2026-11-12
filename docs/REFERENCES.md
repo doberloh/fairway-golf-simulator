@@ -856,6 +856,90 @@ only, kept under the ignored bench/shots/lidar/, never committed.
 - Autumn colour of the species, read as search summaries: https://themarthablog.com/?p=105677, https://www.woodlanddunes.org/?p=7377, https://storymaps.arcgis.com/stories/116c411218f547b8bcea69f23bc0b3b7, https://mortonarb.org/app/uploads/2021/10/Fall-color-report-10-28-2021-Edited-by-Beth-1.pdf.
 - Pollinations (image.pollinations.ai): read and rejected for pictures of each tree: cropped, wrong shapes, one image per 45 seconds.
 
+## The ball model rebuilt (11 November 2026)
+
+The sources behind docs/BALL_PHYSICS.md, repeated here so this file stays the
+one list of everything outside the project that was read.
+
+Read for this model, with what was taken. The four research reports written on
+10 and 11 November 2026 (local, `docs/studies/ball-physics/`) hold the full
+tables, the pages that could not be fetched, and the sources read and not used.
+
+**The air**
+- TrackMan, tour averages and the normalised 6-iron tables:
+  https://www.trackman.com/blog/golf/introducing-updated-tour-averages ,
+  https://www.trackman.com/blog/golf/normalization-feature-explained . The tour
+  table's own footnote: weather and altitude are not removed.
+- TrackMan, driver optimizer charts (2010):
+  https://wishongolf.com/wp-content/uploads/2012/07/TrackMan-Driver-Optimization_2010.pdf
+- Acushnet, US patent 6,913,550 (measured drag and lift of a production ball):
+  https://patents.google.com/patent/US6913550B2/en
+- USGA, indoor test range model and worked example, US patent 6,186,002:
+  https://patents.google.com/patent/US6186002
+- Bearman and Harvey (1976); Smits and Smith (1994); Lyu, Kensrud, Smith and
+  Tosaya, "Aerodynamics of golf balls in still air" (2018): the shapes of the
+  curves. Lyu publishes no fitted coefficients. Smits and Smith's own fit runs
+  about 40% high on drag at a drive's speed against measured modern balls and
+  was not used.
+- TrackMan on spin axis and curve: https://www.trackman.com/blog/golf/spin-axis
+- Titleist on altitude (1.16% per 1,000 ft):
+  https://www.titleist.com/teamtitleist/gb/b/weblog/posts/the-effect-of-altitude-on-golf-ball-performance
+
+**The ground**
+- A. R. Penner, "The run of a golf ball", Can. J. Phys. 80, 931 (2002):
+  http://www.raypenner.com/golf-run.pdf . The tilted contact face. His tilt
+  formula is fitted to ONE impact and grows with total speed; the Bristol data
+  below fit a constant tilt slightly better, so the scaling here is different.
+- A. R. Penner, Am. J. Phys. 69, 563 (2001): http://www.raypenner.com/golf-loft.pdf .
+  Restitution against impact speed.
+- S. J. Haake, PhD thesis, Aston (1989): https://publications.aston.ac.uk/id/eprint/15132 .
+  721 impacts on 16 greens; two kinds of green; the shear weakness of turf.
+- USGA and R&A, "Second Report on the Study of Spin Generation" (2007), section 6.8:
+  https://www.jga.or.jp/jga/html/rules/image/info_groove_second_report_spin_generation_en.pdf
+- R&A, "An Investigation into Ball-Turf Impact Characteristics" (2008); USGA and
+  R&A, "Agronomic Impacts on Bounce and Roll Distance" (2018 launcher tests):
+  both at assets.randa.org (full links in the local report 03).
+- Biber, Champneys and Szalai, "Measurements and linearized models for golf ball
+  bounce on a green", Sports Engineering 26, 50 (2023):
+  https://link.springer.com/article/10.1007/s12283-023-00442-4 ; arXiv:2208.11685.
+  1,023 bounces. Their fitted values (their Table 3) could not be read.
+- TrackMan, "The Chip Shot Code": https://www.trackman.com/blog/golf/the-chip-shot-code
+- Not obtained: Roh and Lee (2010); Cross, "Bounce of a golf ball on the green"
+  (2025, paywalled), which re-analyses Haake's data and would be worth buying
+  if a second model is ever wanted beside Penner's.
+
+**Putting and the hole**
+- B. W. Holmes, "Dialogue concerning the Stimpmeter", Phys. Teach. 24, 401
+  (1986): https://doi.org/10.1119/1.2342065 . The 1.83 m/s release.
+- B. W. Holmes, "Putting: how a golf ball and hole interact", Am. J. Phys. 59,
+  129 (1991): https://doi.org/10.1119/1.16592
+- A. R. Penner, "The physics of putting", Can. J. Phys. 80, 83 (2002).
+- S. K. Perry (2002), https://doi.org/10.1119/1.1517882 ; M. Brouillette (2010),
+  https://doi.org/10.1016/j.proeng.2010.04.136 ; Pope et al. (2014),
+  https://doi.org/10.1016/j.proeng.2014.06.109 : the skid.
+- Burritt and Henrikson, "Modeling golf ball roll with a variable coefficient
+  of friction", Sports Engineering 27:39 (2024):
+  https://doi.org/10.1007/s12283-024-00481-5 (abstract only).
+- P. Hurrion (Quintic), https://www.paulhurrion.com/media/entering-the-drop-zone/
+- The TrackMan-measured 12.1 mph putt: a GolfWRX post quoting TrackMan; the
+  green's speed is not given, so Stimp 10 is assumed.
+- Lemons' slope chart, in Bevard and Zontek, USGA Green Section Record, Jul/Aug
+  2008, as read by Mangum: http://www.waddengolfacademy.com/putting/Geoff%20Mangeum%20Slope%20&%20Break.pdf
+- The Brede correction: https://www.asianturfgrass.com/post/the-brede-equation/
+- Flagstick: Mase (Cal Poly) with Golf Digest, 2019,
+  https://www.australiangolfdigest.com.au/putting-with-the-flagstick-in-could-be-a-mistake-new-golf-digest-study-shows/ ;
+  Molinari, https://clubhouse.swingu.com/tour/molinari-conducts-scientific-flagstick-in-putting-experiment
+
+**Other simulators** (what players judge a ball model by)
+- Pureplay Golf (Early Access 6 November 2026): https://pureplaygolf.com/ ;
+  first look, https://golfsimulatorvideos.com/2026/10/pureplay-golf-simulator-software-first-look/ .
+  Nothing is published about its model. The praise rests on five shots: a
+  10,000 rpm wedge that comes back a little, a 1,700 rpm chip that bounces and
+  rolls out, a mid-iron's release, a drive's run, a putt that matches the Stimp.
+- GSPro 4.0, "Physics 2.1" (3 November 2026): https://gsprogolf.com/change-log.html .
+  Cut its conditions to green firmness, fairway firmness and Stimp the same week.
+- No product publishes a restitution, a friction or a spin-retention figure.
+
 ## The gimme circle (10 November 2026)
 
 - The Rules of Golf, Rule 3.2b(1), Conceding the next stroke -- https://www.usga.org/content/usga/home-page/rules/rules-2019/rules-of-golf/rule-3.html -- a conceded next stroke means the player has holed out with that stroke, so it counts. Cited from the Rules as known; not fetched this session. Taken: a gimme adds one stroke. Not taken: concessions belong to match play; the game's gimme circle is a simulator convention in every format (RESEARCH *The gimme circle*).

@@ -18,7 +18,7 @@ import {mapPosition,mapPoint,zoomAbout,panBy,MAP_NAV_NONE,MAP_ZOOM_MIN} from './
 import {planCourse,planScorecard,playCameraMode,aimDelta} from './course-plan.js';
 import {TEE_ORDER,GENERATED_TEES,courseSets,teeFor,teeOn,teeName} from './tees.js';
 import {listRounds,findRound,saveRound,deleteRound,renameRound,suggestName,MAX_ROUNDS} from './round-library.js';
-import {turfConfig,rollDeceleration,launchForDistance,struckDistance} from './turf.js';
+import {turfConfig,rollDeceleration,FIRMNESS,FIRMNESS_NAMES,FIRMNESS_LABELS,FIRMNESS_LINES,firmnessValue,firmnessName,CONDITION_PRESETS,presetOf,STIMP_RANGE,stimpWord} from './turf.js';
 import './style.css';
 import './ui-kit.css';
 import './round-hud.css';
@@ -46,7 +46,7 @@ import {isoWeek,weekIndex,weekKey,weeklySettings,weeklyBiome,recordWeekly,bestEv
 import {ACHIEVEMENTS,achievement,blankProgress,markOnce,sandSave,holeAchievements,roundAchievements,countedAchievements,earn,progressOf} from './achievements.js';
 import {ballPixels} from './ball-finishes.js';
 import {customizeClubs,manualLaunch,CLUB_KINDS,MAX_BAG,MAX_CLUB_NAME,stockBag,bagClubs} from './clubs.js';
-import {startSwing,tap as meterTap,advance as meterAdvance,markerAt,inOverswing,swingLaunch,shapedLaunch,monitorLie,strikeZone,fullCarry,carryAtSpeed,previewTrack,puttFullRoll,puttRange,targetShare,longestReach,swingZoom,lieFactor,LIE_NAMES,DIFFICULTIES,difficultyOf,DEFAULT_SHAPE,CURVES,HEIGHTS,SPIN_STEPS,shortGame,heightName,curveName,spinName,OVERSWING,MISS_AT,puttAccuracy} from './swing-meter.js';
+import {startSwing,tap as meterTap,advance as meterAdvance,markerAt,inOverswing,swingLaunch,shapedLaunch,monitorLie,strikeZone,fullCarry,carryAtSpeed,previewTrack,puttFullRoll,puttRange,targetShare,longestReach,swingZoom,lieFactor,LIE_SPIN,LIE_NAMES,DIFFICULTIES,difficultyOf,DEFAULT_SHAPE,CURVES,HEIGHTS,SPIN_STEPS,shortGame,heightName,curveName,spinName,OVERSWING,MISS_AT,puttAccuracy} from './swing-meter.js';
 import {surfaceLabel,isGround,GROUNDS} from './grounds.js';
 import {puttingConfig,scoreText,sumScores,GIMME,puttingFieldsFor,puttingName,awardWords} from './putting.js';
 import {createLayout} from './layout.js';
@@ -97,7 +97,6 @@ import {dispersionByClub,clubColour,MIN_GROUP} from './dispersion.js';
 import {playerColour,playerTracer,PLAYER_INK} from './player-colours.js';
 import {shotPlan,solveLaunch,outcome,greenSlope,envelope as labEnvelope,dropPlan,dropOutcome,jitterStream,groupStats} from './lab.js';
 import {greenDistance,pinDayOf,pinBandFor,random} from './course.js';
-import {FIRMNESS_PRESETS,FIRMNESS_NAMES,LAB_FIRMNESS_RANGE,firmnessValue,firmnessName} from './firmness.js';
 import {RANGE_SETTINGS,GREEN_RANGE,DEFAULT_GREEN_YARDS,rangeGreenYards,moveRangeGreen,offlineOf,rangeTargets,SHOT_LINE_MAX,loadShotLines,saveShotLines,centreSetup,shortSetup,shapes,loadRangeSetup,saveRangeSetup,SLOPES,SLOPE_NAMES,TILT,CONTOUR,greenById,activeGreen,setActiveGreen,nearestGreen,moveCup,chipSpot,puttSpot,CHIP_YARDS,PUTT_FEET} from './range.js';
 import {sessionCsv,sessionReport,clubTable} from './range-report.js';
 import {buildRangeControls,sessionRows,updateRangeSession} from './ui-range-controls.js';
@@ -392,6 +391,15 @@ const RULES_KEY='fairway-rules-v1';
 try{const r=JSON.parse(localStorage.getItem(RULES_KEY)||'null');if(OB_RULES[r?.outOfBounds])Round.defaultOutOfBounds=r.outOfBounds;if(typeof r?.monitorLie==='boolean')Round.defaultMonitorLie=r.monitorLie;}catch{}
 // Both round rules a group sets and the next round starts with, written together
 // so changing one never forgets the other.
+// THE PLAYER'S COURSE CONDITIONS (turf.js: green speed, green firmness, fairway
+// firmness), kept on this device like the house rules, because they are asked
+// when a round is set up -- before that round's settings exist. `settings.turf`
+// is the round's own copy: a resumed round keeps the conditions it was being
+// played under, and a new one starts from these.
+const CONDITIONS_KEY='fairway-conditions-v1';
+let playerTurf=(()=>{try{return turfConfig(JSON.parse(localStorage.getItem(CONDITIONS_KEY)||'null')||{});}catch{return turfConfig();}})();
+const conditionsNow=()=>{try{return turfConfig(settings.turf??playerTurf);}catch{return playerTurf;}};
+const keepConditions=turf=>{playerTurf=settings.turf=turfConfig(turf);try{localStorage.setItem(CONDITIONS_KEY,JSON.stringify(playerTurf));}catch{}};
 const saveRules=()=>{try{localStorage.setItem(RULES_KEY,JSON.stringify({outOfBounds:Round.defaultOutOfBounds,monitorLie:Round.defaultMonitorLie}));}catch{}};
 let settings={...DEFAULT_COURSE,style:'cartoon'},round=new Round(),course,world,worldKey='',view,aim=0,shotShape={...DEFAULT_SHAPE},swing=null,flight=null,latest=null,ws=null,monitorConnected=false,armed=false,armSwitch=false,monitorDevice=null,panel=null,toastTimer,keys=new Set(),gamepadLast=[],lastTick=performance.now();
 // The 1.0 lobby's course colours, and launch monitor setup's redraw, while open.
@@ -1198,7 +1206,7 @@ const worldKeyFor=s=>JSON.stringify([generatorFor(s),rangeKey(s),s.built??null,s
 // so the yardage rescale on the line below stops applying. prepareWorld calls
 // this and then loadCourse calls it again on the way through.
 function settleSettings(){
- settings.style='cartoon';settings.turf=turfConfig(settings.turf);
+ settings.style='cartoon';settings.turf=conditionsNow();
  // A built course is only ever the course a round was started on (buildRoundOn,
  // a resumed round); the range, an endless run and the studio grow their own.
  if(settings.built&&(settings.range||round.endless||appMode==='studio'))settings.built=null;
@@ -1673,7 +1681,7 @@ function drawMeterScale(){
  if(!show)return;
  const ctx=swing?.ctx||swingContext(),c=ctx.club,putt=c.code==='PT';
  const l=shapedLaunch(c,ctx.shape,{short:ctx.short});
- const key=[c.label,c.speed,l.vla,l.spin,l.axis,l.zone,ctx.lie,ctx.difficulty,settings.turf.stimp,settings.turf.firmness,ctx.puttRange??0,ctx.zoom,shownSwing()?'held':''].join();
+ const key=[c.label,c.speed,l.vla,l.spin,l.axis,l.zone,ctx.lie,ctx.difficulty,settings.turf.stimp,settings.turf.greenFirmness,settings.turf.courseFirmness,ctx.puttRange??0,ctx.zoom,shownSwing()?'held':''].join();
  if(key!==meterScaleKey){
   meterScaleKey=key;
   const full=putt?ctx.puttRange:fullCarry(c,l)*ctx.zoom;
@@ -1784,7 +1792,7 @@ function stepShape(which,dir,wrap=true){
  shotShape={...shotShape,[which]:list[j]};
  drawShapeControls();updateAim();
 }
-// THE LIE, before every shot and for every way of playing (the owner's rule):
+// THE LIE, before every shot and for every way of playing:
 // the surface the ball sits on and what it costs. In the shot controls for the
 // Swing Meter, and in the monitor window -- where it says when the round has the
 // monitor penalty switched off.
@@ -1792,7 +1800,8 @@ function drawLie(){
  if(!course||!round)return;
  const lie=currentLie(),f=onMat()?1:lieFactor(lie);
  const name=onMat()?'Mat':surfaceLabel(lie);
- const cost=f<1?`${name} · −${Math.round((1-f)*100)}% ball speed`:`${name} · full ball speed`;
+ // Grass takes a wedge's spin as well (the flyer, swing-meter.js `lieSpin`).
+ const cost=f<1?`${name} · −${Math.round((1-f)*100)}% ball speed${LIE_SPIN.loss[lie]?' · wedges spin less':''}`:`${name} · full ball speed`;
  const meter=$('lieReadout');
  if(meter){meter.innerHTML=`<span>LIE</span> ${escape(cost)}`;meter.classList.toggle('penalty',f<1);}
  const mon=$('monLie');
@@ -1935,13 +1944,13 @@ function takeShot(data=null,struck=null){
  // the Swing Meter; the meter calls back in with the struck numbers.
  if(!data&&!struck)return meterPress();
  closePanel();const c=clubs[$('club').value],lie=course.surface(round.position.x,round.position.z);
- // THE LIE (14 October 2026, the owner's rule): rough, semi-rough and sand cost
- // ball speed, by one table, for every golfer. The Swing Meter has already taken
+ // THE LIE: rough, semi-rough and sand cost ball speed, and grass costs a
+ // high-spinning shot spin (the flyer), by one table, for every golfer. The Swing Meter has already taken
  // it off its swing (swing-meter.js). A MONITOR'S MEASURED BALL SPEED is
  // multiplied by the same share unless the round switches that off -- and the
  // measured number is kept beside the one played, so it is shown and recorded
- // exactly as sent, with the penalty in red (shot-data.js). Launch, direction,
- // spin and axis are never touched. The range and the lab's typed shots are
+ // exactly as sent, with the penalty in red (shot-data.js). Launch, direction
+ // and axis are never touched. The range and the lab's typed shots are
  // played off the mat. PROJECT_HANDOFF *The simulator never invents ball data*.
  const factor=onMat()?1:lieFactor(lie);let launch,lieRecord=null;
  if(data)({launch,lie:lieRecord}=monitorLie(data,lie,{on:round.monitorLie,range:onMat()}));
@@ -2080,7 +2089,9 @@ let gameAudio=null,lastSoundScene=0;
 function soundsOf(r,h){
  if(r._sounds)return r._sounds;
  const list=[...(r.contacts||[]),...canopyContacts(r.points||[],view.world?.trees||[],q=>h.toWorld(q))];
- if(r.holed)list.push({t:r.time,what:'cup',speed:1,...r.end});
+ // The cup's own rattle comes from the hole's contacts (cup.js); a ball that
+ // slid in too gently to make one still gets the drop.
+ if(r.holed&&!list.some(c=>c.what==='cup'))list.push({t:r.time,what:'cup',speed:1,...r.end});
  list.sort((a,b)=>a.t-b.t);
  Object.defineProperty(r,'_sounds',{value:list});
  return list;
@@ -2962,8 +2973,8 @@ function openPlaySettings(name,content){
   // per-shot shape controls already lived -- how the ball leaves the club and how
   // far it then runs are two different subjects, and they were sharing one form
   // and one save button.
-  content.innerHTML=`<p>The ground everything lands on. These apply immediately to every shot source.</p><h3>Turf & roll</h3>${slider('greenStimp','Green speed · Stimp',settings.turf.stimp,6,15,' ft',.5)}${slider('fairwayRoll','Fairway roll',settings.turf.fairway,30,180,'%')}${slider('semiRoll','Semi-rough roll',settings.turf.semi,30,180,'%')}${slider('roughRoll','Rough roll',settings.turf.rough,30,180,'%')}<label class="field">Green firmness<select id="turfFirmness">${FIRMNESS_NAMES.map(n=>`<option value="${n}"${firmnessName(settings.turf.firmness)===n?' selected':''}>${n}</option>`).join('')}</select></label><p class="note">Green firmness is not green speed. It decides what a ball does the moment it lands — how high it bounces and whether it holds — while the roll settings decide what it does once it is already rolling. A green can be quick and soft, or slow and baked hard.</p><p class="note"><strong>It is named for what it touches.</strong> Green firmness is measured in inches of penetration by a greens instrument, so it moves greens and their collars and nothing else — a fairway or rough keeps one landing behaviour and is set to run with the roll sliders above.</p><p class="note">100% is standard turf. Higher roll values mean less resistance. Stimp is the distance, in feet, a standard release rolls on a level green.</p><button class="primary" id="saveFlight">Save turf settings</button>`;
-  $('saveFlight').onclick=()=>{settings.turf=turfConfig({stimp:Number($('greenStimp').value),fairway:Number($('fairwayRoll').value),semi:Number($('semiRoll').value),rough:Number($('roughRoll').value),firmness:$('turfFirmness')?.value});save();updateAim();closePanel();toast('Turf conditions saved.');};
+  content.innerHTML=`<p>The course as it plays today. Three things, each changed the moment you move it, for every shot from here on.</p><label class="field">Course conditions<select id="turfConditions">${Object.entries(CONDITION_PRESETS).map(([k,p])=>`<option value="${k}">${p.label} · ${p.line}</option>`).join('')}<option value="custom">Your own mix · set each below</option></select></label><label class="field">Green speed<select id="turfStimp">${stimpOptions()}</select></label><label class="field">Green firmness<select id="turfGreens">${firmnessOptions('green')}</select></label><label class="field">Fairway firmness<select id="turfFairways">${firmnessOptions('course')}</select></label><p class="note"><strong>Green speed</strong> is the Stimpmeter reading: how many feet a ball rolls on the level from a standard release. It decides how far a putt and a chip run.</p><p class="note"><strong>Green firmness</strong> is the landing: how high a ball bounces, whether it holds, and whether a spinning wedge stops, hops on or comes back. A firm green is a tournament green, dried and rolled; a soft one holds almost anything.</p><p class="note"><strong>Fairway firmness</strong> does the same for tees, fairways and rough: how many times a drive bounces and how far it runs.</p>`;
+  wireConditions('turf',()=>toast('Course conditions changed.'));
  }else{
   const p=playerPutting();content.innerHTML=`<p>Choose how to finish the hole. Automatic putting applies only to a ball resting on this hole’s green.</p><label class="field">Putting mode<select id="puttingMode">${PUTTING_MODES}</select></label><div id="putting-distances">${puttingFields('putting',p)}</div><p class="field-error" id="playError"></p><button class="primary" id="savePutting">Apply putting mode</button>`;$('puttingMode').value=p.mode;
   const explain=()=>showPuttingFields('putting',$('puttingMode').value);$('puttingMode').onchange=explain;explain();
@@ -3124,7 +3135,7 @@ async function enterRange(options={}){
    rangeShort:rangeGreensPref.short,
    ...(options.seed?{seed:options.seed}:{}),
    turf:turfConfig({...(RANGE_SETTINGS.turf||{}),
-    ...(options.firmness?{firmness:options.firmness}:{}),
+    ...(options.firmness!=null?{greenFirmness:options.firmness}:{}),
     ...(options.stimp?{stimp:options.stimp}:{})}),
    rangeGreen:options.green??rangeGreenPref};
   closePanel();loadCourse();
@@ -3358,20 +3369,19 @@ function labStrike(over={}){
  labLaunch=five;
  labShotText=labShotLine(five);
  labState={label:`manual · ${five.speed} mph, ${five.vla}° launch, ${five.hla}° direction, `
-  +`${five.spin} rpm, axis ${five.axis}° · ${firmnessName(settings.turf.firmness)} `
-  +`(${settings.turf.firmness.toFixed(2)} in)`,
+  +`${five.spin} rpm, axis ${five.axis}° · ${firmnessName(settings.turf.greenFirmness)} greens, Stimp ${settings.turf.stimp}`,
   approach:null,manual:true,speed:five.speed*MPH,result:null};
  syncLabTool();
  if(!takeShot({speed:five.speed*MPH,vla:five.vla,hla:five.hla,spin:five.spin,spinAxis:five.axis,...(extra?{extra}:{})}))
   throw Error('The shot was refused; a ball may still be in the air.');
  return {...five};
 }
-// Firmness is a lab control, not a course one: the four named settings are what
-// a player picks, and this is the ground between them.
+// Green firmness in the lab is continuous: the three names are what a player
+// picks, and this is the ground between them (-1 soft, 0 medium, +1 firm).
 function labFirmness(value){
- settings.turf=turfConfig({...settings.turf,firmness:value});
+ settings.turf=turfConfig({...settings.turf,greenFirmness:typeof value==='number'?value:firmnessName(value)});
  syncLabTool();updateAim();
- return {firmness:settings.turf.firmness,reads:firmnessName(settings.turf.firmness)};
+ return {firmness:firmnessValue(settings.turf.greenFirmness),reads:firmnessName(settings.turf.greenFirmness)};
 }
 // Green speed belongs in the lab, and until now it was only reachable by
 // closing the lab and opening the turf panel. It is the single biggest thing
@@ -3389,12 +3399,13 @@ const STIMP_PRESETS=[['Slow',8],['Medium',10],['Quick',12],['Tournament',13.5]];
 // Lab tools is redrawn IN PLACE rather than re-rendered. A re-render would
 // replace the shot-data textarea mid-keystroke and drop the caret -- the same
 // trap the old floating lab bar had -- and the panel may simply not be open.
+const firmnessRead=firm=>`${FIRMNESS_LABELS[firmnessName(firm)]}${Math.abs(FIRMNESS[firmnessName(firm)]-firm)<1e-9?'':` · ${firm>0?'+':''}${firm.toFixed(2)}`}`;
 function syncLabTool(){
  if(!$('labFirmness'))return;
- const firm=firmnessValue(settings.turf?.firmness),stimp=settings.turf?.stimp??10;
- $('labFirmness').value=firm;$('labFirmnessRead').textContent=`${firmnessName(firm)} · ${firm.toFixed(2)} in`;
+ const firm=firmnessValue(settings.turf?.greenFirmness),stimp=settings.turf?.stimp??10;
+ $('labFirmness').value=firm;$('labFirmnessRead').textContent=firmnessRead(firm);
  $('labStimp').value=stimp;$('labStimpRead').textContent=`Stimp ${stimp.toFixed(1)}`;
- for(const b of document.querySelectorAll('[data-firm]'))b.classList.toggle('on',Math.abs(FIRMNESS_PRESETS[b.dataset.firm]-firm)<1e-9);
+ for(const b of document.querySelectorAll('[data-firm]'))b.classList.toggle('on',Math.abs(FIRMNESS[b.dataset.firm]-firm)<1e-9);
  for(const b of document.querySelectorAll('[data-stimp]'))b.classList.toggle('on',Math.abs(Number(b.dataset.stimp)-stimp)<1e-9);
 }
 function startEndless(group,replaySeed){
@@ -4432,7 +4443,32 @@ const FORMAT_NOTES={stroke:'Each golfer finishes the entire hole before the next
 // carry simply runs on (the owner, 16 October 2026).
 // `strokeOnly`: the course of the week, whose bests are strokes for the
 // eighteen, so its format is fixed (the owner, 15 October 2026).
-const formatFields=({match=true,strokeOnly=false}={})=>`<label class="field">Format<select id="roundMode"${strokeOnly?' disabled':''}><option value="stroke">${strokeOnly?'Stroke play only':'Stroke play'}</option>${strokeOnly?'':`<option value="scramble">Team scramble</option>${match?'<option value="match">Match play · best ball teams</option>':''}<option value="skins">Skins · two to four golfers</option>`}</select></label><label class="field">Play from<select id="roundTee">${setupTees().map(t=>`<option value="${t}" ${teeFor(round.tee,setupTees())===t?'selected':''}>${teeName(t)} tees</option>`).join('')}</select></label><label class="field">Out of bounds<select id="roundOB">${Object.entries(OB_RULES).map(([k,v])=>`<option value="${k}" ${round.outOfBounds===k?'selected':''}>${v.label}</option>`).join('')}</select></label><label class="field">Lie penalty for launch-monitor shots<select id="roundMonLie"><option value="on" ${round.monitorLie?'selected':''}>On: rough and sand cost ball speed</option><option value="off" ${round.monitorLie?'':'selected'}>Off: monitor shots fly as measured</option></select></label><label class="field">Putting<select id="roundPuttingMode">${PUTTING_MODES}</select></label><div id="roundPutting-distances">${puttingFields('roundPutting',playerPutting())}</div>`;
+const formatFields=({match=true,strokeOnly=false}={})=>`<label class="field">Format<select id="roundMode"${strokeOnly?' disabled':''}><option value="stroke">${strokeOnly?'Stroke play only':'Stroke play'}</option>${strokeOnly?'':`<option value="scramble">Team scramble</option>${match?'<option value="match">Match play · best ball teams</option>':''}<option value="skins">Skins · two to four golfers</option>`}</select></label><label class="field">Play from<select id="roundTee">${setupTees().map(t=>`<option value="${t}" ${teeFor(round.tee,setupTees())===t?'selected':''}>${teeName(t)} tees</option>`).join('')}</select></label><label class="field">Out of bounds<select id="roundOB">${Object.entries(OB_RULES).map(([k,v])=>`<option value="${k}" ${round.outOfBounds===k?'selected':''}>${v.label}</option>`).join('')}</select></label><label class="field">Lie penalty for launch-monitor shots<select id="roundMonLie"><option value="on" ${round.monitorLie?'selected':''}>On: rough and sand cost ball speed</option><option value="off" ${round.monitorLie?'':'selected'}>Off: monitor shots fly as measured</option></select></label><label class="field">Course conditions<select id="roundConditions">${Object.entries(CONDITION_PRESETS).map(([k,p])=>`<option value="${k}">${p.label} · ${p.line}</option>`).join('')}<option value="custom">Your own mix · set each below</option></select></label><label class="field">Green speed<select id="roundStimp">${stimpOptions()}</select></label><label class="field">Green firmness<select id="roundGreens">${firmnessOptions('green')}</select></label><label class="field">Fairway firmness<select id="roundFairways">${firmnessOptions('course')}</select></label><label class="field">Putting<select id="roundPuttingMode">${PUTTING_MODES}</select></label><div id="roundPutting-distances">${puttingFields('roundPutting',playerPutting())}</div>`;
+// THE THREE COURSE CONDITIONS (turf.js), as the options of a drop-down each:
+// green speed in Stimp feet with a word beside it, and the two firmnesses.
+const stimpOptions=()=>{let s='';for(let v=STIMP_RANGE.min;v<=STIMP_RANGE.max+1e-9;v+=STIMP_RANGE.step)s+=`<option value="${v}">Stimp ${v} · ${stimpWord(v)}</option>`;return s;};
+const firmnessOptions=kind=>FIRMNESS_NAMES.map(n=>`<option value="${n}">${FIRMNESS_LABELS[n]} · ${FIRMNESS_LINES[kind][n]}</option>`).join('');
+// Shows the conditions in force on a set of those controls (ids prefixed
+// `id`), and wires them: a preset sets all three, any one of the three can then
+// be moved on its own, and every change applies at once to this round and the
+// rounds after it. A Stimp or firmness between the listed steps (the range's
+// lab can set one) is shown as the nearest step and kept until a control moves.
+function wireConditions(id,after){
+ const el=k=>$(id+k);if(!el('Stimp'))return;
+ const show=()=>{const t=conditionsNow();
+  el('Stimp').value=String(Math.round(t.stimp/STIMP_RANGE.step)*STIMP_RANGE.step);
+  el('Greens').value=firmnessName(t.greenFirmness);el('Fairways').value=firmnessName(t.courseFirmness);
+  if(el('Conditions'))el('Conditions').value=presetOf(t)||'custom';
+  for(const k of ['Stimp','Greens','Fairways','Conditions'])el(k)?.dispatchEvent(new Event('paint'));};
+ // A change that cannot be applied says why and puts the controls back, as
+ // putting's does: a thrown error here would otherwise leave them lying.
+ const set=turf=>{try{keepConditions(turf);save();updateAim();after?.();}catch(e){toast(e.message);}show();};
+ const apply=()=>set({stimp:Number(el('Stimp').value),greenFirmness:el('Greens').value,courseFirmness:el('Fairways').value});
+ for(const k of ['Stimp','Greens','Fairways'])el(k).onchange=apply;
+ if(el('Conditions'))el('Conditions').onchange=()=>{const p=CONDITION_PRESETS[el('Conditions').value];
+  if(p)set({stimp:p.stimp,greenFirmness:p.greenFirmness,courseFirmness:p.courseFirmness});else show();};
+ show();
+}
 // Wires everything `formatFields` rendered. Returns the format note redraw so a
 // caller that also owns the group list can refresh it when the group changes.
 function wireFormatFields(){
@@ -4453,6 +4489,7 @@ function wireFormatFields(){
  // Swing Meter shots keep the lie either way -- on the meter it is part of the
  // swing, not an adjustment to a measurement.
  $('roundMonLie').onchange=()=>{const v=$('roundMonLie').value!=='off';Round.defaultMonitorLie=v;round.monitorLie=v;saveRules();save();updateHUD();};
+ wireConditions('round');
  $('roundMode').onchange=formatNote;formatNote();
  return formatNote;
 }
@@ -6541,11 +6578,11 @@ function renderPanel(name,content){
   // the mode is gone and this is what was actually being reached for: the two
   // turf numbers that decide what a ball does when it lands and once it rolls,
   // and a way to fire an exact shot instead of swinging one.
-  const firm=firmnessValue(settings.turf?.firmness),stimp=settings.turf?.stimp??10;
+  const firm=firmnessValue(settings.turf?.greenFirmness),stimp=settings.turf?.stimp??10;
   content.innerHTML=`<p>Bench conditions for the range. Both apply straight away, to this shot and every one after it.</p>`
-   +`<label class="field">Green firmness <output id="labFirmnessRead">${firmnessName(firm)} · ${firm.toFixed(2)} in</output>`
-   +`<input type="range" id="labFirmness" min="${LAB_FIRMNESS_RANGE[0]}" max="${LAB_FIRMNESS_RANGE[1]}" step="0.01" value="${firm}" aria-label="Green firmness"></label>`
-   +`<div class="lab-chips">${FIRMNESS_NAMES.map(n=>`<button data-firm="${n}"${Math.abs(FIRMNESS_PRESETS[n]-firm)<1e-9?' class="on"':''}>${n}</button>`).join('')}</div>`
+   +`<label class="field">Green firmness <output id="labFirmnessRead">${firmnessRead(firm)}</output>`
+   +`<input type="range" id="labFirmness" min="-1" max="1" step="0.05" value="${firm}" aria-label="Green firmness, soft to firm"></label>`
+   +`<div class="lab-chips">${FIRMNESS_NAMES.map(n=>`<button data-firm="${n}"${Math.abs(FIRMNESS[n]-firm)<1e-9?' class="on"':''}>${FIRMNESS_LABELS[n]}</button>`).join('')}</div>`
    +`<p class="note">Firmness is the landing. It decides how high a ball bounces and whether it holds, and it acts on greens and their fringes only.</p>`
    +`<label class="field">Green speed <output id="labStimpRead">Stimp ${stimp.toFixed(1)}</output>`
    +`<input type="range" id="labStimp" min="6" max="15" step="0.5" value="${stimp}" aria-label="Green speed in Stimp feet"></label>`

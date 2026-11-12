@@ -1,209 +1,215 @@
+// The hole (src/cup.js): a rigid ball meeting the green, the rim, the wall, the
+// floor and the flagstick. Nothing in the model decides whether a putt drops,
+// so these tests are of what comes OUT of it: the published capture limits, and
+// the rules a real hole obeys. Then the same hole inside a whole shot.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {cupOutcome, captureSpeed, rimContact, crossingChord, crossingDrop, CUP_RADIUS, BALL_RADIUS, CAPTURE_SPEED, FREE_FALL_CAPTURE} from '../src/cup.js';
+import {cupSim, rollAtCup, flyAtCup, captureSpeed, CUP, CUP_RADIUS, BALL_RADIUS, CUP_DEPTH} from '../src/cup.js';
+import {simulateShot, CUP_RADIUS as PHYSICS_CUP, R, FLAGSTICK_HOLE_R, FLAGSTICK_HIT_R, FLAGSTICK_BASE_R} from '../src/physics.js';
+import {launchForDistance} from '../src/turf.js';
+
+const G = 9.80665;
+const holmes = offset => 1.63 * (1 - (offset / CUP_RADIUS) ** 2);
 
 test('regulation geometry', () => {
  assert.ok(Math.abs(2 * CUP_RADIUS - 4.25 * 0.0254) < 1e-12, 'a 4.25 inch hole');
  assert.ok(Math.abs(2 * BALL_RADIUS - 0.04267) < 1e-9, 'a 42.67 mm ball');
- assert.ok(CUP_RADIUS > BALL_RADIUS * 2, 'the hole takes more than two balls across');
+ assert.ok(Math.abs(CUP_DEPTH - 4 * 0.0254) < 1e-12, 'four inches deep');
+ assert.equal(PHYSICS_CUP, CUP_RADIUS);
+ assert.equal(R, BALL_RADIUS);
 });
 
-test('free fall alone is anchored to Penner’s 1.31 m/s, not to 1.63', () => {
- // 1.63 is capture by every mechanism together. Free fall is 1.31, and the far
- // wall and the lip make up the difference -- they are modelled separately in
- // rimContact, so letting free fall reach 1.63 by itself counted them twice.
- assert.ok(Math.abs(captureSpeed(0) - FREE_FALL_CAPTURE) < 0.001,
-  `dead centre free fall ${captureSpeed(0).toFixed(4)} against ${FREE_FALL_CAPTURE}`);
- assert.ok(FREE_FALL_CAPTURE < CAPTURE_SPEED);
- assert.equal(cupOutcome(1.2, 0).kind, 'capture');
+test('the fastest centred putt a hole catches is Holmes\'s, give or take the rim', () => {
+ // 1.31 m/s by free fall alone, 1.63 with the far rim and no bounce, up to
+ // 1.97 with a lively rim (Holmes 1991); Cal Poly holed every centred putt at
+ // 8 ft past and almost none at 9-12 ft past (about 1.6-1.8 m/s).
+ const v = captureSpeed(0);
+ assert.ok(v > 1.5 && v < 1.9, String(v));
+ assert.ok(rollAtCup(1.2, 0).holed && rollAtCup(.3, 0).holed);
+ assert.ok(!rollAtCup(2.6, 0).holed, 'a putt going 20 ft past does not drop');
 });
 
-test('capture falls off as the square root of the offset', () => {
- // The chord the centre crosses goes as sqrt(1 - x^2), and the time it spends
- // over the hole goes with it, so the envelope has that shape and not a square.
- const at = x => captureSpeed(x * CUP_RADIUS);
- for (const x of [0.2, 0.4, 0.6, 0.8, 0.9]) {
-  const root = FREE_FALL_CAPTURE * Math.sqrt(1 - x * x);
-  assert.ok(Math.abs(at(x) - root) / root < 0.01, `at ${x}R expected ${root.toFixed(3)}, got ${at(x).toFixed(3)}`);
+test('the hole gets smaller as the putt gets faster, on Holmes and Penner\'s curve', () => {
+ let last = Infinity;
+ for (const frac of [0, .2, .4, .6, .8, .92]) {
+  const off = frac * CUP_RADIUS, v = captureSpeed(off);
+  assert.ok(v <= last + .03, `capture rises at ${frac}: ${v}`);
+  assert.ok(Math.abs(v - holmes(off)) < .3, `at ${frac} of the radius: ${v.toFixed(2)} against ${holmes(off).toFixed(2)}`);
+  last = v;
  }
- assert.ok(at(1) < 1e-9, 'and nothing is caught right on the rim');
+ // Half the hole is left at about 1.23 m/s (Holmes's fig. 13).
+ assert.ok(Math.abs(captureSpeed(CUP_RADIUS / 2) - 1.23) < .2);
 });
 
-test('the hole shrinks as the ball speeds up, in the direction measurement shows', () => {
- // Hurrion & Sheppard measured the effective hole on a Stimp 10 green: about 4%
- // smaller at 0.23 m/s entry and about 25% smaller at 0.65. This model gives
- // about 0% and 4%, so it narrows far too slowly at low speed even though it now
- // matches Penner's 1.63 dead centre to 3%. The two anchors pull apart and this
- // one is the loser; the gap is recorded rather than tuned away, because nothing
- // is left to tune that is not either geometric or already anchored.
- const width = v => {
-  let lo = 0, hi = CUP_RADIUS;
-  for (let i = 0; i < 44; i++) {const m = (lo + hi) / 2; if (cupOutcome(v, m).kind === 'capture') lo = m; else hi = m;}
-  return 2 * lo;
- };
- const shrink = v => 1 - width(v) / (2 * CUP_RADIUS);
- assert.ok(shrink(0.23) < shrink(0.65), 'faster must mean smaller');
- assert.ok(shrink(0.65) < shrink(1.0));
- assert.ok(shrink(0.23) < 0.05, 'a dying putt uses nearly the whole hole');
- assert.ok(shrink(0.65) > 0.01 && shrink(0.65) < 0.30, `at 0.65 m/s the hole shrank ${(shrink(0.65) * 100).toFixed(0)}%`);
- assert.ok(width(FREE_FALL_CAPTURE * 1.3) < CUP_RADIUS, 'well past the free-fall speed only a sliver is left');
+test('a ball whose centre passes outside the rim is never holed; one inside at a crawl always is', () => {
+ for (const v of [.2, .6, 1.2]) assert.ok(!rollAtCup(v, CUP_RADIUS + .003).holed, `${v} m/s`);
+ for (const frac of [0, .3, .6, .85]) assert.ok(rollAtCup(.25, frac * CUP_RADIUS).holed, `${frac}`);
+ // Both sides of the hole behave the same.
+ for (const [v, off] of [[1.1, .03], [.7, .045], [1.5, .02]]) assert.equal(rollAtCup(v, off).holed, rollAtCup(v, -off).holed);
 });
 
-test('a ball whose line misses the opening is not touched at all', () => {
- assert.equal(cupOutcome(0.4, CUP_RADIUS).kind, 'miss');
- assert.equal(cupOutcome(0.4, CUP_RADIUS + 0.001).kind, 'miss');
- assert.equal(cupOutcome(4, CUP_RADIUS * 2).kind, 'miss');
+test('a holed ball falls to the floor of the cup and lies still there', () => {
+ for (const [v, off] of [[.4, 0], [1.0, .02], [1.5, 0], [.6, .04]]) {
+  const r = rollAtCup(v, off);
+  assert.ok(r.holed && r.rest);
+  const end = r.points.at(-1);
+  assert.ok(Math.abs(end.y - (-CUP_DEPTH + BALL_RADIUS)) < .003, `rests ${end.y} at ${v} m/s`);
+  assert.ok(Math.hypot(end.x, end.z) <= CUP_RADIUS - BALL_RADIUS + .001, 'inside the liner');
+  assert.equal(end.v, 0);
+  // It gets there by falling: every recorded point is at or below where it started.
+  assert.ok(r.points.every(q => q.y < BALL_RADIUS + .012));
+  assert.ok(r.t > .2 && r.t < 4, `settles in ${r.t} s`);
+ }
 });
 
-test('the chord the ball crosses shrinks to nothing at the rim', () => {
- assert.ok(Math.abs(crossingChord(0) - 2 * CUP_RADIUS) < 1e-12);
- assert.ok(crossingChord(CUP_RADIUS * 0.5) < crossingChord(0));
- assert.equal(crossingChord(CUP_RADIUS), 0);
- assert.equal(crossingChord(CUP_RADIUS * 2), 0);
+test('lip-outs come out of the contact, some of them back toward the player', () => {
+ let lips = 0, back = 0, held = 0;
+ for (let off = .024; off < .054; off += .003) for (let v = .7; v < 2.1; v += .1) {
+  const r = rollAtCup(v, off);
+  if (r.holed) held++;
+  if (r.lipped) { lips++; if (r.points.at(-1).z < 0) back++; assert.ok(!r.holed); }
+ }
+ assert.ok(lips > 20 && held > 10 && back >= 1, `${lips} lip-outs, ${back} horseshoes, ${held} holed`);
 });
 
-test('how far it falls while crossing decides everything, and falls off with speed', () => {
- const slow = crossingDrop(0.5, 0), quick = crossingDrop(2.5, 0);
- assert.ok(slow > quick, 'a slower ball is over the hole longer and falls further');
- assert.ok(quick < BALL_RADIUS, 'a ball at 2.5 m/s barely dips in');
- // A crawling ball simply drops the full depth.
- assert.equal(crossingDrop(0, 0), crossingDrop(0.001, 0));
+test('the hole never adds energy: nothing leaves faster than it arrived', () => {
+ for (const v of [.5, 1, 1.6, 2.2, 3]) for (const off of [0, .02, .04, .05]) {
+  const r = rollAtCup(v, off);
+  if (!r.holed) assert.ok(r.points.at(-1).v <= v + 1e-6, `${v} at ${off}: left at ${r.points.at(-1).v}`);
+ }
 });
 
-test('between dropping and sailing over there is now a lip out', () => {
- const kinds = new Set();
- for (let v = 0.2; v < 4; v += 0.05) kinds.add(cupOutcome(v, CUP_RADIUS * 0.7).kind);
- assert.ok(kinds.has('capture'), 'slow enough still drops');
- assert.ok(kinds.has('lip'), 'there is a band that catches the rim');
+test('slope barely moves the capture speed, and uphill is the easier way in', () => {
+ const up = captureSpeed(0, {slope: .05}), down = captureSpeed(0, {slope: -.05}), level = captureSpeed(0);
+ assert.ok(up >= down - .02);
+ assert.ok(Math.abs(up - level) < .25 && Math.abs(down - level) < .25);
 });
 
-test('a lip out never leaves with more energy than it arrived with', () => {
- // The contact can turn speed into height, so horizontal speed alone is not the
- // test any more -- the whole velocity is.
- for (const offset of [0.1, 0.4, 0.7, 0.9].map(f => f * CUP_RADIUS))
-  for (let v = 0.3; v < 5; v += 0.05) {
-   const o = cupOutcome(v, offset);
-   if (o.kind !== 'lip') continue;
-   const out = Math.hypot(o.speed, o.lift);
-   assert.ok(out <= v + 1e-9, `offset ${offset.toFixed(3)} at ${v.toFixed(2)} left at ${out.toFixed(3)}`);
+test('the flagstick: no difference at dying pace, and it saves a centred putt far too fast for the hole', () => {
+ const pin = {pin: FLAGSTICK_HOLE_R};
+ for (const off of [0, .02, .04]) assert.equal(rollAtCup(.5, off, pin).holed, rollAtCup(.5, off).holed);
+ assert.ok(captureSpeed(0, pin) > captureSpeed(0) + .5);
+ assert.ok(rollAtCup(2.6, 0, pin).holed && rollAtCup(2.6, 0, pin).pinHits > 0);
+ // A glancing blow on the stick is no help (Mase: off-centre putts at 4.5 ft
+ // past, 90% holed with the stick out against 45% in).
+ assert.ok(captureSpeed(.02, pin) <= captureSpeed(.02) + .1);
+ // A ball must fit beside the stick or nothing is ever holed with it in.
+ assert.ok(CUP_RADIUS - FLAGSTICK_HOLE_R > 2 * BALL_RADIUS);
+ // What a ball meets is a real stick (0.75 in in the air, 0.5 in in the hole),
+ // whatever width is drawn.
+ assert.ok(FLAGSTICK_HOLE_R < FLAGSTICK_HIT_R && FLAGSTICK_HIT_R <= .009525 + 1e-9 && FLAGSTICK_HIT_R < FLAGSTICK_BASE_R);
+});
+
+test('a ball that flies into the hole stays in it: a slam dunk does not bounce back out', () => {
+ // The owner saw a wedge fly into the cup and come back out a metre high
+ // (11 November 2026): the cup's bounces were a putt's, at ten times the speed.
+ const drop = speed => cupSim({p: [0, .3, 0], v: [0, -speed, 0], w: [0, 0, 0]}, {x: 0, z: 0, y: 0, gx: 0, gz: 0}, {});
+ for (const speed of [1, 3, 8, 20]) assert.ok(drop(speed).holed, `dropped at ${speed} m/s`);
+ // Full shots on the fly, with and without the stick, anywhere across the hole.
+ for (const pin of [0, .00635]) for (const [speed, descent, rpm] of [[21.9, 51, 9100], [24.7, 46, 5100], [10, 40, 5000]]) {
+  let held = 0;
+  for (const at of [-.04, -.02, 0, .02, .04]) {
+   const r = flyAtCup({speed, descent, rpm, at}, {pin});
+   if (r.holed) held++;
+   assert.ok(Math.max(...r.points.map(q => q.y)) < .3, `${speed} m/s at ${at}: nothing leaves the cup above knee height`);
   }
-});
-
-test('a ball that clips the far side hard is thrown upward', () => {
- // The lift does not come from the falling -- there is barely any of that at
- // speed -- it comes from the tilted contact normal redirecting part of a large
- // horizontal velocity. So faster crossings hop higher.
- const hops = [2.6, 3.2, 4, 5, 6].map(v => cupOutcome(v, 0).lift);
- assert.ok(hops.every(h => h > 0), `every fast crossing should lift: ${hops.map(h => h.toFixed(3))}`);
- for (let i = 1; i < hops.length; i++) assert.ok(hops[i] > hops[i - 1], 'faster must hop higher');
- // And it is a hop, not a launch: inches, not feet.
- const peak = hops.at(-1) ** 2 / (2 * 9.80665);
- assert.ok(peak > 0.02 && peak < 0.5, `peak hop ${(peak * 1000).toFixed(0)} mm`);
-});
-
-test('the faster it crosses, the smaller the share the hole takes', () => {
- // It does not converge to untouched as quickly as intuition suggests. Even a
- // ball that dips under a millimetre still meets the edge at a glancing angle,
- // and friction on that contact costs it real speed: a quarter of it at 8 m/s.
- // That is the impulsive treatment being pessimistic about what is mostly a ride
- // over a tiny step, and it is the known soft spot in this model. It matters
- // little in play -- 4 m/s is already a wild putt -- but it is not nothing.
- const kept = [4, 6, 8, 12, 20].map(v => cupOutcome(v, 0).speed / v);
- for (let i = 1; i < kept.length; i++)
-  assert.ok(kept[i] > kept[i - 1], `keeps ${kept.map(k => k.toFixed(3))}`);
- assert.ok(kept.at(-1) > 0.9, 'and it does get there eventually');
- assert.ok(cupOutcome(8, 0).drop < 0.002, 'a ball that fast hardly falls at all');
-});
-
-test('the rim turns the ball toward the side it passed on, and not at all through the middle', () => {
- assert.ok(cupOutcome(2.2, 0).turn === 0 || cupOutcome(2.2, 0).kind !== 'lip');
- const shallow = cupOutcome(2.4, CUP_RADIUS * 0.25), deep = cupOutcome(2.4, CUP_RADIUS * 0.85);
- if (shallow.kind === 'lip' && deep.kind === 'lip')
-  assert.ok(deep.turn > shallow.turn, 'a line nearer the edge is turned harder');
-});
-
-test('a ball stopped dead on the lip falls in rather than perching', () => {
- // Below the rim with nothing left to carry it clear, it goes back down the hole.
- const offset = CUP_RADIUS * 0.3, boundary = captureSpeed(offset);
- assert.equal(cupOutcome(boundary - 0.001, offset).kind, 'capture');
- assert.equal(cupOutcome(boundary + 0.001, offset).kind, 'capture');
-});
-
-test('a ball riding high over the lip is never asked to climb out of anything', () => {
- // It was, once, and the cup swallowed balls at 2.8 m/s because of it.
- const hit = rimContact(3.5, 0, crossingDrop(3.5, 0));
- assert.equal(hit.inside, false, 'at 3.5 m/s the centre is still above the rim plane');
- assert.equal(cupOutcome(3.5, 0).kind, 'lip');
-});
-
-// --- the hole does not care about the slope it is cut into -----------------
-//
-// This is the regression guard on a cancellation that is easy to break by
-// "improving" it. A hole in a sloping green has its far rim lower by chord.theta
-// going downhill, which looks like it should make capture harder. But a ball
-// rolling downhill is already descending at v.theta as it leaves the near rim,
-// and over the crossing it falls exactly that much extra. The two terms cancel
-// and the criterion has no theta in it. Add one without the other -- the natural
-// mistake, since the geometry is visible and the head start is not -- and the
-// capture speed picks up a ~20% slope error at 4%.
-
-import {simulateShot} from '../src/physics.js';
-import {turfConfig} from '../src/turf.js';
-
-const turf = turfConfig({stimp: 10});
-const sloped = slope => ({
- height: (x, z) => -z * slope, surface: () => 'green', pin: {x: 0, z: 0},
- trees: [], homes: [], bounds: {x: 1e6, minZ: -1e6, maxZ: 1e6},
-});
-const from = -1.2;
-const roll = (course, speed) => simulateShot(
- {origin: {x: 0, z: from}, aim: 0, hla: 0, vla: 0, spin: 0, spinAxis: 0, speed}, course, {turf});
-
-// The fastest launch that still drops, found on the upper branch: above the
-// boundary nothing holes, below it everything that reaches does.
-function boundaryLaunch(course) {
- // A slow putt does not miss the hole, it fails to reach it -- struck at 0.5 m/s
- // a ball runs 0.13 m against a cup 1.2 m away -- so the bracket has to be found
- // rather than assumed, then closed from above.
- let holes = null;
- for (let s = 0.6; s <= 5 && holes === null; s += 0.02) if (roll(course, s).holed) holes = s;
- if (holes === null) throw Error('no launch speed holed this putt at all');
- let misses = 5;
- for (let i = 0; i < 30; i++) {
-  const mid = (holes + misses) / 2;
-  if (roll(course, mid).holed) holes = mid; else misses = mid;
+  assert.ok(held >= 4, `${speed} m/s at ${descent} degrees, pin ${pin ? 'in' : 'out'}: ${held} of 5 stayed in`);
  }
- return holes;
-}
-// How fast it is going as its centre reaches the cup, with the hole moved away
-// so nothing catches it first.
-function arrivalSpeed(course, speed) {
- const open = {...course, pin: {x: 9e9, z: 9e9}};
- const r = roll(open, speed);
- for (let i = 1; i < r.points.length; i++) {
-  const a = r.points[i - 1], b = r.points[i];
-  if (a.z < 0 && b.z >= 0) return Math.hypot(b.x - a.x, b.z - a.z) / ((b.t - a.t) || 1e-9);
+ // A putt's rattle is still lively: the same surfaces give a slow ball a real bounce.
+ assert.ok(CUP.hardE < CUP.rimE && CUP.hardE < CUP.floorE && CUP.hardSpeed > 4);
+});
+
+test('the constants are a hole\'s: nothing bounces like a superball, nothing is frictionless', () => {
+ for (const k of ['rimE', 'wallE', 'floorE', 'pinE']) assert.ok(CUP[k] >= 0 && CUP[k] < .6, k);
+ for (const k of ['rimMu', 'wallMu', 'floorMu', 'pinMu']) assert.ok(CUP[k] > 0 && CUP[k] < 1, k);
+ assert.ok(CUP.dt <= 1 / 2000);
+});
+
+// ---- the same hole, inside a whole shot --------------------------------------
+const green = (slope = 0, side = 0, pin = {x: 0, z: 3}) => ({height: (x, z) => slope * z + side * x, surface: () => 'green', pin,
+ bounds: {x: 1e4, minZ: -1e4, maxZ: 1e4}, trees: []});
+const putt = (speed, course, aim = 0, options = {}) => simulateShot({origin: {x: 0, z: 0}, aim, hla: 0, spinAxis: 0, speed, vla: 0, spin: 0}, course, {turf: {stimp: 10}, ...options});
+
+test('a putt hit to die at the hole drops, ends in the cup and says so', () => {
+ const course = green(), speed = launchForDistance(3 + .35, {stimp: 10});
+ const r = putt(speed, course);
+ assert.ok(r.holed && !r.lipped && r.onGreen);
+ assert.ok(Math.hypot(r.end.x - 0, r.end.z - 3) < CUP_RADIUS);
+ assert.ok(Math.abs(r.end.y - (-CUP_DEPTH + R)) < .004, `ball ${r.end.y}`);
+ // The recorded path really goes down into the hole, point by point.
+ const inHole = r.points.filter(q => q.y < 0);
+ assert.ok(inHole.length > 10);
+ const near = r.points.filter(q => Math.hypot(q.x, q.z - 3) < .3);
+ for (let i = 1; i < near.length; i++) assert.ok(Math.hypot(near[i].x - near[i - 1].x, near[i].y - near[i - 1].y, near[i].z - near[i - 1].z) < .03, 'no jump in the path at the hole');
+});
+
+test('too hard goes over the hole; wide of it rolls past untouched; short stops short', () => {
+ const course = green();
+ const hard = putt(launchForDistance(3 + 9, {stimp: 10}), course);
+ assert.ok(!hard.holed && hard.end.z > 4);
+ const wide = putt(launchForDistance(3.4, {stimp: 10}), course, 2.2);   // 11.5 cm left of centre
+ assert.ok(!wide.holed && !wide.lipped);
+ const short = putt(launchForDistance(2.2, {stimp: 10}), course);
+ assert.ok(!short.holed && short.end.z < 2.6);
+});
+
+test('a putt that catches the edge at pace lips out and is reported as lipped', () => {
+ const course = green();
+ let lipped = 0, holed = 0;
+ for (let mm = 30; mm <= 52; mm += 2) {
+  const aim = Math.atan2(mm / 1000, 3) * 180 / Math.PI;
+  const r = putt(launchForDistance(3 + 1.6, {stimp: 10}), course, aim);
+  if (r.lipped) { lipped++; assert.ok(!r.holed); assert.ok(Math.hypot(r.end.x, r.end.z - 3) > CUP_RADIUS); }
+  if (r.holed) holed++;
  }
- return 0;
-}
-
-test('the launch that holes changes a lot with slope, because the ball arrives differently', () => {
- const downhill = boundaryLaunch(sloped(0.06)), flat = boundaryLaunch(sloped(0));
- assert.ok(downhill < flat * 0.92, `downhill boundary ${downhill.toFixed(3)} vs flat ${flat.toFixed(3)}`);
+ assert.ok(lipped >= 2, `${lipped} lipped, ${holed} holed`);
 });
 
-test('but the speed it can arrive at and still be caught does not', () => {
- const arrivals = [-0.06, -0.04, -0.02, 0, 0.02, 0.04, 0.06]
-  .map(slope => {const c = sloped(slope); return arrivalSpeed(c, boundaryLaunch(c));});
- const low = Math.min(...arrivals), high = Math.max(...arrivals);
- assert.ok(arrivals.every(a => a > 1.3 && a < 1.9), `arrivals ${arrivals.map(a => a.toFixed(3))}`);
- assert.ok((high - low) / low < 0.05,
-  `capture speed moved ${((high - low) / low * 100).toFixed(1)}% across the slope range: ${arrivals.map(a => a.toFixed(3))}`);
+test('holing works on a slope, both ways and across', () => {
+ for (const [slope, side] of [[.03, 0], [-.03, 0], [0, .025], [.02, -.02]]) {
+  const course = green(slope, side);
+  // Find the line and pace by trying: a few aims, a few speeds.
+  let made = 0;
+  for (let aim = -6; aim <= 6 && !made; aim += .5) for (const past of [.2, .5, .9]) {
+   const r = putt(launchForDistance(3 + past, {stimp: 10}) * (1 + slope * 4.5), course, aim);
+   if (r.holed) { made++; assert.ok(r.end.y < course.height(0, 3) - CUP_DEPTH + R + .01); break; }
+  }
+  assert.ok(made, `no putt found on slope ${slope}, ${side}`);
+ }
 });
 
-test('cupOutcome is a function of speed and offset alone', () => {
- // If a slope term is ever added here, it has to be added as a pair or not at
- // all. This asserts the signature stays honest about that.
- assert.equal(cupOutcome.length, 2);
- assert.equal(captureSpeed.length, 1);
+test('a ball set down anywhere round the lip ends, promptly, either in the hole or at rest', () => {
+ for (const mm of [-3, -1, -.3, 0, .3, 1, 3]) {
+  const course = green(0, 0, {x: 0, z: CUP_RADIUS + mm / 1000});
+  const began = Date.now();
+  const r = simulateShot({origin: {x: 0, z: 0}, aim: 0, hla: 0, spinAxis: 0, speed: .001, vla: 0, spin: 0}, course, {turf: {stimp: 10}});
+  assert.ok(Date.now() - began < 4000, `${mm} mm: took ${Date.now() - began} ms`);
+  assert.ok(r.holed || Math.hypot(r.end.x, r.end.z) < .02, `${mm} mm: ended ${r.end.z}`);
+  if (mm < -1) assert.ok(r.holed, `${mm} mm inside the rim drops`);
+  if (mm > 1) assert.ok(!r.holed, `${mm} mm outside the rim stays out`);
+ }
+});
+
+test('with no pin on the course there is no hole to fall in', () => {
+ const course = {...green(), pin: null};
+ const r = putt(launchForDistance(3.3, {stimp: 10}), course);
+ assert.ok(!r.holed && r.end.z > 3);
+});
+
+test('a chip can run into the hole, and one landing short of it bounces rather than vanishing', () => {
+ const course = green(0, 0, {x: 0, z: 14});
+ let made = 0;
+ for (let mph = 20; mph <= 32 && !made; mph += .25) {
+  const r = simulateShot({origin: {x: 0, z: 0}, aim: 0, hla: 0, spinAxis: 0, speed: mph * 0.44704, vla: 24, spin: 2500}, course, {turf: {stimp: 10}});
+  assert.ok(Number.isFinite(r.end.z));
+  if (r.holed) made++;
+ }
+ assert.ok(made, 'some chip between 20 and 32 mph holes out from 14 m');
+});
+
+test('a ball already rolling slowly toward the hole from a foot away drops', () => {
+ const course = green(0, 0, {x: 0, z: .3});
+ const r = simulateShot({origin: {x: 0, z: 0}, aim: 0, hla: 0, spinAxis: 0, speed: .75, vla: 0, spin: 0, roll: .75}, course, {turf: {stimp: 10}});
+ assert.ok(r.holed);
+ assert.ok(r.time < 6);
 });

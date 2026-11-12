@@ -43,58 +43,58 @@
 export const GROUND_TINT = {coral: '#e6dcc2', pinestraw: '#8b5e34', litter: '#b4692f', heather: '#7a5b78', native: '#b3a35a'};
 export const GROUNDS = {
  rock: {label: 'Rock', word: 'rock', like: 'rough', sound: 'rock', map: '#9a958a', relief: 4,
-  contact: {cor: .22, tilt: .10, mu: .30, ground: .020, canopy: .000, spin: 2.5},
-  roll: 1.0, slide: .35, lie: .82, hop: .14},
+  turf: {e0: .62, eHi: .55, tilt: 2, mu: .35, grab: 0, slide: .35, stimp: 5.5, hard: true},
+  lie: .82, hop: .14},
  // Ironshore: limestone and coral, sharp and pitted. Plays as rock, rolls less.
  coral: {label: 'Coral rock', word: 'coral', like: 'rough', sound: 'rock', map: '#d9d2bf', relief: 4,
-  contact: {cor: .20, tilt: .12, mu: .38, ground: .020, canopy: .000, spin: 2.5},
-  roll: 2.0, slide: .45, lie: .8, hop: .12},
+  turf: {e0: .55, eHi: .50, tilt: 3, mu: .40, grab: .02, slide: .45, stimp: 2.8, hard: true},
+  lie: .8, hop: .12},
  // Loose stones below a cliff: hard, but they move and grab.
  scree: {label: 'Scree', word: 'scree', like: 'rough', sound: 'rock', map: '#a8a397', relief: 4,
-  contact: {cor: .12, tilt: .16, mu: .55, ground: .060, canopy: .030, spin: 2.5},
-  roll: 4.5, slide: .8, lie: .82, hop: .1},
+  turf: {e0: .30, eHi: .15, tilt: 14, mu: .55, grab: .25, slide: .80, stimp: 1.2},
+  lie: .82, hop: .1},
  // The desert floor beyond the turf, and Pinehurst's hardpan: firmer than a
  // fairway, a tight bare lie, a ball runs on it.
  hardpan: {label: 'Hardpan', word: 'hardpan', like: 'fairway', sound: 'tee', map: '#c9ae80', relief: 2,
-  contact: {cor: .155, tilt: .12, mu: .40, ground: .045, canopy: .005, spin: 2.5},
-  roll: 1.15, slide: .38, lie: .93, hop: .06},
+  turf: {e0: .55, eHi: .22, tilt: 8, mu: .38, grab: 0, slide: .38, stimp: 4.8},
+  lie: .93, hop: .06},
  // Open sand that is not a bunker: a dry wash, a sandy waste area. Firmer than
  // a bunker's raked sand, and it takes the spin the same way.
  waste: {label: 'Waste sand', word: 'waste', like: 'sand', sound: 'sand', map: '#e3cf9f', relief: 4,
-  contact: {cor: .06, tilt: .02, mu: .62, ground: .110, canopy: .350, spin: 2.5},
-  roll: 5.0, slide: .9, lie: .86, hop: 0, killsSpin: true},
+  turf: {e0: .14, eHi: .04, tilt: 6, mu: .65, grab: .55, slide: .90, stimp: 1.1},
+  lie: .86, hop: 0, killsSpin: true},
  // Fallen needles under conifers: soft, and a ball sits down in it.
  pinestraw: {label: 'Pine straw', word: 'pine straw', like: 'rough', sound: 'rough', map: '#9c7a4c', relief: 3,
-  contact: {cor: .075, tilt: .07, mu: .56, ground: .100, canopy: .200, spin: 2.5},
-  roll: 4.2, slide: .7, lie: .88, hop: .03},
+  turf: {e0: .28, eHi: .08, tilt: 12, mu: .50, grab: .30, slide: .70, stimp: 1.3},
+  lie: .88, hop: .03},
  // Fallen leaves under hardwoods: as pine straw.
  litter: {label: 'Leaves', word: 'leaves', like: 'rough', sound: 'rough', map: '#a7703f', relief: 3,
-  contact: {cor: .075, tilt: .07, mu: .56, ground: .100, canopy: .200, spin: 2.5},
-  roll: 4.2, slide: .7, lie: .88, hop: .03},
+  turf: {e0: .28, eHi: .08, tilt: 12, mu: .50, grab: .30, slide: .70, stimp: 1.3},
+  lie: .88, hop: .03},
  // Heather: woody, wiry and the worst lie on a heath.
  heather: {label: 'Heather', word: 'heather', like: 'rough', sound: 'rough', map: '#7d6378', relief: 4,
-  contact: {cor: .055, tilt: .06, mu: .62, ground: .105, canopy: .380, spin: 2.5},
-  roll: 6.5, slide: .9, lie: .78, hop: 0},
+  turf: {e0: .20, eHi: .06, tilt: 14, mu: .60, grab: .50, slide: .90, stimp: .85},
+  lie: .78, hop: 0},
  // Unmown native grass: marram on a dune, prairie in the Midwest, fescue on a
  // links. Deeper than rough.
  native: {label: 'Native grass', word: 'native grass', like: 'rough', sound: 'rough', map: '#b7a46a', relief: 4,
-  contact: {cor: .06, tilt: .07, mu: .60, ground: .105, canopy: .320, spin: 2.5},
-  roll: 6.0, slide: .85, lie: .82, hop: 0},
+  turf: {e0: .22, eHi: .07, tilt: 14, mu: .58, grab: .42, slide: .85, stimp: .9},
+  lie: .82, hop: 0},
  // A CART PATH (architect-courses, phase 2; paths.js): concrete, asphalt,
  // gravel, shell or bark by landscape, all played as one hard surface -- the
  // hardest in play, a long hop and a long run, a clean tight lie. Not natural
  // ground: nothing grows or stands on it, and a ball at rest on one gets free
  // relief (relief.js `pathRelief`). PLACED, against rock just below it.
  path: {label: 'Cart path', word: 'cart path', like: 'fairway', sound: 'tee', map: '#d9d2c2', relief: 5,
-  contact: {cor: .235, tilt: .02, mu: .32, ground: .004, canopy: .000, spin: 2.5},
-  roll: .85, slide: .3, lie: .95, hop: .16},
+  turf: {e0: .72, eHi: .68, tilt: 0, mu: .35, grab: 0, slide: .30, stimp: 9.0, hard: true},
+  lie: .95, hop: .16},
  // A ROAD OR THE PARKING LOT (roads.js; the US landscapes goal, phase 4): the
  // owner's PLAN, "a ball on a road plays as hardpan" -- hardpan's bounce and
  // roll; man-made like a cart path, so nothing grows on it and a ball at rest
  // on it gets the same free relief (relief.js).
  road: {label: 'Road', word: 'road', like: 'fairway', sound: 'tee', map: '#6b6f75', relief: 5,
-  contact: {cor: .155, tilt: .12, mu: .40, ground: .045, canopy: .005, spin: 2.5},
-  roll: 1.15, slide: .38, lie: .93, hop: .06},
+  turf: {e0: .68, eHi: .62, tilt: 0, mu: .40, grab: 0, slide: .38, stimp: 7.8, hard: true},
+  lie: .93, hop: .06},
 };
 
 export const GROUND_KINDS = Object.keys(GROUNDS);

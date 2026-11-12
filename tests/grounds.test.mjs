@@ -4,8 +4,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {GROUNDS, GROUND_KINDS, isGround, isNatural, allows, surfaceLabel} from '../src/grounds.js';
-import {contactOf, ploughParts, simulateShot} from '../src/physics.js';
-import {rollDeceleration, slideFriction} from '../src/turf.js';
+import {simulateShot} from '../src/physics.js';
+import {rollDeceleration, slideFriction, turfOf} from '../src/turf.js';
 import {LIE_SPEED, LIE_NAMES, lieFactor} from '../src/swing-meter.js';
 import {lieRank} from '../src/relief.js';
 import {ROLL_HOP} from '../src/roll-hop.js';
@@ -16,11 +16,14 @@ test('every ground type has a row in every table', () => {
  assert.ok(GROUND_KINDS.length >= 8);
  for (const k of GROUND_KINDS) {
   const g = GROUNDS[k];
-  assert.notEqual(contactOf(k), contactOf('green'), `${k}: physics falls back to the green`);
-  assert.equal(contactOf(k).cor, g.contact.cor);
-  assert.ok(Math.abs(ploughParts(k).total - (g.contact.ground + g.contact.canopy)) < 1e-4, `${k}: plough`);
-  assert.equal(rollDeceleration(k), g.roll, `${k}: roll`);
-  assert.equal(slideFriction(k), g.slide, `${k}: skid`);
+  // Its own row in the ball's table (turf.js), not rough's by default, and
+  // not moved by either firmness: firmness is a property of mown turf.
+  const row = turfOf(k);
+  for (const c of ['e0', 'eHi', 'tilt', 'mu', 'grab']) assert.equal(row[c], g.turf[c], `${k}: ${c}`);
+  assert.equal(row.stimp, g.turf.stimp, `${k}: roll`);
+  assert.equal(slideFriction(k), g.turf.slide, `${k}: skid`);
+  assert.equal(row.firmer, null);
+  assert.equal(row.hard, !!g.turf.hard);
   assert.equal(lieFactor(k), g.lie, `${k}: lie`);
   assert.equal(LIE_SPEED[k], g.lie);
   assert.equal(LIE_NAMES[k], g.word);
@@ -39,13 +42,18 @@ test('every ground type has a row in every table', () => {
 });
 
 test('no ground is livelier than a hard surface can be', () => {
- // physics multiplies the elasto-plastic value by up to 3.5 for a slow
- // contact; past about 0.24 a dropped ball would come back higher than it fell.
- for (const k of GROUND_KINDS) assert.ok(GROUNDS[k].contact.cor < .24, `${k}: restitution ${GROUNDS[k].contact.cor}`);
+ // A golf ball dropped on concrete comes back to about 60% of its height
+ // (restitution near 0.78); nothing a ball lands on out here is livelier, and
+ // nothing that is not rock or paving comes close.
+ for (const k of GROUND_KINDS) {
+  const t = GROUNDS[k].turf;
+  assert.ok(t.e0 < .78 && t.eHi <= t.e0, `${k}: restitution ${t.e0}`);
+  if (!t.hard) assert.ok(t.e0 < .6 && t.eHi < .25, `${k}: soft ground cannot bounce like stone`);
+ }
 });
 
 test('the orderings that make each ground what it is', () => {
- const cor = k => contactOf(k).cor, lie = lieFactor;
+ const cor = k => turfOf(k).eHi, lie = lieFactor;
  // Rock and coral are the hardest things a ball lands on; hardpan is firmer
  // than a fairway; heather and waste sand are the deadest.
  assert.ok(cor('rock') > cor('hardpan') && cor('hardpan') > cor('fairway'));
@@ -57,9 +65,10 @@ test('the orderings that make each ground what it is', () => {
  assert.ok(rollDeceleration('heather') > rollDeceleration('rough'));
  assert.ok(rollDeceleration('native') > rollDeceleration('rough'));
  // The lie: hardpan is a tight lie but cleaner than rough; heather the worst
- // grass; nothing is better than a fairway or worse than a bunker.
+ // grass; nothing is better than a fairway, and the worst ground (heather, bare
+ // coral and rock) costs a little more than a bunker does.
  assert.ok(lie('hardpan') > lie('rough') && lie('heather') < lie('rough'));
- for (const k of GROUND_KINDS) assert.ok(lie(k) <= 1 && lie(k) >= lie('sand') - .03, `${k}: lie ${lie(k)}`);
+ for (const k of GROUND_KINDS) assert.ok(lie(k) <= 1 && lie(k) >= lie('sand') - .08, `${k}: lie ${lie(k)}`);
  // Waste sand takes spin as a bunker does.
  assert.ok(GROUNDS.waste.killsSpin);
 });

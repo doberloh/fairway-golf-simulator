@@ -1736,8 +1736,8 @@ built yet, says so.
 ## The builder-ux goal (branch `builder-ux`, from 9 November 2026)
 
 By 9 November 2026 the owner had played every part of the builder that TODO
-listed as "not played by a person" (those entries are closed in TODO's
-`# Done`). The owner's verdict: the layer rule (paint goes under the layers
+listed as "not played by a person" (those entries are closed, in
+DONE.md). The owner's verdict: the layer rule (paint goes under the layers
 above it) and Skin from the land are right and stay; a real course takes
 about 15 minutes with OpenStreetMap data, which is fast; but "The UI is
 extremely basic and really confusing. It needs to run more like an MS

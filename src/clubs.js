@@ -1,4 +1,4 @@
-import {rollDeceleration,launchForDistance} from './turf.js';
+import {launchForDistance} from './turf.js';
 import {simulateShot,MPH,YARD,clamp} from './physics.js';
 export const CLUBS={driver:{label:'Driver',code:'DR',speed:155*MPH,vla:12.5,spin:2700,carry:250},wood:{label:'3 Wood',code:'3W',speed:138*MPH,vla:14,spin:3500,carry:220},iron5:{label:'5 Iron',code:'5I',speed:119*MPH,vla:17,spin:4800,carry:185},iron7:{label:'7 Iron',code:'7I',speed:105*MPH,vla:20,spin:6500,carry:155},iron9:{label:'9 Iron',code:'9I',speed:91*MPH,vla:25,spin:8000,carry:125},wedge:{label:'Pitching wedge',code:'PW',speed:76*MPH,vla:30,spin:9000,carry:100},sand:{label:'Sand wedge',code:'SW',speed:58*MPH,vla:35,spin:8500,carry:65},putter:{label:'Putter',code:'PT',speed:7,vla:0,spin:0,carry:30}};
 const flat={height:()=>0,surface:()=> 'fairway',bounds:{x:5000,minZ:-5000,maxZ:5000},trees:[]},cache=new Map();
@@ -79,7 +79,7 @@ export function validateBag(bag){
 }
 const solveSpeed=(kind,carry)=>{
  const key=kind+':'+carry;let speed=cache.get(key);
- if(speed===undefined){const c=CLUB_KINDS[kind];if(kind==='putter')speed=launchForDistance(carry*YARD,rollDeceleration('green'));else {let lo=1,hi=130;for(let i=0;i<19;i++){const mid=(lo+hi)/2,r=simulateShot({origin:{x:0,z:0},aim:0,hla:0,spinAxis:0,...c,speed:mid},flat);if(r.carry<carry*YARD)lo=mid;else hi=mid;}speed=(lo+hi)/2;}cache.set(key,speed);}
+ if(speed===undefined){const c=CLUB_KINDS[kind];if(kind==='putter')speed=launchForDistance(carry*YARD);else {let lo=1,hi=130;for(let i=0;i<19;i++){const mid=(lo+hi)/2,r=simulateShot({origin:{x:0,z:0},aim:0,hla:0,spinAxis:0,...c,speed:mid},flat);if(r.carry<carry*YARD)lo=mid;else hi=mid;}speed=(lo+hi)/2;}cache.set(key,speed);}
  return speed;
 };
 // A bag as the game plays it: id -> club, longest first and the putter last,

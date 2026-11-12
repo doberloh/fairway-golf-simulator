@@ -10,7 +10,6 @@ import fs from 'node:fs';
 import {generateWorld, DEFAULT_COURSE} from '../../src/course.js';
 import {simulateShot, YARD, MPH} from '../../src/physics.js';
 import {turfConfig} from '../../src/turf.js';
-import {FIRMNESS_PRESETS} from '../../src/firmness.js';
 
 const OUT = 'docs/reports/shotmaking';
 fs.mkdirSync(OUT, {recursive: true});
@@ -34,7 +33,7 @@ const SHOTS = [
 const plan = [];
 for (const s of SHOTS) {
  const h = w.holes[s.hole], origin = s.from(h), course = Object.create(h);
- const turf = turfConfig(s.firmness ? {firmness: FIRMNESS_PRESETS[s.firmness]} : {});
+ const turf = turfConfig(s.firmness ? {greenFirmness: s.firmness} : {});
  // Aim: at the pin for approaches; for tee shots down the centreline at 250 yd,
  // offset so the curve finishes the ball back near the middle.
  const target = s.atPin ? h.pin : {x: fairwayMid(h, 220), z: 220};

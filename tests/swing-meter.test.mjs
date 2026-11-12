@@ -26,14 +26,34 @@ function swingAt(club, powerShare, strikeAfter, {difficulty = 'normal', putt = f
 const flat = {height: () => 0, surface: () => 'fairway', bounds: {x: 5000, minZ: -5000, maxZ: 5000}, trees: [], homes: []};
 const fly = shot => simulateShot({origin: {x: 0, z: 0}, aim: 0, ...shot}, flat);
 
-test('the lie table is one rule: semi 96%, rough 90%, sand 80%, everything else full', () => {
+test('the lie table is one rule: semi 96%, rough 90%, sand 85%, everything else full', () => {
  // The cartoon overhaul's ground types (grounds.js) each bring a row of their
  // own; the turf's rows are unchanged.
  const turf = Object.fromEntries(Object.entries(LIE_SPEED).filter(([k]) => !GROUNDS[k]));
- assert.deepEqual(turf, {semi: .96, rough: .9, sand: .8});
+ assert.deepEqual(turf, {semi: .96, rough: .9, sand: .85});
  for (const k of Object.keys(GROUNDS)) assert.equal(LIE_SPEED[k], GROUNDS[k].lie, k);
  for (const s of ['tee', 'fairway', 'fringe', 'green']) assert.equal(lieFactor(s), 1, s);
- assert.equal(lieFactor('sand'), .8, 'sand was softened from 72% to 80% on 14 October 2026');
+ assert.equal(lieFactor('sand'), .85);
+});
+
+// THE FLYER (the USGA's groove study): grass takes spin from the shots that
+// have most of it, and none from a mid iron; sand takes none.
+test('grass takes spin from a lofted shot and none from a long iron', async () => {
+ const {lieSpin, LIE_SPIN} = await import('../src/swing-meter.js');
+ assert.equal(lieSpin('rough', 16), 1, 'a 5 iron launch keeps it all');
+ assert.ok(Math.abs(lieSpin('rough', 29) - .55) < 1e-9, 'a sand wedge launch keeps 55%');
+ assert.ok(lieSpin('semi', 30) > lieSpin('rough', 30) && lieSpin('semi', 30) < 1);
+ for (const s of ['sand', 'fairway', 'tee', 'green', 'fringe']) assert.equal(lieSpin(s, 40), 1, s);
+ let last = 1;
+ for (let a = 5; a <= 50; a++) { const k = lieSpin('rough', a); assert.ok(k <= last + 1e-12 && k >= 1 - LIE_SPIN.loss.rough - 1e-12); last = k; }
+ // On the meter: a full sand wedge out of the rough leaves with about half its
+ // spin, a 5 iron with nearly all of it, and more loft never loses less.
+ const spin = (id, lie) => swingLaunch(swingAt(id, 1, 1), ctx(id, {lie})).shot.spin;
+ assert.ok(spin('sand', 'rough') < spin('sand', 'fairway') * .6, `${spin('sand', 'rough')} of ${spin('sand', 'fairway')}`);
+ assert.ok(spin('iron5', 'rough') > spin('iron5', 'fairway') * .95);
+ assert.equal(spin('driver', 'rough'), spin('driver', 'fairway'));
+ const kept = id => spin(id, 'rough') / spin(id, 'fairway');
+ assert.ok(kept('iron7') >= kept('iron9') && kept('iron9') >= kept('wedge') && kept('wedge') >= kept('sand') - 1e-9);
 });
 
 test('a tap is judged on its time: the marker is a function of the clock alone', () => {
@@ -165,34 +185,6 @@ test('the spin dial: -1 to +3, each added step more spin than the last', () => {
  for (const spin of SPIN_STEPS) { const s = shapedLaunch(clubs.wedge, {spin}).spin; assert.ok(s > last);last = s; }
 });
 
-// THE OWNER'S RULE: with no spin added, a ball never spins back. Swept on level
-// ground and a 2% rise into the landing (steeper than that, gravity rolls any
-// ball back whatever its spin, which is the course and not the strike), at the
-// softest firmness, where a ball grips hardest, for every short club and height
-// at a full swing and at full overswing. The full sweep across every club,
-// power and firmness is in RESEARCH.md *The Swing Meter*; this is the corner of
-// it where a come-back was ever found.
-test('with the club\'s own spin, nothing spins back', () => {
- const soft = turfConfig({firmness: 'Soft'});
- const bag = ['iron8', 'iron9', 'wedge', 'gap', 'sand', 'lob'];
- const all = bagClubs([...bag.map(k => ({id: 'c' + k, name: k, kind: k, carry: CLUB_KINDS[k].carry})), {id: 'putter', name: 'Putter', kind: 'putter', carry: 30}]);
- const green = g => ({height: (x, z) => z * g, surface: () => 'green', pin: {x: 9e9, z: 9e9}, trees: [], homes: [], bounds: {x: 1e6, minZ: -1e6, maxZ: 1e6}});
- for (const club of Object.values(all)) {
-  if (club.code === 'PT') continue;
-  for (const [height, short] of [['low', false], ['normal', false], ['high', false], ['low', true], ['high', true]]) {
-   if (short && !['wedge', 'gap', 'sand', 'lob'].includes(club.kind)) continue;
-   const l = shapedLaunch(club, {height, spin: 0}, {short});
-   for (const share of [1, 1 + OVERSWING_CARRY]) {
-    const speed = speedForCarry(club, l, share * fullCarry(club, l));
-    for (const g of [0, .02]) {
-     const r = simulateShot({origin: {x: 0, z: 0}, aim: 0, speed, vla: l.vla, hla: 0, spin: l.spin * spinForPower(Math.min(1.2, speed / club.speed)), spinAxis: 0}, green(g), {turf: soft});
-     assert.ok(r.total >= r.carry - .05 * YARD, `${club.kind} ${height}${short ? ' (short)' : ''} at ${share} on a ${g * 100}% rise came back ${((r.carry - r.total) / YARD).toFixed(2)} yd`);
-    }
-   }
-  }
- }
-});
-
 test('a putt: two taps on every difficulty, the bar in roll on a flat green at today\'s Stimp', async () => {
  const p = clubs.putter;
  const full = puttFullRoll(p, turf);
@@ -208,19 +200,21 @@ test('a putt: two taps on every difficulty, the bar in roll on a flat green at t
  for (const d of Object.keys(DIFFICULTIES)) assert.equal(puttAccuracy(d), false, `${d} has no accuracy tap on a putt`);
 });
 
-// THE OWNER'S RULE FOR MONITOR SHOTS (14 October 2026): the lie costs a monitor
-// shot the same ball speed it costs a Swing Meter one, the measured number is
+// MONITOR SHOTS: the lie costs a monitor shot the same ball speed and spin it
+// costs a Swing Meter one, the measured number is
 // shown and recorded as sent with the penalty beside it in red, and the round
 // can switch it off.
-test('a monitor shot from the rough flies at 90% of its measured ball speed, and nothing else moves', async () => {
+test('a monitor shot from the rough flies at 90% of its measured ball speed, a little less spin, and nothing else moves', async () => {
  const {monitorLie} = await import('../src/swing-meter.js');
  const {shotGrid, liePenaltyNote, shownSpeed} = await import('../src/shot-data.js');
  const measured = {speed: 120 * MPH, vla: 18, hla: -1.5, spin: 6200, spinAxis: 4, extra: {clubSpeed: 85}};
  const {launch, lie} = monitorLie(measured, 'rough');
  assert.ok(Math.abs(launch.speed - measured.speed * .9) < 1e-9);
- for (const k of ['vla', 'hla', 'spin', 'spinAxis', 'extra']) assert.deepEqual(launch[k], measured[k], `${k} was changed`);
+ for (const k of ['vla', 'hla', 'spinAxis', 'extra']) assert.deepEqual(launch[k], measured[k], `${k} was changed`);
+ const {lieSpin} = await import('../src/swing-meter.js');
+ assert.ok(Math.abs(launch.spin - 6200 * lieSpin('rough', 18)) < 1e-9 && launch.spin < 6200 && launch.spin > 6200 * .9);
  assert.equal(measured.speed, 120 * MPH, 'the measured shot itself is untouched');
- assert.deepEqual(lie, {surface: 'rough', factor: .9, before: measured.speed, measured: true});
+ assert.deepEqual(lie, {surface: 'rough', factor: .9, spin: lieSpin('rough', 18), before: measured.speed, measured: true});
  // The tile shows what the monitor sent, with the penalty beside it.
  const record = {shot: {...launch, lie}, result: {carry: 140 * YARD, total: 150 * YARD}};
  assert.ok(Math.abs(shownSpeed(record) - measured.speed) < 1e-9, 'the tile shows the measured speed');
@@ -236,8 +230,9 @@ test('a monitor shot from the rough flies at 90% of its measured ball speed, and
  assert.equal(monitorLie(measured, 'sand', {range: true}).launch, measured);
  const off = monitorLie(measured, 'sand', {on: false});
  assert.equal(off.launch, measured);assert.equal(off.lie.factor, 1);assert.equal(liePenaltyNote({shot: {...off.launch, lie: off.lie}}), null);
- // Sand keeps 80%.
- assert.ok(Math.abs(monitorLie(measured, 'sand').launch.speed - measured.speed * .8) < 1e-9);
+ // Sand keeps 85% of the speed and all of the spin.
+ assert.ok(Math.abs(monitorLie(measured, 'sand').launch.speed - measured.speed * .85) < 1e-9);
+ assert.equal(monitorLie(measured, 'sand').launch.spin, measured.spin);
 });
 
 test('the putting bar zooms to the putt, and the putter is unchanged', async () => {
@@ -266,7 +261,7 @@ test('the putting bar zooms to the putt, and the putter is unchanged', async () 
 });
 
 // PHASE 2, THE TARGET MARKER: the stop on the bar that lands the ball in the
-// circle. Slope and lie always; wind only on Easy (the owner's call).
+// circle. Slope and lie always; wind only on Easy.
 test('the target marker: level ground and still air is the circle\'s share of the carry', async () => {
  const {targetShare} = await import('../src/swing-meter.js');
  const c = clubs.iron7;

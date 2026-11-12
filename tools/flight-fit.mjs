@@ -24,10 +24,11 @@ import path from 'node:path';
 import zlib from 'node:zlib';
 import {fileURLToPath} from 'node:url';
 import {pathToFileURL} from 'node:url';
+import {NORMALISED, DRIVER_CHART, TOUR} from './flight-targets.mjs';
 // --physics FILE evaluates another physics module instead (a copy of an older
 // src/physics.js placed beside it, so its own imports resolve): before and after.
 const physicsArg = (() => { const i = process.argv.indexOf('--physics'); return i >= 0 ? process.argv[i + 1] : null; })();
-const {simulateShot, airDensity, AERO, MPH, YARD} = await import(physicsArg ? pathToFileURL(path.resolve(physicsArg)).href : '../src/physics.js');
+const {flyBall, airDensity, AERO, MPH, YARD} = await import(physicsArg ? pathToFileURL(path.resolve(physicsArg)).href : '../src/aero.js');
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PRIVATE = path.join(ROOT, 'docs', 'sources', 'private');
@@ -62,7 +63,7 @@ function gc3() {
   // Columns: A club, F carry, H peak height ft, I offline, K descent, L hang,
   // M ball speed, N launch, O direction, R total spin, S spin axis.
   return rows.filter(r => num(r.M) && num(r.R) && num(r.F)).map(r => ({source: 'GC3', club: String(r.A).replace(/[^\w ]/g, ''), mph: num(r.M), vla: num(r.N), hla: num(r.O) ?? 0,
-   spin: num(r.R), axis: num(r.S) ?? 0, carry: num(r.F), apexFt: num(r.H), descent: num(r.K), hang: num(r.L)}));
+   spin: num(r.R), axis: num(r.S) ?? 0, carry: num(r.F), apexFt: num(r.H), descent: num(r.K), hang: num(r.L), side: num(r.I)}));
  }
 }
 // One file out of a zip, by its central directory: enough for an .xlsx.
@@ -92,30 +93,51 @@ function r50() {
   .filter(r => r['Club Type'] !== 'Driver')
   .map(r => ({source: 'R50', club: r['Club Type'] === 'Lob Wedge' ? `${r['Club Name']} wedge` : r['Club Type'], mph: +r['Ball Speed'], vla: +r['Launch Angle'],
    hla: +r['Launch Direction'], spin: +r['Spin Rate'], axis: +r['Spin Axis'], carry: +r['Carry Distance'], apexFt: +r['Apex Height'],
+   side: Number.isFinite(+r['Carry Deviation Distance']) && r['Carry Deviation Distance'] !== '' ? +r['Carry Deviation Distance'] : null,
    air: {density: +r['Air Density'], tempC: (+r['Temperature'] - 32) * 5 / 9}}));
 }
 
-const SHOTS = [...trackman(), ...gc3(), ...r50()];
+// The published flights (tools/flight-targets.mjs): TrackMan's normalised 6 iron
+// in calm and in wind, its driver optimizer chart, and the 2023 tour averages.
+function published() {
+ const out = [];
+ for (const c of NORMALISED) for (const r of c.rows) out.push({source: 'Normalised', club: c.club + (r.wind ? (r.wind > 0 ? ' tail ' : ' head ') + Math.abs(r.wind) : ''), mph: c.mph, vla: c.vla, hla: 0, spin: c.spin, axis: 0,
+  carry: r.carry, apexFt: r.apex * 3, land: r.land, opts: {temperature: 25, wind: [0, 0, r.wind * MPH], uniformWind: true}});
+ for (const [mph, vla, spin, carry] of DRIVER_CHART) out.push({source: 'DriverChart', club: 'driver ' + Math.round(mph / 10) * 10, mph, vla, hla: 0, spin, axis: 0, carry, opts: {temperature: 25}});
+ for (const [tour, rows] of Object.entries(TOUR)) for (const [club, mph, vla, spin, apex, land, carry] of rows) out.push({source: 'Tour2024', club: tour + ' ' + club, mph, vla, hla: 0, spin, axis: 0, carry, apexFt: apex * 3, land});
+ return out;
+}
+const SHOTS = [...published(), ...(argv.includes('--old-tour') ? trackman() : []), ...gc3(), ...r50()];
 // The driver is two rows of Trackman's twenty-three and nothing anywhere else
 // (the R50's were set aside), so on its own the fit barely sees the club a
 // player hits on every hole. --driver N counts each of those rows N times.
 for (const s of SHOTS) if (/Driver/.test(s.club)) s.weight = +(opt('--driver') || 1);
 // Altitude giving a stated density at a stated temperature.
 const altFor = ({density, tempC}) => { let lo = -2000, hi = 6000; for (let i = 0; i < 50; i++) { const m = (lo + hi) / 2; if (airDensity(m, tempC) > density) lo = m; else hi = m; } return (lo + hi) / 2; };
-for (const s of SHOTS) s.opts = s.air ? {altitude: altFor(s.air), temperature: s.air.tempC, wind: [0, 0, 0]} : {wind: [0, 0, 0]};
+// The tour averages are raw, played mostly in warm weather: flown at 25 C.
+const SOURCE_TEMP = {Trackman: +(opt('--tour-temp') || 25), Tour2024: +(opt('--tour-temp') || 25), GC3: +(opt('--gc3-temp') || 21)};
+for (const s of SHOTS) s.opts ??= s.air ? {altitude: altFor(s.air), temperature: s.air.tempC} : {temperature: SOURCE_TEMP[s.source] ?? 18};
 
 // ---- the model ---------------------------------------------------------------
 // Flat ground of one surface: carry, apex, descent and hang are all decided
 // before it is touched.
-const flat = {height: () => 0, surface: () => 'fairway', bounds: {x: 9000, minZ: -9000, maxZ: 9000}, trees: []};
 function fly(s) {
- const m = simulateShot({origin: {x: 0, z: 0}, aim: 0, speed: s.mph * MPH, vla: s.vla, hla: s.hla, spin: s.spin, spinAxis: s.axis}, flat, s.opts);
- const k = m.points.findIndex((q, j) => j > 2 && q.y <= 0.03 && q.t > .2);
- return {carry: m.carry / YARD, apexFt: m.apex / .3048, descent: m.descentAngle, hang: (m.points[k] ?? m.points.at(-1)).t};
+ const m = flyBall({speed: s.mph * MPH, vla: s.vla, hla: s.hla, spin: s.spin, spinAxis: s.axis}, s.opts);
+ return {carry: m.carry / YARD, apexFt: m.apex / .3048, descent: m.descent, hang: m.hang, side: m.side / YARD};
+}
+// SIDEWAYS FINISH (added 12 November 2026): where a device reports how far
+// offline the ball carried (yards, right positive), the model's own figure is
+// set beside it. Reported, never fitted: it is not in `cost`. "Same side"
+// counts only shots both put at least a yard off the line.
+function sideLine(rs) {
+ const s = rs.filter(r => r.side != null && Number.isFinite(r.m.side));
+ if (!s.length) return '';
+ const off = s.filter(r => Math.abs(r.side) >= 1 && Math.abs(r.m.side) >= 1);
+ return `  offline ${sg(mean(s.map(r => r.m.side - r.side)))} yd (typical ${mean(s.map(r => Math.abs(r.m.side - r.side))).toFixed(1)} yd, ${sg(mean(s.map(r => (r.m.side - r.side) / r.carry * 100)))}% of carry); same side ${off.filter(r => r.side * r.m.side > 0).length} of ${off.length}`;
 }
 function evaluate() {
  return SHOTS.map(s => { const m = fly(s); return {...s, m,
-  carryPct: (m.carry - s.carry) / s.carry * 100, apexPct: (m.apexFt - s.apexFt) / s.apexFt * 100,
+  carryPct: (m.carry - s.carry) / s.carry * 100, apexPct: s.apexFt != null ? (m.apexFt - s.apexFt) / s.apexFt * 100 : 0,
   landErr: s.land != null ? m.descent - s.land : s.descent != null ? m.descent - s.descent : null,
   hangErr: s.hang != null ? m.hang - s.hang : null}; });
 }
@@ -125,7 +147,11 @@ function evaluate() {
 // player reads off the card; landing angle in degrees where the source gives it,
 // at a quarter weight, because the bounce and the roll are fed by it.
 // Hang time (GC3 only) is off unless --hang gives it a weight per second squared.
-const W = {apex: 1, carry: 2, land: .25, hang: +(opt('--hang') || 0)};
+// How much each source counts. The normalised rows state their air and wind;
+// the driver chart is the only cover of the club hit on every hole; the tour
+// table is raw; the GC3 and R50 are other makers' flight models.
+const SOURCE_WEIGHT = {Normalised: 3, DriverChart: 2, Tour2024: 1, Trackman: .5, GC3: 1, R50: 1};
+const W = {apex: 1, carry: 2, land: +(opt('--land') || 1), hang: +(opt('--hang') || 0)};
 function cost(rows) {
  const by = {};
  for (const r of rows) (by[r.source] ??= []).push(r);
@@ -134,9 +160,10 @@ function cost(rows) {
   let c = 0;
   let n = 0;
   for (const r of rs) { const w = r.weight ?? 1; n += w; c += w * (W.apex * r.apexPct ** 2 + W.carry * r.carryPct ** 2 + (r.landErr != null ? W.land * r.landErr ** 2 : 0) + (r.hangErr != null ? W.hang * r.hangErr ** 2 : 0)); }
-  total += c / n;
+  total += (SOURCE_WEIGHT[rs[0].source] ?? 1) * c / n;
  }
  total /= Object.keys(by).length;
+ void SOURCE_WEIGHT;
  // A curve that produces no number for some shot is not a fit, however low the
  // rest of it scores.
  return Number.isFinite(total) ? total : 1e9;
@@ -152,7 +179,8 @@ function report(rows, title) {
   const rs = rows.filter(r => r.source === src);
   const land = rs.filter(r => r.landErr != null);
   console.log(`  ${src.padEnd(9)} n=${String(rs.length).padStart(3)}  carry ${sg(mean(rs.map(r => r.carryPct)))}% (rms ${rms(rs.map(r => r.carryPct)).toFixed(1)}%)  apex ${sg(mean(rs.map(r => r.apexPct)))}% (rms ${rms(rs.map(r => r.apexPct)).toFixed(1)}%)`
-   + (land.length ? `  landing ${sg(mean(land.map(r => r.landErr)))} deg (rms ${rms(land.map(r => r.landErr)).toFixed(1)})` : ''));
+   + (land.length ? `  landing ${sg(mean(land.map(r => r.landErr)))} deg (rms ${rms(land.map(r => r.landErr)).toFixed(1)})` : '')
+   + sideLine(rs));
   const clubs = [...new Set(rs.map(r => r.club))];
   for (const c of clubs) {
    const cs = rs.filter(r => r.club === c);
@@ -162,7 +190,11 @@ function report(rows, title) {
  }
 }
 
-const KEYS = ['liftK', 'liftP', 'liftC', 'spinDrag', 'dragBase', 'dragCrisis', 'crisisRe', 'crisisWidth', 'spinTau'];
+// Held inside what the wind tunnels measured: a fit that leaves these has
+// stopped describing a golf ball.
+const BOUNDS = {liftMax: [.3, .7], liftHalf: [.08, .5], dragBase: [.17, .28], dragRise: [.05, .4], dragHalf: [.08, .6], dragLow: [0, .3], lowRe: [40000, 90000], lowReWidth: [4000, 30000], spinTau: [18, 25]};
+const bounds = () => Object.entries(BOUNDS).reduce((p, [k, [lo, hi]]) => p + (AERO[k] < lo ? 1e4 * (lo - AERO[k]) ** 2 / lo ** 2 : AERO[k] > hi ? 1e4 * (AERO[k] - hi) ** 2 / hi ** 2 : 0), 0);
+const KEYS = ['liftMax', 'liftHalf', 'dragBase', 'dragRise', 'dragHalf', 'dragLow', 'lowRe', 'lowReWidth', 'spinTau'];
 const setAero = v => { for (const [k, x] of Object.entries(v)) AERO[k] = x; };
 if (opt('--set')) setAero(Object.fromEntries(opt('--set').split(',').map(kv => { const [k, v] = kv.split('='); return [k, +v]; })));
 
@@ -175,9 +207,10 @@ if (argv.includes('--fit')) {
  // starting size, so a Reynolds number and a coefficient take comparable steps.
  // spinTau is left out by default: fitted freely it slows the decay for wedges
  // and triples their spin-back, so it is held at the published rate (physics.js).
- const keys = (opt('--keys') || 'liftK,liftP,liftC,spinDrag,dragBase,dragCrisis').split(',');
+ const keys = (opt('--keys') || 'liftMax,liftHalf,dragBase,dragRise,dragHalf,dragLow').split(',');
  const base = keys.map(k => AERO[k]);
- const at = x => { setAero(Object.fromEntries(keys.map((k, i) => [k, base[i] * (1 + x[i])]))); return cost(evaluate()); };
+ // A constant at zero cannot be moved by a ratio, so it moves by tenths instead.
+ const at = x => { setAero(Object.fromEntries(keys.map((k, i) => [k, base[i] ? base[i] * (1 + x[i]) : x[i] * .1]))); return cost(evaluate()) + bounds(); };
  const n = keys.length, step = +(opt('--step') || .15);
  let simplex = [Array(n).fill(0), ...keys.map((_, i) => keys.map((_, j) => i === j ? step : 0))].map(x => ({x, f: at(x)}));
  const iters = +(opt('--iters') || 400);

@@ -28,8 +28,9 @@ generator checks can run any time.
 
 **GitHub** runs `npm test`, the ground check, and three smoke journeys (`boot`,
 `range`, `endless-round`) under a software renderer on every push
-(`.github/workflows/test.yml`). The smoke step there is slow and has not yet
-gone green reliably -- TODO, *Found on GitHub*.
+(`.github/workflows/test.yml`). The smoke step there is slow and still fails
+now and then (green on six of the eight pushes before 11 November 2026) --
+TODO, *The smoke step on GitHub still fails now and then*.
 
 ## Running the Node tests
 
@@ -177,7 +178,11 @@ golfer (`tests/virtual-golfer.mjs`) swings the Swing Meter with the game's
 own functions -- the bar zoomed to the shot, the distance tapped where the
 target marker sits, the strike as the marker runs back, a little seeded error
 on each -- and the ball flies through `simulateShot` on the real Challenge
-Course and the real range: slopes, rough, water, trees, the cup. Each
+Course and the real range: slopes, rough, water, trees, the cup. It plays
+as a person does where the ball asks for it: a putt is read for its slope
+(about 17 cm of putt for each centimetre of rise at Stimp 10; without that
+every uphill putt stopped a tenth short and only tap-ins were holed), and a
+chip out of grass is landed shorter because it runs further (the flyer). Each
 challenge is set up by the same `planChallenge`/`playContext` the game calls
 and played to its end, one golfer and a group (two and three for head to
 head); Sudden death and Bogey-free nine are played as real rounds, hole after
@@ -206,9 +211,20 @@ the courses several suites share, and builds many at once on worker threads
   `achievements`, `challenges`, `challenge-play`, `challenge-matrix`,
   `challenge-spots`, `challenge-week`, `challenge-virtual`, `weekly` (also: every week before Lakeshore Dunes' debut keeps the landscape it had, the debut week is the newcomer's, and the splash's copy of the rotation agrees), `far-woods` (the far woods: outside the property, never in water, deterministic, wooded from the property line to 12 km and coarser with distance; every crown's base no higher than the DRAWN ground under it; the drawn ground reproducing the ring's vertices; each far shape flat-based and no wider at its base than the seat assumes; Low and Medium groves only; Island's far woods on its islets went with the Keys, 7 November 2026), `water-mirror` (trees in still water: each twin under its own pond's level, straight below its tree; none for a tree far from still water, nor for the sea; a pond made from its outline gets its bank's reflection, under the water and outside the pond), `seasons` (Haunted Hollow's window to the minute, offered with and without the setting, a picker keeping a chosen landscape, an off-season endless run never rolling it and staying deterministic, the weekly stand-in only out of season and only from 9 November 2026, the splash's copy of the rotation, and an old graphics record loading with the setting off), `rival`, `player-colours`, `bag`,
   `range-report` (the range's CSV and PDF: the numbers, and a PDF a reader accepts).
-- **The ball** -- `core` (flight), `low-spin`, `landing`, `spin-back`, `skid`,
-  `firmness`, `refinement`, `green-refinement`, `cup`, `rim`, `pins`,
-  `obstacle-collision`, `solid-colliders`, `homes`, `swing-meter`,
+- **The ball** (rebuilt 11 November 2026; docs/BALL_PHYSICS.md) -- `ball-bench`
+  (runs `tools/ball-bench.mjs`: the ball against 148 real measurements, one
+  test a section, so a failure names what a player would notice), `aero` (the
+  air's rules, and the published flights), `bounce` (one impact's rules: never
+  adds energy, firmer never bounces lower, grip or skid, the constant spin loss
+  of a firm green), `turf` (the three conditions, old saves' settings read,
+  every surface's row, a release runs exactly its Stimp), `cup` (the hole's
+  capture curve, lip-outs, the flagstick, and the same hole inside a whole
+  shot), `core` (flight), `landing`,
+  `refinement`, `green-refinement`, `pins`,
+  `obstacle-collision`, `solid-colliders`, `homes`, `swing-meter` (the lie's
+  speed table, the flyer -- grass takes a lofted shot's spin and almost none of a
+  long iron's -- from meter and monitor shots alike; nothing in it holds a ball to
+  stopping or staying),
   `dispersion`, `plays-like`, `aim-preview`, `range` (every green, the aim
   arc, slopes, cups, chip and putt spots), `lab`.
 - **Making a course** -- `world`, `landscape` (with `landscape-water` and
@@ -480,7 +496,7 @@ measures every landscape and plays eight virtual golfers on both;
 
 ## Checked only by a person
 
-Kept current in TODO.md, *The owner's hands-on checks*: a real launch monitor
+Kept current in TODO.md, *Only the owner can check*: a real launch monitor
 through the bridge, the iPhone launch monitor, the server program on a Mac and
 Linux, a real phone's frame rate, Safari and Firefox, and how anything looks.
 A feature nobody has seen working is reported as not seen (AGENTS.md).

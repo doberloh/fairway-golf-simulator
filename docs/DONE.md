@@ -1,0 +1,8015 @@
+# Done: what Fairway has finished
+
+**This file is the changelog; [TODO.md](TODO.md) is the list.** Every entry
+that has left TODO.md is here with what was actually built. Completed entries
+keep their reasoning, including the dead ends, because knowing what was ruled
+out and why is worth more than a tidy list. An entry marked RESOLVED, FIXED or
+SUPERSEDED stays so the next reader does not repeat the work.
+
+**Never read this file whole** -- it is about 165 thousand tokens. List its
+sections (`grep -n "^## " docs/DONE.md`), search it
+(`grep -n -i "<subject>" docs/DONE.md`), and read only what matches.
+
+**It was the foot of TODO.md until 12 November 2026**, under the heading
+`# Done`, so an older document, comment or commit that says "TODO, `# Done`",
+or names a TODO entry that is not in TODO.md any more, means this file.
+Nothing was reworded in the move.
+
+**How it is kept.** A finished entry moves here from TODO.md in the same pass
+that finishes it, under a copy of the heading it had there, so it still says
+which piece of work it belonged to. A new heading goes at the top: the
+sections run newest first, roughly, down to the first lists of September
+2026. Nothing here is open -- a thing still owed is an entry in TODO.md, never
+a note under a finished one. The two times the open list was pared down are
+kept whole: *The open list before the 11 November 2026 prune* and *The open
+list before the 16 October prune*, each with a table of what became of every
+entry.
+
+## The ball rebuilt (branch `ball-physics-rework`, 10-12 November 2026)
+
+- **The rebuilt ball: play it, then merge.** DONE: played by the owner on 12
+  November 2026 ("ive played it and it feels way better"), merged into main
+  and released as 0.9.13 the same day. What was built (docs/BALL_PHYSICS.md is
+  the model in full; docs/BALL_BEHAVIOUR_KNOBS.md its tuning values): a new
+  air model (`src/aero.js`) fitted to TrackMan's normalised tables and driver
+  chart; one bounce law (`src/bounce.js`) on Penner's tilted contact face,
+  with greens of two kinds after Haake; rolling that follows the Stimp, with a
+  putt's skid; the hole as real contacts (`src/cup.js`); three course
+  conditions (`src/turf.js`: green speed, green firmness, fairway firmness)
+  asked at the start of a round, with three presets; the lie taking a lofted
+  shot's spin as well as speed (the flyer). At the owner's word on 11
+  November every earlier ruling of theirs about the ball was deleted from the
+  code, tests and documents and replaced by choices made on measurements or
+  marked PLACED. `node tools/ball-bench.mjs` holds 148 measurements;
+  `node tools/meter-landings.mjs` prints what the Swing Meter's shots do on a
+  green. 28 smoke journeys passed on 11 November, before the last changes.
+  What it still owes is one entry in TODO.md, *What the rebuilt ball still
+  owes*; what nobody has reported seeing is in *Play the current build by
+  hand*.
+
+### Release 0.9.13 (12 November 2026)
+
+- **Released at the owner's word** ("please merge this back into main. Create
+  a new patch release. Push to github and the live website demo"): the
+  rebuilt ball and the gimme circle (DISTRIBUTION_REVIEW, the addendum for
+  v0.9.13). "Patch" was read as the next number after 0.9.12.
+
+## The open list before the 11 November 2026 prune
+
+The owner asked on 11 November 2026 for the list to be pared down again: "The
+TODO section is absolutely massive right now. We need to par this down to
+things that matter ... I think many things are not relevant anymore." The open
+half held 233 open entries and 45 ticked ones over about 2,500 lines. Below is
+all of it, word for word, under its original headings (one level down). **The
+boxes were removed, so nothing here reads as open**; the entries that were
+already ticked keep their ticks. Each group was checked that day against the
+code (the fifteen landscapes in `BIOME_KEYS`, `facilities` off in course.js,
+the versions in package.json), the GitHub runs and this branch's smoke run.
+
+**Why most of it closed.** Four things had overtaken the list since October.
+The landscapes were pared from 42 to 15 and every tree remade (5-9 November),
+so notes about the Midwest, Autumn, Island, Links, Lakeshore Dunes, the
+Rockies and the rest named places that no longer exist. Cart paths, the
+clubhouse, roads and lots were switched off on generated courses (8
+November). The interface was rebuilt three times in a row (the 1.0 interface
+17-18 October, the UI/UX pass 21-22 October, the 1.0 polish 27-29 October),
+each leaving a "built, not played" note per screen for a screen the next pass
+replaced. And twelve releases each left a "play it by hand" entry, when only
+the newest can be downloaded. What was still true of those notes is one entry
+now, *Play the current build by hand*.
+
+**What became of each.** "Carried" means a short entry in the new open list
+names it with "was:".
+
+| Entries | What became of them |
+| --- | --- |
+| *The ball model rebuilt* | Carried, shortened |
+| *Frame rate on every tier and device* | The goal is finished, merged and released as 0.9.11. Its leftovers carried as *Frame rate: what the 9 November goal left*; its unplayed checks joined *Play the current build by hand* |
+| *Two builder smoke journeys fail on main too* | Carried |
+| *A built tee's bands can turn where two holes meet* | Carried |
+| *Models to check: every remake...* | Finished: every remake approved by the owner and released in 0.9.10. The shardy brittlebush carried in *Look leftovers on the fifteen landscapes* |
+| *Gimme circle* (1) | Carried |
+| *Fairway Tour* (1) | Carried, shortened |
+| *Release 0.9* to *Release 0.9.12* (12 entries, "play it by hand") | Eleven closed: superseded by a later release. 0.9.12's is the head of *Play the current build by hand* |
+| *0.9.3 went out without a smoke run*; *Vite 8.3.3 ... run the smoke journeys* | Closed: nine releases and many smoke runs on Vite 8.3.3 since, 28 journeys on 11 November |
+| *US golf courses*: the seven sign-off entries (Classic Parkland, Florida Palms / Hawaiian Resort / Desert Resort, Desert Mountain, batch two, the last batch, Lowcountry and Gulf, Southern Pines) and *The Badlands routed round its formations* | Finished and released in 0.9.8; signed off by the owner from captures. Their unplayed checks joined *Play the current build by hand*. The "3 tests fail until sign-off" notes are untrue now: `npm test` passes |
+| *The signed-off landscapes: a smoke run and a weak machine are owed* | Closed: the smoke journeys still unrun are named in the ball entry; the weak machine is *A real phone, an iPad and a weak laptop* |
+| *Relief shading on the course map and the hole map is not seen* | Joined *Play the current build by hand* |
+| *The island code has no landscape*; *Pine needles under trees the landscape does not plant*; *Clean up after the retired landscapes* | Merged into one carried entry, *Clean up after the retired landscapes* |
+| *No cart paths, clubhouse, road or lot on a generated course*; *Small cart path blemishes on Classic Parkland*; (US landscapes) *Cart paths with no right angles and no dead ends* | Merged into one carried entry under *The owner's calls* |
+| *The limb fix has not reached the Redwood Coast's Meshy trees*; *One look left in Southern Pines*; *Bare tree branches*; *Regenerate the grasses on Meshy* | Merged into *Look leftovers on the fifteen landscapes* |
+| *Meshy trial: The Meshy trees are in; not played* | Closed: the Cascades and Oregon Dunes it names are retired; the redwoods' far versions are in *Play the current build by hand* |
+| *US landscapes*: *The owner's play-through, the end of the goal* | Closed: it lists the Rockies, the Blue Ridge, the Heartland, New England and others that were retired on 6-8 November, and paths and clubhouses that are switched off |
+| *US landscapes*: *The owner's feedback of 4 November 2026: built, none of it seen* | Closed: the builder was reworked by the builder-ux goal (10 November), which the owner tried and closed. Water on a hillside, ground cover and Game view joined *Play the current build by hand* |
+| *US landscapes*: *Left when the owner cleared the goal* | The Medium crash on a machine with no graphics card is carried. Closed: cenizo and Chinese tallow (their landscapes are retired); the eleven hand-built trees short of fifteen rounds (replaced by Meshy models); sidewalks (a note that they are out, never work) |
+| *US landscapes*: *Not yet played: the world round the holes*; *Not yet played: the map, the globes and the new names* | Closed: the first is paths, clubhouse and bridges, now off; the second is the 42-landscape map, redrawn for fifteen. An old save opening on its new landscape is in *Play the current build by hand* |
+| *US landscapes*: the 43 ticked entries; *Course Builder*: *Northwood's redwoods* (ticked); *1.0 interface polish*: *The drop bar and the Tools window* (ticked) | Already finished; they had never been moved down |
+| *Course Builder*: *A course file saved before 5 November 2026 from a survey in feet* | Closed: the builder first shipped on 5 November (0.9.7), so no player holds such a file |
+| *Course Builder*: *The Redwood Coast's trees are NOT finished*; *The Redwood Coast's trees, the owner's verdict* | Closed: superseded by the Meshy redwood pack and the 9 November remakes |
+| *Course Builder*: *Read redwood heights by age* | Dropped: a research nicety for hand-built trees that have been replaced |
+| *Course Builder*: *A real course's doglegs, checked by a person* | Carried |
+| *Course Builder*: *Refining OpenStreetMap's trace from the LIDAR*; *The auto trace from the LIDAR alone*; *Sand is the trace's weakest surface* | Merged into one carried entry |
+| *Course Builder*: *Google and Bing imagery not tried with a real key* | Carried, under *Only the owner can check* |
+| *Course Builder*: *The editor's saved outlines changed* | Closed: a note from 1 November, before the builder shipped; a saved file plays as before |
+| *Course Builder*: *The trace has no review layer...*; *The editor cannot stamp a green's contours beyond the brush* | Moved to IDEAS.md: things not built, not things wrong |
+| *Course Builder*: *laz-perf's copyright line* | Carried |
+| *Course Builder*: *Before a release carrying the builder: check the website's demo check* | Closed: five releases have carried the builder and the website's demo was redeployed with each |
+| *The 1.0 interface polish*: *Playing it by hand, screen by screen* (16 entries) | Closed as a screen-by-screen list: released in 0.9.6 and played since. A controller, a thumb on a phone and the projector joined *Play the current build by hand*; *Course pictures from a file opened straight from disk* joined *Other browsers* |
+| *The cartoon overhaul* (25 entries, "captured, not played") | Closed: most name retired landscapes (Midwest, Autumn, Island, Links, Lakeshore, the old Mountain and Desert), the hand-built trees that Meshy's replaced, or gardens, drives and tee furniture. What survives (water, mowing, Reading the ground, the ground types, shared fairways, the far woods, the light) is one line of *Play the current build by hand*. The albatross wait is in *Small calls*. *Low on a weak machine* joined *A real phone, an iPad and a weak laptop* |
+| *The cartoon overhaul*: *A straight step in the fairway's tone, Midwest hole 2* | Closed: fixed in generation (generators 49-52), and the Midwest is retired |
+| *The cartoon overhaul*: *`ball-light-shaders` failed once in nine runs*; *The 1.0 interface*: *A lit shader built during a hole-out flyover once* | Closed: one failure each, on 27 and 17 October, on landscapes since retired or remade. Reopen with the course and the material if either comes back |
+| *Lakeshore Dunes* (4 entries) | Closed: the landscape was retired on 8 November |
+| *The 1.0 interface* (35 entries) | Closed: every screen it lists was rebuilt by the UI/UX pass and the 1.0 polish, and released. Carried: the skins value, the typed aim distance and the Text size on 16:9 (*Small calls*); the sound levels and the controller (*Play the current build by hand*). Moved to IDEAS.md: the course flyover as a card's picture, XP flying to the golfer's card, the round's three highlights. *The canvas's 1024 floor is PLACED* was a note, not work |
+| *Found on GitHub*: *The smoke step fails on GitHub* | Carried, shortened: it is green on six of the last eight pushes |
+| *Found on GitHub*: *Three high-severity advisories*; *Tools and code*: *`vite-plugin-singlefile` 2.3.4* | Merged into one carried entry |
+| *The owner's hands-on checks* (5 entries) | All carried |
+| *Getting the word out* (2 entries) | Both carried |
+| *Play*: *The shot panel forgets its numbers on a reload* | Carried |
+| *Play*: *The green marker may still show a flag* | Joined *Play the current build by hand*: a look, not yet a known fault |
+| *Play*: *The rest of the penalty rules*; *Accessibility*; *Send `DistanceToTarget` to the device*; *Rate courses by more than their length*; *WHS soft and hard caps* | Moved to IDEAS.md: features nobody has decided to build |
+| *Play*: *The floating tool windows are not swept for layout* | Closed: the fault behind it was fixed in the UI/UX pass (*Tool windows open clear of the HUD*); a sweep journey is a nicety |
+| *Ball flight and the bounce*: *A launch-monitor session with ROLL* | Carried |
+| *Ball flight and the bounce*: *Up to 0.36% of a course reads `semi` where it is painted `rough`* | Closed as accepted: a third of a percent, behind the green, in the forgiving direction |
+| *Generation and landscape*: *Green surrounds are steeper than intended*; *Watercourses: endings and junctions* | Carried |
+| *Generation and landscape*: *Blind tee shots: a decision, not a fix* | Closed as stale: its 23 were counted on the nine old landscapes. The bench still counts blind drives; reopen from a run on the fifteen if they play unfair |
+| *Generation and landscape*: *More natural pond siting* | Moved to IDEAS.md |
+| *Generation and landscape*: *Ponds and lakes end on a flat alpha* | Closed: superseded by the cartoon overhaul's water (depth colour, wavelets and a wet line at every bank) |
+| *Generation and landscape*: *Turn `crownShare` on for the other biomes*; *The bush family is sized by height*; *The baked trees' leaves go near-black* | Closed: the landscapes and models they name were replaced; most of the fifteen set `crownShare` already |
+| *Generation and landscape*: *Deadfall does not collide* | Closed as accepted, in its own words: "fine at this size" |
+| *Graphics*: *Not yet seen: the far heath, and the eleven models unwrapped* | Closed: Links, Autumn and Lakeshore are retired and their models remade |
+| *Graphics*: *Frame-rate goal (22-23 October): play it*; *Profile the slower descent through the trees*; *The redwood cull rebuild on a card that cannot hold 60 fps* | Closed: superseded by the 9 November frame-rate goal, which re-measured every tier and remade the redwoods' far versions; no player report of the stall |
+| *Graphics*: *Give Giant Redwood a fog of its own* | Carried in *Small calls* |
+| *Tools and code*: *A course takes seconds to build*; *Fewer, smaller documents* | Carried |
+| *Tools and code*: *The per-hole tree list is dead code* | Merged into *Clean up after the retired landscapes* (built courses read `h.trees` now: check before deleting) |
+| *Tools and code*: *Separate main.js concerns* | Moved to IDEAS.md: a standing wish, not a fault |
+| *Tools and code*: *The profiler should say how its slow frames were paced* | Closed: frame costs are compared with `tools/frame-ab.mjs` now, alternating builds, which is what the entry wanted guarded against |
+| *UI/UX pass* (49 entries) | Closed: every one says "Built; seen" in its own words (audit 7, 364 screenshots, smoke 38 of 38), was released in 0.9.2 and hand-tested by the owner on a phone and a PC. They were never ticked |
+| *Challenge a friend*: *Built, not seen working: play it*; *The shot lines may not look right* | Joined *Play the current build by hand* (the `friend-challenge` journey passed again on 11 November) |
+| *Challenge a friend*: *The owner's ten fixes of 20 October* | Closed: those screens were rebuilt by the UI/UX pass and the polish |
+| *Challenge a friend*: *Leftovers, if wanted* | Moved to IDEAS.md |
+
+### At the head of the list, under no heading
+
+- **The ball model rebuilt** (branch `ball-physics-rework`, 10-11 November 2026; the owner, after
+  a round: spin on greens erratic and too much come-back, putts the wrong length, no bounces in
+  the fairway, chip and approach run-out off, the hole stiff, too many turf settings). Built
+  (docs/BALL_PHYSICS.md): a new air model, one bounce law for every surface, rolling that follows
+  the Stimp exactly, the hole as real contacts, and three course conditions (green speed, green
+  firmness, fairway firmness, with Everyday / Club / Tournament presets) in the rules step and in
+  Settings, Turf. `node tools/ball-bench.mjs` holds it to 148 measurements; `npm test` passes.
+  **Driven in a real browser on 11 November 2026** (the owner asked; `node tools/smoke.mjs` through
+  `tools/gpu-run.mjs`, in batches of two to five): 28 journeys, all passing -- boot, the whole round
+  loop to a holed putt and the next hole, Play through the new conditions step to tee off, the
+  range and its greens, a saved course played to the hole-out, the launch monitor, a mixed group, a
+  friend's challenge, relief, every menu panel, every play-screen control at nine screen sizes, a
+  hole on a phone both ways, the challenges, skins, sound, profile, bag, level-up and no swallowed
+  errors. **It found three things the Node tests could not:** opening Play threw (the conditions
+  were read before the round's settings carried them: they are now the player's, kept on the device
+  under `fairway-conditions-v1`, and a round starts from them); the fairway-firmness control's id
+  was the lobby's course picker's (`roundCourse`; now `roundFairways`); and a wedge flown into
+  the hole bounced back out a metre high (the cup is now dead to a hard hit, `CUP.hardE`).
+  **Not run:** the shader and lighting journeys (no-late-shaders, ball-light-shaders,
+  floodlit-night), Course studio and every-landscape, text-size, the home-screen and bridge
+  journeys, weekly, look, and the two phone menu-panel journeys: none touches the ball, and the
+  graphics card had crashed that night.
+  **Seen in pictures only, not played by a person -- to check:** how the hole-out banner and the
+  cameras time against a ball that now really falls and rattles; the cup sound, which now plays as
+  the ball rattles in rather than once it has stopped; whether seven pickers in the rules step sit
+  well on a phone; the range's Lab tools firmness slider and its three chips; how a drive's four or
+  five bounces look from the tee and the TV cameras.
+  **Owed:** the website's sample shots and any clip made with the old ball; a re-bake of
+  `src/golfer-table.js` (deliberately not done: it moves generated markings and owes a
+  GENERATOR_VERSION bump). Putt speed is the real one (5.3 mph for a 10 ft putt
+  at Stimp 10, not GSPro's 4.1; BALL_PHYSICS, *The putt speed question*).
+  **Every earlier ruling about the ball was deleted on 11 November 2026** (the owner: "delete all
+  previous recorded decisions I made on zip back, bounce, flight ... and replace them with your most
+  realistic decisions"), from the code, the tests and every document, and what replaced them is
+  written as what the game does (BALL_PHYSICS, *The strike*). Changed with it, **built and tested
+  in Node, not seen in the game:** grass takes a wedge's spin (the flyer: `lieSpin`, from Swing
+  Meter and monitor shots alike), sand keeps 85% of ball speed, the Swing Meter's heights change
+  spin by the strike's geometry and nothing is trimmed to stop a ball (`HEIGHT_SPIN`), and a ball
+  in the air meets a real 0.75 in flagstick. **To check in the game:** the lie line now ends
+  "· wedges spin less" in rough and semi-rough -- whether it fits on a phone; the spin tile's lie
+  tag after a shot from the rough; a wedge from the rough running out 5 to 6 yd.
+- **Frame rate on every tier and device** (the owner, 9 November 2026: "Large courses in the
+  builder can tank framerates even on this PC. I think we need to draft a reasonable goal and get
+  moving on all tiers across all devices"). The 26 October acceptance of the High and Ultra gap is
+  withdrawn (AGENTS.md). **Done as a /goal** on branch `frame-rate-all-tiers` (its spec, log and
+  status page in docs/studies/frame-rate-all-tiers/GOAL.md, local), cleared by the owner, merged and
+  **released as 0.9.11** (9 November 2026); the branch's free use of the computer ended with the
+  merge. Built (RESEARCH, *Frame rate on every tier: the large built
+  courses*): far versions for every model, the swap cross-faded, Low's trees (the owner's rule), the
+  ground drawn coarser with distance (with a 1.5 m level), the field baked on every core, the houses'
+  footings and drives batched, two per-frame processor costs cut, the builder's cost readout and
+  weight note, the dissolve on fade meshes only. Dinosaur Mountain 59-82% faster on every tier (Low 7.4 to
+  1.3 ms on the RTX 4090, Ultra 20.0 to 8.2), generated courses no slower; Game view opens in 29 s, not
+  45-51. High and Ultra miss 120 a second at the 95th percentile on the large built courses (their
+  heavy frames redraw a far shadow map: 8-15 ms).
+  **Seen only in captures and measured, not played -- to check:** the dissolve where trees turn into
+  their far versions (does it shimmer?); Low's thinning far from the hole, and its fade-in as you
+  walk; free flight on Low (the 250 m ring); seams between the ground's squares (skirts) and the
+  distant ground's shape; the builder's readout and its weight note; a large course's load. **Owed by
+  the goal:** the device stand-ins on generated courses are far from their targets (iPhone 13 on
+  Medium estimated 43-161 ms, the older laptop on Low 106-294 ms): a tier for phones is the owner's
+  call. Takes in *Low on a weak machine, measured against main* and the processor's share on large
+  built courses; the real devices stay *A real phone, an iPad and a weak laptop*.
+  **Eighteen plants have no far version** (9 November 2026; RESEARCH, *The outline kept*): the
+  automatic far versions now keep their model's outline as the hand-made ones do, and canes, blades,
+  flat mats and layered sprays could not at any share up to a half -- both ocotillos, the halas,
+  sotol, sassafras, the Pacific dogwood, the lake junipers and others are drawn in full at every
+  distance, as on main. That costs Low most on Dinosaur Mountain (its ocotillos). Far versions made
+  by hand in Blender (cartoon.py `far_twin`) for the ones that are planted thickly would win it
+  back; the build's list of them is printed by tools/build-meshes.mjs.
+- **Two builder smoke journeys fail on main too** (found 9 November 2026, running the builder's
+  smoke for the frame-rate goal; both fail the same on the build at 21eecc1). `builder-door-2`: "the
+  tree height scale should grow the trees, taller and wider, at once: 0 -> 0" -- the journey reads no
+  trees to measure. `builder-door-2-worthington` (local only): it expects Worthington's survey to
+  suggest the Heartland, which the pare to fifteen landscapes removed; it suggests Classic Parkland.
+  The journeys need updating, or the slider looking at; not part of the goal.
+- **A built tee's bands can turn where two holes meet** (8 November 2026). Its stripes follow
+  the hole row that owns the ground, so a tee near another hole can carry that hole's direction in a
+  corner (Worthington's 1st). Small; a tee's own hole would need to be in the baked field.
+- **Models to check: every remake in the game and approved, Low measured; not played** (9 November 2026, after the African sumac: "go
+  through the rest of the Landscape's and figure out if there's any other missed models that are
+  trees like this. Also look for any other model that doesn't look exactly right"). Every model a
+  9-hole course plants on seed FAIRWAY, in all 15 landscapes, looked at from
+  tools/capture/landscape-models.mjs. Four trees are still hand-built: the Redwood Coast's bay
+  laurel, madrone and bigleaf maple (the Pacific Northwest's Meshy maple would do) and its sapling,
+  Hawaiian Resort's plumeria, Desert Mountain's ocotillo. Ten other things look off: brittlebush
+  and sagebrush read as rocks; creosote looks dead; cholla like popcorn; muhly grass like a pale
+  rock; bougainvillea shapeless; the plain shrub a blob in six landscapes; coast live oak 1, shore
+  pine 1 and huckleberry nearly black; rocks with sticker-like patches; a Midwest barn in the
+  south and a one-wall desert ruin; western hemlock's nodding tip. Each is on the US golf status
+  page's Models to check with pictures. **The owner answered the same night.** Done, seen in
+  captures, not played: the bigleaf maple is the Pacific Northwest's Meshy maple and the sapling a
+  small Meshy young redwood (copied as RwBigleafMaple and RwSapling in vendor/blender-meshy_redwood2,
+  two kinds cannot share a model); coast live oak, shore pine and huckleberry two steps lighter;
+  no barn and silo in the south, no ruin in the desert (generator 103). Left as they are: the plain
+  shrub, the hemlock tip. On Meshy (tools/meshy/remakes.json, Mx names): one picture each of bay
+  laurel, madrone, plumeria, ocotillo, brittlebush, sagebrush, creosote, cholla, muhly grass,
+  bougainvillea and a plain round boulder, two models each (198 credits), on the page's Pictures to
+  review. **The owner picked 20 and sent the cholla back** ("This looks alien": giant fuzzy blobs).
+  The 20 are made (600 credits) and in the game from vendor/blender-meshy_remakes, in place of the
+  hand-built bay laurel, madrone, plumeria, ocotillo, brittlebush, sagebrush, creosote, muhly grass,
+  bougainvillea and round boulder; seen in captures (bench/shots/landscape-models/r17, r17b, r17c),
+  not played. The conversion gained a flower part (`accent`, tools/blender/meshy_game.py *FLOWERS*)
+  for the bougainvillea's magenta, the plumeria's cream, the ocotillo's red tips and the muhly's
+  plumes, which otherwise came out green or as bark; and `gameTris`, which thinned the boulder
+  from 1,550 triangles to 400. Creosote lifted, brittlebush and sagebrush toned down (vegetation.js
+  `shades`, PLACED by eye). The cholla redrawn as a real teddy-bear cholla, four pictures (36
+  credits) on the page; the owner picked one of each, made and shipped in place of the hand-built
+  teddy-bear cholla (the `cholla` family keeps its prickly pear and barrel), its pale joints read as
+  leaf by the pack's `leafColours` (the wood test took them for bark). The muhly sent back ("It looks
+  like a big yellow puff on top. We need to get some sort of separation"): redrawn with every plume on
+  its own stalk, four pictures (36 credits) on the page; and its plumes painted pink in summer
+  (vegetation.js `accents`, #a4ad74 to #d08cb0) -- the yellow was the summer table's, and Florida
+  Palms never leaves summer. The owner picked the third picture of each (made as `--round 2`, 60
+  credits); Meshy kept the plumes apart but dropped every stalk, so the conversion grows a thin green
+  stalk to each plume (`stalks`, meshy_game.py *STALKS*). Cholla 1 sent back ("colors are off. Make
+  them match cholla 2"): its joints lifted (`paintLevel` .95) and its trunk darkened (`barkLevel`
+  .45), measured against cholla 2 in the capture. Both on the page's Pictures to review as the game
+  draws them; the owner approved both ("Use both chollas", "use both of these as well") and asked for
+  everything in the game, with every landscape's models retaken for review. Frame check on Low run
+  (RESEARCH, *The remakes' frame cost on Low*): Redwood Coast's graphics +0.24 ms a frame (about 13%,
+  the bay laurel and madrone), Desert Mountain and Florida Palms flat. **Owed:** the owner's look at
+  the retaken pictures; play it (not played); the brittlebush is shardy close up.
+
+### Gimme circle (branch `gimme-circle`, 10 November 2026)
+
+- **Play the gimme circle by hand** (the owner, 10 November 2026: "We need to add 'single
+  gimmie circle' mode to the game. User sets the gimmie circle size."). Built as a fourth putting
+  mode, *Gimme circle*: one circle round the cup, its size in feet (0.5-30, 3 to start), set in
+  Play's rules step and in Putting options mid-round; a ball resting on the green inside it is
+  given one putt and the hole ends; outside it the golfer putts out. The rule is putting.js with
+  tests/putting-gimme.test.mjs, the round matrix plays it in every format, a friend's challenge
+  carries it. **Not seen in play, and no smoke run** (no graphics card asked for): check the circle
+  is drawn on the green and easy to see at 3 ft and at 30 ft, the size field shows only for this
+  mode in both places (and the ring distances hide), the shot card says "Gimme", and the scorecard
+  counts the extra stroke. RESEARCH *The gimme circle* has the placed numbers.
+
+### Fairway Tour (picked 9 November 2026; the next feature, after the builder-ux goal)
+
+The owner, 9 November 2026: "Fairway tour is going to be our next feature."
+Built from two ideas that left IDEAS.md the same day, *Computer opponents* and
+*A tournament weekend*, plus a season to string events together. Nothing is
+designed yet; the first job is a plan for the owner to approve.
+
+- **Plan the Fairway Tour with the owner, before any code.** Three steps,
+  each worth shipping alone: (1) **computer opponents**, golfers who choose a
+  club and an aim and miss the way a real golfer of their handicap misses,
+  through the shared ball model (a solo player gets a match; match play gets an
+  opponent); (2) **a tournament weekend**, four rounds on one course against a
+  field, with a leaderboard and a cut; (3) **a season**, events across the
+  landscapes with standings, kept offline in the profile. The rules go in pure
+  modules with Node tests (AGENTS.md, *Game rules live in pure modules*); any
+  new round format joins `tests/round-matrix.test.mjs`. Settle with the owner:
+  how a computer golfer's miss is modelled and anchored (RESEARCH), how big a
+  field is and how its scores are made without playing every shot, whether
+  built courses can host events, and what the season rewards. Large. (Claude,
+  from the owner's pick, 9 November 2026.)
+
+### Release 0.9.12 (10 November 2026)
+
+- **Play 0.9.12 by hand.** Released at the owner's word ("Merge back into main. Generate a new
+  hotfix release version push to github and update the live website with the new demo version"),
+  the website's demo redeployed with it. The owner tried the builder-ux branch before the merge;
+  not reported tried: a built course with four or more tee sets in a round (seat buttons, Playing
+  tee, scorecard), tee markers on a narrow built tee, and Build it myself from a drawn box on the
+  real services (DISTRIBUTION_REVIEW, the addendum for v0.9.12).
+
+### Release 0.9.11 (9 November 2026)
+
+- **Play 0.9.11 by hand.** Released at the owner's word ("Lets get this merged into main and do
+  a new patch version. Push to github as well as the live website"), the website's demo redeployed
+  with it. The frame-rate work was measured and seen only in captures and in motion on the virtual
+  clock: the dissolve to far versions, Low's thinning and fade-in as you walk and fly, the distant
+  ground's seams, the builder's readout and weight note, and High and Ultra after the far versions'
+  outline rule are still to be seen in play (the list under *Frame rate on every tier and device*;
+  DISTRIBUTION_REVIEW, the addendum for v0.9.11).
+
+### Release 0.9.10 (9 November 2026)
+
+- **Play 0.9.10 by hand.** Released at the owner's word ("Merge this all back into main and
+  create a new patch version release, Push to github, and update and push the demo to the live
+  website"), the website's demo redeployed with it. The 22 remakes, the sumac, the lighter coast
+  greens and the barn, silo and ruin taken out were seen only in captures; Troon North's two
+  courses in the Course Builder's picker were tested, not seen (DISTRIBUTION_REVIEW, the addendum
+  for v0.9.10).
+
+### Release 0.9.8 (8 November 2026)
+
+- **Play 0.9.8 by hand.** Released at the owner's word, the website's demo redeployed with it.
+  The fifteen landscapes, Desert Mountain's and the Badlands' routing, the maps' relief and the
+  floodlights on a long eighteen were seen only in captures (DISTRIBUTION_REVIEW, the addendum for
+  v0.9.8).
+
+### Release 0.9.7 (5 November 2026)
+
+- **Play 0.9.7 by hand.** Released at the owner's word, the website left alone: its
+  Download buttons follow the release, its demo stays on 0.9.6 until the owner asks for a
+  redeploy. The full smoke set did not run on this build (DISTRIBUTION_REVIEW, the
+  addendum for v0.9.7).
+
+### US golf courses (branch `us-golf-courses`, from 5 November 2026)
+
+The plan is local, docs/studies/us-golf-courses/PLAN.md: 42 landscapes pared to 15 real
+golf looks, one tree style. The owner's feedback lives on the hosted page.
+
+- **The signed-off landscapes: a smoke run and a weak machine are owed.** The full
+  `npm test`, one file at a time: 1,482 of 1,486 pass (8 November, the deserts out and the last batch
+  in); the 3 left wait on the Mountain and Prairie & Sand Hills -- no map shape of their own until
+  sign-off, no menu pictures until captured -- and the palette clash found then is fixed. Low was measured only on this
+  fast card; the smoke run has not been run on this branch. The tests and tools that named a
+  retired key now name its replacement (8 November).
+- **Classic Parkland's tufted trees are signed off from captures, not played.** All 11 in the
+  build on rounds 4 and 5. Spruces keep a slight cool tint from the air; Redwood Coast's bark
+  range still owed.
+- **Florida Palms, Hawaiian Resort and Desert Resort are signed off by the owner, from captures,
+  not played** (7 November). The Keys, Florida Flatwoods, Hawaii, the first Desert Resort and Desert
+  Palms have left (GENERATOR 93, SCHEMA 38). Owed: a smoke run (its map journey now clicks Florida
+  Palms, not the Keys). Check in the game: the cactus and green-wood far versions, Florida's open scatter.
+- **The island code has no landscape** (7 November 2026). The Keys was the only ring island
+  (`ringIslands`, the far islets, no inland water on an island); Florida Palms, which replaced it, is
+  mainland. The island-only tests went with it (water-terrain, landscape-water, far-woods); the
+  code is unreachable and untested. The owner decides: remove it, or keep it for a later island.
+- **Desert Mountain is signed off by the owner, from captures, not played** (8 November): the
+  Sonoran, Mojave, Chihuahuan and Red Rock have left (GENERATOR 97, SCHEMA 43); ponds about 1.5 in 18
+  (`pondShare` .37). Check in the game: a drive off a rock tee, the walk to its top (no path climbs
+  it), a ball on its rock flank. Not fixed: the entrance road can climb straight over a range (roads.js
+  `costGrid`). Owed: a smoke run (its map journey clicks Desert Mountain).
+- **Batch two is signed off by the owner, from captures, not played** (8 November): Pacific
+  Northwest (`pacnw`), California Coast (`calcoast`) and Seaside Links (`seaside`) are in, and Puget
+  Sound, Monterey, SoCal Canyons, Wine Country, Scottish Links, Oregon Dunes and Lake Dunes have left
+  (GENERATOR 94, SCHEMA 42). The Redwood Coast keeps its key with the new redwoods, young redwoods and
+  tanoaks and its first-pack Douglas fir. Pine needles under the Pacific Northwest's and California
+  Coast's own conifers added after the sign-off (GENERATOR 95; they had none): not shown to the owner.
+  The California Coast has only 2-4 holes of 18 with the sea within 80 m (Monterey had 3+ within
+  50 m): say so if the owner wants more holes on the cliff. The Challenge Course is on the Pacific
+  Northwest now. Owed: a smoke run (its map journey clicks Seaside Links).
+  Check on High: the new redwoods' far versions (tufts) were missing from the mesh build at first and
+  drew whole crowns to the horizon (6.8 ms on Low); fixed, measured on Low only.
+- **The last batch is in the game** (8 November; Mountain, Northern Woods and Prairie & Sand Hills
+  signed off by the owner, from captures, not played -- the Rockies, Cascades, High Sierra, Ponderosa,
+  Sagebrush, Blue Ridge and Alaska have left for Mountain (GENERATOR 99), the Sand Hills, High Plains,
+  Bluebonnet Prairie and Hill Country for Prairie & Sand Hills (GENERATOR 100, SCHEMA 47); fifteen
+  landscapes; the Badlands waits for the owner): Mountain (ponderosa
+  and lodgepole pine, Engelmann spruce, quaking aspen), Prairie and Sand Hills (plains cottonwood,
+  hackberry, eastern red cedar), Badlands (green ash, Rocky Mountain juniper), Northern Woods (red pine,
+  paper birch); packs tools/meshy/mountain.json, prairie.json, badlands.json, northwoods.json. The
+  junipers came out as tall pines and the red cedars too open; the owner approved all 22 as they
+  are. Models built (round 1; Engelmann spruce 2 round 2, `wood: "brown"`), far and game versions
+  made and approved by the owner. In the game (GENERATOR 98): Mountain (`mountains`) and Prairie &
+  Sand Hills (`prairie`) beside the landscapes they will replace; the Badlands and Northern Woods
+  (renamed from North Woods) with the new trees. Captured on seed FAIRWAY in four seasons, menu
+  pictures made; not played. Until their sign-off the map tests fail for the two new keys (no map
+  shape of their own).
+- **Pine needles under trees the landscape does not plant** (8 November): High Plains, Sand
+  Hills, Hawaiian Resort, Hill Country, Bluebonnet, Cascades, High Sierra and Ponderosa take
+  `fallen` (pine, spruce, cedar) from their region and plant none of them, so no needles lie
+  anywhere. The last batch replaces most; give each survivor its own conifers then. (The Badlands,
+  Northern Woods, Mountain and Prairie & Sand Hills name their own since 8 November.)
+- **The Badlands routed round its formations, waiting for the owner's look** (8 November;
+  GENERATOR 101, `formationShareOf`, `sink` 12, `reach` 30). Not played. The `upInto` bench trial
+  stays in landforms.js switched off.
+- **No cart paths, clubhouse, road or lot on a generated course** (8 November, the owner; course.js
+  `facilities`, off; GENERATOR 102). To bring back later: the public road must bend round the Badlands'
+  formations and Desert Mountain's ranges first (a to-do test in terrain-true). The landscape menu
+  pictures were taken with them and may still show a clubhouse or paths.
+- **Relief shading on the course map and the hole map is not seen in the game** (8 November;
+  src/map-relief.js). Check: hills light on their top-left faces on both maps (a hollow look means the
+  light is upside down), and a pan or zoom on the hole map does not stutter.
+- **Lowcountry and Gulf is signed off by the owner, from captures, not played** (7 November).
+  Mist kept, the owner's call. The Lowcountry, Bayou and Gulf Coast have left. Owed: a smoke run. Check in
+  the game: the `fronds` far palms and the dark patch low on Sabal palm 2's trunk.
+- **Southern Pines is signed off by the owner, from captures, not played** (7 November).
+  All 8 tufted trees in the build. Piedmont, Longleaf Pines and Pine Barrens have left. Look
+  at the softer fallen ground on the other landscapes that have it: seen only here.
+- **The limb fix has not reached the Redwood Coast's Meshy trees.** `read_tree` now calls
+  a forked limb wood; those models were converted before it. A re-run of `--far` and
+  `--convert` is free; the owner decides. Same bark lesson: paler, greyer colours than the
+  real tree. Classic Parkland has had the fix (6 November), not yet looked at in the game;
+  its thinnest twigs may still read as leaf, because the rule only counts a limb past 5% of
+  the tree's height.
+- **One look left in Southern Pines:** trunks in deep shade are still dark.
+- **Small cart path blemishes on Classic Parkland.** The stub test held seeds on the Heartland,
+  and with the ground changed some fail: PATHS-T ends a path 11.4 m past a junction (the test asks
+  12), PA-4 (9 holes) and `overhaul` run on 3 and 7 m past a crossing (it asks 8). Other seeds are
+  clean and the test moved to them, so this is not fixed. Worth a look in the path router.
+- **Clean up after the retired landscapes.** New England, the Old Northeast, the
+  Heartland, the Bluegrass, the Ozarks and the Cross Timbers left the game on 6 November
+  and their keys read as Classic Parkland; the Piedmont, Longleaf Pines and the Pine Barrens
+  left on 7 November and read as Southern Pines. Their entries in course-names, crest, hole-names,
+  renderer and seasons are unused now, and so are models no landscape plants. Models stay
+  for now, because built courses name trees by species. Do it at the end, for every
+  landscape at once. Classic Parkland also takes eight weekly slots a cycle, Southern Pines four. The karst
+  recipe in landforms.js has no landscape now; its test holds the Bluegrass's old recipe.
+- **Bare tree branches** (the owner, 6 November: "keep a note for later"). Winter's
+  bare Meshy hardwoods look thin and dead, because those branches are generated by the
+  game (twigs.js), not built by Meshy. IDEAS.md has one route, Meshy 7.1's limbs.
+- **Regenerate the grasses on Meshy** at the end, once landscapes can be seen together
+  (the owner, 5 November).
+
+### Meshy trial (5 November 2026)
+
+- **The Meshy trees are in; not played.** The redwood pack's 14 trees ship from
+  vendor/blender-meshy_redwood (the owner, 5 November). Owed: a hand play, watching
+  trees swap to their far versions in motion, and a look at the Cascades and Oregon
+  Dunes, which share them. The full smoke run was waived by the owner; no one build
+  ran all 41 journeys. The far versions' plain tip cones and the tanoak's gaps stand.
+
+### US landscapes (branch `course-builder`, from 2 November 2026)
+
+Every region of the USA as a landscape, picked by the owner on 2 November
+2026 from the study of 1-2 November (local: docs/studies/us-landscapes/,
+PLAN.md the plan with the owner's answers, catalogue.json the source of
+truth; a finding the next person needs goes into RESEARCH.md). AGENTS.md
+*The US landscapes goal* holds its rules: the usual limits on moving
+landscapes are off, performance and testing are not. In order (PLAN.md
+section 6); nothing ships early -- the branch merges when all of it is done.
+
+- [x] **The machine went down at 12:14 on 3 November 2026, during Blender
+  work** -- graphics-card work stopped until the owner said otherwise, which
+  the owner did the same day ("you can use the computer fully as im not on it.
+  but make sure not to over load the desktop"), and the throttled gate came of it.
+  Windows logged an unclean shutdown (Kernel-Power 41, event 6008 at
+  12:14:12) and no blue screen or display-driver error, so the cause is not
+  proven. It came as the prairie grass pack's round 2 started rendering --
+  the eighteenth Blender render in about two hours (the Badlands pack's
+  fifteen rounds and three season and far-twin renders, the grass pack's
+  round 1), run back to back with less than the minute's rest the branch's
+  rules ask, several started with the card at 31-39% busy (above the 30%
+  line), after the morning's captures. The iterate renders were not in
+  bench/ab/gpu-runs.jsonl (iterate.mjs takes the lock but does not log).
+  Nothing was lost: the Badlands models are done and exported; the grass
+  pack's round 1 is logged and its round 2 change saved, not rendered.
+
+- **The owner's play-through, the end of the goal** (4 November 2026).
+  Everything on this list is built and checked by machine; none of it has been
+  played by a person. In the order worth doing:
+  1. **The land** (generator 85-87): any eighteen on the Rockies, the Blue
+     Ridge and the Heartland, from the tee and from the overview. Is any hole
+     still in a bowl, any crease between holes? Do tees and greens sit better?
+     Fairway slopes went up on the mountains (median 7% on the Rockies).
+  2. **The landscapes' own ground**: the Badlands, Sonoran, Red Rock, Alaska,
+     Oregon Dunes, Puget Sound, Redwood Coast, Cross Timbers, the Cascades.
+  3. **The seasons**: Round start's season on New England (winter, autumn),
+     the Hill Country in spring, the Rockies in winter. Snow on walls and
+     bloom flecks are seen in pictures only; the long grass's bloom heads read
+     as flowers from a tee and as blue blade tips from a metre away (kept;
+     say if not).
+  4. **The world round the holes**: *Not yet played by a person* below, the
+     clubhouse, paths and bridges, streets, houses. A house shows the fairway
+     its back wall since generator 84 (RESEARCH *The fairway homes' streets*).
+  5. **The map and globes**: *Not yet played by a person: the map* below.
+  6. **The builder**: Chambers Bay and Bully Pulpit from Saved courses; a
+     course of your own through door 2; Skin from the land and paint by hand
+     (*Fairway Course Builder* below, *The owner plays the builder*).
+  7. **A weak machine**: the wait to the menu and the frame on Low, which
+     nothing here measured (RTX 4090 only); the Heartland's grasses on the
+     processor (0.6 ms in one measure, not seen since).
+  8. **course-match**: send it a course.
+  **Your calls, not bugs:** 9 dead-end paths and 86 sharp corners across the
+  bench's 195 courses (*Cart paths* below); a machine with no graphics card, 8
+  s a frame against 3.3 in September (*Performance pass*).
+- [x] **The landscape cards' pictures show the land of generator 87** (retaken
+  4 November 2026: biome-shots `take --picks --label final87`, then `encode`;
+  169 pictures, 41 landscapes). They showed the ground before generator 85,
+  bowls and all. The set is 6,259 KB against 6,268 before, so the page did not
+  grow; that is 8.15 MB of the page against `BUDGET`'s 3 MB, written for ten
+  landscapes, so `encode` exits 1 and says over budget. **Your call:** raise
+  the number, or fewer or smaller pictures.
+
+- **The owner's feedback of 4 November 2026: built, none of it seen.** The
+  owner was gaming, so nothing ran on the graphics card and neither page was
+  opened: the rules are tested in Node, the screens not at all. To check, once
+  the owner has looked (smoke, then builder-smoke, then by eye):
+  - **Right click in the game**: no menu, no free camera drag, no map grab; a
+    text box still has its menu.
+  - **Select shape** in the 3D editor: click outlines, four anchors show, a
+    drag moves it live, an anchor turns it, Undo, Escape. The turn's direction
+    and the anchors' feel are unseen. The builder-tools journey was changed to
+    this and has not been run.
+  - **Back to 2D** on a course opened from a file and on one taken over from
+    door 1: never run. Door 2's review on a course with no survey may meet a
+    step that wants one. Its ground no longer softens on each trip. Auto trace
+    and Manual trace would replace such a course's layers: unguarded.
+  - **Water**: draw a pond on a hillside, play it. Does it show, do its banks
+    look right, does a green beside it stay as it was? Open a saved course whose
+    water was missing and save it again.
+  - **Ground cover**: paint rocks and bushes, play the course (is a rock hit?
+    do the models sit on the ground? is a size right against the slider?).
+  - **The preview**, in both editors: the first pick is slow (the models load);
+    colours; framing. **`Fairway Builder.html` grows by about 25 MB.**
+  - **Season greens**: wine country and a few others in each season. Spring and
+    its far woods, the rough in `GREEN`, the long grass with it. The card
+    pictures and the showcase still show the old rough (retake them after).
+    Frame rate: colours only, no new geometry; the A/B on Low is owed anyway
+    (vegetation.js and seasons.js moved).
+  - **New England's real summer** (seasons.js `realSummer`): play it in summer
+    and in autumn. Its cards were autumn because the default was: the retake
+    wants `--season autumn` for New England or they turn green, and
+    tools/capture's `autumn-*` shots (gallery, clips) need the same.
+  - **Ground cover in the 2D editor** and **Fill to surrounding** in the 3D one:
+    built the same way, not seen.
+  - **Built courses at their real height**: Bully Pulpit's clouds over the land,
+    its haze, and Breckenridge's turf no longer snow; the ground shader changed,
+    so a frame check on a generated course (nothing should move) is owed.
+  - **LIDAR coverage and combining** (COURSE_BUILDER *How much the LIDAR
+    covers*): search a course at the edge of a survey; download a box drawn round
+    part of a course on the map, then a bigger one round all of it, and see it
+    fetch only the rest and end as one ZIP (named for both sides since 10
+    November 2026). Not run online.
+  - **The two editors at parity** (COURSE_BUILDER): every new tool in both, by
+    eye. The tree brush's look and density; Select shape in 2D (anchors, the
+    turn's direction); painted water in 3D on a slope; a 2D creek and bunker in
+    the game; a creek through Back to 2D and back. The journeys' changed steps
+    have not been run.
+  - **Game view**: never run. Press it on a small course and a big 18: does the
+    picture come up, does it open at the editor's spot, is flipping instant, how
+    long is the first look and a look after an edit, does the bar work, does the
+    game's page keep its saved time and graphics? Measure memory on a weak machine;
+    a builder journey for it is owed. Risk: the game's drawing code may lean on
+    something only the game's page sets up.
+  - **Not done:** `npm test` whole, smoke,
+    the round matrix and the fingerprint were not run (no file the generator
+    reads changed).
+
+- **Left when the owner cleared the goal, 4 November 2026** (an audit of the
+  goal's list against the study's catalogue, after the owner ended the goal):
+  - **Two catalogue models never built:** cenizo (Hill Country, Chihuahuan) and
+    Chinese tallow (Gulf Coast). Adding them moves planting: a
+    `GENERATOR_VERSION` step.
+  - **Eleven older trees have fewer than fifteen logged rounds** (reworked for
+    the silhouette rule, not new models; 7-10 rounds each): alder, aspen, black
+    oak, cottonwood, hala, maple, mesquite, oak, palo verde, sugar maple,
+    tanoak. The other 205 logged models have fifteen or more, each with its
+    last side-by-side.
+  - **Medium on the software renderer crashes its page again**
+    (tools/software-crash.mjs, this build; Low runs). It is not from the last
+    commits: a build with 4ee6906's ground.js, vegetation.js and renderer.js
+    crashed the same way twice, though the full profile had passed Medium at
+    4ee6906. So it comes and goes, as on 3 November, and the cause is not
+    found. A no-card machine starts on Low. A lower resolution
+    for such a machine (`pixelRatio` .4) was tried and backed out unmeasured, as
+    the crash stopped the profile.
+  - **Sidewalks are out** (the owner, 4 November 2026: "Don't worry about
+    sidewalks. Remove that from the goal and spec"): removed from PLAN.md,
+    GOAL.md, the catalogue and the study's pages. Never built.
+
+**The owner's additions of 3 November 2026** (each part of the goal now):
+
+- [x] **No hole sits in a bowl** (the owner, 4 November 2026): "each hole
+  exists in sort of a bowl with a creased rise of land between them. This
+  makes things look extremely unnatural, and also I believe this may have
+  been linked to prior issues we have had with tee boxes and greens ... we
+  need to remove the forced corridor/bowl effect on each hole." The land and
+  generated courses may move; tees and greens may move or change; iterate
+  over all landscapes. The owner's suspect is "Landscape character", which
+  may be folded into "elevation severity" if needed. Check: seen from low
+  and from above on every landscape, no crease between holes, and the tee
+  and green complaints it may have caused looked at again. Built, generator
+  85 (RESEARCH *The country is one surface*): the bowl is gone by measure on
+  every landscape, tees need less earthwork, "Landscape character" stayed.
+  Seen from above on all 41 in the showcase of 4 November 2026. **Not seen by a
+  person**: the play-through, item 1.
+- [x] **The Dakota Badlands, a forty-first landscape** ("can we add a new
+  biome, The north and south dakota Badlands? Do all of the research, data
+  gathering, model planning, pictures, and add to the us_landscapes report.
+  Then build out that biome as well"; "add bully pulpit to the course
+  research for badlands"). Done so far: the study (catalogue.json
+  `plains.badlands`, two overlays on the map -- the White River and the
+  Little Missouri badlands -- four courses located: Bully Pulpit, Watford
+  City, Wall, Lake Waggoner; nine models specced; 22 landscape pictures and
+  every model's references picked; tools/add-badlands.mjs, local); the
+  Blender pack tools/blender/cartoon_badlands.py -- Yellow Mounds, Rocky
+  Mountain juniper, green ash, chokecherry, leadplant and bison, fifteen
+  rounds each and the four seasons; the game's record (biomes.js
+  `badlands`, key, SCHEMA 26, names, crest, hole names, debut week 191,
+  card pictures, the map's two shapes). **Its formations are the
+  ground's**, not models (the owner: "the rock formations ... dont look
+  great. And the shapes are off still", then "I would prefer the landscape
+  to generate the mountain, butte, spire like formations"): the spire,
+  wall, butte, horizon-wall and concretion models were cut, and the
+  `badlands` landform (landforms.js) with banded strata on every rock face
+  (ground.js) replaces them -- RESEARCH *The Dakota Badlands*, which has
+  every round. **Generator 83** carved it again, by a drainage network
+  (`carve`): ridges, pyramids, spires and flat-topped buttes up to about
+  130 m of relief, sunk into the prairie near a hole, the road on a valley
+  floor, the far hills tables with fluted banded scarps (`ringCarve`). Six
+  rounds of captures against the study's pictures; the Badlands' bench rules
+  clear on twelve courses, the road and cart paths gentle on seven; winter
+  and autumn seen in captures (snow on the tables, the beds bare on the
+  faces; straw grass, gold ash). Bully Pulpit, built, opened in the game on
+  this build: a 143 m tee shot played, the banded clay on the survey's
+  breaks and the carved tables on its horizon. On Low the landscape
+  got cheaper, not dearer: 1.23 ms a frame to 0.70 at three tees (*Performance
+  pass*). Not played by a person. Seen and left alone: the long grass (western wheatgrass, blue
+  grama) stays green in winter snow, a question for the grass pack's
+  seasons; two or three small sunk cones near a green or tee read a little
+  like hats from low down. No code left open here but the owner's eye on it.
+- [x] **Bully Pulpit built in the builder** (the owner, 3 November 2026), on
+  the Badlands, the way Chambers Bay was. **Built** (tools/build-courses.mjs
+  `bully-pulpit`): OpenStreetMap way/245874307 at Medora traced, the land
+  from 3DEP's survey (14.8 million points, 1 m, 100% surveyed) refined,
+  skinned from the land by the editor's own Skin from the land (`skin:
+  true`: rock on the survey's steep breaks, bare clay below), par 72,
+  7,113 yd from the back (the course lists 7,166); the virtual golfers
+  played all 18 in 83, none stuck; opened in the game and a 142 m tee
+  shot played (tools/play-built.mjs), the banded clay seen on the survey's
+  real breaks; the picture and the file sent to the owner. Not played by a
+  person. The file is local (bench/courses/bully-pulpit), never committed.
+- [x] **Tall fescue and the prairie grasses for every landscape that needs
+  them** ("do we have tall fescue and prairie grasses? if not, we should
+  retroactively build them"): tall fescue, little bluestem, switchgrass,
+  Indiangrass and blue grama (and the Badlands' western wheatgrass) as
+  long-grass families (tools/blender/cartoon_prairiegrass.py; biomes.js
+  GRASSES says who grows what -- seventeen landscapes). **Built**: fifteen
+  rounds each (tools/blender/logs; rounds 13-15 were checks with no
+  change), the four seasons, in the game's model data, seen in the
+  Heartland's rough (a capture sent to the owner). **All seventeen seen in
+  captures** (3 November 2026, biome-shots `rough-low`): wrong colours in
+  every one, the pack's own never having reached the game -- orange tall
+  fescue in a Kentucky summer, no autumn -- and one tall fescue six metres
+  wide; fixed (RESEARCH, *Tall fescue and the prairie grasses*; no ground
+  moved, the fingerprints silent). The Heartland, Sand Hills and Cross
+  Timbers seen again in the final colours, the Sand Hills' autumn copper
+  too; the other fourteen were seen before the colour fix and not since.
+  **The A/B on Low, the Heartland** (each build only this change apart):
+  no graphics-card cost (0.98 to 1.06, 0.66 to 0.63, 0.84 to 0.80 ms at
+  three tees), triangles +1.2-2.5%, draws +9, but 0.6-0.7 ms more on the
+  processor a frame (1.40 to 2.10, 0.90 to 1.50, 1.30 to 2.00), steady in
+  both rounds and not explained: TODO *Performance pass*. The High Plains,
+  the worst case (837 triangles a clump), read level (-1.9% by mean,
+  4 November 2026).
+- [x] **Desert Resort** (the owner, 5 November 2026: "Many courses in vegas and
+  surrounding area look like this"): a forty-second landscape in the Las Vegas
+  valley, `cartoon_resort` (Afghan pine, African sumac, pampas grass, sixteen
+  rounds each), winter green, no Italian cypress. RESEARCH, *Desert Resort, as
+  built*. Frame rate on Low: cheaper than Desert Palms and Mojave (table there).
+  **Seen in captures only, not played**; `npm run smoke` not run (the owner
+  looks first). No Desert Resort map or card seen in the running game.
+- [x] **Every landscape's terrain true to its place** (the owner, 3 November
+  2026: "Do all of these new landscapes have different terrain generation
+  based on their location and research? Similar to the badlands? If not.
+  Please amend the goal to account for that. We want to make sure that the
+  terrain is also lifelike to the regions where the courses are built!").
+  Today most share their region's landform recipe (landforms.js): the
+  South's and Texas's on the prairie roll, the western mountains and
+  Appalachia on the Rockies' crags, the Mojave and Desert Palms on the
+  Sonoran's mesas. Each landscape's ground gets researched from its real
+  geology (sources in RESEARCH.md and LANDSCAPE_RESEARCH.md, the study's
+  pages) and its own recipe or tuning where the shared one is wrong -- at
+  least: flat wet ground (Bayou, Flatwoods, Lowcountry with its tidal
+  creeks), sandhill ridges (Longleaf), red-clay hills and gullies
+  (Piedmont), stair-stepped limestone (Hill Country), coastal bluffs and
+  headlands (Monterey, the Oregon Dunes), lava flows and cinder (Hawaii,
+  Ponderosa), basalt coulees and rimrock (Sagebrush), alluvial fans and
+  granite domes (Mojave), a flat valley under steep ranges (Desert Palms),
+  glaciated granite (Sierra), karst with sinkholes (Bluegrass, Ozarks),
+  glacial kettles and moraines (North Woods), ridge and valley (Blue
+  Ridge). Each a GENERATOR_VERSION step naming the landscapes it moves;
+  each seen in captures sent to the owner as it lands.
+  **Done so far (generator 76):** eighteen landscapes on their own recipes
+  -- Hill Country, Monterey, Bluegrass, Ozarks, North Woods, Old Northeast,
+  Mojave, Desert Palms, High Sierra, Sagebrush, Piedmont, SoCal Canyons,
+  Ponderosa, Hawaii, Longleaf, Bayou, Flatwoods, Gulf Coast (biomes.js
+  TERRAIN, landforms.js; RESEARCH *Terrain true to place*;
+  tests/terrain-true.test.mjs); the bench, the tests and the fingerprints
+  green; captures of fourteen sent to the owner. The Blue Ridge's coves
+  and ridges followed (generator 78), Monterey's holes along the sea (79;
+  its terraces step down to the shore) and the Lowcountry's salt marsh
+  and tidal creeks (80); SoCal's barrancas have their geology source (the
+  Santa Monica Mountains through SCEC). The second look (generator 81):
+  the High Plains a flat table with dry playas, the Sand Hills' dunes
+  about twice as tall, Wine Country a valley floor under higher ranges;
+  Bluebonnet, Cross Timbers, Pine Barrens and the Chihuahuan judged to fit,
+  each with its source (RESEARCH *The second look*). The Lowcountry's A/B
+  on Low: no cost (-0.6%). Captures of the three sent to the owner. The
+  High Plains' planting followed (generator 82): nearly treeless, as the
+  Llano is, brush and yucca round the holes, the shelterbelts kept. Generator
+  87: the last eight on another's ground each on their own (Sonoran, Red Rock,
+  Alaska, Cascades, Oregon Dunes, Puget Sound, Redwood Coast, Cross Timbers;
+  RESEARCH *The last landscapes on another's ground*), and a test that no two
+  share theirs. Low's frame measured on the Hill Country, High Plains, Keys and Mojave
+  (the performance pass). Weakest still, each its own job if wanted: the
+  Cascades (volcanic in name more than shape), no deflation plains or headlands
+  on the Oregon Dunes, no playa floor in the Chihuahuan.
+- [x] **The builder skins the land from its heights** (the owner, 3 November
+  2026: "In the builder, we should add an option that the user can click to
+  do a best effort at skinning the landscape based on height. For example
+  if the LIDAR shows something that looks like a mountain or a butte. We
+  should skin it that way. Allow the user to paint it or indicate as such
+  if they dont want to auto paint it. for all landscapes"). A button in the
+  editor reads the built land's heights and slopes (the LIDAR's) and paints
+  what the landscape's own landform would there -- steep faces as its rock
+  (with the Badlands' strata, the crags' bands), the gentler ground at their
+  feet as its apron (hardpan, scree, waste), flat tops left grass -- outside
+  the holes' turf; and a paint tool (or a mark-as tool) for those who would
+  rather do it by hand. Every landscape. **Built** (3 November 2026):
+  src/builder/skin.js and the editor's Skin from the land button (under
+  Paint), tested in Node; painting by hand was already there (Paint,
+  Outline). No BUILT_VERSION step: a file changes only when the button is
+  pressed. **Seen in the real builder** (tools/capture/builder-skin.mjs,
+  3 November 2026, a script's clicks; no person yet): the button under
+  Paint, Undo and Redo back cell for cell, the Layers list, Erase by the
+  mouse, the saved file, on Bully Pulpit's buttes (31 ha of rock, 56 of
+  bare clay, reading as buttes) and Chambers Bay's dunes, Chambers Bay in
+  the game too. It found three bugs, fixed: rock on dunes in a landscape
+  with no rock (now only the landscape's own ground, native grass there),
+  the page frozen 5-10 s with no word, and a metre-wide staircase in the
+  game where two ground types met (BUILT_VERSION 3). Not done: a builder
+  smoke journey for it (the capture does its work); a person pressing it.
+- [x] **A skill that matches a real course to a landscape, the last step**
+  (the owner, 3 November 2026: "turn the US landscapes docs into a skill
+  that I can send in a course, you would evaluate the course. Do research,
+  and recommend the best biome to match. If there is no matches, and we
+  need to build a new one, the skill would follow the research paths we
+  have set up to gather data about what would need to be built and put
+  together a plan to build it"). From the study's method: locate the course
+  (locate-courses.mjs, OpenStreetMap), find its landscape on the partition
+  (lookup.mjs `landscapeAt`), research its ground, trees and look (the
+  landscape pages, photos and catalogue), score it against every built
+  landscape, and recommend one -- or, when none fits, run the study's path
+  (catalogue entry, ecoregions or an overlay, model specs and searches,
+  photo sheets, picks, Blender pack plan) and write the plan to build it.
+  After everything else on this list.
+  **Drafted** (3 November 2026): .claude/skills/course-match/SKILL.md --
+  locate, the partition, research, a scoring table against every
+  landscape, the recommendation with how to build it (door 2, Skin from
+  the land, tools/build-courses.mjs), and the Badlands' research path for
+  a new landscape. **Tried** (3 November 2026) on Whistling Straits:
+  found (OpenStreetMap way/205111637), the partition said Lake Dunes, the
+  research (eight holes on Lake Michigan, dunes pushed up on a flat site,
+  fescue, no trees on the Straits) scored Lake Dunes 28 of 39 and Scottish
+  Links 29 -- place against the Irish-links look Dye built; for a builder
+  course (the survey's own trees) Lake Dunes. The skill gained what the
+  trial taught (place and look can split; a builder course brings its own
+  trees; unsourced famous numbers stay unconfirmed); the record is local
+  (docs/studies/us-landscapes/trials/). **Second trial** (4 November 2026)
+  on Cape Kidnappers, where nothing matches: 49% at best, the new-landscape
+  path run to a plan on paper; the skill gained the course's defining feature
+  first, that the generator cannot route by the land, and that the study's
+  tools stop at the US border. Not used by the owner yet.
+
+- **Not yet played by a person: the world round the holes on every
+  generated course** (step 1, 2 November 2026; GENERATOR_VERSION 55). The
+  clubhouse, cart paths and bridges, markings and divots, the land's story,
+  fountains and rip-rap, and the animals were Architect's and are now on every
+  course but the range. Tested in Node (every landscape: a clubhouse, one path
+  network, every path over water a bridge -- the bench's `pathOverWater` is
+  zero on every course) and driven by the smoke journey `course-pieces-round`
+  (a saved generated course played to the hole-out). Not seen by eye: none
+  of it captured or played on the new ground. To check: a Midwest and a
+  Mountain eighteen -- does each clubhouse sit well, does its path reach the
+  network without a stub, does every creek crossing have a bridge, do the
+  animals move (High), and does the pause menu's *Yardage book* download?
+  A ball hit onto a bridge and against a wall in a round (Node only).
+- **Not yet played by a person: the map, the globes and the new names**
+  (step 2, 2 November 2026; SCHEMA_VERSION 17, GENERATOR_VERSION 56). Seen
+  in the smoke journey's pictures (Course studio, desktop and phone: the map
+  over the pictures, a region pressed picks it, Scottish Links beside it, a
+  globe in every picture's corner) and driven by `landscape-map`,
+  `every-landscape` and the builder's Worthington journey (door 2 suggested
+  Heartland). Not seen: Endless's landscape step with its map, the builder's
+  door 1 map, the globes at a glance on a real screen, an old save or course
+  file opening on its new landscape in the game. To check: Play, Endless,
+  pick a landscape on the map; open a course saved before today.
+- [x] **Today's ten rebuilt as their new landscapes** (Links stays, as
+  Scottish Links, outside the map), with the models their research says
+  they lack.
+  Progress (the 40 models the nine lack, by pack; each model fifteen
+  rounds or more, logged in tools/blender/logs/):
+  - [x] `cartoon_pacific` -- Puget Sound and Redwood Coast's ten (madrone,
+    Garry oak, bigleaf maple, Pacific dogwood, bay laurel, vine maple,
+    Oregon grape, Scotch broom, Pacific rhododendron, Douglas iris), in the
+    game since generator 57; Puget Sound's Low frame +2% after two cost
+    passes (RESEARCH, *The Pacific pack*). Seen in captures (Puget Sound,
+    Redwood Coast); not seen by a person in play.
+  - [x] `cartoon_mountain` -- the Rockies' six (lodgepole, blue spruce,
+    willow thicket, split-rail fence, columbine, lupine), in the game since
+    generator 58; the fence is the Rockies' story wall, laid in zig-zag
+    sections (RESEARCH, *The mountain pack*). Seen in captures (the Rockies'
+    stands, a fence on a meadow shelf); not seen by a person in play.
+  - [x] Found on the way (generator 59): since the new keys, seven of the
+    nine landscapes had no walls, ruins, farmstead or animals, the generic
+    clubhouse and gravel paths -- the world pieces were looked up in the
+    regions' tables by the landscape's key. Fixed (through `worldOf`), and
+    walls keep off bare rock and steep banks. Seen: the Rockies' fence;
+    not seen: the other six landscapes' restored pieces in the game.
+  - [x] `cartoon_drylake` -- jojoba (Sonoran), sand cherry and a Great Lakes
+    pier light as Lake Dunes' landmark, in the game since generator 60, with
+    the landmarks restored on every landscape that has one (they had been
+    lost since 55) and a lane of no trees to them. Seen in captures (the pier
+    light over the dune woods); not seen by a person in play. The ironwood
+    is held for the silhouette pass.
+  - [x] `cartoon_heartland` and `cartoon_newengland` -- the Heartland's
+    bur oak, elm, shagbark hickory, prairie flowers, red barn with corn;
+    New England's white pine, paper birch, beech, balsam fir, fieldstone
+    walls and covered bridges; the ironwood after its silhouette pass. In
+    the game since generator 61, with every planting list summing to one
+    (Redwood Coast's iris and Lake Dunes' sand cherry had never been
+    planted). Seen in captures (the barn, a covered bridge, New England's
+    shore); not seen by a person in play; the corn not caught in a capture.
+  - [x] `cartoon_keys` -- royal palm, traveler's palm, sea grape, mangrove,
+    gumbo limbo, banyan, bougainvillea, hibiscus, in the game since
+    generator 62 (Low +47% on the Keys, recorded for the performance pass).
+    Seen in a capture (a Keys hole); not seen by a person in play.
+    Mangroves are not yet placed at the water's edge.
+  - [x] **Every variant shipped** (the owner: "I dont want to end up not
+    using the models we create"): Madrone_1, GarryOak_2, BigleafMaple_2,
+    BayLaurel_2, BlueSpruce_2, Ironwood_2, AmericanElm_2, Shagbark_2,
+    BurOak_2, PaperBirch_1, BalsamFir_2, AmericanBeech_2, RoyalPalm_2, with
+    their far twins.
+  - [x] **Silhouette pass** (the owner, 2 November 2026: the trees read as
+    "big green fluffy balls on the trunks"; "back port to all of our other
+    models that are already done"): every pack from New England on modelled
+    silhouette first, and every broadleaf already in the game reworked --
+    the Pacific trees, the ironwood, the overhaul's oak, maple, aspen,
+    alder, cottonwood, black oak, sugar maple, palo verde, mesquite, hala
+    and tanoak (BLENDER_ASSETS, *The silhouette pass on the packs before the
+    goal*); conifers, palms, cacti and shrubs judged and left. Seen in
+    captures (the Keys, Lake Dunes, the Sonoran). A lineup of every tree as
+    black outlines side by side was not made.
+- [x] **A page that does not start in the capture harness** (4 November
+  2026, two in about 40 minutes under the goal's shared queue): frame-ab's
+  High Plains B round waited 60 s for `window.lab`, us-showcase's next page
+  120 s for the main menu. Probably the ground's three shader compiles at
+  8 s each under load (start to main menu read 42-47 s that night); not
+  proven, none since, and that wait is 12 s now (RESEARCH *The performance
+  pass at the end of the US landscapes goal*).
+- [x] **Performance pass, at the end of the goal** (the owner, 2 November
+  2026: accept the costs while building, record them, fix them in one pass).
+  **Done 4 November 2026** but for what is listed here: RESEARCH *The
+  performance pass at the end of the US landscapes goal*. The profile against
+  bench/profile-baseline.json is better on every case with a graphics card
+  bar the processor's share on Links (2.2 to 3.1 ms) and the water course (4.1
+  to 5.0 ms), whose card share fell further. **Worse and not fixed: a machine
+  with no graphics card**, 3.3 to 8.1 s a frame, unplayable before and after.
+  Start to main menu 12.1 s against 26.7 s (the ground's shader). Low's frame
+  within 0.16 ms of generator 75 everywhere measured. **Still open:** the
+  Heartland's grasses on the processor (the 0.6 ms below, not measured again
+  there; not seen on the High Plains), and the wait on a slower processor, which
+  nothing here measured: both in the play-through, item 7. Candidates below stand
+  if a weak machine shows trouble.
+  Measured so far, Low, by mean frame against the build before (frame-ab,
+  RTX 4090, so headroom, not a weak machine). **The seasons' twigs (3
+  November 2026), one round of each build only, the run failed, agents on the
+  processor, so an indication and not a figure:** New England in winter,
+  against bare trees without twigs, processor 1.6 to 4.5 ms and graphics card
+  .93 to 1.32 ms at tee 1, .9 to 2.9 and .61 to .93 at tee 5. Check the
+  processor's rise first: the cull now keeps a far mesh for every bare model
+  (RESEARCH). The spring bloom is not measured at all: new flower meshes in
+  every landscape that had none, and a ground-shader branch on Low. **The homes' streets (generator
+  84, homes on at 45%, the Heartland, RD-1):** no cost seen: draws +2 at tees 1 and 9 and -11 at tee 5, triangles level at tees 1 and 9 and +8.5% at tee 5 (where the trees moved); the mean frame read -33% (2.25 to 1.52 ms, A B B A), which nothing here explains, since no work was removed, so count it as level, not a saving. **The owner's additions (3
+  November 2026), against 4784efd:** the prairie grasses in the Heartland
+  -5.3% (noise; measured again 3 November with only the grasses apart: no
+  graphics-card cost, but 0.6-0.7 ms more on the processor a frame, +41% by
+  mean on a frame of 1.3 ms, +4.4% by p95, steady over both rounds and not
+  explained -- the cull rebuilds only when the camera moves, so look there
+  second; High Plains, the worst clumps, not measured), Hill Country's stepped terrain -1.4%, the Bayou's
+  flat lowland +5.6% (p95 +13.5%: flat ground lets the camera see further),
+  Ponderosa's cones and flows -6.8%, the Lowcountry's tidal creeks and
+  sea plane -0.6% (generator 80; that run's wait from start to the main
+  menu was 18.8 s for the base build and 21.9 s for this one, with the
+  whole afternoon's work between them -- worth a look in the pass); the Badlands alone 0.5-0.8 ms a frame
+  at its tees (the Heartland about 1.0), and carved (generator 83) 0.70 ms against
+  1.23 for the same tees before it, -43%, triangles down too, the far ring's
+  155,000-180,000 triangles included. Earlier: Pacific pack +2.3% (before
+  every variant shipped; with them and the silhouette rework Puget Sound
+  measured 10% faster), Rockies +1.8%, Lake Dunes not
+  measured cleanly (agents on the processor), Heartland +22% (six tree
+  species; draws +26, triangles +8-13%), New England +1.3%, the Keys +47% (eight species). The South (phase 5;
+  one build, against the Heartland on it, three tees): the Bayou level
+  (0.81 against 0.82 ms of graphics card), the Lowcountry +34% (1.10 ms;
+  triangles +40%, the live oaks' moss; draws 12% fewer). Texas and the
+  deserts (phase 6, same way): the Mojave 0.89 and Desert Palms 0.87 ms
+  against the Sonoran's 0.73 (+22%, +19%; triangles +33%, +7%), the Hill
+  Country 0.97 against the Heartland's 0.82 of phase 5 (+18%; the Heartland
+  has its wildflowers back since, so not like for like). California and
+  the mountains (phase 7): the Cascades 0.85 against the Rockies' 0.80 (+6%;
+  triangles +33%, draws 20% fewer), Monterey 0.84 and Wine Country 0.82,
+  level with the Heartland. The high desert and plains (phase 8a): Red
+  Rock 0.80 against the Sonoran's 0.71 (+13%; triangles +19%), High Plains
+  0.71. Appalachia and the Northeast (phase 8b): the Blue Ridge 1.00
+  against the Heartland's 0.81 (+23%; triangles +40%, its closed hardwood
+  woods), the Old Northeast 0.87 (+7%). One frame-ab run (the Heartland,
+  3 November) hung 40 minutes with the card idle and was killed; the retry
+  took its usual 90 s. The north and Hawaii (phase 8c): the North Woods
+  0.92 (+14%), Hawaii about 0.97 (+20%; one of its runs read 1.36 at tee 1
+  against 1.08, so noisy). Candidates:
+  fewer species drawn per landscape at range, far twins for shrubs, merging
+  a landscape's species into fewer draws; **the software renderer on Medium
+  crashes its page** (the full profile of 3 November, retried alone: "Target
+  crashed" at weak/medium on Puget Sound, every time; Low runs, 3.3 ms) --
+  a machine with no graphics card cannot run Medium now, probably the
+  model module's memory (23 MB of models) under SwiftShader, not measured.
+  Since 3 November such a machine STARTS on Low (graphics.js
+  isSoftwareRenderer, by the renderer's name) unless its player has chosen a
+  tier, so a first run no longer lands on the crash. **Retried 3 November
+  2026, evening, on the current build: it no longer crashes** -- the
+  profiler's weak group ran both cases (Low 259 draws, 11.7 M triangles;
+  Medium 315 draws, 13.5 M) and tools/software-crash.mjs built a course at
+  Medium and drew it. What fixed it is not known (the builds between carried
+  the Badlands, the terrain and the grasses; the crash ran with 37.0 MB of
+  page, this with 38.1); the start-on-Low guard stays. But software frames
+  are slow: 6.2 s a frame on Low and 6.7 on Medium by the presentation gap,
+  against 3.8 s in the September baseline -- a machine with no graphics
+  card cannot play either tier;
+  the grain elevator's and
+  shelterbelt's far twins, built but not drawn (a landmark and a story prop
+  draw their full model at every distance). The profile against
+  bench/profile-baseline.json is due here.
+- [x] **Five landscapes on existing models** (PLAN.md 6, phase 3): High
+  Plains and the Sand Hills (a new plains region: prairie or grassed dunes
+  with blowouts, cottonwood, cedar and elm, a windmill for a landmark), the
+  Old Northeast and the Pine Barrens (New England's region in summer green,
+  and pitch pine, scrub oak and heath on sand), Alaska (a new region: the
+  Rockies' crags, spruce, birch and willow, a long low sun). Pickable
+  (SCHEMA 18), with names, crests and pictures; no generator step (every
+  existing landscape unchanged). Each gets its own models in its region's
+  phase. Seen in captures; not seen by a person in play.
+- [x] **The new landscapes' debut weeks** in the course of the week: phase
+  3's five are placed at weeks 160-164 (25 January to 22 February 2027),
+  the South's at 165-169 (1 to 29 March 2027), Texas and the deserts' at
+  170-175 (5 April to 10 May 2027), California and the mountains' at
+  176-181 (17 May to 21 June 2027), phase 8a's at 182-184 (28 June to
+  12 July 2027), phase 8b's at 185-187 (19 July to 2 August 2027), phase
+  8c's at 188-190 (9 to 23 August 2027), the Badlands at 191 (30 August
+  2027;
+  weekly.js `eras`). All are still ahead (checked 4 November 2026); if a
+  release lands past 25 January 2027 they move on, which is a job for that
+  release, and a later landscape takes its own week the same way.
+- [x] **Every landscape's card pictures retaken** once its models are in:
+  the nine originals retaken on 3 November 2026 (biome-shots, label rt9),
+  every other landscape when its phase went in.
+- [x] **The roads pass** (generator 63; roads.js): a public road along the
+  clubhouse's side of the property, out of bounds beyond it; the parking
+  lot beside the clubhouse; the drive between, never across play (the
+  bench's `roadOnPlay` invariant at zero); the clubhouse leans toward the
+  edge. Seen in captures; not seen by a person in play.
+- **Cart paths with no right angles and no dead ends** (the owner's
+  amendment, 2 November 2026): every corner rounded; where a path ends, a
+  smooth loop back on itself instead. Built (generator 64; paths.js `shape`):
+  joins merge at a shallow angle, corners rounded, dead ends and hairpins
+  turn in teardrop loops, ends that cannot loop are cut back. **Not yet
+  everywhere**: on sixteen nine-hole courses, ten fully meet it; the rest
+  keep 5 dead ends and 19 sharp corners between them, mostly on the steep
+  Rockies where no loop or rounding fits the ground (tests/paths.test.mjs
+  holds the clean ten and that budget; the bench counts `pathDeadEnd`,
+  `pathSharp`). Not seen in the game yet.
+  **Generator 77** (3 November 2026): a smoothed corner point that does
+  not fit may move halfway, and on ground already steeper than the shaping
+  grade a rounded corner may be as steep as the corner it replaces (never
+  past 29%, so still walkable): across the full bench, 205 sharp corners
+  -> 186, the six steepest landscapes 58 -> 45. What is left stands on
+  ground too steep for a walkable rounded turn (a 120-degree switchback on
+  a 50% hillside): rounding it would break the walkable-grade rule, and
+  that trade is the owner's call. **After generators 85-86** (4 November 2026,
+  the land calmer and one network): 9 dead ends and 86 sharp corners across
+  the bench's 195 courses, no course in two parts. **Left open as the owner's
+  call**: the amendment says none; a walkable grade says these stay.
+- [x] **The streets kit placed** (generator 65; roads.js `streetFurniture`):
+  light poles down the lot's aisles, a planted island at each row end, a
+  wheel stop a stall, the bag drop by the clubhouse, lamps along the drive.
+  Seen in a capture (the Heartland's lot). Not done: a tree in each
+  island, the cart barn and mailboxes placed, streets for the fairway
+  homes, each landscape's own road surface -- open below.
+- [x] **The lot's island trees and the cart barn** (generator 71): the
+  landscape's most-planted tree in each island, 5.5 m at most, kept out of
+  the tee views; the cart barn (40 by 15.2 m) beside a long side or an end
+  of the lot where it fits (on 9 of 17 courses tried), a building. Seen in a
+  capture (the Sonoran's lot: saguaros in the islands, the barn's roof).
+- [x] **The rest of the streets kit**: mailboxes and streets for the fairway
+  homes, each landscape's road surface (catalogue `streets`). **Done
+  (3 November 2026, drawing only):** each landscape's road surface -- the
+  public road asphalt (concrete in Bluebonnet, the Gulf Coast and the
+  Flatwoods, gravel in the Sand Hills), the club's drive the place's own
+  (gravel, dirt, Longleaf's red clay, the Lowcountry's and Pine Barrens'
+  shell, the Old Northeast's brick, Desert Palms' cobble, concrete;
+  renderer.js addPaths), and a mailbox at the street end of every
+  garaged house's drive. Smoke every-landscape passes; the drives seen in
+  captures (biome-shots view `lot`: Longleaf's red clay, the Lowcountry's
+  shell). **Done (3 November 2026, generator 84):** streets joining the
+  fairway homes to the road (roads.js `placeStreets`): houses turned to face
+  them, a lane from every drive, a cul-de-sac or a join at the far end, a
+  drive no street reaches not built. Seen in captures (biome-shots `street`,
+  `street-high`, `mailbox`, `street-back`: the Heartland RD-1), the mailboxes
+  among them. Not played in a round. Open for the owner: a house now shows the
+  fairway its back wall (RESEARCH, *The fairway homes' streets*, has the
+  alternatives); the bench keeps 78 sharp corners, 49 streets that stop short and 7 blunt
+  joins, across 195 courses and 558 streets; and a row a creek cuts off
+  loses its drives rather than gaining a road bridge.
+- [x] **Roads in the builder** (3 November 2026): Road is in every
+  landscape's Paint and Outline lists (layers.js `layersFor`) -- painted
+  anywhere, and Outline Road is the parking-lot tool (draw the lot's edge);
+  door 2 reads OpenStreetMap's roads (`highway=*`, painted their width,
+  osm.js `ROAD_WIDTH`, PLACED from US lane widths) and parking lots
+  (`amenity=parking`) onto the road layer; stored as the course's `road`
+  surface, which the game already draws and plays as road (ground code 11).
+  No BUILT_VERSION step: no existing file plays differently. Tested in Node
+  (tests/osm.test.mjs); not seen in the builder by a person.
+- [x] **The South** (phase 5; SCHEMA 19, no generator step): Piedmont,
+  Longleaf Pines, Lowcountry, Bayou and Florida Flatwoods on the South's own
+  packs (every variant and far twin), a new `south` region with a
+  plantation clubhouse, names, crests, pictures and debut weeks 165-169.
+  Seen in captures; not seen by a person in play. Found on the way: the
+  full bench's `roadOnPlay` on two courses, fixed in generator 66 (the
+  drive's berth, the lot checked every 4 m).
+- [x] **The Bayou's bald cypresses stand in its water** (generator 72):
+  the cypress and their knees may stand in a pond's or lake's shallows,
+  within 8 m of the shore (course.js inShallows, biomes.js `inWater`); 6-14
+  a course. Seen in a capture.
+- [x] **The Piedmont's red clay** (generator 73): its prairie drifts beyond
+  play are bare red clay banks (hardpan painted #9c6048) at a quarter of the
+  ground. Seen in a capture.
+- [x] **The Lowcountry's salt marsh** (generator 74): open now (trees
+  halved, 1.5), its drifts beyond play cordgrass flats (native grass painted
+  #c4b468) at two-thirds of the ground, its water brackish -- it reads as
+  open grass flats round live-oak woods. **Its tidal creeks followed**
+  (generator 80): the marsh laid at the tide line, creeks cut through it
+  that the sea fills (RESEARCH *Terrain true to place*, Lowcountry).
+- [x] **Bluebonnet Prairie reads as bluebonnet fields** (3 November 2026,
+  drawing only): its native-grass drifts beyond play are painted bluebonnet
+  blue (groundTints native #6276c4), with the blue-headed long grass and the
+  rough's flowers. Seen in a capture.
+- [x] **Texas and the deserts** (phase 6; SCHEMA 20, generator 67): Hill
+  Country, Bluebonnet Prairie and Gulf Coast (a new `texas` region,
+  limestone boulders, a stone ranch-house clubhouse) and the Mojave, Desert
+  Palms and Chihuahuan (the Sonoran's region) on the Texas and deserts
+  packs. Seen in captures; not seen by a person in play. Found on the way:
+  a path along a winding creek ran off its one straight bridge (the full
+  bench's `pathOverWater`), fixed in generator 67 (decks split to follow it).
+- [x] **California and the western mountains** (phase 7; SCHEMA 21, no
+  generator step): Monterey, SoCal Canyons and Wine Country (a new
+  `california` region on golden summer hills) and the Cascades, High Sierra
+  and Ponderosa (the Rockies' region) on the California coast, California
+  inland and western mountains packs. Monterey's sea stacks stand offshore
+  and the Cascades' snow volcano on the horizon (renderer.js
+  `addSeaStacks`, `addBackdrop`); basalt and granite are boulder families.
+  Seen in captures; not seen by a person in play.
+- [x] **Monterey's holes play along the sea** (generator 79; the owner, 3
+  November 2026: "Make sure the holes can genuinely play along the coast.
+  Close that item out"): the shore follows the holes instead of running
+  straight down the course's edge -- at each point along the course it is
+  set from the easternmost hole's corridor there (course.js `coastAt`,
+  biomes.js `coastSeek`), and the land never drops toward the sea within
+  5 m of any corridor, so the holes' edge is a cliff over the water. On
+  five 18-hole seeds, 3-6 holes have open sea within 50 m of their
+  fairway or green, and no tee, fairway, green or semi is wet (tests/
+  terrain-true.test.mjs holds both). Was: none on most seeds. The routing
+  itself does not yet send more holes to the coast (Pebble Beach has about
+  eight); that would be a change to how holes are laid out.
+- [x] **Wine Country's vines in rows** (generator 75): two blocks of 60 by
+  36 m off play, a vine every 2 m along rows 3 m apart (806 vines on three
+  seeds each), a few strays left in the open planting. Built and measured;
+  **not seen in a picture** -- the card cameras do not look where the blocks
+  fell. Check in play.
+- [x] **The high desert and the plains** (phase 8a; SCHEMA 22, generator
+  68): Sagebrush and Red Rock (a new `highdesert` region from the Sonoran's
+  record, rimrock and hoodoos as stone) and Cross Timbers on the high desert
+  and plains packs; High Plains and the Sand Hills on their own models now
+  (eastern red cedar, soapweed yucca, buffalo grass, sunflowers, barbed
+  wire, a shelterbelt, a windmill or grain elevator; Cross Timbers' pump
+  jack). Seen in captures; not seen by a person in play.
+- [x] **Appalachia and the Northeast's own** (phase 8b; SCHEMA 23,
+  generator 69): Blue Ridge, Ozarks and Bluegrass (a new `appalachia` region
+  from New England's record in summer; a log-cabin ruin, a four-board horse
+  fence, a tobacco barn) on the Appalachia pack; the Old Northeast (copper
+  beech, hydrangea, a Tudor clubhouse) and the Pine Barrens (pitch pine, scrub
+  oak, bayberry, beach rose, a shingled windmill) on the Northeast parkland
+  pack. Seen in captures; not seen by a person in play.
+- [x] **The north, the Pacific links and Hawaii** (phase 8c; SCHEMA 24,
+  generator 70): the North Woods (a new region: red and jack pine, tamarack
+  round lakes, a log cabin and a dock), the Oregon Dunes (the Links' region:
+  shore pine, Sitka spruce, gorse) and Hawaii (a new region: a sea along one
+  side, lava, monkeypod, ironwood, Cook pine, ohia) on the north and Hawaii
+  packs; Alaska on its own (black spruce, fireweed, devil's club,
+  cottongrass). Seen in captures; not seen by a person in play.
+- [x] **The new landscapes by region** (phases 5-8): every landscape on the
+  map has its key, record, names, crest, pictures and its own models -- forty
+  with Scottish Links. Played in the generator, not in the builder: the
+  builder's side is *Every landscape in the builder* below.
+- [x] **Every landscape in the builder** (PLAN 2's table, "both modes"): a
+  built course takes its look, trees and ground from its landscape's record
+  (built-world.js `speciesFor` reads the landscape's planting by role), so
+  every landscape is in the builder's list and builds; tests/built-world
+  holds it for all forty -- the same file, every lie kept, each stored tree
+  one of that landscape's own. Seen in the game on the Oregon Dunes
+  (Chambers Bay) and the nine; the other new landscapes not seen built. Texas and the deserts;
+  California and the mountains; the rest (PLAN.md 6, phases 5-8).
+- [x] **Every model at least 15 iterations** against its reference pictures
+  (the study's photos/models/), each with its log and side-by-side picture;
+  a contact sheet a pack, not waited on. Counted 3 November 2026: 202 model
+  logs in tools/blender/logs/, 3,213 rounds; every new model has fifteen or
+  more. Eleven older ones (the overhaul's oak, maple, sugar maple, aspen,
+  alder, black oak, cottonwood, tanoak, mesquite, palo verde, hala) have 7-10:
+  they were built before this goal and only took its silhouette pass.
+- [x] **Seasons on** (step 9; SCHEMA 25, no generator step): the Season
+  setting (today's, or spring, summer, autumn, winter) fixed when a round
+  starts and saved with it (main.js); every species in its own season's
+  colours from its pack's specs (src/season-tints.js, 172 species, made by
+  tools/blender/dump-tints.mjs); autumn colour everywhere (New England keeps
+  its as its summer, PLACED); deciduous trees bare in winter -- drawn
+  without their leaf and flower parts rather than as separate bare models
+  (PLACED, a departure from PLAN 3's 55 bare variants); snow on the rough
+  in the north and mountains, frost, dormant straw or green by region;
+  the far woods turn with a broadleaf forest. Looks only. Seen in captures
+  (a winter Heartland, an autumn Blue Ridge); not seen by a person.
+- [x] **Snow on the trees, and the far woods in winter** (3 November 2026,
+  drawing only): in a snow winter every tree face turned up fades to snow
+  white (vegetation.js snowTopped), and the far woods of a broadleaf forest
+  turn grey-brown (seasons.js farWoodsInSeason, read by the ground shader
+  from the season's copy of the record). Seen in captures (Alaska's spruces
+  under snow, the Heartland's horizon).
+- [x] **Snow on the roofs and the ground under the trees** (3 November 2026,
+  drawing only): in a snow winter the clubhouse, the story's buildings, the
+  cart barn and every house whiten on their up-facing faces as the trees do
+  (snowTopped on their materials); leaf litter, pine straw and the other
+  natural grounds go under snow (seasons.js lays snow over grounds.js
+  GROUND_TINT, and ground.js now reads the round's season copy); the far
+  broadleaf woods in winter go .85 of the way to bare grey-brown (New
+  England's autumn record read orange at .55). Seen in captures (Heartland's
+  barn, New England's winter).
+- [x] **The twig layer, the spring bloom, snow on the walls** (3 November
+  2026, drawing only, no generator step, no new models): a bare tree's
+  branches are grown from its own model's crown (src/twigs.js, mesh-assets.js
+  `bareParts`) and merged into its bark, so a bare tree has no draw call a tree
+  in leaf lacks, and each species keeps its outline; each landscape has its spring bloom
+  (seasons.js `BLOOM`: months and colours, most of them PLACED) in the rough's
+  flowers, the long grass's heads and drifts painted in the rough; no
+  wildflowers in winter; New England's spring is green; walls, fences and yard
+  pieces whiten on top as the roofs do. RESEARCH *The twig layer, the spring
+  bloom and snow on the walls*. Seen in captures: New England and the Heartland
+  in winter at Ultra, New England at Low in the game's own view, the Hill
+  Country, Blue Ridge and New England in spring. Not seen by a person. The
+  tropics' "only the flowering changes" (PLAN 3) is not built, and a bloom's
+  window is not read against the date.
+- [x] **Seasons, to check** (3 November 2026; the graphics card stopped with a
+  hung frame run before these were done). **Seen 4 November 2026:** the first
+  pictures showed New England's fieldstone bare, its stones too round to hold
+  the trees' snow; walls and fences now take it on gentler slopes
+  (`snowTopped(mat, true)`), seen on New England and the Rockies. The bloom's
+  flecks and drifts seen on the Hill Country, Blue Ridge and Bluebonnet: no
+  polka dots from a tee. Low's frame measured: *Performance pass*. What it asked
+  for: **Snow on the walls is not seen in
+  any picture**: `biome-shots take newengland highplains rockies --views wall
+  --season winter` (the `wall` view is new and has never run either). **The
+  final bloom flecks (0.27 m) are not seen**: the last spring picture had the
+  0.42 m dots; `--views h2-side,h1-low --season spring` on hillcountry and
+  blueridge, and look for polka dots from a tee. **Low's frame is not properly
+  measured** (RESEARCH, same section; TODO *Performance pass*): rerun frame-ab
+  on New England in winter and on the Hill Country and New England in spring.
+- [x] **Chambers Bay** built in the builder on its new landscape and played
+  through (step 10): rebuilt by door 2's own modules (tools/build-courses.mjs:
+  OpenStreetMap traced, the LIDAR's land, refined) on the Oregon Dunes --
+  PLACED, the study's "in the lowland, but built as Links" -- par 72,
+  7,455 yd; the virtual golfers played all 18 in 87, none stuck; opened in
+  the game and a tee shot played (tools/play-built.mjs). Seen in the game's
+  pictures; not played by a person.
+- [x] **The showcase** of every landscape, generated, several pictures each
+  (step 10): tools/capture/us-showcase.mjs takes each landscape's generated
+  nine in summer from three views and in spring, autumn and winter from one
+  (the tropics summer only: 234 pictures, 3 November 2026) and writes
+  docs/reports/us-landscapes-showcase.html (local). No page error on any.
+  **Retaken whole on the final land** (4 November 2026, generator 87): all 41
+  landscapes, the Badlands for the first time, 240 pictures, no failed batch.
+
+### Fairway Course Builder (branch `course-builder`, from 31 October 2026)
+
+The record is docs/COURSE_BUILDER.md (stages, decisions, measurements). Open:
+
+- **A course file saved before 5 November 2026 from a survey in feet** comes
+  back on Back to 2D in the wrong place: its unit was not stored and it is read
+  as metres (draft-from-doc.js). None of the test courses is one; settle it by
+  telling feet from the EPSG code if a player's file turns up.
+- **The Redwood Coast's trees are NOT finished (5 November 2026).** The owner stopped this work: another session will make this landscape's models with an online 3D generator. Done and kept in the working tree: heights, mix, stands and clumps, river terraces, turf, the name. The trees built here are the current stand-ins. Frame on High: 106 million triangles a frame, 22 ms, cut to 29.8 million, 6.4 ms against Puget Sound's 29.5 and 5.3 by `farPaintedFrom` (biomes.js), which swaps these trees to far twins early. Open: Low never measured; `tools/build-meshes.mjs` and other writes fail now and then with an UNKNOWN file error, so check `src/asset-meshes.js` updated after a build.
+- **The Redwood Coast's trees, the owner's verdict.** Rebuilt as they grow
+  (BLENDER_ASSETS, *Built as it grows*), 17 rounds or more each. Bay laurel, bigleaf
+  maple and madrone were rebuilt with the same builders in far fewer rounds and owe
+  the fifteen. Not played; not seen in autumn or winter colours. Their figures are
+  under *Performance pass*. The owner means this approach for many other models
+  later.
+- **Read redwood heights by age** from Bulletin 796 (scanned, CAL FIRE) and
+  check the 30-75 m and 12-35 m ranges against it.
+- [x] **Northwood's redwoods** on the Redwood landscape, closed by *The Redwood
+  Coast, grounded* (RESEARCH): with surveyed trees
+  picked by height they fall to 17% from a 38% share, as most of its surveyed trees are
+  mostly under 21 m and the landscape's redwood runs 42-116 m. The numbers are
+  right; whether a redwood course should look like that is the owner's call
+  (RESEARCH, *A survey sees a shape, not a species*). Summerlin in the editor and
+  Game view seen with no errors; no round played on it and the builder's smoke
+  journeys not run.
+- **A real course's doglegs, checked by a person** (was: holes run straight
+  from back tee to green). Since the builder-ux goal (10 November 2026) door 2
+  finds a dogleg's bend from the traced fairway (map-checks.js `bendFor`; the
+  holes step's **Find the doglegs**, and Build it for me for holes whose
+  straight line is already 40% on the fairway); not played, and the yards
+  against Worthington's card not measured again since. Worthington's test round, 96 against par 71 (a generated Midwest
+  eighteen plays at par), is partly the golfers aiming through trees on
+  doglegs; its yardages are short of the card by a median 22 yards for the same
+  reason.
+- **Refining OpenStreetMap's trace from the LIDAR: measured on Worthington only**
+  (door 2, *Refine with the picture / the LIDAR*). Since 1 November it lines
+  the map up by its bunkers', ponds' and greens' edges and keeps its shapes:
+  every damaged test map (nine from the picture, Worthington from its LIDAR
+  in two directions) came back within half a metre (RESEARCH, *OpenStreetMap
+  is itself off the place*). Not yet measured from the LIDAR on courses other
+  than Worthington: their 3DEP downloads were rate-limited and are paused
+  (tools/lidar-fetch.mjs resumes them). Played by the owner by 9 November 2026; only the measurement on the other courses is open.
+- **Google and Bing imagery not tried with a real key** (door 2, *Fetch
+  imagery for this land*): their session, metadata and tile addresses follow
+  the providers' documentation and are tested against a fake fetch; the free
+  providers each answered one tile by hand (31 October 2026), and the journey
+  stands in for USGS and Nominatim. The owner's own key is the check.
+- **The auto trace from the LIDAR alone, before the holes: started, far
+  from 90%** (LIDAR iterations 1-5, 1 November 2026; RESEARCH, *The auto
+  trace from the LIDAR alone*): mean overlap over the nine courses green 12,
+  tee 5, fairway 19, semi 5, sand 9, water 21 (from 0 but water 13). The
+  laser tells fairway, green and rough apart by millimetres; greens and tees
+  are found because they are built up (iterations 6-9). Next: fairway
+  corridors by width and by their tees and greens at either end; a
+  green's bunkers round it. Not seen in the builder's page.
+- **The editor's saved outlines changed** (1 November 2026): it now saves
+  door 2's smoothed outlines (`layerRings`) instead of a staircase simplified
+  to 0.35 of a cell, so a course saved again from the editor differs slightly
+  at its edges from the same course saved before; and later that day
+  `layerRings` itself relaxes the staircase before simplifying (RESEARCH,
+  *Outlines without notches*), moving every edge again by centimetres. A file already saved plays
+  as before (`BUILT_VERSION` unchanged). Not yet compared on a course by
+  measurement (tools/freeze-compare.mjs round trip).
+- **The trace has no review layer
+  in the editor** (each cell's source is kept, and door 2 reports the share), no
+  automatic alignment nudge after a picture is lined up, and no classifier
+  learnt from the player's corrections -- all in the study's design
+  (docs/COURSE_BUILDER.md, *LIDAR first, the picture as fallback*).
+- **Sand is the trace's weakest surface**: 27% overlap with
+  OpenStreetMap's bunkers at Worthington with both witnesses, and on generated
+  courses the LIDAR's sand calls lower the picture's, 54 to 43, on pale
+  native grass (docs/COURSE_BUILDER.md, stage 8). OpenStreetMap maps 20 of
+  the club's bunkers; some of what it scores as wrong may be bunkers it lacks
+  -- one corner checked by eye, not the whole course. The study's 80% target
+  is not met.
+- **laz-perf's copyright line** in THIRD_PARTY_NOTICES.txt was written from its repository's description, not its LICENSE file (the npm package ships none): confirm before a release carrying the builder.
+- **The editor cannot stamp a green's contours beyond the brush.** (Adding
+  and removing holes: since 10 November 2026, the builder-ux goal.) Ponds and creeks: since the builder-ux goal (10 November
+  2026) a pond moves (as before) and is deleted with its water body, and a
+  creek is selected and deleted (not moved: delete it and draw it again), in
+  both editors; a deleted pond's bed and creek's channel stay in the land
+  (Fill to surrounding). Not seen by a person.
+- **Before a release carrying the builder**: check the website's demo
+  check reads `RELEASE_SHA256.txt` by name, so the builder's line beside the
+  game's does not confuse it (tell the owner).
+
+### The 1.0 interface polish (branch `ui-polish-1-0`, from 27 October 2026)
+
+- [x] **The drop bar and the Tools window: three lines low on their own
+  panels; the near-miss contrasts; the map's switches and Done on a tablet**
+  (found by the final audit, 28 October 2026; the first three the same on
+  main). Fixed at the cause: Place ball's dark words were out-ranked by the
+  bar's rule for every button; the lines and headings were coloured only on
+  wide screens; the highlight's end colour aims at 6:1; words over pictures
+  carry the outline; the switches are 25 px and Done takes its touch size.
+  UI_POLISH.md, *Third look*.
+The checklist, the rounds and the decisions are in docs/UI_POLISH.md.
+Merged into main on 29 October 2026, squashed to five commits; the branch's
+no-ask GPU terms ended with it. Not released, and not yet played by hand
+beyond the owner's one round of 28 October -- the list below is what to play.
+
+#### Playing it by hand, screen by screen (the owner's)
+
+Everything below was built and seen in the audit's pictures and the smoke
+journeys, and none of it has been played by hand. Each line is what to do
+and what should happen. With a keyboard first, then a controller, then a
+phone.
+
+- **Square boxes everywhere** (the owner's eight findings, 28 October
+  2026; UI_POLISH.md, *Square boxes*). No box, tile, field, key plate or ring
+  leans or has rounded corners (balls, dots and round badges stay round); no
+  second box behind the loading, Leave or Save box; one ring on a chosen ball
+  in the locker; every stack straight down, nothing over its neighbour. The
+  main menu's Settings / Launch monitor / Help line up with the menu. Saved
+  courses with nothing saved says Build a course or import a code. Endless's
+  landscapes scroll down only. The Save box fits a 1280 x 720 screen, its
+  picture beside the view buttons. On a sideways phone the band under Back /
+  Next is solid. Seen in the audit's pictures at sixteen sizes; not played.
+- **The foot, compacted, and the phone's map** (the owner's second list,
+  28 October 2026; UI_POLISH.md). The club is one box: the lie along its top,
+  the code in the accent's letters, the name, carry and Q E, no seams; the
+  bag opens over everything, on a phone too. Under the meter one row: carry,
+  total and apex, then curve, height and spin (S W X, or taps); in flight
+  Skip takes their place, on a phone too -- no shot box anywhere. Upright on a
+  phone the golfers are top right and the wind under the hole; MAP beside
+  MENU shows and hides the map (sideways MAP is under the golfers). With a
+  launch monitor on a phone, Skip stands alone bottom right in flight. The
+  phone's one bar -- MENU, MAP, VIEWS, FLY, thin lines between: VIEWS steps
+  aim point, green, back (drag turns the camera in the first two); FLY flies
+  with the pad bottom right and a drag, FLY again comes back; flying, the
+  club box, meter and aim pad are away and Jump to green is one chip (upright,
+  on its own row above the bar). From a long hole's tee on an upright phone
+  the pin's yards sit just under the hole card, not over it. The
+  course studio's Water menu rings Rivers once. Ponds: gust patches drift
+  slowly downwind, nothing flashes across. Seen in the audit's pictures (the
+  bar, VIEWS and FLY at four phone sizes, 29 October 2026), passed by smoke's
+  phone journeys and the drag check, the water measured in frames, no slower
+  than main on Low or Ultra; **not played by hand** -- try VIEWS, FLY and the
+  fly pad with a thumb.
+- **The splash and a course growing.** The tips are the fourteen in
+  src/tips.js, each true of the game today; one shows while a course grows
+  ("Growing the landscape...", "Shaping the landscape").
+- **The main menu.** The arrows move a white cursor; the tile lights in
+  place (no slide since the boxes went square); the eyebrow reads Main menu. After any round, **Play again** shows
+  what it will start (the line under it) and starts it in one press.
+- **Play.** Titled Play, with Main menu above the title. Opens with the
+  keys on the chosen card. Right then Down: one yellow card (chosen) and one
+  white (the keys), never two yellow. The cards show landscape pictures that
+  fade from one to the next, one card at a time; with reduced motion (the
+  system's setting) they hold still. Tee off is on every step. Course of the
+  week by Enter alone: three presses.
+- **Endless, Surprise me, the earlier weeks.** Endless's landscapes and
+  the weeks show their pictures; Surprise me, before a roll, runs through
+  every landscape.
+- **Saved courses.** Each card shows the picture the course was saved
+  with, then its landscape's. **Save as file**, delete the course (it asks
+  twice), then open the file with the button and again by dropping it on the
+  screen: it comes back with its picture. A saved round's delete asks twice
+  too.
+- **Challenges.** Opens on the chosen challenge; a challenge by Enter
+  alone in four presses.
+- **The driving range.** Its setup's drop-downs: the arrows go into and
+  out of each (they were trapped on main).
+- **The course studio, from the main menu.** Five menus -- Course (the
+  landscapes first, as pictures), Land & routing, Fairways, greens &
+  bunkers, Water, Trees & scenery -- every setting still there, More settings
+  folded at the foot. Choosing a landscape by keys lands on Grow this
+  landscape.
+- **The course studio, saving.** Save course shows a picture of the
+  course; each view button changes it; Frame it yourself lets you fly, and
+  Enter takes it. The arrows (or a d-pad) move between the box's buttons.
+  The saved course's card then shows that picture. On a phone the box fits
+  and its rows are straight.
+- **Settings, Launch monitor, Help, My profile.** Each opens with the keys
+  on the chosen item. Launch monitor no longer lists which monitors work; one
+  line points to README.md in the download. Help's line about the keys reads
+  "listed with this page".
+- **The round.** The score, the meter and the flag's distance read on
+  bright ground and sky (a dark outline on the text). The pause list, the
+  scorecard, the big map, Tools, Golfers & rules and the shot box: one white
+  cursor, the chosen item yellow.
+- **The pieces you move.** Drag the map by its header and the shot numbers
+  (Tab); each stays inside the screen, keeps its place, and a double click
+  puts it back. (`tools/ui-movable-check.mjs` drags both at six sizes.)
+- **Sizes.** At 1280 x 720 and 1366 x 768 the sheets' labels read about
+  13 px and nothing runs out of its box; at 4K nothing is tiny.
+- **Phones, upright and sideways.** Back is on screen on the last step of
+  Play; the start button has a row of its own and wraps; every button is
+  easy to hit; the studio's bar is the 1.0 look.
+- **Course pictures from a file opened straight from disk** (no web
+  server) in Chrome, Firefox and Safari: save a course with its picture,
+  close the browser, open the file again -- the picture is still there
+  (IndexedDB; DISTRIBUTION_REVIEW).
+
+### The cartoon overhaul (branch `cartoon-overhaul`, 25-27 October 2026; merged)
+
+The plan, the rounds and the rules set aside are in docs/CARTOON_OVERHAUL.md.
+
+- **The far landscape's third-goal rounds are built and not played**
+  (far-woods.js `seatOn`, landscape-edge.js `drawnGround`, `ringMesas`,
+  `ringIslands`; CARTOON_OVERHAUL *The far landscape (far-landscape goal)*).
+  Check from the tees and from high cameras on every landscape: no far tree
+  hangs over a valley or stands in the sea (the bench's `farSeated` says
+  none does); no painted crowns under Links' or Lakeshore's shallows; no
+  line where near crowns become groves (300-540 m out); Desert's mesas read
+  as tables with red-rock sides, its scrub in clumps with bare sand between,
+  and its hardpan runs past the course's edge with no line; Lakeshore's far
+  land dune woodland, not a carpet; Island's islets sit on the horizon;
+  Autumn's evergreens dark crowns in
+  the canopy, no spikes on the horizon. The wait as a course loads is
+  0.3-0.5 s longer on the wooded landscapes (measured, not felt).
+- **Links' double fairways have been judged from above and in captures,
+  not played** (course.js shareFairways `cover`, `roundTip`, `seamBunkers`;
+  routing.js `shifts`; vegetation.js `carryFade`; ground.js A FAIRWAY'S
+  BANDS IN THE WORLD; generators 48 and 51). Check on seeds `overhaul`,
+  LINKS-B and S5: from the tee the shared fairway shows over short rough in
+  the carry, the tall grass on either side; each join one broad mown shape
+  with its stripes running across it as one, a pot bunker or two on the seam
+  between the holes; the rough between two fairways closing in a rounded
+  tongue; no crossbars; a ball in a seam bunker plays from sand.
+- **The tee's lap, its turf, and diamond-mowed greens are built and not
+  played** (ground.js). Check: the lap one continuous pass round a tee and a
+  green, no checker, its inner edge soft; a tee's colour between fairway and
+  green; the diamonds, and a tee's bands, turning from light to dark as you
+  walk round them, as cut grass does, and never shimmering as the camera
+  moves; the collar shading gently round each green; on Clear a green's tilt
+  still reads through the diamonds (also on Natural); the range's greens
+  diamond-mowed too.
+- **The water's edges and reflections are built and not played**
+  (water-mirror.js; renderer.js FOAM_FRAG, WATER_EDGES; ground.js WET SAND;
+  CARTOON_OVERHAUL *Trees in still water*, *Waves at the water's edge*).
+  Check on High or Ultra (Low and Medium draw no mirror): a pond's far bank
+  reflected as one dark wooded band hanging from the waterline, crowns below
+  it, from the bank and from a tee; calmer reflections in calm weather,
+  broken up in wind; no posts or floating patches. On every tier: wavelets
+  arriving along a pond's bank rather than one band breathing, more on the
+  bank the wind blows onto, a thin wet line at every bank; the sea's swash
+  running up unevenly in sets, breakers in stretches, wet sand just above the
+  water (Lakeshore's lake shore not dark to the dunes); a lake's swash
+  quicker and smaller than the sea's; a creek's water fading in where it
+  starts, not a square edge, and never reading as a road; whether all of it
+  reads as water and not as a sine on the edge -- the owner's words.
+- **The new trees have been seen only in captures, not played.**
+  Broadleaves (oak, maple, aspen, alder), conifers (spruce, pine, cedar) and
+  the desert's plants (palo verde, mesquite, saguaro, cholla, ocotillo,
+  agave -- generator 41; does a ball still hit a saguaro where it is drawn?),
+  the Island's palms and hala, the houses
+  (does a ball off a wall bounce where the wall is drawn?), the redwood grove and
+  the deadfall,
+  built in Blender with painted shading (BLENDER_ASSETS.md *The cartoon
+  packs*). Check in a round: crowns light as one soft body with no speckle;
+  trunks are brown, not black; the wind moves the outer lobes more than the
+  core; a ball hits a trunk where one is drawn; nothing pops at distance; the
+  frame rate on Low and on a phone (each crown is now thousands of triangles
+  where Kenney's were tens -- measured in the overhaul's frame-rate phase).
+- **The new ground types have not been played** (generator 37; PLAYING.md,
+  RESEARCH *The overhaul's ground types*). Seen in captures and measured in
+  Node only. Check in a round, on each landscape: the lie box names the
+  ground (Rock, Hardpan, Heather...); a ball kicks off rock and runs, stops in
+  heather, takes no spin in waste sand; the hole map shows them; the painted
+  edge and the lie agree (drop a ball either side of a rock edge); no tree
+  stands on a cliff face; Mountain's crags and the Desert's mesas never
+  intrude on a hole; the 18-hole wait is not noticeably longer (it is 0.1-1.3 s
+  in Node). All their numbers are placed: retune by feel in `src/grounds.js`.
+- **Shared links fairways have not been seen in the game** (generator 38;
+  RESEARCH *Shared links fairways*). Judged only from overhead maps drawn in
+  Node (`tools/surface-map.mjs`). Check on North Sea Links, 18 holes: the
+  merged fairways read as one sweep from the tee, not a strip bolted on; the
+  aim line and the hole map still make clear which way the hole goes; a ball
+  in the shared ground lies as fairway; the mowing stripes run sensibly where
+  two holes meet. If the routing feels cramped or the merges too big, the
+  four numbers are in the Links record in `src/biomes.js`.
+- **The uncleared stands have been seen only in captures, not played**
+  (generator 39; RESEARCH *The overhaul's stands*). Check in a round: a ball
+  hit into a stand finds a lie and can be played out; the camera following a
+  ball into the woods does not sit inside a crown; the far twins do not pop
+  as you walk toward a stand (Ultra swaps below 3% of the screen, High 5%);
+  nothing hitches when you turn; the painted forest on the far hills joins
+  the last real trees without a visible line, and does not crawl or shimmer
+  as the camera moves (it was only seen in still captures); the long grass
+  (vegetation.js addLongGrass and the near-field clumps) sways sensibly, does
+  not crawl or pop at the 48 m edge of the near tiles, and costs no frames
+  worth noticing -- it adds tens of thousands of instances (measured since:
+  CARTOON_OVERHAUL *Frame rate*; drawn only so far by tier). The frame-time
+  spikes seen in the first profile were measured in the frame-rate pass: not
+  the cull, whose rebuild is about 1.6 ms (see the entry below). A weak card
+  is still unmeasured: the software arm is not run in a goal.
+
+- **A straight step in the fairway's tone, Midwest hole 2** (seed `overhaul`,
+  view `h2-green-b` in tools/capture/overhaul.mjs: the green from 45 degrees
+  round, noon). A vertical line runs from the bottom of the frame to the green,
+  lighter turf one side, darker the other, on Natural and Clear alike -- a
+  straight edge in something the ground shader blends (a ground grid seam, a
+  baked relief tile, a cloud shadow?). Seen 26 October. **Diagnosed and fixed
+  in generation, not yet seen in the game** (CARTOON_OVERHAUL *The straight
+  tone step*): creases in the ground, which the slope tint draws -- the false
+  front's straight drop (generators 49, 50), then a crease along a straight
+  line through every green's and tee's end, from the centre line read past
+  its end (generator 52). Not a cloud shadow (captured with them off). To
+  check in play: from Midwest hole 2's approach, and round a few other greens,
+  no straight line of lighter or yellower turf.
+- **Reading the ground is one choice now, seen only in captures** (CARTOON_OVERHAUL
+  *Reading the ground*). Check in a round: the Graphics panel's choice
+  (Natural, Clear, Map lines) changes the green at once; on Clear a green's
+  tilt shows from the fairway and on the putt, and its tone does not swim as
+  the camera moves round it (the reason its sheen was capped); Map lines'
+  5 cm contours on greens beside the green-reading grid; that nobody misses
+  the turf colour and tree-shade sliders. Clear as the default is PLACED.
+- **The overhaul's late rounds have been seen only in captures** -- the
+  ponds' shallows, raked bunker sand, cliffs and cut banks, numbered flags that fly
+  downwind (CARTOON_OVERHAUL). Check in a round: a pond's pale shelf is where the water
+  is shallow (it reads the ground grid); rake lines do not shimmer as the
+  camera moves; a mesa's side shows layers, not paving; a flag flies the way
+  the trees bend and the wind shown on screen blows, and its number reads from
+  both sides; a calm pond is clear teal, not smeared; the tee furniture's thin
+  ink outline looks like the same hand as the trees; a house's drive reads as
+  concrete (sandstone flags in Desert) lying on the ground with no grass
+  through it; with houses on, the ground at a house's walls is shaded (faint in
+  long rough, where the blades cover it) and Ultra's ferns do not gather there.
+- **`ball-light-shaders` failed once in nine runs** (27 October, the
+  far-landscape goal's final smoke run): "1 lit shader(s) built as the menu
+  hole became the first hole: MeshToonMaterial", on a Links course
+  (CASTLE-1440-1); the next eight runs passed. The step adopts whatever
+  course the menu was showing, so `--endless-seed` cannot replay it. Not
+  known whether game or harness. To do: if it fails again, note the menu's
+  course and which toon material it names (the journey could print the
+  material's name or its program key).
+- **After an albatross the scorecard waits about 7 s longer than after a
+  birdie** (measured in the smoke run, 27 October: 12.1 s against 4.9 s from
+  the banner and XP checks to the card). By design the card waits for the
+  hole-out banner and the XP popup; whether that long a still moment feels
+  like a celebration or a stall is the owner's to judge in play.
+- **The far woods and Desert's stacks have been captured, not played**
+  (far-woods.js, vegetation.js addFarWoods; cartoon_rocks.py; CARTOON_OVERHAUL
+  *The far woods*, *Desert rock stacks*). Check: no bare band between the
+  course's trees and the hills; woods to the horizon where the landscape is
+  wooded, none above Mountain's treeline, thin in the desert; nothing pops as
+  the camera turns (the woods are in twelve culled sectors); on Low and
+  Medium the far trees are simpler groves -- acceptable?; a desert stack's
+  beds sit on each other with no hovering top.
+- **Links' shared fairways have been judged from above, not played**
+  (course.js shareFairways; generator 46; CARTOON_OVERHAUL *Shared links
+  fairways, rounds 4 to 13*). Check from the tees on seeds that join (the
+  default seed's 2 and 3; S5's 9-11): one merged fairway, no square rungs,
+  no sliver of rough between near fairways; fewer joined holes than before --
+  enough of the "LARGE" shared fairways the owner asked for?
+- **Mountain's crags and far peaks have been captured, not played**
+  (landforms.js jag, landscape-edge.js ringPeaks; generator 45). Check: no
+  striped banding where grass meets rock; the crags read as cliffs from the
+  tees; the peaks behind the valley; no hole made unfair by a crag (the bench
+  says none is); the nearest far face is pale under the haze -- acceptable?
+- **Water depth colour has been captured, not played** (renderer.js
+  WATER_EDGES; CARTOON_OVERHAUL *Water depth colour*). Check from a tee and
+  from the air: a pond darker in the middle, lighter toward its banks; no
+  brown rim; the sea's shelf at Island and Links pale, the open water deep
+  blue; at dusk and night the water darkens with the light rather than
+  glowing.
+- **The links tee surrounds have been captured, not played**
+  (vegetation.js teeFade; CARTOON_OVERHAUL *Links tee surrounds*). Check on
+  Links and Lakeshore tees: the grass rises into the fescue over a few metres
+  rather than a wall; nothing tall in the strip a ball takes off the tee; the
+  same fade on every other landscape's tees reads as natural.
+- **The tee boxes' mowing has been captured, not played** (ground.js;
+  CARTOON_OVERHAUL *Tee boxes' mowing*). Check on several tees: the stripes
+  run with the shot whatever the hole's bearing; no shimmer as the camera
+  moves; the divots sit behind the markers, not in front; the range's mats
+  are untouched.
+- **Seated trees have been measured and captured, not played** (tree-seat.js;
+  CARTOON_OVERHAUL *Floating trees*). Check on Mountain and PNW slopes: no
+  trunk's foot shows daylight under it; ground cover on a slope lies along it
+  rather than sticking out level; nothing looks sunk (a tree on a steep slope
+  is drawn up to 15% of its height lower). The wait as a course loads is
+  0.1-0.15 s longer here.
+- **The gardens have been seen only in captures** (cartoon_garden.py,
+  homes.js): fences stand on the ground on a sloping lot (they were never
+  fitted to it, before or now); the shrubs do not stand in the driveway or
+  the porch; a house on a slope shows a tall stone footing -- deliberate, but
+  check it reads as a basement wall rather than a plinth.
+- **The tee furniture has been seen only in captures** (cartoon_course.py;
+  BLENDER_ASSETS *cartoon_course*): the marker sits on the turf and is not
+  mistaken for a ball; the sign's card faces the player at every tee; the
+  bench and ball washer never stand in a pond, a bunker or the line of a
+  shot. Also seen in the same captures: the tee pad reads as one flat, very
+  saturated green.
+- **The overhaul's frame-rate pass has been measured, not seen** (CARTOON_OVERHAUL
+  *Frame rate*). Check in a round: the long grass does not pop or visibly sink
+  at the edge of its reach (High 190 m, Low 90 m); on Low and Medium the trees
+  swap to their faceted twins from about 55 m -- acceptable there?; a bush's
+  shadow is missing past the nearest shadow map -- visible on a long shot?;
+  the twelve-sided crown lobes up close; the one-off long frame (about 120 ms
+  on the 4090) the first time the camera turns onto new ground. High and
+  Ultra stay 2-3.6 ms a frame over main on the 4090 (Autumn, PNW, Mountain,
+  Midwest) -- accepted by the owner 26 October 2026, **withdrawn 9 November
+  2026** ("Large courses in the builder can tank framerates even on this PC";
+  *Frame rate on every tier and device*, above).
+- **Low on a weak machine, measured against main** (the owner's one
+  frame-rate worry, 26 October 2026). Low doubled on the 4090 (Autumn 0.55 to
+  1.0 ms) but nobody has measured a machine without a real graphics card:
+  `node tools/profile.mjs --only weak` (the software arm, about a minute) on
+  main's kept build and the branch's. **Ask the owner first, every time:** a
+  software-rendered smoke run took the machine down on 13 October, and
+  AGENTS.md keeps `weak` out even of GPU-allowed goals -- the branch's
+  standing GPU terms do not cover it. If Low misses main's figure there, the
+  Low levers are in CARTOON_OVERHAUL *Frame rate* (twins sooner, the long
+  grass's reach).
+- **The overhaul's light has been seen only in still captures** (five
+  rounds; CARTOON_OVERHAUL *Lighting*). Check in a round, on several
+  landscapes: the rim on the crowns does not shimmer or crawl as the camera
+  moves (it is a view-angle term); a ball is easy to find at noon, dusk and
+  night; the lavender blue hour after sunset and the afterglow under the set
+  sun look like evening, not a filter; the
+  colour grade does not make the HUD's tiny course models or the menu cards
+  garish (they share the renderer). Frame cost of the rim and the eight-step
+  ramp is unmeasured (a few instructions on painted crowns) -- the frame-rate
+  phase owes it.
+
+### Lakeshore Dunes (branch `lakeshore-dunes-biome`, 23 October 2026)
+
+- **The tenth biome is built and has not been played.** A Lake Michigan
+  dunes course after the owner's Harbor Shores photograph (RESEARCH.md
+  *Lakeshore Dunes, the tenth biome*; models in docs/BLENDER_ASSETS.md). Seen
+  only in captures (noon, golden hour, the beach, an overview, the 4K
+  `times.mjs` set) and through four smoke journeys (`boot`, `weekly`,
+  `studio`, `surprise-round`); nobody has played a round on it. Check in a
+  round: a ball in a **blowout** plays from sand and the sand drawn is where
+  the lie says (rough only, never within 6 m of the corridor or 12 m of
+  water); the **driftwood** on the beach; the dune grass and juniper sizes
+  beside a fairway; the lake running to the horizon with no far shore; the
+  Lakeshore course-of-the-week card, splash colours and tiny course model.
+- **Its names are placed** -- Lakeshore Dunes / Beacon Dunes and the tag
+  (biomes.js `PALETTES.lakeshore`); the goal left them for the owner.
+- **Its debut week is placed: Monday 9 November 2026, week 149**
+  (weekly.js `WEEKLY_ROTATION`). If the release goes out after that Monday,
+  move the debut to a week after the release, or players who update mid-week
+  see the week's course change under them.
+- **One drive in seventeen is blind** on it (5.9% of tee shots blocked by
+  over a metre, against 3.2% over the other nine): the price of dunes beside
+  the fairways. The sweep is in RESEARCH; lower `hills` if it plays unfair.
+
+### The 1.0 interface (branch `ui-1-0`)
+
+The plan is the owner's local `docs/reports/UI_1_0_PLAN.md` (approved 17
+October 2026): seven phases, a stop for the owner's look after each. The rules
+are in PROJECT_HANDOFF *The 1.0 interface: layout rules*.
+
+- **Three fixes of 18 October 2026: built; seen in the browser pane at
+  1600 x 900** (the seat's pickers leaning with it on Play's Golfers; a drive's
+  card above the apex with its arrow, YDS TOTAL and YDS TO PIN, ball speed,
+  backspin and apex, gone when the camera came back; all 47 info icons on the
+  studio's pages measured 8 px after their names). Smoke, run in small
+  batches: all 37 journeys pass. (text-size failed now and then before a
+  startup fix the same day: the menus' card drawing stepped the automatic
+  resolution down before a round began -- RESEARCH *F4*, the 18 October note.) (1) The seats' Plays with / Swings bars follow the seat's lean,
+  in every golfers step (Play, the course of the week, Endless, the range,
+  Challenges' group); (2) the shot card hangs above the shot line's apex with an
+  arrow down to it, comes up as the camera pulls back and fades as it flies
+  in, shows ball speed, backspin and apex underneath, and has a second big number, the
+  yards left to the pin (feet inside 10 m, PLACED); (3) every
+  setting's info i sits right after its name (a new layout rule,
+  PROJECT_HANDOFF *Info icons*). **To check:** the seats on a phone and in
+  the other golfers steps; the card below the apex where the top of the
+  screen has no room, its fade caught mid-way, a drive with the review camera
+  off, a holed shot (IN THE HOLE).
+- **The hidden old interface removed (18 October 2026): built; `npm test`
+  1000/1000, the build, and all 37 smoke journeys pass** (run on the real GPU
+  in 13 small batches the same day; the journeys were changed to read the 1.0
+  pieces). Not seen by a person. Gone from the page,
+  the code and the styles: the course card, the weather box, the camera
+  button and strip, the aim box, the spin dial's pair, the Swing button, the
+  hints row and the club box's hidden label, plus about 40 class names nothing
+  used (the drag grips, `.hud-custom`, old shot groups, the old splash);
+  PROJECT_HANDOFF *The old interface, removed*. **To check** by hand: the Esc list's cameras (Player, Overview, Free
+  flight, Green, Flyover, Full screen), the tool column's Range and Full
+  screen, R on the range, the wind chip's arrow turning with the camera, a
+  phone's aim pad. **For the owner:** the skins value of the hole being
+  played was only in the hidden course card, so the round screen does not
+  show it.
+- **The owner's fix list of 18 October 2026: built; seen only in scripted
+  screenshots at 1920 x 1080** (Playwright on the built file; nobody has
+  played it). Seat names centred and whole; the putting description gone
+  everywhere; cut italic and "..." fixed across the sheets (captions wrap);
+  notes, the map's expand button, the scorecard's countdown and match line no
+  longer rounded, and no "MAKE IT YOURS" over the scorecard; the shot card up
+  only while the ball rests; a new hole quiet until the turn box goes, then
+  the yards fade in; no blur past the XP card, level-up band or growing
+  window; pause: course line centred over the left column only, a player
+  icon on Players & round; the map and tools above the corner logo; the menu
+  wordmark up 20; the Tab tiles about 45% smaller with the units clear; the
+  ball light growing with its words; the range's targets as 1.0 sliders;
+  Challenges' group as compact seat rows. **To check:** the ball light with a
+  real bridge and a monitor armed (seen only faked, and the meter was still
+  drawn under it in the fake), the scorecard countdown between holes (not
+  captured), the turn box with two to four golfers, every size but 1920 x
+  1080 for the round screen, phones.
+- **The map and the Tab shot numbers move again (18 October 2026): built;
+  dragged only by script at 1920 x 1080** (moved, kept through a resize to
+  1280 x 720, a double-click put the map back). Not seen: by hand with a
+  mouse or a finger on a touch screen, the range (its tiles start top right),
+  the big map (M) after a move, the Tools window's Reset. PLACED: only those
+  two move; no resizing.
+- **Phase 1 (the round screen): seen at 1280 x 720 and 1920 x 1080, not
+  on the projector** (17 October 2026, overnight, the owner having allowed
+  the graphics card for the night). Seen in the browser pane and the smoke
+  screenshots: the hole slab, conditions, one golfer's card, the map, the
+  club panel, the shape chips, the meter, the pin tag, the quiet hole-out
+  strip, the Esc list (fixed: it overflowed 720, Resume sat mid-list, the
+  monitor row and Players row lost their words), the main menu and its arrow
+  keys (fixed: Enter did nothing; the focused row was not lit), the shot card
+  (fixed: a short shot's card sat on the meter), and with a monitor armed
+  (fixed: a relief panel covered the Armed switch; stray tiles in the corner).
+  The smoke
+  journeys pass, every one of the 37 (their top-bar steps go through the Esc
+  list; the camera and flight checks read the round screen). **Not seen:** the
+  projector, 16:10, 4:3 and an iPad, two to four golfer cards and their
+  frames, a long club name, a meter skin, the ball light with a monitor armed
+  (its journeys pass), the range with R.
+- **Pause in every mode, round 13 (frame c-pause): built, seen in the
+  browser pane at 1280 x 720** (a round; the course studio). The windows lean
+  as one block (ui-windows.js). Not seen: the range's and a challenge's pause,
+  a controller in the studio pause. PLACED: the round's pause keeps all its
+  rows and a second window for the round (the frame has six rows).
+- **Keys & help (round 14, item 10): built; seen in the browser pane at
+  1280 x 720** (The essentials with their keys on the right; Explore the
+  course). Not seen: the other five pages, a controller, a phone (one column
+  there). The help text is today's, one topic a page (the frame's eleven
+  topics would need new writing: not done); the free-flight line no longer
+  names the bird icon.
+- **Driving range setup in steps (round 14, item 9): built; seen in the
+  browser pane at 1280 x 720** (step 2: hit from, targets, the session note;
+  Open the driving range on it). Not seen: a session opened from the short
+  game or putting (Hit from applied after the range opens), a slope chosen
+  here, the live Apply to this session, a phone. PLACED: no Aim at or Wind
+  rows. The journeys menu-panels, range, range-greens, sound and the phone
+  menu pass.
+- **Start splash (round 14, item 8): built; seen in the browser pane at
+  1280 x 720** (Desert week: bands, wordmark, the bar at "Growing the first
+  hole · 30%", a tip, "v1.0.0 · WEEK 42 · DESERT"). Not seen: a phone, another
+  week's colours, the file opened from disk. The journeys boot, home-screen
+  (three) and no-swallowed-errors pass.
+- **Round screen, round 14 (item 7): built; seen in the browser pane at
+  1280 x 720** -- at rest (nothing above the meter, the three boxes under it,
+  the club box with Q E and its triangle), the bag opened and a club picked
+  from it, Q back, and one shot in flight (launch strip, the meter counting,
+  Skip at the bottom centre). Not seen: the monitor armed (the boxes hiding
+  for the ball light), 21:9 and 4:3, a phone's bag (the phone journeys pass).
+  The out-of-reach words above the meter are gone with the head; the bar's
+  hatch still shows the reach.
+- **The locker's single highlight; one 1.0 drop-down for every select
+  (round 14, items 5-6): built; seen in the browser pane at 1280 x 720** -- the
+  locker's worn ball traced with its name ticked; the title list opened by
+  click and by Enter, Arrow Down onto locked titles, Escape closing only the
+  list; Graphics' Quality and Frame cap; a seat's name. Not seen: picking a
+  title (the test golfer has none unlocked), a touch, a phone, the tool
+  windows' and pause list's selects. The bag (#club) is item 7.
+- **Course of the week and Endless in two steps; seats where nothing clips
+  (round 14, items 2-4): built; seen in the browser pane at 1280 x 720** -- the
+  week's step 1 (Next only) and Golfers (Play · the course); Endless step 1
+  (Next only, format and rules under THE RUN) and Golfers (Start the run ·
+  Hole 1); Play's seats with Plays with / Swings as value lines and an arrow
+  stepping one. Not seen: a profile with a long name (nameSize is unit-tested),
+  the range's seats, a phone. Differs from the frames: the week's Golfers step
+  keeps its rules under the seats (c-cotw2 shows seats only).
+- **Tiny course models on every card (round 14, item 1): built; seen in the
+  browser pane at 1280 x 720** on Play, Endless (nine landscapes), the course
+  of the week (picture and earlier weeks) and Saved courses, two of them
+  enlarged. Not seen: the sway on the selected card, the studio's landscape
+  pictures, a phone, frame cost (no profile run; renderer and frame cost are on
+  the ask list). **Not built: the B flyover** for the course of the week's
+  picture and the course about to play -- a capture of the real course the
+  first time it is built or saved, stored and played back; they show the tiny
+  model meanwhile. PLACED: the relief and trees are a per-landscape rule.
+- **Wide-screen rule (round 14, item 0): built; seen in the browser pane**
+  -- Play at 1280 x 720, 1382 x 720 (1.92), 1680 x 720 (21:9) and 1024 x 768
+  (4:3): 5, 6, 7 and 5 cards across; a page script found nothing off the
+  screen and no clipped leaning shape on the eight menu screens at 1382 x 720
+  (with the sheet scale raised to 0.9, as a larger Text size would). **The
+  full pass, after items 1-10:** the page script over every menu screen and
+  every step (Play, Endless, the week, Challenges, the range, the studio,
+  Saved courses, My profile, Graphics, Help) at 1280 x 720, 1382 x 720,
+  1680 x 720, 1024 x 768, 844 x 390 and 390 x 844 -- nothing off the screen,
+  no leaning shape clipped, after three fixes it found (the seats' gutter;
+  the phone gutter; the phone's card grid); Play and the round looked at in
+  the pane at 21:9 and 4:3 (nothing of the round off the screen at 4:3).
+- **Phones get the 1.0 sheets and dialogs (round 13): built, seen in the
+  browser pane at 390 x 844** (Play steps 1 to 4, Endless, the course of the
+  week, Challenges, the studio's settings, Saved courses, My profile,
+  Graphics, the round's pause) **and 844 x 390** (Play, the studio's settings,
+  My profile). Not seen: a real phone, Help, Sound, Camera & bay, Launch
+  monitor and the scorecard on a phone, the Leave and welcome dialogs on a
+  phone. The driving range setup was rebuilt in steps in round 14 (its
+  entry above); not seen on a phone.
+- **Course studio, round 13: built to frames c-studio-set and c-studio,
+  seen in the browser pane at 1280 x 720** (the settings from the menu and in
+  the studio, Landscape and Routing, Desert changing the colours, a changed
+  slider with its dot and one outline, R regrowing, the flying view, the big
+  map). Not seen: every category, a controller on the sheet, Save course and
+  the other windows in the studio, a phone (unchanged). PLACED: R regrows only
+  from the sheet (R flies up); the tool column is Big map, Full screen and Menu
+  (no camera, green or shots over a landscape with no ball); Leave studio stays
+  on the bar where the frame has Play it (on a phone too, the bar steps aside
+  while a sheet is open); the whole-course map's surround is
+  dark now (biomes.js mapWater).
+- **The big map, round 13: built to frame c-bigmap.** M opens and closes
+  it. Seen in the browser pane at 1280 x 720 on a tee shot (M to open and
+  close, Heat on and off). Not seen: aiming by a click on it, a putt with the
+  reading layers drawn, a drop or free flight on it, a phone (unchanged; the
+  phone journeys pass).
+- **Windows, round 13: built to frames c-dialogs1-3, c-xp and c-free,
+  seen in the browser pane at 1280 x 720** (Leave without saving, the keys,
+  a toast, the XP card, the level-up band, free flight; the XP card and band
+  were shown by hand, not earned). Not seen: Take relief, the sim drop, the
+  scramble pick, the version notice, the welcome, the time of day, the shot
+  list, a phone. A toast and the XP card at the same moment overlap a little.
+- **Round screen, round 13: built to frames c-aim, c-first and c-flight,
+  seen in the browser pane at 1280 x 720** (at rest with the aim point shown
+  first -- retired 18 October 2026, a new hole now starts quiet -- and one
+  shot in flight). Not seen: a putt, a monitor shot's strip,
+  the tools column on the range, 4:3, a phone (keeps its own layout). PLACED:
+  plays-like left the round screen; Menu added to the tool column; Fly is V
+  (the mockup's F is down in free flight).
+- **Play, step by step (round 13): built to frames c-play1 to c-play4,
+  seen in the browser pane at 1280 x 720** (17 October 2026; src/ui-lobby.js,
+  ui-steps.js). Each golfer has their own tee (game.js `teeOf`). Not seen: four
+  golfers, the saved rounds view, a long course name, a phone, the steps from
+  a controller. The smoke journeys press the steps by name, and pass. PLACED: no Goal or Holes rows; the course
+  of the week's card opens its own setup; the scorecard's yards are the
+  round's tee.
+- **1.0 launch monitor setup: built to the mockup, seen in the browser
+  pane at 1280 x 720 with no bridge** (17 October 2026, third pass;
+  src/ui-monitor-setup.js). Not seen: the steps ticking and the light going
+  green with a real connector (the monitor, mixed-group and bridge-bundle
+  journeys drive it), a phone. PLACED: Connect bridge keeps its words (the
+  mockup says Reconnect; the journeys press it by name), the address is the
+  editable box, the last shot is the last of any kind, the connector notes
+  sit along the foot.
+- **1.0 My profile hub: built to the mockups, seen in the browser pane at
+  1280 x 720** (Overview, Locker, Stats, History; 17 October 2026, third pass;
+  src/ui-profile-hub.js). Not seen: two or more golfers (the chips in the
+  header band), a golfer with rounds (recent-round cards, the history), the
+  rename and remove buttons in the new stack, a phone. PLACED: locked looks
+  keep full colour with a padlock and their level (the owner's 15 October rule,
+  which the smoke checks) rather than dimmed as drawn; the recent-round cards
+  show the landscape's colours, not a picture; the tab shown is remembered
+  while the game is open, and coming back from the bag editor opens Bag.
+- **1.0 settings: built to the mockup, seen in the browser pane at 1280 x
+  720** (Graphics, Camera & bay, Sound from the menu; 17 October 2026, third
+  pass; src/ui-settings.js). Not seen: the help line following a real
+  keyboard or controller focus (checked by a synthetic focus event: the pane
+  had no window focus), ? showing every note in place, the switches and
+  segment bars driven by arrows, a phone. PLACED: the categories are the five
+  sheets there are, not the mockup's seven; the tool windows in a round keep
+  their own layout.
+- **1.0 challenges, course of the week, saved courses: built to the
+  mockups, seen in the browser pane at 1280 x 720** (17 October 2026, third
+  pass; src/ui-menu-screens.js). Not seen: a challenge with medals won, a
+  head-to-head's group, the share box after Copy code, renaming on the shelf,
+  the week with bests recorded, a phone, the studio's own Saved courses (old
+  layout there). PLACED: the challenge's group sits under its detail; the
+  week's tees and group sit under its facts; the week's length is not shown
+  (only a grown course knows it); course pictures are the landscape's
+  colours; saved courses has no Saved rounds tab or Open in studio button
+  (rounds stay in the lobby; the studio opens courses from its own bar).
+- **1.0 course studio: built to the mockups, seen in the browser pane at
+  1280 x 720** (flying and with Settings open, one slider moved: the dot, the
+  column, the chip; 17 October 2026, third pass; src/ui-studio.js). Not seen:
+  regenerating from the chip, a phone (the old bar and sheet there), 4:3, the
+  Show all descriptions mode in the new rows, a warned slider's bubble in the
+  new rows. PLACED: the map stays where the studio has it (right, as in a
+  round) rather than the mockup's left; the bar keeps Leave studio where the
+  mockup has Play it; no key letters on the bar -- R flies up in the studio,
+  so the mockup's "R regenerate" would lie; the studio bar stays where the
+  owner's 15 October layout puts it over an open sheet (a strip above it), not
+  in a footer band, because the sheet's geometry and its smoke check depend
+  on it and it was no obstacle; eight categories, not the mockup's nine (water
+  is one group here).
+- **1.0 range controls: built to the mockup, seen in the browser pane at
+  1280 x 720** (two columns, segment bars, the session table empty; 17
+  October 2026, third pass; src/ui-range-controls.js). Not seen: the table
+  filling after balls, two golfers' rows, Chip and Putt's own controls in the
+  new layout, a phone (the window is one column when narrow). PLACED: still a
+  window over the range rather than the mockup's full sheet (a green is set
+  while looking at it, and balls are hit with it open), now 720 wide; the
+  mockup's green firmness and speed pickers are not here (no such range
+  setting yet), and Lab tools is one row that opens the Lab window.
+- **1.0 pause: built to the mockup, seen in the browser pane at 1280 x
+  720** (one golfer, Endless; 17 October 2026, third pass). Not seen: two to
+  four golfers in the standings, the range's pause, 4:3, a controller moving
+  down the new order. PLACED: the mockup's six rows hold eleven things here
+  -- Tools stands for Camera & bay (it opens the tools tray), Main menu for
+  Save & leave (it asks to save), the settings are four half-width chips
+  under the rows rather than one Settings row, and the time of day stays (the
+  mockup has no clock).
+- **A lit shader built during a hole-out flyover once** (17 October 2026,
+  smoke `ball-light-hole-out` on seed WILDFLOWER-8575, Giant Redwood; passed
+  on two reruns with other seeds). Course-dependent, not the interface: find
+  which material the flyover meets that the warm-up missed.
+- **Phase 2 (shot moments) is built and not seen** (17 October 2026,
+  overnight). Look at: the shot card after a drive (where it sits, the fade),
+  Tab for every number, the range's tiles and the cards moved left, the Esc
+  list's *Shot numbers* choice, a birdie's band and a par's strip (and the
+  next golfer's turn coming in as it leaves), the scorecard's marks and the
+  flashing hole, and round complete. Not built: the XP flying to the golfer's
+  card, the scorecard's leaning columns, *Play again* with the same group, the
+  round's three highlights (longest drive, closest approach).
+- **Phase 3 (menus and windows) is partly built and not seen** (17
+  October 2026, overnight). Built: arrows and a controller on the main menu
+  and the Esc list (ui-focus.js), the main menu as the title screen with the
+  golfer card, the standings in the Esc list, and the 1.0 colours and type on
+  every panel and window through the old variables. **Not rebuilt on the kit**
+  (each keeps its old layout, restyled; the lobby, monitor setup and profile
+  hub, settings, challenges, course of the week and saved courses,
+  the course studio, the range controls and pause since rebuilt): and the small windows. Look at the main menu at 16:9, 16:10,
+  4:3 and on an iPad, drive it with arrows and a controller, and open every
+  panel to check the restyle reads.
+- **Phase 4 (sounds): wired in, NOT HEARD IN THE GAME.** Family C (clean)
+  now plays for hole in one, eagle, birdie, par and bogey, a new level, XP
+  counting and round complete, and the interface set on menu moves, presses,
+  Escape, the green-reading buttons, a locked look and the monitor turning
+  Ready; the marimba stings are deleted (17 October 2026, at the owner's word,
+  given directly to the planning session: "you can also wire all the new
+  sounds i agreed on"). An albatross, a double bogey and worse keep the 14
+  October jingle (PLACED). Levels were measured, not heard (RESEARCH *The 1.0
+  interface's sounds, wired in*): the big moments run 4-6 dB louder than the
+  old jingles, birdie and bogey 3-6 dB quieter, the XP count much quieter.
+  **To check:** play a round with sound on -- hole a birdie, a par, a bogey,
+  level up, finish a round -- and drive the main menu and the Esc list with
+  arrows; on the projector's speakers if you can. Say what's too loud or too
+  quiet and `CHIP_LEVELS` (chiptune.js) moves.
+- **Phase 5 (phones and screen shapes): built, seen in the browser pane at
+  844 x 390 and 390 x 844, not on a real phone** (17 October 2026, overnight).
+  The phone round screen sideways and upright (src/round-phone.css), the
+  aim pad (slanted then, square since 28 October 2026), swinging by tapping the bar, the MENU chip and the pause
+  list as one column, the phone main menu (its rows leaned one by one until 28 October 2026). The
+  phone smoke journeys pass (they tap the bar now). Not seen: a real iPhone's
+  Safari and safe areas, a phone with two or more golfers, the ball light on a
+  phone, the sheets on a phone (unchanged, old layout).
+- **The Text size barely enlarges the round screen on 16:9** (about a
+  tenth: the pieces already span the screen; round-hud.js `ROUND_MIN_WIDTH`).
+  The owner's call whether that is right for the bay.
+- **The typed aim distance has no home on the round screen** (arrows and
+  the map still aim). Decide in phase 3 whether it comes back.
+- **The canvas's 1024 floor for the Text size is PLACED** (ui-layout.js
+  `MIN_CANVAS_WIDTH`): the first screen that overflows at 125% moves it.
+
+### Found on GitHub
+
+- **The smoke step fails on GitHub, in `endless-round`.** The tests
+  workflow runs on every push to `main` (the two entries that said it never had
+  were wrong by 10 October at the latest), and the unit tests pass there. The
+  smoke step (`--software --only boot,range,endless-round`) failed on 6 of the
+  8 latest pushes, every time in `endless-round`: "putts from two yards and the
+  ball never dropped" (both 0.8 pushes), "waited 60s for Space to start a shot
+  (the game refused it)" (0.6 and 0.6.1), and a click timing out at "Start an
+  endless run" (0.7). A two-core runner without a graphics card is about twelve
+  times slower than here.
+  **Cause found 16 October 2026 (branch `smoke-on-github`): the harness, three
+  ways; the game was right each time.** (1) *Never dropped* (0.8): the putt's
+  stop was tapped on the first FRAME after the marker passed the target, but
+  the game judges a tap on its own timestamp, and with no GPU a frame is most of
+  a second against a putt bar crossed in about 1.6 s -- every putt ran long (the
+  screenshots: 8 ft and 23 ft away, off the green, after six putts). (2) *Space
+  refused* (0.6, 0.6.1): the putt HAD dropped (screenshots: one under par, the
+  next hole growing), but the harness gave the scorecard six seconds, not scaled
+  for the software renderer, then putted again on a finished hole. (3) *Click
+  timing out* (0.7): the round had started (screenshot: in play, nothing hit);
+  Playwright's click waited on a page busy starting it. Fixed in
+  `tools/smoke.mjs`: the tap is a DevTools press stamped with the moment the
+  marker reaches the target (`lab.state().swing` gives the start and pace),
+  holed-or-not is asked of the game (`lab.state().holeComplete`), and Start an
+  endless run is accepted once the game leaves the menu (`pressToPlay`).
+  PROJECT_HANDOFF, *A harness tap that has to land*. **First GitHub run of the
+  branch (38961631676, 16 October): cancelled by the job's 45-minute limit**
+  with every step passing, during `endless-round`'s putting out, right after
+  the drop beside the pin -- the fallback for the start click saved that step.
+  Its smoke steps ran 5 to 10 times slower than the faster 0.8 run's
+  (38856836307: menu ready 104 s against 17, the cameras 348 against 44) and
+  about three times slower than the slower one's (38857024163), while its unit
+  tests were only 13% slower (546 s against 483). Not the fix: boot, which none
+  of the change touches, was already slow (two single page reads 13 s and
+  11 s, 0.0 s on every earlier run), and that runner was the slowest of the
+  five measured (RESEARCH, *The smoke test on GitHub*). The branch at 8a6058d
+  was merged into main anyway, at the owner's word, on 16 October. The job's
+  limit is now 90 minutes and the smoke step's 70, and the log names the
+  course on every run (c61bdf6 onward, on the branch). **The stamped putt is
+  still not seen running:** the next push is the test -- check that
+  `endless-round` passes and its putt out takes one or two putts. Close this
+  entry when it has gone green on GitHub a few times running. `gh run view <id> --log-failed` has a log, and
+  a failed run keeps its screenshots as the `smoke-screenshots` artifact. Once
+  it runs green, add it as a required check to the *main changes by reviewed pull
+  request* ruleset in `tools/github-protect.mjs` -- not before, or every pull
+  request waits for a check that never passes. (was: *The CI smoke step has
+  never run on GitHub*; *The tests workflow has never run on GitHub*)
+
+- **Three high-severity advisories in the build tools.** `npm audit`, run
+  16 October 2026: nothing in what the game ships (`--omit=dev`: 0); three
+  high in `micromatch`, pulled in by `vite-plugin-singlefile`. Build-time only,
+  run on the owner's own files, so no player is exposed; upgrading the plugin
+  clears it, and an upgrade means a build-size check and the attribution files.
+  (was: *Run a live dependency advisory audit*)
+
+### The owner's hands-on checks
+
+Only the owner can do these, with hardware or browsers the development machine
+does not have. Nothing here is a claim of support until it is done.
+
+- **A real launch monitor through the bridge.** Everything is checked
+  against a pretend bridge sending what `bridge/server.mjs` sends. Check: the
+  ball arrives and the big numbers update; the ClubData fields (club speed,
+  attack angle, path, face to target, closure rate, impact position) against
+  the device's own app; reconnecting, duplicated shots, putting. **And one
+  deliberate fade**: the R50's export signs sidespin opposite to its spin axis,
+  so if the connector sends backspin and sidespin rather than an axis, a fade
+  would arrive as a draw (RESEARCH, *The R50 session against the model*).
+  Record the operating system, firmware and connector version. (was: *Owner:
+  the launch-monitor panel with a real device*; *Validate against real
+  hardware*; *Nothing has been tested against a real monitor*; *Hardware
+  validation, when requested*; the monitor half of *Finish
+  target-browser/direct-file...*)
+
+- **A launch monitor from the iPhone, loaded from the bridge.** Start the
+  bridge with `FAIRWAY_HTTP_HOST` set to the computer's address, open
+  `http://<address>:1922` on the phone, **Launch monitor** in the main menu,
+  Connect bridge, arm, hit. If the phone cannot reach the computer: same Wi-Fi
+  (not a guest network), and Settings > Privacy & Security > Local Network.
+  (was: *Owner: a launch monitor from the iPhone*)
+
+- **run_fairway_server on a real Mac and a Linux machine.** Built and
+  tested on Windows only. Mac: unzip, Control-click Open, allow it in Privacy &
+  Security if asked, check it serves the game and prints a phone link. Linux:
+  `./run_fairway_server` from a terminal. (was: same heading)
+
+- **A real phone, an iPad and a weak laptop: the frame rate.** The layout is
+  checked under emulation; no real phone's graphics have been measured, and the
+  low tier is known to miss 30 fps on weak hardware. Report a problem shows the
+  tier and frame rate, so the test produces numbers to state honestly on the
+  page. (was: *Nobody has measured a real phone*; *Weak hardware: the owner is
+  testing it personally*)
+
+- **What the smoke test does not walk, by hand:** a multi-player stroke
+  round to the end, match play, scramble selection, a replay across holes,
+  leaving during a pending timer, the lab, a round saved and continued, free
+  flight on a phone, export and import round-trips, and Safari, Firefox and
+  Edge opening the file. (`mixed-group` now covers a monitor golfer and a
+  Swing Meter golfer in one group, and `skins` starts a two-golfer skins
+  round. The RULES of every format with every group are played in Node by
+  `tests/round-matrix.test.mjs`, so what is left here is the screens.)
+  (was: *What the smoke test does not walk*;
+  *Browser timing and state-transition regression*; *Offline release matrix*;
+  the browser half of *Finish target-browser/direct-file...*)
+
+### Getting the word out
+
+The decisions behind these (MIT, open to everyone at once, the two audiences)
+are in the archived section of the same name.
+
+- **Ten testers, recruited one message at a time.** A request for help,
+  not a launch. Go where simulator owners already are -- the golf-simulator
+  subreddits, GolfSimulatorForum, the GSPro community, home-simulator Facebook
+  groups, each monitor's owner community -- and **check which are alive
+  first**; the list was written from general knowledge. Issues is where
+  reports go, with the Report a problem block. (was: same heading)
+
+- **Then one public moment, not a drip.** Hacker News, the procedural
+  generation and WebGL communities, the three.js showcase and the simulator
+  forums, the same week, one post each, **each leading with the play link**,
+  the repository under it. Say plainly that launch-monitor support is untested
+  and that it was built with Claude Code. Donation wording rules are in
+  DISTRIBUTION_REVIEW. (was: same heading; *Donation wording is the part that
+  carries risk*)
+
+### Play
+
+- **The shot panel forgets its numbers on a reload.** `lastShot` is memory
+  only, so a resumed round shows dashes mid-hole. Decide first whether a shot
+  from an earlier session should look as though it just happened. (was: *The
+  card forgets its numbers on a reload*)
+
+- **The rest of the penalty rules**: an unplayable ball (Rule 19), a
+  provisional (18.3), yellow penalty areas, and choosing the drop spot by hand.
+  RESEARCH *Penalty relief* lists what was left out and why. (was: same heading)
+
+- **Accessibility**: keyboard-only play end to end, reduced motion, and
+  readability settings. The smaller-screen half is covered by `hud-reachable`.
+  (was: *Accessibility and smaller screens*)
+
+- **The floating tool windows are not swept for layout.** `hud-reachable`
+  checks the menu and play screen at nine sizes and the studio bar has its own
+  journey; the tool windows opened from the tray during play are not checked
+  for overlap. (was: *The floating tool windows during play...*)
+
+- **The green marker may still show a flag after the stick is pulled.** A
+  cup or target mark would be honest. Not re-checked since it was written.
+  (was: same heading)
+
+- **Send `DistanceToTarget` to the device**, so a monitor can switch itself
+  into putting mode. Blocked on units (`distM` in the log, yards nominally); a
+  wrong guess switches modes at the wrong distance. Needs the connector's
+  documentation or a measured test. (was: same heading)
+
+- **Rate courses by more than their length.** The sim handicap rates on
+  yardage alone; the generator knows the water, sand, trees and slopes, and the
+  USGA's obstacle factors would make a hard course rate hard. Also check the
+  placed bogey-rating formula against the Course Rating manual. (was: same
+  heading)
+
+- **WHS soft and hard caps, and exceptional scores** -- once profiles carry
+  a year of history. (was: same heading)
+
+### Ball flight and the bounce
+
+- **A launch-monitor session with ROLL would be the first check of the ball against this
+  game's own hardware.** The flight is fitted to published tables and agrees with the two sessions
+  on file to about 2%; nothing on file measures what a ball does after it lands. Worth recording:
+  total spin and spin axis as reported, peak height, hang time, descent angle, and the run-out
+  with the surface it happened on -- chips at 10, 20 and 30 yd, a 50 yd pitch, a 7 iron onto a
+  green, a driver on a fairway. Compare with `node tools/ball-bench.mjs --shot`; fit nothing to
+  one device.
+
+- **Up to 0.36% of a course reads `semi` where it is painted `rough`**,
+  behind the green: the shader mows to `length + 8`, `fairwayWidth` stops at
+  `length`. Forgiving direction. (was: *Remaining drift behind the green*)
+
+### Generation and landscape
+
+- **Green surrounds are steeper than intended.** The shoulder blends off
+  the green's nominal size, not its outline, so a shaped green that bulges
+  outward gets a steeper bank: the worst surround goes 0.570 at shaping 0 to
+  0.709 at the default. Within the intended 0.6 at default settings in most
+  places, a perched green at slider extremes. Fix: blend off the outline, with a
+  maximum grade around green complexes; measure with raised and sunken greens
+  off. (was: *Shaping a green steepens the ground around it*; *Green surrounds
+  are steeper than intended on extreme settings*; *Green-surface shaping
+  quality*)
+
+- **Blind tee shots: a decision, not a fix.** 23 remain, and the forward
+  tee improves least (red blocked over 1 m on 12% of holes, blue 5%). Every
+  lever is a trade: lifting tees or flattening landing areas (the owner ruled
+  out building up land), per-pad lift (the complex stops reading as one piece),
+  or an aiming post on the crest, which is gameplay. (was: *23 blind tee shots
+  remain*; *Blind shots that remain*)
+
+- **Watercourses: endings and junctions.** A channel cannot flow into a
+  pond (a pond is raised in the drainage model); where two channels meet, or a
+  channel meets a pond, the geometry is a segment strip, not a triangulation;
+  9 endings in 24 courses fade out on a hillside. The curvature cap is what
+  keeps strips safe -- re-check it before widening rivers past 30 m or raising
+  meander. (was: *Watercourse endings that remain*; *Hydrology mesh quality*)
+
+- **More natural pond siting.** At high Water settings about one pond per
+  hole is placed however many are asked for. Prefer existing low ground, let
+  ponds share a basin, add wetlands and reeds. (was: same heading)
+
+- **Ponds and lakes end on a flat alpha.** Channels and the sea fade by
+  depth at their edges; ponds and lakes need a depth map per basin to match.
+  Per-body planar mirrors only if a probe's missing parallax ever reads wrong
+  on a big still lake. (was: *Lighting and water fidelity*)
+
+- **Turn `crownShare` on for the other biomes.** One number each; the
+  fingerprint says what moved. (was: same heading)
+
+- **The bush family is sized by height**, not spread -- the ferns' old bug.
+  `fern`, `gorse`, `heather`, `naupaka` and `shrub`, across six biomes; look at
+  each. (was: same heading)
+
+- **The baked trees' leaves go near-black.** Multiplying the green leaf
+  sheet by a green role colour darkens it; tint white, or use the sheet as
+  alpha only and take the colour from the role. (was: *Leaf tinting for the
+  baked trees*; its partner, a third crown shape, is in IDEAS.md)
+
+- **Deadfall does not collide.** A ball rolls through a fallen log; fine at
+  this size. (was: same heading)
+
+### Graphics
+
+- **Not yet seen: the far heath, and the eleven models unwrapped** (31
+  October 2026, the owner's third word on Architect's branch; rendering only, no
+  version moves). Built and tested in Node only -- no capture, no frame
+  measured. To check on Links (an 18-hole course, Medium and Low): from a
+  tee, looking across heather -- past about 48 m the cushions should give way
+  to low purple-and-olive domes rather than flat purple ground, with no ring
+  where one becomes the other, and the domes sinking away at the tier's
+  long-grass reach (Low 90 m, Medium 130 m). And the eleven models whole: tussocks and logs
+  (Autumn), sorrel, Lakeshore's junipers, dune grass and driftwood.
+  The frame cost on Low and Medium is unmeasured: at most 20,000 extra
+  triangles in reach of a Links tee on Medium, against the
+  long grass's millions -- a `profile --only biomes` would settle it.
+- **Frame-rate goal (branch `frame-rate`, 22-23 October): play it.**
+  Smoke journeys run with the owner's go-ahead (23 October), one at a time,
+  the card checked before each: `hud-reachable`, `range`, `endless-round`,
+  `floodlit-night`, `phone-portrait`, `phone-landscape` -- **all six passed**;
+  the other journeys not run. Measured with `tools/frame-ab.mjs` against the original
+  build: Ultra -21% on Redwood and Pacific Northwest, High -19%, Medium -7%,
+  Low -2% at the card (their processor -18 to -27%); the cheap-laptop and
+  budget-phone profiles -16% and -26% (RESEARCH.md *Frame time on Ultra*).
+  Never played by a person. Check in the
+  game: the pin and aim labels follow the camera and fade as before; the wind
+  arrow turns with the camera; the hole map and the full map draw the course,
+  the aim line, dispersion rings and the ball, and redraw on a new hole, on the
+  range when its green changes, and on zoom and pan; distant shadows while the
+  camera turns fast, follows a drive and cuts to a new hole (the middle and far
+  cascades are redrawn every fourth frame, or at once when the view leaves
+  them); on Ultra, the shadows near the ball (the nearest map is 4096 now, its
+  blur kept the same width) -- as crisp as before, not crawling as the camera
+  moves; cloud shadows drifting across the course, and the dawn mist (both now
+  skip work only where it cannot change a pixel). Before merging, the rest of
+  the smoke journeys are worth asking for (about 5 minutes for all).
+
+- **Profile the slower descent through the trees** -- `clearCameraTrees`
+  does more work now the camera passes through canopies. About a minute for
+  `--only views`, asked first; redwood is the one to watch. (was: same heading)
+
+- **The redwood cull rebuild on a card that cannot hold 60 fps.** Its
+  170-195 ms stall shows only uncapped here; a struggling card may feel it. If
+  so, spread the 6.7 MB upload over several frames. No player report yet.
+  (was: *Check the redwood cull rebuild...*)
+
+- **Give Giant Redwood a fog of its own** -- it borrows Midwest's prairie
+  haze. A look decision for the owner; `tests/mist.test.mjs` lists it in
+  `BORROWS` until then. (was: same heading)
+
+### Tools and code
+
+- **`vite-plugin-singlefile` 2.3.4 would clear the `braces` audit warning**
+  (found 22 October, looking into the vite alerts). 2.3.4 (17 October) swaps
+  micromatch for picomatch, so braces leaves the tree. Build-time only, but
+  it is the plugin the one-file build depends on: upgrading means a build, a
+  look at the page and the smoke run. Not done; the owner's call.
+- **Vite 8.3.3, released in 0.9.3 without a smoke run: run the smoke
+  journeys.** The three Dependabot alerts (launch-editor in the dev server,
+  never shipped) are fixed by it; the newer bundler re-minified the page
+  (equivalent rewrites, 255 bytes smaller). `npm test` and the fingerprint
+  pass; the owner left the smoke run for later and asked for 0.9.3, so no
+  browser has played this build (DISTRIBUTION_REVIEW, *Vite 8.3.3*, *v0.9.3*).
+
+- **A course takes seconds to build, and that is the test suite's whole
+  cost** (the testing audit, 31 October 2026; TESTING.md, *Running the Node
+  tests*). A whole run builds 521 courses; with the processor full the suite
+  is about 205 s, and only cheaper builds (or fewer) make it faster now. A
+  build is three-quarters "Building the ground"; profiled over an 18-hole
+  Links and a 9-hole PNW with water: routing 9%, `nearest` 8%, the shaped
+  height (`shapedNoTees`, `shapedLand`, `land`, `analyticHeight`) about 17%,
+  the hole's widths (`sideWidth`, `width`) 6% -- nothing on its own. A
+  faster build is also a shorter wait to start a round. Must leave both
+  fingerprints silent. (was: *The test suite's wall time*; *The suite's wall
+  time is one file at a time*; *Generation is still ~24% slower*)
+
+- **The per-hole tree list is dead code.** `h.trees` is built per hole in
+  `generateCourse` and only test fixtures without a world read it; its 22 m
+  keep-out reads as though it protects tee shots and protects nothing. Delete
+  it or make it the fallback it is. (was: same heading)
+
+- **Separate main.js concerns**: studio, round settings, scorecard, input
+  and monitor, presentation. Keep IDs and accessible names; no framework move
+  for file size alone. (was: same heading)
+
+- **The profiler should say how its slow frames were paced.** It runs
+  uncapped, so a large upload can show as a 170-195 ms stall that 60 fps never
+  sees; and something on the machine hitching every 200 ms once doubled a
+  biome's cost. Flag a case whose slow frames fall on a regular period and
+  re-run it; consider a fresh browser per case. (was: *The profiler's worst
+  frames are not a player's*; *The profiler can be fooled...*)
+
+- **Fewer, smaller documents, the rest of the 1 October plan.** The first
+  step (ARCHITECTURE.md as the short entry point) is done; moving TODO's
+  `# Done` and PROJECT_HANDOFF's dated narrative into a HISTORY.md, merging
+  LANDSCAPE_RESEARCH into RESEARCH, and the rest of that plan have not started.
+  The plan, with its order and its traps, is in the archive. (was: *Fewer,
+  smaller documents*)
+
+### UI/UX pass (branch `ui-ux-pass`, 21 October)
+
+**V5 plan** (the owner, 22 October, after audit 6: the leftovers, the upright
+saved course card, then audit 7). Smoke after it: **38 of 38 green**. Audit 7
+(364 screenshots, no console errors) saw every entry below. The owner's call on
+Round complete's held buttons (22 October): **keep the narrow band**, though a
+third golfer's row shows beside it on a long Skins card until scrolled.
+**Graphics profile before the merge (22 October, the owner asked):** the branch
+build against main's (d7ec4e9), alternated group by group on the real GPU (an
+RTX 4090), every group but the software `weak` one (a software run took the PC
+down on 13 October). GPU time per frame unchanged within noise -- the largest
+rise 0.3 ms on the low overview; slightly fewer triangles where the view now
+hides what stands in front of the camera. Three outliers (island GPU, redwood
+and midwest CPU) were re-run twice per build and swing as widely on main.
+The 7 October baseline was not compared or re-saved: it predates most of the
+work since.
+
+- **The empty shelf's Saved course card as wide as the rest on an upright
+  phone** (the owner: much skinnier). It took the saved rounds list's class.
+  Built; **seen** at 390x844 (measured: picture and words 154 px like the
+  others).
+- **A second golfer's Make main profile and Remove as outlines (square since 28 October 2026)**
+  (audit 6: the last old grey buttons). Built; **seen** at 1920x1080 and
+  390x844.
+- **Tool windows open clear of the HUD** (audit 6: the range controls over
+  the shot numbers and tool column). Built; **seen** on the range at
+  1920x1080 (left of the marker, under the golfer card) and 1366x768, the
+  round's Tools window and a sideways phone measured clear.
+- **The results' button band only as wide as the buttons, in the
+  landscape's colour** (seen on a Sudden death card: a stray dark bar across
+  the card). Built; **seen** on the Sudden death card. The goal card itself
+  (Sudden death to its end) **seen** in the new layout.
+- **On an upright phone a putt and a pitch keep the ball clear** (audit 6
+  could not check): **seen** -- ball 374 and 466 px, the lie row from 492. The
+  studio's map stays whole after the big map (303 px before and after).
+- **The XP popup hidden under an open sheet** (seen on the Sudden death
+  card: its lines ghosted behind the words). Built; **seen** on that card.
+
+**V4 plan** (from audit 5, the owner's decisions of 22 October: a
+launch-monitor shot while paused may play behind the pause list; a Continue
+row after Save and leave; Esc on a step sheet goes back one step). One commit
+per change; audit 6 looks at each. **Smoke after the V4 changes (22 October):
+37 of 38 journeys green; `phone-portrait` failed once** -- a tap on the course
+did not move the aim on a fresh Endless hole, the picture taken at the hole's
+arrival (no aim line yet) -- and passed 3 of 3 run on its own. Looked into after audit 6: 6 more runs
+alone all passed (9 of 9), and a probe of the arrival found the tap point on
+open course from the first frame (`view.pick` hits ground, no overlay, no
+sheet). Not explained; it may be timing under the full run's load. If it
+comes back, note which frame the tap lands on.
+
+- **Main menu during a flight lands the ball first** (audit 5: the round
+  froze, the menu never came). Built; probed in the capture build: Esc and
+  Main menu 1.5 s into a drive landed it 216 m out and asked to save; audit
+  6's journey the same, with no page error.
+- **The small map stays whole after the big map** (audit 5: the hole in
+  the top half, the rest dark, since audit 2). Built; probed in the capture
+  build (286 px tall before and after M, and with its pixels forced to 1 px);
+  **pictured whole** in audit 6 after the big map. Not seen in the studio.
+- **The file buttons fit an upright phone** (audit 5: the words ran out
+  of the boxes). Built; **seen** at 390x844 in the capture build (Saved
+  courses' Import & export stacked, the saved rounds list's two rows).
+- **The range's Save a session note names R** (audit 5: it said Tab,
+  which shows the shot numbers). Built; PLAYING already said R.
+- **Help's Made to travel names Fairway.html** (audit 5: it said
+  index.html, the build's name, not the file in the download). Built; **seen**
+  in audit 6 at three sizes.
+- **Esc goes back one step on a step sheet** (the owner's decision after
+  audit 5; the top-right Back the same). Built, tested in Node, probed in the
+  capture build: Format, Golfers, The week, Game, closed; Challenges' Rules
+  to Golfers by the Back button. Smoke's close helpers press until closed.
+- **The monitor screen opened from Settings goes back to Settings on Esc**
+  (audit 5). Built; probed in the capture build: the menu's Settings and the
+  round's Settings window (on the tab it was on); straight from the main menu
+  Esc still closes it.
+- **Continue after Save and leave** (the owner's decision after audit 5).
+  Built; probed in the capture build: after Save and leave the menu had
+  Continue, focused, and it put the ball back where it lay (pictured).
+- **A Help topic comes into view on a phone** (audit 5: its text began
+  below the screen). Built; **seen** at 844x390 in the capture build.
+- **My profile's tabs head the page on a phone** (audit 5: below the
+  first screen). Built; **seen** at 844x390 (History brought up) and 390x844.
+- **Settings' help line under the categories** (audit 5: held at the
+  foot it covered the last rows -- at 1920x1080 too, found while fixing it).
+  Built; **seen** at 1920x1080, 1366x768 and 844x390: no row covered
+  (measured). Not seen upright.
+- **The step bar and settings categories wrap on an upright phone**
+  (audit 5: 5 Rules and LAUNCH MONITOR cut off). Built; **seen** at 390x844,
+  every chip inside the screen (measured).
+- **Camera & bay in one column on an upright phone** (found fixing the
+  wrap: two columns, rows wrapped to six lines). Built; **seen** at 390x844.
+- **The challenge of the week's banner stacks on an upright phone**
+  (audit 5: three columns of five short lines). Built; **seen** at 390x844.
+- **The meter's Out of reach words follow the aim** (found looking at the
+  marker: after a drive the sand wedge at 47 yd said Out of reach, left over
+  from the old aim). Built; **seen** in the capture build after the same drive.
+- **My profile's golfer chips on an upright phone** (found fixing the
+  tabs: no room in the header band, not shown). Built; **seen** at 390x844.
+- **My profile's backup and bag buttons as rows (square since 28 October 2026)** (audit 5: old
+  grey buttons; History's handicap paragraph a note). Built; **seen** at
+  1920x1080.
+- **Save a course's Open course studio as a row (square since 28 October 2026)** (audit 5).
+  Built; **seen** at 1920x1080.
+- **A challenge's results laid out like Round complete** (audit 5).
+  Built; **seen** in the capture build after closest to the pin for two, and
+  in audit 6's journey. Not seen: a goal round's (Sudden death, Bogey-free nine) card, a phone.
+- **Round complete's share note at a readable size** (audit 5: small print
+  over the card buttons; 13 px to 17 px). Built; **seen** after a stroke round.
+- **Round complete's buttons held in reach** (audit 5: below the screen
+  with three in Skins). Built; **seen** after a Skins round for three (at the
+  foot on arrival, in place at the end) and a stroke round. Not seen on a
+  phone.
+- **The range's Golfers step says WHO'S PLAYING · 1 TO 4** (audit 5: it
+  said WHO IS HITTING, the only place). Built; **seen** in the capture build.
+- **New in studio and Import a code share one shelf cell** (audit 5:
+  Import a code alone on a row with three courses). Built; **seen** with three
+  courses and empty (measured); the closer icon spacing not yet pictured.
+- **A different sheet opens at its top** (audit 6: after a scrolled Help
+  page, My profile opened 328 px down). Built; probed at 844x390 (tabs at the
+  top again).
+
+**V3 plan** (from audit 3, the owner's decisions of 21 October: free flight
+keeps the trees the play view cleared until it moves; no graphics profile until
+asked; stay on this branch; the launch monitor's supported list in one box; the
+pause list's Settings row offset; seats centred on their slant; no "Nothing hit
+yet" box anywhere; on a phone nothing covers the ball or the aim line). One
+commit per category.
+
+- **V3 category 1, phones: built, seen in the capture build.** Seen at
+  844x390 and 390x844: the ball above the meter and every row (measured and
+  pictured), no empty shot box, the sideways XP popup under the wind, the
+  sheet's foot on a solid band. Smoke: hud-reachable, menu-panels on both
+  phones, endless-round pass. Not seen: a putt or a pitch on a phone with the
+  lift (the green camera frames the ball differently), a real phone.
+- **V3 category 2, seats and the pause list: built, seen in the capture
+  build.** Seen: seats centred on their lean in Play, Challenges, the range and
+  Golfers & rules mid-round; the six pause rows the same size and evenly
+  stepped (measured). Not seen: a seat with the launch-monitor pickers under
+  it (they lean with it too), phones.
+- **V3 category 3, free flight keeps the cleared trees until it moves:
+  built, probed in the capture build** (2 hidden at a tee, 2 after V, 0 after
+  flying). Not seen by a person flying away from a tee.
+- **V3 category 4, the launch monitor's list in one box: built, seen in
+  the capture build.** Seen: rēlā's nine monitors in one box under the Arm
+  switch, no gap. Smoke: monitor, monitor-phone pass. Not seen on a phone
+  (the monitor screen opens at the top there; the box is further down).
+- **V3 category 5, polish from audit 3: built, seen in the capture
+  build.** Seen: step sheets from the top, the friend step's three rows, the
+  studio without its opening sentence, Reset camera as a row. Smoke:
+  menu-panels, studio, skins, friend-challenge pass. Not seen: Round
+  complete's rows at full width (audit 4 looks).
+- **Audit 4 found the default aim 5 m in front of the tee** on an uphill
+  Endless hole into a 10 mph wind (the V2 "never out of reach" rule fell to its
+  floor when the ball model answered nothing). Fixed in code (longestReach
+  returns null; under 40% of the carry is ignored), tested in Node. Probed
+  afterwards on three random Endless first holes: the driver's default aim
+  254, 259 and 245 yd, none out of reach, none near the tee. **The failing
+  hole itself was not met again** (Endless holes are random): still check an
+  uphill hole into the wind.
+- **Play's saved rounds button shows with none saved** (the owner, 21
+  October: with no saved rounds the button hid, and with it Import a round from
+  a file). Built, tested and **seen** in a fresh browser (21 October): SAVED
+  ROUNDS · IMPORT A ROUND under the cards opens the list with Import a round
+  from a file. That list's Export and Import buttons are now rows too (square since 28 October 2026)
+  (seen in a fresh browser, 21 October: Import lit, Export dimmed with no round
+  to export). While the list is open the heading reads SAVED ROUNDS (seen
+  in a fresh browser, 21 October).
+- **Saved courses: the file buttons as rows (square since 28 October 2026), the intro one line**
+  (audit 4's leftovers): built, tested and **seen** in the capture build
+  (21 October, once the card was free): the intro one line over the tabs, the
+  two file buttons as rows (square since 28 October 2026) in the accent.
+
+**V2 plan** (from audit 2, the owner's decisions of 21 October: Play opens on
+game types with the week's page back; Challenges a row of their own with a
+Golfers step and rules the same for everyone; shot tiles on the left by
+default; the view cleared of rocks and the rest, not only trees). One commit
+per category.
+
+- **V2 category 1, Play's game types: built, seen in the capture build.**
+  Seen: the six cards, The week (picture, tiles, earlier weeks), the saved
+  course's shelf after two codes imported on the step itself, the empty shelf
+  with its import box, Surprise me's Rules with its picture and Roll another
+  course, Endless's Landscape. Not seen: Roll another course pressed, a
+  friend's code pasted into the saved step's box, Surprise me teed off from
+  Play by a person, the cards on a phone. Audit 3 found The week's 430 px
+  picture filling a landscape phone, the name under the buttons: a 170 px strip
+  on phones now (seen at 844x390).
+- **V2 category 2, Challenges' own row: built, seen in the capture build.**
+  Seen: the menu with six rows, the three steps, a head-to-head's Golfers
+  saying two to four, the fixed rules with Start, a challenge started from
+  Rules and its pause list without Golfers & rules. Smoke: challenge,
+  challenge-week, challenge-more pass. Not seen: the steps on a phone, a
+  head-to-head played by two from the steps (the journey uses `lab.challenge`).
+- **V2 category 3, the round screen: built, seen in the capture build.**
+  Seen: the shot tiles at the left edge at 1920x1080 and 1366x768, the ?
+  list below the hole slab, free flight's pill and Jump to green each in one
+  row, the challenge bar under the hole slab with no turn plate; the default
+  aim from the rough probed at four places, none out of reach. Smoke:
+  hud-reachable, endless-round, challenge, look pass. Not seen by a person:
+  dragging the tiles from their new place and double-clicking them back; a
+  short uphill par 4 off the tee. The audit-2 note that free flight's header
+  was cut off by the screen's top was wrong -- the contact sheet's file label
+  covered it -- but its yardage and list did hang below their panels.
+- **V2 category 4, menus tidied: built, seen in the capture build.**
+  Seen: Import & export in two columns, the launch monitor's connectors under
+  their heading, the studio's Saved courses row and Show all descriptions in
+  the foot, a window's ? Explain before its close, the scorecard between holes
+  across the sheet with Download in the countdown's row, Endless's THE RUN.
+  Smoke: menu-panels, studio, monitor, skins, mixed-group pass. Not seen:
+  ? Explain pressed, the round-complete card at the new width (audit 3 looks),
+  any of it on a phone. Left: the launch monitor's left foot still starts
+  level with the status column's end, a gap under the arm row.
+- **V2 category 5, cameras and phones: built, seen in the capture build.**
+  Seen: boulders hidden with the camera behind them (probe), the upright
+  phone without the empty shot panel, Skip during a flight, the XP popup
+  under the map, and the upright menu that had the old Endless and Course of
+  the week rows back (fixed). Smoke: no-late-shaders, ball-light-shaders,
+  menu-panels on both phones, hud-reachable, floodlit-night,
+  ball-light-hole-out, boot, range pass; fingerprint unchanged. **Not run:
+  `npm run profile`** -- vegetation.js now tests every boulder, log, house and
+  prop when the camera moves (about ten minutes on the graphics card; ask
+  first). Not seen: a house cleared in play, the menu camera
+  clearing a fir (it needs the right showcase hole).
+
+The owner's audit of 0.9.1 (local report, *Fairway UI Audit*) and its six
+phases, run on one branch with a commit each; the owner's decisions: a shorter
+pause list, the course of the week as the first-launch default, floating
+windows kept for settings better adjusted while seeing the course, under par
+green everywhere, and every mode but the range under one Play.
+
+- **Phase 1, the first ten minutes: built, seen in a fresh browser.**
+  Play opens on the course of the week and Tee off starts it (checked: a fresh
+  browser pressed straight through to a round); the swing strip over the meter
+  and the first-swing coach were seen; the ? list from `keys.js`. Not seen: the
+  tool labels' new names read in a real round by a person, the main menu's
+  hover-to-focus with a mouse, the challenge-of-the-week card as a button.
+- **Phase 6, cameras and phones: built, seen in the capture build.**
+  Seen: both blocked tees clear, the overview without clouds, the aim ring
+  whole, the phone settings rows below their tabs, the upright wind under the
+  hole. Smoke: no-late-shaders, ball-light-shaders, ball-light-hole-out,
+  floodlit-night, challenge, look, hud-reachable, menu-panels (both phones),
+  endless-round, skins pass; fingerprint unchanged. Not run: `npm run profile`
+  (renderer.js and vegetation.js changed: the per-frame tree check and the
+  clouds' visibility; ask before running it). Not seen by a person: trees
+  vanishing as the camera turns -- watch for crowns popping in and out beside
+  the tee.
+- **Phase 5, old pieces to 1.0: built, seen in the capture build.** Seen:
+  Saved courses empty with its two cards, Help's essentials, Report a problem
+  with the toast over the sheet, credits rows, the launch monitor's switch and
+  rows, profile stats and achievements. Smoke: menu-panels, studio, monitor,
+  profile, no-swallowed-errors pass. Not seen: the studio slab's new mark and
+  footer, free flight's Jump to green with its value, the phone XP popup and
+  Skip. (The launch monitor's orphan connector heading is gone: V3 category 4
+  put rēlā's monitors in one box.)
+- **Phase 4, one Play for every mode: built, seen in the capture build.**
+  Seen: the menu with five rows, Play's seven cards, Endless's Landscape step,
+  a friend's The challenge step, the week locking the format, Challenges with
+  its keys footer and the list on the chosen challenge's tab. Smoke:
+  endless-round, weekly, friend-challenge, challenge, challenge-week,
+  challenge-more, skins, level-up, menu-panels (three sizes), hud-reachable,
+  monitor-phone, boot, no-late-shaders, ball-light-shaders,
+  ball-light-hole-out, profile, bag, relief, mixed-group pass. Not seen by a
+  person: a friend's code read on the new step end to end (the smoke journey
+  does it), Play on a phone with seven cards, Endless's start button now on
+  the last step.
+- **Phase 3, pause and settings: built, seen in the capture build.** Seen:
+  the six-row pause list, the Settings window and every tab (the time of day
+  needed a fix: the clock closed itself), Tools by T, Golfers & rules, the range
+  arriving with its controls closed. Smoke: menu-panels (all three sizes),
+  endless-round, floodlit-night, sound, relief, bag, profile, mixed-group,
+  range, range-greens, text-size, no-swallowed-errors, hud-reachable, monitor,
+  monitor-phone, challenge, challenge-week, challenge-more, look, weekly,
+  surprise-round, studio pass. Not seen by a person: whether the window's tabs
+  are where a player looks for each setting; the Settings window on a phone.
+- **Phase 2, end of hole and round: built, seen in two played rounds.**
+  Seen: a stroke-play tie (headline, card, TIED rows, one row of buttons,
+  readable share buttons) and a no-skins skins round; under par green on the
+  card. Not seen: match play's Round complete, a scramble's, the grouped XP
+  popup with real golfers holing out close together (the audit places balls at
+  the cup), the popup's new place in a real round, a level-up crossing inside
+  the grouped popup.
+
+### Release 0.9.6 (31 October)
+
+- **Owner: play 0.9.6 before calling it good.** Released at the owner's
+  word ("Lets merge this back into main. I think i want to keep this still
+  0.9 so lets make another path version and push the latest to both github
+  as well as the live website") with **no smoke run on its build** -- the
+  graphics card was not asked for. It carries the 1.0 interface polish
+  (merged 29 October, unreleased until now; hand-check list above, *Playing
+  it by hand, screen by screen*) and Architect courses (beta) with the
+  owner's three reviews; the smoke journeys `architect-studio` and
+  `architect-round` last ran on the branch on 31 October, before the far
+  heath and the models. Not seen in the game: the far heath, the eleven
+  unwrapped models (Graphics, above). Website redeployed with it.
+
+### Release 0.9.5 (27 October)
+
+- **Owner: play 0.9.5 before calling it good.** Released at the owner's
+  word with **no smoke run on its build** ("No smoke tests or anything needed
+  for this. I'll be performing a final one after another goal"). It carries
+  the cartoon overhaul (Lakeshore Dunes, every model, landscape, mowing, water
+  and light new) and the asset cleanup. What to look at in play is in the
+  open *cartoon overhaul* entries above; the smoke journeys last ran on the
+  overhaul branch (35 of 37, then the two failures followed up: TODO there).
+  Website redeployed with it.
+
+### Release 0.9.4 (23 October)
+
+- **Owner: play 0.9.4 on Ultra and Low.** Released from the merge of
+  `release-0.9.4` (the `frame-rate` journey) into `main`; what to look at is in
+  *Frame-rate goal* under *Graphics*. Six smoke journeys passed; the rest were
+  not run. Website redeployed with it.
+
+### Release 0.9.3 (22 October)
+
+- **0.9.3 went out without a smoke run.** (23 October: six journeys --
+  `hud-reachable`, `range`, `endless-round`, `floodlit-night`,
+  `phone-portrait`, `phone-landscape` -- passed on 0.9.4's build, which carries
+  the same Vite 8.3.3; the rest still to run.) Vite 8.3.3 only (the three
+  Dependabot alerts); the game's source is 0.9.2's, re-minified by the newer
+  bundler. Run the smoke journeys (*Tools and code*), and the owner's phone
+  and PC testing of 0.9.2 holds for it. Website not redeployed.
+
+### Release 0.9.2 (22 October)
+
+- **Owner: play 0.9.2 on a phone and a PC.** Released from the merge of
+  `release-0.9.2` (the `ui-ux-pass` journey) into `main`; the website is not
+  redeployed (its demo stays on 0.9.1, its Download buttons serve 0.9.2).
+  Smoke 38 of 38 and audit 7 clean; nobody has played it by hand. The UI/UX
+  pass section above lists what each change was seen doing. What was checked
+  is in DISTRIBUTION_REVIEW, *v0.9.2*.
+
+### Release 0.9.1 (20 October)
+
+- **Owner: play 0.9.1, which went out unplayed.** Released from the merge
+  of `release-0.9.1` (the `challenge-a-friend` journey) into `main`, and the
+  website redeployed so its demo is 0.9.1. No smoke run and no look in a
+  browser after the owner's ten fixes (the graphics card was busy, and no GPU
+  run was asked for): the checklist is under *Challenge a friend*, *The
+  owner's ten fixes*. The studio smoke journey was rewritten for the save box
+  and has not run. What was checked is in DISTRIBUTION_REVIEW, *v0.9.1*.
+
+### Release 0.9 (18 October)
+
+- **Owner: play 0.9 and look over the 1.0 website.** Released from the
+  merge of `release-0.9` (the `ui-1-0` journey and the capture tools) into
+  `main`; the website was redeployed live from its branch `website-1-0`
+  (that repository; not merged there). What was checked is in
+  DISTRIBUTION_REVIEW, *v0.9*. Not seen by a person: the 1.0 interface in a
+  real round on this machine, the sounds, a phone. The smoke's
+  `ball-light-hole-out` failed once in the release run and passed on a rerun
+  (the intermittent entry above).
+
+### Challenge a friend (branch `challenge-a-friend`, 20 October)
+
+The owner's pick from IDEAS.md, decided with them on 20 October: a finished
+stroke-play card, its course and every shot as a code; the friend plays the
+same course against it, the challenger's shots drawn on each hole; total
+strokes decide it, each hole's winner shown; the rules are shown, not forced;
+and only on the same version of Fairway. `src/rival.js`, wired in main.js
+(PROJECT_HANDOFF *A friend's challenge*; RESEARCH *Challenge a friend*).
+
+- **Built, not seen working: play it.** Nobody has played any of it in the
+  game; the Node tests (`tests/rival.test.mjs`) cover the code, the comparison
+  and shots flown again on a real course, and the build is clean. To check, on
+  one machine: finish a 9-hole stroke round, press *Challenge a friend* under
+  Round complete (one golfer: the code is copied at once; several: press the
+  golfer's card; *Save as a file* saves it); then Play →
+  *A friend's challenge*, paste it, *Read the code*, play it. Look for: the
+  white dashed lines of their shots on each hole from the first tee; their row
+  in italics on the scorecard and the line above it ("2 ahead of Sam after
+  7"); "Sam made 4 · hole won" in the hole-out card; *Against Sam's card* in
+  Round complete, with any rules that differed. Also paste the code into Saved
+  courses' course code box (it should open the challenge), and try one from a
+  different build (it should be refused, naming both versions). The smoke
+  journey `friend-challenge` passed on the real GPU on 20 October (paste, read,
+  round started and remembered, a shot logged, the friend's row on the
+  scorecard), but it takes no picture, so none of it has been looked at.
+- **The shot lines may not look right.** Placed without a mockup: white,
+  dashed 1.2 m on and off, drawn whatever the shot-lines setting says, under
+  the player's own lines. The setup screen and the card on Play step 1 are also
+  placed on the course of the week's frames, not designed.
+- **The owner's ten fixes of 20 October: built, none seen in the game.**
+  Nothing here was run in a browser (no GPU work was asked for); `npm test`
+  (with the new `camera-orbit` suite and two `round-hud` tests) and the build
+  pass. To check, on the branch: (1) the studio's *Save course* (bar and Esc
+  list) opens a box -- name, *Save*, *Go back*; Enter saves, Escape goes back.
+  (2) After a hole-out, close the scorecard: *NEXT HOLE · n* (Enter) at the
+  bottom middle, not shown until the scorecard has opened once; *FINAL
+  SCORECARD* after the last hole. (3) Round complete: title, the card, the
+  standings with XP / level / handicap on each row (and a scramble team's
+  golfers named), one row of buttons; *Challenge a friend* opens the code box.
+  (4) A small CAM box beside the wind naming the view; it changes with C, G, V
+  and a flyover. (5) In the aim point and green views (G), drag to turn round
+  the spot, wheel to zoom, a plain click still aims; the turn resets when the
+  view changes. Look for the camera fighting the drag or dipping under the
+  ground. (6) The aim point's label stays 3 s after the aim stops. (7) "N YDS
+  TO HOLE" after the aim point's rise. (8) Play's course cards and Endless's
+  landscapes: picture and caption as one leaning shape, one outline when
+  chosen; the 3D model still fills the picture. (9) Saved courses: one shape
+  per card, no double lean. (10) Saved courses' icons: Play, Rename, Copy
+  code (the code box under the shelf), Delete twice. Also check a phone, and
+  that the rightmost Play card's corner is not cut at 16:9 and 21:9.
+- **Leftovers, if wanted:** the downloaded scorecard (CSV) has no row for
+  the friend's card; a friend's round on a code made from the course of the
+  week does not count as the course of the week; and there is no way to delete
+  a kept challenge (the 20 newest are kept, the oldest drop off).
+
+## The builder made easy (branch `builder-ux`, from 10 November 2026)
+
+- [x] **Goal closed** (the owner, 10 November 2026, after trying the branch:
+  "Im happy with these changes. Mark everything complete for this goal.
+  Merge back into main"). Merged into main and released as v0.9.12. The
+  open items as they stood, closed at that word -- the six tee sets in a
+  round and the markers on a narrow built tee were not reported tried, the
+  two times below were never measured, and the draft still forgets the
+  picture's settings and History's names:
+  > - **Try by hand, still open** (the owner tried the rest on 10 November
+  > 2026; the record is under # Done): **Build it myself** from a box on the
+  > map -- Download the box here on real services, the box as the property, and
+  > **Next: build the land** starting the build by itself; and the pen as
+  > changed that day (no Apply: the first node or Enter fills at once).
+  > - **Map data, still open** (item 24): Worthington's numbering, which no
+  > check can settle without the real routing. (The guessed green for a hole
+  > drawn to the wrong one is gone since 10 November 2026: the owner, "just
+  > tell the user it needs fixing".)
+  > - **The six tee sets, not seen by a person** (10 November 2026;
+  > COURSE_BUILDER, *Six tee sets*): a built course with four or more sets in
+  > a round -- each golfer's seat buttons, Playing tee, the scorecard's rows,
+  > a golfer on a set the course lacks; the tee markers on a narrow built tee
+  > and sets sharing a box; the holes step's six coloured buttons and its
+  > scorecard columns; a course from OpenStreetMap whose map tags its tees
+  > (Worthington has one tagged box: blue, white, gold, red).
+  > - **Not measured:** the 2D plan's frame time with the picture on its own
+  > finer grid (one canvas drawImage a frame; up to about 36 million pixels);
+  > the kept draft's time to write on a large course (it runs quietly every 3
+  > minutes; on Worthington's 33 MB draft, not timed).
+  > - **Not kept in a draft:** the picture's brightness, contrast and date, and
+  > the names in History (all come back as they start).
+  > - **Before a release carrying this:** build it from main after the merge,
+  > as always. `npm run release` was tried on the branch (10 November 2026):
+  > all five zips verified, the guide in each player zip with its pictures
+  > (DISTRIBUTION_REVIEW, *The builder's guide in every download*).
+
+- [x] **Tried by hand** (the owner, 10 November 2026, on the builder-ux branch):
+  "build it for me is good"; Checking the map's warnings "do point to real
+  issues" (and the guessed green for a wrong hole was dropped for it: "just
+  tell the user it needs fixing"); the pen "mostly good but we dont need to
+  have an apply button" (taken out the same day); the steadied brush "great";
+  layers "good"; saving "good"; "all the quick checks look good" -- the
+  menus and keys, tips, Measure, copy and paste, the hole navigator, the
+  sharp picture, Skin from the land, Bring it back, Save for Fairway, the 3D
+  editor's pieces and the guide. The list as it was:
+  > **Try by hand, in this order** (the owner's): door 2's **Find the
+  > course** (10 November 2026, after the hand-over; COURSE_BUILDER, *The map
+  > first, then the box, then the LIDAR* and *One search bar for both ways*): a
+  > course by name in the one search bar, the map round it, a box dragged round
+  > the course; then **Build it myself**, Download the box here, the box as the
+  > property on the relief, and **Next: build the land** starting the build by
+  > itself -- the download and the land from a drawn box not yet run on real
+  > services; then **Build it for me** on a course you know, from the same bar
+  > and a box (on Worthington, the club is taken at once): does its warning
+  > read right, the time it takes, and what the review or the holes step
+  > shows; **Checking
+  > the map** on Worthington: does each doubt point at a real fault, and do the
+  > fixes (one at a time, then Take the fixes offered) put holes where they
+  > belong; the **pen** round a green and a bunker (does the curve shown match
+  > what fills; closing on the first node; dragging a node); the **steadied
+  > brush** at Steadiness 0, 50 and 90 (does 50 feel right); **layers** (is the
+  > "goes under" line and the flash enough to make the rule clear); the menus
+  > and keys (? for the list); the 3D editor's icon strip, Add a hole and Remove
+  > this hole; the step tips (Got it); Check against the scorecard with the
+  > club's real card; **Measure**, copy and paste, the hole navigator
+  > (. and ,) and the overview map; the **sharp picture** zoomed in on a green;
+  > Skin from the land's **Before (hold)**; closing the tab mid-course and
+  > **Bring it back**; **Save the course for Fairway** on the review, then
+  > Import in the game and play a hole; the 3D editor's one brush and pen, and
+  > Delete on a pond and a creek; the guide (Fairway Builder Guide.html after
+  > `npm run build`, as `dist/builder-guide.html`).
+
+- [x] **Desert Resort's African sumac remade from Meshy** (the owner, 9 November 2026, a
+  screenshot: "What are these trees. We need to remake them with meshy i think. They don't look
+  like anything we built"). The dark puff-ball trees were the hand-built `africansumac`, the only
+  Desert Resort tree not from Meshy. Eleven reference photographs (RESEARCH, *African sumac*), two
+  models in tools/meshy/desertres.json, the owner's pick of the four pictures (take 1 of each), 96
+  credits in all; shipped as Blender_DrSumac_1 and 2 in vendor/blender-meshy_desertres under the
+  same species key, with far versions; the hand-built ones no longer exported. The leaf lifted a
+  step (summer #6e9050) after the first look in the game read near black. Every landscape's
+  ground unchanged (fingerprint). Seen in captures, not played; the frame cost on Low not measured
+  (two models of about 12,500 triangles, like the pack's others, each with a far version).
+
+- [x] **Skin from the land on Desert Mountain** (the owner, 9 November 2026: "can we do that for
+  the desert mountain course as well?"). One code path for every landscape already; TPC Scottsdale
+  has no mountains in its survey, so Troon North's Monument was built from 3DEP and skinned
+  (tools/build-courses.mjs `troon-north`). The desert's apron is now its floor, hardpan, not the
+  washes' sand (skin.js `skinKinds`); a club boundary holding two courses is split by its hole
+  lines' course names (osm-course.js `only`). Seen in the game on Troon North's tors; the picker's
+  split not seen in the builder's page, only tested; not played by a person. docs/COURSE_BUILDER.md.
+
+- [x] **Built courses' greens not mown to their edge, and their tees not mown at all** (the owner,
+  8 November 2026, with a screenshot). Fixed in ground.js (PROJECT_HANDOFF, *A BUILT COURSE'S MOWING
+  READS THE BUILT EDGES*), seen in the game on four bench courses; released as 0.9.9. Not played by
+  hand.
+
+- [x] **Desert Resort's bougainvillea is bright magenta under the floodlights** (7 November 2026).
+  Fixed 8 November: its magenta (#c8288a) clipped to neon in the game's light by day and was the
+  brightest thing on a floodlit night; now #a03a72 (autumn #b0583e, winter #8e4a70), in
+  tools/blender/cartoon_keys.py's LOOK, season-tints.js regenerated, vegetation.js. Seen in the game
+  by day and night (RESEARCH, *The bougainvillea's magenta*). Florida Palms and the Hawaiian Resort
+  share it.
+- [x] **Seaside Links is hard to press on the landscape map** (8 November 2026). The owner: fine,
+  players pick from the cards. The smoke journey presses a point where each region is on top.
+- [x] **Mountain's lupine has a brown disc floating beside it** (8 November 2026). The owner: it is a
+  divot, which is right.
+
+- [x] **Night lighting is broken in the Course Builder** (the owner, 7 November 2026). Fixed 8
+  November: every floodlight pole was a live lamp, and past about 118 the shaders run out of room and
+  the lit ground draws as nothing -- ten of the fifteen bench courses (98-129 poles) and long generated
+  eighteens. floodlights.js `lampBudget`: at most 96 live, nearest the ball; tests/floodlights.test.mjs.
+  Retaken in the game, all lit (RESEARCH, *Night lighting*). Not played by hand.
+
+## US golf courses (branch `us-golf-courses`)
+
+- [x] **Desert Mountain, rounds 2-9** (signed off 8 November 2026) (7 November): round 7 on the owner's notes --
+  orange-tan rock the colour of the props, long joined ranges laid first and the holes routed round
+  and along them (`range`, routing.js; round 8's smaller ranges, after the owner found an eighteen boxed in: about 30% of holes with a
+  rock wall within 40 m of their rough, short of the owner's 60% -- a shorter fade reached 40% but stood a fairway on a range, not understood), the land tilted
+  toward the big mountain, one big mountain on the horizon shaped on
+  Superstition Mountain (`ringMassif`), and about 1.5 holes in 18 teeing off a rocky outcrop with
+  only the tee cut flat (`rockTees`; the back tee, sometimes the middle one). Captured on seed FAIRWAY and the rock tee on seed TROON, not
+  played: check in the game a drive off the outcrop, the walk or cart path to its top (none climbs it
+  yet), and a ball landing on its rock flank. At sign-off it replaces the Sonoran, Mojave, Chihuahuan
+  and Red Rock. Until then a map test fails, as expected: it takes their map shape only through
+  OLD_KEYS; that test also finds Florida Palms' and North Woods' own places outside their shapes
+  (tools/us-map.mjs or their `where`). Seen in the 18-hole capture and not fixed: the entrance road climbs straight over a range.
+  Round 9 (8 November): three trials built as switches and captured on four seeds -- ranges on the
+  big mountain's side only (`range.side`, routing `frontTurn`), a bigger area (`spread`), both. The
+  owner picked one side: on since generator 96; no blind tee shots (quick tier), 17 rock tees over ten
+  eighteens. The five-view set on seed FAIRWAY in four seasons retaken (7 November, one run at a time);
+  `spread` stays in the code switched off. Waiting for the owner's sign-off. The `--no-clouds` capture switch does not hide the clouds;
+  look before using it again.
+
+## US landscapes (branch `course-builder`, from 2 November 2026)
+
+- [x] **Foundations**: the `REGION` table and inheritance; the new keys and
+  player names (study's data/names.json) with one `MIGRATIONS` entry from
+  today's keys; `tests/landscapes-complete.test.mjs`; the seasons module;
+  the partition shipped, door 2's suggestion, **the clickable map** in the
+  course card, studio and builder, and **a small globe in each landscape
+  thumbnail's corner** marking where it is.
+  **Built** (step 2): regions.js (every landscape, its region, place and
+  the old keys), biomes.js keyed by region with each landscape's `LAND` over
+  it, the new keys and names with MIGRATIONS 16 (schema 17) and the old keys
+  read in course files, profiles and endless seeds (generator 56: the seven
+  renamed landscapes' world pieces moved), tests/landscapes-complete.test.mjs,
+  seasons.js (summer only until step 9; the turf palettes come with the
+  seasons), the partition shipped (us-map-data.js, 215 KB, tools/us-map.mjs),
+  the clickable map in Course studio, Endless and the builder's doors 1 and
+  2, a globe on every landscape picture, door 2's suggestion from where the
+  survey lies. Not seen by a person: the open entry *the map, the globes and
+  the new names*.
+- [x] **Remove Architect** (the designer, its styles and hole design, hand
+  tools, `ARCHITECT_VERSION`, the studio's choice, its tests, tools and
+  doc), **tournament week** (`occasion.js`, `leaderboard.js`) and **the
+  people** (`life.js`); **move into the generator** the paths and bridges,
+  clubhouse, markings, waterworks, walls, landmarks, wildlife, yardage book
+  and surface field, with **every path over water a bridge** (PLAN.md 1b).
+  Saved Architect courses migrate.
+- [x] **Remove Haunted Hollow**: the landscape, `haunts.js`, `seasons.js`'s
+  date switch, the weekly challenge's Haunted turn, its sounds, Blender pack,
+  meshes, names, tests, captures and fixtures. Saved courses migrate to New
+  England in autumn.
+  **Built** (commits 53c4aa2, ee77600 and step 1c): Haunted Hollow, its date
+  switch and assets gone, saves opening on Autumn (SCHEMA_VERSION 15); the
+  people and tournament week gone; Architect gone -- designer.js,
+  architect.js, architect-styles.js, hand-tools.js, `ARCHITECT_VERSION`, the
+  studio's choice, four suites, two smoke journeys, architect-difficulty.mjs
+  and the Architect fingerprint store; an Architect save loads as an ordinary
+  course (SCHEMA_VERSION 16, the version notice shown). The world pieces run
+  on every generated course from their own streams (world-stream.js), each
+  landscape's kit its `WORLD` block; `findBridges` makes every path over
+  water a bridge, the clubhouse's link included, held by a test on every
+  landscape and the bench's `pathOverWater` invariant. GENERATOR_VERSION 55.
+  Not seen by a person: the open entry *the world round the holes*.
+
+## Architect courses (branch `architect-courses`, from 30 October 2026)
+
+- [x] **Closed unplayed on 2 November 2026: Architect was removed** (the US
+  landscapes goal). The open play checks -- the studio's *How the course is
+  made*, phase 1's designed holes, phases 2-7 (paths, relief, hole names and
+  the architect's note, the crest's founding line, markings, the clubhouse,
+  collection areas, mounds, waterworks, the story and the land's templates,
+  life, tournament week, the yardage book), the owner's two reviews, and the
+  surface field and turned greens -- were never played by a person. What
+  survives the removal is checked under *US landscapes*, *the world round the
+  holes*; the far heath entry moved to *Graphics*. The entries' text is in
+  git history (this file before step 1c).
+
+## Fairway Course Builder (branch `course-builder`, from 31 October 2026)
+
+- [x] **Reopening a course with everything: play it by hand.** Driven in the
+  built builder on TPC Scottsdale with real data (the USGS picture, OpenStreetMap,
+  a par changed in 3D, saved, reopened, Back to 2D: all back, no errors), and the
+  file's game side by tests. Not seen: a Google or Bing picture, a picture file,
+  a hand-matched picture, a reopened file imported by hand in the game on a
+  phone. COURSE_BUILDER, *The builder's section*. **Closed 9 November 2026: the owner has played all of it by hand** (the owner: "I have tried all of the things in the 'not tried by a person' for the builder"). What the owner found goes into the builder-ux goal (docs/COURSE_BUILDER.md, *The builder-ux goal*).
+- [x] **Trees placed for you: play it by hand.** The LIDAR sizes toggle and the species
+  ticks driven in the built builder on Northwood's file: live in the 3D view, in Game
+  view, saved, reopened, Back to 2D, no errors. Not seen: a change made in the 2D
+  panel carried to the game, and a round played. COURSE_BUILDER, *The trees placed
+  for you*. **Closed 9 November 2026: the owner has played all of it by hand** (the owner: "I have tried all of the things in the 'not tried by a person' for the builder"). What the owner found goes into the builder-ux goal (docs/COURSE_BUILDER.md, *The builder-ux goal*).
+- [x] **Door 2's new steps are not played by a person** (the owner's order of
+  31 October 2026: LIDAR, land, auto or manual trace, holes, name, the painted
+  review): the builder-door-2 journey drives every control once. **Closed 9 November 2026: the owner has played all of it by hand** (the owner: "I have tried all of the things in the 'not tried by a person' for the builder"). What the owner found goes into the builder-ux goal (docs/COURSE_BUILDER.md, *The builder-ux goal*).
+- [x] **Not played by a person: the trace step's 1 November list** (the
+  owner's list after testing; docs/COURSE_BUILDER.md, *The amended goal*,
+  item 10): the landscape in the trace step, every layer listed with empty
+  ones marked, Extrapolate, the banner, the renamed brushes, Google's key
+  steps, the course boundary and Fill outside it, houses (tool, zone,
+  OpenStreetMap's buildings) and the smooth view. The builder-door-2 and
+  builder-door-2-osm journeys drive each once and the game plays a tee shot
+  on a course with a house; nobody has looked at a built house in the game
+  or painted with the smooth view by hand. In the editor since 1 November
+  2026 (drawn, the House tool, Clear houses): the builder-door-2-osm journey
+  draws the map's house, has one refused on the fairway, stands one on the
+  rough and undoes it; not played by a person. **Closed 9 November 2026: the owner has played all of it by hand** (the owner: "I have tried all of the things in the 'not tried by a person' for the builder"). What the owner found goes into the builder-ux goal (docs/COURSE_BUILDER.md, *The builder-ux goal*).
+- [x] **Not played by a person: Viewing, the picture's lock, Move shape**
+  (docs/COURSE_BUILDER.md, *The amended goal*, items 11 and 12; the trace
+  step). The builder-door-2 journey sets the opacities, draws the LIDAR's
+  slope over the picture, unlocks, drags, nudges and locks the picture, and
+  moves a bunker and undoes it. To check by hand: whether a half-seen slope
+  over a real picture makes the bunkers easy to line up, and whether picking
+  the chosen layer before the topmost surprises anyone. Move shape is in
+  the editor too (the builder-tools journey drags a bunker and undoes it;
+  under a tree's crown it takes the tree). Turn shape too, in both (the
+  builder-door-2 journey turns a bunker a quarter and undoes it). **Closed 9 November 2026: the owner has played all of it by hand** (the owner: "I have tried all of the things in the 'not tried by a person' for the builder"). What the owner found goes into the builder-ux goal (docs/COURSE_BUILDER.md, *The builder-ux goal*).
+- [x] **Not played by a person: the 1 November evening list** (docs/COURSE_BUILDER.md,
+  amendments 13-14): Find LIDAR (the search, the in-page download of a USGS
+  square or IGN tiles, rockyweb's tiles through the bridge or the browser's
+  downloads, the 36 state portals), Save on every screen with Save again and
+  door 2 drafts, the kept pictures (Showing), the editor's WASD flying and
+  its smoothed surfaces, State Plane surveys placed. Checked: the
+  builder-door-2 journey (search with the National Map stood in for, Save
+  and Save again with a stand-in dialog, a renamed Save, a draft reopened,
+  the 3D view's texels and W/Q); tools/lidar-search.mjs (a real Worthington
+  square through Entwine, ground equal to the owner's tiles to 0.1 cm); a
+  real rockyweb range through a test bridge. **Not checked**: the rockyweb
+  download read from the LIDAR folder (a browser download a script cannot
+  watch), the bridge path from the page (the owner's running bridge needs a
+  restart to have the route), IGN's in-page download end to end, a real
+  save dialog in Chrome, WASD feel. (Swiss LV95 has been worked since the
+  same night: swissSURFACE3D found and downloaded in the page.) **Closed 9 November 2026: the owner has played all of it by hand** (the owner: "I have tried all of the things in the 'not tried by a person' for the builder"). What the owner found goes into the builder-ux goal (docs/COURSE_BUILDER.md, *The builder-ux goal*).
+- [x] **Not played by a person: amendment 17** (docs/COURSE_BUILDER.md; every
+  course in bench/lidar built, 1 November 2026): the fourteen courses in
+  bench/courses (built by tools/build-courses.mjs, opened in the game by
+  tools/play-built.mjs -- see RESEARCH *Every course in bench/lidar, built*
+  for which played and what each report says); door 2's Course choice,
+  holes moved with the refined map, Fit holes to the trace, the map's par
+  kept; Saved courses not adding a built file twice. **To check by hand**:
+  play a few holes on each course; Worthington's holes 2, 3, 6, 8, 9, 10,
+  14, whose tees the map never drew; Key West's 2nd (a straight map line
+  across water); the TPC Scottsdale card numbers quoted from memory. **Closed 9 November 2026: the owner has played all of it by hand** (the owner: "I have tried all of the things in the 'not tried by a person' for the builder"). What the owner found goes into the builder-ux goal (docs/COURSE_BUILDER.md, *The builder-ux goal*).
+- [x] **Not played by a person: amendment 16** (docs/COURSE_BUILDER.md; the
+  owner's second list of 1 November 2026): the scorecard (par and index
+  set, the yards the game's), Ctrl+Shift+Z, the trees choice in its column,
+  Back to 2D carrying the 3D work home (round-trip.js: layers, shaping,
+  holes, trees, houses, creeks), Close and Back asking twice, the editor's landscape-only paint
+  and its landscape look, Tree height (the whole tree since), Size a tree,
+  the editor's close-up sheet (sharp edges near the camera, lined up with
+  the whole picture, outlines without notches; seen only in
+  tools/builder-look.mjs pictures), Clear trees from tees and greens,
+  Fill outside removing the trees too, the views following the window.
+  Checked by the builder-door-2, builder-door-2-osm, builder-lidar-folder
+  and builder-tools journeys and tests/tree-clear.test.mjs and
+  tests/round-trip.test.mjs. **To check by hand**: several trips between 2D
+  and 3D on a real course (the journey makes one, with sand and a hill); a window dragged to a second screen of another scaling (the
+  journeys only resize); how the editor's stand-in trees read against the
+  game's; clearing trees on a real course (not yet measured how many it
+  draws in at Worthington or Nile Shrine). **Closed 9 November 2026: the owner has played all of it by hand** (the owner: "I have tried all of the things in the 'not tried by a person' for the builder"). What the owner found goes into the builder-ux goal (docs/COURSE_BUILDER.md, *The builder-ux goal*).
+- [x] **Not played by a person: amendment 15** (docs/COURSE_BUILDER.md; the
+  owner's list of 1 November 2026 after building Nile Shrine): the LIDAR
+  folder (every download saved there, read back instead of downloaded
+  again, Load from the folder, ZIPs unpacked), Washington's portal opened on
+  the place, Download all tiles, a tooltip on every button, places found as
+  buttons, the files' coverage in yellow, whose trees beside OpenStreetMap,
+  and Fill outside keeping or removing what is there. Checked: the
+  builder-lidar-folder journey (with a stand-in folder: the square
+  downloaded once and read back with nothing asked of USGS, listed ticked,
+  coverage drawn, every shown button with a tooltip, the result a button),
+  the builder-door-2-osm journey (whose trees three ways, outside kept and
+  removed), tests/lidar-folder, builder-tips, osm and trace-edit, and Nile
+  Shrine's own survey by script (RESEARCH, *Whose trees*). **To check by
+  hand**: Chrome's folder dialog, the leave-to-use prompt and the folder
+  remembered on a later visit (IndexedDB; a stand-in cannot be stored
+  there); Washington's portal from the link and its ZIP loaded; whether
+  2,362 of OpenStreetMap's wood trees added at Nile Shrine stand where trees
+  are; the tooltips' wording. **Closed 9 November 2026: the owner has played all of it by hand** (the owner: "I have tried all of the things in the 'not tried by a person' for the builder"). What the owner found goes into the builder-ux goal (docs/COURSE_BUILDER.md, *The builder-ux goal*).
+- [x] **The owner plays the builder and a built course** at the end of the
+  goal: the builder's doors and editor, a Worthington round in the game.
+  Nothing in the builder has been played by a person; the smoke journeys
+  drive every door (builder-door-2 on a made-up survey; the local
+  builder-door-2-worthington on Worthington's own tiles, the holes clicked by
+  the script from OpenStreetMap). `node tools/built-compare.mjs --file <your
+  course.fairway> --dem ... --osm ... --scorecard ...` measures the owner's own
+  door 2 course the same way. **Closed 9 November 2026: the owner has played all of it by hand** (the owner: "I have tried all of the things in the 'not tried by a person' for the builder"). What the owner found goes into the builder-ux goal (docs/COURSE_BUILDER.md, *The builder-ux goal*).
+- [x] **A small shape can be moved when seen from afar** (5 November 2026, found
+  by the smoke's builder-tools). A bunker ten pixels across has all four anchors
+  within reach of its middle, so pressing it only ever turned it, in both
+  editors. A press now takes an anchor only when it is nearer that than the
+  middle (layer-ops.js `anchorHit`). While looking, a second fix: a quick drag
+  kept the first pointer position of each frame and dropped the last one waiting
+  at release, so it could land short of where it was let go.
+- [x] **Evergreens stay green in autumn** (the owner, 5 November 2026, of Puget Sound). `cedar` was not on the keep-green list, so it turned with the maples; nor were palms, tanoak, young conifers and several evergreen shrubs. The list is species.js `EVERGREEN` now, and tests/seasons.test.mjs holds every conifer and palm to it. Seen on Puget Sound at Medium.
+- [x] **A course reopens with everything** (the owner, 5 November 2026): a course
+  saved from the editor carries the door 2 session behind it (the survey's grids,
+  every surveyed tree, the trace, boundary and box, pictures, OpenStreetMap's
+  download, where it is), the game skips and drops that section, and Back to 2D
+  opens it. Save a copy to share leaves it out. Older files get their location
+  and trees back. The Trees choice emptying a reopened draft is fixed.
+  COURSE_BUILDER, *The builder's section*.
+- [x] **Surveyed trees pick their species by height** (the owner, 5 November
+  2026). A survey's narrow or wide reading no longer steers the species, palms
+  can be picked, and the landscape's shares stand among the species of the tree's
+  height: too tall by a quarter is out, under half the shortest is out, and a
+  tree short for all of them stays in the shares. `TREE_SIZE` moved to species.js
+  with `tallHeight`, ground unchanged. Summerlin's trees too tall for their species
+  14.3% to none. RESEARCH, *A survey sees a shape, not a species*.
+- [x] **Stages 0-9 of the builder** (docs/COURSE_BUILDER.md, *Stages*): the
+  page and file format, the game playing a built file, pins per round, door
+  1, real-time shaping, the editor's tools, checks and a test round, the
+  LIDAR readers and Worthington's ground, door 2 end to end, the auto trace
+  LIDAR first, and the release-readiness sweep (the documents, the
+  distribution review's sizes and offline proof, the player's guide in
+  PLAYING.md). Not merged, pushed or released; not played by a person (the
+  open items above).
+
+## Release 0.9.6 (31 October)
+
+- [x] **v0.9.6 published**, "Fairway 0.9.6 (beta)", at the owner's request,
+  from the merge of `release-0.9.6` into main: the 1.0 interface polish and
+  Architect courses (beta). Generator 53 (52 in 0.9.5), architect 20,
+  schema 14 (11), profile 3 unchanged; package 0.9.6. Notes:
+  `docs/releases/v0.9.6.md`; DISTRIBUTION_REVIEW, *Addendum, 31 October
+  2026: v0.9.6*.
+
+## Architect courses: the owner's third word (31 October 2026)
+
+- [x] **The test suite's wall time** -- the owner: "testing is taking a really
+  long time ... optimize our testing flows". 285 s -> about 205 s for the
+  whole suite: the four slowest files built on worker threads, split or
+  cached (`water-keep-out` 177 -> 35 s alone), and files started longest
+  first (`tools/test.mjs`). And two quicker ways in: `npm run test:changed`
+  (only the files a change can reach) and `npm run test:fast` (the 81 files
+  that build no course, 621 tests in 2 s). TESTING.md, *Running the Node
+  tests*. What is left is open above (*A course takes seconds to build*).
+- [x] **A tournament Sunday costs PNW 12.5% more processor time on Medium**
+  -- the owner: "crowd cost is fine". Left as measured (ARCHITECT_COURSES.md,
+  *The crowd's cost*).
+- [x] **`nearest`'s box skip can name the wrong hole past a hole's end** --
+  the owner: "this is ok". Left as it is, so no ground moves. What was found:
+  it skips a hole when the distance to the hole's box, less its widest
+  corridor, is already worse than the best, but past a tee or green the
+  centre line carries straight on and can leave the box. Compared at every
+  call: Classic Lakeshore HZ-2 3,355 wrong in 1.46 million, none within 60 m
+  of a corridor; Links DUNE-7 27, all within 60 m, by 0.05-0.7 m mostly
+  (worst 11 m); Architect PNW 154, none near. `nearestMargin` uses the bound
+  that holds (PROJECT_HANDOFF *NO SEAM WHERE TWO CORRIDORS MEET*).
+- [x] **Eleven models wrap in the ingest** -- the owner: "back port the
+  models to classic as well". Every model too long for the int16 box now
+  carries its own scale (build-meshes.mjs, `q`), not only the Architect's
+  families: exactly the eleven changed (Tussock_1 and _2, Log_1 to _3,
+  Sorrel_1, LakeDuneGrass_3, LakeJuniper_1 and _2, LakeDriftwood_1 and _2),
+  every other model byte for byte as before. Their outermost parts had been
+  drawn folded back through the model since they were ingested. Not seen in
+  the game (above).
+- [x] **The Links heather's cushions vanish, leaving purple ground** -- the
+  owner: "the purple bushes fade out completely leaving just weird looking
+  purple ground". Past the near tiles' 48 m a heath is now low domes in the
+  cushions' colours to the tier's long-grass reach (vegetation.js
+  addFarHeath; tests/far-heath.test.mjs). Not seen in the game (above).
+
+## Architect courses: the owner's second review (31 October 2026)
+
+- [x] **Classic has the corridor seam too** -- the owner: "Fix Classic too"
+  (31 October 2026). The tee area's relief fades out across the line where
+  the nearest hole changes on both designers (GENERATOR_VERSION 53; every
+  landscape but the island moved). Worst Classic bank: a 4 m wall in 3 m on
+  Lakeshore HZ-2, bend 0.94 -> 0.19; Links DUNE-7 0.63 -> 0.18. Build time
+  unchanged (measured only where it can change the ground). Test:
+  tests/corridor-seam.test.mjs. Not seen in the game: no capture or play.
+- [x] **Not yet played by a person: the hand tools** -- closed: the owner
+  withdrew the studio's Hand tools on 31 October 2026 ("leave those tools
+  for the architect to use"); the `archHand` setting went with them
+  (SCHEMA_VERSION 14). The architect's own signatures stay.
+
+## The 1.0 interface polish (branch `ui-polish-1-0`, from 27 October 2026)
+
+- [x] **Text on the dark end of a highlighted box is weak** -- confirmed on
+  main first (onHot on a2: 2.28:1 on Giant Redwood, under 4.5 on eight of ten
+  landscapes). Fixed in the palette: a highlighted box's gradient ends on
+  `--a2-text` (ui-palette.js `textEnd`), the deepest mix of a1 toward a2
+  that still gives 4.5:1, a2 itself where it already passes (Links, Desert,
+  Island); a contrast rule holds every palette to it. (Was open since phase 1.)
+- [x] **Saving: a full store says nothing** -- confirmed (`save()` swallowed
+  the error). Now the player is told once, until a save works again; and a
+  saved round's delete asks twice, as a saved course's does. (Was: "a saved
+  round deletes in one click and a saved course needs two taps; pick one".)
+
+## Release 0.9.5 (27 October)
+
+- [x] **v0.9.5 published**, "Fairway 0.9.5 (beta)", at the owner's request:
+  the cartoon overhaul (squashed to 13 commits under its merge) and the asset
+  cleanup. Generator 52 (was 36 in 0.9.4), schema 11 and profile 3
+  unchanged; package 0.9.5. Notes: `docs/releases/v0.9.5.md`. `npm test`
+  1101; no smoke run, at the owner's word. Website redeployed.
+
+## The old assets removed (branch `asset-cleanup`, 27 October 2026)
+
+- [x] **Every asset the cartoon overhaul replaced, removed, with its credits**
+  (the owner, 27 October 2026). Gone: the six Kenney and Quaternius CC0
+  packs, `vendor/blender-lakeshore/` and `tools/blender/lakeshore.py`, the
+  tree bake tools (`bake-assets.mjs`, `bake-trees.mjs`) with their ez-tree
+  devDependency, the redwood grower (`grow.mjs`, `grow-lib.mjs`, `npm run
+  grove`) and its local output; `vendor/` from 240 MB to 11 MB.
+  `build-meshes.mjs` no longer demands the grown folder (a fresh clone had to
+  grow 173 MB of unused trees before it could ingest). ATTRIBUTION.md says
+  every model is this project's Blender work; ez-tree's notice left
+  THIRD_PARTY_NOTICES.txt and DEPENDENCY_INVENTORY.json (65 packages).
+  Checked: `src/asset-meshes.js` rebuilt byte-identical but for its header
+  comment, 232 models; the built page differs from main's only by the
+  removed notice and its stamp; npm test 1101 pass. The website's footer may
+  still name the packs (DISTRIBUTION_REVIEW, *Addendum, 27 October 2026*) --
+  the owner's, in the website repository.
+
+## The cartoon overhaul (branch `cartoon-overhaul`, from 25 October 2026)
+
+- [x] **Haunted Hollow's season has been tested, not played** (seasons.js) --
+  CLOSED UNPLAYED, 2 November 2026: Haunted Hollow and its date switch were
+  removed (the owner; the US landscapes goal), so there is no season left to
+  check. Every landscape is offered all year.
+- [x] **`endless-round` failed once on the cartoon-overhaul branch** (26
+  October, seed HARROW-4021): **the harness was wrong, not the game.** Replayed
+  on the far-landscape goal (27 October) with `--endless-seed HARROW-4021`,
+  whole logs kept (`bench/shots/overhaul/harrow-4021*.log`, local): the run
+  holes hole 1, a par 5, in 2 -- the albatross -- every time. With the old
+  12 s wait for the scorecard: two passes, then one failure at "putt out", its
+  screenshot the scorecard up and counting down from 8 (it had just opened).
+  Measured with a line the journey now logs: after the albatross the card
+  came 12.1 s after the journey's banner and XP checks; after an ordinary
+  birdie on another run, 4.9 s. The wait sat right on the harness's 12 s
+  window, so the journey passed or failed by a tenth of a second. The wait
+  for a holed putt is now 30 s (both putt-out steps); four replays since,
+  all green. The first replay also failed on its own seed check (the map names
+  the course, `HARROW-4021-1`, not the run): fixed in the harness.
+
+## Release 0.9.4 (23 October)
+
+- [x] **v0.9.4 published**, "Fairway 0.9.4 (beta)", at the owner's request:
+  the `frame-rate` journey (Ultra frames about 21% faster, the frame tools).
+  Generator 36, schema 11, profile 3 unchanged; package 0.9.4. Notes:
+  `docs/releases/v0.9.4.md`. `npm test` 1043; six smoke journeys passed.
+  Website redeployed.
+
+## UI/UX pass (branch `ui-ux-pass`, 21 October)
+
+- [x] **Upright, the folded shot line clear of the yards marker** (audit 6:
+  the marker sat over its arrow). 150 px between shots. Built; **seen** at
+  390x844 after a drive (line 12-162 px, marker from 171 px).
+  **Closed 28 October 2026**: a phone has no shot panel now (the owner's
+  second list; UI_POLISH.md) -- the meter's row keeps the last shot.
+- [x] **On a phone the yards marker draws over the folded shot line** (audit
+  5: upright, the line hid the top of the yards). Built; **seen** at 390x844
+  after a drive.
+  **Closed 28 October 2026**: a phone has no shot panel now (the owner's
+  second list; UI_POLISH.md) -- the meter's row keeps the last shot.
+
+- [x] **The round matrix plays the course of the week and a friend's challenge**
+  (the owner asked for every mode in the simulated rounds): 36 weekly rounds of
+  18 holes and 24 friend rounds, checked hole by hole (tests/round-matrix).
+
+## Release 0.9.3 (22 October)
+
+- [x] **v0.9.3 published**, "Fairway 0.9.3 (beta)", at the owner's request:
+  Vite 8.3.3 for the three Dependabot alerts on its dev server; the game as in
+  0.9.2. Generator 36, schema 11, profile 3 unchanged; package 0.9.3. Notes:
+  `docs/releases/v0.9.3.md`. `npm test` 1041; no smoke run. Website not
+  redeployed.
+
+## Release 0.9.2 (22 October)
+
+- [x] **v0.9.2 published**, "Fairway 0.9.2 (beta)", at the owner's request:
+  the UI/UX pass (seven audits and their fixes). Generator 36, schema 11,
+  profile 3, all unchanged; the package version is 0.9.2. Notes:
+  `docs/releases/v0.9.2.md`. `npm test` 1041; smoke 38 of 38; the graphics
+  profile unchanged against 0.9.1. The website not redeployed.
+
+## Release 0.9.1 (20 October)
+
+- [x] **v0.9.1 published**, "Fairway 0.9.1 (beta)", at the owner's request:
+  challenge a friend, and the ten fixes from testing 0.9 (the studio's save
+  box, a Next hole button, Round complete with the card first, the camera's
+  name and a turn round the aim point and green views, the aim label's hold
+  and its distance to the hole, one-piece course cards, saved courses' icon
+  buttons). Generator 36, schema 11, profile 3, all unchanged; the package
+  version is 0.9.1. Notes: `docs/releases/v0.9.1.md`. `npm test` 1022; no
+  smoke after the fixes.
+
+## Smooth flyovers (19 October)
+
+- [x] **Every flyover clip shook, and now does not.** The owner saw it on all
+  the website's clips. `clips.mjs` built each camera path from what
+  `lab.camera` returns, which is rounded to 0.1 m and 0.1 degree, so the
+  camera turned stop-start about eight times a second. It now reads the exact
+  pose back from the camera, smooths every channel and interpolates on a
+  Catmull-Rom curve; Giant Redwood has a new route (the old one flew through a
+  fir). All ten flyovers re-recorded: jitter 0.03-0.24 px before, 0.005-0.011
+  after (Midwest 0.018, a tree passing close), measured by the new
+  `tools/capture/motion.mjs` (CAPTURE.md *Traps*, RESEARCH *Every flyover
+  shook*). The website's branch carries them as `<name>-smooth`, deployed
+  as a preview only.
+
+## Release 0.9 (18 October)
+
+- [x] **v0.9 published**, "Fairway 0.9 (beta)", at the owner's request: the
+  1.0 interface on every screen, the start splash, the course models, the new
+  sounds and icons. Generator 36, schema 11, profile 3, all unchanged; the
+  package version is now 0.9.0 (the splash prints it). Notes:
+  `docs/releases/v0.9.md`. `npm test` 1004, smoke 37 of 37 (one rerun). The
+  release check found the course-model cards bundling all of three.js (four
+  `fetch(` instead of one, 147 KB); fixed before release (PROJECT_HANDOFF
+  *Never hand `T` itself on as a value*).
+- [x] **Capture tools for the 1.0 website** (docs/CAPTURE.md): every landscape
+  at four times of day with no interface, the interface screen by screen, and
+  clips recorded frame by frame at 4K60, plus a putting screen; the website was
+  rebuilt from them in its own repository.
+
+## The 1.0 interface (branch `ui-1-0`)
+
+- [x] **Phase 0 (foundations) is built and not seen.** The typeface, the nine
+  palettes, `ui-layout.js`, `ui-palette.js` and the kit are on the branch with
+  their tests (17 October 2026), but no screen uses them, so nothing of it has
+  been looked at in a browser: the font's look at 700/800 and its browser
+  slant, the kit's pieces, and `canvasFrame` on a real screen are unseen. The
+  first look is phase 1's round screen. **Phase 1 waits for the owner's
+  go-ahead.**
+  Closed 18 October 2026: untrue now. Every 1.0 screen since phase 1 is built on the typeface, the palettes, `ui-layout.js` and the kit, and they have been looked at in the browser pane through rounds 13 and 14; phase 1 went ahead the same night.
+- [x] **Phase 3, second pass: the sheets as 1.0 screens** (17 October 2026,
+  seen in the browser pane at 1280 x 720 and 1024 x 768: the lobby, My
+  profile, challenges, launch monitor). Restyled on the grid, not rebuilt on
+  the kit (the lobby and launch monitor setup since rebuilt to their
+  mockups, below);
+  course of the week and saved courses not looked at. The course studio's
+  sheet is unchanged. The pause screen (two columns) and settings' help on
+  demand are not yet seen.
+  Closed 18 October 2026: superseded. Round 13 rebuilt every sheet to its frame (the course of the week, saved courses and the course studio included) and round 14 rebuilt them again; their own entries above hold what is not yet seen.
+- [x] **Round 13 sweep: what still showed the old interface.** Converted and
+  seen at 1280 x 720: the Tools list and the tool windows (Turf settings
+  opened), the wait while a landscape grows (shown by hand). Converted, not
+  seen: the turn card between golfers. Still old, each needing a mockup: the
+  driving range setup (tabs, old player rows), the Help sheet's body (not
+  looked at this pass). Still in the page but hidden on every screen: the old
+  view strip, keys hints, aim control, Swing button, course card and weather
+  (the journeys read them to tell the old screen from the new; removing them
+  is a cleanup with the journeys). style.css still carries the old rules
+  under the 1.0 ones; they go with that markup.
+  Closed 18 October 2026: the two screens it left (the driving range setup and the Help body) were mocked and built in round 14, and the hidden old pieces and style.css's old rules were removed (the entry above, *The hidden old interface removed*).
+- [x] **Course of the week on one screen (round 13): built to frame c-cotw,
+  seen in the browser pane at 1280 x 720.** Not seen: a week with bests. PLACED:
+  a second step, Golfers, holds the group, tees and rules.
+  Closed 18 October 2026: superseded by round 14's two steps (*Course of the week and Endless in two steps*, above).
+- [x] **Endless, step by step (round 13): built to frame c-endless, seen in
+  the browser pane at 1280 x 720** (step 1). Not seen: a pinned-landscape run
+  played, Sudden death from here, steps 2 and 3. PLACED: a third step for
+  format and rules; the mockup's Length, Greens and Wind rows are not there
+  (no such run settings).
+  Closed 18 October 2026: superseded by round 14's two steps; the format and rules now sit under THE RUN on step 1 (*Course of the week and Endless in two steps*, above).
+
+## Release 0.8.3 (16 October)
+
+- [x] **v0.8.3 published**, "Fairway 0.8.3 (beta)", at the owner's request
+  (the owner chose 0.8.3 over 0.9), from the merge of `release-0.8.3` into
+  `main`: the range's greens, short game, shaped greens and CSV/PDF exports,
+  and the Low and Medium trees fix. Generator 36, schema 11, profile 3, all
+  unchanged. Notes: `docs/releases/v0.8.3.md`. Smoke 37 of 37, `npm test`
+  901 (DISTRIBUTION_REVIEW, *v0.8.3*). The website is redeployed after it so
+  its demo runs 0.8.3; its "view your shot data" wording can now say export
+  (its repository has the item; not changed in this release).
+
+## The range's greens, short game and exports (16 October 2026)
+
+- [x] **Range targets play as greens, on the aim arc** (from IDEAS, and the
+  owner's ask). Branch `range-greens`. A hole may carry a list of greens:
+  `greenDistance` takes the nearest, the ground shader loops over an
+  extended cup atlas (`HOLE_ATLAS.greens`), and every target is a mown green
+  with a fringe, a cup and a flag. Each number is now the distance from the
+  centre mat to the green's middle (the 50 was 62 yd, the 100 106 yd); a
+  target the centre green covers steps aside. Aiming at a green from the mats
+  makes its cup the live one.
+- [x] **A chipping and putting green** (from IDEAS, *A short-game area*).
+  Beside the mats on the right; Range controls' *Hit from* chips (5-60 yd) or
+  putts (3-80 ft) on it or on the centre green, with play it out and a new
+  spot every ball.
+- [x] **Both greens shaped**: flat, left to right, right to left (0.5-4%), or
+  random contours with New green; New cup on either. A shaped green regrows
+  the range (about a second).
+- [x] **Export CSV and a PDF report** of the session (closes *Export the
+  range's shot data* from the open list). `src/range-report.js` and a
+  hand-written `src/pdf.js`, no dependency. **The website says "view your
+  shot data" until a release can export -- the owner was told; its
+  repository has the matching item.**
+- [x] **Range controls can always be reopened**: its own button on the view
+  bar. And the session caption averages one club's full shots, not every ball
+  (it mixed a driver, a wedge and now putts into one number).
+- Checked: `npm test`, the build, the `range` and new `range-greens` smoke
+  journeys on the real GPU, the targets, stations, a regrow and the report
+  looked at in the game and in Chrome's PDF viewer. RESEARCH.md
+  *The driving range*; tests in `tests/range.test.mjs` and
+  `tests/range-report.test.mjs`.
+- [x] **Played by hand: the range's greens** (closed at the owner's word, 16
+  October 2026). The owner played the greens with the keyboard controls and
+  closed the check. It listed chips and putts on the short-game green with the
+  Swing Meter, aiming at the targets, the sloped greens' read and break, the
+  bigger Range controls window on a phone, two golfers at a station and the
+  PDF in the owner's own reader; the owner's word covered the entry, not each
+  item separately.
+
+## Low and Medium trees (16 October 2026)
+
+- [x] **Trees on Low and Medium looked like "a mangled mess" (the owner).**
+  Branch `low-tier-trees`. Two faults, both absent on High and Ultra. (1)
+  Distant crowns were drawn as thinned twins (F2), which tore the few-faced
+  cartoon crowns into floating shards -- 84-93% of all crowns past 60 m on
+  every biome but Redwood. Only crowns of 2000+ leaf triangles (the grown
+  trees) get a twin now (`TWIN_MIN_TRIANGLES`, instance-cull.js); Redwood keeps
+  F2's saving. (2) Every near crown shaded itself in stripes: the shadow
+  normal offset was a quarter of a texel on Low. Now Low .7, Medium .35, the
+  floodlights still .15. Measured on the real GPU across four biomes: no
+  graphics time moved; Low and Medium make 20-78 fewer draw calls for 2-4%
+  more triangles. Seen in captured frames on every tier (the game in a
+  browser, cameras placed by script, nothing clicked); the floodlit-night and
+  boot smoke journeys run. Not checked: the software-rasteriser arm and a real
+  weak laptop (*A real phone, an iPad and a weak laptop*, open above).
+  RESEARCH.md *Low and Medium trees: striped crowns and shards*; test in
+  `tests/instance-cull.test.mjs`.
+
+## Found on GitHub
+
+- [x] **Check that Endless off the menu now starts in daylight.** Fixed 16
+  October 2026 on branch `endless-menu-clock` (every Endless run started from
+  the menu on a fresh device was at 12:00 AM; RESEARCH.md *The smoke test on
+  GitHub*, fourth finding). Not seen in the game: no browser was run. Check: the
+  next `endless-round` smoke screenshot (`bench/shots/smoke/endless-round.png`,
+  or GitHub's `smoke-screenshots`) shows daylight; by hand, with
+  `fairway-time-v1` removed from localStorage, Endless from the menu starts at
+  the hour the hole was shown at, and the clock reads that hour.
+  **Closed 16 October 2026 at the owner's word.**
+
+## The owner's hands-on checks
+
+- [x] **A round somebody joined partway through: Continue after a reload, and a
+  mulligan.** Both failed before the save fix of 16 October 2026 (*Every
+  format with every group*, below). **Closed 16 October 2026 at the owner's word.**
+
+## Skins as a round format (16 October 2026)
+
+Skins left the challenges and became a Format beside stroke, match and scramble
+(branch `skins-game-mode`; `src/skins.js`, RESEARCH.md *Skins as a format*,
+PROJECT_HANDOFF *Skins is a round format*). Built and tested in Node (the rule,
+the mode, old saves, the saved-rounds list); **not yet seen in the game** --
+nothing was run on the graphics card.
+
+- [x] **Play a skins round in the game and look.** Play -> Format -> *Skins*
+  with two or three golfers: the format note; each chip's "N skins"; a tied hole
+  -- the last golfer's banner says the skins carry, and the next hole's course
+  line says "2 skins on this hole"; a won hole -- the banner names the winner in
+  their colour, the XP popup says "Won 2 skins"; the scorecard's *Skins* header,
+  top line and Skins row (dots and carry arrows), and the CSV's Skins row; a
+  mulligan of the winning putt takes the skins and their XP back; the finished
+  card ("... wins the skins" or a tie) and the 50 XP win; *Records* on My
+  profile. One golfer with Skins chosen should be refused with "Skins is for two
+  to four golfers". Also: an endless run on skins, and the Challenges screen's
+  line about where Skins went.
+  **Closed 16 October 2026 at the owner's word.**
+- [x] **Run the smoke journey `skins` (new).** Done: it passed in the full
+  smoke run of 16 October 2026, 34 of 34 at 1da4f74.
+- [x] **A save from the Skins challenge resumes as skins** -- covered in Node
+  (tests/skins.test.mjs); worth one look with a real 0.8 save in Continue.
+  **Closed 16 October 2026 at the owner's word.**
+
+## Release 0.8.2 (16 October)
+
+- [x] **v0.8.2 published**, "Fairway 0.8.2 (beta)", at the owner's request, from
+  the merge of `release-0.8.2` into `main`: 36 challenges with medals, the
+  Challenge Course, the challenge of the week and five achievements.
+  Generator 36, schema 11, profile 3, all unchanged. Notes:
+  `docs/releases/v0.8.2.md`. Smoke: 34 of 35 then `look` fixed, and the three
+  challenge journeys (DISTRIBUTION_REVIEW, *v0.8.2*); the challenges have not
+  been looked at in the game by a person. The website is redeployed after it
+  so its demo runs 0.8.2.
+
+## More challenges (16 October 2026)
+
+The owner asked for 30-40 challenges, repeatable, and a challenge of the week;
+the plan (local: `docs/reports/CHALLENGES_PLAN.md`) was approved with the
+owner's answers the same day -- medals, nothing locked, repeat pay capped,
+distance medals against the golfer's own driver, every hole challenge on one
+fixed Challenge Course, the week's challenge on the course of the week. Step 1
+is on branch `more-challenges`: 27 challenges (36 since step 3) from one table
+(`src/challenges.js`, `src/challenge-play.js`, `src/challenge-spots.js`),
+medals, the new pay and the day's allowance, the Challenges screen with five
+tabs, range challenges, the three old ones moved onto it. Tested in Node
+(the table, every challenge with every group, the pay, the Challenge Course
+hosting all of them, old profiles); **not yet seen in the game** by a person. The
+smoke journey `challenge` passes (below, *Done*).
+
+- [x] **Play some in the game and look.** Main menu -> Challenges: the five
+  tabs (on a phone they should slide sideways), the cards' medal dots and
+  bests, a card's medal list ("Gold: within 10 ft", "measured against your own
+  driver"). Play closest to the pin on the Challenge Course, Four-footers
+  (the putter in hand, holing out under dartboard putting), Dartboard on the
+  range (aimed at the 150 target), Draw and fade (the bar shows the call),
+  Find the zone (the aim starts on the zone; nothing marks the zone itself yet
+  -- say if it needs a ring), Up and down. The results card's medals, *Other
+  challenges*, and the line when the day's 250 XP is used up. My profile ->
+  *Challenges*. A two-golfer group on one, and a left-hander on Draw and fade.
+  **Closed 16 October 2026 at the owner's word.**
+- [x] **Look at the challenge of the week in the game**: its card across the
+  top of the Challenges screen (gold edge, "until Sunday", where it is played),
+  the menu tile's "This week: ...", the bar's "This week ·", the results
+  card's "best this week", its line on My profile, and the XP popup for a
+  first finish (100) and a gold. The four new achievements on My profile.
+  **Closed 16 October 2026 at the owner's word.**
+- [x] **Look at step 3 in the game**: Every par 3 and Greens in regulation
+  moving hole to hole by themselves; Putting tour; a shootout and a long-drive
+  knockout with two or three golfers (the toast naming who went out, the
+  results card's "Won" and "Out in round 2"); Bingo Bango Bongo with every
+  golfer's ball showing where it lies and the bar's points; Sudden death's card
+  coming up when everyone is out, while the run can go on; Bogey-free nine's
+  card at the end of the nine; the bar following each goal; the Head of the
+  Table achievement.
+  **Closed 16 October 2026 at the owner's word.**
+
+- [x] **The smoke journey `challenge`, rewritten for step 1, passes** (GPU, the
+  owner's go-ahead, 46 s): five tabs and 27 cards, an old 9-foot record shown as
+  a gold, closest to the pin to its results card with nothing in the round slot
+  or the history, Play it again, Four-footers holing out with the putter, the
+  Dartboard on the range, a long drive. Its first run caught a real bug: moving
+  to the challenge's hole saved the Challenge Course's round into the Continue
+  slot, because `challenge` was set only after the hole loaded (the old code
+  set it before). Saving and the profile sync are now held off
+  (`challengeStarting`) while the hole loads. The results card and the
+  Challenges screen were not looked at as pictures: the one screenshot was
+  taken as the card slid in.
+- [x] **Step 2: the challenge of the week** (weekly.js `weeklyChallenge`), on
+  the course of the week or the range, with its own best for the week and its
+  own pay, its card on the Challenges screen, the menu tile and My profile;
+  and four achievements (First Medal, Gold Standard, All-Rounder, Weekly
+  Regular). The fifth in the plan, Head of the Table, waits for the
+  head-to-heads in step 3. Tested in Node (`challenge-week`, `achievements`,
+  `profile`); not seen in the game by a person.
+- [x] **Step 3: the last nine and the play-through tests** (16 October 2026).
+  Every par 3, Greens in regulation, Scrambler and Putting tour across holes
+  (`spotsAcross`); Closest-to-the-pin shootout, Long-drive knockout and Bingo
+  Bango Bongo for two to four, with Head of the Table; Sudden death and
+  Bogey-free nine as real rounds with a goal (`src/round-goals.js`,
+  `round.goal`). The four across holes join the week's pool from 4 January 2027
+  (a new `WEEKLY_POOLS` row). Set-up moved into `planChallenge`/`playContext`,
+  shared with a new Node test that plays every challenge through the ball model
+  (`challenge-virtual`, `tests/virtual-golfer.mjs`); its first run found One
+  club unwinnable with the stock bag (no 8-iron) -- fixed. The round matrix
+  plays both goals. npm test 884/884. Smoke: `challenge`, `challenge-week` and
+  the new `challenge-more` pass (GPU, the owner's go-ahead); `challenge-more`'s
+  first run stopped at the "Leave this round?" question after Bogey-free nine
+  -- right of the game, a real round; the harness now answers it.
+  The full smoke run then passed 34 of 35; `look` still expected 13
+  achievements (now 18) and passes with the count updated. Not yet looked at
+  by a person in the game.
+- [x] **The smoke journeys `challenge` and `challenge-week` pass** (GPU, the
+  owner's go-ahead, 50 s). The first run failed twice: the harness counted
+  the challenge of the week's card on every tab (32 cards, not 27 -- the
+  harness was wrong), and this week's pick, Curve it on the range, wrote the
+  round slot -- a real bug: entering the range saves the slot, and a range
+  challenge went through it. Saving is now held off (`challengeStarting`)
+  while a range challenge opens, and `challenge` checks the slot after its
+  range challenge too. The failed run's screenshot showed the week's challenge
+  on the range as it should be: the bar ("This week · Curve it · Ball 2 of 6 ·
+  fade"), the 7-iron, the aim on the 150 target.
+
+## Release 0.8.1 (16 October)
+
+- [x] **v0.8.1 published**, "Fairway 0.8.1 (beta)", at the owner's request, from
+  the merge of `release-0.8.1` into `main`: Skins as a round format, Endless
+  from the menu in daylight, and rounds a golfer joined mid-round saving and
+  loading again. Generator 36, schema 11, both unchanged. Notes:
+  `docs/releases/v0.8.1.md`. Smoke: full 34/34 before the save fix, none after
+  it, by the owner's choice (DISTRIBUTION_REVIEW, *v0.8.1*); none of the three
+  changes has been seen in the game. The website is redeployed after it so its
+  demo runs 0.8.1.
+
+## Every format with every group (16 October 2026)
+
+- [x] **The round matrix.** Asked for by the owner, who cannot play
+  multi-golfer rounds quickly: `tests/round-matrix.test.mjs` plays every
+  format (stroke, match, scramble, skins) with every group of one to four
+  golfers and every team split the format allows, under all three putting
+  modes, both out-of-bounds rules and endless runs -- about 1,250 rounds and
+  65,000 made-up shots in five seconds -- against a scorer written from the
+  rules rather than from game.js. It saves and restores mid-hole and while a
+  ball waits for relief, takes mulligans, drops balls, and has golfers join
+  and leave between holes. docs/TESTING.md, new, maps every layer of testing.
+  **It found a real bug on its first run:** a round somebody joined partway
+  through could not be saved and loaded once they had finished a hole --
+  Continue dropped the round, and the mulligan threw -- because a save writes
+  the holes they missed as null and loading refused null (PROJECT_HANDOFF, *A
+  HOLE NOBODY SCORED IS A GAP*). Fixed in `Round.restore`; the regression
+  test fails without the fix. **Not seen in the game** -- the owner check is
+  in the open list, *What the smoke test does not walk*. One thing it showed
+  that was the test's assumption, not a bug: after a sim drop in match play
+  the golfer who dropped plays next, nearest ball or not.
+
+## The open list before the 16 October prune
+
+The owner asked on 16 October 2026 for the TODO list to be pared down: "there
+is a lot of stuff in there that isn't needed anymore". Below is every entry that
+was open that morning, word for word, under its original heading (one level
+down). **The boxes were removed, so nothing here reads as open**; the two
+already-ticked entries that had been left in the open half keep their ticks.
+Each entry was checked against the code, GitHub and RESEARCH.md that day.
+
+**What became of them.** Most were carried over, shortened, into the new open
+list, whose entries name their original here with "was:". Duplicates were
+merged: the launch-monitor checks (six entries), the real-device checks (two),
+the by-hand browser checks (four), the next launch-monitor session (seven), the
+green surrounds (three), blind tee shots (two), watercourses (two), the
+green-reading options (seven), the profiler (two), range targets (two, the same
+text twice). The sixteen biome ideas went across word for word, and later that
+day moved to IDEAS.md with the other entries that were ideas rather than work
+(each with its "was:" line); the Haunted Hollow follow-ups went to *Graphics*,
+*Tools and code* and IDEAS.md; the empty *Selling
+it* and *Sounds* headings were dropped. **Closed, and why:**
+
+| Entry | Why it was closed |
+| --- | --- |
+| *The flag marker and the aim marker overlap on screen* | Already ticked: fixed 10 October; left in the open half by mistake |
+| *A panel moved while it is folded away for a shot...* | Already ticked: closed off 13 October |
+| *The CI smoke step has never run on GitHub* | Untrue: it runs on every push to `main`, and fails; replaced by *The smoke step fails on GitHub* |
+| *The tests workflow has never run on GitHub* | Untrue: same runs; its required-check step moved into that entry |
+| *ACCEPTED AS IS ... The hole flyover flies through the trees* | Accepted by the owner on 23 September and, in its own words, not pending work. Its measurements stay here; reopen only if the flyover looks wrong |
+| *Progress is weighted by measured cost...* | A caveat, not work: the bar cannot stall or go backward, and a test holds both |
+| *Generation is still ~24% slower in wall time* | A measurement; its one lever (the ground grid) is in *The test suite's wall time* |
+| *Donation wording is the part that carries risk* | A rule, kept in DISTRIBUTION_REVIEW; the posting entry points there |
+| *The library card still shows the seed* | Deliberate, by its own words |
+| *A name is suggested, never enforced as unique* | Harmless: import dedupes on name and settings together |
+| *UNEXPLAINED ... The far ring around greens* | The owner said not to chase it; a measurement, not work |
+| *Six metrics in this project have now measured the wrong thing* | A habit, now in AGENTS.md: a metric imports its geometry from `src`, and invariants must be zero |
+| *Wider generation stress tests* | Done by `tools/bench.mjs`: every biome, many seeds, slider sweeps, invariants that must be zero |
+| *Generation worker and progress* | Untrue: `generateWorldSteps` yields to a real progress bar, and `gen-pool.js` workers compute the ground heights |
+| *Terrain/vegetation/house LOD* | Superseded by October's frame-rate work (*OPUS5.5 GFX and OPTIMIZATIONS*); reopen from a profile that shows a bottleneck |
+| *Home interiors and regional architecture* | Never asked for from play; an idea, not a defect |
+| *A sink pond can be given a water plane its basin cannot reach* | Guarded at the call site; measured at float noise (worst 0.02 m) |
+| *The debris tails point along the mean wind* | Invisible at this sprite size, by its own words |
+| *Choose public publisher/support details...* | Done in effect: Fairway has been released publicly under the owner's name since 7 October |
+| *Run a live dependency advisory audit* | Run 16 October; the result is the open entry *Three high-severity advisories in the build tools* |
+| *Range dispersion is always zero* | Untrue since the Swing Meter: tap timing makes the miss, and a monitor's ball is never added to, by design (PLAYING, dispersion) |
+| *`CONTACT_GAIN` in contact.js has been declared and unused* | It is gone; no file names it |
+| *One last fit when the Garmin R50 data lands* | Done 6 October (RESEARCH, *The flight refitted against three launch monitors*); what is still wanted is in *The next launch-monitor session* |
+| *No driver data in either session, and the R50 session will have it* | Untrue: the R50's driver swings were set aside as unrepresentative; carried into the same entry |
+
+### The UI pass (10 October 2026)
+
+Asked for by the owner on 10 October, in this order, on the branch
+`shot-panel-and-monitor-mode`. Done so far is under the same heading in
+`# Done`.
+
+- **Profile the slower descent through the trees.** It passes through
+  canopies now instead of over them, and `clearCameraTrees` does more work when
+  it does. Not profiled (AGENTS.md: ask first); about a minute for
+  `--only views`. Redwood is the biome to watch.
+
+### Found by driving the built game
+
+
+
+- [x] **The flag marker and the aim marker overlap on screen.** "340 YARDS TO
+  HOLE" sat on top of "257 TO AIM POINT" in the 1280x720 and 1366x768 captures
+  taken during the layout work. The aim marker steps aside when the two POINTS
+  are within 8 m of each other on the ground; it never checks whether the two
+  LABELS overlap on screen, which from the tee they often do. Not changed:
+  separate from the layout, and it wants a look at which should give way.
+  **Fixed 10 October 2026** by making them take turns rather than giving way:
+  the pin's label at rest, the aim's while aiming and for a second after (*The
+  UI pass*, `# Done`).
+
+- [x] **A panel moved while it is folded away for a shot keeps the folded size.**
+  While a ball is in the air the shot controls shrink out of the way; dragging
+  the panel in that moment stores the shrunken height (119 px instead of 674
+  in a test), and it stays that way until resized by hand. Older than the title
+  bar: moving a panel always stores its current size. Found 6 October.
+  **No longer possible, 10 October 2026:** the shot controls no longer fold to
+  their numbers in flight -- the numbers moved to the shot panel -- so they are
+  hidden and take no pointer while a ball is up, and there is nothing folded to
+  grab. The shot panel itself never changes size for a flight.
+  **Possible again from 13 October 2026, and closed off:** the shot controls
+  (and the launch monitor window) now shrink to the shot line in flight
+  instead of going, so their drag and resize handles are hidden and take no
+  pointer while a ball is up (style.css, beside the in-flight rule).
+
+
+What `tools/smoke.mjs` turned up on its first full runs, and what building it
+turned up alongside. The one outright crash is fixed and recorded under the
+same heading in `# Done`.
+
+
+- **The floating tool windows during play have not been swept for layout.**
+  `hud-reachable` covers the main menu and the play screen at nine sizes, and
+  every menu panel and tab is opened on a phone both ways up. The tool windows
+  opened from the tray during play are not checked for overlap the same way.
+  (The studio half of this entry is done: the studio bar now rides above an
+  open panel and the `studio` smoke journey checks it at five sizes -- see
+  *Shot views and the studio bar* in `# Done`.)
+
+
+- **Nobody has measured a real phone.** The layout is checked under
+  emulation at a phone's size; the GPU is not. The low tier's known weakness on
+  weak hardware is the whole first impression on a phone, and the owner's own
+  phone and iPad test is the next data point. The tester diagnostic reports
+  the tier and the frame rate, so that test produces numbers.
+
+- **The CI smoke step has never run on GitHub.** There is no remote yet,
+  so it has been proven locally with `--software` and not on a runner. A
+  runner has two to four cores against the 32 it was measured on; the job
+  has a 45-minute ceiling and every smoke wait scales twelvefold without a
+  GPU. If the first push fails there, look first at Chromium's system
+  libraries (which `--with-deps` installs) and at a timeout.
+
+- **What the smoke test does not walk is still checked by hand:**
+  multi-player rounds, match play and scramble selection, the lab, the
+  launch-monitor panel against a live bridge, a round saved and continued,
+  free flight on a phone, Safari and Firefox, and any REAL phone or tablet --
+  the phone journeys run in a browser that emulates one.
+
+- **ACCEPTED AS IS, 23 September 2026. The hole flyover flies through the
+  trees, and has since redwoods landed.** Owner's call: not worth changing for
+  now. Left open because it is still true, NOT because it is waiting on
+  somebody -- do not pick this up as pending work, and do not re-report it as a
+  new discovery. Reopen it only if the flyover starts looking wrong on screen.
+  Same stale assumption as the arrival pose had; fixing it is a framing decision
+  rather than a one-line clamp. `makeHoleTour` clears TERRAIN by 34 m and never
+  looks at the canopy. Measured against real canopy, worst gap per biome over
+  nine holes each: **redwood -91.1 m** (tallest canopy 186 m), **mountain -0.0 m**
+  (128 m), pnw +5.5 m (82 m). So on a redwood course the flyover orbits inside
+  the forest. The file's own comment says a flyover that skims treetops reads as
+  a bug -- this one is ninety metres past skimming. The fix is not simply lifting
+  the ring: a 200 m orbit is a different shot. Growing the radius instead, or
+  both, needs a look on screen.
+
+- **Generation is still ~24% slower in wall time than it was.** The blocking
+  work is unchanged at ~7.0 s for an 18-hole feature-heavy course; the extra is
+  the frame handed back at each pause, and it is the price of the overlay moving
+  at all. Worth revisiting only if the grid itself gets cheaper -- at 81% of the
+  work it is where any real win is, not in the pacing.
+
+- **Progress is weighted by measured cost, not by real-time feedback.** The
+  PHASE table in course.js and LOOP_WEIGHT in terrain-grid.js were fitted to one
+  profile on one machine. A very different course shape could make the bar
+  advance unevenly. It cannot stall or go backward -- there is a test for both --
+  but it is an estimate wearing a percentage. Since 7 October the graphics
+  half of the bar is an estimate too: shader compilation cannot report its
+  progress, so the bar creeps through it, paced by the last compile.
+
+### Reading a green without the overlays
+
+- **Bands that follow the contour may alias at distance, and this has not
+  been tested on screen.** The anti-alias fade is measured on the PLAN coordinate
+  deliberately -- measuring it on the bent one once made bands vanish on exactly
+  the slopes they describe -- so raising the bend raises the frequency without
+  the fade knowing. It briefly defaulted to definition 100, bending at 4.57x --
+  well past the 3.5x this was written about. The owner then set 35, which bends
+  at 2.25x, below it again, so the risk is back to modest; it matters again if
+  anyone raises the slider.
+
+### Tee boxes: what was wrong, and what was not
+
+Reported from play on 2026-09-25, with an instruction to measure before
+changing anything. Worth it: one of the three assumptions was wrong.
+
+- **23 blind tee shots remain and every lever is a trade.** Lifting tees or
+  flattening the landing area, both of which the owner ruled out in principle
+  ("without building up too much land"). Needs a decision rather than a fix.
+
+- **No picture of a tee complex from above.** The overview camera frames the
+  whole course from very high with clouds in the way, so the stagger is
+  evidenced by numbers rather than by an image. A camera that frames one tee
+  complex would be worth having for exactly this.
+
+### Playing on a phone
+
+- **Owner: the launch-monitor panel with a real device.** It is checked
+  against a pretend bridge that sends what `bridge/server.mjs` sends. A real
+  connector may report the ball differently -- or never -- and the big numbers
+  wait for the monitor to see the next ball.
+
+### On a phone's home screen
+
+- **Owner: run_fairway_server on a real Mac and a Linux machine.** Built
+  and packaged from Windows (ad-hoc signed for macOS, checked in the binary)
+  and tested on Windows only. On a Mac: unzip, Control-click Open, allow it in
+  Privacy & Security if asked, and check it serves the game and prints a phone
+  link. On Linux: `./run_fairway_server` from a terminal.
+
+- **Owner: a launch monitor from the iPhone, loaded from the bridge.**
+  Start the bridge with `FAIRWAY_HTTP_HOST` set to the computer's address,
+  open `http://<address>:1922` on the phone, **Launch monitor** in the main
+  menu, Connect bridge, arm, hit. Checked in emulation against a pretend
+  bridge; the first real test is the owner's. If the phone cannot reach the
+  computer at all: same Wi-Fi (not a guest network), and Settings > Privacy &
+  Security > Local Network.
+
+- **It needs a connection every time it opens.** Offline play is a service
+  worker that keeps a copy of the game on the phone: about thirty lines, plus a
+  cache named by the build stamp so an update replaces the old copy cleanly,
+  plus a smoke journey that goes offline and reloads. It must never register
+  when the file is opened from disk.
+
+### Getting the word out
+
+Planned on 2026-09-25. The decisions below are the owner's and are recorded so
+the next person does not reopen them.
+
+**Decided already.** The project **goes open source at launch, under MIT**,
+free, with a donation button. No social accounts yet; a Discord server since
+7 October 2026 (see its entry under *Done*, which reverses the earlier "not
+yet"). The owner
+holds the copyright outright, which is what made the choice free to make in
+either direction and what keeps a later change possible.
+
+This reversed an earlier plan to keep the source closed, made two days into
+the same week -- read the MIT entry below for what was weighed. The open item
+that used to sit here saying MIT was the wrong licence is closed, because the
+premise it rested on (closed source) is gone: MIT and a public repository are
+a coherent pair, which closed source and MIT were not.
+
+**The one structural fact the plan turns on: there are two audiences and they
+need opposite timing.**
+
+*Simulator owners* -- the people who might eventually donate -- care first and
+only about whether it works with their launch monitor. That is currently the
+weakest claim in the project: nothing has been verified against physical
+hardware, and that community establishes it within minutes. Going there now
+spends the one first impression on the worst feature.
+
+*Developers and procedural-generation people* cost nothing to reach, amplify
+hard, and do not care about launch monitors at all -- they will hit a ball
+with the keyboard. "A golf simulator that generates infinite courses and runs
+from a single 15.8 MB HTML file, offline, no install" is a real story for that
+audience, and their attention is what buys credibility with the first one.
+
+**~~So the order is: developers now, simulator owners after hardware
+validation.~~ Reversed 8 October 2026: open to everyone at once.** The owner
+chose to post for whoever wants to try it, simulator owners included, and to
+be flooded with feedback rather than ration first impressions. The posts say
+plainly that launch-monitor support is untested, which is what the sequencing
+was protecting, and that the game was built with Claude Code (316 of the
+first 327 commits carry its co-author line). The two-audience reasoning above
+is kept because it is still true -- it is the risk being accepted, not a
+mistake: a monitor owner whose first shot fails will say so publicly.
+
+- **Export the range's shot data.** The owner's copy for the website's
+  practice panel said "view and export your shot data"; the game has no such
+  export (it downloads the scorecard, saved rounds and courses, and nothing
+  else), so the page says "view your shot data" until it does. The shot list
+  already holds every shot of the session. When a release carries it, tell the
+  owner: the website's repository has the matching item to put "and export"
+  back.
+
+- **Ten testers, recruited one message at a time.** Not a launch -- a
+  request for help, which is a different thing and gets a far better response
+  rate. With the repository public, Issues is where their reports should go;
+  that does not remove the need for the diagnostic block, because the thing a
+  tester cannot paste is the thing that is missing, not the place to paste
+  it. Go where these people already are instead of asking them to come to
+  you: the golf-simulator subreddits, GolfSimulatorForum, the GSPro community,
+  the home-simulator Facebook groups, and the owner communities for each
+  specific monitor. **Check which of those are actually alive first**; this
+  list was written from general knowledge, not from looking.
+
+- **Validate against real hardware.** No longer the gate before
+  approaching simulator owners (see the 8 October reversal above), but still
+  the first thing that audience checks and the weakest claim the project
+  makes: nothing has been tested against a physical launch monitor, and the
+  extra fields the shot-data grid can display -- club speed, attack angle,
+  path, face to target, closure rate, impact position -- are parsed but have
+  never been checked against a real session. Recorded here as the gate, not as
+  a plan: how it gets done is the owner's call.
+
+- **Then one public moment, not a drip.** Hacker News, the procedural
+  generation and WebGL communities, the three.js showcase, and the simulator
+  forums -- same week, one post each. **Lead every one of them with the play
+  link, not the repository.** Open source is what makes the developer half of
+  that audience take it seriously, but nobody has ever been convinced by a
+  LICENSE file: they are convinced by being on a tee ten seconds after a
+  click, and they look at the source afterwards. "Show HN" with a repository
+  link under a play link is the right shape; a repository link alone is not.
+
+- **Donation wording is the part that carries risk, not the licence.**
+  Recorded in DISTRIBUTION_REVIEW and worth repeating here because it is
+  written at the moment the page goes up: do not imply a donation is required
+  to play, unlocks anything that already works, buys promised hardware
+  compatibility, or reaches the third-party authors. Quaternius asks that
+  support go through their Patreon and Kenney appreciates credit; neither is
+  an obligation, but a donation page for a game built on their free work must
+  not read as though the money reaches them.
+
+### Making the repository public
+
+Asked for on 2026-09-25: organise the tree and the documentation for a public
+GitHub repository, and stop shipping what nobody needs.
+
+- **The tests workflow has never run on GitHub.** `.github/workflows/test.yml`
+  is active, but GitHub shows 0 runs, on any branch, after many pushes (checked
+  3 October, and again on 7 October in the new public repository, with Actions
+  enabled and the workflow listed as active, after two pushes to `main`). Worth a look at the repository's Actions tab: Actions may be
+  switched off at the account level, or waiting on something the account has
+  to accept. Once it runs green, add it as a required check to the *main
+  changes by reviewed pull request* ruleset in `tools/github-protect.mjs` --
+  not before, or every pull request waits for a check that never comes.
+
+- **Fewer, smaller documents.** Asked for 1 October. **The first step is
+  done (7 October): `docs/ARCHITECTURE.md` is the short entry point, about
+  14 KB, and AGENTS.md says to search the long documents rather than read them**
+  -- see the Done entry. The rest below is still a plan; nothing else has moved.
+  The figures that follow are from 1 October. Then the
+  repository carries 19 Markdown files and about 1.5 MB of them, and three
+  hold almost all of it: RESEARCH.md (5,800 lines, 500 KB), TODO.md (3,500
+  lines, 330 KB, four fifths of it the `# Done` archive) and PROJECT_HANDOFF.md
+  (1,800 lines, 310 KB). The trouble for someone arriving with an AI agent is
+  not the NUMBER of files but that the entry point -- AGENTS.md, then
+  PROJECT_HANDOFF -- asks for 330 KB of reading before any work starts, most of
+  it dated narrative. The aim: an agent is oriented after reading two short
+  files, finds anything deeper by search, and no reasoning is lost.
+
+  Proposed shape: 19 files down to 16 -- the count matters less than the size,
+  which falls from about 330 KB of entry reading to under 80 KB:
+
+  | Keep / become | From | Change |
+  | --- | --- | --- |
+  | README.md, LICENSE | same | unchanged |
+  | AGENTS.md | AGENTS.md + CONTRIBUTING.md | one rules file; CONTRIBUTING's setup commands move into it, and README links to it |
+  | docs/ARCHITECTURE.md | PROJECT_HANDOFF.md | **Done differently, 7 October**: ARCHITECTURE.md was written as a 14 KB summary BESIDE PROJECT_HANDOFF rather than cut out of it, so nothing was moved or lost. Still open: moving PROJECT_HANDOFF's dated narrative to HISTORY.md |
+  | docs/RESEARCH.md | RESEARCH.md + LANDSCAPE_RESEARCH.md | one evidence file with a contents list at the top; the landscape sources become its last part |
+  | docs/BALL_BEHAVIOUR_KNOBS.md | same | kept apart on purpose: it is what a tuning request is written against, and inside a 500 KB file it would be buried |
+  | docs/GENERATION.md | PROCEDURAL_GENERATION.md | renamed only |
+  | docs/TODO.md | the open half of TODO.md | open work only, about 60 KB |
+  | docs/HISTORY.md | TODO's `# Done`, PROJECT_HANDOFF's narrative, DISTRIBUTION_REVIEW's dated addenda, both docs/reports/ | the changelog and the record of why. Nothing is deleted, only moved; it is the file that answers "was this tried?" |
+  | docs/PLAYING.md, docs/PORTABLE_README.md | same | both ship to players |
+  | docs/INSTALLATION.md | same | trimmed where it repeats PORTABLE_README |
+  | docs/REFERENCES.md, docs/ATTRIBUTION.md | same | the citations, and the asset credits every download carries |
+  | docs/DISTRIBUTION_REVIEW.md | its current-status part | the standing release checklist; the audit history goes to HISTORY |
+  | docs/README.md | same | rewritten as a "which question, which file" table |
+
+  `docs/sources/README.md` stays where it is: it states the rule for the
+  ignored private folder.
+
+  Before anything moves:
+  - **Scrub for what a private repository still should not hold**: machine
+    paths and user names (`C:\Users\...`), email addresses, and anything
+    naming what is in `docs/sources/private/` -- which stays ignored and is
+    never inventoried, per the rule in `.gitignore`.
+  - **One branch per step**, in this order: AGENTS + CONTRIBUTING; HISTORY.md
+    (pure moves); the ARCHITECTURE cut; RESEARCH + LANDSCAPE; the index. A
+    pure move is reviewed with `git diff --color-moved`; mixing a move with an
+    edit makes both unreviewable.
+  - **AGENTS.md's documentation rule names every file**, and has to change in
+    the same branch as each rename, or it sends the next session looking for
+    files that are gone. The same goes for every cross-reference: grep for
+    each old name after each step, and add a small check under `tools/` that
+    every relative Markdown link resolves, run by `npm test`.
+  - **What is deliberately NOT proposed**: splitting RESEARCH.md into many
+    small files (more files, the opposite of the ask, and search already finds
+    things in one), and dropping the Done archive (this repository's history
+    starts at one squashed commit, so that archive is the only record of why
+    most decisions went the way they did).
+
+### Selling it: the attribution pass
+
+
+### Getting it into other people's hands
+
+- **Weak hardware: the owner is testing it personally**, on a phone, an
+  iPad and a laptop, and the answer is whatever those give. Decided 25
+  September: there is no route to a broad device matrix for a solo project and
+  waiting for one would stop everything. The open item saying the low tier
+  cannot reach 30 fps on weak machines still stands and tuning still cannot
+  fix it -- what changes is that the number gets MEASURED on three real
+  devices and stated honestly on the page, rather than discovered by a
+  stranger.
+
+### Networked multiplayer
+
+Asked for on 2026-09-25 as a feasibility study, not a plan.
+
+- **The product question is unanswered and blocks any code.** Two people in
+  different houses, or several people standing in one bay? They want different
+  things and the second is nearly free.
+
+- **Version skew would become a shipping constraint.** GENERATOR_VERSION was
+  at 32 and moved twice on the night the study was written. Once people play
+  together, a bump costs a MATCH rather than a saved round, and the handshake
+  has to refuse a mismatch at the door.
+
+### A course has a name, not a serial number
+
+Asked for on 2026-09-25, in the run-up to letting other people play it. One
+idea under several bullet points: a course is presented by what it is CALLED,
+and the development chrome around that goes.
+
+- **The library card still shows the seed** -- deliberately, since that is
+  metadata about a stored course rather than chrome on the playing screen. Worth
+  a second look if seeds are being retired from the player's view generally.
+
+- **A name is suggested, never enforced as unique.** Two saved courses can
+  have the same name; the dedupe on import compares name AND settings, so this
+  does not cause a collision there. It would read oddly in a long library.
+
+### Shot numbers that stay on the card
+
+Asked for on 2026-09-24, in the run-up to letting other people play it.
+
+- **The card forgets its numbers on a reload.** `lastShot` is memory only,
+  so resuming a saved round opens with dashes and "Nothing hit yet" even though
+  the round is mid-hole. Saving the last shot with the round would fix it; the
+  question first is whether a shot from a previous SESSION should be presented as
+  though it just happened.
+
+- **The range's own session summary is still its own thing.** Average carry
+  and offline spread across the session sit in the paragraph above the grid
+  rather than being fields you can tick. They are session statistics rather than
+  shot readings, which is a real distinction -- but somebody will want them as
+  tiles.
+
+- **Nothing has been tested against a real monitor.** Every extra field is
+  exercised through the lab and through `parseLaunchMessage`, which is the same
+  code path a device drives, but no physical device has sent a ClubData block
+  into this. First thing to check at the R50 session.
+
+### Greens read better if the art style bends for greens only
+
+Asked for on 2026-09-24, after the second retune. **Updated 30 September:**
+the five green sliders are now two (definition, bands) plus a course-wide grass
+sheen, which answers the midday problem from the viewer's side rather than the
+sun's -- see RESEARCH.md *Reading the ground, again*. These entries remain the
+further options, each breaking one of the two limits a green still has: the
+lighting is quantised into four steps, and at the default difficulty a green
+has only about half a percent of shape to show.
+
+**None of this touches the ground.** No routing, no hazards, no planting, no
+collision, no `surface()` -- so **no `GENERATOR_VERSION` bump** for any of it,
+and the biome fingerprints must come back unchanged. They are all graphics
+settings, in `GREEN_READ` beside the other two, which DOES mean a
+`SCHEMA_VERSION` bump and a `GREEN_READ_GEN` bump per shipped batch, or a saved
+record beats the new default and the change reaches nobody. Every one of them
+also needs `customProgramCacheKey` in `ground.js` bumped, or the browser serves
+the old program from cache.
+
+**Ordered by payoff for how much style is broken.** The first is the one to do.
+
+- **Give greens their own lighting ramp -- this is the blocker, and it is
+  small.** `toonRamp()` in `textures.js` is four texels (90, 145, 205, 245) on
+  `LinearFilter`, sampled by three at `dot(normal,light)*0.5+0.5`; texel centres
+  stop at .875, so a near-flat green under a sun above about 48 degrees is
+  clamped and every lighting cue dies. Measured: brightness span across a green
+  was 0 out of 255 with AND without the old sun cue at 50, 65 and 80 degrees.
+  Smooth the ramp for the putting surface and all of it starts working again at
+  full strength, for free.
+
+  **It cannot be done with a second material.** The whole course is ONE mesh with
+  one `MeshToonMaterial`; greens are `kind==4.` inside the fragment shader. So
+  the ramp has to be bypassed IN the shader: declare `float gGreen=0.;` in the
+  `common` injection (a constant initialiser, which is legal at global scope --
+  a non-constant one is what once stopped the ground drawing entirely), set it
+  from the kind test inside the `color_fragment` injection, and replace three's
+  `getGradientIrradiance` so it mixes between the ramp lookup and the raw smooth
+  `dotNL` by `gGreen`. Order is on our side: `color_fragment` runs BEFORE
+  `lights_fragment_begin` in the toon fragment shader, so the kind is known by
+  the time lighting asks. That is a fourth link in the replace chain, so add the
+  anchor to `FRAGMENT_ANCHORS` in `tests/ground-shader-structure.test.mjs` --
+  and confirm the chunk name against the three version in use, which that test
+  already does for the others.
+
+  **The seam is at the collar**, where stepped fairway meets smooth green. Fade
+  `gGreen` across the fringe rather than switching it, using the same signed
+  distance the surrounding classification already has.
+
+  Rejected: remapping `dotNL` for greens so the flat region lands mid-ramp
+  instead of at the top. It is a one-line change and it works, but it moves a
+  green's average brightness down a whole step -- greens would read as a
+  different, darker grass than the fairway they sit in, which is a worse break
+  than the one being avoided.
+
+  **The measurement that decides it**: brightness span across a single green at
+  50, 65 and 80 degrees of sun, against the numbers above. Anything below about
+  15 out of 255 at 65 degrees means it did not land.
+
+- **Cross-cut the bands instead of striping them.** A stripe bends one way,
+  so it describes slope along one axis and says nothing across it; a grid bends
+  both ways and reads like a wireframe laid on the surface, which is shape
+  information rather than brightness information and therefore survives midday.
+  Real courses cross-cut greens, so this is arguably not breaking the style at
+  all.
+
+  In `ground.js`, the band block already computes `plan`, `coord`, `stripe` and
+  `spread` for `kind==4.` at a 3.2 m period. A second set at 90 degrees to `mow`,
+  combined multiplicatively, is most of the work. **The trap is the anti-alias
+  fade**, and it is written up at the top of that block: the fade is measured on
+  the PLAN coordinate, never the bent one, because the height term changes
+  fastest exactly where the ground is steep or seen at a grazing angle -- doing
+  it on the bent coordinate once made bands vanish on the slopes they describe.
+  The second axis needs its own `fwidth` on its own plan coordinate, not a reuse
+  of the first. Two sets also double the pattern energy, so `greenBandSoft` will
+  want re-tuning downward; the owner already has bands at 10%, which suggests
+  starting the grid lower still.
+
+- **Contour lines on greens only, at a fine interval.** The most legible cue
+  we own by a distance -- our own note on the course-wide toggle says so, because
+  it turns a slope into a spacing you can count -- and the reason it is off is
+  that a metre-interval topographic map across the whole course looks absurd.
+  Confined to the putting surface at 20-25 cm it stops being a map and becomes
+  the one place a golfer actually reads contour.
+
+  The code is already there: the `cueContours` block in `ground.js` is
+  `groundPoint.y/1.0` with an `fwidth` line and a moire fade at `smoothstep(.25,
+  .7,w)`. A green-only branch is the interval, the kind test, and its own
+  strength uniform. **At 25 cm the moire fade will trigger far earlier**, so the
+  lines will vanish at mid-distance unless the fade is re-fitted -- check it on a
+  green from the tee, not from over the ball.
+
+  **Say plainly that this is the closest of the five to being a green-reading
+  helper**, which is the thing the owner asked to do without. Ship it off by
+  default and let them decide.
+
+- **Bake shading into each green when the course is built.** Everything
+  sun-driven collapses at midday because that is what midday does; shading baked
+  from the geometry does not care where the sun is. `localReliefField()` in
+  `ground.js` already does exactly this at course scale, into the `localRelief`
+  vertex attribute and the `vRelief` varying. A green is roughly 500 square
+  metres against a course's several hundred thousand, so the same field over
+  just the putting surfaces is affordable at many times the resolution -- a
+  second, finer attribute sampled only where `kind==4.`, or a small per-green
+  data texture.
+
+  **Check the generation cost before committing**: this runs in the build, which
+  is already 3-5 seconds for 9 holes and 24% slower than it was. `bench.mjs
+  --tier full --since` before and after, and it is not worth more than a few
+  hundred milliseconds.
+
+- **Slope in colour, not brightness.** The ramp quantises LIGHT; it does not
+  touch the colour of the grass, so hue is an entirely unused channel on a
+  surface where the brightness channel is saturated. A few per cent cooler
+  running uphill, warmer running down, keyed off the same tilted normal
+  `greenLift` already builds. The eye reads hue and brightness separately, so
+  this ADDS a channel rather than competing for the one every existing cue is
+  fighting over. Closest relative is the existing `cueSlope` tint, which works on
+  the whole course and is the only one of the original three that works in colour
+  -- worth reading first, because it already solved the "does this look like
+  grass" problem once.
+
+- **The honest caveat, to be repeated to anyone who picks this up.** Part of
+  why a green reads flat is not shading at all: you are looking at it from near
+  ground level at a shallow angle, which compresses the slope out of the picture
+  geometrically. No shading cue fixes viewing geometry -- it is why real golfers
+  walk round a putt and crouch behind it. Expect a real improvement from the
+  above, not a solved problem, and do not chase the last of it with ever-stronger
+  cues; that is what produced a green that read as a lit object rather than a
+  shaped one and had to be walked back.
+
+### Green and bunker shapes
+
+Both outlines were a smooth oval. Measured over 108 greens and 284 bunkers:
+widest radius over narrowest ran 1.15-1.40 for greens and 1.11-2.40 for bunkers,
+and a bend figure that is non-zero only where an outline turns back on itself was
+**0.00 for all 392 shapes**. Nothing had a lobe or a waist anywhere.
+
+- **Shaping a green steepens the ground around it, and the shoulder blend is
+  why.** The shoulder falls away from the green's NOMINAL size and does not
+  follow the outline, so wherever a shaped green bulges outward its shoulder has
+  less room. On default terrain the steepest surround goes 0.570 at slider 0 to
+  0.709 at the default and 0.806 at full; on the harshest, 0.685 to 1.032. The
+  surround test was re-pinned from 1.35 to 1.45 to record it. **The intent of a
+  broad shoulder rather than a ridge was already not met before this change and
+  is now further off.** The fix is to blend the shoulder off the outline rather
+  than the nominal size, which is real work and has not been attempted.
+  **Since GENERATOR_VERSION 33 a quarter of greens are raised by default**, whose
+  banks are steep on purpose (3-5 ft over 5-8 m), so measure this with
+  `raisedGreens: 0, sunkenGreens: 0` to separate the unintended steepening
+  from the intended.
+
+- **True scalloped edges need a data channel that does not exist.** Capes and
+  bays -- the fingers of grass that intrude into sandbelt bunkers -- want
+  harmonics above the two a bunker carries, and `meta` in the hazard texture is a
+  full vec4 (phase, kind, wave2, wave3). Adding a third means changing the
+  texture layout, which is where the paint-versus-lie risk lives. Worth doing
+  only if the amplitude alone turns out not to be enough on screen.
+
+### Tee surrounds, and the moat that made them
+
+- **UNEXPLAINED, AND THAT IS FINE FOR NOW, 23 September 2026. The far ring
+  around greens is probably structural rather than a pile-up.** Owner's call:
+  keep it on the list, do not chase it. It was recorded earlier as bunching at a
+  hard edge, but it sits at 179-205% at 55-120 m even with the edge softened and
+  at every slider setting. More likely: rough far from any corridor is fully
+  planted while rough near one is thinned, and a green sits at a corridor's end
+  so its far field is disproportionately far-from-corridor. **The earlier claim
+  that softening the edge would fix it was wrong and is withdrawn** -- that is
+  the part worth remembering, because it is written into the commit message for
+  the soft-edge change where nobody will think to look for a correction.
+  `tools/bench.mjs surrounds --set trees=65` is what measures it.
+
+### Obstructions in the shot path
+
+Measured across 216 holes, 648 tee shots (8 biomes x 3 seeds x 3 tees): **29 tee
+shots (4.5%) have a trunk sitting on the straight line to the fairway**, the
+close ones 8-20 m from the tee. None were unplayable -- every one had a clear aim
+somewhere within 18 degrees -- but being forced off the fairway line on a tee
+shot is the complaint, not being stuck.
+
+Cause: **world trees have no tee guard at all.** The only rule is "at least 10 m
+outside a corridor", which near the tee is right beside the tee box. There IS a
+22 m no-tree bubble, but it lives in the per-hole tree list and is centred on
+hole-local origin while the tees sit 11 to 85 m away from it -- and that list is
+dead anyway (see below), so the bubble never protected anything.
+
+- **The per-hole tree list is dead code.** `h.trees` is built in
+  `generateCourse` for every hole and nothing reads it once a world exists:
+  physics takes `course.world?.trees` first, and the renderer, vegetation and
+  camera all read `world.trees` only. `course.trees` survives as a fallback for
+  a bare hole with no world, which is test fixtures. Costs a placement loop per
+  hole and carries a stale keep-out rule that reads like it is protecting tee
+  shots. Delete it or make it the fallback it actually is.
+
+### Ball flight, after the GC3 session
+
+- **Hang time is 0.7 s long and it is not the lift cap's doing.** It sits
+  between 0.5 and 0.7 s for every value of `spinDrag` tried, so it cannot be
+  tuned from here. The 6 October refit left it at 0.70 s, and putting hang into
+  the fit with a heavy weight moved it only to 0.66 s while making height, carry
+  and landing worse -- which, with those three now agreeing with the GC3 to a
+  percent or a degree, points at the GC3 defining hang differently. Matching apex while overshooting hang means the ball takes
+  too long to fall from the same height -- the SHAPE of the descent rather than
+  its scale -- and descent angle running 1.5 degrees steep says the same. Needs
+  a look at how drag varies through the descent, with its own evidence.
+
+- **One last fit when the Garmin R50 data lands.** A third device makes the
+  spread readable instead of a two-way argument: with two sources that disagree
+  there is no way to tell which is off, and with three the odd one out shows.
+  Fit against all three together, report the residual against each, and accept
+  it. **Perfection is explicitly not the bar** -- a fit that matches one device
+  exactly would be overfitting to that device's algorithm. Worth asking whether
+  the session can include driver, since the item below is still open.
+
+- **No driver data in either session, and the R50 session will have it.**
+  Confirmed 23 September 2026. Both existing sets are irons and wedges, 78 to
+  142 mph, so the high-speed low-spin corner is entirely unmeasured -- and it is
+  the corner the original six-row tour fit was most confident about, which is
+  the combination that hides an error rather than showing one.
+
+- **What the R50 session has to carry for the fit to be worth doing.**
+  Written down before the data arrives, because every one of these has already
+  cost something once:
+  - **Total spin AND spin axis, reported not derived.** The GC3 gave both
+    directly. Deriving spin axis is where a sign error lives, and a shot
+    direction sign error has shipped four times in this project.
+  - **Peak height.** The whole lift-cap defect was invisible in carry and
+    obvious in apex. Carry alone cannot catch a shape error.
+  - **Hang time to hundredths.** SkyTrak reported whole seconds, which cannot
+    grade anything -- and hang time is the open defect, running 0.7 s long.
+  - **Descent angle**, kept OUT of the cost as it always has been, so it stays
+    an independent check rather than a fitted output.
+  - **The landing surface, stated.** Nothing else validates roll, and that is
+    why roll still has no reference data at all. A range mat or a stated turf
+    type would be the first roll evidence this project has ever had.
+  - **Ball speed, launch angle, azimuth, carry, offline** as usual.
+  - **Roll, with the surface it happened on** -- the first measured roll this
+    project would have. Total distance and the landing surface for chips at
+    10, 20 and 30 yards, a 50 yard pitch, a 7 iron onto a green and a driver on
+    a fairway (2 October: the published chipping ratios disagree by a factor of
+    three, so only a measurement can settle them).
+
+
+Updated September 15, 2026. These are future tasks, not claims of implemented behavior. Finished work moves to the completed sections at the bottom. See PROJECT_HANDOFF.md for context and README.md for current controls.
+
+### Priority 1: correctness and continuity
+
+- **The suite's wall time is one file at a time.** Worlds are memoized per test file and `water-terrain` is split, and the wall did not move: it is set by the slowest single FILE, and six are still over 100 s. Splitting more is mechanical. The better fix is underneath: a profile puts `nearest` at 15.3% of a generation and the hole-centreline math (`sideWidth`, `unitCenter`, `toLocal`) at about 40% together. `nearest` walks all nine holes with no spatial rejection; a world-space bounding box per hole would speed up the tests, the harness and the game's loading at once.
+
+
+- **Turn `crownShare` on for the other biomes.** They would all benefit and none of them needs it. One number each, and the fingerprint will say exactly what moved.
+
+- **Six metrics in this project have now measured the wrong thing.** Each had a filter or a clamp that excluded exactly the case under test. Worth a short checklist in the tooling: before trusting a number, confirm it can move.
+
+- **Leaf tinting for the baked trees.** The sprite sheet is green; multiplying it by a green role colour comes out near-black. Either tint white and accept the sheet's own colour, or use the sheet as alpha only and take RGB from the role.
+
+- **Only two crown shapes.** Acceptable while the crown is seventy metres up, but a third would want either a pack with a single-mass conifer or a procedural plume built from overlapping foliage.
+
+- **The bush family is still sized by height.** Same bug the ferns had -- ground cover should be sized by its spread. `fern`, `gorse`, `heather`, `naupaka` and `shrub` all draw from it across six biomes, so it wants doing on its own with a look at each.
+
+- **Deadfall does not collide.** A ball rolls straight through a fallen log. Fine at the current size, wrong if they ever get bigger: a log is an oriented box and physics already collides against those for houses.
+
+- **Blind shots that remain.** The forward tee improves least -- red is blocked over 1 m on 12% of holes against blue's 5% -- because the lift is computed for the complex and red sits lowest within it. Per-pad lift would close that at the cost of the complex reading as one piece of ground. An aiming post on the crest is the other half of the blind-shot question, and is gameplay rather than generation.
+
+- **Watercourse endings that remain.** An outlet INTO an existing pond or lake, which today is prevented rather than handled -- a pond is raised in the drainage model, so a channel can never flow to one. Junction geometry where two channels meet, or a channel meets a pond, is still a segment strip rather than a real triangulation. And 9 endings in 24 courses still fade out partway down a hillside because the profile ran out of cut budget, which is the least convincing ending left.- [ ] **Wider generation stress tests.** Sample many seeds across all biomes, footprints and slider extremes. Measure green-surround slopes, hazard clearances, corridor overlaps, channel segment intersections and shoreline/contact disagreement. Save failing seed/settings fixtures and screenshots. The present regression set is not exhaustive proof for arbitrary seeds.
+
+- **Measured physics calibration.** Collect repeatable launch/landing/roll measurements on known Stimp and turf. Fit drag/lift/contact parameters against held-out data. Track errors by club, launch speed, spin and surface, while preserving convergence and finite stopping behavior. Do not claim commercial-level accuracy from plausibility tests alone.
+
+- **Browser timing and state-transition regression -- partly covered now.** `npm run smoke` drives the three-second cup reveal through to the scorecard and the next hole, a replay, a mulligan, and Enter skipping a flight. **Still manual:** replay across holes, multi-player completion, scramble selection, and cancellation during pending timers.
+
+### New biome ideas (9 October)
+
+Sixteen landscapes the owner and Claude drew up together, with what each would
+cost. Ordered cheapest first within each group. **Haunted Hollow was
+picked first** and built as a Halloween update (in `# Done` under this heading);
+everything else here is open. A biome is one record in `src/biomes.js` (PROJECT_HANDOFF *Adding a
+biome*), so "settings only" really means one record plus a course-name list and
+a mist profile. "Unused models" means the model is already in `vendor/` and goes
+in through `PICK` in `tools/build-meshes.mjs`; check it in `npm run assets`
+before choosing, because picking by file name has been wrong twice. Altitude and
+temperature are biome fields and feed the air density the ball flies through,
+so several of these play differently as well as look different.
+
+**Haunted Hollow follow-ups**
+
+- **Check the redwood cull rebuild on a graphics card that cannot hold 60 fps.** On the development machine the 170-195 ms stall at the start of the opening descent appears only with the frame rate uncapped (RESEARCH, *The redwood hitch: an uncapped-profiler stall*). A card already struggling on the redwood course queues frames the same way and may feel it. If so: spread each rebuild's 6.7 MB upload over several frames, measured before and after. Not done by decision (9 October): no player report, and nothing here reproduces it at 60 fps.
+- **The profiler's worst frames are not a player's.** It runs uncapped, so frames pile up behind the graphics card and a large upload can stall it for 170-195 ms where normal 60 fps pacing shows nothing -- that is the whole of the redwood hitch. A worst-frame or p99 figure wants a second run at normal pacing before it is believed, and the report should say which it was.
+- **The profiler can be fooled by something on the machine hitching every 200 ms.** One run in four, either biome, a burst of 25-100 ms frames at exactly 5 Hz, and the median goes up 1-2 ms with it. One browser for a whole sweep also makes later cases worse. It reported Haunted Hollow at twice its real cost. The harness should flag a case whose slow frames fall on a regular period (and re-run it), and consider a fresh browser per case.
+- **A glow round the lit lanterns.** An additive point-sprite halo drew a dark square behind every lit face, even with the mist patch kept off it (RESEARCH, *Second pass: full fantasy*). Find what in the frame does that before trying again; the lit face reads without it.
+- **Giant Redwood has no fog of its own.** Found while adding Haunted Hollow: `profileFor` falls back to Midwest, and the test that claimed every biome had a profile could not fail. The grove's "wet air" has been prairie haze since it was added. A look decision for the owner; `tests/mist.test.mjs` lists redwood in `BORROWS` until it is made.
+
+**Settings only, no new assets**
+
+- **Heathland / Sandbelt.** Sandy scrubby rough, purple heather, scattered pines, firm fast ground -- the Melbourne sandbelt and English heathland style, not represented yet. Desert's `sandLand` rough, Links' `heather`, PNW's `pine`.
+- **Volcanic Coast.** Black lava rock in the rough, bright green fairways, dark blue sea along one edge (`edgeCoast`), palms and low scrub. Island's species with a dark rock palette.
+- **High Plateau.** Wide dry golden grassland near 2,500 m under a pale sky; thin air carries the ball noticeably farther. Palette, landform and Links-style `tallGrass`.
+- **Highland Moor.** Steep, almost treeless hills of heather and bracken, grey outcrops, dark lochs, low heavy sky. Mountain's `hills` with a very low `treeDensity` and Links' heather. Looks best with the course's lake setting up -- a biome does not control how much water a course gets.
+
+**Unused models already in vendor/**
+
+- **Winter.** Snow-covered trees and green playing surfaces cut through white rough, low sun, cold air (shorter carries), pale blue light. The Quaternius packs carry `_Snow` versions of nearly every tree, bush, rock, stump and log (`PineTree_Snow`, `BirchTree_Snow`, `Willow_Snow`, `Rock_Snow`, `TreeStump_Snow`, `WoodLog_Snow`, `Bush_Snow`). Decide whether snowy rough PLAYS differently or only looks it: today the lie is plain rough whatever colour it is painted.
+- **Nordic Birch.** White-trunked birch stands with pines, mossy granite boulders, many lakes, a long low northern sun. `BirchTree_*`, `Rock_Moss`.
+- **Mushroom Grove.** Fairytale: giant red and tan toadstools as the trees, twisted trees and flowers between. Kenney `mushroom_*` and MegaKit `Mushroom_Common` / `Mushroom_Laetiporus` scaled to tree height; stalks collide like trunks. The only purely fanciful idea, so it turns on whether the game should stay realistic.
+- **Rainforest.** Dense layered green: palms, big-leafed plants (`Plant_1_Big`, `Plant_7_Big`), ferns, mossy rock, warm wet haze. The work is density -- jungle without hiding every fairway.
+- **Lowcountry Marsh.** Flat wet Carolina-coast ground: live oaks, willows, lots of water, warm humid haze. `Willow`, `tree_oak`. Kenney's `hanging_moss` and `lily_large`/`Lilypad` are there too, but draping moss on branches and floating pads on ponds are new code -- a second step.
+
+**Some new building**
+
+- **Spring Blossom.** Pink and white flowering trees and flowering bushes (`Bush_Flowers`, `Bush_Large_Flowers`). Autumn's per-species leaf colours are written into `vegetation.js` for autumn only (`leafFall`); making the tint a biome field is small and lets any biome recolour its trees.
+- **Mediterranean Cliffs.** Umbrella pines, narrow cypresses, gnarled olives, terracotta houses (`warm`), deep blue sea along one edge. The umbrella pine is a bare trunk with a flat crown -- the trick `tools/bake-assets.mjs` used for the first redwoods; cypress is a stretched `tree_cone`; olive from `TwistedTree`. Three tree builds, none from scratch.
+- **Savanna.** Golden tall grass and flat-topped acacias. No acacia in any pack, so it would be grown the way the redwoods were (`tools/grow.mjs`). A wrong silhouette sinks the biome, so this is the costliest of the tree-led ideas.
+- **Countryside.** Rolling farmland: wheat and corn fields, fences and hedgerows, scattered oaks and farmhouses. Kenney `crops_*`, `fence_*`, Quaternius `Wheat`, `Corn`. Laying out fields in rows beside the holes is a new placement system, not a plant list.
+- **Ancient Ruins.** Broken columns, obelisks and stone heads in the rough between holes (Kenney `statue_column`, `statue_columnDamaged`, `statue_obelisk`, `statue_head`, `statue_ring`). Less a biome than a scenery layer several biomes could switch on -- Mediterranean and Rainforest especially. Placement would likely borrow how `homes.js` picks sites.
+- **Red Rock Canyon.** Flat-topped mesas and red cliff walls, juniper scrub, red earth. Kenney's cliff kit (`cliff_*`, including waterfall pieces) is vendored, but the landform fields only say how high and how far hills rise -- not flat tops or sheer walls. New landform work, so it moves generation and needs the fingerprint and bench run like any terrain change. The costliest and riskiest idea here.
+
+### Priority 2: landscape and performance
+
+- **Hydrology mesh quality — remaining work.** The tight-bend failure is now prevented rather than meshed around: generation caps channel curvature, stations sit about 2.6 m apart, each carries a mitered three-vertex cross section, and the ground shader resolves station joins against neighbouring segments. A channel is still a segment strip, not a constrained bank/water triangulation, so the guarantee rests on the curvature cap. Re-check it before widening rivers past 30 m, raising meander amplitude, or adding confluences, and add the real triangulation if any of those land. Junction geometry where two channels or a channel and a pond meet is still unsolved and belongs with the drainage item above.
+
+- **Bridges and crossings.** Channels currently cross walking routes with no deck. A first attempt shipped `src/bridges.js`, which overrode contact height over each deck footprint while the ground mesh kept its carved channel; it was removed because a height override is not a solid — a ball flying *under* a deck registered as landing on it, and the override fought every other height consumer. A real crossing needs an actual collision volume with an underside, sitting above ground that is left alone, rather than a second height function layered over the terrain.
+
+- **Home interiors and regional architecture.** Interiors, varied window patterns and per-region architecture beyond the warm/arid palette split are still unbuilt.
+
+- **Generation worker and progress.** Generation still runs on the main thread and still blocks it; an 18-hole feature-heavy course pauses the tab for several seconds. A **"Growing your landscape…" overlay** now covers that: `whileGenerating` paints the message, waits for a frame (or a timeout, since a background tab fires no frames), then does the work. That is a status message, not progress — it cannot advance, because the thread is locked for the duration.
+  Real progress needs generation split into steps that yield between them. The cheapest route is to make `generateWorld` a `function*` yielding phase labels: a sync wrapper drains it for the tests, an async wrapper yields to the browser between phases. Measure first — if one phase such as `makeGroundGrid` dominates, yielding between phases buys little and that phase needs chunking too. **A Web Worker is the wrong tool here:** `generateWorld` returns closures (`toWorld`, `height`, `surface`) that cannot cross a worker boundary, so it would mean refactoring the world into pure data with closures rebuilt on the main thread. Acceptance: controls remain responsive while generating; stale results cannot replace a newer round.
+
+- **Terrain/vegetation/house LOD.** Reduce distant draw calls and mesh density, batch houses, stream visible cells, and profile shadow/reflection costs. Preserve close-up green/cup/contact precision. Benchmark several screen sizes/GPUs rather than choosing limits from one computer. **Start by establishing what actually binds the frame** -- the redwood LOD was built against an assumption that instanced vertices were expensive, and they are not; the grove went from 1 M to 33.6 M vertices a frame with no measurable change. Draw calls, shadow passes and fill are the candidates that have not been ruled out.
+
+- **Routing quality metrics.** Evaluate forced carries, recovery space, green-to-tee walks, finishing-hole return and strategic choices. Improve footprint resemblance without forcing fixed hole templates or sacrificing separation. Previews are guidance rather than guaranteed exact silhouettes today.
+
+- **Green-surface shaping quality.** Retain broad surrounding transitions while adding a maximum-grade constraint around green complexes and fairway approaches. Avoid over-flattening adjacent holes. Current smoothing greatly softens shoulders but does not impose a global terrain-grade guarantee.
+
+- **More natural pond siting.** Terrain is now settled to a level shelf under each pond, so rims vary by a few centimetres and a pond no longer needs a naturally flat site; rim sampling, shrinking and removal remain only as a safety net. What is left: ponds are still dropped for *geometric* reasons — at high Water settings large ponds crowd each other and the playing corridors, so roughly one pond per hole is placed however many are requested. Prefer existing low contours when choosing where to level, relax the mutual-overlap rule so several ponds can share one basin, and add wetlands and reeds.
+
+- **Lighting and water fidelity.** *Water itself is done and signed off (2026-09-17): the surface, the flow and the reflection model are settled and should not be reopened without a reason from play.* What remains under this heading is sky/environment continuity, shoreline alpha and the postprocessing decision below. The shared planar reflector is gone -- every body now carries its own cubemap probe, so nothing pops -- and what that gives up is parallax: a probe is taken from one point, so its reflection does not shift as you walk past. If that reads as wrong on a large still lake up close, the answer is per-body planar mirrors, capped and assigned so that no body ever gains or loses one while it is on screen; never one mirror shared again. Probe resolution follows the tier (`quality.reflection`/4, 64-256). Shoreline translucency is handled for channels by a per-vertex bank weight, and for the ocean since `water-edges` by a depth map of the terrain (the sea fades out over its last 35 cm); ponds and lakes still end on a uniform alpha at their edge, softened by their foam strip — a depth map per basin is the way to give them the same. The no-postprocessing rule has been narrowed by the owner: postprocessing is now allowed on the **high** graphics tier, starting with additive god rays and open to bloom and ambient occlusion if they earn their place. The underlying requirement is unchanged — nothing may soften the sharp turf boundaries — so a pass that blurs the scene image itself still needs a decision, while an additive layer composited over it does not. The blended turf edges around creeks and rivers remain a deliberate, local exception granted for channel crossings only.
+
+### Player profile
+
+- **Rate courses by more than their length.** The sim handicap rates every course from yardage alone (RESEARCH.md *The sim handicap*). The generator knows where the water, sand, trees and slopes are; obstacle values from the USGA's ten factors would make a hard course rate hard. Also check the placed bogey-rating formula against the Course Rating System manual.
+- **WHS soft and hard caps, and exceptional scores.** Left out until profiles carry a year of history.
+
+### Priority 3: play and maintainability
+
+- **Separate main.js concerns.** Extract studio, round settings, scorecard, input/monitor and presentation controllers. Preserve accessible names/IDs and public behavior; avoid a framework migration solely for file size.
+
+- **Spin-dependent rim behaviour.** The rim is now a rigid-body rolling contact carried through time (see the completed item below), but the ball arrives at it carrying only the spin implied by rolling. A putt struck with sidespin or cut across the face should engage the lip differently, and nothing here models that. Hogan & Antali's separation of rim lip outs from hole lip outs via degenerate saddle equilibria is also not reproduced as such, although the instability of the edge equilibrium falls out of this formulation: f'(alpha) = rho theta'^2 cos alpha - g sin alpha is negative throughout (90, 180) degrees, so a ball on the edge cannot balance there and must either fall in or be thrown off.
+
+- **The rest of the penalty rules.** Water and out of bounds are done (see *Done*): what is left is an unplayable ball (Rule 19), a provisional ball (18.3), yellow penalty areas if a course ever marks one, and choosing a drop spot by hand anywhere in the relief area rather than the best one the game picks. RESEARCH.md *Penalty relief* lists what was left out and why.
+
+- **Per-player tee choice.** The current active tee is a round setting. Support separate tee sets/yardages per golfer if requested, including mixed-tee scoring and CSVs.
+
+- **Replay persistence and controls.** Optionally save recorded shots, pause/scrub/restart and choose replay cameras. Keep recorded trajectories separate from score/undo mutations and bound file sizes.
+
+- **Accessibility and smaller screens.** Keyboard-only end-to-end testing, narrow viewport/custom layout combinations, reduced-motion support and configurable readability. Ensure the result panel remains usable alongside other panels. **The smaller-screen half is now measured**, by the smoke test's `hud-reachable` journey -- and it fails; see "Found by driving the built game".
+
+- **Hardware validation, when requested.** Test actual controllers and launch monitors/connector versions. Record operating system, firmware, protocol fields, putting support, shot duplication/reconnect cases and licensing prerequisites. Synthetic bridge tests are not device certification.
+
+- **Offline release matrix -- the Chromium half is automated.** Archives are one command (`npm run release`), and `npm run smoke` opens the built file by file:// in Chromium on every run. **Still manual:** Safari, Firefox and Edge, and export/import round-trips. The last sentence this entry used to carry -- that browser automation disallows file URLs -- was the in-app preview pane, not browsers.
+
+### Still open from the putting and cup update
+
+- **Green surrounds are steeper than intended on extreme settings.** The test that claimed otherwise was pinned to one lucky seed at 0.582 while most seeds were already over its 0.6 line. Now a multi-seed characterisation test; the underlying shoulder blending on elevation 100 / landform 100 mountain still wants doing. **Not a release blocker, measured**: at the default elevation 35 / landform 70 the worst surround across 8 biomes x 3 seeds is 0.59 with a median of 0.54, and nothing exceeds the intended 0.6. It only bites at slider extremes, where the result is a perched green rather than a broken one.
+
+- **A sink pond can be given a water plane its basin cannot reach.** Guarded at the call site so the pond is dropped rather than floating, but the cause is in `fitPondBasin`: it takes the level from the lowest ground around the outer transition without knowing how deep the pond digs. The same arithmetic applies to lakes, which is why the guard is not in the shared fit. **Not a release blocker, measured**: across 64 worlds and 2,511 sampled points of water surface, 15 stand above their own surface and the worst by 0.02 m -- float noise at the waterline. No sink pond and no lake. The four-metre case that started this is gone.
+
+- **The debris tails point along the mean wind** while each mote wobbles off it. Needs a per-particle direction attribute; invisible at this sprite size so far.
+
+- **Roll has no reference data.** The flight is checked; the bounce and roll are not, because no launch monitor export states the landing surface. Needs a session with the surface pinned, or on-course measurement.
+
+- **The green marker still shows a flag glyph** after the flagstick has been pulled. A cup or target mark would be honest.
+
+### Distribution follow-up (September 11 review)
+
+- Run a live dependency advisory audit on a machine with working registry certificate trust. Current attempts failed TLS verification; no clean-security claim.
+
+- Finish target-browser/direct-file, controller and physical launch-monitor testing before making corresponding support claims.
+
+- Choose public publisher/support details and check the working product name before a broad release.
+
+- **The PGA driver carries 262 against Trackman's 275 and peaks about 4% high.** After the 6 October refit (RESEARCH.md, *The flight refitted against three launch monitors*), Trackman's tour inputs (167 mph, 10.9°, 2,686 rpm) carry 262 yd, peak 33.4 yd against the sheet's 32, land at 39° against 38, and total 284 against 296. The LPGA driver is within 1.2% on carry and +5% on height. The earlier entry said the apex was 9% LOW against a quoted 35 yd; Trackman's own sheet says 32, and the refit moved it to slightly high.
+  **What was tried and rejected:** letting lift and drag depend on airspeed fitted the PGA driver exactly, by making drag fall with speed against Kensrud and Smith's measurements. Next evidence wanted: a normal driver session on the owner's R50.
+  - **Acted on 6 October:** the refit closed the R50's long-iron gap to about 4%. **The R50 had said the same about long irons:** On the owner's R50 session the model's peak height matches within about 1% on wedges and falls away as spin falls: 5% low on the 8 iron, 8% on the 7, 11-12% (7-8 ft) on the 6 iron, 5 iron and 5 wood -- with carry still within 1% on those clubs, so the model's long-iron flight is flatter rather than shorter. Same direction and size as the driver gap above; the SkyTrak check pointed slightly the other way. Wanted before a refit: a normal driver session and a second day. RESEARCH.md, *The R50 session against the model*.
+
+- **We use the bounce paper's restitution and tilt but not its friction.** [arXiv:2302.02758](https://arxiv.org/abs/2302.02758) Table 3, Campaign B fixed-beta, is r = 0.147, beta = 18.4 deg AND **mu = 0.998**. We take the first two and use mu = 0.40 (green) / 0.44 (fairway), which are from nowhere in that paper. The old justification (the Coulomb limit never binds) does not survive the move to the compliant model, where friction saturates above ~0.4 for a different reason: the tangential spring grips and takes over.
+  - **And we apply a speed-dependent tilt the paper explicitly rejected.** `clamp(-incomingNormal/12,0,1)` in physics.js:406 is Penner's speed-dependent angle; the paper fitted that variant (21.3% error) against a fixed angle (19.2%) and the fixed one won. Measured, the clamp is inert for every full and 3/4 shot and only distorts partial shots -- up to 10 yd on a half driver, 2.3 on a half 7-iron. **Re-measured 2 October with keyboard partials: it is not inert and not a drop-in.** Swapping to the fixed tilt moves a FULL driver's fairway run from 20.8 to 31.2 yd (published 21) and a half driver's from 26.9 to 53.3, while green run-outs fall. It needs a refit of the whole bounce against every anchor, not a switch. RESEARCH.md *After the ball lands*.
+  - [x] **The measured data DOES cover amateur speeds.** Campaign B spans 1.93-38.7 m/s, so the anchor is valid down to a chip. What is narrow is our tour validation set: it spans 3.49x in arrival spin but only 1.26x in landing speed, while the stock bag lands as slow as 14.7 m/s.
+  - [x] **Partial shots show the release-spread defect from the other side:** a half 7-iron releases 17.5 yd against a full one's 3.5.
+  **SUPERSEDED** by the fairway and green refits.
+
+- **A stinger needs a 2-5 degree launch in this model, which no golfer produces.** Asked for a stinger, the fitted aero will only put the apex in the real 10-15 yd (30-45 ft) band if the launch angle is dropped to 2-5 deg. At a plausible de-lofted launch of 8-9 deg the lowest it reaches is 50-56 ft (17-19 yd), roughly half again too high. Measured across 5,324 combinations on the range at 138-170 mph.
+  - **And spin raises the apex hard.** At 150 mph / 7 deg: 2,400 rpm gives 44 ft, 6,400 rpm gives 83 ft. Correct in direction for a fixed launch -- more backspin is more lift -- but it means the model cannot produce the "low and climbing on spin" shape a stinger is usually described by. The rise SHAPE is there (height at a quarter of carry falls from 49% to 35% of apex across that spin range); the height it rises to is not.
+  - **Unchanged by the 6 October refit:** 150 mph, 7°, 2,800 rpm still peaks at 51 ft; 2,400 rpm gives 44 ft and 6,400 rpm 90 ft.
+  - **Why this is a lift-curve SHAPE problem, not a magnitude one:** the open entry above said (before the refit) the driver's apex was 9% LOW against a quoted 35 yd. Low on a driver and high on a low-launch high-spin shot cannot both come from a uniform lift error. It points at how `liftGain`/`liftCap` respond to the spin parameter S at low launch, not at the overall level.
+  - No sourced stinger apex was found -- searches returned general launch-monitor explainers rather than stinger data, so the 10-15 yd target is the user's figure and is not independently confirmed. Getting a real one is the first step before refitting anything.
+  - Searched again 3 October for the shot-making clips, with the same result. The stinger clip (2 iron, 152 mph, 7.5 deg, 2,800 rpm) peaks at 54 ft and says so on its page; RESEARCH.md, *Shot-making clips*.
+
+- **Send `DistanceToTarget` to the device.** The connector evaluates a device mode from club and distance and currently logs `distM=n/a`, so a device cannot switch itself into putting mode on the green. The browser's player message carries only `Handed` and `Club`. Blocked on units: the device log says `distM`, the protocol is nominally yards, and guessing wrong would switch modes at the wrong distance -- worse than not switching. Needs the connector's own documentation or a measured test.
+
+- **Save/import/export, what is left.** Neither loses work.
+  - Saved-round delete is one click and gone; course delete in the round panel is a two-tap arm. Pick one.
+  - `save()` swallows quota errors, so a full store means *Continue* silently stops updating with nothing said.
+
+- **Remaining drift behind the green.** Up to 0.36% of a course still classifies `semi` where the shader paints `rough`: the shader mows to `length + 8`, `fairwayWidth` stops at `length`. Forgiving direction, separate defect.
+  *(was a note under "The driving range. 500 yd × 100 yd, dead flat, mown..." -- see `# Done`.)*
+
+- **Targets are scenery, not greens.** A ball landing on one bounces as range turf, because the shader and `localSurface` both carry exactly one green per hole. Real target greens need a GLSL loop over an extended cup atlas and a matching CPU loop.
+  *(was a note under "The driving range. 500 yd × 100 yd, dead flat, mown..." -- see `# Done`.)*
+
+  *(was a note under "The bounce takes time now (Option C). A spun ball st..." -- see `# Done`.)*
+
+- **Range dispersion is always zero** — see above; needs a strike-quality model.
+  *(was a note under "Flight camera pass. Tightens across the whole shot r..." -- see `# Done`.)*
+
+- Targets are scenery, not greens — needs a GLSL loop over an extended cup atlas.
+
+  *(was a note under "Flight camera pass. Tightens across the whole shot r..." -- see `# Done`.)*
+
+- `CONTACT_GAIN` in contact.js has been declared and unused since it was written.
+
+  *(was a note under "The bounce turns backspin into topspin, which is why..." -- see `# Done`.)*
+
+- **The gain magnitude is unanchored.** Nobody has measured how turf resistance grows with speed; the shape is pinned at the Stimpmeter end but `k = 1` is a choice.
+
+  *(was a note under "Speed-dependent rolling resistance is ON (ROLL_SPEED..." -- see `# Done`.)*
+
+  *(was a note under "Greens and fairways re-anchored to research, each ag..." -- see `# Done`.)*
+
+
+  *(was a note under "Greens and fairways re-anchored to research, each ag..." -- see `# Done`.)*
+
+
+### Sounds (13 October 2026)
+
+Built, signed off and in the game; nothing open (see `# Done`, same heading).
+
+## Release 0.8 (15 October)
+
+- [x] **v0.8 published**, "Fairway 0.8 (beta)", at the owner's request, from
+  the merge of `release-0.8` into `main`: the Swing Meter, XP and levels,
+  things to unlock and wear, achievements, challenges and the course of the
+  week, greens at real size with a bolder attended pin and a Green size
+  setting, and every level from 2 to 50 bringing something. Generator 36,
+  schema 11. Notes: `docs/releases/v0.8.md`. Smoke: full 32/32 before the last
+  changes, the touched journeys after (DISTRIBUTION_REVIEW, *v0.8*); the
+  website is redeployed after it so its demo runs 0.8.
+
+## Unlocks under test (15 October 2026)
+
+- [x] **Every unlock checked one by one, and levelling up played** (the owner
+    asked whether the tests prove unlocks happen and can then be worn; they
+    cannot reach most rewards without weeks of play). Node: every reward shut
+    a level early and open at its level; every wearable worn only from its
+    level, falling back to the starting look (a frame to the newest badge's);
+    achievement titles only with their achievement; the level-up list for
+    every level 2-50 (moved from main.js into rewards.js as `unlocksBetween`
+    so it could be tested); the save refusing every item a level early; and
+    an AGREED list pinning each reward's level. Smoke: `level-up`, a golfer
+    5 XP short of level 2 -- Sky padlocked and refused, one hole, the banner
+    names it, then it goes on. Run on the graphics card the same night,
+    green first time; the banner read "Level 2 · New flourish: Sparkles on a
+    par · New tracer: Sky".
+
+## The Swing Meter, XP and levels (14 October 2026)
+
+- [x] **Owner: play-test the Swing Meter journey's Phases 5-7** (14 October 2026).
+  Everything a machine can check has been: unit tests, the full smoke run (30
+  journeys, with new ones for a challenge, the course of the week and the look
+  picker with a flourish), pictures of the tracers in flight and the phone
+  menus, and a graphics profile (RESEARCH *Profile after Phases 5-7*). What is
+  left is feel and looks: the owner's list is `docs/reports/SWING_METER_TESTING.md`
+  (local). Open questions there: Ribbon's wide band reads faint from behind the
+  tee; the definitions placed without the owner (spec section 14).
+  **Signed off by the owner, 15 October 2026: "everything is ok with me."** Ribbon stays as it is; the definitions placed without the owner (spec section 14, PLACED in RESEARCH) and the defaults for spec questions N1-N3 (W height, X spin; launch-monitor XP x1; reward names, colours and levels as drafted) all accepted.
+- [x] **Larger flags far away on by default?** (15 October 2026.) The third
+  part of the pin proposal, not chosen: with greens at real size and a bolder
+  stick, the pin is still hard to pick out from the tee at 350 yards. Ask the
+  owner after they have played the new pin.
+  **The owner, 15 October 2026: keep it off.**
+- [x] **A new build stutters on its first visit, then never again** (the owner,
+  15 October 2026, loading the `swing-meter` build and clicking round the
+  menus: "lots of lock ups"; after a reload, smooth). Chrome keeps compiled
+  graphics programs between visits, keyed by their source; a build that
+  changes any must rebuild them once, and each trip to the main menu grows a
+  fresh showcase hole that can need more. Not this branch's code: the ball
+  pictures cost about 75 ms the first time the Ball tab opens (measured), a
+  hitch rather than repeated freezes. Worth a look before a release, since
+  every player meets it once per version: warm the menu backdrop's programs
+  behind the loading screen, or the next backdrop's before the menu shows it.
+  Measure first, with a Chrome recording of a first visit after clearing the
+  site's cache.
+  **Measured and mostly fixed (15 October 2026, RESEARCH *First-visit
+  lock-ups and the hole-out stutter*)**: the menus build nothing late; the
+  lock-up was starting Endless from the menu, which rebuilt 35-40 programs in
+  view (1.85 s) because the ball's glow light hid with the ball. The light now
+  sits beside the ball; starting Endless builds one small unlit program, worst
+  frame 100 ms. Left: 100-150 ms frames opening Play, My profile and the Frame
+  tab (page work, not graphics); that one unlit program. **The owner, after
+  playing the fix the same night: "much better."** Left open for the small
+  hitches above; close it if they are never noticed.
+  **Closed by the owner, 15 October 2026: the leftovers (100-150 ms opening Play, My profile and the Frame tab; one small unlit program on starting Endless) are acceptable.**
+- [x] **A stutter at the hole-out, while the camera pulls back** (the owner, 15
+  October 2026): during the hole-out banner, its chiptune sting and the XP
+  popup after it. The owner loves the pull-back into the summary orbit and
+  wants it kept exactly as it is; the fix is in what competes with it.
+  Suspects, unmeasured: the banners' and the popup's `backdrop-filter` blur
+  recomputed every frame over a moving scene; the turning ball close-up
+  redrawn per frame (1-4 ms of CPU in Node); `syncProfile` and its
+  synchronous localStorage write at the hole-out; the summary's tracer lines;
+  the sting's oscillators; the cull and LOD as more of the course comes into
+  view. The smoke probe on 14 October saw only one 50 ms frame, as the
+  scorecard opened -- the owner's machine and settings differ, so measure
+  from the owner's Chrome recording of a hole-out.
+  **One cause found and fixed (15 October 2026)**: the flyover hides the ball,
+  and the ball's glow light went with it, so 14-17 lit programs were rebuilt
+  in view as the camera pulled back on a course built through Play (the 14
+  October probe used Endless, where the menu had already built them). The
+  light now stays. **The owner, the same night: "much better"** (said of the
+  build as a whole, not of a hole-out on its own); if a stutter is still felt
+  at the hole-out, the suspects above remain.
+  **Closed by the owner, 15 October 2026: acceptable as it is now.** The untested suspects above stay written down in case it comes back.
+- [x] **Phase 1: the Swing Meter** (`src/swing-meter.js`). Three taps -- start,
+  distance, strike -- judged on each input's own timestamp, never on a frame.
+  The bar is in yards of carry for the club in hand, solved against the ball
+  model; overswing worth up to 5%; Easy, Normal and Hard per golfer, kept in
+  the profile; early goes right and late goes left for everyone. Curve (S),
+  height (W) and a spin dial (X) replace the Shot shape sliders. Putts are two
+  taps (three on Hard) on a bar that zooms to the putt, aimed at a length by
+  the circle, with the read line showing the break for that length -- all of it
+  on Easy and Normal, the first third on Hard, and the panel saying why (all
+  three replaced later the same day: see *Phase 2, round 3* below). The
+  lie is shown before every shot for every way of playing, and costs ball
+  speed by one table for everyone. A launch monitor's measured ball speed now takes the same share, shown
+  as sent with the penalty beside it in red, unless the round switches it off
+  in Format & tees. The power slider and the ball-flight profile are gone
+  (SCHEMA_VERSION 10 drops the profile from saves). PROJECT_HANDOFF's *The
+  simulator never invents ball data* was rewritten for the lie rule.
+  RESEARCH.md *The Swing Meter*.
+- [x] Closed by round 4: **Owner: tune the Swing Meter's sounds** (round 1, 14 October 2026). Built
+    in `src/sound.js` (`METER_VOICES`, `meterVoice`, `METER_EVENTS`,
+    `meterEvent`): a voice that follows the marker, and a sound for the distance
+    set, overswing, a perfect strike, a strike in the zone, a miss and a swing
+    that ran out, three takes each. Report: `node tools/sound-lab/build.mjs`, then
+    `docs/reports/sounds/meter.html` (local), with a practice meter that plays the
+    picked takes. `check.mjs` renders every take: all between -10 and -17 dB
+    peak. **None plays in the game** until signed off; then fold the choices into
+    a FINAL-style table, wire them in audio.js and extend tests/sound.test.mjs.
+- [x] Closed: **Owner: pick the XP popup's sounds** (round 1, 14 October 2026). Six
+    takes each (three more added on the owner's ask) for the gain, the bar filling and a new level, in `src/sound.js`
+    (`XP_SOUNDS`, `xpSound`); report `node tools/sound-lab/build.mjs`, then
+    `docs/reports/sounds/xp.html` (local), with a demo of the popup that plays
+    the hole-out sting first and spaces the sounds as the game does. All render
+    between -12 and -17 dB peak. The popup already calls `gameAudio.xpSound`,
+    which is silent until `XP_FINAL` holds the picks; then extend
+    tests/sound.test.mjs as for the meter sounds.
+    **Done:** the owner picked gain E, fill D and level-up C with their sliders
+    (`XP_FINAL`), and they play in the game.
+- [x] **The scorecard covered the XP popup, and the screen sat still before it**
+    (the owner, 14 October 2026). The card now waits for the popup and any
+    level-up banner; a holed ball holds 1.2 s instead of 3; the popup comes
+    1.6 s into the banner. Measured: no stalled frame before the popup, the
+    "freeze" was six seconds of still picture (RESEARCH *The pause before the
+    XP popup*). The level-up banner now lets taps through.
+- [x] Closed: **Owner: pick the chiptune hole-out stings** (round 1, 14 October 2026).
+    Four takes in `src/sound.js` (`CHIP_TAKES`, `chipSting`), the same four
+    for every score; report `node tools/sound-lab/build.mjs`, then
+    `docs/reports/sounds/stings.html` (local), with the current marimba beside
+    each to compare. `gameAudio.score` already plays a score's chiptune sting
+    once it is in `CHIP_FINAL`; until then the marimba. On sign-off: fold the
+    picks in, retire the marimba takes from play, extend tests/sound.test.mjs.
+    **Done:** the owner chose take D, the game jingles, for every score, at
+    length 0.7, pitch 0.63, brightness 1.2 (`CHIP_FINAL`); they play in the
+    game, and tests/sound.test.mjs holds every score to it.
+- [x] Closed: **`phone-portrait` fails when its random course puts a shot in water.**
+    Seen once in four runs on 10 October 2026: the relief bar covered the club,
+    the power and the aim pad when the reachability check ran, and it reported
+    eleven unreachable controls. Three re-runs passed. The harness, not the game:
+    the bar is meant to cover them while relief is chosen. The journey wants a
+    fixed seed or to take relief before checking. (`monitor` had the same kind of
+    flake, fixed under *The UI pass* in `# Done`.)
+    **Done (14 October 2026):** it hit `phone-landscape` the same way; both
+    phone journeys now take relief before the check, as a golfer about to hit
+    sees the screen.
+- [x] Closed: **Pins and greens look wrong next to other sims -- a proposal for the
+    owner** (15 October 2026; RESEARCH *Why our pins look small*). The stick and
+    flag are real size; our greens are about twice the US average (median 12,060
+    sq ft against 5,600-5,700). Proposed, in order of effect: (1) **greens to real
+    size** -- the default green size cut so the median lands near 6,000-6,500 sq
+    ft (a generation change: GENERATOR_VERSION bump, every course and week's
+    course re-grown, `bench.mjs --since` before and after, putting distances
+    shorter); (2) **a stick within the Rules but easier to see**: 8 ft instead of
+    7, and the part more than 3 in above the green up to 1 in thick (the Rules
+    allow 2), the putting-height part unchanged so no putt changes; (3) **Larger
+    flags far away on by default**, with a gentler cap.
+    **Done (the owner chose 1 and 2, with the stick tapering 2 in to 1 in):**
+    greens at real size (generator 36, median 6,146 sq ft), their bumps scaled
+    with them so putting slopes are unchanged; the stick 8 ft, 2 in at the top
+    to 1 in at the green, drawn and hit. Smoke 30/30. RESEARCH *Why our pins
+    look small*.
+- [x] **Course studio's Settings fill the play area** (the owner, 15 October
+    2026: "just make the Course studio settings full screen; leave the other
+    windows alone"). The sheet runs from just under the studio bar to the foot
+    of the screen; from the main menu's setup, to the top. A full-screen toggle
+    on every window was offered and declined. The `studio` smoke journey now
+    also checks the sheet fills the space. Its first run failed: the sheet's
+    top is counted from the page, not the play area, so it slid under the top
+    bar and pushed the studio bar off screen; the top is now measured from where
+    the course starts. Then studio, phone-portrait and phone-landscape smoke
+    green, the sheet filling the space at all five sizes, and pictured at
+    1600x900 (local, bench/shots/). **Not yet played by the owner.**
+- [x] **A Green size setting** (the owner, 15 October 2026). Course studio,
+    turf: *Green size*, 60-160%, default 100% (`greenScale`, SCHEMA_VERSION
+    11, a save from before migrates to 100%). It multiplies each green's
+    drawn radius; the bumps scale with it, so slopes are unchanged (median
+    1.06% at 60, 100 and 160%). 100% is exactly the generator-36 greens -- the
+    fingerprint is unchanged, so no GENERATOR_VERSION bump. Full bench clean
+    at both ends. Tests: `tests/green-scale.test.mjs`. Numbers in RESEARCH
+    *Why our pins look small*. **Not seen in the game**: move the slider in
+    Course studio and look at a green at 60% and 160%.
+- [x] **The owner's round of 15 October 2026: flourishes, frames, pin,
+  cameras, cup.** Padlocks show on the meter skins; animated frames break out
+  of the ring (flames rise above the ball, glints orbit, ripples spread, leaves
+  drift); flourishes simple to grand (par, birdie, eagle, chip-in, every
+  birdie), the ace's lantern secret from the start, level 50 everything in
+  gold; the pin stays in while putting and is lifted as the ball comes near;
+  the shot review and the flight back go through trees; an aimed putt has its
+  own low camera behind the ball, and the ball stays in view while it rolls;
+  the cup rattles down, every knock softer than the last. Checked by unit tests
+  and static renders; not yet in the game.
+- [x] **More looks, and the golfer's own tracer everywhere** (the owner, 15
+  October 2026). Eight solid balls, eight plain tracers and nine plain frames
+  from the start; frames a reward of their own, with thirteen animated ones
+  (flames, sparkle, water, leaves, ice, aurora, galaxy) at higher levels;
+  locked items in full colour with a padlock; tracers previewed as a moving
+  flight and frames animating in the picker; a Flourishes tab saying what each
+  is, when it plays and its level, with a preview. The seat colour no longer
+  overrides anyone's tracer -- live or in the end-of-hole summary.
+- [x] **The owner's round of 15 October 2026 on the journey.** The top-bar
+  chip's circle is the golfer's ball in their frame with the level over it (the
+  seat colour a dot on its edge); whose turn it is flashes up in the middle of
+  the screen with the chip's details (a group on every change of golfer, alone
+  at each hole's start); the course of the week is stroke play only, said on
+  the tile and the panel; every challenge is open from the start. The group
+  editor's name box spans its row again (two lines when a monitor is in play).
+  Smoke (15 October, the owner's go-ahead): the eight affected journeys
+  green, with two fixes found there -- the flash now waits for the hole-out
+  banner it used to land on, and a flourish's particles follow the cup (one
+  run in eight drew nothing when the burst began with the cup off screen).
+- [x] **Phase 6: badges and frames, meter skins, hole-out flourishes**
+  (`src/rewards.js` FRAMES, METER_SKINS, flourishFor; `src/flourishes.js`).
+  Eleven badges with frames round the picture (the newest worn unless one is
+  chosen) and the level chip in the badge's colours, *Master 51* on from 50;
+  ten meter skins as colour data on the meter, held legible for colour-blind
+  players by a test; seven flourishes drawn flat over the cup, no sound, off
+  for reduced motion. Frame and Meter tabs on Your look.
+- [x] **Phase 7: challenges** (`src/challenges.js`). Closest to the pin,
+  long drive and up and down as practice games on a hole of the course of the
+  week or a saved course (no card, no history, no mulligans), a bar over the
+  course, a results card, records on My profile and their XP; a skins game as a
+  stroke round with skins over the card and on the scorecard. From a Challenges
+  tile, all four open from the start (at first by the main profile's level:
+  changed by the owner on 15 October 2026). tests/challenges.
+- [x] **Phase 7 (part): course of the week and achievements** (`src/weekly.js`,
+  `src/achievements.js`). The week's course from the ISO week and the
+  generator version, rotating landscapes, eighteen holes at the defaults, a menu
+  tile and a setup panel, weekly bests on the profile, 150 / 50 XP. The
+  thirteen achievements with their XP and nine titles (worn from My profile),
+  an Achievements list with progress, and two new counters, **Sand saves** and
+  **On the number**. tests/achievements, tests/weekly, profile round trips. Not
+  yet played through in the game (the owner tests at the end).
+- [x] **Phase 5: tracer styles, ball finishes and titles** (`src/rewards.js`,
+  `src/ball-finishes.js`). One reward table by level (the spec's 7.1); what a
+  golfer wears saved on the profile (`worn`), shown only once earned. Sixteen
+  ball finishes, each one rule painting both the 3D ball and its picture; the
+  ball as the profile picture (My profile, its tabs, the group editor, the
+  level-up banner) and close up, turning, in the hole-out banner. Fifteen tracer
+  styles on the golfer's own shots; the end-of-hole lines in seat colour keeping
+  the style's shape. Ten level titles under the name (My profile, scorecard,
+  level-up banner); achievement titles wait for Phase 7. The level-up banner
+  lists what each level brought. A "Your look" picker on My profile. Every look
+  is uniforms and buffers, never a new shader; no-late-shaders now also hits a
+  first shot. **With it:** the daily first-round bonus's day was dropped on every
+  load (a pattern that had lost its backslashes), so the bonus could be paid
+  twice a day -- fixed, with a test; the level-up banner now lets taps through.
+- [x] **Phase 4: XP and levels** (`src/progression.js`). One system for monitor
+  and meter golfers: hole, score, fairway and green, on the number, chip-ins,
+  long putts, personal bests, rounds, wins and the daily first round, with the
+  difficulty multiplier; a mulligan takes back its shot's XP; the range a
+  capped trickle. Levels without end, 2,850 a level from 50. Profile store 3
+  (no back-fill; a one-time note). The level beside the name on the score
+  chips, the group editor and My profile, and a level-up banner after the
+  hole-out banner (it names no unlocks yet: those come with Phase 5).
+  tests/progression.test.mjs; smoke checks a finished hole pays XP. **With it,
+  the owner's meter notes:** the carry/total/apex row never hides (dashes while
+  you swing), and the swing's marks on the bar clear when the ball stops.
+  **Then the XP popup** (the owner, same day): what earned the XP, the amount
+  and the level bar filling, every time XP is earned; smoke checks it comes up.
+- [x] **Phase 3: mixed groups.** Each golfer plays with the launch monitor (the
+  default: whenever it is armed, as before) or the Swing Meter, chosen in the
+  group editor once a bridge has connected, with their hand; both saved to the
+  profile and carried through a group change mid-round. `armed` is per turn
+  (`syncArmed` from the Armed switch `armSwitch` and `playsWith`): a Swing
+  Meter golfer gets the meter with the monitor waiting on its strip, and a
+  monitor ball on their turn is refused; the window and strip say who is up;
+  the device is told the golfer's hand; a dropped bridge says so and the meter
+  comes up. Smoke journey `mixed-group`; tests/mixed-groups.test.mjs.
+- [x] **Phase 2, round 5: short shots and putts** (the owner, 14 October 2026:
+  "the bar starts in the wrong place and just moves too fast"). The marker
+  starts from the far left of the bar and runs up to the strike line; a short
+  full shot's bar zooms to a half or quarter swing; zoomed bars (putts too) run
+  12-25% slower; the chip's wider strike zone follows the share of the club.
+- [x] **Phase 2, round 4 (the owner's notes, 14 October 2026).** Overswing
+  crawls at a quarter speed with the meter flashing, and holds at its end until
+  the second tap. Colours swapped: the strike zone is yellow, the perfect band
+  green. **The Swing Meter's sounds signed off and in the game** (round 1, the
+  owner's picks: voice C air, power B click, overswing A buzz, perfect A
+  marimba, zone A wood block, miss A thunk, duff B falling whistle, with their
+  sliders; `METER_FINAL`), on the Swing Meter only; tests/sound.test.mjs holds
+  them to one signed-off take each.
+- [x] **Phase 2, round 3 (the owner's notes, 14 October 2026).** The bar keeps
+  the struck swing -- the distance stop and the strike -- until the next swing.
+  No putt preview for any way of playing: a straight line to the aim, the break
+  read from the green, the putt target on a flat green, and the aim point shown
+  on the green for everyone. Putts are two taps on every difficulty. The putting
+  bar reaches from a quarter of the putter's roll to six times it, so a putt
+  can cross any green (80 yd at Stimp 6 is tested).
+- [x] **The smoke journeys, on the Swing Meter and the 13 October layout: 26 of
+  26 pass** (14 October 2026, the owner's go-ahead, hardware GPU, the full set
+  in about 4 minutes 40 seconds). Getting there found, in order:
+  - **Stale harness: the phone journeys expected the shot numbers to start
+    folded.** Since 13 October they start shown, as PLAYING.md says; the step
+    was first run against that layout here. Fixed in the harness.
+  - **A real game fault: the Swing Meter's pickers were under a thumb's width
+    on a phone** (42 px tall), and held sideways the taller panel squeezed the
+    Swing button to 30 px. Fixed in the game: on a phone the three pickers are
+    one row of 46 px buttons, spin is one button that steps round like X, and
+    held sideways the club's carry line goes (the bar's full line shows it).
+  - **Stale harness: putting out with three taps at fixed gaps.** A putt is two
+    taps, so the third waited 30 s for a layer already gone; and with no power
+    preset to the hole any more, fixed gaps hole a two-yard putt only by luck --
+    `profile` and `bag` passed one run and failed the next. Putting out now
+    stops the meter on the blue target marker (`tapOnTarget`, `t.putt()`).
+  Closes, from *Shot line in the play window, tiles placed afresh, the bridge's
+  clubs*:
+  **Run the smoke journeys on this layout.** A software-renderer run
+    (`node tools/smoke.mjs --software`) crashed the owner's computer part-way
+    through on 13 October (only `boot` had passed), and 0.7 went out on 14
+    October with light testing at the owner's request, so `hud-reachable`,
+    `phone-portrait`, `phone-landscape`, `monitor` and the rest are unrun on the
+    shot line and the new tile places. Only with the owner's go-ahead, on an idle
+    card, a few journeys at a time (`--only`). The finished work is under the
+    same heading in `# Done`.
+- [x] **Phase 2: the target marker.** A blue mark on the bar where to stop for
+  the ball to land in the aim circle, found by flying the ball (`targetShare`,
+  through `playsLike`): slope, lie and air always, wind only on Easy; out of
+  reach, the full line in red with *Out of reach: take more club*; for a putt,
+  the circle's length on a flat green. Changing club moves a circle nobody
+  placed to the new club's carry; a placed one stays and the marker moves.
+  Worked out at most ten times a second while aiming. RESEARCH.md *The Swing
+  Meter*, *The target marker*. **Added at the owner's request the same day:**
+  on the Swing Meter the floating number tiles are gone and the meter shows
+  carry, total and apex, counting up through the flight and kept until the
+  next swing; armed, the tiles are as before.
+- [x] Closed by Phase 1, from *Found by driving the built game*:
+  **Owner's call: a lower launch for keyboard chips with less-lofted clubs.**
+    The keyboard keeps a club's full-swing launch at any power, so there is no
+    keyboard bump-and-run: Trackman's low chips leave at 6-14 degrees on about
+    1,500 rpm, and a 7 iron chip here leaves at 20. A launch that falls with power
+    for the 7 iron to the pitching wedge would add one. A feel decision as much as
+    a physics one. Report plan item 3.
+  **Resolved:** Bump & run, the Swing Meter's Low height near the green with a
+  wedge, leaves at 55% of the club's launch on half its spin.
+- [x] Closed by Phase 1, from *Still open from the putting and cup update*:
+  **Short shots off the green pick the shortest club at 100% power.** *More pressing since 2 October: partial-power spin is now right, so a chip that starts at full power starts as the wrong shot.* Report plan item 2. Exposed by dropping the `d < 18` putter clause, though the behaviour already applied from 18 to 65 yards. Power should scale to the distance; needs a real decision about how, since power is linear in club speed and carry is not.
+  **Superseded:** there is no power to start at. The Swing Meter's bar is in
+  yards, so half the bar is half the carry, and the golfer stops it where the
+  chip needs, and Phase 2's target marker shows where.
+
+## Release 0.7 (14 October)
+
+- [x] **v0.7 published**, "Fairway 0.7 (beta)", at the owner's request, from
+  the merge of `release-0.7` into `main`: sound, each golfer's own bag, the
+  spin-back rework, clearer tee views, shot views and the studio bar, and the
+  shot line and tiles rearranged, with the bridge taking every club.
+  Generator 35, schema 9. Notes: `docs/releases/v0.7.md`. Smoke not run on the
+  release code (DISTRIBUTION_REVIEW, *v0.7*); the website is redeployed after
+  it so its demo runs 0.7.
+
+## Shot line in the play window, tiles placed afresh, the bridge's clubs (13 October 2026)
+
+Asked for by the owner on 13 October, on the branch `shot-data-layout`, before
+the next release. PROJECT_HANDOFF *THE SHOT TILES REPLACED THE GRID*, *back
+inside the play window* and *passes on every club a bag can hold*.
+
+- [x] **The shot data bar moves into the shot controls / launch monitor window.**
+  `#shotPanel` is a section near the top of the window you play from;
+  `drawMonitorState` moves it into the monitor window when armed. In flight the
+  window shrinks to that line (Skip, live dot, countdown) rather than going.
+- [x] **Tiles along the bottom on a big screen.** A row of equal-width tiles
+  centred between the play window and the map, extra rows above. A column down
+  the left was built first the same day and dropped at the owner's word.
+- [x] **Three tiles across the top of a phone, carry / total / backspin by
+  default.** A third Shot data set (`phone`, at most three), chosen in the
+  Shot data window; the fold now starts open on a phone too.
+- [x] **Switching clubs with the bridge connected dropped the connection.** The
+  bridge accepted only the eight stock clubs' codes and closed the browser's
+  socket on any other (4 iron, hybrids, gap wedge...), with or without a
+  device. It now takes its codes from `CLUB_KINDS` and ignores, rather than
+  disconnects on, a code it does not know. Unit test, plus a hand check against
+  the real bridge and a pretend device: every club reached the device and a
+  shot played.
+- [x] **The folded carry-and-total line showed a mid-flight number** after
+  some shots ("16 carry" beside a 219 yd carry tile). Found on the way;
+  `gridHTML` now redraws it with the tiles.
+## Nothing stands in what a tee sees (12 October 2026)
+
+From the owner's checklist ("bushes and houses sit in front of tees and block
+the view"), on the branch `player-bags-and-tee-views`. GENERATOR_VERSION 35.
+
+- [x] **Bushes and houses are kept out of the view from the tee.** Bushes
+  were exempt from every tee rule and houses kept only 28 m from a tee in a
+  circle; 232 bushes and 4 houses stood in a tee's view on 12 planted courses.
+  `blocksView` refuses either where its top rises above the line from the
+  golfer's eye to the landing area, inside a tee's forward wedge; low cover
+  still grows there. Bushes fell 2%, houses 120 to 112; nothing else measured
+  moved (171 bench figures at the full tier, before and after). `teeclear`
+  holds both as invariants; `tests/tee-corridor.test.mjs` covers the
+  geometry and three planted courses.
+- [x] **Closed: "Trees near tees".** Its two rules already held -- the
+  launch corridor keeps every tee's shot line clear and the tee fan keeps
+  trees out of the view, both built from the tees as finally sited, and
+  `teeclear` reads zero for trees. The 22 m circle it describes survives
+  only in the per-hole tree list, which nothing draws.
+
+## The player's own bag (12 October 2026)
+
+From the owner's checklist, on the branch `player-bags-and-tee-views`.
+
+- [x] **Each golfer builds their own bag.** Up to 14 clubs, each named by the
+  player, of one of 19 kinds (the stock eight plus 5 and 7 woods, 3-5
+  hybrids, 3, 4, 6 and 8 irons, gap and lob wedges -- the added kinds' launch
+  and spin are placed, not measured), with a carry the ball speed is solved
+  to. Saved in the profile and its backup; edited from *My bag* in play
+  (whoever is up, or any golfer in the group) and from the profile page. The
+  club picker follows whoever is up. The old device-wide distances become
+  every golfer's bag once. Longest drive now asks the club's kind, not its
+  label. `tests/bag.test.mjs` and the `bag` smoke journey.
+
+## Shot views and the studio bar (12 October 2026)
+
+From the owner's checklist, on the branch `shot-views-and-studio-bar`.
+
+- [x] **Shot views read flat, and right is right.** The height plot measures
+  from where the ball was struck, as if the ground were flat, instead of
+  clearance above the turf under each sample -- which bent a smooth flight
+  over every bump and labelled an apex different from the shot's APEX. The
+  plot's apex is now the readout's, checked against the physics over rolling
+  ground. The top-down plot drew right of the aim UP the canvas, so every
+  slice looked like a hook beside a label saying R; it now draws right down
+  (the ball runs left to right), checked by reading the drawing calls. The
+  distance label moved between the finish and the aim line, off the curve.
+- [x] **The studio bar rides above an open panel.** It sat over the bottom
+  of every panel opened in the studio. It is lifted by the panel's height,
+  folds to icons where the room above is too short (a phone on its side), and
+  no longer stacks one button per row on a phone held upright. Hiding it was
+  rejected: Regenerate has to be in reach beside the sliders. The Settings
+  panel's text says "the bar above". The `studio` smoke journey checks it at
+  1920x1080, 1366x768, 1280x720, 844x390 and 390x844.
+
+## Release 0.6.1 (11 October)
+
+- [x] **v0.6.1 published**, "Fairway 0.6.1 (beta)", at the owner's request, from
+  the merge of `release-0.6.1` into `main`: the UI pass (shot tiles, launch
+  monitor window, plays like, keys, television cameras). Generator and schema
+  unchanged. Notes: `docs/releases/v0.6.1.md`. The website is redeployed after
+  it so its demo runs 0.6.1.
+
+## The UI pass (10 October 2026)
+
+- [x] **The scorecard's hole row says Hole**, not Player. **Launch angle** and
+  **Launch direction** replace the tiles' Launch and Direction, and the range
+  shot list's column says LAUNCH ANGLE. **The course studio draws no aim line**
+  off the first tee; a round started from the studio gets it back.
+- [x] **One shot panel** (`#shotPanel`) replaced the flight bar, the monitor's
+  big-numbers card and the last-shot fold at the foot of the shot controls. It
+  shows the tiles ticked in Shot data, in the order the player drags them into
+  on the panel itself; every number the strike decided appears at once, carry
+  and total count up as the ball flies (carry freezing at the first touchdown,
+  total running through the roll), hang ticks, and descent and landing speed
+  arrive at touchdown. Skip and the countdown are in its header. It moves and
+  resizes like any panel; its default is centred along the bottom between the
+  controls and the map, as wide as its tiles in one row, capped to the gap. On a
+  phone it runs along the top beside the wind, folded to carry and total. The
+  shot controls now step aside in flight at every size. Columns gained *Fit to
+  width*, the new default; a saved v1 choice keeps its tiles and their order.
+  Reverses the 26 September rule that carry and total stay hidden in flight, at
+  the owner's request -- the numbers count up, so nothing is given away early.
+- [x] **Hang time shows time in the air.** The tile read the time to REST: a
+  drive hanging 6.5 s showed 10.8. `simulateShot` returns `hang` now. Nothing
+  measured in RESEARCH was affected; only the tile.
+- [x] **Launch monitor mode has its own window.** Armed, the shot controls go
+  and `#monitorPanel` takes their place with only the flashing ball light, the
+  Armed switch, the club (sent to the monitor) and Reconnect. Hit by hand is
+  gone: the switch is the way back, and connected-but-unarmed the controls
+  carry a slim strip with the same light and switch. The aim arrows and the
+  aim distance box went with the controls, reversing the 26 September call.
+  **Each mode keeps its own Shot data** (tiles, order, columns) and **the shot
+  panel its own place** per mode.
+- [x] **Aim is unlocked for every club with a monitor armed.** ↑/↓ walk the aim
+  point further or shorter, quickening as they are held; the aim pad steps a
+  yard, a foot inside twenty; the putter aims at a point like any club and a
+  putt starts aimed at the hole. By hand nothing changed.
+- [x] **The aim and pin labels take turns.** The pin's distance shows at rest;
+  moving the aim fades it out and the aim point's in, and they swap back a
+  second after the aim stops. Closes "The flag marker and the aim marker
+  overlap on screen" (copied below under *Found by driving the built game*).
+- [x] **Plays like**, under the yards to the hole: the club in hand flown at full
+  swing in today's conditions to the hole's height, against the same strike on
+  the level in still air, and the distance scaled by the ratio. By geometry,
+  at the owner's request, after a first version that searched for the ball
+  speed landing at the hole (RESEARCH, *Plays like, by geometry*).
+- [x] **Keyboard shortcuts**: A resets the aim, I/K change club, H hides the
+  interface, Tab lists every key, G steps the camera to the aim point, the green
+  and back.
+- [x] **A full shot is filmed the television way.** The tee camera stays and
+  turns with the ball, so the climb and the curve show against the sky; past
+  the apex it cuts to a landing camera already standing beside where the ball
+  comes down. Chips keep one camera; putts keep theirs. **After the ball stops
+  the camera flies up to show the whole shot**, holds while the panel counts
+  down, and flies on to the next shot (Enter skips; a camera setting turns it
+  off). **The descent onto a new hole** takes 3.5-5.5 s instead of at most
+  2.6, and goes through trees rather than over them. The hole intro stays on
+  always, by the owner's call.
+- [x] **After the owner tried it (11 October):** the shot panel boxes every
+  number and every section, grouped in every mode, numbers bold and sized to
+  the screen, without the measured/simulated notes; the aim label no longer
+  vanishes crossing the pin while aiming; chips are followed from behind, and
+  the landing camera swings behind the ball for the roll-out.
+- [x] **Shot numbers are tiles of their own** (owner, 11 October, after not liking the boxed sections): each a small draggable box, placed per mode, unmoved ones in a row beside the slim Shot data bar. Columns and drag-to-reorder went.
+- [x] **The monitor smoke journey no longer fails on a wet course.** Its caption
+  check read the first line of the grid, which a penalty replaces; the caption
+  is in the panel's header now.
+
+## Release 0.6 (10 October)
+
+- [x] **v0.6 published**, "Fairway 0.6 (beta)", at the owner's request, from
+  the merge of `release-0.6` into `main`: Haunted Hollow, the smooth time
+  slider, no freeze facing the sun, the god rays' second shadow pass gone,
+  and the pond-probe, shadow-twin and foam fixes (below). Generator and
+  schema unchanged. Notes: `docs/releases/v0.6.md`. `floodlit-night` not run
+  for it, by the owner's decision. The website was redeployed after it so
+  its demo runs 0.6.
+
+## Wasted drawing (9 October)
+
+- [x] **Less wasted drawing: pond photographs, shadow twins, shore foam** (owner's request, measured 10 October on an idle card). The pond reflections are no longer re-photographed with 48 identical shadow redraws, and when the sun moves they are retaken one pond a frame into their own textures; the shadow twins share their trees' colours, so the shared material stops switching program; the shore foam and two flat rings draw in one pass. Dragging the clock dawn to dusk on a 16-body course: 15 stalls of 67-117 ms on Ultra and a 1.4 s freeze on Medium before, no frame over 50 ms after, on both. three's program selection on Redwood Ultra from 0.5-1.2 ms a frame to under 0.05. Found on the way and fixed: the probes' render-target programs were never built behind the loading screen on any tier but Ultra (the 1.3 s Medium freeze), because the loading-time probes hid the planting; they now include it, which made no visible difference on the pond checked. RESEARCH, *Wasted drawing*.
+
+## The studio froze when the camera turned to the sun (9 October)
+
+- [x] **The god-ray mask drew every shadow map a second time** (found while fixing the freeze below; owner asked to check it). Every `render` call redraws all shadow maps while `autoUpdate` is on, and the mask pass is one; it now switches that off for its own render. Facing the sun, a frame sends 35-36% fewer draws and 31-35% fewer triangles to the graphics card, on every run; the milliseconds saved were lost in this machine's run-to-run noise on an RTX 4090. A new profiler group, `sun`, faces the sun on High and Ultra -- no other case did, so none could see this. RESEARCH, *The god rays drew every shadow map twice*.
+
+- [x] **An 8-second freeze a moment after the loading screen, in Course studio on Ultra** (owner's report; found from the owner's own Chrome recording after nine scripted runs could not reproduce it -- their camera never moved). The god rays draw only with the sun in shot and through their own black override material, so the shader warm-up behind the loading screen never built their programs; the first time the player turned toward the sun, all of them were built in one frame, and that frame waited behind everything the browser was still compiling. The frame behind the loading screen now runs the god rays regardless (drawing nothing), across every solid object; lines, points and sprites are left out of the mask, which also removed the aim line's late program on Play rounds. Turning a full circle after loading now builds nothing on three courses; the loading screen's frame is 11-17 ms longer. `no-late-shaders` now turns the camera and counts every kind of shader; it fails on the old build. Not re-checked in the owner's Chrome. RESEARCH, *The studio froze when the camera turned to the sun*.
+
+## The time slider hitched (9 October)
+
+- [x] **Dragging the time of day froze the game every few steps** (owner's report). Every 6 degrees of sun the game re-captures the sky's reflection and every pond's, and each capture built a fresh PMREM generator and threw it away -- taking its shaders with it, so they were compiled again every time: 130-160 ms a freeze on the development machine at Low, 14 of them dragging from 6:00 to 20:00. Two generators (sky and water) are now kept for the life of the renderer (`pmremFor`), and a threshold costs 4-7 ms. Not measured after the fix: Medium and above, a many-pond course, a weaker card; spreading the pond probes over frames is the next step if one still hitches (it did, on Ultra; done the same day, *Wasted drawing*). Branch `smooth-time-slider`. RESEARCH, *The time slider hitched*.
+
+## New biome ideas (9 October)
+
+- [x] **Haunted Hollow, the ninth biome** -- a Halloween course where nothing is alive. Gnarled dead oaks (MegaKit `DeadTree`), tall pale snags (Ultimate Stylized `DeadTree`), dead willows and the desert's dead hardwoods over dark bramble; pumpkins and red toadstools among the logs and stumps on the floor; black water, the heaviest fog of any biome, a 10-degree orange sun under a mauve sky, 9 °C air. One record in `src/biomes.js`, plus a name list, a mist profile, four `FAMILY_OF` lines and the PICK entries. Two pieces of plumbing came with it: the forest floor's mix is the biome field `floor` (it was a constant), and `ROLE_OVERRIDE` in the mesh ingest re-roles models whose material names mislead (Kenney's pumpkin is "leafsFall" and "grass"). Three first tries were wrong on looking and were changed: heather read as pink blocks (now `bramble`), the rough read desert-orange, the pale snags read salmon. Fingerprint: all eight existing biomes unchanged, so no version bump; all 238 existing model parts byte-identical after the re-ingest; the page grew 762 KB. Course-name words searched with "golf": Scarecrow (Gamble Sands) and Phantom (Phantom Lake GC) dropped and denylisted. RESEARCH *Haunted Hollow, the ninth biome*.
+
+- [x] **Haunted Hollow, second pass: full fantasy** (owner's request, same day). Pumpkins and toadstools are three to five times their old size (0.9-3.5 m and 0.75-2.75 m), nearly twice as many, and **solid** -- generation places them now (`world.props`), physics collides with them as cylinders as wide as their models, and a test rolls balls into them with a built-in control (its first version could not fail). Purple fairways, violet rough, slime-green greens; two new biome fields made that possible, `roughTint` (the Cartoon ground's lift toward olive turned violet to mud) and `mapTurf` (the 2D maps drew every biome green). Sixty per cent of pumpkins are carved jack-o'-lanterns that light and flicker from sunset; the face is drawn on the pumpkin, so nothing new to collide with. Ghosts: two a hole, 2.3-4 m tall, patrolling loops beside and across the holes, fading near the camera; the ball passes through them. All in the new `src/haunts.js`. Also closes the open *Jack-o'-lanterns after dark* idea. No generator bump: only the unreleased biome moved (RESEARCH, *Second pass: full fantasy*).
+
+- [x] **Haunted Hollow at night: a harvest moon, bats and will-o'-the-wisps** (owner's pick from a list of ideas). A huge orange moon drawn into the sky, rising before sunset so it hangs low in the east at Dusk; a flock of bats round a tall tree on every hole from dusk; three will-o'-the-wisps a hole over the ponds and hollows after dark. Scenery only, in `src/haunts.js` and the sky shader; other biomes' skies are unchanged. The moon first followed the moonlight's arc and had not risen by Dusk, so it runs about 1.25 h ahead of it; the wisp glow first read as a green ring and became a rim-fading shell. RESEARCH, *Night: a harvest moon, bats and will-o'-the-wisps*.
+- [x] **The Giant Redwood hitch, explained** (owner's request, write-up only). Four or five frames of 157-195 ms about three seconds into every profiled redwood course: the instance cull re-uploads about 83,000 instances (6.7 MB) every 4 m of camera travel, the opening descent triggers one every few frames, and with the frame rate uncapped those uploads collide with queued frames and stall Chrome's GPU process. Gone with rebuilds frozen, with the redwood models hidden, and **at normal 60 fps pacing -- so not something a player on this machine sees**. Shadows, god rays, the floodlight warm-up and first-draw preparation were each ruled out. The game was not changed; the untested case of a slower graphics card is left open. RESEARCH, *The redwood hitch: an uncapped-profiler stall*.
+- [x] **Haunted Hollow's frame cost and hitches** (owner's request). First profiled at twice Autumn with a 58 ms p99; that was mostly interference from outside the game -- a 5 Hz burst that hits any biome one run in four, and a single browser slowing over a sweep. Clean runs: 0.7 ms more GPU than Autumn, the same CPU, no hitch of its own. The gnarled oaks are 7.3 M of its 17.8 M triangles and about 0.5 ms; **their polygons were not reduced**, because the owner asked for that only if they caused the hitches. Two new open items: Giant Redwood's real hitch, and the profiler's blindness to the interference.
+
+## Release 0.5.1, a hotfix (9 October)
+
+- [x] **v0.5.1 published**, "Fairway 0.5.1 (beta)", at the owner's request,
+  from the merge of `hole-out-score-banner` into `main`: the hole-out banner
+  and the putting marker's upright flag, below. Generator and schema
+  unchanged. Notes: `docs/releases/v0.5.1.md`. The website was redeployed
+  after it so its demo runs 0.5.1.
+
+## The hole-out banner
+
+- [x] **The score's name in the middle of the screen when a hole is finished
+  (8 October).** *Birdie*, *Par*, *Double bogey* ... *Quadruple bogey*, and past
+  that the number over par (*+5*); *Hole in one* outranks the arithmetic, and a
+  fractional decimal-putting score shows its number. Under it the strokes, par
+  and a to-par chip tinted like the score chips. The flight badge's glass,
+  rising in with a small overshoot on the name, lifting away at 2.7 s -- inside
+  the 3 s before the scorecard opens; reduced motion gets a plain fade. Works in
+  stroke, match, scramble (the team, after a holed ball or a lie with automatic
+  putts) and endless, because it watches the scorecard being written rather
+  than the shot (PROJECT_HANDOFF, *THE HOLE-OUT BANNER WATCHES THE CARD*).
+  **Rejected:** keying it on `event.complete` -- a scramble candidate awarded
+  putts reports complete before the team has chosen, and the team's choice
+  completes the hole without a shot. Label in `holeOutLabel` (scoring.js), tested.
+- [x] **The flag on the putting marker was upside down (9 October).** On the
+  green the pin marker clamps to the screen edge and points at the cup, and it
+  did so by rotating the whole circle -- flag icon included -- so with the cup
+  below or behind the view the flag hung upside down. Now only a small notch
+  on the ring turns (`--point`, style.css); the flag stays upright.
+
+## Making the repository public
+
+- [x] **A high-severity Dependabot alert on a build tool (7 October), fixed 8
+  October.** `source-map-js` 1.2.1 can be made to hang by a crafted source map
+  (alert 2 on the repository's Security tab). It reached this project only
+  through the build tools -- `vite` 8.3.0 -> `postcss` 8.5.28 ->
+  `source-map-js` -- so nothing a player downloads carried it. `npm update
+  source-map-js` moved the lockfile to 1.2.2 within postcss's existing range;
+  vite and postcss are unchanged, and `docs/DEPENDENCY_INVENTORY.json` follows
+  (same licence, BSD-3-Clause, so THIRD_PARTY_NOTICES is untouched -- it names
+  only what ships). **Still open:** `npm audit` reports
+  `braces` 3.0.3 (via `vite-plugin-singlefile` -> `micromatch`), build-time
+  only; 3.0.3 is the newest published version (fixable since 17 October: see
+  *Tools and code*, the single-file plugin 2.3.4). GitHub closed its own alert on
+  it; `npm audit fix --force` would "fix" it by downgrading the single-file
+  plugin to 0.9.0 -- **rejected**, that is the plugin the one-file build
+  depends on.
+
+- [x] **AGENTS.md trimmed from 33 KB to 14.5 KB (7 October).** At the owner's
+  request: it is loaded with every message, so it went from roughly 8,300
+  tokens to 3,600 on each one. Every rule stayed, each with one line of why;
+  the incidents behind them (dates, costs, what went wrong) moved to the new
+  `docs/RULES_HISTORY.md`, so nothing was lost. Two sections merged (*Reports
+  made for the owner stay local* into *What stays local*) and four were
+  retitled shorter; the one pointer to an old title, in `.gitignore`, was
+  updated. Deliberately NOT added while trimming: two rules from the saved
+  session notes (push `main` alone before a release; ask before a smoke run if
+  the owner may be gaming) -- a trim should not change what the rules say.
+
+- [x] **A short entry document, and searching instead of reading (7 October).**
+  At the owner's request, after measuring what a session spent before doing
+  anything: AGENTS.md said to read PROJECT_HANDOFF.md first (about 83 thousand
+  tokens) and to check every document every pass, which with TODO.md (about 93
+  thousand) and RESEARCH.md (about 141 thousand) read whole cost several hundred
+  thousand. Now `docs/ARCHITECTURE.md` (14 KB, about 3,500 tokens) is read
+  first: the product, every `src/` file in one line, units and coordinates, the
+  pipeline in seven steps, and 40 traps, each naming the PROJECT_HANDOFF phrase
+  to search for (every phrase checked to exist, every `src/` file checked to be
+  listed). AGENTS.md now forbids reading the three large documents whole and
+  makes the every-document check a search for the names a change touched,
+  keeping the rule to name the documents judged unchanged. CONTRIBUTING, the
+  README, the docs index and the source archive's document list follow.
+  **Rejected**: cutting PROJECT_HANDOFF down to the short version (the plan's
+  first shape) -- it moves 300 KB of reasoning in one step and risks losing
+  some; a summary beside it loses nothing and can be followed by the move later.
+
+## Release 0.5, the first from the new repository (7 October)
+
+- [x] **The repository is public (7 October).** At the owner's request,
+  `doberloh/fairway-golf-simulator` was made public and
+  `node tools/github-protect.mjs` run the same minute: every setting done --
+  `main` keeps its history, changes by reviewed pull request (the owner
+  bypasses), permanent release tags, merge commits only, GitHub's own actions
+  with a read-only token, outside contributors' workflows held for approval,
+  Dependabot alerts, secret scanning with push protection, private security
+  reports. Checked from outside with no sign-in: the four Download addresses
+  reach v0.5's zips, and the old `doberloh/fairway` address shows nothing.
+  The licence (MIT) and the name were settled earlier; this closes *There is
+  still no PUBLIC remote*.
+- [x] **The website went live on v0.5** the same day, its demo the release's
+  own `Fairway.html` and its Download buttons on this repository.
+- [x] **The rewritten history is on GitHub.** The owner renamed the original
+  repository `fairway-backup` (private, keeping v0.1-v0.4 and the website's
+  history) and created `fairway-golf-simulator` and `fairway-website`.
+  `main` and `site-kofi` went up, after `site-kofi` was merged; the 81
+  finished branches and the old tags stayed in the backup. Still private: the
+  owner makes it public, and `tools/github-protect.mjs` runs that minute.
+- [x] **v0.5 published**, "Fairway 0.5 (beta)", at the owner's request, from
+  the merge of `release-0.5` into `main`: the same game as 0.4 (the only
+  change to the built file is the `fairway-versions` tag), released so the new
+  repository has a release for the website's Download buttons and demo. Notes:
+  `docs/releases/v0.5.md`.
+
+## The website leaves this repository (7 October)
+
+- [x] **The website has its own private repository**, at the owner's request,
+  so the game can be public under MIT while the website stays all rights
+  reserved. It took its pages, media, build and deploy tools, `netlify.toml`
+  and its rules and docs, with its own history cut from this one's. Here:
+  `site/`, `netlify.toml`, `tools/build-site.mjs`, `tools/deploy-site.mjs`,
+  the `site`/`deploy` scripts, the Git LFS rule and the website's rules in
+  AGENTS.md are gone, and a rewritten copy of the history without them waits
+  for the owner (DISTRIBUTION_REVIEW, *The website leaves this repository*).
+  The capture tools stayed and became `tools/capture/`, saving to
+  `bench/shots/media/` instead of into the site. The built page now opens with
+  a `fairway-versions` tag (generator and settings versions), which is how the
+  website writes its sample course code without this repository's source
+  (PROJECT_HANDOFF, *The built page states its versions*). The website's own
+  done list (the Ko-fi button, going public, the download links) went with it.
+
+## Release 0.4 and going public (7 October)
+
+- [x] **v0.4 published, with its notes in the repository.** "Fairway 0.4 (beta)", at the owner's request, from the merge of `release-0.4` into `main`: penalty relief by the Rules of Golf with the Local Rule E-5 option, player backup and restore, removing a round from the history, one typeface and the cleaned-up top bar, the moving build progress bar and the shader-code credits. The notes are `docs/releases/v0.4.md`, published with `--notes-file` from the same commit the tag points at; v0.1 to v0.3's notes were copied in from GitHub. AGENTS.md now makes this the rule.
+- [x] **The website is public.** The owner turned Netlify's password protection off and moved to the Personal plan (7 October). The no-index signals stay until the owner says otherwise (the open *At launch* item).
+- [x] **`GIT_LFS_ENABLED` in Netlify: not needed.** It only matters if Netlify builds from the repository; the owner deploys from this machine with `npm run deploy` and does not plan to do it any other way (7 October).
+
+## One typeface (7 October)
+
+- [x] **The top bar's hole, par, yards and pin, cleaned up and aligned.** The owner found it sloppy and disliked the font. Measured: Georgia's old-style figures made numbers bounce ("311", "O1"), the PIN label sat 5 px below the others because its value was smaller, values mixed sizes and cases ("01 / 18", "THU front"), and on a phone the hole number was larger and unlabelled. Now one grid -- one label line, one baseline, one size, rules between -- with "1/18" and "Pin · Thu / Front". Checked at 1920, 1366, 390 and 844 px wide.
+- [x] **The main menu's tagline is gone** ("Your next round is somewhere new."), at the owner's request after rounds of alternatives: the logo stands alone. The menu dialog was named by that heading, so it carries `aria-label="Fairway main menu"` instead. The website keeps its own "Every round is somewhere new" heading.
+- [x] **The game's browser tab says "Fairway" and nothing else** (was "Fairway — A world of golf"), at the owner's request. The website keeps its own title.
+- [x] **One font across the whole game: the logo's.** The owner asked for the logo's font everywhere. The logo had always been the device's interface font (Inter was named first but never shipped), so Georgia is gone from every heading, number and the yardage markers painted into the scene, and the game now reads in Segoe UI on Windows, San Francisco on Apple and Roboto on Android. Five bundled webfonts were mocked up and set aside.
+
+## Launch fixes (7 October)
+
+- [x] **Remove a round from a player's history.** Each round on My profile has **Remove**, which asks twice. Its scores leave the scoring totals and the sim handicap; the running totals keep the balls that were hit. The round's id is remembered (`removed` on the profile), so one removed while still being played is not written back by its next hole. `removeRound` in profile.js; tested.
+- [x] **The licence check of everything since 11 September.** Dependencies unchanged; assets all CC0, ours or credited; two pieces of MIT shader code were missing their notices (Hoskins's hash, the Quilez/stackgl smooth-min) and now have them; five copies of a shader one-liner with no identifiable author were replaced. DISTRIBUTION_REVIEW has the addendum, with what it still cannot establish.
+- [x] **The swallowed TypeError on course load could not be found.** Searched with the browser's debugger set to stop on every exception, caught or not: none is thrown at startup, building a 9- or 18-hole course, on Low or High, from the dev server or the built file from disk, in an endless run or on the range -- and none in a build of the repository's first commit either. Whatever it was went before the history began. A smoke journey, `no-swallowed-errors`, now fails if anything is thrown, even caught, while starting and building a course, so it cannot come back unseen.
+- [x] **The build overlay sat on a full bar for most of the wait.** Measured on an 18-hole build: generation filled the bar in 3 s, then "Preparing the graphics" showed it full for another 6.8 s while shaders compiled. Generation now fills the first half and the graphics the second, creeping through the compile on a curve paced by the last one; the bar moves throughout (70 updates against 12) and never reaches the end before the work does.
+- [x] **Donation wording reviewed by the owner and kept as it is.**
+
+## Penalty relief
+
+- [x] **Water and out of bounds follow the Rules of Golf (7 October).** The owner found (6 October) that a ball in water made you rehit automatically, and asked for the rules to be researched and followed in every format. Built: a ball in trouble waits for a choice; water (red, since nothing is marked) offers stroke and distance, back-on-the-line and lateral relief, one stroke each; out of bounds is stroke and distance, or a round can play Model Local Rule E-5's two-stroke drop toward this hole's fairway. Works in stroke, match, scramble and endless, under every putting mode, through a reload and a mulligan; chosen by click, touch or keyboard. `src/relief.js`, `tests/relief.test.mjs`, the `relief` smoke journey; RESEARCH.md *Penalty relief* has the rules, the sources and the departures.
+
+## Player profile
+
+- [x] **A name on first load, and a profile behind it (6 October).** The owner asked for the game to ask a new player's name, keep their stats and round history under a new *My profile* page, with a *Replay this course* button per round and a "sim handicap". Built: a welcome over the menu whenever the browser has no profile; `src/profile.js`, one versioned record (a store of several profiles since the entry below) with a registry of counters (shots, sand shots, bunkers, water, out of bounds, trees, houses, chip-ins, lip-outs, mulligans, ball travel, hang time, range balls) and bests (longest drive, longest putt holed, fastest ball speed); a history entry per round, filled from the scorecard on every save; score-type counts, par-3/4/5 averages, putts per hole, fairways and greens in regulation; `src/handicap.js`, the WHS arithmetic with courses rated from length alone. physics.js now reports `treeHits` and `homeHits` with each shot -- counting only, the flight is unchanged. Rounds carry a `uid`. A smoke journey (`profile`) walks a fresh browser through the welcome, a counted shot, a finished hole, the page and a replay.
+- [x] **Back up and move players (7 October).** The owner asked for profile backup alongside the drop rules. *My profile → Back up & move* saves every player to `fairway-players.json` and restores from one; the welcome offers the restore on a first visit. Restoring merges (`importProfiles`): new players added, the same player keeps the more recently active copy, a clashing name comes in as "Name (2)". Tests in `tests/profile.test.mjs`; the `relief` smoke journey saves a real backup and restores a player from it.
+- [x] **Every golfer is a profile, with one main profile (6 October).** The owner asked for added players to get profiles too, for players to pick a profile when setting up any mode, for a selectable "main profile" that is otherwise no different, and for add and remove to work mid-round, a newcomer included. Built: one store of profiles (`fairway-profiles-v1`, version 2, the first build's single profile migrated in as main); a round's players carry their profile id through `setPlayers`; the group editor picks a profile per row or makes a new player, in every setup and mid-round; every seat records to its own profile; My profile switches between players and can make one main, rename or remove them. The `profile` smoke journey adds a new player mid-hole, checks each player's shots land on their own profile, and removes them again.
+- [x] **The top menu opened under the Shot controls title bar (6 October).** Found by that journey: Play, Course studio and Main menu sat behind the panel's bar and could not be clicked, because the panel title bars (layer 6) and tool windows (30) stacked above the whole top bar (5). The top bar is layer 50 now; PROJECT_HANDOFF *A title bar, not the whole panel* has the layer list.
+
+Kept, not thrown away: the reasoning in a finished entry is often the only
+record of what was ruled out and why, which is worth more than a short file.
+
+
+## The simulator bay
+
+- [x] **A left/right offset for the simulator bay (1 October).** Branch
+  `bay-stand-side`, asked for by the owner. "Your mat, left or right of the
+  screen centre", in feet, in the Camera & bay panel: an off-axis view (a lens
+  shift), so the target line lands where it is in the room; the eye stays
+  behind the ball. RESEARCH.md *Field of view is a measurement in a bay*.
+
+## Text size
+
+- [x] **Text size for a projector bay (1 October).** Branch `text-size`, asked
+  for by the owner. A Text size setting in Graphics, 75-200%, automatic by
+  default: 100% at a desk, worked out from the bay's screen, stance and
+  browser width in simulator mode. The whole interface is CSS-zoomed, with the
+  stylesheet's screen rules turned into container queries; the course is drawn
+  at full resolution at any size; capped at what keeps the screen at least
+  1280x720. RESEARCH.md *Text size for a projector bay*.
+
+## OPUS5.5 GFX and OPTIMIZATIONS
+
+Every item on this list was finished or closed by 1 October 2026; the
+section's opening, its ground rules and the 27 September build-time baseline
+are kept here for the record.
+
+From the performance review of 27 September 2026 (published privately as
+"Where the frames and the wait go"; the numbers are repeated here so nothing
+depends on that page). Everything was measured on the development machine, a
+desktop RTX 4090 -- far faster than most players' hardware, so absolute times
+flatter the game and the PROPORTIONS are what carry over. Frame figures come
+from `bench/profile-baseline.json` (22 September) -- which was taken with a
+probe that counted every frame twice, so its triangle and draw figures are
+HALF the truth and its times are near the fastest frame (RESEARCH.md *The
+profiler counted every frame twice*, fixed 28 September); build times were measured
+on 27 September with the browser's CPU profiler over `window.lab.course({biome,
+holes, seed: 'REPORT1'})` at 1366x768.
+
+Ground rules that apply to every item below:
+
+- **A graphics tier may not change a played surface** (`src/graphics.js` says so
+  outright). Trunks are collidable and two players on different tiers must hit
+  the same trees, so culling, LOD and draw distance may change what is DRAWN,
+  never what exists in `world.trees` or what physics reads.
+- **Anything that changes generated output for an unchanged seed needs a
+  `GENERATOR_VERSION` bump** (AGENTS.md). `node tools/biome-fingerprint.mjs
+  --check` is the arbiter. The owner has generation FROZEN during testing, so
+  only the items marked "no course changes" are to be done now.
+- **Profile before and after anything that touches the frame**
+  (`npm run profile`, about 10 minutes for the full sweep, about a minute for
+  one group such as `--only tiers`; ask the owner first, per AGENTS.md), and
+  compare with `--since` against `bench/profile-baseline.json`. `renderer.info`
+  triangle and draw-call counts (the lab reports them) are a quick check in
+  between, not a substitute.
+- One branch per item, each with its own before/after numbers.
+
+Measured 27 September, 9 holes PNW: 9.2 s total -- ground shaping 2.5 s
+(`makeGroundGridSteps` in `src/terrain-grid.js` calling `analyticHeight` per
+3 m grid point), routing/holes/water 0.5 s, building the 3D scene 2.0 s
+(`view.build`: ground shading data ~0.8 s, trees ~0.5 s, ground cover
+~0.5 s), screen updates while waiting 1.4 s, first-time shader compile 2.8 s.
+18 holes: 16.6 s (5.6 / 0.9 / 2.7 / 2.0 / 5.4). Opening the game: ~4.1 s to
+the menu on a fresh visit, ~1.7-2.2 s after. `nearest` (course.js, "which hole
+does this point belong to") is 1.7 s of the 3.0 s generation.
+
+### Frame rate
+
+- [x] **F4. Automatic resolution to hold the frame rate.** Branch
+  `frame-and-lights`. `src/auto-resolution.js` decides, `main.js` feeds it one
+  frame interval per frame, the renderer applies it under the tier's ceiling
+  (`setResolutionScale`). Steps of 100/85/72/60/50% of the tier's pixels,
+  never below a pixel ratio of 0.5. Aims for 60 fps, or the cap when lower --
+  never a faster display's full rate, so a 120 Hz Ultra machine running 90 fps
+  is left alone. Steps down when a second of frames averages 15% over the
+  target; steps up after 4 s at the target, and a step up that does not hold
+  doubles that wait (up to a minute), which is what stops it flickering on the
+  edge. Held (not reset) while the page is hidden or the loading screen is up.
+  **A switch at every tier**, "Automatic resolution" under the frame rate cap,
+  on by default; the tester report says whether it was on and the resolution
+  drawn at. Checked in the built game with the processor slowed eightfold: 72%
+  after 2 s, 50% by 4 s; lifted, back to full in 20 s; switched off, never
+  moved. RESEARCH.md *F4: automatic resolution*.
+
+- [x] **F6. Shadow cascades split where the player stands.** Branch
+  `cascade-splits`. High and Ultra end the first two cascades at 100 m and
+  500 m (`cascadeSplits` per tier) instead of three's ~420/900 m (High) and
+  ~590/1260 m (Ultra); the overview keeps three's split. Graphics ms, tees 4
+  and 5 at 10:15: High 12.30 -> 11.14 and 11.36 -> 9.92, Ultra 12.64 -> 11.93
+  and 11.21 -> 10.61; at 18:24 High still gains 0.4-0.9, Ultra is level. The
+  owner judged the pictures from a flip page: Ultra indistinguishable, the
+  faint seam at ~100 m acceptable, no blending wanted (CSM `fade` also breaks
+  the ground shader). RESEARCH.md *Shadow cascades split where the player
+  stands*.
+
+- [x] **F5. Quick fixes already known.** Branch `f5-quick-fixes`. (a) The far
+  plane now ends 5% past the fog, and the sky dome follows the camera scaled
+  inside it; measured, it saves nothing on the courses as generated -- on a
+  nine-hole course from the player's view almost nothing lies beyond Low's 3.5
+  km of fog (identical draws and triangles, 2.41 ms either way), so fog is still
+  mostly atmosphere, now with nothing wasted behind it. (b) Water reflections
+  cost nothing per frame (3.80 ms on, 3.78 off) since the planar mirror went;
+  what "off" did NOT save was each body's probe, re-taken at build and every six
+  degrees of sun, 40-65 ms a time. Off now skips it; turning it back on takes
+  it. (c) Island went from 8.1 ms of graphics time to 3.1 ms through the
+  earlier F work and sits 0.3 ms from Pacific Northwest; what is left is its
+  dense tall scatter grass (1.2 ms), a look choice -- the ocean costs nothing
+  measurable, and fading far grass bought nothing. RESEARCH.md *F5: the three
+  quick fixes*.
+
+- [x] **F2. Draw distant crowns as their thinned twins -- built, and found to
+  be worth little.** Branch `far-trees`. A crown under a share of the screen's
+  height (`farTrees` per tier) is drawn by a second mesh using the thinned twin
+  (`farParts`), with its own buffer and its own thinned shadow; hysteresis so
+  it does not flicker; nothing within 60 m. Measured: on these courses almost
+  every visible tree is big on screen (a 90 m redwood is 15% of the screen at
+  ~600 m), so only the edge tee gains -- Low 3.15 -> 2.62 ms, Medium 5.72 ->
+  5.23, High 11.96 -> 11.71 -- and every tier pays draw calls (Low and Medium +25-57,
+  High +50-167). Ships ON at 15% on Low and Medium pending the owner's call on
+  that trade, OFF on High (calls for nothing) and Ultra (owner: Ultra stays
+  amazing). RESEARCH.md *Distant crowns drawn thinned*. **Since 16 October the
+  grown trees only**: it was measured on Redwood, and on every other biome it
+  tore the short cartoon crowns into shards (*Low and Medium trees*, in Done).
+
+- [x] **F3. Only the trees a shadow map can reach, and thinner beyond the
+  nearest cascade.** Branch `tree-shadows`. Each shadow map now draws only
+  the trees whose square lies inside it (instances written in order of the
+  first map that needs them; `onBeforeShadow` cuts each map to its prefix),
+  and on High and Ultra the middle and far cascades take each crown's shadow
+  from its thinned twin (`farParts`, derived at load, nothing added to the
+  download). Graphics ms, first tee / tee 5: Low 4.12 -> 3.23 / 1.89 -> 1.78;
+  Medium 6.37 -> 5.74 / 4.03 -> 4.01; High 13.28 -> 11.42 / 7.91 -> 7.34;
+  Ultra 13.63 -> 11.87 / 7.75 -> 7.22. Screenshots at 18:24 and 10:15 match
+  within frame-to-frame noise on every tier. REJECTED: the twin in Low and
+  Medium's single map -- it shades the nearest crowns, which went visibly
+  darker. Found on the way: the nearest cascade is ~1 km across (F6, since done),
+  and layers cannot split shadow maps in three. Tests in
+  `tests/instance-cull.test.mjs`. Detail in RESEARCH.md *Only the trees a
+  shadow map can reach*.
+
+- [x] **F0. Re-save the frame-profile baseline.** Done 28 September after the
+  probe fix (RESEARCH.md *The profiler counted every frame twice*): full sweep,
+  29 cases in 15.8 minutes (not the ~10 AGENTS.md quotes -- the software arm
+  and the corrected frame counting both run longer). Headlines, graphics ms:
+  Redwood Low 5.6, Medium 8.8, High 14.1, Ultra 15.4 from the first tee;
+  Redwood High OVERVIEW 27.7, the heaviest case in the sweep; every other
+  biome 5.0-8.7 at High; High at 1x/1.5x/2x pixels 10.7/12.4/14.4. `--since`
+  now compares like with like.
+
+- [x] **F1. Draw only what is in view.** Built as `src/instance-cull.js`, on
+  branch `view-culling`. Every course-wide `InstancedMesh` in `view.group` --
+  trees (model and procedural), deadfall, rocks, ground cover, homes,
+  floodlight masts and heads -- is registered at the end of `build`. Its
+  instances are sorted into 64 m squares; when the camera moves 4 m or turns
+  4 degrees, the squares in a view 7 degrees wider than the camera's (plus
+  everything within 60 m, plus squares whose shadow falls into view, from the
+  sun's direction, capped at 1 km) have their instances packed to the front
+  of the buffer and `count` set to match. **One draw call per mesh, as before**
+  -- the planned split into one mesh per area was rejected because it
+  multiplies draw calls about 25 times. Measured over all nine tees of seed
+  REPORT1: Redwood High 241 M -> 143 M triangles a frame (-41%), Redwood Low
+  91 M -> 55 M (-39%), Pacific Northwest High 6.2 M -> 5.5 M; draw calls
+  unchanged; a rebuild costs 0.5-1 ms and runs about 8 times a second while
+  the camera follows a shot, never while it is still. Screenshots with the
+  cull on and off at 06:24, 18:24 and 19:18 differ by no more than the wind
+  moves things between two frames. `clearCameraTrees` now hides a tree through
+  its flag (`mesh.userData.cullHidden`) instead of a zero matrix at its
+  original index; the water probes call `showAll()` first; the near-field
+  grass tiles opt out (`userData.noCull`). Lab: `lab.scene()` (what is built
+  and held), `lab.cullTune()` (the margins, live), `lab.hole(n)` (jump to a
+  tee). Tests: `tests/instance-cull.test.mjs`. Frame time, corrected probe,
+  graphics ms, cull holding everything -> cull on: High tee 1 14.4 -> 13.9
+  (the first tee is the cull's worst case, and the only view the profiler
+  measures), tee 5 11.6 -> 7.8, tee 9 12.0 -> 8.2; Low tee 5 4.1 -> 2.4;
+  Ultra follows High. The profile also caught a real regression in the first version:
+  marking the buffers `DynamicDrawUsage` tripled High and Ultra (33 ms) on any
+  page opened after another in the same browser; the buffers now keep their
+  built usage. Detail, and the shadow bug the screenshots caught, in
+  RESEARCH.md *Drawing only what is in view*; the traps in PROJECT_HANDOFF.
+
+### Build time
+
+- [x] **B2c. The ground cover's `surface` calls on the workers -- DROPPED
+  (owner, 30 September).** About 1.2 s of the wait on a nine; not worth the
+  cost, since the finished height grid would have to be copied to every worker
+  without shared memory (not available from `file://`).
+
+- [x] **B5. Coarser ground far outside the course -- DROPPED (owner, 30
+  September).** Not worth it: it would change every course's land for an
+  unchanged seed (a GENERATOR_VERSION bump) to save time and triangles where
+  nobody plays.
+
+- [x] **B7. A hitch two to three seconds after a course appears.** Branch
+  `frame-and-lights`. It was two shaders being built on the spot, not work
+  scheduled after the arrival: the **forest floor** (Ultra's ferns and fallen
+  sticks) grows only under canopy in the tiles around the camera, and the
+  establishing pose over open ground usually has none, so the shader warm-up
+  behind the loading screen never saw those materials. When the camera came
+  down among trees, the first fern was drawn and its two programs were built
+  there and then: one frame of 170 ms, 2.9 s in, every time, on PNW eighteen.
+  Fixed with **stand-ins** -- one hidden, zero-sized instance of each late
+  material, shown only while the warm-up compiles AND through the one frame
+  drawn under the loading screen (on Windows the browser finishes a shader on
+  its first real draw, so compiling alone left the whole cost in place). A
+  second case on Island: a grass tile with no rough in it has no instance
+  colours and so a different shader, built on its first (empty) draw -- 96 ms;
+  empty tiles are now hidden. Measured after: no long frame on PNW, Island,
+  Desert, Links or Mountain at High or Ultra; loading time unchanged. Redwood
+  on Ultra still has two or three frames of 40-50 ms in its first third of a
+  second (graphics-card work while the grass ring fills, not a shader). A new
+  smoke journey, `no-late-shaders`, fails if any lit shader is built after a
+  course appears; it fails on the old build. (Since 9 October it also turns
+  the camera a full circle and fails on a shader of any kind.) RESEARCH.md *B7: the hitch after
+  a course appears*.
+
+- [x] **B1. The first frame paid for behind the loading screen.** Branch
+  `shader-warmup`. `GolfView.ready()`, awaited by `whileGenerating` before the
+  overlay goes (*Preparing the graphics*): `compileAsync` for the driver's
+  links with the page live, then one frame drawn under the overlay for the
+  programs only a draw makes. Cold browser, PNW, High: the frozen first frame
+  after the overlay went from 1.9 s (nine holes) and 3.5 s (eighteen) to
+  0.01 s; the total wait is about the same on nine holes and ~1 s shorter on
+  eighteen, because the time is the driver's and it still has to be spent.
+  Found why it is that long -- the floodlight lamps are in every lit shader --
+  and filed it as B6. RESEARCH.md *The first frame, paid for behind the
+  loading screen*.
+
+- [x] **B6. Floodlit shaders built after the course is on screen.** Branch
+  `daylight-lamps`. The lamps are hidden while the floodlights are off, so a
+  daylight start builds programs with no spot lights -- the same on every
+  course -- and `warmFloodlights` builds the other state's in the background
+  once the course is on screen. Cold browser, PNW, High, alternated with
+  `main`: graphics prep 3.0-3.2 s -> 0.1-0.8 s, press play to smooth 2.3-3.2 s
+  shorter on nine holes. Switching the floodlights afterwards: worst frame
+  19-30 ms, from a daylight or a floodlit start. Night unchanged, overview
+  included. REJECTED first: a cap on live lamps (same win, but only the
+  nearest poles lit at night -- the owner declined it for the overhead view).
+  FOLLOW-UP, found by the owner in the course creator: switching on in the
+  first seconds after arrival, while the lit programs were still being built,
+  froze the game (5.3 s on eighteen holes); such a switch now waits for the
+  build with the game running, and the lights come on when it is done (5.9 s
+  on eighteen holes, 2.1 s on nine; worst frame 48 ms).
+  RESEARCH.md *Floodlit shaders built after the course is on screen*.
+  SUPERSEDED 30 September: the build now runs behind the loading screen, and
+  on Ultra this warm-up had never worked at all (see *The floodlights froze
+  the game on Ultra* under "Graphics work the profiling turned up").
+
+- [x] **B4. The scene build and the loading screen -- partly.** Branch
+  `scene-build` (on `daylight-lamps`). Profiled: the scene build is one frozen
+  block of ~3.7 s -- ground cover 1.4 s, the ground-shading atlas 1.0 s, the
+  water probes 0.8 s. Done: the probes are taken after the shaders are built
+  (same capture, trees hidden as before), the outgoing menu scene no longer
+  re-photographs its ponds when the round's clock is applied (1.6 s), and the
+  game loop does not draw while the graphics prepare. Longest page freeze
+  while loading 3.7-4.8 s -> 3.1-3.2 s. The ground cover and atlas work cannot
+  be trimmed without changing answers; moved to B2. RESEARCH.md *The scene
+  build and the loading screen*.
+
+- [x] **B3. The ground grid stops asking every hole about every point.**
+  Branch `faster-ground`. Rescoped by measurement: the nearest-hole lookup
+  already measured 1.2-1.4 holes a call, so there was little there; the time
+  was three per-point questions asked of every hole or basin -- which cells to
+  refine, which basin a point is in, and the green contour computed before its
+  (often exactly zero) weight. Each now has an exact world-box or zero-weight
+  rejection in front; fingerprints unchanged, so no version bump. Generation,
+  best of three: PNW nine 2.46 -> 1.4 s, eighteen 8.79 -> 4.2 s, Links
+  eighteen 10.26 -> 4.9 s. RESEARCH.md *The ground grid stops asking every
+  hole about every point*.
+
+- [x] **B2. The ground grid's heights on every core.** Branch
+  `parallel-ground` (on `faster-ground`). Up to eight workers, each generating
+  its own copy of the world and stopping at the grid; the main thread feeds the
+  unchanged grid builder their answers in the order it asks, so the grid is
+  the serial one by construction -- byte-for-byte in the Node test and the same
+  `lab.ground()` hash in the browser. Classic blob worker embedded in the
+  single file (+89 KB), falling back to the main thread on any failure.
+  Generation in the browser: PNW nine 2.6 -> 1.9 s, eighteen 9.0 -> 3.4 s,
+  Links eighteen 12.1 -> 3.6 s. The workers then compute the ground's
+  ownership atlas too (hole, lake and stream per texel; `owner-atlas.js`),
+  started as soon as the grid is done and collected when generation ends, so
+  the ground material only adds straw: the longest page freeze while loading
+  6.6-7.0 -> 5.8 s on a busy machine. Follow-ups B2b (Firefox/Safari) and B2c
+  (the ground cover). RESEARCH.md *The ground grid's heights on every core*.
+
+- [x] **B2b. The ground workers checked on the owner's devices.** 28 September:
+  the owner tested the combined build (`build-time-all`) -- the checklist of
+  loading, floodlights mid-round, ponds and the night overview, and
+  `lab.ground()` on an iPhone and a Mac -- and reported all of it good. The one
+  problem found, a long pause switching the floodlights in the course creator,
+  is fixed under B6.
+
+### Looking better on Ultra (cartoon style throughout)
+
+- [x] **U1. Soft shade under trees and rocks.** Branch `ultra-looks`. Not a
+  screen-space pass: a bake per course of how much sky each patch of ground
+  loses to the trunks, crowns and boulders around it (`src/occlusion.js`), read
+  by the ground shader as a soft darkening -- tight at the foot of each trunk
+  and rock, broad and faint under crowns, deeper where they overlap. Every
+  tier, no extra pass, MSAA untouched, 3-12 ms of build time. It rides in the
+  red channel of the existing `cover` texture rather than a new one, because
+  the lit shaders have one sampler of headroom. Graphics slider *Shade under
+  trees and rocks*, default 60%. RESEARCH.md *Soft shade under trees and
+  rocks*.
+
+- [x] **U2. Trees and grass in the wind.** Branch `ultra-looks`. Every tree,
+  imported or procedural, bends as one body -- trunk, limbs and leaves by one
+  displacement that grows with height, curving rather than shearing -- and
+  sways at its own natural frequency (slower for taller trees), with only a
+  small leaf rustle on top. Gusts arrive as fronts carried downwind at the
+  course's wind speed, so a crosswind gust bends the trees on one side of the
+  fairway before the other. Cacti and agave do not move. Graphics preference
+  `wind` scales all of it. Third version: the first moved the leaves apart from
+  the trunk, the second bent trunks but still shivered leaves separately and
+  had no gust front; the owner rejected both and approved the third.
+  RESEARCH.md *How a tree moves in the wind*.
+
+- [x] **U3. Every surface in patches.** Branch `ultra-looks`. Widened by the
+  owner from "the rough" to every surface: rough, semi, fairway and tee ground,
+  fringe, green (tone only, faint, so reading is not disturbed) and sand (damp
+  patches), from world-position noise at each surface's own scale. A Graphics
+  slider, *Turf colour variation*, default 60%. RESEARCH.md *Every surface in
+  patches*.
+
+- [x] **U4. Distance fading into the sky.** Branch `ultra-looks`. Every lit
+  surface drifts toward the horizon's colour with distance, warmer toward the
+  sun, and much less on steep sight lines so the bird's-eye view stays clear
+  below. Every tier; graphics preference `haze`, default 50%. RESEARCH.md
+  *Distance fading into the sky*.
+
+- [x] **U5. Water with an edge and a glint.** Branch `ultra-looks`. A strip of
+  lacy foam 1.4 m wide inside every pond's outline, lapping in and out, and a
+  scatter of sun sparks where the ripples catch the sun's reflection. Every tier
+  but Blueprint; gone once the sun is down. The foam is its own strip rather
+  than read from `bankAtlas`: nothing on a pond's surface knows how far it is
+  from the edge. The lapping runs at 30% of the water's own clock: at full
+  speed it looked frantic (the owner). Approved by the owner after the slow-down.
+  RESEARCH.md *Foam and sun sparks on the ponds*.
+
+- [x] **The sea's edge, and foam for every kind of water (30 September).**
+  Branch `water-edges`. The flicker where the ocean met the beach on Island and
+  Links was the flat 14 km sea cutting the terrain's 3 m triangles at a
+  shallow angle: a sawtooth waterline the depth buffer could not settle, so it
+  changed with every camera move. The sea's shader now reads the terrain's own
+  heights as a texture, knows its depth everywhere, and fades out over its last
+  35 cm -- no hard line left to flicker, and smooth where the triangles were
+  jagged. The same depth places the surf: a swash line that runs up quickly and
+  drains back slowly, foam left behind it, and a faint line of breakers
+  offshore. Lakes (which are large ponds and already had the pond foam) get a
+  wider, coarser and livelier strip; rivers get lacy foam along the banks
+  drifting downstream; creeks get white flecks carried by the current. Ponds
+  unchanged. No measurable frame cost. After the owner's first look: the sea's
+  foam slowed to 30% (as the ponds), rivers and creeks slowed by half with the
+  foam at the water's own speed, and their water and foam now follow each bend
+  of the channel instead of one direction for the whole river. RESEARCH.md
+  *The water's edge, by kind*.
+
+- [x] **U7. The ground past the course edge.** Branch `ultra-looks`. The
+  streaks were sliver triangles (70 to 1): rings now widen by a ratio and carry
+  only as many vertices as keep them near square (worst 6.6 to 1, a third of the
+  vertices). The light rectangle round the course was the seam's normals and
+  the landscape having no baked relief; both are carried across the seam now.
+  A faint rectangle still shows from overhead where the course's ground meets
+  the distant land; the owner judged it unnoticeable in play and closed this.
+  RESEARCH.md *The ground past the course edge*.
+
+- [x] **Rough grass that looks like grass.** Branch `ultra-looks` (the owner,
+  after U8: not a fan of "5 2D tufts in a circle"). Clumps of seven curved,
+  tapering blades at uneven angles and heights, lit like the ground under them
+  (every normal up) and darker at the root than the tip; the course-wide blades
+  got the same lighting and root shading. Grass now bends by its real height
+  above the root -- the old lever was in model units, so a 7 cm tuft was pushed
+  further sideways than it was tall and lay flat as dark scratches. 21
+  triangles a clump against 5. Approved by the owner, who singled out the
+  prairie. RESEARCH.md *Rough grass clumps*.
+
+- [x] **U6. A forest floor on Ultra.** Branch `ultra-looks`. Low fern clumps
+  and fallen sticks in the grass tiles round the camera, denser where the
+  canopy is (the U1 bake), fading out between 28 and 48 m like the grass.
+  Decoration only: not in the world, nothing a ball can hit, and ankle height
+  at most so a ball rolling through it never looks wrong. Ultra only
+  (`quality.forestFloor`); every other tier keeps today's planting. The first
+  half of the brief -- full-detail trees further out on Ultra -- was already
+  true (`farTrees: 0` on Ultra since F2). RESEARCH.md *A forest floor on Ultra*.
+
+- [x] **U8. Ultra distinct from High, and the looks as settings.** Branch
+  `ultra-looks`. Ultra now differs from High in what you see standing in a
+  forest (U6) as well as in its shadows and bloom, and says so in the Quality
+  note. The four looks from this branch are sliders in Graphics under *The look
+  of the course* -- turf colour variation, shade under trees and rocks,
+  distance haze, wind in the trees and grass -- on every tier, since none costs
+  a measurable frame, and all live without a rebuild.
+
+## Reading a green without the overlays
+
+- [x] **The grid's flow covers the whole green, and the grid holds still while
+  you aim (1 October).** Branch `green-grid-fixes`, from the owner's screenshot:
+  the moving light showed only in the middle of a green (it skipped slopes
+  under 1%, which on that green was most of it), and the grid turning with
+  every nudge of the aim was disorienting. The gentlest band flows now; the grid
+  takes the shot's starting direction and keeps it. RESEARCH.md *The slope grid
+  squared to the camera*, the correction at its end.
+
+- [x] **The slope grid squares to the play camera, and light flows on it
+  instead of rolling balls (1 October).** Branch `green-grid-flow`, asked for by
+  the owner. One shader surface draws both; in play the lines follow the
+  direction faced at the START of each shot and hold it while aiming (corrected
+  1 October: it first followed the camera every frame, which was disorienting),
+  other cameras keep the hole's axes. The flow is
+  dashes of light running downhill along the grid lines (the owner's pick of
+  three). Faded where squares are a few pixels. Switching on is quicker than
+  before (33-50 ms against 67-83). RESEARCH.md *The slope grid squared to the
+  camera*.
+
+- [x] **Reading the ground, rebuilt (30 September).** Branch `ground-reading`.
+  Measured each setting first: at noon *Sunlight on contours* moved a green by
+  0.2 of 255, *Band grain* 0.9, *Green definition* under 1, and *Slope
+  darkening* was an even 8% darkening that read as dirt -- removed those three.
+  Added **grass sheen** (lighter where mown turf tips away from you, darker
+  toward you -- strong on fairways, which the owner liked, and only a gentle
+  hint on greens, where full strength looked like a graphical bug) and the
+  mower's **clean-up lap** round every green, out to the fringe. **Ground shading** now comes from the
+  sun's side instead of a fixed bearing. **Slope tinting** dries turf only as
+  far as it is green, which ends the gold and orange banding on desert and
+  links. Every remaining green setting now moves a green by 4-6 of 255. Also
+  closes *Reading undulation needs more than a cast shadow* (Priority 3): the
+  sheen is the midday cue it asked for. RESEARCH.md *Reading the ground,
+  again*.
+
+The overnight brief was "greens look flat from every angle"; what it
+turned into was five graphics settings and three faults found by the
+owner's eye rather than by any measurement here.
+
+- [x] **Measured why greens look flat.** Every shading cue is proportional to
+  slope, and a green is the flattest thing on the course by design. At the
+  default contour setting a green's shading spans .129 of brightness against the
+  .240 ordinary terrain gets. Raising the contour setting would fix the look and
+  change how the hole plays, so it is not the answer.
+
+- [x] **The terrain cues ARE applied to greens -- the owner's first guess was
+  worth checking and the answer is not the obvious one.** Greens get a weaker
+  landform relief (.07 against .15) and a weaker slope-drying colour (.25 against
+  1.0), but a STRONGER directional relief than anything else (gain 4 against
+  2.6). The problem is the input, not the treatment.
+
+- [x] **Four candidates built behind `lab.greenRead(...)`,** so they can be
+  compared live rather than argued about: exaggerate the shading normal, add
+  slope-magnitude shading, make the mow bands follow the contour, make the bands
+  view-dependent. Presets: off, lift, bands, grain, recommended, strong.
+
+- [x] **Exaggerating the NORMAL beats raising the gain, and that distinction is
+  the whole trick.** Gain multiplies the response and clips against the clamp, so
+  steep ground saturates while gentle ground stays invisible; tilting the normal
+  rescales the whole range so a two-centimetre roll and a tier both move within
+  it. Shape contrast .084 to .262, a 3.1x gain, with the geometry untouched --
+  the ball still rolls on the real surface.
+
+- [x] **Slope-magnitude shading was rejected by its own measurement.** The
+  directional cue should in theory be blind to ground tilted across its bearing;
+  measured on real greens that case is 0%. It solves a problem that does not
+  occur.
+
+- [x] **Softening the mow bands RAISES how well the shape reads** -- .262 to .309
+  -- because a strong regular pattern is the first thing the eye locks onto.
+  Bands that follow the contour score nothing on that metric by construction, the
+  blur stripping exactly the signal they live in, but they are plainly visible in
+  a render and they have a real mechanism behind them.
+
+- [x] **"Sunlight on contours" did nothing in daylight, and the owner spotted
+  it.** They said they could not see what it was doing, and they were right. The
+  cartoon ground is a four-step toon ramp sampled at `dot(normal,light)*0.5+0.5`,
+  clamped flat past .875 -- which a near-flat green reaches above about 48 degrees
+  of sun. Tilting the lighting normal measured a brightness span of 0 out of 255
+  WITH and WITHOUT the cue at 50, 65 and 80 degrees. It only ever worked at dawn
+  and dusk. Not a defect in the ramp: the art direction is flat at midday on
+  purpose, which the shader's own comment upstream says in words.
+
+- [x] **Reworked to follow the sun in the turf colour instead.** It asks how much
+  more light the patch would catch if the green were as steep as it looks, so
+  nothing clamps it: 23.4% variation at 20 degrees of sun, 20.1% at 35, 15.2% at
+  50, 10.5% at 65 where the old way gave exactly zero. At 80 it is 4.6%, which is
+  physics -- with the sun overhead, tilting a surface barely changes what it
+  catches. The `normal_fragment_maps` link in the shader chain is gone with it.
+
+- [x] **Owner's first defaults, set on screen: 100 / 20 / 100 / 50 / 65.** Both
+  cues that measured no benefit went on. The measurement said 0% of greens, on
+  this generator at that day's settings; a person looking at a green saw
+  otherwise, and that wins. Slope darkening was rescaled so 50 is what 100 used
+  to be, leaving headroom above it.
+
+- [x] **And then the owner's second set inverted it: 35 / 10 / 20 / 70 / 0.**
+  Definition, sunlight and grain came right down; slope darkening went up past
+  what used to be full strength; grain went off. The shape of that answer is the
+  finding, not the numbers. Definition, sunlight and grain all key off a fixed
+  compass bearing or off where the viewer stands, so running them high makes a
+  green read as a LIT object rather than a SHAPED one. Slope darkening has no
+  bearing at all -- it answers "how steep is this, from anywhere" -- which is the
+  question a player is actually asking over a putt. Bands nearly off because a
+  regular pattern competes with shape. Whatever gets tried next should start from
+  that: direction-free beats directional on a surface this flat.
+
+- [x] **A saved record beat the new default, so the change reached nobody.**
+  Graphics settings persist, so anyone who had opened the panel kept the old
+  numbers. `GREEN_READ_GEN` makes every saved record adopt new defaults once;
+  anything set afterwards sticks. Verified in the browser against a stale record:
+  it adopted 100/20/100/50/65, all six uniforms read back correctly on the GPU,
+  and a deliberate change to 35 stuck and saved at gen 2.
+
+- [x] **The ground stopped drawing entirely, and it was a deleted replace link.**
+  ground.js builds the fragment shader by replacing three of three's `#include`
+  anchors. A scripted edit of mine evaluated to `s.replace(anchor,'')` -- an
+  accidental empty replacement -- which deleted the `color_fragment` link while
+  printing a success message. The block did not vanish; it was appended to the
+  `common` chunk at GLOBAL scope, where `vec2 wp=groundPoint.xz;` is a
+  non-constant global initialiser. GLSL refuses it, the program fails to link,
+  and every draw call raises INVALID_OPERATION.
+
+- [x] **Nothing in the toolchain could see it.** `node --check` passes, the
+  bundler passes, all 499 tests passed, and the app boots with NO fatal card,
+  because a shader compile failure is not a JS exception. The only signal was the
+  ground being absent on screen and `THREE.WebGLProgram: Shader Error` in the
+  console. `tests/ground-shader-structure.test.mjs` now checks that every link in
+  the chain is present, that each anchor still exists in the three version in
+  use, and that statement blocks go to anchors INSIDE main(). Run against the
+  broken file it fails with exactly the right sentence.
+
+- [x] **A slider reported the right number while nothing read it.** The owner
+  said the shipped settings did less than the ones from the analysis, and they
+  were right. `greenBandSoft` was declared, plumbed, exposed on a slider and
+  reported back correctly for two commits, while the ONE LINE in the shader that
+  used it had been deleted -- removing the neighbouring grain block took the span
+  between two anchors with it. Band softening is a third of the recommendation
+  (.262 to .309 shape contrast) and it was silently absent.
+
+- [x] **`tests/green-cue-wiring.test.mjs` reads the shader source** and fails if
+  a cue uniform is declared and never referenced in the body, or if `greenCues`
+  and the shader disagree about names. Run against the broken code it fails with
+  exactly the right sentence.
+
+- [x] **The cue never reached the light, which is the bigger miss.** Everything
+  tinted the grass; the lighting was untouched, so the whole effect was an albedo
+  shift under full sun and tone mapping. Measured, sunlight varies across a green
+  by .009 to .024 -- almost nothing. The diagnosis was right; the first fix was
+  not. Tilting the normal the LIGHTING uses measured 4.2x the variation in an
+  unlit test and exactly nothing in the game, because of the toon ramp -- see the
+  entries above, which replaced it with a sun-aware tint.
+
+- [x] **The two rejected cues are back on sliders, and the owner then turned
+  both ON.** Their call, and the right one twice over: "0% of greens" was
+  measured on this generator at that day's settings, not on every green anyone
+  will ever build, and deleting them meant the measurement could never be
+  revisited by eye. It was revisited by eye, and the eye disagreed.
+
+- [x] **None of it was ever confirmed on screen by me, and the owner's eye
+  closed it.** The drawing buffer reads empty outside a requestAnimationFrame
+  callback and the browser pane keeps going hidden, which stops frames, so every
+  pixel measurement came back zeros. I could confirm only that the shader
+  compiles, that all six uniforms are live on the GPU at the right values, and
+  the offline maths. Two of the three faults in this section -- the dead
+  `greenBandSoft`, and a sun cue the ramp was eating -- were found by the owner
+  looking at a green, not by anything here. On a change that is ONLY a look,
+  assume the measurements are blind until someone sees it.
+
+- [x] **The sliders threw on every input event, and it was my markup.**
+  `wireSliders` wires every range in a panel to an output named `<id>Value` from
+  the input's `data-unit`; there is a `slider()` helper that emits both. I wrote
+  the markup by hand and named the readout `...Out`, so wireSliders looked up
+  nothing and threw once per input event -- while my own handler worked, so the
+  slider moved and the number updated and only the console showed it. Now built
+  with `slider()`.
+
+- [x] **The same trap was already set for three older sliders.** `labFirmness`,
+  `labStimp` and `timeHour` have no readout element at all. The lookup in
+  `wireSliders` is guarded now, which fixes those as well as mine.
+
+- [x] **I SAW THESE ERRORS DURING VERIFICATION AND EXPLAINED THEM AWAY** as a
+  stale console buffer left by my own probe script. They survived a reload,
+  which should have been the tell. The owner found them. Worth remembering: the
+  stale-buffer trap is real, and it is also a very comfortable excuse.
+
+- [x] **DONE: shipped as two graphics settings.** (Later five, at the owner's
+  defaults -- see above.) The owner picked "strong" from the comparison.
+  **Green definition**, then defaulting to 70, moves the shading tilt and
+  the band bending together, because they are one perceptual thing; it maps to
+  exactly the numbers that were judged, lift 3.2 and bend 3.5 -- which the
+  mapping still produces at 70, so the judged look is reachable. **Mowing band
+  strength** is separate because it is taste rather than legibility. Graphics settings rather than course settings -- this is a look,
+  not a property of the ground -- so no generator bump, and the fingerprints
+  confirm it.
+
+- [x] **The two rejected candidates were removed from the shader, not zeroed --
+  and then the owner asked for them back.** Removing them was right by the rule
+  against dead uniforms, and wrong by the outcome: both are now shipping cues at
+  50 and 65. The lesson is not "keep dead code"; it is that a measurement of a
+  LOOK is weaker evidence than a person looking, so a look-only cue deserves a
+  slider before it deserves a deletion.
+
+- [x] **A broken import reached the browser and the tests could not see it.**
+  `greenCues` was used in renderer.js without being imported: node --check
+  passes, the bundler passes, the whole suite passes, and the app dies on boot
+  with a fatal card -- because no test loads the renderer. Caught only by
+  opening it. The stale console buffer then reported the same error AFTER the
+  fix, which is its own trap.
+
+## Menus and settings layout
+
+Asked for on 2026-09-20 from browsing the menus. Each one is a containment
+problem: a control that belongs inside a box is sitting beside it.
+
+- [x] **Tooltips belong inside the box they explain.** Done in the walker by id
+  pairing rather than in the templates, so the feared fan-out across the custom
+  renderers never happened: a tip is `tip-<key>` and its button carries
+  `data-tip="<key>"`, so `groupPanelContent` finds each one's owner and moves
+  the tip into the nearest `.control-card`, `.control-group` or `.course-plan`.
+
+  NOT by adding `.tip` to `ATTACHED`, which is the obvious one-word fix and a
+  trap: every control is emitted followed by its own tip, so an absorbed tip
+  would stop ending the absorption run -- and that run ending is the only
+  reason the course-length box stays a direct child of the section, which is
+  what its `column-span: all` depends on. The one-word version would have
+  swallowed the scorecard into the card above it.
+
+  The biome picker needed a box first: a `p.control-label` and a grid of
+  buttons, the one setting on the panel with no container at all. Both its
+  selectors appear exactly once in the file, so `p.control-label` joined
+  `CONTROL` and `.option-grid` joined `ATTACHED` with nothing else affected.
+
+- [x] **The import button belongs to the code box.** The `courseCode` textarea
+  and the `importCourseCode` button were siblings. Wrapped in a `.code-import`
+  container that owns the border and the corners, with the textarea giving up
+  its own and the button sitting under it as a footer bar behind a divider --
+  so the seam between them is one line rather than two outlines a few pixels
+  apart. Wrapped rather than putting the button inside the `<label>`, which
+  would make clicking the label fire the import.
+
+- [x] **The four house controls are one group.** `homes`, `homeDensity`,
+  `homeSetback` and `residentialOB` render as one `.control-group` card headed
+  "Houses" instead of four separate ones.
+
+- [x] **Wind speed and direction are one group.** One card, deliberately
+  unlabelled: a box headed WIND under a heading already saying Weather, holding
+  "Wind speed" and "Wind direction", says the word four times.
+
+  Done together, as one mechanism: `FIELD_GROUPS` in the panel builder rather
+  than a `group` key on the schema, because grouping is a fact about the panel
+  and the schema is also read by validation, migration, the world rebuild key
+  and the save format. `.control-group` joins `CONTROL`, so the existing walker
+  boxes it exactly like a single control -- and because that walker only looks
+  at its root's own children, the fields inside are left alone instead of each
+  being boxed again. A group draws at the position of its first member, so
+  schema order still decides what appears where.
+
+  Two things fell out of it. The grouped fields' tooltips now sit INSIDE the
+  box, because they are emitted within the wrapper -- a free partial win on the
+  tooltip item above, which is still open for every ungrouped field. And
+  toggles finally have a size: `label.toggle` carried no styling at all beyond
+  a margin on its `i` button, which is why they read as the loose controls in
+  the panel.
+
+- [x] **The seed sits with the hole count.** It was last in the Course tab,
+  below the full-width scorecard box -- which spans every column and breaks the
+  flow, so anything after it drops underneath. `holes seed courseYards` now,
+  the two one-line choices together above the card they produce.
+
+- [x] **The Water tab's note explains the tab, not its history.** The merged
+  note opened by saying still and moving water used to be two panels. That is a
+  changelog entry, and it had been written into the help text a player reads.
+  Removed; what remains is the two original notes, which state what the
+  controls do. Every other tab note was checked for the same mistake and none
+  had it.
+
+- [x] **A control's own parts sit inside its box.** The layout picker's grid of
+  shapes and the "Surprise me" button beside the seed field were siblings of
+  their control rather than part of it, so both sat outside the card. Neither
+  was new, but it showed once descriptions moved inside that card: the card
+  looked finished with a piece of its own control stranded underneath.
+  `.footprint-icons` and a `.field-action` class join `ATTACHED`. Bare `button`
+  could not, because it would swallow every panel action on the way past.
+
+- [x] **A box that names the feature lets its fields stop repeating it.** The
+  Ponds box said "Pond frequency" and "Typical pond size"; the Houses box said
+  house four more times. A `short` label on the schema entry now carries the
+  trimmed text -- "Frequency", "Typical size", "Occurrence".
+
+  Display only, and that distinction is the whole care in it: `label` is the
+  ACCESSIBLE NAME on both the range input and the `i` button, so shortening it
+  outright would have announced a slider as "Minimum" and its help button as
+  "What Frequency changes". `label` is untouched and still what assistive
+  technology receives.
+
+  The flag is passed into `control()` rather than read off the field, so a
+  short label can only appear beneath a heading that supplies the missing
+  noun. Move a field out of its box and it goes back to saying what it is.
+  Sixteen fields carry one; the unlabelled wind box deliberately has none.
+
+- [x] **Still water and moving water are one section.** "Ponds & lakes" and
+  "Rivers & creeks" were two tabs, so setting up a pond and a creek on the same
+  course meant two of them. One `water` category now, with a box per feature:
+  Ponds, Lakes, Rivers, Creeks.
+
+  Six boxes rather than four, and the two extra ones are the point. The depth
+  range is read identically by ponds and by lakes -- `lakes.js` uses the same
+  `waterMin + rng()*(waterMax - waterMin)` that ponds do -- and channel depth
+  and meander are read by rivers and creeks alike. Folding either pair into a
+  feature's own box would claim it belonged to that feature. They sit in their
+  own boxes saying who they serve.
+
+  That also caught two wrong tips: `waterMin` and `waterMax` both said "a
+  pond's deepest point" while lakes have always used them too. Corrected --
+  leaving them inside a box labelled "Depth of ponds and lakes" would have been
+  incoherent.
+
+  The depth pair moved down the array so the box lands after both the things it
+  governs. Array order is the panel's order and nothing else's: 446 tests pass
+  and every biome fingerprint is unchanged, so no generated output moved and no
+  version bump is owed. SCHEMA_VERSION stays too -- no control was added,
+  renamed, removed or re-ranged; only which tab it appears on.
+
+- [x] **The studio's two entry points are backwards.** The panel ended with a
+  Regenerate button emitted after every category, so it fell into whichever
+  section came last and turned up at the foot of the Weather tab looking like a
+  weather control. It called `regenerateStudio()` -- exactly what the studio
+  bar's own Regenerate calls -- and the bar is on screen whenever this panel can
+  be opened, since both ways in are studio-only (`enterStudio`, and the bar's
+  Settings button). A duplicate, in the wrong place. Gone.
+
+  What is left is one verb each way round: "Grow this landscape" starts a
+  studio and shows only during setup, pinned to the panel's lead by
+  `data-panel-action` so it cannot fall into a tab; once a landscape exists,
+  regenerating it belongs to the bar. The panel's own prose now names the bar
+  rather than saying "regenerate" with no button in sight.
+
+## Ball flight, after the GC3 session
+
+- [x] **The two monitors disagreeing about apex is expected, not a fault to fix.**
+  Owner's call, 23 September 2026, and it closes the question rather than
+  deferring it. GC3 says the model flies low, SkyTrak said it flew high, on an
+  overlapping spin range. Each device runs its own algorithm -- they do not
+  measure apex so much as derive it, from different inputs -- so there was never
+  one true number to land on, and "something has to give" was the wrong framing.
+  **The target is reasonable agreement across devices, not exact agreement with
+  any one of them.** The curve trusts the GC3 because it is the better
+  instrument; that stays a judgement about the references, openly.
+
+## Graphics work the profiling turned up
+
+Found while building `tools/profile.mjs` and reading the tier table against it.
+None of these are tuning -- they are missing capability or wrong plumbing, so
+they were written down rather than done. Asked for on 2026-09-22 as the place
+to put "potential gfx improvements" instead of inventing features overnight.
+
+- [x] **WON'T DO (owner, 1 October): `applyQuality` clamps pixel ratio to the display's own.**
+  A fact to know rather than a fault to fix, closed as it stands.
+  `setPixelRatio(Math.min(devicePixelRatio, tier.pixelRatio))` is correct, but
+  it means the tier ladder collapses on a 1x display: low, medium and ultra all
+  render the same pixels and differ only in shadows and reflections. That is
+  worth knowing before anyone concludes from a 1x machine that the tiers do
+  nothing. It also caught this harness out -- see the note in profile.mjs.
+
+- [x] **The menu hole stuttered as the game opened; and it is daylight only
+  (1 October).** Branch `frame-and-lights`, reported by the
+  owner. The menu hole's first real frames (117-217 ms on Ultra: the first
+  render with the orbiting camera, the cull's first sort, the grass ring) fell
+  inside the splash's fade. The menu now opens under the splash, which fades
+  only once three frames in a row run under 40 ms (two seconds at most); every
+  loading overlay holds the same way (one second at most), and the menu
+  reached from a round opens inside that wait. Measured, four cold opens: no
+  frame over 25 ms once the splash starts to fade. Returning to the menu from
+  a round: at most one 33 ms frame, where main froze for 0.6 s and 3.7 s on
+  the same path. The menu hole is never at night any more (dawn to golden
+  hour, nine hours to rotate through); a player who wants night sets the
+  clock in a round. RESEARCH.md *The menu hole: daylight, and no stutter as it
+  appears*.
+
+- [x] **The floodlights froze the game on Ultra, and the work moved into
+  loading (30 September).** Branch `frame-and-lights`, reported by the owner:
+  a MASSIVE freeze when the floodlights came on, and a freeze after loading.
+  Measured on Ultra, PNW: the first switch-on froze for 11.3 s on main, 16.1 s
+  on this branch before the fix, 26 s on eighteen holes; nothing at all on
+  High. Cause: Ultra draws the scene into bloom's off-screen target, and three
+  picks a program's version partly from the bound target, so every warm-up --
+  the loading screen's and the background floodlight one -- built versions no
+  frame used. Fixed by compiling against the target the frame draws into
+  (`asDrawn`). Then, as the owner asked, the floodlit programs are built
+  behind the loading screen, every round starts with the floodlights OFF, and
+  a round built through Play starts at MIDDAY ("Start at my local time" still
+  wins). Measured after, Ultra and High, nine and eighteen holes: no frame over
+  50 ms after loading, switching on, off or on again. Loading, Ultra: nine
+  holes 7.1 s on main -> 6.8 s, eighteen ~10 -> 11.9 s; opening the game to
+  the menu 4.6-7.7 s -> 3.1-5.5 s. A hole change also froze for 83-100 ms (on
+  main too): the warm-up spent 70 ms filling the grass ring with no overlay
+  up; now it fills a tile a frame. RESEARCH.md *The floodlight freeze on
+  Ultra*.
+
+- [x] **WON'T DO (owner, 30 September): a tier drawing less vegetation.** The
+  frame on a heavy biome is dominated by tree geometry, and no tier knob
+  reaches it: `grass` scales scatter grass (under 1% of the triangles on
+  Redwood) and `foliage` only the DRAWN trees' segments, nothing on biomes
+  planted with instanced models. A tier may not plant fewer trees (trunks are
+  collidable; two players on different tiers must hit the same ones), so the
+  only legal lever was drawing fewer while colliding with all -- a tier-driven
+  draw distance or level of detail. The owner does not like the look of
+  drawing fewer trees and plants, so it is closed rather than left open. What
+  weak hardware has instead: Low's own trims, distant crowns drawn as their
+  thinned twins (F2; the grown trees only, since 16 October), and automatic
+  resolution (F4). **Reopened for Low only, 9 November 2026** (the owner: "Medium should still
+  show all trees. Low can draw less trees but only if we can ensure that we draw all of the trees
+  for the hole we are on at a minimum"): Medium and up still draw every tree; Low may skip far ones,
+  never one of the hole being played (PROJECT_HANDOFF, *GRAPHICS TIERS MAY NOT TOUCH*). Open work in
+  *Frame rate on every tier and device*.
+
+- [x] **Floodlight shadows, on every tier, with a switch (30 September).**
+  Branch `frame-and-lights`. The texture unit they were blocked on was freed by
+  packing four of the ground shader's per-hole tables (route, tees, cups,
+  hazards) into one (`HOLE_ATLAS`, ground.js): the ground now uses 10 of the 16
+  units WebGL guarantees on Low and Medium, 12 on High and Ultra, where it used
+  13 and 15. Measured, a floodlit night now links six casting lamps on Low and
+  Medium (fails at seven) and four on High and Ultra (fails at five); the tiers
+  use five and three, keeping ONE unit spare so the next texture added to the
+  ground cannot make it vanish at night again. Pixel-compared against the
+  build before over fifteen views on five biomes: identical within the noise
+  between two runs of the same build. The lamps nearest the shot cast; their
+  maps are redrawn only when a lamp moves or the view does (at most every 200
+  ms), so they cost nothing frame to frame (High 4.2 ms on and off; Low 2.9
+  against 2.6). **"Floodlight shadows"** in Graphics, under Costs a frame, on
+  by default; the first switch on a course builds every floodlit shader again
+  in the background (4.4 s on an Ultra nine once shaders were compiled for the
+  right target -- 14 s before that fix; the game running smoothly) and says
+  so, then instant. `tests/flood-shadows.test.mjs`
+  fails if any tier's count would leave no spare unit; the `floodlit-night`
+  smoke journey plays Ultra at night with the lights on. RESEARCH.md
+  *Floodlight shadows*.
+
+- [x] **Floodlight and glow ball strength sliders (30 September).** Branch
+  `frame-and-lights`. Two sliders in the Weather & time popover, 0-200% of the
+  tuned brightness, saved with the other time settings; uniform writes, nothing
+  rebuilds. The popover now scrolls within the screen: with the sliders it no
+  longer fit a 720 px window, and the bottom of it could not be reached.
+
+- [x] **Fog distance was not a performance setting.** Closed by F5a: the far
+  plane now follows the fog, so nothing past it is drawn -- which, measured,
+  was almost nothing anyway.
+
+- [x] **Turning water reflections off did not stop the reflection work.**
+  Closed by F5b: the per-frame reflection pass had already gone with the
+  planar mirror; the probe re-taken as the sun moves was still taken with
+  reflections off, and no longer is.
+
+- [x] **`high` and `ultra` were very nearly the same tier.** When this was
+  written the difference was bloom, a bigger reflection buffer and overview
+  shadows. Ultra has since taken sharper shadows (6144, radius 4) reaching
+  3.5 km against High's 2.5, and on branch `ultra-looks` a forest floor of
+  ferns and fallen sticks round the camera (U6), which is what a player
+  standing among the trees actually sees change. The Quality note in Graphics
+  says so. Four rungs.
+
+## Benchmarking and profiling worth deciding from
+
+Asked for on 2026-09-20, off the back of the "should this be ported" question in
+RESEARCH.md. The conclusion there was that nobody knows what binds the frame --
+it is measurably NOT vertex throughput -- and that no performance decision
+should be taken until somebody does. This section is how that gets known.
+
+**What exists.** `tools/bench.mjs` measures GENERATION: twelve courses across
+twelve workers, eight invariant rules that must stay clear, counts, and
+distributions with min/p05/median/p95/max. It has a saved baseline
+(`bench/baseline.json`) and a `--since` diff. `tools/biome-fingerprint.mjs`
+proves the generator did not move. Both are good and neither one renders
+anything.
+
+**What does not exist.** Any measurement of a frame. The only frame numbers this
+project has ever had were taken by hand, with a probe temporarily pasted into
+`renderer.js` and deleted afterwards, on one machine, on one course.
+
+- [x] ~~A frame benchmark~~ (built: `tools/profile.mjs`; closed 1 October, original note below)
+  THE TRAP, WRITTEN DOWN BECAUSE IT ALREADY CAUGHT US ONCE: a timer wrapped
+  around `renderer.render()` reads 8.3 ms on a 120 Hz display no matter what it
+  is asked to draw, because the call is waiting for the display, not for the
+  GPU. That number was taken as real, a level of detail was built on it, and
+  the forest looked dead for a fortnight. `requestAnimationFrame` intervals are
+  the same lie in a different hat, and `gl.finish()` does not save you --
+  Chrome's command buffer makes it close to a no-op.
+
+  So the first requirement is not a feature, it is a property: **the harness
+  must be capable of reporting a number lower than the refresh interval.**
+  Prove it on day one by drawing an empty scene and checking the figure
+  collapses. If it does not, the harness is measuring the monitor.
+
+  Ways that actually work, roughly in order of how much they are worth:
+  - `EXT_disjoint_timer_query_webgl2` for real GPU time per pass. The only
+    thing that tells you where the time goes rather than how much there is.
+  - vsync off, via headless Chrome with `--disable-gpu-vsync` and
+    `--disable-frame-rate-limit`, then render as fast as the machine allows.
+  - render to a framebuffer in a loop, with no presentation at all.
+
+- [x] ~~Decide what headless is for~~ (built: `tools/profile.mjs`; closed 1 October, original note below) A software rasteriser (`--use-angle=swiftshader`) gives
+  figures that are comparable between machines and over time, and are not the
+  truth about any real GPU. A real GPU in headless Chrome gives the truth about
+  THAT machine and nothing comparable to a run on another one. Both are useful
+  and they answer different questions -- regression tracking wants the first,
+  "will this run on the owner's laptop" wants the second. Say which the harness
+  is for, in the harness, or the numbers get read as the wrong kind.
+
+  Cost to be honest about: either route is a Playwright or Puppeteer
+  devDependency, and this project has treated a 24 MB devDependency as a real
+  cost before (it is why `vendor/baked_assets` was committed, until 30
+  September). Weigh that
+  deliberately rather than installing it on the way past.
+
+- [x] ~~Sweep the presets~~ (built: `tools/profile.mjs`; closed 1 October, original note below) Eight biomes,
+  fourteen footprints, two hole counts, the graphics tiers in `src/graphics.js`,
+  plus elevation, landform, water, trees and homes is a combinatorial explosion
+  that nobody will ever run twice. Pick a matrix that is a FEW DOZEN cases and
+  says why each is in it: every biome at defaults (the common path), every
+  graphics tier on one heavy biome (the tier is the lever players actually
+  pull), the extremes that are known to be hard -- redwood for geometry,
+  elevation 100 / landform 100 for terrain, maximum water and homes for draw
+  calls -- and the driving range, which is the flattest and should be the
+  floor. A sweep that takes four minutes gets run; one that takes an hour gets
+  run once and quoted for a year.
+
+- [x] ~~Report what a decision needs~~ (built: `tools/profile.mjs`; closed 1 October, original note below) Frame time
+  as a distribution and never as a mean -- median, p95, p99 and the worst
+  frame, because stutter is what is felt and a mean hides it. Beside it, per
+  frame: draw calls, triangles submitted, programs, texture binds, and the GPU
+  timer split by pass if the extension is there. Then generation time and peak
+  memory per case. The existing bench's table format is the right shape
+  already: columns of min/p05/median/p95/max with the case names down the side,
+  a `rules: all clear` line for anything that must not regress, and a `--since`
+  diff against a saved baseline so a change shows as movement rather than as
+  numbers somebody has to remember.
+
+- [x] ~~Have it name the bottleneck~~ (built: `tools/profile.mjs`; closed 1 October, original note below) The question is not
+  "how many milliseconds" but "of what". A run should end with a sentence a
+  human can act on: whether the frame is bound by draw calls, by fill, by
+  shadow passes, or by the CPU walking the scene graph -- and the simplest
+  version of that is an ablation rather than a profiler. Render the same frame
+  with shadows off, with the grass off, at quarter resolution, with the
+  vegetation removed, and print what each one gives back. Whatever returns the
+  most time is the answer, and it needs no tooling beyond the harness that is
+  already being built.
+
+- [x] **WON'T DO (owner, 1 October): the low tier cannot reach 30 fps on weak hardware, and
+  tuning cannot fix it.** Measured on a software rasteriser: 3,034 ms a frame against a
+  33.3 ms budget. Retuning moved it 6%. SwiftShader is the floor rather than a
+  typical weak device -- real integrated graphics is perhaps one to two orders
+  faster, which is the difference between playable and not, and that range is
+  an extrapolation this machine cannot narrow. What is certain is that a
+  hundredfold gap does not close by tuning. The vegetation draw distance that
+  was the remaining lever is closed as won't do (the owner, on the look);
+  automatic resolution (F4) is what Low has now. The real number needs a real
+  weak machine.
+
+- [x] **WON'T DO (owner, 1 October): then, and only then, act on it.** RESEARCH.md has the order: find the
+  bottleneck, consider WebGPU before rewriting anything, WebAssembly for
+  generation if seven seconds a course becomes intolerable, a desktop shell if
+  this becomes a sim bay, and an engine port only if all of that has been done
+  and something still does not fit. The value of this section is that it makes
+  step one possible; skipping to step five has already been tried in miniature
+  and it produced the dead forest.
+
+- [x] **A frame benchmark, and it must not be able to return the refresh rate.**
+  `tools/profile.mjs`, `npm run profile`. THE CHECK CAUGHT IT: a blank page read
+  17.3 ms because headless Chromium paces animation frames to a virtual 60 Hz
+  display whatever `--disable-gpu-vsync` is told. So it measures WORK instead --
+  time inside the frame callback, plus a `TIME_ELAPSED` query spanning it -- and
+  asserts both collapse to 0.000 ms on an idle page before reporting anything.
+
+- [x] **Decide what "headless" is for.** Both arms, labelled. The real GPU
+  answers "how much headroom is there"; a software rasteriser answers "what
+  happens with no graphics card". `npm run gpu` prints the renderer per launch
+  config, because default flags give SwiftShader silently -- and it also showed
+  the real card reporting 16 texture units against SwiftShader's 32, which
+  independently confirms the ceiling the floodlight comment describes.
+
+- [x] **Sweep the presets, but do not sweep the product of them.** 29 cases in
+  six groups: the tier ladder, the same ladder in overview, every biome at one
+  tier, an ablation, a pixel-ratio group and the software arm. Each is in the
+  file with a stated reason. About eight minutes for the lot.
+
+- [x] **Report what a decision needs.** Distributions not means, CPU beside
+  GPU, draws and triangles per frame, `--save` and `--since` against
+  `bench/profile-baseline.json` in the shape `bench.mjs` already uses.
+
+- [x] **Have it name the bottleneck.** It is geometry, and it is one biome.
+  (Figures below from the old probe, which halved triangles and read times
+  near the fastest frame; see RESEARCH.md *The profiler counted every frame
+  twice*.) Redwood draws 92.9 M triangles where every other biome draws 3.1-4.6 M --
+  twenty times, for 12.66 ms against about 4. Cascades double it (46.5 M to
+  92.9 M). Pixel ratio is worth 26%. Every ground-cue toggle is free, inside
+  the noise. The reflections toggle does nothing at all: 208 draws either way.
+
+## Priority 1: correctness and continuity
+
+- [x] **Drainage-aware rivers and creeks.** Generator 13. The course is solved once as a drainage model -- priority-flood depression filling, D8 flow directions, flow accumulation -- and each channel is a walk down the flow directions, so it cannot spiral or cross itself by construction (0 self-overlaps against 2716). A channel that reaches a surviving depression crosses it to the bottom and ends in a real pond, built through the same `fitPondBasin` every other body uses; the mouth meets the shore within 3 m and the two water levels agree exactly. `SINK_FILL_AREA` swept to 15 000 m2: same channel count as 40 000, but 8 terminal ponds against 1 and 9 faded-out endings against 17.
+
+- [x] **Water keeps out of play.** No channel over a green (was 3 in 216, one 16.2 m inside), none across a playing corridor, none within 26 m of a pond or lake it did not create, and no pond crossing a fairway -- while a pond still bites into one about one time in six, median 5.7 m. The keep-out displacement is smoothed along the path before it is applied; moving each station by just what it needs creased the curve to a 0.00x-half-width bend and flipped the water quads face down.
+
+- [x] **The back tee was the low one, and a quarter of tee shots were blind.** Generator 14. A tee complex is levelled as one piece: the three natural heights are compressed toward their mean, then ordered so the back tee is never below the one in front (34% of holes were backwards, worst step 2.9 m; now 0%), and the whole complex is lifted until the shot clears the ground in front of it, capped at 3.5 m (blue tee shots blocked over 1 m: 23% to 3%). Pad flatness improved as a side effect, worst spread 0.35 m against 0.46. Rejected: forcing holes uphill, which costs the good downhill holes and does not address intermediate crests; one flat terrace, which reads as a driving range on a long hole; shaving the crest, which reshapes the interesting terrain.
+
+- [x] **Tee plateaus are ovals, and blind tee shots are a dial.** The flattened ground was a box while the tee and its collar are ellipses, so flat corners jutted ~3 m past the paint; the plateau now matches the paint and reaches the apron. Normal jump around a pad 2.6 to 0.8 deg median, collar relief 0.33 m to 0.01. `blindTees` (default 0) is the share of holes allowed to keep a blind shot.
+
+- [x] **The corridor ridge was a plateau.** It clamped the corridor distance at zero, so every point inside a corridor got the same raise -- and a constant offset preserves the gradient underneath it exactly, so water ran through corridors as it always had and the keep-out repair pass was left doing a router's job, oscillating instead of converging. The ridge rises inward now: zero violations, 70 of 72 channels still placed, median length unchanged.
+
+- [x] **A measurement harness.** `tools/bench.mjs` shares one generation pass between every metric and builds the courses across all cores: 768 s of generation in 29.7 s wall, 25.8x. Three fixture tiers, named invariants that must stay at zero, and a saved baseline with `--since`. Found a real bug on its first full run -- channel headwaters climbing onto the corridor hills the ridge fix created, on a seed the test fixture did not include.
+
+- [x] **Finding the nearest hole was 15% of building a course.** Each hole carries a rough box now, so `nearest` rules one out without measuring it; the previous winner is tried first, and the per-group minimum behind `other` is only kept on islands, the one biome that reads it. An 18-hole course builds in 8.4 s against 15.8, the test suite runs in 140 s against 217, and the measurement sweep in 20 s against 30. Proven to change nothing: the baseline reported no movement and a terrain fingerprint over eight courses is identical before and after.
+
+- [x] **One tee on a short hole, and earthworks off greens.** The pad is separate from the marker now, so a par three gets one long tee with the markers down it: 0 overlapping pads against every one of 66 par threes overlapping before. Tee earthworks reach half as far and fade before a green -- steepest patch on a green 9.9 degrees to 2.2, worst pad relief 0.58 m to 0.07. Channels also gained: a route that fails its profile or cannot be cleared of play now falls through to the next candidate instead of losing the channel, 87 of 90 placed to 90 of 90.
+
+- [x] **Tee siting from the terrain.** Each pad tries forty-odd nearby sites and takes the one the ground already suits: 653 of 678 moved, median 19.9 m, tees now sit a median 10.1 m off the centre line with real height differences between them, and the chosen ground is only 0.85 m uneven at the median. Blind shots 80 of 810 to 53. Earthworks fall away over a short rounded shoulder instead of a long ramp -- and the ground round a tee is now smoother and gentler than the countryside it sits in (95th percentile smoothness 4.4 degrees against 13.7, slope 20.7 against 43).
+
+- [x] **Raised tees, merged collars, and the landform theory.** A clear shot is now worth 10 against flat ground when siting rather than 1.6, which cut pads raised for sightline from 198 to 122 and blind shots from 53 to 33 at the same time. Collar overlap is scored, not banned: 12% of pairs to 1%. Pads whose shoulders would meet share a level so a complex is one platform, not three humps. The green guard reaches the mown surround, not just the fringe, which is what was painting a brown scar beside greens.
+
+- [x] **The corridor trough behind the tee.** A quarter of the surrounding relief comes back there, and it is better than none on every axis at once: tees cut into real ground 115 to 201, tees propped up for sightline 124 to 113, blind shots 33 to 27. The four earlier attempts failed because every sweep counted 'sites needing real earthwork' as a cost when it is the thing being asked for. Elevation 0 is now a baseline rather than dead level, the driving range excepted. The trough along the fairway itself is untouched and should stay that way -- it is what makes a hole read as a corridor.
+
+- [x] **The blindness check could not see tee boxes.** It read the shaped land with no tee pads in it, and sampled the centre line while tees now sit a median 19 m off it -- so it was measuring a shot nobody plays over ground that omitted the thing in the way. From the real tee along the real line: shots blocked over 1 m 103 to 74, downhill 89 to 68. The bench figure appears to treble because the metric was fixed in the same pass; only the same-method pair is a fair comparison.
+
+- [x] **Tee shapes.** Rounded rectangles instead of ovals, squared to the same aim the markers use, 6 by 9 m with the collar at 1.45x, and the site score prefers a lateral stagger. Shots blocked over 1 m from the real tee 74 to 19, of those blocked by another tee 23 to 2, downhill 68 to 13, and the lowest quarter of sideways gaps 1.5 m to 11.7. The par three special case is deleted rather than improved: at this size three ordinary pads fit down a short hole, so they get three tees and the existing levelling rule gives the stepped form. `fairwayMiddle` and `teeAim` moved into course.js so there is one answer to where a tee points.
+
+- [x] **Clouds fade out and in instead of popping.** A wrap is a four-kilometre jump. Opacity is now a function of distance to the edge of the box rather than of the wrap, so a cloud thins out as it leaves, wraps while invisible, and thickens as it returns -- one rule for both ends, and no step at the jump (largest single-frame change 0.0067). The shadow shares the same opacity. Uncovered a real trap: 'userData.clouds' meant BOTH "already patched" (set by applyCloudShadows on every material it touched) and "is a cloud" (set by clouds.js on one). The fade keyed on it, patched 34 materials instead of 1, and every geometry without the fade attribute read zero alpha -- the whole course invisible at Ultra, with nothing in the console. Split into 'cloudShadowed' and 'cloudMesh'.
+
+- [x] **A biome is one record.** Seven tables and 48 conditionals across eight files consolidated into `src/biomes.js` -- defaults for 45 fields, traits listing only the differences. The ground shader took a biome as an index into a four-element array, so a new name became -1 and took whichever branch that was; it reads four named flags now. Proven invisible: `tools/biome-fingerprint.mjs` hashes what each biome generates and all seven are byte-identical.
+
+- [x] **Giant Redwood biome.** One record, one dropdown entry, two species and a tree builder. Sun at 18 degrees for raking light, a desaturated sky which the fog colour follows, dark lush palette, PNW landform. Redwoods are a drawn tapered trunk carrying a borrowed conifer crown narrowed to 40% and lifted to the top, because every pack conifer is conical to the ground. Tree height became a biome field on the way -- hardcoded 13-29 m made the first grove a tinted pine wood -- and redwoods run 46-80 m, which needed the physics trunk collision cap raised from 0.8 m to 2.4 (it only binds above 29.6 m, so nothing else moved).
+
+- [x] **Redwood assets.** Searched, and most of it was already in `vendor/` and simply not ingested. 24 models added to `PICK` (fallen logs, stumps, mossy boulders, leafy ground plants): 71 shipped of 598 available becomes 95, packed geometry 1056 KB to 1238 KB, build 2.59 MB to 2.78 MB. The floor scatter is a `deadfall` count on the biome, 72% of it anchored to existing trunks, 877 instances in 31 draw calls on a redwood course. Ferns are a real `swordfern` species so PNW's generic bushes are untouched. Along the way, the two hand-written "not really a tree" lists in course.js and physics.js -- which were NOT the same list -- became `GROUND_PLANTS` and `NO_TRUNK` in `src/species.js`.
+
+- [x] **A fern that is actually a fern.** Stylized Nature MegaKit vendored; `swordfern` draws `Fern_1` and two of its ground plants.
+
+- [x] **Redwood crowns were needles.** The crown width was inherited from whichever model was borrowed rather than stated, so it varied 2.5x within one grove and the narrow end was 3 m of foliage on a 36 m crown. Width is now a stated fraction of tree height with the model's own divided out: 8-12 m over 21-29 m, measured in the scene. Crowns ship as leaf geometry only, trunk taper relaxed from .34 to .62.
+
+- [x] **Giant redwoods, and a tree as tall as it says.** Max height to 380 feet with the floor unchanged. The drawn trunk now calls `trunkRadius` so the trunk you see is the trunk you hit -- it was drawn thinner than it collided, by over a metre at this height -- and that function's clamp went 2.4 m to 3.6 m so it stops binding on anything the generator makes. 6.2 m trunks under 80 m bare columns. The crown takes whatever height the trunk leaves rather than being a second jittered fraction, which had been stacking to 112% of the stated height and leaving the top 35 feet as scenery a ball flew through.
+
+- [x] **Crowns that were wedding cakes.** The MegaKit pines are tiered -- radius alternating wide-narrow every band -- which at this scale is five green plates with daylight between them. Swapped for the only two crowns across six packs whose profile rises to one peak and falls, `PineTree_2` and `PineTree_4`. Measure the profile before adding a third.
+
+- [x] **Trees had no spacing rule.** None at all -- placement checked surface and corridor distance and never checked other trees. At 380 feet the closest pair stood 0.2 m apart and the worst trunks intersected by 5.4 m. `crownShare` on the biome: two crowns may not share more than 55% of their combined radii, trunks never intersect. On for redwood, zero for the other seven, because switching it on relayouts them all -- the ungated first version moved seven biomes and the fingerprint caught it.
+
+- [x] **A mid-storey.** A plant entry's third number scales that species' height, so the redwood grove's cedars are 30% of canopy rather than 380-foot christmas trees standing inside the redwoods.
+
+- [x] **The canopy floated off the trunk.** Trunk leans about its middle, crown leaned about its base on the vertical through the tree centre -- same angle, different pivot, up to 4 m apart at this height. The crown is seated from the trunk's own matrix, the lean is a third of what it was, and the sleeve is 20% of the trunk rather than 8%.
+
+- [x] **An asset contact sheet.** `npm run assets`.
+
+- [x] **Redwoods generated rather than found.** ez-tree (MIT) at bake time: four variants in `vendor/eztree-redwood/`, crowns starting 45-60% up the trunk with zero silhouette reversals, 18.5k-27k verts each. The library is a devDependency and never ships.
+
+- [x] **Match the bake to real redwoods.** Against published descriptions rather than memory: straighter trunk and gentler taper, 26 thick branches rather than 42 thin ones, branches horizontal to slightly drooping, foliage out at the branch ends, and a buttress flare at the foot (42% wider at ground level) because every quoted redwood diameter is measured above the swollen base and the library tapers uniformly. Bark is textured now -- Poly Haven's CC0 willow bark, tiling baked into the UVs.
+
+- [x] **The bark ran sideways.** Three attempts. ez-tree's `v` is 0,1,0,1 per vertex ring, so multiplying it crams tiles into every section AND every ring is a mirror axis; `u` at a fixed count squares the tile on one girth of trunk and squeezes it on all the others. Both coordinates are rebuilt from the geometry now -- `v` as arc length along the branch over a stated ~2 m tile, `u` from each ring's own circumference. Four attempts in the end: the branch split used a median over the whole mesh, so on a tree with many short branches the trunk's own sections each looked like a new branch and the whole trunk carried one `v`. It is a local comparison now, with a floor so coincident rings still advance. Every trunk measures 1.42-1.70 units per tile against a 1.7 target. Two of the checks had been lying -- one skipped the collapsed triangles as a divide-by-zero guard, the other sampled only brown pixels on grey bark. Both are fixed and the bake now fails on a collapsed UV basis. AND THEN IT TURNED OUT NOT TO BE THE BAKE: the ingest and the previewer packed UVs into 16 bits across 0..1, which is right for a house atlas and clamps tiling bark to a single stretched row. `uvSpan` per part now records the real range. The check that would have caught it measures how much DETAIL is on the trunk, not which way it runs -- a smeared row is vertical too.
+
+- [x] **A forest, not a tree.** Twelve models: four mature redwoods (two of them branching much lower), two young skinny ones, two douglas firs, two red cedars for the mid-storey, a bigleaf maple and a dead standing snag.
+
+- [x] **Trunks painted, not textured.** No bark image is carried at all; each species states a bark colour, converted from sRGB because MTL `Kd` is linear.
+
+- [x] **The pack canopies are textured at last.** `PineTree_2`/`_4` and the MegaKit ferns are fully mapped and their packs ship the sheets -- the OBJ exports just never reference them, or reference an absolute `C:/` path. 92 of 741 models textured in the previewer, against 12.
+
+- [x] **Renamed to `vendor/baked_assets`.** It stopped being only redwoods several species ago.
+
+- [x] **Stylized hybrids.** Six models pairing ez-tree's trunk and limbs with Quaternius's `PineTree_2` and `_4` foliage at redwood proportions, in two dressings: one crown capping the bare trunk (5.5-7k verts) or a spray at the end of every main limb (23-51k). The caps are an order of magnitude cheaper, which matters more than file size.
+
+- [x] **Twenty-two trees composed from the packs, no generator.** `tools/bake-assets.mjs` into `vendor/baked_assets`: stretch the bole of a `DeadTree` to redwood proportions, flare the foot, dress it with a borrowed crown as one cap or as sprays. `Redwood_Old_A` is 1,321 verts against 17,000 for the cheapest generated one.
+
+- [x] **`vendor/eztree-grove` renamed `vendor/baked_assets`** and is now the dumping ground for anything composed or generated.
+
+- [x] **A grove grown from nothing.** 153 models in `vendor/grown-redwood-forest` -- redwoods, firs, hemlock, cedar, broadleaves, snags, stumps, nurse logs, sword ferns, salal, sorrel, seedlings, moss, boulders, litter -- with no imported vertex and no texture, shaped against 315 measured reference photographs. 922k vertices, mean 6k.
+
+- [x] **A contact sheet.** `preview/sheet.html`: every model in one canvas at its real height beside a 1.8 m figure. How the flat ferns and the twelve identical firs were caught.
+
+- [x] **The redwood biome is entirely grown.** Nine species, none imported: redwood, douglas fir, hemlock, red cedar, tanoak, seedlings, sword fern, salal, sorrel, plus grown nurse logs, stumps and boulders as deadfall. `addTallConifers` and its 121 lines of drawn cylinder are gone.
+
+- [x] **The two-level LOD was built, then removed as unnecessary.** It was justified by arithmetic and confirmed by a benchmark that turned out to be reading the 120 Hz vsync interval in both arms. Measured honestly, the grove draws 33.6 M vertices a frame at 117.6 fps. The swap's only visible effect was that nearly every tree on screen was the thinned twin -- the "dead forest" and the pop-in. Gone.
+
+- [x] **The foliage palette was the colour of a shadow.** Clustering 315 photographs and taking the dominant green returns the shade, because most of a photographed grove is shaded. Canopy `#3b4b2a` to `#62784a`, understory to `#6b9046`, saplings to `#83ad55`, and density up by half again now that the budget is known not to bind.
+
+- [x] **Wire the baked trees into the game.** ~~Superseded.~~ The ez-tree bake was abandoned for `tools/grow.mjs`, which grows whole trees with their own trunks and needs no sprite sheet. The size estimate here was right and irrelevant -- the bundle is 15.79 MB and nobody minds. The frame estimate was wrong: 33.6 M vertices a frame draws at the refresh cap.
+
+- [x] **Two detail levels per baked tree.** ~~Not the blocker. Not a blocker at all.~~ Built, measured against a benchmark that was reading vsync, and removed. See RESEARCH.md; the honest number is that eleven times the geometry costs nothing measurable on this path.
+
+## Priority 2: landscape and performance
+
+- [x] **A CC0 grass model for the near-field tuft -- not needed.** Closed on
+  branch `ultra-looks`. The question was whether to buy the near grass a real
+  model; instead the near tuft became a hand-built clump of seven curved,
+  tapering blades (21 triangles, inside the 20-40 this entry had priced as
+  affordable for `addNearbyGrass`), lit like the ground and darker at the root,
+  and the owner approved it. No outside asset, so nothing to license.
+  RESEARCH.md *Rough grass clumps*.
+
+- [x] **Water sits on land, and a pond may split a hole.** Channels were being drawn on the seabed (2302 of 2452 stations at sea on a measured island seed) and were chosen for length, which after trimming selected runs entirely off the map. Island courses now carry no inland water at all -- the ocean is the hazard -- and Links keeps its coast handling. A mown semi-rough band now comes round every pond, lake and channel that meets a fairway, in the ground shader AND in the lie -- the first attempt changed only the lie and was invisible, see RESEARCH.md. Ponds may bite into a corridor or cross it, with the carry measured rather than assumed: 6% of holes split at default settings, median carry 33 yd, longest 101 yd at maximum water.
+
+- [x] **A lake could be dropped on top of a pond.** `addLargeLakes` checked separation only against lakes it had already placed, never against the ponds generated with the holes -- 10 overlapping lake-pond pairs across 12 courses, worst pair with water surfaces 14.19 m apart. Fixed at no cost: 0 overlaps, all 36 requested lakes still placed.
+
+- [x] **Tees beside a creek, and a river that read as a trench.** The channel soften block repainted tees (corridor geometry only, no idea a tee is there) -- suppressed over tee ground; island tees looked fine throughout because islands have no channels. Tee tilt was three things: `carve` protection threshold coming out negative for tees, tee pads missing from the mesh refinement list, and one attempted fix (returning the pad's level inside the pad) that put a step at the boundary and was reverted. Median tee spread now 0.000 m. River banks halved: 1.00 m of rise to 0.58 on the reported seed.
+
+- [x] **Four regressions from the water work, one cause behind two.** `foreshore` keyed on elevation instead of coastal proximity, reshaping whole courses (a links tee 510 m inland dropped 2.3 m) and amplifying every slope it touched by up to 1.67 -- both the steep edges and the unflat tee pads, now back to 0.46 m worst pad spread against 0.46 originally. `cutFor` stops a 3 m creek getting a lake's cut bank (steep probes near channels 1.6% back to 0.8%). Channels were not actually shorter where it counts -- on-course length went 447 m to 1862 m -- but stubs are now rejected. And the beach block ran before the tee block, silently removing the mown collar from every low-lying coastal tee in the paint only.
+
+- [x] **Cut banks for inland water, and a beach for the sea.** Ponds, lakes, rivers and creeks are excavated like bunkers -- 1.1 m of freeboard, a 2.4 m lip, measured at a 1.10-1.11 m bank across the interquartile range -- and the painted shore went from 7.14 m of soil to 1.36 m. The ocean instead got a shaped foreshore and a real beach that plays as sand: the coast measured 45 degrees before, and is now 10 m of sand at the default BEACH_TOP of 16 m. The beach claims rough only: allowing it onto mown turf made 19.4% of the island corridor sand.
+
+- [x] **A tear at the end of every hole.** `nearest` switched its greenside allowance on an exact float equality, stepping the distance 17 m instantly and tearing the landform past every green in every biome (worst 10.87 m on mountain, 7.18 m on island). Ramped over `GREEN_RAMP`, one-sided so green surrounds are untouched: worst step now 0.49 m on island. The shoreline is also refined now -- it was the one feature the 3 m mesh never subdivided, giving a waterline staircase whose p90 was exactly the grid spacing.
+
+- [x] **Hole-boundary staircase and a water lie on dry ground.** The owner atlas was a flat 512 square over a non-square course (2.88 x 4.26 m texels, 0.35% of samples on the wrong hole); it is sized from the course now at 1.75 m square, 0.13% error, 4 to 16 MB and 0.5 to 2.1 s of build. Separately, `surface()` decided ocean from `land` while the mesh is `height`, scoring 1512 island cells as water where the ground stood up to 6.13 m above the sea -- now 0.
+
+- [x] **Resolve hole ownership at boundaries.** Done in the shader: `fwidth` gates the work to quads a boundary crosses, the four neighbouring texels give the candidates, and `holeDistance` picks the true owner. Needed `h.width` uploaded in the spare `curves` channel (`nearest` does not measure against `fairwayWidth`) and a lake-ownership flag in the atlas alpha so the resolve declines where a lake owns the ground. 0.032% wrong against the atlas's 0.13%.
+
+- [x] **The crisp turf boundary stays crisp at water.** Asked whether the mowing boundary near a pond should be SOFTENED the way a channel crossing is -- which would have widened the one documented exception to the crisp-turf rule from "channel crossings" to "turf meeting water". Declined 2026-09-17 in favour of a sharp line in a rounded shape, which is what a mower actually leaves. The channel exception stays channel-only.
+
+- [x] **The mown outline is rounded where two edges meet** (`BAND_ROUND`, 2 m, in the paint and the lie). The band's width needed no change -- the visible band was already exactly the hole's semi-rough, and the original plan to "fix" it would have made it vary. Rebuilding semi-rough as a single uniform offset was priced on a real hole (worst swath 25.2 m against 32.2 m, 1.04% of ground) and declined: it is a distance transform and `surface()` is a point query, so the lie would need a fourth baked representation. See scratchpad/band-options.html.
+
+- [x] **Wind the whole scene agrees on, and a ball that sits on the ground.** Plants displaced along a hard-coded diagonal while the ball's drift, the clouds and the HUD arrow all used the course's real `windDirection`; they share one `windVec` now, and gusts are phased along it so they travel downwind rather than shimmering in place. Separately, `ball.castShadow` had been true since the beginning and could never have drawn anything -- the ball is 0.16 to 0.47 of one shadow-map texel -- so it is off, replaced by contact darkening that spreads and fades as the ball rises, and leans and stretches away from the sun so it doubles as the cast shadow -- at a resting ball's scale the two marks are 2.5 cm apart. The semi-rough also stopped carrying 3.5 cm blades, which were 13.5% of near-field grass instances.
+
+## Completed in the putting and cup update
+
+- [x] **The main menu shows a different hole, at a different hour.** The backdrop inherited the player's clock, so once floodlights existed a player who had been putting at 1 a.m. saw nothing but dark floodlit holes. Generation was never the problem — all seven biomes, all fourteen footprints and 136–610 yd still come up. The backdrop now draws its own hour from the same seed as the hole, weighted to daylight with three of ten slots dark, and lights the poles by that hour rather than by the player's setting. The loan is given back on leaving, the periodic clock save is suppressed while it is held, and touching any clock control ends the loan so a time the player just set is never undone.
+
+- [x] **A fog toggle, and the start of weather settings.** `fog` joins the daylight record beside the floodlights and the glow ball, switching off both the low morning sheet and the broad haze. The scene fog stays whatever the setting: it is the distance cue the landscape is drawn against, and removing it shows the edge of the world rather than a clear day. Measured at dawn, turning it off takes mean frame luminance from 128 to 87 of 255. It is the first control here that is about weather rather than time, and more will want to sit beside it.
+
+- [x] **Night golf under floodlights.** Poles down alternating sides of every hole plus a pair flanking the back of each green at 45 degrees off the line of play, placed from published sports-lighting practice rather than by eye: 23 m masts (the bottom of the ball-field band), spacing derived as three times the mounting height, 62 m of reach scaled with the mast, and clearance of 18 yd past the semi rough down the fairway and 10 yd around the greens, because a pole is an obstacle. Every pole is instanced geometry — two draw calls for a course — and every one of them is a live `SpotLight`: the assumption that sixty lights would not render was measured and proved wrong, because none of them casts a shadow and shadow maps are the expensive part. A cap of 192 keeps a nearest-first fallback for any future course that outgrows it. Off by default and saved with the other time settings. Measured at 1 a.m., switching them on lifts mean frame luminance from 43 to 92 of 255 at no cost to frame time (8.4 ms median either way). Seven tests in `tests/floodlights.test.mjs`; figures and sources in RESEARCH.md.
+
+- [x] **A par 5 is not 723 yards.** Base length by par, jittered a quarter either way with no clamp, then every hole scaled by one factor to hit the total -- so a long hole raised the total, lowered the factor and shortened everything else. At a 7,400-yard target one hole in eight was outside the USGA guideline and par 5s reached 803. Researched bands (120/175/250, 300/410/490, 470/540/640) filled by proportional water-filling: 0.0% outside the guideline at every length.
+
+- [x] **The par mix was drawn flat off the list.** Every combination adds up; eighteen par 4s is not golf. Weighted toward a fifth of holes at each par, so 4/10/4 comes up 49% of the time.
+
+- [x] **Par order spreads across the nines.** Counts split evenly with the odd hole going to a seeded side, then each nine hill-climbed against a badness score for back-to-back 3s and 5s. 0.09 adjacent pairs a course.
+
+- [x] **One hole skeleton, shared.** `holeLine` in course-plan.js computes the line, the length and the tees for both the builder and the pre-build scorecard, over one contiguous prefix of the hole's stream. The two seeded generators -- identical streams, separate code -- are now one.
+
+- [x] **The full card before the course is built.** Par, out/in/total and all three tee yardages, exact to the rounding. The length slider, the exact-yardage box and the card are one group instead of three controls for one decision.
+
+- [x] **The hole map sat on paper, and the green tile was 96 texels.** `mapWater` is the colour beyond the generated land and was the base coat for the whole canvas; the full-course map hides it under a terrain tile and hole view does not, so it WAS the surround. Biome rough there now. The contour tile is 256 when the map frames the green rather than 96, and the canvas backing store follows the display ratio instead of a hardcoded 2x.
+
+- [x] **The green is one state the HUD reads.** Pin pulled while putting (cup and liner stay), marker renamed to the hole and clamped to a measured free rectangle that clears the shot controls and the map, putter auto-selected only on the putting surface. `projectMarker` handles behind-the-camera properly, where `project` flips both axes and puts a marker on the wrong side.
+
+- [x] **The wind arrow was mirrored.** Camera minus wind, not wind minus camera: both bearings are `atan2(x, z)` and agree with each other, but that runs counter-clockwise on screen while CSS `rotate` is clockwise. The easy test case -- wind downrange, camera downrange -- is zero either way round and cannot catch it.
+
+- [x] **Wind debris is carried rather than fired.** Per-mote sway and bob rates plus a spread in drag, with the sway as a velocity through zero so the weave stays bounded. Tails from a single screen-space wind uniform, as shape rather than an alpha gradient.
+
+- [x] **The putt aim line rides on the green.** It inherited the full shot's 100 mm lift and appeared to leave the top of the ball; 15 mm passes below the ball's equator so the ball sits on its own line.
+
+- [x] **The flight model checked against a launch monitor.** 36 SkyTrak shots, irons and wedges: carry unbiased at under 2%, descent angle exactly zero mean error, offline within 1.4 yd. Caveats and the unvalidated roll model in RESEARCH.md.
+
+- [x] **The aim line stopped making garbage.** It was rebuilt from scratch every frame an arrow key was held — a Vector3 per point, a flattened array and a fresh LineGeometry, about 44 KB and several hundred throwaway objects a frame at 2.6 MB/s. Not CPU time (0.06 ms) but GC pressure, showing up as an occasional 90 ms frame with nothing else to blame. The buffer is now allocated once and written in place with `instanceCount` deciding what draws: `bufferData` calls per frame during a sweep went from 4 to 0. Over 4,500 sampled frames of continuous aiming: median 8.4 ms, p99 11 ms, one frame over 16 ms.
+
+- [x] **Shaders compile before play instead of during it.** Nothing precompiled, so each material variant was built the first time something using it came into view — mid-flight, mid-turn. A first pass over fresh ground burst six frames between 21 and 71 ms; a second pass over the same ground compiled nothing at all. `warmUp()` now compiles the scene at course build and on each hole change, after draining the grass queue against a 70 ms budget so the lazily-built grass material is in the scene to be compiled. 116 shaders now land at load, 10 during play, and a played course holds p99 at 11 ms.
+
+- [x] **The camera stopped hitching on grass.** Near-field grass tiles were all built in the frame the camera crossed a tile boundary: five tiles, 8,000 candidate blades, three world queries each — 37 ms measured, and 127 ms for the first ring of 25. Tiles are now built one per frame from a nearest-first queue, out-of-range tiles are parked in a 32-entry LRU instead of discarded, and blades are written straight into the instanced mesh instead of cloned into arrays first. Worst-case single-frame work: 25 tiles to 1. What is left in a tile is 85% `world.surface()`, which is its own optimisation and is not done.
+
+- [x] **Endless mode, and the menu hole you are looking at.** One hole after another, forever, from a single run seed: hole seven's landscape comes from that seed and the number seven, so a run resumes from `{seed, hole}` with nothing else stored. The main menu's showcase hole is now hole one of a real run built under the cache key `loadCourse` will ask for, so choosing Endless adopts that seed and that world and tees off immediately — no regeneration, and no progress overlay over work that is not happening. That makes `endlessSettings` load-bearing: `loadCourse` normalises through it on the way in, so it has to be a fixed point or the key moves, the cache misses and a different hole appears than the one that was picked. It lives in `endless.js` so both sides call the same function, proved a fixed point over 200 seeds.
+
+- [x] **Schema and generator versions for the pin work.** `GENERATOR_VERSION` 9 → 10, because greens and cups changed for unchanged seeds; `SCHEMA_VERSION` 3 → 4 with a migration that gives pre-`pinDay` saves Thursday — the gentlest setup and the nearest thing to the middle-of-the-green cup they were played with. A new test walks every version from 1 to current and fails if any step leaves a setting undefined, which is the failure mode when only half of "bump and migrate" gets done.
+
+- [x] **The hole flyover is the main menu's camera.** It ran up the fairway and then orbited the green, which showed a hole a piece at a time and never its shape in the landscape. It now circles the whole hole with the menu backdrop's framing at one and a half times its speed, a 55.9 s lap. Terrain clearance is solved once per hole rather than clamped per frame: the ring is measured along the arc and to each side of it, then smoothed, so the camera rises to meet a ridge before it arrives instead of putting a corner in the path. Measured on full mountain and full forest it holds 34 m of ground clearance and passes 10 m over the tallest canopies.
+
+- [x] **The Tools button did nothing.** `openToolsBox` existed and nothing ever called it, in any mode. Bound, and opened up to the studio as well — Arrange windows and Reset windows are what you want while laying a course out — with the play-only controls disabled outside a round so nothing in the tray can fire without one.
+
+- [x] **Greens that are actually shaped, and hole locations that move.** The green contour was a tilt and two sine ridges, which at the top of the slider gave 3.8 ft of relief and nowhere flat. It is now a tilt, rounded-square-wave ridges, a dish that is a punchbowl or a turtleback by seed, and a tier — and the slider curve is superlinear, so the default green is unchanged at 1.2% mean slope while 100% reaches 5.6 ft of relief, 18.5% tier faces, and still keeps 14% of the surface under 2.5% so there is somewhere to cut a hole.
+
+- [x] **The cup stopped being the centre of the green.** It had been both, so hole locations could not move at all. Green centre and pin are now separate everywhere: routing, bunkering, tree exclusion, the corridor collision disc, the flyover orbit, stream protection, the map outline and the green-reading shader key off the green; physics, the flagstick and the cup mesh key off the pin. The corridor disc was the one that mattered — centred on the cup, recutting a pin moved the collision volume, moved the next hole and rerouted the whole course under it. Held by a test that asserts all four pin days produce an identical layout.
+
+- [x] **Thursday to Sunday hole locations.** A `pinDay` setting cuts the cup for the day of a tournament. Difficulty is slope — Thursday 1.59%, Friday 2.03%, Saturday 2.54%, Sunday 3.11%, nothing past 4% on any green — while room to the edge is a safety floor of three metres rather than a second dial. Scoring that room as a target instead put every cup on the course the same five paces inside the edge; one-sided, they now spread from three metres to eighteen. Front, middle and back rotate hole by hole from the front. Shown on the hole card beside par.
+
+- [x] **Tracers stop stacking up.** The previous shot's tracer used to hang over the next one. It now clears when the shot is over, and every tracer of the hole comes back at once on a slow high orbit while the scorecard is up.
+
+- [x] **The cup has a bottom, and nothing teleports.** A ball straight down the middle touched no wall, so no regime owned it: it fell 143 mm, 62 mm below the floor, still accelerating, and the capture animation then hauled it 50 mm back up. Separately, a ball thrown clear of the rim kept the "over the cup" flag that suppresses the landing test and sank through the green 86 mm out before the wall grabbed it back to 32.6 mm, a 53 mm jump with the camera at its closest. Audited across 969 entry conditions and every lab preset for position jumps, upward jumps, balls inside the turf, holed-but-finishing-away and touched-but-not-flagged: clean.
+
+- [x] **A lab to watch green behaviour deliberately.** One hole whose green is measurably flat (elevation and green difficulty at zero give 0.000% gradient across 1089 samples on any seed) plus a console API that places the ball and strikes it to order: `lab.putt({feet, past, offset})` asks for a shot the way a golfer describes one — how far from the hole, how far past it the ball would finish, how far off the centre the line runs — and solves the launch with the same roll preview the aim line is drawn from. Named presets sit either side of the model's own thresholds, so the table doubles as a readable statement of the capture envelope: dead centre holes anything finishing up to 9.3 ft past, an inch off line 5.5 ft, an inch and a half 2.7 ft, two inches only 0.4 ft — monotone in offset, which it was not before the rim was resolved as a single surface. `src/lab.js`.
+
+- [x] **More complete cup dynamics.** Rewritten around one rule: the ball is caught if it falls its own radius while its centre crosses the opening. That is `chord x sqrt(g / 2r)` = 1.6365 m/s dead centre against Penner's published 1.63, from geometry with nothing fitted, and it fixed the shape of the envelope off centre — the old `1.63(1 - (d/R)^2)` turned away balls that had already fallen two and a half ball radii below the rim. Balls that fall less than a radius now climb back out over a rim that turns them, so holing out, lipping out and racing across the top are three readings of one number with no seam between them. Before this the hole did nothing at all to a ball it did not swallow: crossings at 0.6, 0.8, 0.95 and 1.05 of the cup radius all finished 1.310 m past it, identically. `src/cup.js`, with the measured before/after in RESEARCH.md.
+
+- [x] **The aim preview runs the shot instead of describing it.** A putt's line and ring come from the same ground integration the ball will use, so the two cannot drift. The closed form it replaced assumed a flat green of unlimited extent: on a 4% cross-slope the preview now lands within 0.05 m of the ball, shows break as a curve rather than a straight bearing, and reports the surface it stops on. Clicking a spot while putting solves for the power that stops there through the same preview. 0.17 ms per preview.
+
+## Completed earlier, moved from the priority lists
+
+- [x] **Version generated courses and saves.** *All four phases complete.* `src/settings-schema.js` is now the single source of defaults, bounds, categories, help text, validation and migration, and carries two separate versions: `SCHEMA_VERSION` for the shape of a settings object, migrated silently through a chain; and `GENERATOR_VERSION` for the behaviour of the generator, which cannot be migrated because the same seed simply grows different ground afterwards. Rounds are stamped with both on save and export, the generator version is part of the world rebuild key, and a mismatch on load blocks play behind a choice — continue on the rebuilt landscape, or start a fresh round on the same course. Exact old geometry is deliberately **not** reproduced: that would mean keeping every retired generator alive, which was weighed and rejected.
+  *Phase 2 is done too.* `src/course-library.js` keeps named courses in `fairway-courses-v1` and moves one between devices as an `FW1.…` code. A record is generation settings and a name — never a round, a lie, a score, or the author's turf and club preferences. Codes carry only what differs from the defaults, are checksummed against a truncated paste, migrate an older schema on import and refuse a newer one. The library is reachable from **Course studio → Saved courses** as a placeholder; phase 3 moves it to where it belongs.
+  *Phase 3 is done too.* The app now has three modes. **Menu** is the entry point and offers Continue, Play, Course studio and Help. **Play** selects a saved course, the group, format and tee — the hole count comes from the course, so the two can no longer disagree, and no generation control appears. **Course studio** is its own mode: free flight, the settings panel, an explicit **Regenerate**, and a "settings changed" indicator, since nothing auto-regenerates when a rebuild is seconds of frozen tab. **Surprise me & play** builds a randomised nine from the schema's per-field `vary` bands and tees straight off. Opening Fairway grows only a one-hole showcase for the camera to circle behind the menu — about a quarter of a second against roughly two for a nine — and a saved round waits in `pendingRound` until Continue is pressed. Courses are deleted from Play, next to the course picker, behind a named two-tap confirm.
+  *Phase 4 closes it.* The studio panel is rendered entirely from the schema — groups, order, labels, bounds, units and help text — with only the six controls that are not plain sliders written by hand. Every setting carries an on-demand description behind a hint button, plus **Show all descriptions**, and the nine categories replace the old muddle that mixed wind, fairway width and green difficulty under one heading. A test asserts every setting falls in exactly one rendered category, so a new entry cannot be added and silently never shown.
+  **What this does not do, by design:** retired geometry is not reproducible. A generator bump means old seeds grow different ground, and the player is told rather than kept in the dark. Reviving exact old terrain would need every retired generator kept alive; that was weighed and rejected.
+
+- [x] **House collisions and residential rules.** Houses are solid. `simulateShot` indexes them like tree trunks and resolves the deepest overlap of an oriented box (walls plus the roof folded in as height), pushing the ball out along the face it entered and reflecting only incoming motion, so a ball resting against a wall can still be played away from it. **Bouncing is the default and costs nothing.** The optional **Houses play as out of bounds** setting makes reaching one a penalty stroke and replay from the previous lie; it is off by default, carries its own explanation in the studio, and the 2 to 3 schema migration sets it off for every existing course, so nobody's saved course silently starts costing strokes.
+
+- [x] **Richer residential scenery.** Four roof forms (gable, hip, saltbox, L-wing), optional porches, garages with a drive, picket fences and planted borders, all drawn from the same seeded stream so a street reads as built over time. Wall and roof palettes follow the biome. Foundations are sized to reach each house's lowest corner, so nothing floats on a slope. Setback, density, tee/green protection and tree exclusion are unchanged. House outlines are drawn on the full-course map.
+  Still open: interiors, varied window patterns, and per-region architecture beyond the warm/arid palette split.
+
+- [x] **Pond banks on sloping ground.** Overlapping pond shelves settle to one shared level, which took the median pond bank from 35% to 13% against a background terrain median of 3%. The remaining quarter of ponds with locally steep banks turned out to share a cause with the biomes that lost ponds entirely: the shelf margin was pinned at a fixed 34 m, so shrinking a pond to fit steep ground barely reduced the footprint the fit was judged over. Scaling that margin with the pond fixed both. Measured on the reported max-elevation course: bank slope median 0.38, worst 0.62, none above 1.0, and mountain went from 3 of 8 seeds with no ponds at all to 1-6 ponds on every seed. Two approaches were tried and rejected with measurements: applying every overlapping shelf in turn (a pond in a valley drags a hilltop pond's shelf down to its level), and taking only the nearest shelf (a 1197% cliff wherever the winner changes — the boundary-switching trap the handoff warns about).
+
+- [x] **Central settings schema.** Derive defaults, validation, migration and sliders from one schema; prevent save/import controls from drifting. Include units and generated-vs-live setting semantics. *Delivered by the schema work above:* `src/settings-schema.js` is the single source of defaults, bounds, categories, units, help text, validation and migration, `generationKeys()` carries the generated-vs-live split, and the studio panel is rendered from it.
+
+## Completed in the September 11 update
+
+- [x] Optional fairway homes with density/setback and dry gentle site selection.
+
+- [x] Broader green-surround transitions and expanded modifier bounds.
+
+- [x] Flat pond levels fitted below rim/outer-bank samples, smaller/rejected unsuitable ponds, refined shoreline geometry.
+
+- [x] Optional rivers/creeks with count, width, depth and meandering controls; beds, lies, water animation and maps.
+
+- [x] Ten additional footprint choices including Original square (14 total), selectable SVG previews.
+
+- [x] Persistent shot results, live horizontal distance and height.
+
+- [x] Three-second replay final hold and three-second delay before the completion scorecard.
+
+- [x] Animated flag lifting for putts.
+
+- [x] Context-free project handoff, agent entry point and separate future-work list.
+
+- [x] Camera-enclosing trees hide their complete trunk/branch/canopy instances and restore on exit.
+
+- [x] Biome-aware river/creek banks, downhill graded channels and shared reflective water.
+
+- [x] Large-lake count/diameter controls with open-ground siting and map/contact ownership.
+
+- [x] Fairway-following hole flyover and heatmap-only green orbit with preference restoration.
+
+- [x] Initial aim follows the fairway centerline instead of pointing across doglegs at the pin.
+
+## Completed in the waterway update
+
+- [x] Smooth channel passage through fairways. Obstacle avoidance is a low-passed displacement with the side chosen once per obstacle, replacing the hard clamp whose influence boundary produced trapezoid corners. Two Chaikin passes and a curvature relaxation follow.
+
+- [x] Bunkers are avoided by rivers and creeks. Three routing tiers try a generous berth, then a tight squeeze, then sand-blind routing; any bunker a sand-blind channel crosses is washed out in `generateWorld` so water never stands in a playable bunker.
+
+- [x] Independent channel bearings, wavelengths, amplitudes and phases. Every channel previously shared one course-wide bearing and wavelength pair, so rivers and creeks were offset copies of one curve.
+
+- [x] Staged shoreline. Three bands — saturated margin, damp earth, then a fade to the surrounding cut — sized from channel width and capped inside the valley shoulder, replacing a 2.8 m collar. The bank tint is warmed and darkened so it reads as earth beside a green fairway rather than duller grass. An intermediate damp-turf stage was tried and removed: it held a near-constant tint of the surrounding turf and traced each channel as a coloured ribbon. Instanced grass is kept off the painted earth band for the same reason. Mown turf gets about a third of the margin unmaintained ground gets, so a channel crossing a fairway no longer carries a wide earth band through it.
+
+- [x] Channel water feathers out at the waterline via a per-vertex bank weight, and all water bodies are translucent in Cartoon style instead of only the single reflective one.
+
+- [x] The bank tapers to its crossing width gradually. One scale factor now shrinks the whole profile so it keeps its shape, the taper runs over a distance proportional to the body (about 70 m ahead of a fairway for a river, against 13 m before), and the corridor distance is smooth-min/maxed so a corridor corner no longer creases the bank into a wedge. Previously the band's outer contour swung inward faster than 45 degrees and drew a hard line along the fairway edge.
+
+- [x] Creeks and rivers relax the crisp turf boundary rule where they cross a playing surface: the classification blends and mowing stripes fade, both falling off with distance from the water. Colour only — surface queries and contact still switch at the true boundary. Ponds, bunkers and ordinary turf edges are untouched.
+
+- [x] Ponds share the channel shoreline. `shoreTint` in the ground shader now serves ponds, lakes and channels alike, replacing the pond sand bed and 5 m sand collar.
+
+- [x] Terrain is levelled under each pond during generation instead of searching for a flat site. Rim spread on finished terrain measures a few centimetres.
+
+- [x] Ponds sit against the fairway. Their gap to the corridor may be negative, so water can reach the playing edge without ever entering it.
+
+- [x] Larger water. Ponds now span roughly 90 m rather than a fraction of that, and **Typical lake diameter** reaches 460 m. Pond banks are anchored a fixed gap outside the fairway edge, so a larger pond grows away from play rather than into it. At the top of the lake range open ground runs out and fewer lakes are placed than requested.
+
+- [x] Patterned ripple strokes on the water surface were tried and removed at the owner's request; the water keeps its translucency, normal-map distortion and reflections. Do not reintroduce a surface pattern without asking.
+
+- [x] Station joins no longer step: the ground shader tests the two neighbouring segments of the same channel and keeps the nearest.
+
+## Distribution follow-up (September 11 review)
+
+- [x] **Floodlight shadows: blocked on a texture unit, not on frame time.**
+  Unblocked 30 September by packing the ground's per-hole tables; see
+  *Floodlight shadows, on every tier* under "Graphics work the profiling turned
+  up". The lesson from the first attempt stands and is now enforced twice: a
+  test counts the units, and a smoke journey plays the floodlit night.
+
+- [x] Owner-selected MIT license, package metadata, offline Help licenses and source/portable notices.
+
+- [x] Credit Mulberry32 and embedded Earcut, AgX and bundler helper code; update modified Water attribution.
+
+- [x] Dated provenance review, 50-entry dependency inventory, verified archive packager and release checksums.
+
+- [x] **The driving range.** 500 yd × 100 yd, dead flat, mown from behind the mats to the back of the field, identical every visit because nothing in it is drawn from a seed. Built as a standard hole object (`range.js`) with a one-line branch in `generateWorld`, so the ground shader, physics, map and floodlights need no special case. `noNeck` on the hole stops `fairwayWidth` pinching the back of the field into an approach. The real green is movable without shortening the field, because the shader reads green position from the cup atlas rather than from hole length. Eight tests covering depth, width, flatness, determinism, green travel, that a generated course still necks, and that the painted ground and the ball's lie classify identically.
+  - [x] **Fixed: the painted ground disagreed with the lie.** `localSurface` tested the green's semi collar before the fairway while the shader paints the corridor over it, so the apron short of every green was drawn as fairway and played as semi-rough. Pre-existing on every hole (0.87% of hole 1), invisible until a green sat inside a full-width corridor. Range agreement is now exactly 0.00%; course holes fell to 0.02–0.36%. Existing courses play differently on the apron — the lie now matches what was already being drawn.
+  - [x] **Entry fixes after first look.** `bio: null` threw inside `loadCourse` before `setMode('play')`, so the range built and drew with the main menu still over it — a hole needs a real biome because the HUD and the flight model both read it. The menu entry is a full tile in the mode row rather than a small link. The ball sets up on the centre mat (`round.tee = 'white'`; the default blue tee is the left-hand station). Tee `yards` now carries the green distance so the card stops reading "0 yd". The green-reading overlay is forced off on entry — on a dead-flat green the slope grid and heat map both paint the whole surface blue, which looks like a bug and was reported as one.
+  - [x] **The player card too.** Both practice modes invented a golfer called "Lab" or "Range" and threw away the real group; they now carry `round.players` through, so configured players arrive with their own names. The score chip shows the SHOT YOU ARE ON instead of strokes to par, since a practice ground has no par -- a session opens on SHOT 1 and ticks over as each ball settles.
+  - [x] **FIXED — and the LAB was worse than the range.** The range already blanked its hole number, par and pin; the lab never did, so it announced "HOLE 01 / 09 · PAR 4 · PIN THU front" over a flat bench green. Both now read as what they are: the card titles itself "Lab" or "Driving range", par and pin show an em dash, and DISTANCE — the one field that stays real on a practice ground — follows the green wherever it has been put.
+  - [x] **(original)** **Range HUD still shows round furniture.** The hole card carries "PAR 4" and a "THU" pin-day chip, neither of which means anything on a practice ground. Belongs with the range shot loop, where the card should carry shot data instead.
+  - [x] **Coloured targets and distance signs.** Six targets at 50–300 yd, alternating sides, each a coloured disc with a white rim, an oversized flag and a board behind it carrying the number. Offset from the centre line is derived from the green's own reach so the distance slider can never drive the green through one — tested by walking every target's rim at every green position. The colour ramp avoids the cyan band that water and the slope overlay occupy, tested by hue rather than by channel dominance. Signs scale with distance to hold roughly even angular size from the mats. Three new tests, eleven on the range in total.
+  - [x] **Green-distance slider.** In the tools tray, range-only, 30–300 yd. Moves the painted surface through the cup atlas, carries the flagstick and cup meshes across by hand, and refreshes the cached `worldPin`/`worldGreen` that most of the scene actually reads — without that the flag stands in an empty fairway where the green used to be. The distance is remembered for the next visit in the session. A test drives it through `generateWorld` so the routed transform is non-identity, because a bare builder hole has an identity transform and would pass either way. Twelve range tests.
+  - [x] **Range shot loop and shot data.** `finishShot` branches before `round.takeShot`, so no stroke is recorded and nothing advances; the ball returns to the mat keeping the chosen club, and tracers accumulate on the field. Eight per-shot stats in the Shot information panel plus a running average carry and offline spread. The hole card reads Range / N/A / Range with the live green distance. `offlineOf` was extracted from the readout purely so its rotation could be pinned by test — a shot-direction sign error has shipped four times in this project. Thirteen range tests.
+  - [x] **Range dispersion being zero is CORRECT, not a gap.** Logged earlier as needing a strike-quality model; that was the wrong conclusion. Ball data is an input from the launch monitor, and the simulator must never invent variation the monitor already measures — see PROJECT_HANDOFF. Dispersion appears when real shots differ, which is exactly when it should.
+  - [x] **The lab works on the range.** `LAB_SETTINGS` is now `RANGE_SETTINGS`; `labApproach` moves the green to `carry + short` and fires from the mat instead of walking the ball back from a fixed pin. Every one of the twelve presets now lands on the turf its name claims — previously the wedge fired from rough, the 5 iron from semi, and the driver from rough 46 m behind the tee, none of which the readout showed. Raised `short` on the driver (60→90) and wood (60→80): at 60 both ran onto the green mid-roll and reported the mixture as fairway run, overstating it by 46% and 25% at Burnt. The firmness ladder reproduces exactly at Soft, Firm and Burnt; Normal reads 10.0 against the published 12.8 because the ball holes out.
+
+- [x] **Flight plays at real time.** The render loop advanced the trajectory clock at 1.7× with no comment and no recorded reason, which took a 7-iron's hang time from 6.65 s to 3.91 s on screen and a driver's from 7.45 to 4.38 — the reason shots did not look like shots. The physics was never wrong. Both hold timers count real seconds and were unaffected. Shots now take ~70% longer to watch; the settle pause is the dial if a round drags.
+  - [x] **Simulated hang times run 5–10% long** against real figures (driver 7.45 s where tour data is nearer 6.5–7). Separate from the playback clock that was masking it.
+  **STALE — fixed by the aerodynamic refit, which was not aiming at it.** Measured now: driver **6.59 s**. PGA Tour average hang time is **6.1-6.3 s** and barely moves year to year; Henrik Stenson LED the tour at 6.9 and the longest individual shot on record is 8.2 ([Golf Digest](https://www.golfdigest.com/story/the-five-players-with-the-shortest-tee-shot-hang-time-and-the-drivers-they-use)). So the driver sits between the tour average and the tour leader — inside the observed range, not outside it. The 7.45 s in this entry was measured before the lift curve was flattened; hang time came down with carry and apex as a side effect.
+  **Deliberately not actioned further.** Shaving the remaining 0.3 s means touching lift, and lift is currently fitted to carry (3.2%), apex (3.7%) and descent angle (1.8%). Trading three validated quantities for one already in range is a bad deal. A ratio check backs this up: real hang against vacuum-ballistic hang for the same apex runs 1.35 for the driver down to 1.12 for the wedge, which is lift holding the fastest ball up longest — the right ordering and the right magnitude.
+
+- [x] **Per-shot spin adjustment.** Launch angle and spin axis each had a per-shot delta and spin had none, so a shot could be flighted down or shaped but never deliberately spun. Added as a delta in **rpm** beside them; the profile's spin control stays a **percentage**, because it scales a bag spinning 2,700–9,000 rpm and one absolute number cannot serve both. Added after the profile scaling, clamped at zero so a driver cannot be spun backwards. Two tests.
+
+- [x] **Tool windows regrouped by subject.** `Range controls` is a box that opens with the range and closes with it, holding the green distance slider, which left the tools tray. `Shape your shot` is now `Shot shape` and owns the ball-flight profile as well as the per-shot adjustment — both are about how the ball leaves the club. `Ball flight & turf` is now `Turf settings` and keeps only the ground: Stimp, the roll settings and firmness.
+
+- [x] **Flight camera pass.** Tightens across the whole shot rather than only the last 15 m (a second, height-ungated `trackCloseness` from 150 m in, 24 m → 13 m, handing over to the existing turf-level close-in). Every shot is now followed from off the shoulder — 25° for a full shot against a putt's 45°, kept smaller because the hole sits down the flight line and has to stay in frame. The follow bearing trails the line to the **hole**, not the struck line, falling back to aim within 1.5 m of the cup where the bearing is undefined. The view leads toward the hole so both it and the ball are framed; a test requires both inside 30° of the view axis at three ball heights across the whole approach. Camera hold 0.75 → 1.5 s, putts still immediate. Three existing assertions in `approach-camera.test.mjs` described the old behaviour and were rewritten rather than appended to.
+
+- [x] **The lab hides the manual shot controls and carries its own settings.** Club, aim and power decide nothing on the bench — lab shots have their speed solved to a stated distance and take launch, spin and axis from the preset or the sliders — so four controls were on screen advertising inputs the lab ignores. Hidden in lab mode, and `takeShot` now refuses the manual path there too, because SPACE and the gamepad still reached it and would have fired from controls the user could no longer see. The launch-monitor path (`takeShot(data)`) stays open: that is a real ball. **Green speed moved into the lab bar** with named presets (Slow 8, Medium 10, Quick 12, Tournament 13.5) and is on `lab.stimp()`; it was previously reachable only by leaving the lab for the turf panel, which is the wrong home for the biggest single influence on a putt.
+
+- [x] **The lab takes a shot as one pasted message, the way the monitor sends it.** A `SHOT DATA` box accepts GSPro Open Connect v1 JSON (what the hardware actually puts on the wire, already understood by `parseLaunchMessage`) or five bare numbers — ball speed, launch, direction, spin, axis — for typing a test case. Enter fires. This replaced five sliders that were wrong twice over: they fired on release so every adjustment launched a ball, and a launch monitor does not hand you five knobs. Ball speed and direction had been missing from the panel entirely. Presets are pure again too: `labApproach` had been reading the sliders back in, so after one nudge every preset fired something other than its own name.
+
+- [x] **Green distance moved into the lab bar.** It lived only in the range's own controls, so setting up a manual shot meant leaving the lab. Slider plus 100/150/200/250 yd buttons, and `lab.greenAt()` on the console. Follows the drag on a flat lab green and waits for release on a shaped one, which rebuilds the world. Fixed a latent bug while wiring it: `labGreenAt` recorded `settings.rangeGreen` only on the expensive path, so the cheap one moved the green without saying so — invisible until something read the distance back, which a slider does.
+
+- [x] **Course studio generated a driving range (round two: it was PERSISTED).** The first fix only covered the in-session route out. `save()` fires on course load and after every shot, so it fires while the lab and the range are open, and it wrote `range: true` to localStorage — after a reload every world built from it was a range, studio included, and no amount of in-session restoring touched that. Now: `saveRecord` stores the remembered course rather than the range, the loader replaces a stored range outright instead of merging it, `openStudioSetup` leaves the range BEFORE the panel renders (doing it after would have discarded the settings just entered), and `enterStudio` keeps a last-resort strip that cannot discard anything. `courseFallback` keeps the player's style, bag, flight profile and turf while resetting the world shape, because spreading a range's own settings over the defaults carried its elevation 0 and flat greens into the course.
+
+- [x] **(first attempt, incomplete) Course studio generated a driving range.** `enterLab` and `enterRange` REPLACE `settings` wholesale rather than editing it — both are a different world, one hand-built hole with a fixed seed and no elevation — and nothing put the old settings back on the way out. So `range: true` survived the trip and the next thing to read `settings` built a range: the studio, and the menu's showcase hole with it. The player's seed, biome, style and bag were also being reset to defaults by any visit to either. Both now save the course on the way in (`rememberCourse`) and put it back in `returnToMenu`, which the code already calls "the one way out of play or the studio".
+
+- [x] **Checkpoint before the tilt work:** `.checkpoints/20260915-023232-before-tilt-gate/` with a RESTORE.md holding the measurements. `.checkpoints/` is gitignored.
+
+- [x] **A ball climbing into rising ground no longer passes through it.** `v[1] <= 0` alone missed a ball still gaining height while the terrain came up faster, measured at 59 mm of penetration on a 39-degree slope. Being below the surface is a collision whichever way the ball is travelling.
+
+- [x] **Lab box moves and resizes.** Dragged by its title line, resized from the corner. The listener is wired once and guarded, because `showLabBar` replaces innerHTML on every redraw and re-wiring would stack listeners; inline position and size survive a redraw because the bar element itself is not replaced.
+
+- [x] **Green distance is a typed box at one-foot steps**, quick buttons kept. A slider cannot say "put it on 147", and `moveRangeGreen` already accepted fractional yards so nothing rounds it back.
+
+- [x] **"Firmness" is "Green firmness" everywhere a player reads it** -- the lab control, the turf panel field, and the explanatory note. It moves greens and their collars and nothing else, so the name now says so. Code identifiers are unchanged.
+
+- [x] **The course card's menu button is gone from every mode.** The card reports the hole; a second route into the menu sitting on top of it was clutter beside the nav that already does it.
+
+- [x] **Range slice 2: per-player shots and a shot list.** Who is hitting is chosen by clicking the player card and never rotates on its own. Every range shot records which golfer hit it, and the list filters to one. The topbar `Scorecard` chip reads `Shot data` on a practice ground and opens the active golfer's shots over most of the screen; the shot number on the card opens the same thing.
+  - [x] **FIXED — the lab records shots.** The first option was taken: it records, and `labSource()` is the different club-column source the entry called for. Details in the entry at the end of this file.
+
+- [x] **The range has a setup dialogue and the group can be edited from inside it.** Choosing the range from the menu now asks for the group and the green distance first, the way play, endless and studio do. The same panel, opened from the avatar while practising, reads "Apply to this session" and changes the group in place. This closed a gap created by carrying `round.players` into the range: the group could be brought in but never edited there, because the only control that committed player edits was "Start fresh round", which leaves the range.
+
+- [x] **The group can be changed without restarting, in every mode.** `Round.setPlayers` resizes every per-player array in step: a golfer who stays keeps their card, their strokes and their ball; one who joins starts from the tee with earlier holes blank (`cards` is sparse by hole and the scorecard already guards each cell); one who leaves takes their card, so the button confirms first. "Apply to this session" now appears in play and endless as well as on the range and in the lab.
+
+- [x] **Players are added with a + and removed with a trash icon**, replacing the 1-4 count dropdown. One shared `groupEditor` serves the round panel and the practice panel, and it holds a draft rather than scraping the DOM at commit time -- a count dropdown and a row list can disagree with each other, and a single draft cannot.
+
+- [x] **A golfer can be removed on their own turn.** If everyone still in the round has holed out once they are gone, the hole completes through `showHoleCompletion` -- the same routine a holed putt runs -- so the summary, scorecard and countdown to the next tee behave exactly as they always do. Removal is confirmed by name first, and a rejected change now raises a toast as well as the inline error, which on its own read as the button doing nothing.
+
+- [x] **Putting settings live in Format & tees, inline.** The mode select and the 1/2/3-putt distances render in the round panel's format section instead of a `Putting: … · change` button in *Your group* that opened a second window for one setting. Both surfaces -- the round panel and the tools-tray *Putting options* -- build from the same `PUTTING_MODES` / `PUTTING_NOTES` / `puttingFields` / `readPutting` / `applyPutting` pieces, so the option list and the notes have one definition. The round-panel fields apply on change; the tray popup keeps its Apply button because it is a popup.
+
+- [x] **The range and the lab no longer eat the putting mode.** Their throwaway round forces hole-out, and that was the only copy of the setting: a trip to the range reset a Dartboard or Decimal choice, and *Start fresh round* from inside the range carried hole-out into the round. `savedPutting` holds the player's own choice across practice; `restorePutting()` hands it back from `restoreCourse()` and from `buildRoundOn()`.
+
+- [x] **Endless has a setup panel.** The main menu asks for format, tees, putting and the group before the first hole grows, the way play, the studio and the range already did. No course picker -- endless grows its own -- and no match play, which `Round` rejects for an endless run because a match needs a last hole. `startEndless(group)`/`buildEndless(group)` take the group instead of forcing stroke play on whoever happened to be loaded.
+
+- [x] **`formatFields` / `wireFormatFields` are shared.** Format, tees and putting are built and wired once and rendered by both the round panel and the endless panel, with `FORMAT_NOTES` holding the three format explanations, so the two cannot drift.
+
+- [x] **The endless panel is tabbed and the panel titles are honest.** Two `<h3>` sections fell under `TAB_THRESHOLD` and rendered as one long scroll; `groupPanelContent(root,tabAlways)` lowers the threshold to 2 for that render only. `panelTitle(name)` now says *Lab*, *Driving range* or *Endless run* where the one `round` panel key used to say "Your next round" in all four variants.
+
+- [x] **Range slice 3: shot lines are a setting.** A 0-50 slider in the range controls decides how many tracers stay on the field, applied as it is dragged. The trail store is capped at the ceiling rather than at the current setting, so raising the slider shows lines already hit; zero clears the field. Device-local in its own `fairway-range-lines-v1` key, not in `settings`, which `courseFallback` rebuilds on the way out of the range. The practice card's SHOT number moved to its own `practiceShots` counter -- it read `holeTrails.length+1`, which the cap would have frozen at 51.
+
+- [x] **The lab records shots.** `recordRangeShot` was `rangeMode`-only, so the lab's Shot data chip always opened an empty list. Recording happens before the range branch's early return (the lab does not take it -- it plays a real one-hole round on the practice green) and before `round.takeShot`, so the row carries the golfer who hit rather than whoever the turn advanced to. `labSource()` names the club column: the preset name, `Launch monitor`, or `Putt · N ft`. `enterLab` clears `rangeShots` too -- only `enterRange` did, so the range's rows used to follow you into the lab.
+
+- [x] **Range slice 4: replay any shot in the list.** A Replay button on every row; `replayShot` takes a record instead of always using `lastShot`, and the badge stamp and the panel sentence are passed separately so the default still reads "Replaying your last shot". The row stores the shot that happened rather than a request to re-simulate it -- the model is deterministic and wind is a pure function of settings (both measured), but re-simulation reads the world as it is now, and on a range the green moves and the firmness changes. Bounded at the tracer window; older rows keep their numbers and lose the button. Fixed a latent bug on the way: the live distance readout measured from `lastShot`'s origin during any replay, which is only correct when the replay is the last shot.
+
+- [x] **Lab mode removed; Lab tools is a range popup.** The mode had its own world, a floating bar, a menu entry, sixteen preset shots and thirty-six `labMode` branches through `main.js` -- all onto a bench that `LAB_SETTINGS` had already redefined as `{...RANGE_SETTINGS, seed:'LAB'}`, so it was a second front door onto the same flat ground. What replaced it: a `lab` tool panel in the range carrying green firmness, green speed and a box to fire a shot from typed numbers, updated in place by `syncLabTool()` so a redraw cannot eat a half-typed line.
+
+- [x] **The measurement instrument was kept, deliberately.** `src/lab.js` keeps its arithmetic and `window.lab` keeps every method that runs against the loaded course (`batch`, `drops`, `scatter`, `lipSweep`, `envelope`, `slope`, `drop`, `strike`, `firmness`, `stimp`, `greenAt`, `slowmo`, `eyeHeight`, `reading`, `state`, `last`); `lab.open()` is now "go to the range". Every physics fit in this project was done with these, and deleting them would leave a future physics change with nothing to measure against. `LAB_SETTINGS`, `PRESETS` and `APPROACH_PRESETS` are gone.
+
+- [x] **`tests/lab.test.mjs` repointed at `RANGE_SETTINGS`.** All fifteen pass with no change but the world they build, which is the proof the range is a real bench: flat to below 1e-6 gradient at the pin, big enough for the roll-outs, and `greenDifficulty` still gives a green that reads. The two preset tests went with the presets rather than being left to assert things about a world the app no longer builds.
+
+- [x] **A typed shot is not a club shot.** `takeShot` records `latest.typed=!!data` and the shot list names the row `Launch monitor`, covering both the Lab tools box and a real connected monitor. This replaced a `labSource()` that guessed from `labState`. Manual swings are now allowed on the range, which the lab used to refuse.
+
+- [x] **FIXED -- the bench lost two capabilities in the lab-mode removal, both silent.** (1) `setRangeGreen` only had the cheap slide path; `labGreenAt`'s contoured-green rebuild went with the lab. Moving a sloped green would have put the cup on flat ground with the contours left behind, and nothing would have complained. (2) `enterRange` ignored `difficulty`, `seed` and `stimp`, so `lab.green({difficulty:35})` built a flat green and reported 0% slope. Both restored; `lab.greenAt` now throws instead of no-opping when the range is not open, because a measurement that quietly did not move the green gets blamed on the physics. `tests/range.test.mjs` asserts the contoured rule directly.
+
+- [x] **Range slice 5: 2D side and top-down shot views.** A `Shot views` tool popup -- opened from the tool box, drawing nothing until it is -- with height against distance and the ground track across the aim line. New `src/shot-views.js` holds the arithmetic and the drawing; `viewShot` follows the last shot until a `View` button on a shot-list row pins one, and the next shot clears the pin. Height was clearance above the turf rather than above sea level (reversed 12 October 2026: it is now height above the strike, as if flat -- *Shot views and the studio bar*), and offline is measured against the line you AIMED down, checked against `offlineOf` by a test that compares the two functions to each other rather than to a worked example that could share a sign error.
+  - Two real bugs the tests caught before the browser did: a four-yard putt got no gridlines at all (fixed step larger than the whole shot), and a dead straight shot would have been drawn as a slice (cross-axis span near zero with no floor).
+
+- [x] **The map pans and zooms, in every mode including studio.** Wheel to zoom about the pointer, drag to pan, double-click to reset; the title shows the factor whenever the map is not showing the whole thing. `mapLayout` gained a `nav` that scales and shifts the fitted frame rather than replacing it, so zoom 1 is exactly the old map. The state lives on the canvas as `canvas.mapNav` beside `canvas.mapTransform` instead of being threaded through `drawMap` -- five call sites draw this map and an argument is how one of them ends up without it. That is also why studio, free flight and the menu backdrop needed no per-mode code.
+  - A drag no longer fires a click-to-aim; verified in the browser that dragging leaves the aim readout alone and clicking moves it.
+  - `panBy` had its sign inverted -- the map ran away from the pointer at twice the speed it should have followed it -- and the tests caught it, not the browser. `mapPoint` is `w/2 - (p - c) * scale`, so the offsets ADD.
+  - `setPointerCapture` is wrapped in try/catch: a throw there aborts pointerdown and the map silently stops responding to the mouse.
+  - Next: per-club dispersion circles drawn on this map.
+
+- [x] **Every mode dialogue tabs, and the way in sits with the tabs.** The range setup panel was a single scroll where play, endless and the studio tabbed -- it had a field before any heading and one `<h3>` after it, so it fell under the threshold. It now opens with `The green` and tabs alongside `Who is hitting`, and `groupPanelContent(content,name==='round')` covers all three variants of that panel rather than only endless.
+  - `Start fresh round`, `Start an endless run`, `Open the driving range` and `Grow this landscape` moved into the right-hand end of the tab row. Previously each sat at the foot of one section, so which tab you were on decided whether the way in was visible. Marked with `data-panel-action` rather than found by `.primary`, because half a dozen panels have a primary Save button that must not move.
+  - The first version looked wrong while every DOM assertion passed: `.drawer .primary` sets `width:100%` and `margin-top:18px`, which made the action fill its own row and push the tabs off it. A screenshot caught it, not the checks.
+
+- [x] **FIXED -- the map stopped dragging after one step.** Two separate causes, both live. (1) `mapDrag = p` re-anchored from `mapPixels`, which returns `{x,y}` and nothing else, so the pointer id was dropped and the next move failed its own `e.pointerId !== mapDrag.id` guard. The map moved once and stopped. (2) The pan clamp held the centre inside the content's own half-extent, which at the fitted zoom bound after about fifty pixels. The limit is now measured against the viewport too -- the content must still overlap it by half a screen -- so it grows as you zoom out.
+
+- [x] **Range slice 6: per-club dispersion on the map.** New `src/dispersion.js` groups the session's shots by club and reports a centre, a standard distance and the worst ball; the map draws a circle, a dot per finish and a centre cross, with a legend in Range controls carrying the shot count and a toggle. Three shots minimum -- two balls define a radius that means nothing.
+  - **It invents nothing.** The leading test fires ten identical shots and asserts the radius is exactly 0: the simulator has no strike-quality model by design, and the honest circle for ten identical balls is a dot. Real dispersion comes from real variation in what you feed it.
+  - The radius is a standard distance rather than the worst ball, so one thinned wedge cannot define the club.
+  - **Found by using it:** every typed shot is labelled `Launch monitor`, so grouping on that put a driver and a 7 iron in one circle with a 63.7 yd radius. Rows now carry `clubKey` (what it was hit with) separately from `club` (where the numbers came from).
+
+- [x] **Dispersion is an ellipse covering every ball, not a standard-distance circle.** The circle was wrong twice: dispersion is not round -- long-and-short is a different miss from left-and-right, and most clubs group about half as wide as they are deep -- and a standard distance covers only about two thirds of a group, so a third of the balls sat outside the mark drawn for them. `groupEllipse` takes its shape from the group's covariance (so it lies along the way the club actually misses) and its size from containing every ball. The legend now reports both axes, long first.
+  - Touching the extremes on each axis is NOT containment: a ball on the diagonal can be inside both bounds and outside the ellipse. A containment scale catches it, and a test builds that exact case.
+  - A collinear group would divide by zero and draw nothing; a 4% floor makes it a sliver, which is the truthful picture of a group with no width.
+  - Identical shots still return a zero-size mark. Inflating a point into a shape would be drawing a miss nobody hit.
+  - A second test pins the opposite risk: the tightest ball must reach 0.95 of the ellipse, since containment alone is satisfied by an ellipse twice the size of the group.
+
+- [x] **Every HUD panel moves and resizes at all times.** Arranging was a mode; the tool windows beside it dragged whenever you liked, which was two answers to the same question. `createLayout` now gives each of the seven panels a live grip and resize corner, persisted as fractions of the playing area. Arrange UI survives as a way to make the handles obvious and reach Reset, but nothing is gated behind it -- which is why play, free flight, the studio, the range and the menu backdrop all got it with no per-mode code.
+  - A grip rather than the whole panel: the map is click-to-aim and drag-to-pan and the shot controls are sliders, and a draggable panel would take those gestures from the controls that own them. Verified the map still pans and still aims.
+  - **The handles live inside each panel and a MutationObserver puts them back.** `showLiveResult` rebuilds `#shotResult` with `innerHTML` on every shot, which swept them away -- so the first build left the two most-rebuilt panels unmovable while the rest worked, reading as intermittent rather than total.
+  - Drag uses window-level pointer listeners rather than depending on pointer capture, the same pattern as the popups. The old code depended on capture.
+  - `.view-tools` takes its grip just outside its own left edge: it is a 30px button column and an inside grip sat on the first button.
+
+- [x] **Shot information moved into the course card, seed moved to its top-right corner.** The readout was a second glass panel floating below the card saying the same kind of thing; it is a section of the card now, under the scores, separated by a rule rather than its own border and background. It keeps its own scroll so a long result cannot push the card off screen, and it left `createLayout`'s list -- it moves and sizes with the card, and its own grip would have been a handle inside another panel's handle.
+
+- [x] **One panel chrome and one typography rule.** Panels had radius 9, 10 and 12 and two different drop shadows, so a tool window beside the map read as a different kind of object; `--panel-radius` and `--panel-shadow` now define it once. Fonts are `--font-display` (Georgia: course title, panel headings, large numeric readouts) and `--font-ui` (Inter: everything else) -- the intent all along, but `.result-stats strong` and `.hole-info strong` were sans while `.live-score-par strong` inches away was serif, and `.shot-list-head h2` was the one sans panel heading.
+  - The substitution that introduced the tokens ran over the token's own definition and produced `--font-display:var(--font-display)`. A self-referencing custom property is invalid at computed-value time, so everything silently fell back to sans. It builds and validates; only a computed-style read catches it.
+
+- [x] **The bridge can log every message, and the flag works in PowerShell.** `npm run bridge:debug` (or `--debug`, `-v`, or `FAIRWAY_LOG=debug`) prints device connects, every raw payload in, every reply code out, browser arm state and acknowledgements, and each shot decoded into mph/degrees/rpm -- which is where wrong units and swapped spin fields show up, since both look correct in the raw JSON. Off by default: a working connector sends a shot every thirty seconds plus heartbeats, and logging all of it drowns the one line that matters. Payloads capped at 400 chars so a misbehaving connector cannot flood the terminal with 64 KB.
+  - The env-var prefix form is bash syntax and PowerShell rejects it outright, which is most of the people who will want this since connector software is usually Windows. Hence the argv flag and the npm script.
+
+- [x] **First real connector exposed two interop bugs.** (1) It sends its idle frame with the `ShotDataOptions` fields at the TOP LEVEL and no `BallData`; read strictly that is a malformed shot, and `parseLaunchMessage` threw `BallData is missing`. GSPro accepts the flat shape, so `const opts=d.ShotDataOptions??d` now reads either, and a frame with any known status key but no `BallData` is a status rather than an error. A payload with none of them still throws -- tested, so widening this did not swallow genuinely broken messages. (2) A rejected shot closed the socket, which put the connector into a reconnect loop resending the same frame forever; framing errors still close, validation errors now reply 501 and keep the connection.
+  - Four new bridge tests: flat vs nested status frames, a real shot alongside flat options, a payload with no known keys still erroring, and the close-vs-keep rule driven over a real socket.
+  - This is the first time physical hardware has been pointed at the bridge. RESEARCH.md's "device testing remains deferred" is now partly out of date -- protocol interop has been exercised against one real connector, but no shot has yet reached the simulator.
+
+- [x] **Every bridge response carries the Player block.** A real connector parses a Player out of each reply and was printing empty defaults on every heartbeat, because only the 201 included one. GSPro sends it on all responses; connectors that track club changes from the response stream would otherwise never see one.
+
+- [x] **Launch-monitor UI: a state light and a stripped control bar.** `readDeviceStatus` pulls `LaunchMonitorIsReady`/`LaunchMonitorBallDetected` out of either option shape and the bridge relays them on the `status` message, only when they change. The club card shows red (no device), amber (device, hunting -- breathing animation) or green (ball detected -- one pulse, then still), each with a word beside it since colour alone is not a message. Nothing shows when no bridge is connected.
+  - The reader never throws: it shares a loop with the framing check, where a throw closes the connection.
+  - The stripped bar keys on `armed` rather than connection -- that is the only state where the manual controls genuinely do nothing, and keying it on connection would strand someone who connected but never armed. Applied on `#shotControls`, so it follows every mode showing that bar; checked in play and on the range.
+
+- [x] **The whole shot card carries the monitor colour, and the duplicate pin readout is gone.** The tint moved from `.club-control` to `.shot-controls`, done as an inset box-shadow with a 9999px spread rather than a `::before` overlay -- an absolutely positioned overlay paints above the card's non-positioned flex children and would have covered the club name. The card's own drop shadow is restated in every state and keyframe, since box-shadow does not merge across declarations.
+  - `#bottomPin` removed from the strip above the bar; the pin distance was already on screen beside the flag. The loop that wrote it had to change in the same edit or `$('bottomPin')` would be null and take the rest of `updateHUD` with it.
+
+- [x] **The aim point is marked in the world, and the strip above the shot bar is gone.** `#aimLabel` mirrors the flag label: projected onto `aimPoint` each frame, 3 m up rather than the pin's 6 m because it marks ground rather than a flag. Hidden during flight, in free flight, while dropping, and within 8 m of the pin where the two markers would overlap -- so a par three aimed at the flag shows only the flag, which is correct but can read as the feature missing.
+  - The caption moved with the number: `TO AIM POINT`, or `TO WHERE IT STOPS · OFF THE GREEN` for a putt preview. Deleting the strip without moving that sentence would have thrown away the only feedback saying a putt finishes off the green.
+  - The tee selector moved into the shot bar beside the club, and stays visible in monitor mode -- it is not a shot input.
+  - Trap hit on the way: the mode-hiding rules are selector lists where the `#world[data-mode=…]` prefix belongs to each item, so inserting `.aim-label` after a comma made it `display:none!important` everywhere. It measured 0×0 and looked like a projection bug.
+
+- [x] **The aim marker says only TO AIM POINT, and hides on the green.** The caption briefly reported the putt preview's resting surface, which produced "12 · TO WHERE IT STOPS · OFF THE GREEN" with a putter on a tee 561 yards out -- accurate and useless. The surface report, the module variable behind it and the per-frame write are all gone; the caption is static markup. On the green the marker is suppressed entirely (`ballOnGreen`, cached from `updateHUD` rather than re-derived per frame): the flag marker carries the distance and the roll preview line already shows where the putt finishes.
+
+- [x] **The putting camera is gone; one camera everywhere.** A `putt` mode replaced `player` the instant the ball reached a green -- eye 1.1 m up, 1.8 m behind the ball, FOV clamped to 53 -- which silently overrode whatever the player had set and made the Game camera panel look dead while putting. Reported as a broken tool, and it was not wired wrong: it was being overridden.
+  - Removed in five places: `playCameraMode`, the swap in `setUpTurn`, the one in `replayShot`, the renderer's placement branch and FOV clamp, and the `putting` flag into `flightCameraPose`. The option is gone from the camera select.
+  - `playCameraMode` stays as the identity function rather than being deleted at its call sites -- one place made this decision and it should stay one place.
+  - A save from before this carries `mode:'putt'`; the restore coerces it to `player`, or the player lands in a mode the select cannot show and the renderer no longer places.
+  - `tests/course-variety.test.mjs` asserted the old swap. Rewritten to assert the new rule across every mode rather than deleted.
+
+- [x] **FIXED -- the cup was cut through the middle of every green, not at the pin.** The ground shader's `discard` used `cupInfo.xy` from the green atlas, which carries the GREEN's centre; the same vec4 drives the green's boundary, so one value was doing two jobs. This was collateral from the earlier fix that correctly moved the atlas from `h.pin` to `h.green` for the boundary. The atlas is now two texels per hole -- green in column 0, pin in column 1, sampled at u = .25/.75 with `NearestFilter` set explicitly -- and the discard reads the pin. The pin-move path updates both texels.
+  - `tests/pins.test.mjs` now asserts the cup and the green centre sit more than four cup radii apart on every hole and every pin day, so a change that collapses them back together cannot hide this class of bug again.
+  - A backtick inside the GLSL comment I added ended the template literal; `node --check` flagged it as a missing `)` hundreds of characters later. Worth remembering: the shader is a template string.
+
+- [x] **Saved courses is a first-class menu tile; saved rounds moved into the round panel.** The course library was reachable only from inside the round panel and the studio. It is now a tile beside Course studio and tabbed like the other menu dialogues -- `Your courses`, `Save a course`, `Import & export` -- with whole-library file export/import alongside the existing per-course codes. Saved rounds left the main menu and the in-game nav for the round panel's fourth tab; the LIST moved with the import/export, or every saved round would have been stranded. The now-unreachable `rounds` panel was deleted rather than left as dead code.
+  - File import ADDS and never replaces. Wiping a library with one click on the wrong file is not recoverable.
+  - `PANEL_TITLES` already had a `library:` key later in the object, so the one I added silently lost to it and the panel kept its old title while everything else worked.
+
+- [x] **FIXED -- an exported endless round imported as the wrong course.** `saveRecord` writes a placeholder settings object for an endless run, because an endless hole is a seed plus a hole number rather than a landscape. `resumeRound` regrew it with `endlessSettings(endlessHole(seed,hole))`; the file-import path did not, and rebuilt a default nine-hole course with the run's hole number pointing into it. Saving and resuming from the library was always correct -- only the file round-trip was broken.
+
+- [x] **Browsers on the private network can drive the bridge.** `isLocalOrigin` accepts loopback plus RFC 1918 (10/8, 172.16/12, 192.168/16) and `file://`'s `null`; `FAIRWAY_HTTP_HOST` binds the HTTP/WS listener somewhere a phone can reach it, since widening the origin check alone changes nothing while the server is loopback-bound. The bridge warns on startup when it is not loopback.
+  - It parses with `URL` and tests `hostname` exactly rather than pattern-matching the origin string: a regex passes `http://192.168.1.50.evil.com`, which contains a private address.
+  - The parser canonicalises too, which the tests document with measured values: `010.0.0.1` -> `8.0.0.1` (refused as public), `0x0a.0.0.1` and `167772161` -> `10.0.0.1` (allowed), `10.0.0` -> `10.0.0.0`. A leading-zero guard was written then deleted as dead code -- `hostname` never contains one.
+  - Two new tests, refusals first, plus a live check on this machine's real home-network address: reachable over it, LAN origin accepted, public origin refused.
+  - **Not authenticated.** Anything on the network that can reach the port can drive the simulator. Same caveat the connector's TCP port has always carried.
+
+- [x] **UI pass, first slice.** (1) The Putting options panel promised "A low putting camera activates on the green" -- removed two changes earlier, so the app was describing a feature it no longer had. (2) Arrange UI deleted entirely, along with the layout toolbar, `toggle`, the `editing` state and 18 dead gates; `Reset panel layout` now sits in the tools tray beside `Reset tool windows`. (3) `.view-tools` renamed from "Camera tools" to "Tools tray", and its resize handle fixed -- it was positioned with `margin-right` against `left:auto`, which places nothing, so it sat back in the default corner on top of a button. (4) Sim drop and Putting options disabled on the driving range -- and, added while the green-reading toggles got the same treatment, each says why in its title, because a dimmed control with no explanation reads as broken rather than as not-applicable.
+  - Verified every visible panel carries both handles on screen, and dragged the renamed tray by exactly (-40, +30).
+  - **Broke the app on the way:** deleting `layout.sync` left one `layout?.sync()` caller. Optional chaining guards the OBJECT being null, not the METHOD being absent, so every HUD update threw and the fatal handler replaced the world with the "needs WebGL 2" card -- which looks like a hardware problem, not a missing function. The comment on `sync` said it had callers and I deleted it anyway.
+
+- [x] **Green reading moved onto the thing it describes.** The three tools were checkboxes inside a *Green reading* panel in the tools tray: to change what you were looking at you covered it with a drawer. They are now three icon buttons along the top of the course map -- slope grid, downhill markers, contour heat map -- switchable at any time without opening anything. The panel, its `TOOL_PANELS` / `POPUP_SIZE` / `PANEL_TITLES` entries and the old `#greenGridToggle` are gone. `src/green-map.js` is new.
+  - **The map frames the green once the ball is on it**, and paints the same contour field from directly above. This is the view the 3D overlay cannot give: read from the ball, the far half of the green is a few pixels tall -- exactly the half you are trying to judge. `mapLayout` takes a `focus` argument; `focus:'green'` fits `greenBounds`, which is sampled from `greenRadius` rather than assumed circular, because greens are stretched by `greenAspect` and wobble with the seed.
+  - **`lo`/`hi` come from the putting surface ALONE**, never the sampled square. Scaled against the whole square, a green sitting in a hollow measures itself against the bank behind it, the surface occupies a sliver of the ramp, and the thing reads as uniformly flat -- the opposite of what it is for. A test asserts the range is the on-green range and that the surround exceeds it.
+  - **Same ramp as the 3D overlay**, hue `(1-t)*0.64`, sat 0.88, light 0.48, contours every 10 cm drawn as band edges. Two views of one green that disagreed would be worse than one view. The tile is cached per green because the map redraws about twelve times a second and the field is thousands of `course.height` calls.
+  - **Off and disabled on the range**, with the three buttons saying why on hover, and the map never focuses on the bench green: it is dead flat, so every overlay paints one colour, which has already been reported as a rendering fault once.
+  - **The green question is asked, not cached.** `updateExplorer` runs BEFORE `updateHUD` when a shot finishes, so reading the cached `ballOnGreen` titled the map one pass behind the picture. `onGreen()` does the surface lookup at both sites.
+  - Verified in the browser: toggles switch and light up, a ball dropped on the green takes the map to 7.0 scale under a `GREEN · CONTOURS` heading with a full blue-to-red sweep painted, and moving 60 yd back restores the hole map at 1.0.
+  - **The tile was drawn 180 degrees out, and shipped that way.** `mapPoint` negates both axes, so the map is the world turned half a turn; fitting the tile into a normalised destination rectangle got the size and position right and the orientation wrong, painting the high side of the green over the low side. A green-reading tool that reads exactly backwards, which looks entirely plausible -- spotted from a screenshot, not by any check I ran. `tilePlacement` now derives the transform from `mapPoint` itself. The painted tile covers 99.3% of the green disc; the old way, 45.8%. Three tests, one of them asserting the scales are negative so the fix cannot quietly become a no-op. The field is also sampled at pixel centres now, which was half a texel out.
+
+- [x] **Save/import/export pass: three ways to lose work, all of them now closed.** A walk through every persistence path, exercised in the running build rather than read.
+  - **Discard did not discard.** *"This round and its scores are gone"* cleared `pendingRound` in memory and left `fairway-round-v1` alone, so a reload offered *Continue* on it again. `clearSave()` is now the only `removeItem` in the app, called from the round guard only -- the studio guard must not touch a round it has nothing to do with.
+  - **The menu backdrop was autosaving itself**, which is why the first attempt at the above did nothing: the slot was cleared, the showcase hole grew a throwaway `Round`, and something on the way into the menu wrote it straight back. It also meant a launch after any visit to the menu offered *Continue* on a nine-hole round nobody had played. `save()` refuses while `menuBackdrop`.
+  - **Endless reset the player's bag.** `clubYardages`, `flightProfile` and `turf` are not schema fields, so rebuilding settings from `DEFAULT_COURSE` drops them silently. Measured: driver set to 225 yd, one endless run, one reload, back to 250. `PLAY_KEYS` / `playScope` now live in `settings-schema.js` beside the comment that explains why they are not schema fields, and four sites carry them: entering endless, each new endless hole, `saveRecord`, and resume/import. `style` is excluded on purpose. `applyPlaySettings()` makes them live, which `resumeRound` never did -- so resuming a round saved under a different bag played it with the current one while the panel showed the saved numbers.
+  - **Importing a round destroyed the one in progress** with no prompt, and never entered play: from the main menu it built the course, said "Saved round restored" and left you on the menu. It now reads and validates the file first, then goes through `guardRound` like every other exit, then `setMode('play')`. The file input is cleared afterwards -- without that the same file could not be chosen twice running.
+  - Verified end to end: discard then reload leaves no stored round and no Continue; a 225 yd driver survives an endless run and a reload; importing mid-round asks to save, saves, imports and lands in play. Four new tests in `settings-schema.test.mjs`, one of which fails if a play-scope key ever becomes a schema field and quietly makes the mechanism unnecessary.
+
+- [x] **Toggling the floodlights froze the picture for two and a half seconds.** Three builds its lighting uniforms from the VISIBLE lights in a scene, so lamps created hidden and shown on the toggle changed the light count and recompiled every lit material -- 2541 ms on a nine-hole course with 57 lamps, and worse in the studio, where it was reported. The lamps were then created visible at zero intensity and only their intensity was switched, so the count never changed: **18.7 ms in the studio, zero programs compiled**. (Reversed 28 September, B6: that put every lamp into every lit shader at load; they are hidden while off again and both states' programs are built ahead.) Pre-compiling the floodlit variant was tried first and only got it to 554, then 270 ms -- kept as `warmFloodlights` for the masts, and it now runs per hole rather than once, because a one-shot guard left the per-hole flag, cup and ring materials compiling on the toggle. The trade is a permanently wider light loop in every fragment: measured at 8.3 ms against 8.5 ms, inside the noise here, but real on a fragment-bound machine.
+
+- [x] **Terrain casts its own shadow.** It only ever received one, so trees shaded the turf and the turf shaded nothing -- a ridge did not darken the hollow behind it, which is a large part of why undulation is hard to read. One draw call per cascade over existing geometry: 8.6 ms against 8.5 ms.
+
+- [x] **Water: the gap between reflecting and not is much smaller, and the pass costs half as much.** Three changes. (1) Still bodies get the reflector's own animated normal map, more roughness and a stronger environment map, so a pond that is not reflecting is water rather than varnish -- this attacks the DIFFERENCE between the states, which is the only cheap fix for a one-reflector scene. (2) A stream is scored at 1% of its fill, so a creek only takes the reflector when there is no still water at all; it was threading the whole course and pulling the reflection off the pond beside you as you walked. (3) The reflection renders on every other frame. Measured on ultra: the pass is 1.9 ms of a 10.4 ms frame and the throttle gives back 1.0 of it. Screen-space reflection was rejected -- it can only reflect what is on screen, and looking across a pond at the trees behind it is exactly the shot where those trees are off screen. Two old assertions reversed by the stream rule were rewritten, not weakened.
+
+- [x] **Undulation without the sun: local relief, and stripes that follow the ground.** Cast shadows only read at a low sun; at midday a two metre roll throws nothing. Three cues now, none costing a frame -- measured at 8.5 ms, unchanged.
+  - **Local relief, baked per vertex.** Height minus the average height within 15 m, stored as an attribute at generation time. Measured on a real par 5 against the alternatives: directional relief marks 86.7% of the ground, the textbook Laplacian curvature **0.3%**, local relief 69.5% at 15 m and 81.3% at 30. The Laplacian fails because a bunker lip is hundreds of times more curved than a fairway roll, so any scale that fits the lip erases the roll. Normalised by its own 90th percentile so one cliff cannot flatten a course; three tests, including a plane that must stay unshaded.
+  - **The screen-space crease term is gone.** Same quantity as the Laplacian, same failure, and it varied with camera distance on top.
+  - **And then faded out on slopes, by two mechanisms I had added myself.** The anti-alias fade was measured on the bent coordinate, so the height term fed its own suppression wherever the ground was steep or grazing; and the contrast term was additive, so it crossed zero about eleven degrees against the mow line and killed the bands outright. Fade now measured on the plan coordinate, contrast scaled rather than added and clamped away from zero. Found from a screenshot -- no frame time or test would have shown it.
+  - **Mowing stripes follow the ground.** They existed but were computed in the plan from x and z, so they ran straight over a roll. Now a height term bends the bands and the contrast varies with the surface normal along the mow direction -- which is what real stripes do, because the mower follows the ground and the grass angle changes with it.
+  - The preview that drove the decision is still in `docs/studies/`: five shadings of one real hole with live sliders.
+  - **Slope tint needed two corrections, both magnitudes I had guessed.** After the range was fixed it was still invisible: the colour change on a fairway pixel was 1.8 of 255 in blue, under one percent. Now 15-20, roughly ten times, with the fairway gain raised from .55 to 1 and the tint from .80 to .50 blue. Green held at exactly 1.0, which is what keeps turf from going brown.
+  - **Slope tint first shipped doing nothing.** The curve ran from tan 0.12 to 0.55, a guess at what a slope is. Measured, a fairway is 3.3 degrees at the median and 9.5 at the 99th -- so it touched 0.0% of fairway and 0.1% of semi-rough, and the whole effect was in the rough. Mown ground and rough now have their own ranges; fairway mean dryness went 0.00 to 0.30. Both mistakes in this feature were a scale guessed instead of sampled.
+  - **Slope-tinted turf, added after a look.** The only cue here that is a colour rather than a brightness -- everything else competes for value. A slope sheds water and burns off, a hollow holds it and stays lush, which also reinforces the baked relief instead of fighting it. Slope as the tangent, not one-minus-normal-y, which says almost nothing over the range a fairway occupies. Gained by surface as irrigation: green .15, fringe .35, fairway .55, rough 1.
+  - **All three are switches now, in Graphics**, with contour lines added as the third. Uniforms and never defines: a define is part of the program key and would recompile every lit material in the scene, which is the floodlight trap. Measured at one frame and zero programs per toggle, re-applied per course build, and verified to survive a reload with the switches in a non-default state. `lab.state().cues` reports them as the shader has them.
+  - **Ambient occlusion was made switchable, measured, and then removed.** `lab.ao()` rendered the occlusion term into a target and read it back: from a tee it reached 5.4% of the frame at a mean multiplier of 0.997. It worked; a golf course has nothing for it to occlude, because ambient occlusion shades where surfaces meet and an open fairway has a tree line and a bunker lip. A full extra scene render for that is the worst ratio of anything here, and local relief already covers the ground for free. Module, tier key, `needsRebuild` clause, panel switch and probe all deleted.
+  - **Its cost is still unmeasured.** Attempted, but the machine was loaded enough that turning features ON measured FASTER than leaving them off -- 18.9 ms with all three off against 13.9 with two on -- which is noise, not data. The earlier idle-machine numbers stand for reflections (1.9 ms of a 10.4 ms frame) and terrain shadows (8.6 against 8.5); AO wants a quiet machine before any number is written down.
+  - Still on the table: (unmeasured -- it is a post pass, so unlike these it is not free), and coarse contour banding as a tools-tray toggle.
+
+- [x] **The mulligan reaches back one shot, on the hole you are playing.** `history` runs across hole boundaries, so on a fresh tee the top of it was the last shot of the PREVIOUS hole -- pressing Mulligan rewound a whole hole and unrecorded its score while undoing nothing you had done on this one. `canMulligan()` requires the top entry to belong to the current hole; holing out does not end it, because the card is up for a few seconds and taking back the putt that just dropped is reasonable. The button now says why it is off. An old test asserted the cross-hole rewind outright and was rewritten to the new rule rather than weakened.
+  - **And it takes one tracer with it, not all of them.** `holeTrails.pop()` before `loadCourse()` did nothing: `loadCourse` calls `resetTrails()`, because it is the routine that grows a new hole. Every tracer on the hole vanished and the summary showed only the shots after the mulligan. The trails are kept across the reload and restored; `lab.state().trails` reports the count, since they are only drawn at the end of a hole.
+
+- [x] **The camera panel is one section, and the view picker is gone.** Player, overview, green and free flight are four buttons on the tools tray now -- the green view had none and was reachable only from a select inside a settings panel. A mode selector there made the view you are looking THROUGH into a saved preference, which is how opening the panel from the main menu once saved "free flight". "Go somewhere" is gone with it: Explore duplicated the tray's free-flight button, and `flyToWater` went too, since the waterside viewpoint was its only caller. Follow-the-ball moved in, the bay and hand-tuning sets swap rather than sitting side by side contradicting each other, and a round no longer carries a camera at all -- `saveRecord` writes only the green-reading flags, so a bay setup survives discarding a round and never travels inside one you share.
+
+- [x] **Water that looks like water without a reflector, and reflections on every body.** A pond with no reflector was an opaque grey sheet. Two causes underneath: `waterNormals()` is built for three's Water shader and has an amplitude of nine parts in 255, and it has no mipmaps while pond UVs arrive in world metres -- so a metre-wide tile aliased to a flat wash at distance. The real fix was not a better texture though: it is FRESNEL. Alpha now runs from 22% of the body's depth opacity looking down into it to full looking across, so you see the bed through the shallows and sky at a grazing angle, which is what reads as water. Costs nothing and works on every body.
+  - **Reflections everywhere, via a probe rather than a reflector.** `scene.environment` held only a clone of the sky, which is why non-reflecting water could only ever show sky colour. A `CubeCamera` now renders the course into a 256 square cubemap once per environment refresh and every water material samples it: 13 of 13 bodies reflecting terrain and trees at 8.5 ms, unchanged. It gives up parallax, which matters on glass and not on ripples. `scene.environment` stays sky-only because it feeds every prop.
+  - **Found on the way:** `dressStillWater` was assigning `onBeforeCompile` over `shoreFade`'s, and three allows only one -- every pond had silently lost its shoreline fade.
+  - **And I deleted twelve methods** with an over-wide edit range, including `addSky` and `addFloodlights`, which surfaced as the "needs WebGL 2" card. Restored from the checkpoint and the two later edits re-applied.
+
+- [x] **Three bugs in the new graphics switches, all from one screenshot.** (1) Ambient occlusion renders the scene with an override material to capture normals, and `onBeforeRender` still fires -- so the water drew its REFLECTION in normal colours and kept sampling them. Magenta and cyan water. The reflection now refuses to draw during any override pass. (2) The reflections switch really did nothing visible: cadence zero stopped the render but the shader went on sampling a frozen target. Off now hides the reflector and brings the body's plain mesh back. (3) Ambient occlusion drew nothing below Ultra, because the pass returns on a zero strength and the tier supplies zero -- the tier is a default now, not a gate. None of the three would have shown in a frame time, a link error or a test.
+
+- [x] **Camera settings are device preferences, and a bay can be measured rather than guessed.** They lived in the round's autosave, so discarding a round took your setup with it and a shared round arrived carrying somebody else's screen size. `fairway-camera-v1` now holds them beside graphics and the panel layout, and **Camera & bay** is on the main menu as well as the tools tray.
+  - **`projector.js`** turns a screen size, a screen shape and a standing distance into the one vertical angle the room subtends: `2*atan((h/2)/d)`, with the height off the diagonal by Pythagoras. The panel prints the angle a bay gives and, for a hand-set angle, how far back you would have to stand -- exact inverses, and a test asserts the round trip. Clamped 10-140 degrees, because a bay entered in the wrong units would otherwise ask for a degenerate projection and a camera that renders nothing is worse than one that is not to scale.
+  - **`cameraRig()` places the player camera.** With the bay on, the eye is at eye height, the ball is its own distance in front, and the lateral offset is forced to ZERO -- a golfer stands behind the ball, not beside it. The ball can fall below the frame, which is where it is in the room. Overview and the green view keep the chosen angle: neither is a view from where anyone stands.
+  - **The menu backdrop owns the live camera**, forcing free flight to orbit the showcase hole, so the panel shows the SAVED view and writes the select's value back. Caught in testing: opening the panel from the main menu had saved "free flight" and the next launch started in it.
+  - **The putt follow points at the hole.** `followPose` keeps `flightCameraPose`'s eye exactly and pins only the target on the cup, so the hole sits still while the putt runs at it. One camera for every shot still holds -- the rig does not change, only the look.
+  - **On the green the camera backs off until the ball is in frame.** A correct bay view puts the ball 62.8 degrees below the axis and the frame is 18.8 to its edge -- right for a full shot, useless for a putt you aim from the ball. `framedForBall` raises the setback to `height/tan(halfFov*0.85)` and changes nothing else; for a 100" screen at 6 ft that is 6.11 m, with the ball 16.0 degrees below the horizon and a six metre putt's cup 6.6 below the axis. Deliberately a no-op for the broadcast rig, which already has the ball at 81% of its half-angle. Five more tests, including one asserting an already-good rig is returned as the SAME object.
+  - Ten tests on the geometry and the preference store, four on the putt follow. Verified in the build: a 100" screen at 6 ft gives 37.6 degrees, the rig reads eye 1.75 m / ball 0.9 m / offset 0, and it survives a reload.
+
+- [x] **"Start fresh round" is gone from the round panel while a round is being played.** The panel is how you change your group, reach your saved rounds and export the one in progress; the primary button in its tab row offered to throw that round away every time you opened it. Starting over is a main-menu decision. `roundSurprise` and the library's Play still start one from here and still go through `guardRound` to do it.
+
+- [x] **Removing a golfer mid-round: three bugs, one button.** (1) The first row had no delete button at all -- gated on `i` rather than on there being more than one golfer -- so the only way to drop the first name was to remove everyone else and retype it. (2) `applyGroup` used `confirm()`, which some embedded browsers suppress outright; a suppressed confirm returns false, so Apply did nothing, silently. It arms and names who is leaving instead, the way the course list does, and disarms when the draft changes underneath it. (3) `setPlayers` resized per-player arrays by LENGTH while the editor removes by identity, so removing the first of two golfers deleted the second one's card and handed the first one's strokes and ball to whoever was left, under the remaining name. Draft rows carry `seat` now; `seat` is stripped from the stored player so it cannot be read back against a group that has since changed. Six tests.
+
+- [x] **A scramble chooses its ball on the course.** Every ball the team hit stays where it lies, in the colour of the golfer who hit it, under a beam that is not occluded by the ground between you and it. The bar steps between them and puts the camera behind each ball on its line to the pin -- the view the next shot would be played from -- and the check mark takes the one you are looking at. It opens on the ball nearest the pin. The old row of buttons in the result panel and the scorecard is gone: a list can say "Alex, 148 yd" but not that Alex is behind a bunker, and with a persistent bar the lists were a second, worse way to answer the same question. `setUpTurn` now returns early during a selection, which is also what makes a reload mid-choice come back to the picker instead of offering a shot from a lie the team may abandon.
+
+- [x] **Honours on the tee, and the turn follows the playing order.** Stroke play already kept a golfer on the ball until they holed out, but it picked the next one with `done.findIndex(d => !d)` -- array position, the order the names were typed in. `round.order` is now the hole's playing order and `nextInOrder()` is the only thing that moves the turn. `honoursOrder()` sorts the previous hole's cards lowest first; ties keep the order the group had (stable sort), a golfer with no card for that hole goes to the back rather than to the front where an undefined score would sort them, and fractional putting scores rank like any other number. `setPlayers` repairs it like every other per-player array, and `restore` rebuilds it unless the save holds a clean permutation -- every round saved before this has no `order`, and a broken one would drop a golfer from the hole. Match play is unchanged in substance, but its farthest-ball sort now runs over `order`, so honours breaks the tie on the tee where every ball is the same distance from the pin. Thirteen tests, including one that pins "the same golfer plays until the ball is in the hole" so the alternating cannot come back unnoticed.
+
+- [x] **A colour per golfer, on their card and on their tracers.** Every tracer was one amber, so the end-of-hole flyover -- which exists to show who went where -- withheld exactly that. `src/player-colours.js` assigns gold / cyan / indigo / magenta by position in the group: the chip beside the name on the course card and in the header, the dot on the scorecard row, the dot in the group editor, and the tracer on the summary orbit are all one colour per golfer.
+  - **Red and green are reserved** for over and under par on those same cards, and the test asserts that against `parTint` itself rather than against a comment -- every player hue is 35 degrees or more from both, and 50 or more from every other player. Changing the tint now fails a test instead of quietly creating a collision.
+  - **The line pool is why the colour is set on every pass.** `shotLines` is reused across holes and players, so setting the material colour only at construction left trail 2 wearing whoever hit trail 2 on the previous hole. `pushTrail` records `round.active`, taken before `round.takeShot` advances the turn.
+  - `lab.state().shotLines` now reports each visible tracer's material colour -- the colour is not in the DOM, so that is the only way to check the line, the chip and the dot agree.
+  - Fixed in passing: `.player-row` is a grid whose remove button had no column and was wrapping onto a second row. Leftover `flex` rules on it and on `.drop-spacer` are inert in a grid, and the spacer only makes sense if the button is on the row at all.
+  - Verified on a two-player scramble: five tracers alternating `#efc761` and `#61d8ef`, the card chip switching gold to cyan as the turn passed, and the scorecard showing both dots against green under-par cells.
+
+- [x] **The wordmark stays when a sheet opens over the main menu.** Opening Play or Saved courses hid the menu outright, and the topbar that carries the brand everywhere else is `display:none` in menu mode -- so a panel opened from the menu had no branding on screen at all. `.menu-behind` keeps the masthead, hides the deck (the tiles are what the sheet replaced) and drops the menu from z-index 80 to 19, below the drawer's backdrop, because `.main-menu` is fixed full-screen and would otherwise cover the panel it opened. Inert and `aria-hidden` there, with `aria-modal` removed, since the sheet is the dialog now.
+
+- [x] **Buttons that act on "the thing you are in" now know whether you are in one.** `settings` and `round` are module-level and outlive what they described, so at the main menu both named the backdrop. *Save the course you are playing* saved `DEFAULT_COURSE` under a biome's name on a fresh launch -- a course the player had never seen -- and after an endless run failed with `Holes is not a recognised option.`, because an endless world is `holes: 1`. `savableCourse()` answers with a label naming the course (*Save "Midwest"*) or the reason there is nothing to save, and the panel shows the reason plus a route into Course studio. *Export the round you are playing* is disabled with a reason when there is no round in progress.
+  - **Export moved onto the row.** The Saved rounds tab listed rounds and then offered an export of the LIVE one underneath -- a different round from any on screen. Each card exports itself, filename from its name, in the same record shape the import reads.
+  - Verified: at the menu, no save button and no export; in play, *Save "Midwest"* and an enabled export; a row exported to `fairway-sunday-at-prairie.json` with the real strokes in it.
+
+- [x] **Rename, and the dedupe that makes it bearable.** `renameCourse` and `renameRound` had been implemented and tested with nothing calling them. Both lists now rename in place -- a card swaps to an input row, Enter commits, Escape cancels. Course-file import stays additive, because an import that wiped a library would be an unrecoverable one-click mistake, but a course whose name and normalised generation settings both match one you have is counted and skipped: re-importing a backup no longer doubles the library. Checked before saving, so a duplicate never spends a slot against the 200-course cap. Measured: the same file twice adds nothing ("Nothing new -- you already have that course"); a file with one new name adds exactly one.
+  - **`panelTab` remembers the tab.** Every list action re-renders the panel and `show(0)` threw you back to the first tab, which made renaming two courses in a row a chore. Remembered by title rather than index, because the round panel's sections differ between play, endless and the range.
+  - **Focus has to wait for layout.** `groupPanelContent` runs after `renderPanel` returns and rebuilds the panel by emptying its root, which blurs whatever was focused -- so the rename input came up unfocused until it was focused in a `requestAnimationFrame`. Anything else wanting focus on open has the same problem.
+  - Four tests on the identity the dedupe rests on: stable across a code round trip and a file, blind to play-scope keys that never travel with a course, and independent of object key order.
+
+- [x] **The tools tray is a panel now.** `.view-tools` had no container -- six individually-glassed buttons floating in a column, which is why it looked unfinished next to every other HUD element and why its handles had to hang outside it. It takes the shared panel chrome, the buttons drop their own glass, and the handles sit inside: grip as a grab strip along the top, resize in the corner, matching the tool windows. The two pinned widths in the 560px breakpoint were exact content fits and grew by the padding.
+
+## Selling it: the attribution pass
+
+- [x] **The name lists grew 24x while being swept.** 30 first words by 20-22
+  second words per biome: 19,440 distinct names against roughly 800 before. The
+  no-collision rule is kept by a simpler mechanism -- every first word is unique
+  to its biome -- and the length check is exhaustive rather than sampled.
+
+- [x] **The fingerprint told us to bump the generator and was wrong.** Renaming
+  three biome titles moved three fingerprints, because the hash covers the biome
+  RECORD as well as the ground. Verified by hashing ground alone across the
+  change: byte-identical. The tool now reports the two separately, says plainly
+  when no bump is owed, and both paths were tested by making each kind of change.
+  An arbiter that cries wolf gets ignored the one time it matters.
+
+
+Asked for on 2026-09-25: is everything clear for making money off this. An
+engineering provenance pass, not legal advice.
+
+- [x] **Licences are clear.** 53 packages: 35 MIT, 12 MPL-2.0, 3 Apache-2.0,
+  2 ISC, 1 BSD-3-Clause, every one permitting commercial use with notice
+  retention only. All twelve MPL packages are Lightning CSS, build scope; MPL is
+  file-level copyleft and does not reach the output of running the tool. Only
+  three packages are runtime scope at all: three, lucide, ws.
+
+- [x] **`npm audit` runs now** -- it could not in September, and was remaining
+  release check 1. Zero vulnerabilities across 53 packages on this date.
+
+- [x] **The shipped imported-asset footprint is four PNGs, 64 KB, all CC0.**
+  Kenney house colour atlases. Verified rather than assumed: no texturecan
+  texture anywhere in the tree, no ez-tree leaf sprite in the build, no fonts,
+  no audio, and zero runtime network requests.
+
+- [x] **SIX COURSE NAMES WERE REAL GOLF DESTINATIONS, and are gone.** Titles are now Sitka Bluff, Vermilion Basin and Leeward Cay, the four generator words are removed, and a denylist test stops them returning. No generator bump was owed -- the ground was verified unchanged by hashing it alone across the change. Original note: Bandon and Turtle Bay are
+  default biome titles; Bandon, Dornoch, Kintyre and Saguaro are in the name
+  generator. Place names are weak marks, but a real resort's name on a course in
+  a golf product being sold is the combination that draws attention. Minutes to
+  remove, no generator bump needed since names are not generation settings. The
+  generator cannot currently produce "Bandon Dunes" only because those two words
+  live in different biome lists -- luck, not design.
+
+- [x] **The portable archive is seven files**: the game, LICENSE, THIRD_PARTY_NOTICES, ATTRIBUTION, its own README, INSTALLATION and PLAYING (the manual). Its README is `docs/PORTABLE_README.md`, not the repository's -- the root README links into `docs/` and talks about `npm ci`, which is a page of dead links to somebody who unzipped a game. It was shipping the architecture handoff, the open defect list, the research measurements, the provenance review, the dependency inventory and AGENTS.md. Source archive keeps all of it. Original note: The internal engineering process
+  document, including write-ups of past failures. Harmless, odd to hand a paying
+  customer. Owner's call.
+
+## Getting it into other people's hands
+
+- [x] **The archives were 124 commits stale and are rebuilt.** The
+  `Fairway.html` inside the shipped portable ZIP was 1.2 MB against a current
+  build of 15.1 MB -- it predated the whole mesh ingest, so anyone handed it was
+  playing a materially different game. Portable is 6.9 MB now, source 7.1 MB,
+  both verified file-by-file with fresh SHA-256 sums.
+
+- [x] **`package_release.py` could not read its own build.** It read the HTML
+  with the platform default encoding, cp1252 on Windows, which was fine while
+  the file was small and ASCII and died on byte 0x9d of 15 MB. Every read and
+  write names UTF-8 now.
+
+- [x] **Its dependency gate earned its keep.** It refuses to package while
+  `DEPENDENCY_INVENTORY.json` disagrees with the lockfile, and three build-scope
+  packages had arrived since the review: ez-tree (MIT, bakes geometry that
+  SHIPS), playwright and playwright-core (Apache-2.0, touch nothing shipped).
+
+- [x] **ATTRIBUTION.md was missing from both archives.** The review document
+  ships in both ZIPs and cites it by name for the CC0 pack credits, so the
+  archive pointed at a document it did not contain. It ships now, with
+  BALL_BEHAVIOUR_KNOBS.md and REFERENCES.md.
+
+- [x] **GENERATOR_VERSION is frozen by decision, not by mechanism.** The
+  owner is making no generation changes during testing and will tell testers
+  directly if that changes. Decided 25 September, and it is the right call for
+  a handful of testers: a mechanism to enforce it would cost more than the
+  problem. **The reason it matters has not gone away** -- every bump silently
+  rebuilds the ground under a saved round, and a tester reads that as the game
+  losing their game. It stands at 32. If a generation change becomes
+  unavoidable mid-test, warn people BEFORE shipping the build, not after.
+
+- [x] **A tester can now tell you what went wrong.** Help & controls → Report
+  a problem → Copy diagnostic. `src/diagnostic.js` assembles it and
+  `collectDiagnostic()` in main.js gathers the facts; the split exists so the
+  formatting can be tested without a browser, which is where all 16 of its
+  tests live.
+
+  The course code was already carrying the recipe for the ground -- schema,
+  generator, name, settings diff -- so the report ADDS it rather than
+  duplicating it, and adds what it could not carry:
+
+  - **A build stamp, which did not exist at all.** `vite.config.js` now
+    injects `__FAIRWAY_BUILD__` with the short git commit and the build time.
+    Undefined under the test runner, so every read guards it -- a bare
+    reference to an absent `define` is a ReferenceError, not undefined, and
+    would take the module down on import. A source-archive build has no git
+    and gets a timestamp alone, which still distinguishes two builds.
+  - **The GPU**, which the running game had never asked for.
+    `WEBGL_debug_renderer_info` through the context three already holds. A
+    browser that withholds it is a normal answer; Firefox does under
+    resistFingerprinting.
+  - **Frame rate as a median and a worst frame, never a mean.** A mean hides
+    the complaint: a run that holds 60 and stalls twice a second averages out
+    respectable and is unplayable. Sampled past the frame cap, so a capped run
+    reports the rate it is capped to.
+  - **The last few errors.** console.error is wrapped at module scope, before
+    boot, because the interesting failures are the ones during start-up. The
+    original is always called -- a logger that swallowed what it logged would
+    make this harder to debug. Repeats are counted rather than repeated: a
+    broken frame throws sixty times a second.
+  - Browser, platform, screen, viewport, pixel ratio, cores, memory, touch,
+    tier, frame cap, mode, hole, biome, and the time it was taken.
+
+  Two kinds of missing are kept apart, which matters more than it sounds:
+  in MACHINE a blank prints "unknown", because a browser refusing to say is
+  itself worth knowing; in WHERE the row is dropped, because there is no hole
+  number in the menu and "unknown" there reads as a fault that was never
+  there.
+
+  **It is copied, never sent, and that is now an invariant in
+  PROJECT_HANDOFF.** No fetch, no image, no beacon. Re-verified in the browser
+  with the diagnostic in use: the only request the page makes is the page.
+
+- [x] **The `file://` open WORKS on the current build.** Confirmed by the
+  owner on 25 September: unzip the portable archive, double-click
+  `Fairway.html`, and it plays. This is the central portability claim -- the
+  entire argument for a single-file build -- and it had been carried as
+  unverified across three review addenda, the last confirmation having been
+  made when the file was an eighth of its present size. It is now a 15.8 MB
+  document with the whole mesh ingest inlined, and it still opens off the
+  filesystem.
+
+  It is now checked on every `npm run smoke`, in Chromium, by file:// -- the
+  "cannot be scripted" in the original of this entry was the in-app preview
+  pane's limitation, not a browser's. Safari and Firefox remain by hand.
+  It stays worth re-checking whenever the build gains something structurally
+  new rather than merely bigger, because what breaks a file URL is a fetch, a
+  worker or a module boundary, not a megabyte.
+
+## Obstructions in the shot path
+
+- [x] **The flagstick collides (13 October 2026).** Was: "The flagstick still
+  does not collide... wants its own decision, including whether the pin is in
+  or out." The owner decided: solid while it stands in the hole, out of play
+  whenever the game pulls it (for a putt, and with the ball on the green). It
+  is the same cylinder as a trunk, at its regulated base radius, from the cup
+  floor to 7 ft (RESEARCH, *Flagsticks and houses*); strikes count as
+  `flagHits`; `tests/solid-colliders.test.mjs`.
+
+- [x] **DONE. Slice 1: a forward launch corridor, anchored to each tee.**
+  **0 of 648 blocked, from 4.5%.** Tree counts unchanged. Two wrong turns on the
+  way, both recorded below. Was: A wedge from
+  each tee along its own aim, not a bubble: keep-out ahead only, so trees BESIDE
+  and BEHIND a tee are untouched. Those are wanted -- they make a tee box
+  interesting and they hide the basin-around-the-tee artefacts. Applies to world
+  trees, rocks and the uniform half of deadfall. Acceptance: re-run the harness
+  over the same 648 tee shots and get 0% blocked, with tree count per course
+  essentially unchanged.
+
+- [x] **The wedge pointed at the wrong target first.** It aimed along `teeAim`,
+  which is the bearing the tee PAD is squared to and looks only ~60 m ahead. On
+  one hole that was **35 degrees** away from where the ball goes, and the wedge
+  sailed past an oak 20 m off the tee sitting 0.7 m off the played line. It
+  follows `fairwayAim` now -- the same line the acceptance harness plays -- and
+  `fairwayAim` moved into course.js so both sides share one definition.
+
+- [x] **A fixed-length wedge was the wrong shape.** At 90 m it let a fir through
+  at 118 m on a redwood hole, where the ball is still only thirty metres up and
+  the tree is eighty. Lengthening it would have thrown away short trees far down
+  the hole that nothing could ever hit. `blocksLaunch` asks about HEIGHT instead:
+  would the nominal shot pass between this object's base and its top. That covers
+  a redwood at 118 m and lets a boulder stand at 150 m, and it is the same
+  question the test asks.
+
+- [x] **The harness lied first, and it was the seventh metric in this project to
+  do it.** It fired a 210 m drive from every tee, so on par threes it measured
+  trees BEHIND THE GREEN and called them blockers: 14 of 16 apparent failures
+  after the first fix were that. A par three is played to the green. The shot
+  model is shared with the guard now rather than written twice.
+
+- [x] **DONE. Slice 2: make the other solid things solid.** Rocks are world
+  data and collide; lit poles collide; deadfall stays decorative on the owner's
+  call. Was: Audited -- only tree
+  trunks and homes collide today. Also needs it:
+  - **Rocks/boulders.** Not in world data AT ALL: placed in vegetation.js at
+    render time from a seeded rng, so physics cannot see them. Has to move into
+    `generateWorld` output, which is the architectural half of this slice.
+  - **Floodlight poles.** 23 m of steel standing just outside the corridor,
+    built for every hole at world-build time. Derived from hole geometry by
+    `polesFor`, so no world-data change is needed -- cheap to add. Decide what
+    happens when floodlights are off but the poles are still drawn.
+  - **Deadfall** (logs, stumps, mossrocks). Non-colliding by explicit design --
+    "a ball rolls through a fallen log". Owner's call whether that changes; a log
+    is a real obstacle in real golf but it is also 1 m tall in deep rough.
+  - **The flagstick** is deliberately ignored and is a separate question from
+    this one. Real golf hits the pin.
+
+- [x] **Boulders are generation output now, not decoration.** They were placed
+  in vegetation.js at draw time from an rng the generator never saw, so the world
+  did not know where they were and a ball flew through a six-metre stone. Moved
+  into `generateWorld` as `world.rocks`, carrying `reach` and `top`; the renderer
+  reads that list instead of inventing its own. Everything solid -- trunks,
+  boulders, masts -- now goes through the SAME swept-circle test, so there is no
+  second collision routine to keep honest.
+
+- [x] **The fingerprint tool was blind to rocks, and would have stayed blind.**
+  It hashes an explicit list of what a player can see, and rocks were not on it
+  because they were not generation output when it was written. Adding them is
+  what stops a future change to where boulders sit going unnoticed now that a
+  ball can stop against one.
+
+- [x] **Floodlight masts collide only when they are lit.** The whole floodlight
+  group is hidden when the lights are down, and a ball stopping dead against a
+  mast nobody can see is worse than one passing through a visible one. So they
+  are handed IN through options by main.js rather than read off the course,
+  which keeps "what you see is what you hit" true in both directions.
+
+- [x] **Deadfall stays decorative.** Owner's call. 520 pieces, redwood only --
+  every other biome has none -- knee height in deep rough where the ball is
+  already being punished. Making them solid would add a lot of small
+  unpredictable stops in the one biome that has them.
+
+- [x] **DONE. Slice 3: specimen obstacles, on purpose.** `fairwayFeature`,
+  0-100%, default 20. Was: A feature tree or rock cluster
+  sited in the short grass near the landing zone -- the Pebble Beach cypress, the
+  lone oak in a fairway. Fair rather than cheap: visible from the tee, never on
+  the tee-shot line, and always a playable route past it. **With a slider for how
+  often it happens**, so a course can be clean or quirky. New settings field, so
+  it carries a schema and GENERATOR_VERSION bump with it.
+
+- [x] **A specimen is allowed on the line of play, and that was the hard part.**
+  The launch corridor forbids any trunk in the flight path, which is right for
+  scatter planting and wrong for a feature -- an oak in the middle of a fairway
+  IS on the line, and playing to the side of it is the hole. `blocksLaunch`
+  takes a `within` now: scatter gets the whole carry, a specimen gets only the
+  near stretch (130 m), where a tree low in the flight is the original
+  complaint. What makes the rest fair is the gap beside it, not an empty centre.
+
+- [x] **The siting rules are the feature.** At least 13 m of open short grass on
+  one side so there is always a route; 75 m back off the green; only where the
+  corridor is at least 15 m half-wide; never inside the near stretch of a tee
+  shot. All four asserted, in `fairway-features.test.mjs`.
+
+- [x] **It validated the centre and then built something else.** The first
+  version checked the cluster's centre point and then scattered stones up to a
+  full radius away, sideways, into the gap it had just guaranteed -- the test
+  caught it 0.1 m short of the rule. Everything is laid out first now and every
+  piece has to pass, because the piece that sticks out is the one a ball hits.
+
+- [x] **The fairness test was stricter than the rule, and the rule was right.**
+  It failed a feature 121 m out and 17 m off the line -- where the ball is 29 m
+  up and flies clean over a 25 m tree. Being to the side is irrelevant when you
+  are above it. The test asks about height now, as the generator does.
+
+- [x] **An old invariant said every tree stands on rough,** which a specimen
+  deliberately breaks. Narrowed to scatter planting rather than deleted, with a
+  second assertion that scatter trees exist at all so it cannot pass vacuously.
+
+## Tee surrounds, and the moat that made them
+
+- [x] **The tee ramp is a share of the hole's width, not a number of metres.**
+  A fixed -20 m floor is compared against `n.d`, which grows with the corridor,
+  so it held at the 38 m default and collapsed at the top of the width slider:
+  0.25 of course average at 92 m, and 0.03 at worst, which is worse than the
+  clear-cut this work started from. Scaled to three times the corridor
+  half-width it runs **0.34 to 0.90 across all eight biomes and the whole
+  slider**. Tee shots stay at 0 of 648 blocked.
+
+- [x] **`surrounds` is a bench metric now, not a throwaway script.** This
+  question gets asked every time planting or corridor width moves, across eight
+  biomes and a slider, and each answer costs a course. It imports
+  `greenApproaches` from src rather than recomputing which way a green faces.
+  Run it with `--set trees=65`: the standard fixtures build with `trees: 0`
+  because every other metric measures terrain, where planting is irrelevant and
+  costs time.
+
+- [x] **The metric lied twice before it was right.** First it measured each tee's
+  own 20 m circle -- a circle that small holds a handful of trees, so every
+  reading was zero or a spike and the median came out at zero on a course
+  planted perfectly well. Then it reported a shelf of zeros on the standard
+  fixtures and tripped its own invariant, because those courses have no trees at
+  all. It pools every tee into one reading per course and refuses to report when
+  there is nothing planted.
+
+- [x] **Links has no trees and never did.** It plants gorse, heather and shrub,
+  all of them ground cover with no trunk, so none of the tee or green planting
+  rules touch it. Worth knowing before anyone reads a blank row as a failure.
+
+- [x] **Generator versions 24 to 29 had no entries.** The list in
+  settings-schema.js stopped at 23 while the constant climbed through five
+  bumps in one session -- the exact failure the file warns about, committed
+  repeatedly. All six written up.
+
+- [x] **Tee boxes read as clear-cut, and one signed number was the cause.**
+  Measured per hectare of ROUGH (mown turf can never hold a tree, so counting it
+  understates the rest): the first 20 m around a tee ran at 19-50% of course
+  density, recovering only past 60 m. `nearest().d` IS SIGNED -- it is the
+  distance outside a hole's corridor ENVELOPE, and near a tee that envelope is
+  far wider than the mown turf. 99% of the rough around a tee sits at a negative
+  d, as deep as -34 m, so "at least 10 m outside a corridor" banned the entire
+  surround while the surface classifier called that same ground rough.
+  Now 65-105% across seeds, with the shot still clear.
+
+- [x] **It was safe to drop only because of the launch corridor.** The blanket
+  10 m used to be the thing keeping a tee shot clear. `blocksLaunch` does that
+  exactly now, pointing where the shot actually goes, so the blanket was free to
+  stop being a moat. 0 of 648 tee shots blocked, unchanged.
+
+- [x] **The hard edge is a ramp everywhere else too.** A cliff produces two
+  artefacts at once: a bare moat, and a PILE-UP just outside it, because every
+  refused candidate is pushed outward and bunches at the boundary -- greens
+  measured 0% inside 20 m and 160-179% at 55-120 m. Acceptance now climbs from
+  nothing at the floor to certainty by `EDGE.soft`, so edge candidates are
+  sometimes kept rather than all shoved out.
+
+- [x] **Overcorrected first, and the measurement caught it.** Dropping the gate
+  near tees with no ramp at all left the surround DENSER than the course
+  average, 129-160% -- a thicket rather than a frame. A ramp over negative
+  distances brought it back to roughly average.
+
+- [x] **A blocked tee shot appeared and was slice 3 working.** The harness was
+  not setting `fairwayFeature: 0` the way the real test does, so it counted a
+  specimen redwood at 207 m as a defect. Before spotting that I added a carry
+  `overrun` to "fix" it; that fixed nothing and was reverted rather than left in
+  as unmeasured margin.
+
+- [x] **One seed says very little here.** The same biome ranges 38% to 88%
+  across seeds, so the test averages several rather than pinning to whichever
+  one it was written against -- a single-seed threshold was written first and
+  failed on an outlier at 38%.
+
+- [x] **Slice C done: greens open on the approach, closed behind and beside.**
+  `greenTrees`, 0-100%, default 40. The arc facing back down the fairway keeps
+  its full 46 m at EVERY setting -- measured, the nearest tree on the approach
+  stays at 35.8 m whether the slider is at 0 or 100 -- and the slider moves the
+  back and the flanks only: 6, 7, 10, 15, 30 trees within 40 m of a green across
+  0/25/50/75/100. The approach direction is taken from the middle of the hole
+  70 m short of the green, so a dogleg's approach is where the shot really comes
+  from rather than the line from the tee.
+
+- [x] **The slider's top end was a wall before it was tuned.** At `near` 11 m the
+  20-35 m band ran at 266% of course density, because the thinning ramp had
+  stopped biting before the rough even started -- mown ground reaches about 24 m
+  out, so any keep-out below that does nothing except remove the taper. Swept:
+  `near` 24 with a 20 m ramp gives 51/64/153% across the slider, which is a
+  frame rather than a wall.
+
+- [x] **A combined TEE FAN, not three separate wedges.** A tree can miss the
+  back tee's own wedge and still stand in what you SEE from it: the three tees
+  are staggered and can be ninety metres apart across a hole, so judging each
+  alone leaves the ground between them plantable and that ground is straight
+  down the view. Planting is now refused inside the convex hull of all three
+  wedges -- trees go behind the complex or outside the widest tee on each side.
+  It ignores height, because a tree the ball flies over still hides where the
+  ball is going. Costs some surround density (pnw worst case 75% to 58%) and
+  tee shots stay at 0 of 648 blocked.
+
+## Green and bunker shapes
+
+- [x] **The slope slider's warning jumped the slider out from under the cursor
+  (1 October).** Branch `slope-warning-on-release`, reported by the owner. The
+  note appeared the moment the slider crossed 75%, grew the field, and the
+  panel's columns reflowed mid-drag: the slider moved 229 px while held. Now
+  only the red follows the drag; the note and the toast wait for the release.
+  Checked with a real mouse drag: the slider stays put the whole way, turns red
+  at 76, and the note and toast appear on letting go. Shown in the field on
+  release, it still made the field hop to another column, so (the owner's
+  choice) it is a bubble that pops out over the panel instead and moves
+  nothing: the slider's position measured identical before, during and after.
+  It flips above the slider when the panel would cut it off below, and goes at
+  the next click, after 8 s, or back under 75%; the red stays.
+
+- [x] **Greens with a character each, raised greens, punchbowls and false
+  fronts (30 September).** Branch `green-shapes`, GENERATOR_VERSION 33,
+  SCHEMA_VERSION 9. The owner's screenshot of a bright band across a green at
+  an evening sun was two things: nearly every green carried a square-wave step,
+  and the green's own raking light lit each face at a low sun. The raking light
+  now eases off as the sun drops; each green draws rolling, tiered, ridged,
+  crowned or bowl from its seed, and only tiered greens have a step. The top of
+  the slope slider reaches much further (7.2% mean and 7.2 ft of relief at 100,
+  against 5.4% and 5.6 ft), with broader rolls and wider tier faces so it stays
+  puttable and smooth. Three new share-of-greens settings: raised (default
+  25%), punchbowl (10%) and false fronts (20%). Past 75% the slope slider turns
+  red with a warning note and a toast, at the owner's request. RESEARCH.md
+  *Greens with a character each*.
+
+- [x] **`greenShape` and `bunkerShape`, 0-100%, default 30.** They raise the
+  amplitude of the harmonics AND pull them toward equal as they rise, so no
+  single wave takes over. Medians go 1.24 to 1.42 to 1.74 for greens and 1.48 to
+  1.63 to 1.83 for bunkers. At 0 the outline is exactly what the generator always
+  produced, which is what makes it safe to ship.
+
+- [x] **Scaling the drawn mix was tried first and looked wrong -- owner rejected
+  it on sight.** It preserved WHICH HARMONIC DOMINATED, and the three-lobed wave
+  is drawn always-positive and largest, so it leads on 69 of 81 greens. Amplified,
+  that is a clean three-lobed flower, and stretched by a green's aspect it is two
+  round lobes and a tapering shaft. Evening the mix costs range -- 1.74 at full
+  against the rejected 2.45 -- and that range was the flower.
+
+- [x] **The first descriptor used to diagnose it was blind by construction.** It
+  measured how far an outline differs from its own 180-degree rotation, which
+  cannot see harmonic 2 at all, that harmonic being symmetric under exactly that
+  rotation. Four very different mixes returned identical numbers. Eighth
+  measurement in this project to measure the wrong thing.
+
+- [x] **No shader change was needed, and that was the point.** Scaling happens at
+  GENERATION, so the route texture and the hazard texture pack the already-scaled
+  values and the painted surface and the played lie come from one set of numbers.
+  Scaling at read time would have put the same arithmetic in GLSL and JS, which
+  is how the apron was once painted as fairway and played as semi-rough.
+
+- [x] **A cap keeps the radius positive.** .34 for greens and .30 for bunkers, on
+  the SUM of the harmonics: at the cap the narrowest point of a green is still
+  comfortably over half nominal, so an outline can pinch but never fold through
+  itself. Tested at 360 angles on every green at every setting.
+
+- [x] **The terrain patch was checked and needed nothing.** The high-resolution
+  grid is cut 38 m from a green's centre; the furthest a shaped green reaches is
+  31.5 m even at 100%. An earlier worst-case estimate said 42 m and was wrong --
+  it assumed maximum size, aspect and wave all landing on the same hole.
+
+- [x] **A characterisation test was sampling the wrong place.** It measured
+  ground slope on a fixed ring at `greenSize*greenAspect+7`, which is only "7 m
+  outside the green" while the green is an oval; once the edge could move, the
+  ring landed on the green's own shoulder and reported a regression that was a
+  change of sampling point. It marches out using `greenDistance` now -- proved
+  harmless by measurement, 0.661 against 0.663 on the old geometry.
+
+## Shot numbers that stay on the card
+
+- [x] **The numbers persist between shots, and the card is one function now.**
+  Three separate fixed stat blocks each decided for themselves what a shot was
+  worth showing, which is why the launch numbers were on screen for the two
+  seconds of a flight and then gone. One `gridHTML` from one record now serves
+  every state: just played, played ten minutes ago, a replay, a range session.
+
+- [x] **The live numbers moved to the small line under the player's name.** The
+  ticking speed, spin, distance and height used to REPLACE the grid, so the shot
+  you had just hit erased the shot you hit before it. Nothing about a ball in the
+  air belongs in a panel of finished numbers. `updateHUD` now leaves that line
+  alone while a flight is running -- it runs many times a second and would erase
+  the ticker between every frame that set it.
+
+- [x] **The invented commentary is gone.** "On to the next.", "Beautiful
+  flight." and "A little touch" were the card telling you in words how your shot
+  went, over the top of numbers that already said it. What is left are the four
+  things that are events rather than opinions: holed, lipped out, a penalty, and
+  the hole or round finishing.
+
+- [x] **A CONFIGURABLE GRID: up to twelve tiles, two to four across.** Every
+  field is declared once in `SHOT_FIELDS` in `src/shot-data.js` -- id, label,
+  unit, group, formatter -- and the grid, the panel checklist, the repair of a
+  saved layout and the tests all derive from it. The panel is Shot data in the
+  tools tray. Tiles are drawn in REGISTRY order, never tick order: a grid that
+  rearranged itself while you tried fields on would make comparing two shots
+  harder, which is the one thing the grid is for.
+
+- [x] **Everything else a monitor sends is captured now.** `readExtras` in
+  physics.js keeps club speed, speed at impact, attack angle, path, face to
+  target, dynamic loft, lie, closure rate, both face impact axes, the backspin
+  and sidespin split, and the device's own carry and total. Smash factor and
+  face to path are DERIVED -- no monitor sends either -- and face to path stays
+  blank when only one of its two halves arrived, rather than reading the half as
+  if it were the whole.
+
+- [x] **Not one field of it may reject a shot, and that asymmetry is the whole
+  design.** The five are validated hard because a bad one means the model cannot
+  run. The extras reach a readout and nothing else, so there is no `throw` and no
+  range check in `readExtras`: a device sending a string where a number belongs,
+  or a ClubData that is not an object, must not stop a real ball being played.
+  Tested against seven shapes of nonsense.
+
+- [x] **The grid gave away the result while the ball was still climbing.** Found
+  on screen, not by a test, and every number in it was correct -- `takeShot`
+  writes `lastShot` before the ball leaves and the entire flight is simulated in
+  that instant. A live flight now holds `priorShot`; a replay keeps lastShot,
+  because you already know how that one ended.
+
+- [x] **Two things the first screenshot showed.** The spin tile printed
+  "5400 ..." -- the value was sized at 20px in a 94px column and the card ellipsed
+  the one thing on it that matters. And sided readings came out "1.1L °", with
+  face impact as "2.1 heel mm". Values are sized to fit the narrowest column the
+  settings allow, labels wrap instead of truncating, and a field may now return
+  its own unit so the side goes after it.
+
+- [x] **The lab passes club numbers through.** `labStrike` rebuilt its payload
+  from exactly five fields and dropped everything else, so there was no way to
+  test a monitor's club data without a monitor. They ride along per-strike and
+  unvalidated, which is what they are on a real shot, and deliberately stay out
+  of the remembered launch.
+
+## A course has a name, not a serial number
+
+- [x] **The seed is off the card.** It was printed under the course title,
+  where a player reads it once, never types it, and can do nothing with it. The
+  title carries the course's name now and the biome moved down to the subtitle,
+  so the card still says where in the world you are.
+
+- [x] **The copy button hands over the whole course.** It copied the SEED, which
+  is not enough to rebuild anything -- every setting that shapes the ground was
+  missing, so pasting it somewhere grew different land. It now produces the same
+  share code the library's Get code does, carrying the name and the settings,
+  without a trip through the library or a file download. It refuses in an
+  endless run using the same sentence a save refuses with, because `holes: 1` is
+  not a value a course can hold and the importer would reject it anyway.
+
+- [x] **`copyText` falls back to `execCommand`.** `navigator.clipboard` needs a
+  focused document and REJECTS rather than prompting without one, which is every
+  embedded preview. Found while verifying: the button worked and reported that
+  it could not reach the clipboard. The library's Get code had the same hole and
+  now shares the fallback.
+
+- [x] **"Your next great escape" and "An open world. Your game." are gone,** and
+  Play and Course studio leave the top-bar menu once you are in one of them.
+
+- [x] **EVERY COURSE HAS A NAME, and it is generated from the landscape.**
+  `src/course-names.js` builds them from words that belong to the biome --
+  Trade Wind Cove, Dornoch Sands, Copper Hollow -- seeded from the course's own
+  seed, so the same course always suggests the same name. The old suggestion was
+  the biome's title, which made every midwest course "Prairie Run"; before that
+  it was the seed, which is a serial number.
+
+- [x] **Surprise me names what it built** and says so in the toast. It is the
+  one entry point with nobody to ask, so it takes the suggestion rather than
+  offering it.
+
+- [x] **The name reaches the export**, which it already supported and nothing
+  was filling in. A course started from the library brings its name in on
+  `settings.courseName`; anything generated falls back to its own suggestion, so
+  there is no unnamed course in play for the card, the save button or the code
+  to have to invent something for.
+
+## Networked multiplayer
+
+- [x] **`MULTIPLAYER_FEASIBILITY.md`.** Four shapes costed against each other:
+  async card-swapping (days, no server), live play on a LAN (moderate, reuses
+  the launch-monitor bridge), internet play (significant plus a permanent
+  operating burden), and a shared walkable world (high cost, low value, do not
+  build). Recommends async first, then host-authoritative LAN play.
+
+- [x] **The float risk was measured rather than assumed.** This model is not
+  chaotic: a relative perturbation of 1e-6 in launch speed moves the finish
+  0.12 mm and 1e-3 moves it 304 mm, so error grows roughly linearly. A last-bit
+  disagreement between two engines would move a ball by a hundredth of a micron.
+  The residual risk is BRANCHING -- a lip caught or not -- which is why the
+  host's finish stays authoritative.
+
+## Obstructions standing where they should not
+
+- [x] **Rocks were never judged as bodies.** A boulder was tested against the
+  launch corridor as a dimensionless POINT, with a ceiling of `y+scale` that is
+  not its height, and it never consulted the tee fan at all. Trees have passed
+  their trunk girth since the corridor was built. Measured on four courses:
+  4 rocks standing in a tee shot, 41 in the view from the tees. Now zero.
+  Mountain and desert carry 500 and 550 stones against 160 elsewhere, at twice
+  the scale -- exactly where it was reported.
+
+- [x] **Trees had the same gap on the fan, smaller.** They padded the corridor
+  test by their girth and the fan test by nothing, so a trunk up to 3.6 m across
+  could stand half inside the view from the back tees. 154 of them across 35
+  planted courses. The cost of closing it is 31 trees out of 45,909, and the tee
+  surround holds at 0.45-0.89 of course average.
+
+- [x] **`tools/bench.mjs teeclear`** calls the generator's own `blocksLaunch` and
+  `inTeeFan` against the FINISHED world. That is the only kind of check that
+  catches a rule applied unevenly, because during placement the generator's own
+  answer was "nothing is in the way". Its first version counted deliberate
+  fairway features as breaches and reported four faults that were the setting
+  working; features are excluded now.
+
+- [x] **The giant bush was a silent fallback.** The specimen picker took the
+  first species that is not ground cover and fell back to `bio.plants[0]`. On
+  links every species IS ground cover, so it chose gorse and then sized it by
+  the biome canopy: a 13 to 29 m gorse bush. A biome with no tree species gets a
+  rock now. Only a tree, a desert cactus or stones may stand in a fairway.
+
+## Tee boxes: what was wrong, and what was not
+
+- [x] **A blind tee shot is never the tee.** All 25 of them across 945 shots are
+  caused by ground 96 to 190 m out -- the landing area, not the box. Nothing
+  within 80 m. Shortening the pad and steepening the front moved the count from
+  25 to 23, which is noise.
+
+- [x] **The generator's own sightline starts 12 m out**, so nothing in the code
+  had ever looked at the ground immediately in front of a tee. The `blind`
+  metric now walks its own ray from 2 m for that reading. Measured: near ground
+  stood above the sight line on 8 of 945 shots, now 2.
+
+- [x] **The stagger is the change that earned its place.** It compared each
+  candidate against the PREVIOUS tee only, so blue could sit in line with red
+  while white was in line with neither. Against every placed tee, with the worst
+  offender deciding: in-line pairs 110 -> 10 of 945, closest pair sideways
+  0.00 m -> 3.24 m, at a cost of 1.3 m of median slide.
+
+- [x] **Pad 9 m -> 7.2 m, shoulder 35% shorter directly ahead.** The front fall
+  was swept: 0.5 steepens the ground round a pad from a median 6.3 to 10.1
+  degrees for no further gain, 0.35 reaches the same result at 7.8.
+
+- [x] **Markers were a metre off the tee.** They stood 4 m either side of a pad
+  3 m wide, so both markers of every tee on the course sat in the collar. Six
+  inches in from each edge now.
+
+- [x] **The sign was nowhere near the tee.** Fixed at nine metres off the hole's
+  own origin, which stopped meaning anything when tees began being sited on
+  ground that suits them. It now stands beside the blue tee on the player's
+  right -- and which side that is needed working out, because local +x is the
+  player's LEFT while the code also calls it "right".
+
+- [x] **`tools/shot-sink.mjs`** lets the game photograph itself into files, so a
+  change about how something looks can be shown rather than described. No
+  headless browser: the picture is the renderer that ships. It hung its own
+  client within the hour when a branch checkout removed its output directory --
+  the write threw, no response was sent, and the page waited forever inside a
+  requestAnimationFrame callback. It always answers now.
+
+## Boot, generation and camera flights
+
+- [x] **A splash screen, because boot showed the play HUD over an empty canvas.**
+  Building the renderer, restoring a saved round and growing the menu's showcase
+  hole all happen before `openMenu()` stamps a mode on the shell, and until that
+  stamp lands the shot controls, minimap and weather panel sit over nothing. The
+  splash is in `index.html` itself rather than built by script -- anything script
+  builds arrives after the span it is meant to cover. Blacked out with the
+  brandmark and wordmark over it, dismissed once the menu is up and then removed
+  from the DOM, so an invisible full-screen element cannot eat a click. The fatal
+  path dismisses it too: a black screen hiding the message that explains the
+  black screen is the worst version of this.
+
+- [x] **Camera transitions fly instead of cutting.** `setCamera` has always eased
+  toward its target, but it snapped whenever the move was over sixty metres --
+  and every move worth watching is over sixty metres. `makeCameraFlight` builds
+  the path instead: sample the ground AND the canopy under the route, lift over
+  what is there, smooth the profile so the rise has no corner, and ease in and
+  out with a smoothstep so the move starts and stops at rest. One call in
+  `setMode('play')` covers endless, a new round, Continue, the range, an imported
+  round and the way back from the studio; `cameraMode` and the flyover's return
+  use it too. Measured in the browser, a transition ramps 3.6 to 9.1 and back to
+  4.7 in frame-to-frame change, with no single-frame spike -- the ease curve,
+  not a cut.
+
+- [x] **Clearing the ground was not enough, and the first version proved it.**
+  A blanket `terrain + 34` cleared the dirt but imposed a cruise altitude: a
+  forty-metre hop across a green climbed 8.8 m, which reads as a launch. The
+  test caught it. The floor is the real obstacle now -- terrain or the canopy
+  standing on it, whichever is higher, from `world.trees` filtered to a box
+  around the route -- plus a distance-scaled arc that is what actually reads as
+  flying. Nine tests, including the ridge, the kink, the canopy and the trees on
+  the far side of the property that must not lift anything.
+
+- [x] **A new hole arrives instead of appearing.** Cut to a pose above and behind
+  the tee, hold 2.6 s, then fly down onto the ball. Wired into entering a round,
+  the next hole in normal play and the next hole in an endless run. The cut TO
+  the establishing pose is deliberate and is the one place a cut is right: the
+  hole did not exist a moment ago, so there is no continuous space to fly
+  through. `freshHole()` gates it -- resuming mid-hole gets the plain flight,
+  because an establishing shot of a hole you are halfway down is a recap nobody
+  asked for. The range is excluded: one flat rectangle with no shape to
+  establish, and a hold every visit would be in the way by the second one.
+
+- [x] **"Trees reach 29 m" was wrong and the arrival pose was built on it.**
+  A comment in camera-tours.js carried that number from before the redwood work.
+  The test that walks real holes put the camera at 71 m inside a redwood whose
+  canopy tops out at 111 m. There is one `canopyTop` now and both the flight and
+  the arrival ask it rather than assuming. Four biomes x nine holes in the test.
+
+- [x] **DONE. Generation yields by row band, and the overlay shows real progress.**
+  Was: Measured with `--cpu-prof` on an 18-hole feature-heavy course:
+  **8.4 s total, and `makeGroundGrid` is 81% of it** (9-hole default 2.4 s,
+  one endless hole 250 ms, the range 94 ms). That settles the open question in
+  the priority list: yielding between phases buys almost nothing when one phase
+  is four fifths of the work. `makeGroundGrid` has three row-major loops and
+  chunks cleanly by row band -- make it a `function*`, drain it synchronously for
+  the tests and the fingerprint tool, and yield to the browser on a time budget
+  for the app. A Web Worker is still the wrong tool: `generateWorld` hands back
+  closures that cannot cross the boundary. Acceptance: the eight biome
+  fingerprints stay identical, controls stay live while generating, and a stale
+  result cannot replace a newer round.
+
+- [x] **DONE. The generating overlay's spinner has never spun.** `.generating-spin` is
+  a ring with a lit top edge and no `animation` property at all -- which nobody
+  noticed because the thread is locked solid the whole time it is on screen.
+  Once generation yields it needs a real animation and a real progress reading,
+  which is the point of the chunking above. The splash's dots animate today
+  because nothing is blocking when they are up.
+
+- [x] **Explained, not a bug.** Reached through the Endless panel a run is NOT
+  adopting the showcase hole, because the panel's own settings make a different
+  world key; only the straight-off-the-menu path adopts. It now generates with
+  progress showing rather than locking up. Original note:
+  Straight off the main menu an endless run adopts the showcase hole and needs no
+  generation, which is why there is no overlay -- but reached through the Endless
+  panel it generated for over three seconds with the thread locked. Worth
+  checking whether the adopt path is being missed there, separately from the
+  chunking work.
+
+## Making the repository public
+
+- [x] **The email address on commits, and this machine's network details in
+  the history (2 October).** At the owner's request the whole history was
+  rewritten with `git filter-repo`: the home network address, the VPN address
+  and adapter name replaced in every file version, and every commit's email
+  replaced by the owner's GitHub no-reply address, which new commits in this
+  repository now use. Every commit ID changed; GitHub got the clean history by
+  force-push. DISTRIBUTION_REVIEW *What went to GitHub*.
+
+- [x] **Reports, studies and saved sources are local only (3 October).** At the
+  owner's request `docs/reports/`, `docs/studies/` and `docs/sources/` were
+  untracked, git-ignored and removed from every commit on every branch with
+  `git filter-repo`; the files stay on the owner's machine. AGENTS.md
+  *Reports made for the owner stay local* is the rule from now on. The USGA
+  firmness bands, the one source RESEARCH.md leaned on through a saved file,
+  are now quoted in RESEARCH.md itself. DISTRIBUTION_REVIEW, *Reports kept
+  local*.
+
+- [x] **The second, stale git repository one directory up (30 September).**
+  Handled by the owner outside this repository.
+
+- [x] **`vendor/baked_assets/` is not committed (30 September).** The owner's
+  call: kept on their machine, not in the repository. Untracked (the 91 files
+  stay on disk) and ignored, with the reason in `.gitignore`; nothing was
+  rewritten, so the copies already in history stay there. Nothing reads it at
+  build time -- `src/asset-meshes.js`, the ingested result, is committed. Its
+  ez-tree MIT notice, which has to travel with the redwood and fir geometry
+  that ships, was ONLY in that folder; it is now in
+  `docs/THIRD_PARTY_NOTICES.txt`.
+
+- [x] **The SkyTrak PDF is deleted (30 September).** The owner's own session
+  data; deleted at their request. `docs/sources/skytrak-36-shots.txt` -- the 36
+  shots as ball data, everything that was used from it -- stays, and the
+  RESEARCH.md citation points there.
+
+- [x] **A trademark disclaimer exists now**, in the root README, in the
+  portable archive's README and in ATTRIBUTION.md: marks belong to their
+  owners, and no affiliation, endorsement or certification is claimed. GSPro,
+  Garmin, Rapsodo and PiTrac are still named, which is ordinary -- naming a
+  product to describe compatibility is nominative use. The gap was that
+  nothing said so out loud.
+
+- [x] **Every document moved under `docs/`**, indexed by `docs/README.md`.
+  The root had fourteen markdown files, a dependency inventory and a folder
+  called `scratchpad/`. File NAMES were deliberately left alone: 953
+  references across the docs and the source comments name these files in
+  prose, and renaming them would have turned a reorganisation into a
+  953-line search-and-replace with no way to tell a miss from a mention.
+
+- [x] **README.md is a front door now**, 101 lines against 296. The player
+  manual it used to contain is `docs/PLAYING.md`; `CONTRIBUTING.md` is new.
+  Its "Validation performed" section is gone: it asserted "all 79 gameplay,
+  physics, terrain and generation checks pass" against a suite that now runs
+  530, and described a revision nobody can identify.
+
+- [x] **The file map in PROJECT_HANDOFF was wrong in both directions.** It
+  still listed `src/water.js`, deleted when the planar reflector went, and it
+  was missing sixteen `src/` modules and fifteen tools. It is now grouped by
+  what a file is for rather than listed flat, and every module, tool and
+  committed baseline is in it.
+
+- [x] **Two generator-bump entries were mislabelled.** The rocks-as-bodies
+  entry was written as 30, which the shape sliders already had, and the
+  tee-box entry as 31; each is one less than the version it actually
+  produced. Checked against the commits that moved the constant. AGENTS.md
+  carried the stale summary of the same list -- "stops at 12 while the
+  constant reads 23" -- and now says what is actually there.
+
+- [x] **TODO.md finished its own split.** 74 ticked entries were still above
+  `# Done`, interleaved with 105 open ones across ten sections, which is the
+  exact state the split exists to prevent: an open checkbox cannot read as a
+  claim about the code when it is the fourth item in a list of nine ticks.
+  Verified entry-for-entry that nothing was lost, and that no open sub-item
+  was nested under a ticked parent first.
+
+- [x] **`bake-trees.mjs` said it wrote `vendor/eztree-redwood/`** in its
+  header while the line twenty below it wrote `vendor/baked_assets/`. The
+  same dead path was in PROJECT_HANDOFF and RESEARCH as a present-tense
+  instruction.
+
+- [x] **A CI workflow runs the suite, the fingerprint check, the build, and
+  three journeys of the browser smoke test** on every push. It deliberately
+  does not run the frame profiler: a headless runner measures a software
+  rasteriser two orders of magnitude off the real number, and a green tick
+  from a machine measuring the wrong thing is worse than no tick. The smoke
+  test is different -- it asks whether things throw, which a software
+  rasteriser answers correctly, only slowly -- so `boot`, `range` and
+  `endless-round` run there. The whole suite took 24 minutes on 32 cores with
+  no GPU, against about one minute on one; the rest stays a local gate.
+
+## Getting the word out
+
+- [x] **Donations: Ko-fi (2 October).** Was: "configure an optional donation
+  page when requested". The owner set up https://ko-fi.com/doberloh; the site's
+  support panel carries a "Support Fairway on Ko-fi" button and both footers a
+  Ko-fi link. A plain link, chosen over Ko-fi's embedded panel and floating
+  button, so nothing from Ko-fi loads before a click. The wording is the
+  owner's: "Donations go towards any future development, and hosting costs for
+  this site." The two disclaimers that stood there ("donating doesn't unlock
+  anything", "donations here don't reach" the model artists) were removed at
+  the owner's request; DISTRIBUTION_REVIEW records why that still sits inside
+  its guidance.
+
+- [x] **The website (1 October 2026).** Branch `productization`, asked for by
+  the owner. Was: "a one-page site whose main feature is a Play button,
+  deferred 25 September". Built in `site/`: a front page and a media page,
+  laid out as the game's glass panels over clips recorded from the game,
+  which change to match the section in view (a still for visitors who ask for
+  less motion or less data). The front page covers the eight landscapes,
+  ball physics (the GC3 figures, with SkyTrak named as the held-out check),
+  greens and the three putting modes, stroke, match, scramble and endless,
+  night golf, the course studio and course codes (a real code, written by the
+  build), the range, and four smaller points; then connecting through rēlā
+  in five steps, the four downloads with how to run them, "always free" and
+  "open source soon". The media page has the 18 landscape pictures, filterable
+  by time of day, the clips, and the feature screenshots. **The Demo button**
+  (top right) asks first, saying that keyboard and touch are not how Fairway is
+  meant to be played and to download it for a launch monitor, then opens the
+  shipped game from `play/`. `npm run site` builds it all into `site-dist/`
+  for Netlify (`netlify.toml`), no-index until launch. Checked in Chromium at
+  1440 and 390 px wide: no errors, no sideways scroll, clips switch, the demo
+  reaches the main menu in 3.3 s from a local server and its manifest is
+  served. The media is retaken with `tools/capture/`. INSTALLATION.md
+  *The website*. **Second pass, 2 October, from the owner's review**: every
+  picture and clip retaken at full resolution (the first set rendered at 1x;
+  RESEARCH.md *The website*), landscape names only rather than course names,
+  no em dashes, the stats box gone, and the hero, landscape, greens, game
+  modes and practice copy rewritten in the owner's words. **Third pass, 2
+  October**: the light in every picture is now the time of day it is labelled
+  (the times had been clock readings, and "golden hour" was plain afternoon),
+  and the background plays all eight landscapes in turn instead of one clip
+  per section, which had left the desert on repeat.
+
+
+- [x] **Discord: the owner created a server (7 October 2026)**, reversing the
+  "deliberately not yet" settled on 25 September, with an open-beta announcement
+  drafted for it from the highlights of v0.1 to v0.5. The earlier reasoning is kept
+  because it still says what makes a server work: an empty server is worse
+  than none -- a room where the owner talks alone, signalling that nobody is
+  there, at the cost of daily attention. It earns its keep at roughly 50 to 100 engaged
+  people, when conversation happens without the owner in it. A public
+  repository already provides the venue in the meantime: Issues for bugs,
+  Discussions for everything else, both of them searchable by the next person
+  with the same problem, which Discord is not -- so a bug worth keeping is
+  still best filed as a GitHub issue, even when it is first reported on
+  Discord.
+
+- [x] **MIT, open source at launch. Settled 25 September; do not reopen it.**
+  The alternative considered and rejected was a proprietary licence on the
+  built file -- free to play, not to redistribute -- which is what a
+  closed-source product actually needs, because MIT is a grant to RECIPIENTS
+  and says nothing about whether source was published. That reasoning only
+  bites while the source is closed. Open the repository and the pair is
+  coherent: MIT is what the audience that amplifies this expects to see, and
+  it costs nothing that was ever going to be collected.
+
+  **What is knowingly accepted**, recorded once here so it is a decision and
+  not a surprise: MIT lets anyone fork the project, rebrand it, and sell it or
+  take donations for it, with no obligation beyond keeping the notices. The
+  judgement is that for a niche simulator the product and the person behind it
+  are the moat, not the source, and that a fork of a one-person golf
+  simulator is a theoretical risk against a concrete gain in reach.
+
+  Unaffected either way: three.js, lucide and ws keep their own MIT/ISC terms
+  and their notices must still ship, which they do.
+
+- [x] **The name stays "Fairway". Settled 25 September by the owner; do not
+  reopen it.** The case against was searchability: put it in a search box with
+  the word "golf" and it competes with every course in the language, and word
+  of mouth wants a name somebody can hear once and find. The owner has heard
+  that, likes the name, and accepts the trade -- which is the whole of the
+  decision, because a name nobody is fond of is a worse asset than one that is
+  hard to search for.
+
+  What this unblocks: it was filed as the item everything waited on, because a
+  domain, a repository and a download link each make a rename more expensive.
+  None of them is blocked now.
+
+  Worth doing cheaply when the site exists, and NOT a reason to revisit the
+  name: pair it with a word in the title and the description -- "Fairway, a
+  browser golf simulator" -- so a search engine has something to hang it on.
+
+- [x] **The website's download links (3 October).** Each of the four buttons
+  links to its zip on the newest GitHub release
+  (`releases/latest/download/<zip>`), so publishing a release updates them
+  with no change to the site. GitHub was chosen over Netlify because it serves
+  the files free, where Netlify counts about 150 MB per download round against
+  the plan. The GitHub CLI is installed on the owner's machine; AGENTS.md
+  says a release goes up only when the owner asks. INSTALLATION.md, *Downloads
+  are GitHub releases*. (Donations: Ko-fi, 2 October.)
+
+- [x] **The first release, v0.1 (3 October).** "Fairway 0.1 (beta)", published
+  at the owner's request from `main` at 7608156 (the ball-landing merge): the
+  four platform zips, the source zip and `RELEASE_SHA256.txt`, an ordinary
+  release so it is "latest". A downloaded copy matched its checksum. The
+  Download buttons reach it once the repository is public; until then only the
+  owner, signed in, can download.
+
+- [x] **Shot-making clips for the website (3 October).** Stinger, high draw,
+  power fade, knockdown, flop and zip-back at 1920x1080 on Ultra, interface
+  hidden, with posters: docs/reports/shotmaking/. Each is played on real
+  launch numbers and none needed a physics change. Not yet copied into
+  `site/media/` -- the owner picks which go on the site. The stinger peaks at
+  54 ft, the known gap under *A stinger needs a 2-5 degree launch*. RESEARCH.md,
+  *Shot-making clips*.
+
+## Found by driving the built game
+
+- [x] **Five levels bring nothing** (found 15 October 2026 by the new unlock
+  tests). Levels 14, 22, 27, 36 and 43 unlock nothing and show a level-up
+  banner with no list: they were the flourishes' levels until the flourish
+  ladder moved them (par 2, birdie 5, eagle 12, chip-in 20, every birdie 30).
+  The spec never promised something at every level, so nothing is wrong; ask
+  the owner whether to put something there. If anything moves, the AGREED
+  list in tests/rewards.test.mjs moves with it.
+  **Filled (the owner chose new rewards, 15 October 2026):** Smoke tracer
+  14, Grinder title 22, Sunset meter skin 27, Lightning frame 36, Lava ball
+  43; a test now fails if any level from 2 to 50 brings nothing. RESEARCH
+  *Five empty levels filled*. Seen in screenshots of the picker and the
+  worn picture (Lightning and Lava redrawn after the first look); smoke
+  `look` and `level-up` green. Not yet played by the owner.
+- [x] **Panels drag by a title bar like the tool windows' (5 October).** The
+  map, shot controls, weather, tools strip, course card and flight controls
+  each carry the grip-and-name bar a tool window has; phones keep the corner
+  grip. PROJECT_HANDOFF, *A title bar, not the whole panel*.
+
+- [x] **The bay is measured by its two sides (5 October).** Width and height
+  in inches instead of a diagonal and a shape; the shape is worked out and the
+  view is drawn in it whatever the window's size; old saves convert; the mat
+  offset steps by 0.1 ft. RESEARCH.md, the bay section.
+
+- [x] **The shot controls' title bar dropped to the bottom once the panel was
+  moved (6 October).** A moved panel is a plain block, where the trick that
+  lifted the bar (`order:-1`) does nothing. The bar now goes first in the
+  markup on every panel except the two whose contents are picked out by
+  position. PROJECT_HANDOFF, *A title bar, not the whole panel*.
+
+- [x] **The tracer runs a moment behind the ball (6 October).** It used to end at
+  the ball and sit on top of it. It now trails by 0.15 s (`TRACER_LAG`, main.js):
+  4-8 m behind a full shot in the air, a few centimetres behind a slow putt,
+  and it catches up once the ball stops.
+
+- [x] **Replay broke an endless run from hole 2 on (6 October).** It asked the
+  renderer for the round's hole number, but an endless world only ever holds
+  hole 0, so every frame threw and the round could not continue. `worldHole()`
+  in main.js converts the number everywhere. Replay checked in every mode: a
+  round (holes 1 and 3), endless (holes 1 and 2), the range (Replay last shot,
+  and a shot-list row's Replay and View), a real two-player scramble and match
+  play. A replay watched while a scramble team is choosing its ball now
+  returns to the choice view instead of the play view. Guarded by the
+  `endless-round` smoke journey.
+
+- [x] **A rolling ball skips (6 October, cosmetic).** At random, most on
+  fairways and least on greens, at heights the owner set by eye in play;
+  seeded per shot so replays match; only
+  the drawn ball moves. `src/roll-hop.js`. **Off by default** since the same
+  day, at the owner's request, to revisit: `ROLL_HOP.enabled` or
+  `lab.rollHop(true)` turns it on.
+
+- [x] **v0.3 published, and the website deployed live (7 October).** "Fairway
+  0.3 (beta)", at the owner's request, from `main` at 568e125: player profiles
+  and the sim handicap, the flight refit, endless replay, tracer lag and the
+  top-menu fix. The Latest release; a downloaded zip matched its checksum. The
+  site went live with `npm run deploy` and is still password-protected and
+  unindexed. DISTRIBUTION_REVIEW has the addendum.
+- [x] **v0.2 published with the left/right fix (6 October).** "Fairway 0.2
+  (beta)", at the owner's request, from `main` at 94987ba: the left/right fix,
+  panel title bars, the bay measured by its sides, and Range controls in the
+  Tools window. The latest release, so the Download buttons serve it; a
+  downloaded zip matched its checksum.
+
+- [x] **The floodlight freeze was not back (6 October).** Two `floodlit-night`
+  smoke runs on 5 October froze the picture on switch-on (7.05 s on `main`,
+  1.4 s on `play-feedback`), and the owner's machine hard-crashed after the
+  second -- while the owner was playing a game on the same graphics card. Not
+  reproducible with the card free: `bench/shots/flood-freeze.mjs` on builds of
+  every commit since the 30 September fix (b7f9011 to d58bf9e), switching on
+  at once and after 8 s, with automatic resolution on and off, worst frame
+  33-50 ms every time; the smoke journey itself passed six runs out of six,
+  three on `main` and three on the branch. The fix holds. RESEARCH.md, *The
+  floodlight freeze on Ultra*. Graphics-heavy tests are no longer run while the
+  owner may be gaming.
+
+- [x] **Range controls could not be reopened once closed (5 October).** The
+  Tools window carries a Range controls button on the range.
+
+- [x] **Monitor shots flew the mirror image of what the monitor said (5 October).**
+  Found on the first R50 session: left went right and right went left, while
+  every other number looked right. The flight now treats launch direction and
+  spin axis as the golfer's left and right, as Open Connect defines them, and
+  the offline readouts and the plot agree with the picture. Three tests had
+  pinned the mirror; they now pin the right way. RESEARCH.md, *Left and right
+  were mirrored*.
+
+- [x] **Balls checking back in bunkers (2 October).** Sand kept a third of a
+  wedge's backspin through the first contact; in real bunkers 28 of 264
+  landings came back over 0.3 m, up to 2.2 m. Sand now takes the spin: 4 of
+  264, max 0.5 m, all gravity.
+
+- [x] **The ball whirling round inside the cup (2 October).** The wall gripped
+  as hard as the rolling equations asked, up to 1.3 times the ball's weight at
+  about one g of press, so slow balls circled up to three and a half times.
+  It now grips at most the green's sliding friction times the press: under a
+  lap. Which putts drop and which lip out is unchanged.
+
+- [x] **Iron hops turning left or right on greens: measured, not a bug
+  (2 October).** About 3.3 degrees of turn per 1% of cross-slope, the slope
+  explaining nearly all of it over 973 landings; the triangle mesh is not the
+  cause. The greens reading flat on screen is what makes it look causeless.
+
+- [x] **Bunkers buried under a neighbour's rough (2 October, generator 34).**
+  Spotted by the owner behind a green on the website's desert clip: a white
+  sliver with a staircase edge, the rest of the bunker grassed over. A bunker
+  reaching onto ground another hole owns was dug out but painted and played as
+  that hole's rough; about one bunker in twenty (35 of 682 on the full bench).
+  Such bunkers are now dropped, as ponds already were. New bench invariant
+  `bunkers`, new test `tests/bunker-ground.test.mjs`. RESEARCH.md *Bunkers on
+  another hole's ground*.
+
+- [x] **Course studio opened at midnight for a new player (1 October).**
+  Found while capturing the website's screenshots: a profile whose clock had
+  never been set opened the studio at 12:00 AM, because an unset hour reads as
+  0:00 -- anyone trying the demo who went to the studio before their first
+  round. Rounds already started at midday; opening the studio now does the
+  same, with the floodlights off. Checked on a fresh profile: 12:00 PM.
+
+
+- [x] **An 18 px dark strip along the bottom of the play screen (1 October).**
+  Branch `play-area-fill`, found while measuring for Text size. The play area
+  set its own height as the screen minus a guessed bar height (78, 65, 56 or
+  42 px by size); a later rule made the bar 60 px and the guesses went stale --
+  18 px short at six of the nine sizes the smoke test checks, 5 px on an
+  upright iPad. The app is now a column and the play area takes whatever the
+  bar leaves: no gap at any of the nine sizes, phones unchanged.
+
+- [x] **Putting has shown no distance on screen since 19 September, and threw
+  sixty exceptions a second while doing it.** `GolfView.projectMarker` named
+  the edges of its rectangle `L`, `R`, `T` and `B` -- and `T` is three.js in
+  `renderer.js`. The local `const T` shadowed the library for the whole
+  function, so the `new T.Vector3` at its top reached an uninitialised variable
+  on every call. It is called every frame the ball is on a green.
+
+  Measured before and after on the built file, ball dropped two yards from the
+  cup: **393 exceptions in six seconds** before, zero after. Before, the marker
+  sat frozen at one screen position whether facing the cup or turned away, and
+  never set its pointing angle; after, it sits over the cup reading "6.0 FEET
+  TO HOLE", follows the camera, and points. Silent throughout because the frame
+  loop schedules the next frame before doing anything else, so the game kept
+  running and skipped the rest of each frame -- which also meant the aim label,
+  meant to hide on the green, never did. PLAYING.md described the feature
+  correctly the whole time; it simply was not true.
+
+  The fix is four names: `left`, `right`, `top`, `bottom`.
+  `tests/three-namespace.test.mjs` (seven tests) scans all seventeen modules
+  that import three as `T` for any other binding of that name, proves the scan
+  goes red on the original line and stays quiet on look-alikes, and calls
+  `projectMarker` directly -- in view, behind the camera, and with uneven
+  insets. Red on the old code, green on the new.
+
+  Found by `tools/smoke.mjs`, the browser smoke test, the first time it dropped
+  a ball on a green. Nothing else could have found it: `node --check` parses
+  it, the bundler emits it, and no unit test had ever called the function.
+
+- [x] **A browser smoke test, `npm run smoke` / `tools/smoke.mjs`.** Opens the
+  built file by `file://` in Chromium -- the way a player opens it -- and plays
+  seven journeys: boot; every main-menu panel and every tab in each, plus the
+  tester diagnostic; an Endless hole from tee to holed putt to the next hole,
+  including clubs, aim, power and cameras from the keyboard and a sim drop;
+  Play → Surprise me & play through a nine-hole course with replay, mulligan,
+  the scorecard and the in-round menu; the range; the studio growing and
+  saving a course; and `hud-reachable`. A journey fails on any uncaught error,
+  any `console.error`, and any network request -- which makes the published
+  zero-requests claim a check rather than an assertion. Six of seven pass;
+  `hud-reachable` fails on a real layout bug, recorded above.
+
+  **It presses buttons by the name a player reads**, so a relabelled button
+  fails it -- deliberately, since the label is the contract with the player.
+  **It uses `window.lab` only to look** -- whether a ball is in flight -- and
+  never to drive, because driving through the lab tests the lab.
+
+  Stable across four consecutive runs on four different random courses. Every
+  failure prints the course and seed, because Endless and Surprise me grow a
+  different course each time and a failure nobody can find again is worth
+  little.
+
+  **Measured before it was designed**: with no GPU a nine-hole course took 99 s
+  to build on one run and 213 s on the next, against 4.5 s on a GPU, and
+  halving the window halved the frame cost without shortening the build -- so
+  the cost is not pixels. That is why the round loop runs on Endless, whose
+  first hole is the menu backdrop the game has already grown.
+
+  **Nine of its first failures were the harness, and three were the game.**
+  The harness ones are worth knowing because each looks exactly like a game
+  bug: the drawer checked for an `open` class it has never used; arrow keys
+  pressed down and up before a frame could see them; the Tools button
+  pressed twice when it is a toggle; saved courses read from storage in the
+  wrong shape; Help's window expected under the menu label rather than its
+  own title; floating tool windows expected in the drawer; the tray put away
+  in the middle of a drop; two inputs sharing a label; a 1600x900 capture
+  window that the layout bug itself blocked. The game ones: the green-marker
+  crash (fixed), the HUD overlap, and Escape's order (both above).
+
+  `npm ci` does not fetch Playwright's browser -- 1.63 has no install script
+  -- so the harness says `npx playwright install chromium` rather than
+  printing a stack trace. That also made a comment in the CI workflow wrong;
+  see the CI entry.
+
+- [x] **Escape now closes the panel in front of you before any tool window.**
+  With Tools open, opening the scorecard puts its blur over the Tools window,
+  and Escape used to shut the hidden Tools window first, leaving the visible
+  scorecard for a second press. Two fixes were weighed: close the tool windows
+  whenever a panel opens, or have Escape close whatever is in front. The
+  second won -- it keeps the player's Tools window where they put it for when
+  the card is gone, and it is one condition. An open panel is always in front,
+  because opening a tool closes the panel and never the reverse. The smoke
+  test presses Escape once with Tools open behind the scorecard; red on the
+  old build, green now.
+
+- [x] **A quick arrow tap now always registers.** Aim and power move while a
+  key is held, read once per frame, so a tap whose key-down and key-up fell
+  between two frames used to do nothing -- never at 60 fps, where a human tap
+  spans several frames, but a real risk at 20. Every key-down now also lands in
+  a `tapped` set that the frame loop treats as held for one frame, cleared once
+  per rendered frame. Deliberately NOT changed: how far a held key turns, or
+  replacing held movement with fixed-size steps. That is feel, and it waits for
+  the keyboard feedback. The smoke test taps left and down with no frame
+  between; the left tap read "0.2°" and never changed on the old build.
+
+- [x] **The release packager ships only what git tracks.** It globbed each
+  source directory, so three untracked scratch scripts went into a source
+  archive: 166 files where there should have been 163. It now takes `git
+  ls-files`, proven by planting a stray file in `tools/` and checking the
+  archive left it out. Refusing a dirty tree was considered and rejected --
+  cutting archives before committing is how this project works, and the
+  tracked files' working content is what matches the build beside them. A
+  checkout with no repository falls back to the glob and says so.
+
+- [x] **The HUD fits every screen from a desktop to a phone.** Measured first,
+  across eight sizes, before designing anything:
+
+  | screen | before | after |
+  |---|---|---|
+  | 1920x1080 | 2 controls unreachable | 0 |
+  | 1536x864 / 1440x900 | 6 | 0 |
+  | 1366x768 | 8 -- every camera button under the map | 0 |
+  | 1280x720 | 9 | 0 |
+  | iPad sideways 1180x820 | 8 | 0 |
+  | iPad upright 820x1180 | 0 | 0 |
+  | phone sideways 844x390 | 23, the page scrolled, shot button cut off | 0, no scroll |
+  | phone upright 390x844 | course 7% visible, page 177 px too wide | course 51% visible |
+
+  **The cause was one idea**: every layout rule answered to WIDTH and positions
+  were pixel constants tuned on 1920x1080, while every failure was about
+  HEIGHT. `layout.js` now measures where the bottom bar, the weather, the card
+  and the camera bar actually are and writes them as CSS variables; one new
+  section at the end of `style.css` positions the panels from those. The owner
+  chose between two prototypes photographed at every laptop size: **the camera
+  bar beside the map** (chosen) against a row under the weather (it stuck out
+  past the weather panel and read as bolted on). Also rejected: cameras in the
+  top bar (full already at 1280, and app chrome not game controls), and
+  height breakpoints alone (still guessed constants; break when the controls
+  wrap).
+
+  **Phones** get their own layout below 560 px wide or 500 px tall: the card as
+  a strip whose player row and shot numbers hide behind a "Shot details"
+  toggle by default (the owner's call), cameras in a row with the wind, the
+  map a thumbnail, controls for a thumb. `#world` lost its 620-640 px minimum
+  height, which was making every phone scroll, and the top bar drops its words
+  on a phone -- in a round it had been 177 px wider than the screen.
+
+  **Three bugs found on the way, all fixed**: the main menu could not scroll
+  and stranded Camera & bay, Graphics and Help below a phone's screen -- the
+  page scrolling had been the only way to reach them, so fixing that alone
+  would have made it worse; starting a sim drop left the Tools window over
+  "Place ball" on a phone held sideways; and a toast swallowed the clicks meant
+  for "Copy course code" underneath it for four seconds.
+
+  Checked by `hud-reachable` at nine sizes, menu and play screen, phone details
+  folded and open, and by `phone-portrait` and `phone-landscape`, which play a
+  hole by touch alone. A first draft guessed the camera row's height at 44 px
+  on a phone held sideways; it is about 60 and the map sat 11 px over it, which
+  is why that is measured too.
+
+
+- [x] **The smoke test raced the scorecard's own timer.** The scorecard advances
+  to the next hole by itself after eight seconds; the harness assumed it would
+  wait to be clicked. On a GPU the click lands in under a second, so it never
+  showed. With no GPU a frame takes about a second, Playwright's check that a
+  button is stable across two frames outlasted the eight, and the harness spent
+  six minutes waiting to click a button the game had correctly removed -- the
+  failure screenshot showed hole 2, three under. Both ways to the next hole are
+  now accepted, the log says which one happened, and it fails only if the hole
+  never changes. Looked like "Next hole is broken on slow machines"; was not.
+
+## On a phone's home screen
+
+- [x] **A bridge with nothing to install (1 October).** Branch
+  `productization`, asked for by the owner. `run_fairway_server`, compiled
+  with Bun for Windows, macOS (Apple Silicon and Intel) and Linux, is the
+  program in each platform's download; the Node start scripts are gone. It
+  serves the game and its web manifest (phones can add it to the home screen),
+  listens on the home network by default and prints where to point a browser,
+  a phone and the connector. The `server-program` smoke journey plays a real
+  connector shot through it on Windows. RESEARCH.md *run_fairway_server*.
+
+- [x] **Owner: the portable archive's Launch monitor folder on a Mac.**
+  Superseded on 1 October: there is no Launch monitor folder or start script
+  any more; see *run_fairway_server on a real Mac* above.
+
+- [x] **A hosted copy installs to a phone's home screen and opens like an
+  app.** Asked for on 26 September after the owner hosted the build on Netlify
+  and found getting it onto an iPhone was the hard part. Options weighed: a
+  native iPhone app through Capacitor needs a Mac with Xcode and either a $99
+  developer account or reinstalling every seven days, and this project is
+  built on Windows; the full offline web app was more than was needed to get
+  playing. This is the middle: the iPhone tags, a 180 px icon, and a manifest,
+  so Add to Home Screen opens it full screen without Safari's bars. The icons
+  are the existing brandmark flag with the wordmark's green dot where a ball
+  would sit, optically centred; the manifest is `display: standalone`, so the
+  phone's clock stays and nothing slides under the notch before the HUD keeps
+  clear of it.
+
+  **The portable file never knew.** A manifest link is fetched as the page
+  loads, and from disk that fetch fails with an error -- so it is linked from
+  script only over http or https. The disk-opened journeys, which fail on any
+  request, prove it; `home-screen`, the one journey that serves the game, asks
+  Chrome's own parser and install check. Verdict: parses clean, installable --
+  so Android and desktop Chrome can install it too.
+
+  Also: the tab icon is inline, so a host without a `favicon.ico` never logs a
+  404; and the fullscreen button hides where fullscreen cannot happen, which is
+  every iPhone, where it had silently done nothing.
+
+- [x] **The home-screen icon survives a password-protected host.** The owner
+  keeps the Netlify site private so it cannot be scraped, and adding it to the
+  home screen gave a screenshot icon, with 401s in Netlify's log. Netlify
+  answers every request without the visitor's login with a 401, and a phone
+  fetches a linked icon ON ITS OWN, without Safari's login; the manifest is
+  fetched without credentials too, unless its link asks. Reproduced before
+  fixing, with a local server that behaves the same way: logged in, the page
+  loaded, and both the manifest and the icon came back 401. Now the
+  home-screen icon is a data URL inside the page, the manifest's icons are
+  data URLs inside the manifest, and the manifest link carries
+  `crossorigin="use-credentials"` -- the fix that worked in Netlify's own
+  support thread on this. Same probe after: nothing refused. Chrome still
+  rates it installable. `make-icons.mjs` now writes the manifest and the
+  page's icon itself, so neither can drift from the PNGs.
+
+  Alternatives weighed: turning the password off (the owner's call, and
+  declined -- it is there to stop scraping); a data-URL manifest (Chrome
+  rejects its start_url as cross-origin); and hosting the icon publicly
+  elsewhere, kept as the fallback if iOS turned out not to read a data-URL
+  icon, which no documentation settled. **It does read one** -- confirmed on
+  the owner's iPhone the same day, so the fallback was never used.
+
+  Two iPhone facts now in INSTALLATION: the home-screen app asks for the
+  password once, because it keeps its own login separate from Safari's; and
+  it keeps its own saved rounds.
+
+- [x] **The home-screen icon works on a real iPhone, on the private site.**
+  Confirmed by the owner on 26 September: the flag icon shows on the home
+  screen. That settles the one piece nothing on the development machine could
+  test and no documentation found settled -- **iOS honours a home-screen icon
+  written INTO the page as a data URL**. The fallback of hosting the icon
+  publicly elsewhere is not needed.
+
+## Playing on a phone
+
+- [x] **Owner: aiming and the redrawn play screen on a real iPhone (30
+  September).** Checked by the owner on their own iPhone: the pad, the big map,
+  two-finger zoom and the play screen both ways up. "Done and looks good." The
+  launch-monitor checks with a real device stay open: they need the monitor.
+
+- [x] **Aiming by touch, a map that opens big and pinches, and a thumb's worth
+  of every control.** Asked for on 26 September: aiming and the map were
+  "REALLY hard" on a phone because everything was small. Options offered for
+  aiming were arrows, swipes, a zoom-to-aim view, or a mix; the owner chose
+  arrows plus the zoom view.
+
+  **The aim pad**: turn half a degree a tap, move the target a yard further or
+  shorter (a putt's length, on the green), the pin in the middle; hold to
+  sweep. On phones and touch screens under 820 px; a round pad upright, a row
+  sideways. The laptop's own aim arrows now step half a degree (they were one)
+  and sweep when held. **Swipe-to-turn was rejected**: a drag on the course
+  already moves the camera in free flight, the same gesture meaning two things
+  by mode is a trap, and a swipe that turns the aim is one stray thumb away
+  from spoiling a shot already lined up.
+
+  **The big map**: the one map canvas laid over the course. A tap on the
+  thumbnail opens it on a touch screen; a button on the map's corner opens it
+  anywhere. It aims, drops or flies wherever the small map would; two fingers
+  zoom it; Done or Escape closes it, and it gives way to a shot, a panel, the
+  flyover or the menu by itself. Held sideways the title and Done share a row
+  so the hole gets the height.
+
+  **Pinch zoom** on the map at any size, which had not worked at all: the
+  second finger was ignored.
+
+  **No stray browser gestures**: a double tap no longer zooms the page, a pull
+  down no longer reloads it and throws the round away, and holding an arrow no
+  longer selects text. **Every control a round needs is 44 px to a finger** --
+  Apple's recommended size -- through invisible margins where there is no room
+  to grow; the pad, the club picker and the power slider are that size
+  outright.
+
+  **The Add to Home Screen hint**, closing the open item from *On a phone's
+  home screen*: once, on the menu, on an iPhone or iPad in a browser; never
+  from disk and never inside the installed app.
+
+  Checked by new steps in both phone journeys and a new `home-screen-hint`
+  journey; 14 of 14 journeys green, 553 of 553 tests, no ground moved. Not
+  checked: a real iPhone, which is the open owner item above.
+
+- [x] **The play screen redrawn: the hole in the top bar, the shot panel on
+  the left, and a launch-monitor mode of its own.** Approved from mockups on
+  26 September, for every screen size. The course card is gone from play: hole,
+  par, yardage and pin sit in the top bar, with a score chip per golfer --
+  colour, score against par tinted as the old live score was, the shot they
+  are on or *In* -- that opens the scorecard. The shot controls left the bottom
+  edge for a panel down the left, only as tall as its contents, with the shot
+  button inside it and the last shot at its foot (folded to carry and total;
+  always open on a big screen). Right: wind, the camera strip down the edge,
+  the map at the foot. On a phone: the chip of whoever is up with a count of
+  the others, Tools in the top bar, the cameras behind one button, the pad
+  under the map, the last shot folded above the club. **The controls keep
+  clear of the notch and home bar** (`viewport-fit=cover` and the safe-area
+  insets), which closes that item from *On a phone's home screen*.
+
+  **Monitor mode**, the owner's main mode: the panel leads with Ready / Finding
+  ball / No monitor and an Armed switch; power, shape, the shot button and the
+  tee go; **the aim stays** (it used to go -- the owner's call); the numbers are
+  always open, grouped Ball / Club / Result, the Club group left out when a
+  device sends none; the big numbers come up after each shot and stay until
+  the next ball is seen; red offers Reconnect and Hit by hand.
+
+  Measured: the course visible, folded, on 63-75% of laptops, tablets and
+  desktops (39-65% before), 60% of a phone held sideways (36%), 65% upright
+  (45%). Every journey green, a new `monitor` journey among them.
+
+  Found and fixed on the way: the shot caption printed the bridge's status
+  object ("Alex · Driver · [object Object]") under every monitor shot; new
+  tool windows opened 128 px down on any screen and ran off a phone held
+  sideways; and the playing area could be scrolled by the browser, which
+  slid the whole HUD under the top bar. Saved panel layouts reset once
+  (`fairway-layout-v2`), since a position saved for the old bottom bar would
+  park the panel across the course.
+
+  **Rejected:** keeping the course card and moving only the shot controls (the
+  card was the other half of what covered a phone); a fixed-time after-shot
+  card (runs out while you are still looking); a Club group of dashes for
+  devices without club data.
+
+## A ball in the air
+
+- [x] **The screen clears while a ball is in the air, at every size.** The
+  owner's ask, 26 September, first as phones only and then for every screen:
+  nothing on screen can be used while a ball flies, so the shot controls, the
+  cameras and the aim pad step aside and come back when it settles; replays
+  too. The top bar, the wind and the map stay, and the map now follows the
+  ball, drawing its line. The live readout (ticking speed, spin, distance,
+  height) is gone everywhere; a slim flight bar along the bottom carries the
+  numbers fixed at the strike -- club, ball speed, launch, spin -- and Skip,
+  which moved from near the top to the bottom centre, under the thumb. Bigger
+  than a phone, the shot panel folds to its numbers rather than going, so the
+  last shot stays readable. Checked in the Endless journey on a laptop and in
+  both phone journeys, mid-flight: the controls gone, the map and wind still
+  there, the bar reading mph, no live readout, and Skip reachable.
+
+## A launch monitor on an iPhone
+
+- [x] **A phone reaches the launch monitor, and knows where the bridge is.**
+  Researched 27 September (RESEARCH.md): a hosted `https` copy cannot reach
+  the bridge from an iPhone, so a phone plays with a monitor from the page the
+  bridge serves over the home network. The owner set aside the ways to make a
+  hosted copy connect (Tailscale, an installed certificate, a tunnel) as too
+  much setup. Then found the phone had no way into the monitor settings at
+  all: the redraw hid "Connect monitor" from the phone's top bar for room.
+  Now **Launch monitor** is in the main menu and in Tools at every size; the
+  address box defaults to the address the page came from when it is plain
+  `http` (and to `ws://127.0.0.1:1922` otherwise, which was the default
+  everywhere -- on a phone, the phone); the last address that connected is
+  remembered; and a page loaded over `https` says why it cannot connect and
+  what to open instead. Also fixed: the phone's camera button floated over the
+  main menu. New `monitor-phone` journey; 16 of 16 green.
+
+- [x] **The bridge ships in the portable archive, ready to run.** Asked 27
+  September: how would other players launch the bridge? They could not -- it
+  shipped only in the source archive, and running it took `npm ci` and a
+  build; the portable README claimed an "included bridge" anyway. Now `npm run
+  build` bundles it into one file (`dist/fairway-bridge.mjs`, ~130 kB, needs
+  only Node.js), the portable archive carries it in a **Launch monitor**
+  folder with a **Start bridge** for Windows and for macOS, and the bridge
+  serves the `Fairway.html` beside it. The script listens on every address and
+  prints two links, this computer's and a phone's, finding the computer's
+  home-network address itself -- skipping a VPN adapter that, on the machine
+  this was written on, came first. There were two scripts per platform, one
+  for a phone, until the owner asked why: the phone one did not even serve the
+  computer's own browser, and the firewall prompt is gate enough. Checked by a new
+  `bridge-bundle` journey running the built bundle as its own process with a
+  pretend connector sending a real shot, and a unit test for the address
+  choice; the Windows script run by hand. Not yet run: the macOS scripts.
+
+## Flagsticks and houses (13 October 2026)
+
+- [x] **Houses collide where they are drawn.** Asked for as "give them
+  colliders"; they had one, turned by the hole's angle and 2.6 m too tall, so
+  on a test course a third of each footprint disagreed with the drawing and 96
+  of 100 shots skimming a wall hit it. Fixed in simulateShot, with a test that
+  fails on the old code; `tests/homes.test.mjs` had the same frame mistake and
+  was corrected (RESEARCH, *Flagsticks and houses*).
+- [x] **The flagstick collides** (see *Obstructions in the shot path*).
+- [x] **Flagsticks stay visible from a distance.** Past the point where the
+  stick would stand under 36 px on screen it and its flag grow to hold that
+  size (up to 10x), the pole never under 2 px; to scale up close; drawing only
+  (renderer.js, `FLAG_MIN_PX`). Looked at in the game from a 374 yd tee.
+  Owner to judge the size; the numbers are placed.
+- [x] **A switch for it, off by default (14 October).** "Larger flags far
+  away" in Graphics, below Text size (`graphics.distantFlags`, default
+  false; `tests/distant-flags.test.mjs`). Off, every flagstick is to size
+  from anywhere. Checked in the game at 107 yd: off, the flag is lost against
+  the green at night; on, it shows.
+
+## Sounds (13 October 2026)
+
+- [x] **Every sound, synthesised and signed off by the owner** over four
+  rounds of the local listening report (`tools/sound-lab`, `docs/reports/
+  sounds/`): strikes for driver, woods, irons, chips and putter; a landing per
+  surface; trunk, canopy, rock, flagstick, house (brick for all), the cup;
+  score stings on a marimba; and an ambience per biome that never loops -- wind
+  gusts, one bird at a time, crickets and cicadas by temperature, water only
+  near water, the odd plane. Nothing recorded, nothing to credit; CC0
+  recordings were compared and turned down (RESEARCH, *Sound*).
+- [x] **Wired into the game** (`src/sound.js`, `src/audio.js`): the strike on
+  keyboard shots only (no club sound with a launch monitor, the owner's call),
+  every contact as the ball reaches it from simulateShot's new `contacts`,
+  the canopy, the cup, the score sting with the hole-out banner, and the
+  ambience following biome, wind, temperature, night and the ball's distance
+  to water. A **Sound** window (main menu and in-round menu) with an off
+  switch and three volumes, kept on the device. Tested by
+  `tests/sound.test.mjs` and a `sound` smoke journey.
+- [x] **Decided, not built**: no crowd reactions, no ball-rolling sound.
+- [x] **Water by kind** (13 October). Was: "the nearest water should choose its
+  sound" and "the owner picks the pond-and-lake option". The owner signed off
+  the bubbly lap for ponds and lakes, the mountain stream for rivers and the
+  babbling creek for creeks (`WATER_FOR`), with no frogs, after four rounds
+  (RESEARCH, *Round 5* to *Round 8*). The game finds the nearest water's kind
+  (`waterKindAt`) and plays its sound from its side, the sea keeping its surf.
+  The creek's rendering stays on the main thread (RESEARCH, *Round 8*, says why).
+- [x] **The smoke suite on an idle card.** Was: `floodlit-night` and
+  `text-size` failed while another program held the card at 74%. All 26
+  journeys passed with the card idle.
+- [x] **The swing no longer plays backwards** (the owner, 13 October). The
+  strike was started 0.43 s in the past to give the whoosh room; Web Audio
+  moves a late sound to now whole, so the whoosh came after the crack. It now
+  has a 0.1 s lead and nothing is scheduled in the past (RESEARCH, *Round 5*).
+  This also closed "the first shot of a fresh page plays late".

@@ -6,7 +6,7 @@ bitten. Every point names the section of a longer document that has the
 detail.
 
 **The long documents are for searching, not reading.** PROJECT_HANDOFF.md is
-about 80 thousand tokens, TODO.md about 90 thousand, RESEARCH.md about 140
+about 150 thousand tokens, DONE.md about 165 thousand, RESEARCH.md about 280
 thousand. Reading any of them whole spends a large share of a session before
 any work starts. Instead:
 
@@ -15,8 +15,9 @@ grep -n "^## \|^### " docs/PROJECT_HANDOFF.md   # its sections, with line number
 grep -n -i "cup\|capture" docs/*.md             # every doc that mentions a subject
 ```
 
-then read only the sections that match. TODO.md's open work is everything above
-`# Done`; RESEARCH.md is one dated section per finding.
+then read only the sections that match. TODO.md is open work only and short
+enough to read whole; what was finished is in DONE.md. RESEARCH.md is one dated
+section per finding.
 
 **Keep this file short** -- under about 40 KB. It summarises; it never becomes
 the only place something is written. A new file, invariant or trap gets its
@@ -80,9 +81,12 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - The world pieces, each pure with its test of the same name: `src/paths.js` (cart paths, bridges -- every path over water or a ravine is one, `findBridges` -- `pathIndex` for the lie), `src/clubhouse.js` (sited, sized, terraced, solid), `src/markings.js` (stakes, posts, rakes, divots), `src/waterworks.js` (rip-rap, tie walls, fountains; the fountain's moving water is `src/fountain.js`, drawn by `addFountains`), `src/story.js` (walls and `wallBoxes`, farm, ruins, landmarks), `src/life.js` (animals, drawn only, never on Low; the people went on 2 November 2026, and tournament week's `occasion.js` and `leaderboard.js` with them), `src/yardage-book.js` (the PDF book), `src/surface-field.js` (the baked surface field: bunkers past the twelve slots, painted and played from the same bytes). Drawn by renderer.js's `addPaths`, `addMarkings`, `addBuildings`, `addWaterworks`, `addStory`, `addLife` from the `tools/blender/architect_*.py` packs.
 
 **Moving a ball**
-- `src/physics.js` -- flight and contact, cup capture, monitor shot normalisation; `AERO`, `CONTACT`
-- `src/contact.js` -- the bounce as something that takes time; `src/cup.js` -- the analytic capture reference
-- `src/turf.js`, `src/firmness.js` -- roll and Stimp; firmness, kept separate from speed
+- **docs/BALL_PHYSICS.md is the ball model in full** (rebuilt 11 November 2026); docs/BALL_BEHAVIOUR_KNOBS.md says which number moves what; `node tools/ball-bench.mjs` scores it against 149 real measurements in a second
+- `src/physics.js` -- `simulateShot`: one shot from the club face to rest (air, bounces, slide and roll, trees and houses, the hole); `groundStep`, `rollPreview`; monitor shot normalisation
+- `src/aero.js` -- the air: drag, lift, spin decay, density, wind that is slower near the ground; `AERO`, `flyBall`
+- `src/turf.js` -- the three course conditions (`turfConfig`: green speed, green firmness, fairway firmness; `CONDITION_PRESETS`), one row per surface (`turfOf`), the Stimpmeter and rolling (`ROLL`), putt lengths in closed form
+- `src/bounce.js` -- one impact of a spinning ball: the pitch mark's tilt, the rebound, the turf's grip on the spin (`bounce`, `TILT`, `SEVERITY`)
+- `src/cup.js` -- the hole as rigid contacts: green, rim, wall, floor, flagstick (`cupSim`, `captureSpeed`, `CUP`)
 - `src/clubs.js` -- every kind of club, a golfer's bag checked and made playable
 - `src/swing-meter.js` -- the Swing Meter: three taps into the launch numbers, the bar in yards, the target marker, curve / height / spin, and the lie table every golfer plays under
 - `src/shot-data.js`, `src/shot-views.js`, `src/dispersion.js` -- what a shot shows, its plots, grouping by club
@@ -181,7 +185,8 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `tools/meshy-run.mjs` and `tools/meshy/<pack>.json` -- makes a pack's plants on Meshy's API, pictures first for the owner to approve, then models: a trial for AI foliage, its results land in bench/meshy (local), and the redwood pack's 14 trees ship from vendor/blender-meshy_redwood; `tools/blender/meshy_far.py` rebuilds a far version from a full model, `meshy_game.py` turns a full model into the game's form, `meshy_parts.py` is what they share, `meshy_colours.py` lists a model's colour groups for choosing its flower colours (BLENDER_ASSETS, *Trying models from Meshy*).
 - `tools/software-crash.mjs` (the software renderer at Low and Medium, a fresh browser a case, logging how far each gets), `tools/frame-ab.mjs` (two builds measured alternately, pictures compared; `--built` a course file, `--scene` what the scene holds, `fly` spots), `tools/builder-frames.mjs` (the Course Builder's waits and frames on a course file), `tools/far-cluster.mjs` (far versions made when the models are packed), `tools/frame-variants.mjs` (ideas tried live, processor profile, page restyles), `tools/frame-tris.mjs` (a frame's triangles model by model), `tools/frame-spikes.mjs` (what each long frame spent its time on), `tools/frame-look.mjs` (two hooked builds with the clock stopped: pictures compared exactly, the interface checked), `tools/frame-motion.mjs` (the same round frame for frame on a virtual clock, a shot and a camera flight), `tools/devices.mjs` (device profiles), `tools/gpu-gate.mjs` (the gate for unattended GPU runs; `tools/gpu-run.mjs` runs any command through it and logs it), `tools/png-diff.mjs`, `tools/variants/` -- frame time
 - `tools/ui-audit.mjs` -- every screen at sixteen sizes read for layout bugs (rules in `tools/ui-audit-rules.mjs`, tested; explained findings in `tools/ui-audit-known.json`; four sizes side by side, a contact sheet per screen, `--quick` for a round of fixes; docs/UI_POLISH.md)
-- `tools/green-fit.mjs` -- fits how a ball lands on a green (first hop, check, come-back) against its targets
+- `tools/ball-bench.mjs` -- the ball against real measurements (flight, firm-green landings, club run-outs, spin, chips, fairway, Stimp, putts, break, the hole, slopes), each check naming its source; `--set` tries a constant, `--shot` and `--land` trace one shot hop by hop; `tools/flight-fit.mjs` fits the air to the published flights in `tools/flight-targets.mjs` and the owner's private sessions; `tools/ball-paths.mjs` draws a ball from pitch mark to rest as SVG, against another checkout's ball when asked
+- `tools/meter-landings.mjs` -- what the Swing Meter's own shots do on each green and out of the rough (the table in BALL_PHYSICS *The strike*)
 - `tools/capture/` -- pictures and clips of the game (`landscape-models.mjs`: every model a landscape draws, one picture each), 4K stills and frame-by-frame 4K60 clips (`record.mjs`, `mux.mjs`), and `motion.mjs`, which measures a clip's camera shake from its frames (docs/CAPTURE.md); `overhaul.mjs`, the cartoon overhaul's fixed views of a landscape from any build (docs/CARTOON_OVERHAUL.md); `builder-skin.mjs`, Skin from the land pressed in the real builder on a real course; `tools/landing-report/` -- the owner's local reports
 - `tools/golfer-table.mjs` -- bakes src/golfer-table.js; `tools/us-map.mjs` -- writes src/us-map-data.js (the map of the landscapes and the globe) from the study's partition and Natural Earth
 - `tools/gen-time.mjs` -- how long an 18-hole course takes to generate, per landscape (the wait a player sees); `tools/ground-shares.mjs` -- what share of a course each surface and ground type is; `tools/surface-map.mjs` -- a course's surfaces from above as a PNG, on the CPU
@@ -298,13 +303,17 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - A tracer style or ball finish is uniforms and buffers, never a new program: every tracer line is one dashed, vertex-coloured material, the ball always has a texture, and tracer colours go in linear. [A LOOK IS NEVER A NEW SHADER]
 
 **Physics**
-- Check apex, descent and hang time, not only carry, whenever the aerodynamics move. [CHECK APEX]
-- The firmness tests pin a 7-iron's arrival; a flight refit means re-deriving them. [THE FIRMNESS TESTS]
-- The green's bounce and spin constants are fitted together by tools/green-fit.mjs; never move one by hand. [THE GREEN IS FITTED AS ONE PIECE]
+- Change a ball number, then run `node tools/ball-bench.mjs`: it must stay at every check passing. Check peak height, landing angle and time in the air, not only carry, whenever the air moves -- landing angle is the most sensitive input to how far a ball runs. (docs/BALL_PHYSICS.md)
+- The firm green's bounce numbers (`tilt`, `eHi`, `mu`, `shear`, `arm`) are fitted together to the USGA's launcher tests; never move one alone. (BALL_PHYSICS *What the firm green was fitted to*)
+- Nothing decides whether a ball grips or skids, drops or lips out: both fall out of the contacts. A rule added to force either is the old model coming back. (BALL_PHYSICS *The bounce*, *The hole*)
+- A rolling ball that stops with its centre over the hole is not at rest, and a ball on a bank too steep for the surface rolls back down it: the old model froze both. (`simulateShot`)
+- A ball meets a real flagstick (0.75 in in the air, 0.5 in in the hole) whatever is drawn (2 in tapering to 1 in). (`FLAGSTICK_HIT_R`, `FLAGSTICK_HOLE_R`; BALL_PHYSICS *The hole*)
+- The lie takes speed (`LIE_SPEED`) and, out of grass, a high-spinning shot's spin (`lieSpin`, the flyer), from Swing Meter and monitor shots alike. (BALL_PHYSICS *The strike*)
+- `src/golfer-table.js` (the markings' landing zones) was baked from the OLD ball and is deliberately not re-baked: doing so moves generated markings and owes a `GENERATOR_VERSION` bump.
 - Everything solid is a vertical cylinder in one collision index, except buildings -- houses and a course's `world.buildings` (the clubhouse) -- which are oriented boxes in one shared routine; add no third. A club building is never out of bounds. [EVERYTHING SOLID]
 - A house's rotation is a world angle: in a hole's frame subtract the hole's. The flagstick is solid only while it stands in the hole. [A HOUSE'S ROTATION IS A WORLD ANGLE], [THE FLAGSTICK IS SOLID]
 - The simulator never invents ball data; the one thing applied on top is the round's stated lie rule, shown beside the measured number. [The simulator never invents ball data]
-- With no spin added, a Swing Meter ball never spins back; the club's own spin is set below the come-back point by sweeping. [With no spin added, nothing spins back]
+- Every number in the ball is measured or PLACED on its own reasoning; no ruling about the ball from before 11 November 2026 is used, and the Swing Meter trims no spin to make a ball stop (`HEIGHT_SPIN` is strike geometry only). `node tools/meter-landings.mjs` prints what its shots do. (BALL_PHYSICS *The strike*)
 
 **Shaders and drawing**
 - The ground shader is a chain of `.replace()` anchors; every link is load-bearing, and `tests/ground-shader-structure.test.mjs` checks it. Never script a shader edit whose replacement you have not printed. [THE GROUND SHADER IS A CHAIN]
@@ -376,7 +385,9 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 ## Where else to look
 
 - **docs/README.md** -- which document answers which question.
-- **TODO.md** -- open work above `# Done`, the record of what was built below it.
+- **TODO.md** -- open work only; fine to read whole.
+- **DONE.md** -- the record of what was built, and what was ruled out. Search it.
+- **history/** -- the round-by-round journals of finished branches (the cartoon overhaul, the 1.0 polish). Search them for why; `docs/*.md` does not reach them.
 - **IDEAS.md** -- what could be built; read only when looking for something new.
 - **TESTING.md** -- what is tested, by which layer, and what only a person checks.
 - **RESEARCH.md** -- every number, its source and the measurement behind it.

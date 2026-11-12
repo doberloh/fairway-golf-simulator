@@ -46,6 +46,8 @@ const LIE_WORD = {semi: 'semi-rough', rough: 'rough', sand: 'sand', ...Object.fr
 const docked = r => { const l = r?.shot?.lie; return l && l.factor < 1 && Number.isFinite(l.before) ? l : null; };
 export const liePenaltyNote = r => { const l = docked(r); return l ? `−${(l.before * (1 - l.factor) / MPH).toFixed(1)} ${LIE_WORD[l.surface] || l.surface}` : null; };
 const lieTag = r => { const l = docked(r); return l ? LIE_WORD[l.surface] || l.surface : null; };
+// Spin is the played number; when the grass took some (a flyer), it says so.
+const lieSpinTag = r => { const l = docked(r); return l && l.spin < 1 ? LIE_WORD[l.surface] || l.surface : null; };
 // The ball speed to show: measured for a monitor shot, played for the meter's.
 export const shownSpeed = r => { const l = r?.shot?.lie; return l?.measured && Number.isFinite(l.before) ? l.before : num(r?.shot?.speed); };
 const signed = (v, dp) => v == null ? null : (v > 0 ? '+' : '') + v.toFixed(dp);
@@ -63,7 +65,7 @@ export const SHOT_FIELDS = [
  {id: 'direction', group: 'ball', label: 'Launch direction', unit: '°',
   get: r => sided(num(r?.shot?.hla), 1, '°')},
  {id: 'spin', group: 'ball', label: 'Spin', unit: 'rpm',
-  get: r => fixed(num(r?.shot?.spin), 0)},
+  get: r => fixed(num(r?.shot?.spin), 0), note: lieSpinTag},
  {id: 'spinAxis', group: 'ball', label: 'Spin axis', unit: '°',
   get: r => sided(num(r?.shot?.spinAxis), 1, '°')},
 

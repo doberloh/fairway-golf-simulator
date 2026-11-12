@@ -51,7 +51,7 @@ import {SCHEMA_VERSION, generatorFor, validateSettings, migrateSettings} from '.
 import {courseSettings, settingsDiff, checksum} from './course-library.js';
 import {puttingConfig, puttingName} from './putting.js';
 import {isTee} from './tees.js';
-import {firmnessName} from './firmness.js';
+import {turfConfig, FIRMNESS_LABELS, firmnessName} from './turf.js';
 
 const PREFIX = 'FWC1';
 const KEY = 'fairway-rivals-v1';
@@ -161,8 +161,8 @@ export function normaliseShots(d) {
 // The turf is the challenger's own (it is a player setting, not the course's),
 // and it is also what their shots are flown again on.
 export function rulesOf(round, seat, settings = {}, input = 'monitor') {
- const p = round.players[seat] || {}, putting = puttingConfig(round.putting), t = settings.turf || {};
- const turf = Object.fromEntries(['stimp', 'fairway', 'semi', 'rough', 'firmness'].filter(k => Number.isFinite(t[k])).map(k => [k, t[k]]));
+ const p = round.players[seat] || {}, putting = puttingConfig(round.putting);
+ const turf = safeTurf(settings.turf);
  return {
   tee: p.tee || round.tee,
   putting: {mode: putting.mode, one: putting.one, two: putting.two, three: putting.three, gimme: putting.gimme},
@@ -174,6 +174,9 @@ export function rulesOf(round, seat, settings = {}, input = 'monitor') {
 }
 // Old codes carry no gimme circle; puttingConfig gives them the default.
 const puttingText = p => { try { return puttingName(p); } catch { return 'hole out'; } };
+// The three course conditions, whatever shape they arrived in (a code written
+// before them carried one firmness and roll percentages; turf.js reads both).
+const safeTurf = t => { try { return turfConfig(t); } catch { return turfConfig(); } };
 // Each rule in words, for the setup's list.
 export function describeRules(r) {
  const t = r.turf || {};
@@ -184,8 +187,8 @@ export function describeRules(r) {
   ['Lie penalty on monitor shots', r.lie ? 'on' : 'off'],
   ['Played on', r.input === 'meter' ? 'the Swing Meter' : 'a launch monitor'],
   ...(Number.isFinite(t.stimp) ? [['Green speed', `Stimp ${t.stimp}`]] : []),
-  ...(Number.isFinite(t.firmness) ? [['Green firmness', firmnessName(t.firmness)]] : []),
-  ...(['fairway', 'semi', 'rough'].every(k => Number.isFinite(t[k])) ? [['Roll', `fairway ${t.fairway}%, semi-rough ${t.semi}%, rough ${t.rough}%`]] : []),
+  ...(t.greenFirmness != null ? [['Greens', FIRMNESS_LABELS[firmnessName(t.greenFirmness)].toLowerCase()]] : []),
+  ...(t.courseFirmness != null ? [['Fairways', FIRMNESS_LABELS[firmnessName(t.courseFirmness)].toLowerCase()]] : []),
  ];
 }
 // WHERE TWO GOLFERS' RULES DIFFERED, as sentences naming the challenger. Empty
@@ -291,7 +294,7 @@ export function readRivalCode(code) {
  try { putting = puttingConfig(q.putting); } catch { putting = puttingConfig(); }
  const rules = {tee: isTee(q.tee) ? q.tee : 'blue', putting: {mode: putting.mode, one: putting.one, two: putting.two, three: putting.three, gimme: putting.gimme},
   ob: q.ob === 'e5' ? 'e5' : 'stroke', lie: q.lie !== false, input: q.input === 'meter' ? 'meter' : 'monitor',
-  turf: Object.fromEntries(['stimp', 'fairway', 'semi', 'rough', 'firmness'].filter(k => Number.isFinite(t[k]) && t[k] >= 0 && t[k] < 1000).map(k => [k, t[k]]))};
+  turf: safeTurf(t)};
  let shots;
  try { shots = readShots(parts[2], holes); } catch { throw Error('This challenge code’s shots could not be read.'); }
  return {name: String(head.n || 'Golfer').slice(0, 24), course: String(head.c || 'A Fairway course').slice(0, 40), version: typeof head.f === 'string' ? head.f.slice(0, 32) : '',

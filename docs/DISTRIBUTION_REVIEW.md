@@ -955,7 +955,7 @@ v0.6.1 zips.
 that commit. It carries five journeys since 0.6.1: shot views and the studio
 bar; each golfer's own bag and nothing standing in a tee's view; the spin-back
 rework; every sound, synthesised; and the shot line in the play window with
-the tiles along the bottom (TODO, `# Done`, each under its own heading).
+the tiles along the bottom (DONE.md, each under its own heading).
 **`GENERATOR_VERSION` is 35** (bushes and houses out of the tees' view), so a
 round saved in 0.6.x opens with the version notice; course codes still load,
 on the new ground, and the website's sample course code is written from the
@@ -1996,3 +1996,35 @@ failing) on the release commit's content, the packager's verification of every z
 builder journeys and the 41 smoke journeys on the branch's last code change. **Not played by a
 person:** a built course with four or more tee sets in a round, tee markers on a narrow built tee,
 Build it myself from a drawn box on the real services (TODO, *Release 0.9.12*).
+
+## Addendum, 12 November 2026: v0.9.13
+
+**v0.9.13** is published at the owner's request ("please merge this back into main. Create a new
+patch release. Push to github and the live website demo"; "patch" read as the next number after
+0.9.12), as "Fairway 0.9.13 (beta)", tag `v0.9.13`, not a pre-release, the same six files, from
+the merge of `ball-physics-rework` into `main`, notes in `docs/releases/v0.9.13.md`. Content: the
+ball rebuilt (docs/BALL_PHYSICS.md) -- a new air model, one bounce law, rolling that follows the
+Stimp with a putt's skid, the hole as real contacts, three course conditions with three presets,
+the lie taking a lofted shot's spin -- and the gimme circle putting mode (on `main` since 11
+November, never released). **Version numbers unchanged** (generator 103, schema 47, built 3):
+courses, saved rounds, settings and built course files carry over, and `turfConfig` reads an older
+save's or challenge code's one firmness and three roll percentages into the three conditions.
+**What does not carry over exactly:** a friend's challenge made before 0.9.13 flies its shots
+again on the new ball, so their drawn shot lines land elsewhere than they did for the friend;
+their scores are stored and are not changed. **Putts against 0.9.12, measured** (the same putt
+rolled in both versions' `simulateShot`, level green, Stimp 10): launched level, about the same
+(5.3 mph: 9.8 ft against 10.0; 8.1 mph: 19.9 against 22.9; 12.3 mph: 39.9 against 43.6); launched
+2 degrees up, much further than before (5.3 mph: 9.8 ft against 5.6; 12.3 mph: 39.6 against
+27.8), because the old ball lost speed to that first hop. The release notes say the second and
+do not claim putts need more speed than before -- a first draft did, and the measurement
+overturned it. **Sizes:** the game page 60.4 MB (60,428,738 bytes on the branch, unchanged in
+practice), the builder's 56.1 MB, the guide 2.0 MB; the zips, built on the branch before the
+merge: Windows 107.1 MB (107,142,087 bytes), Linux 103.7 (103,738,828), Apple Silicon 93.0
+(92,986,368), Intel 95.4 (95,356,127), source 36.9 (685 files) -- within 5 KB of 0.9.12's.
+Nothing about the offline build changed. **Checked:** the full tests (1,584; none failing) on the
+release commit's content, `node tools/ball-bench.mjs` (148 of 148), the biome fingerprints
+(unchanged), the packager's verification of every zip. **No smoke run on this release's code:**
+28 journeys passed on 11 November, before the flyer, sand at 85%, the height spin factors, the
+real-width flagstick and the merge of the gimme circle; the owner asked for no graphics-card run
+this turn. **Played by the owner** on the branch on 12 November ("it feels way better"); what
+nobody has reported seeing is in TODO, *Play the current build by hand*.

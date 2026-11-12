@@ -1,240 +1,130 @@
 # What changes what
 
-A plain-language map of every number we tune and which part of the ball's
+A plain-language map of every number that tunes the ball and which part of its
 behaviour it moves. Written so a request can name an OUTCOME and we both know
-which knob it lands on.
+which knob it lands on. Rewritten 11 November 2026 for the rebuilt ball model;
+**docs/BALL_PHYSICS.md** says what each number rests on.
 
 The vocabulary used throughout:
 
 - **carry** — where the ball first touches down.
-- **first hop** — the bounce off the pitch mark. It has a *height* (how high) and
-  a *distance* (how far forward before the second bounce).
-- **release** (or run-out) — where it finishes, measured from the pitch mark.
-  Positive is forward, negative means it came back past its own mark.
-- **check** — the ball stopping short. **Zip-back** — the ball finishing behind
-  its mark.
+- **first hop** — the bounce off the pitch mark. It has a *height* and a
+  *length* (how far forward before the second bounce).
+- **run** (or release, or run-out) — where it finishes, measured from the pitch
+  mark. Positive is forward, negative means it came back past its own mark.
+- **check** — the ball stopping short after a hop. **Come-back** (zip-back) —
+  finishing behind its pitch mark.
+- **grip** and **skid** — the two things a spinning ball can do in a bounce.
+  Gripping, it spends all its backspin in one bite. Skidding, it keeps some for
+  the next bounce.
 
----
+## The one rule
 
-## The one rule that overrides everything
+**Change a number, then run `node tools/ball-bench.mjs`.** It scores the ball
+against 149 real-world targets in about a second and names the source of each.
+A change that makes one shot look right and fails the bench has traded a
+measurement for a feeling. To try a value without writing it:
 
-**A ball never leaves its FIRST bounce travelling backwards**, on any surface, at
-any firmness. Ploughing and tilt can stop a ball; they cannot push it back, since
-there is nothing behind it to push against. Reversal comes from backspin acting
-on the hops and roll that follow. Enforced in `physics.js`; see the
-`bounces === 0` floor.
+```sh
+node tools/ball-bench.mjs --set green.mu=.55,.45,.40 --set ROLL.power=.4
+node tools/ball-bench.mjs --shot 120,16.3,7097        # one shot, hop by hop, on each firmness
+node tools/ball-bench.mjs --land 22,51,9100,green,3   # from landing numbers, into a 3% upslope
+```
 
----
+Fitting a surface against ONE club looks excellent on that club and wrecks the
+rest. Every green is checked against every club that lands on one.
 
-## Per-surface contact table — `CONTACT` in `src/physics.js`
+## What the player sets — `turfConfig` in `src/turf.js`
 
-One row per surface: green, fringe, fairway, tee, semi, rough, sand -- and,
-since the cartoon overhaul, one per ground type (rock, coral, scree,
-hardpan, waste sand, pine straw, leaves, heather, native grass), and the
-cart path (on every generated course since 2 November 2026: the hardest surface in
-play, cor 0.235, a long run, roll 0.85). **Those rows
-are not edited here**: physics writes them from `src/grounds.js`, which holds
-every number for each type in one place -- `contact` (this table's knobs,
-with `ground` and `canopy` instead of `plough`), `roll` (the rolling
-deceleration, m/s², against rough's 3.8; not scaled by the turf roll
-sliders), `slide` (skid friction), `lie` (the share of ball speed kept),
-`hop`, `relief`, `sound`, `killsSpin`. All PLACED; `tests/grounds.test.mjs`
-holds the orderings (rock bounces hardest, heather deadest, hardpan runs, no
-restitution over 0.24). To make a ball run further on hardpan, lower its
-`roll`; to make rock kick less, lower its `cor`.
+| Setting | Range | What it changes |
+|---|---|---|
+| Green speed (`stimp`) | 6 to 15 ft | how far a ball ROLLS on a green: putts, and the last part of every chip and approach. Nothing about the landing |
+| Green firmness (`greenFirmness`) | soft, medium, firm | what a ball does when it LANDS on a green or collar: first hop, whether spin grips or skids, run |
+| Fairway firmness (`courseFirmness`) | soft, medium, firm | the same on tees, fairways, semi-rough and rough: how high and how often a drive bounces, how far it runs |
+| `CONDITION_PRESETS` | Everyday, Club, Tournament | the three at once: 8.5 / soft / medium, 10 / medium / medium, 12 / firm / firm |
 
-| knob | what it physically is | raise it and… | lower it and… |
-|---|---|---|---|
-| `cor` | restitution — how bouncy the surface is | **hop goes higher**, more bounces | hop dies, ball stays down |
-| `tilt` | the ball climbing out of its own crater | hop gets **steeper and shorter**, more of the rebound turns backward | hop gets **flatter and longer** |
-| `mu` | friction | **both** forward speed and backspin are stripped harder | ball keeps its pace **and** its spin |
-| `plough` | turf ahead being shoved out of the way | forward speed killed **without** touching spin | ball runs on |
-| `spin` | how much tangential impulse becomes spin change | backspin destroyed faster; ball reaches rolling and leaves with **topspin** | backspin survives the bounce |
+## Per-surface table — `SURFACES` in `src/turf.js`
 
-**`plough` is the sum of two things**, and this is why ordering it used to
-produce contradictions:
+One row per surface. A column written `[soft, medium, firm]` moves with that
+surface's firmness. The wild ground types' rows are in `src/grounds.js` (`turf`).
 
-- `GROUND` — how far the ball sinks. About the soil. Firmest first: fairway/tee,
-  semi, rough, fringe, green. A fairway is native soil; a green is a watered
-  rootzone kept receptive.
-- `CANOPY` — how much the grass grabs. About mowing height only. A green is
-  shaved to nothing; rough is 50 mm deep.
-
-The two orders genuinely disagree, and the ball feels the sum.
+| Column | What you see when you RAISE it |
+|---|---|
+| `e0` | gentle hops come back higher: more small bounces before the ball settles. A dropped ball's bounce |
+| `eHi` | a full shot's first hop is a little higher. Small effect: most of a first hop's height comes from `tilt` |
+| `tilt` | the first hop is HIGHER and SHORTER: the pitch mark stands the ball up, and more forward speed is lost. The main lever on first-hop shape and on how far a low shot runs |
+| `mu` | the ball grips more easily: spin is spent sooner, a spun shot checks on its first bounce instead of its second. Only matters when the limit binds; chips and gentle bounces |
+| `shear` | the most spin one bounce can take off a FULL shot (m/s of ball speed). Raise it and full shots grip instead of skid: less hop-forward, less come-back on the next bounce |
+| `arm` | (lower = more come-back.) Below 1 a skidding ball keeps more backspin for the speed it loses, so a spun wedge checks harder and comes back further |
+| `dig` | a hard landing loses more of its forward speed in its own pitch mark: shorter run for full shots, steeper ones most. Gentle bounces are untouched |
+| `grab` | every contact loses forward speed and spin: long grass. Rough stops a ball with this |
+| `slide` | a skidding ball slows faster: a shorter skid on a putt, a quicker check once a spun ball is on the ground |
+| `stimp` | (not greens) the surface rolls further: fairway run after the bouncing stops |
 
 ### Which one do I reach for?
 
-- *"the hop is too high"* → `cor`
-- *"the hop pops up instead of going forward"* → `tilt` down (costs height) or
-  `plough` down (keeps height)
-- *"it doesn't run out enough"* → `plough` down
-- *"it won't come back"* → `mu` down or `spin` down, both of which keep backspin
-- *"it comes back too easily on an ordinary shot"* → `spin` up
+| I want | Reach for |
+|---|---|
+| full irons to run less on medium greens | `green.dig` (middle value) up; or `green.tilt` up |
+| wedges to come back more on firm greens | `green.arm` (firm value) down a little; check the `spin` section of the bench |
+| nothing to come back on soft greens | `green.dig` (soft value) up: the pitch mark swallows it either way |
+| chips to roll further | `TILT.power` up a little (gentle bounces dig less), or `SEVERITY.power` up (medium and soft behave more like firm for a chip) |
+| a higher, shorter first bounce on fairways | `fairway.tilt` up |
+| drives to run further on firm fairways | `fairway.dig` (firm value) down, or `fairway.stimp` (firm value) up |
+| more visible bounces after a drive lands | `fairway.e0` up |
+| rough to stop the ball harder | `rough.grab` up |
+| putts to skid less | `green.slide` up |
+| long putts to run further without touching short ones | `ROLL.power` down (and re-check the TrackMan putt in the bench) |
 
-`mu` is the strongest single lever because it moves forward speed and spin
-**together** — lower friction means the ball keeps its pace *and* the spin to
-bring it home, which is why a firm green skips a ball forward and *then* rips it
-back.
+## Laws shared by every surface
 
----
-
-## Firmness — `src/firmness.js` and the `*_BY_FIRMNESS` tables
-
-Firmness is a **greens measurement** (inches of penetration on a TruFirm or GS3)
-and applies to **greens and their collars only**. Fairway, tee, semi and rough
-ignore it entirely — use their roll percentages instead.
-
-| knob | moves | effect across Soft → Burnt |
+| Knob | Where | What it changes |
 |---|---|---|
-| `BOUNCE_BY_FIRMNESS` | `cor` | **hop height** grows with firmness |
-| `SPIN_BY_FIRMNESS` | `spin` at the landing | **firmer takes more spin off**, so Soft spins back most and Burnt almost never. **This is the come-back dial** |
-| `LANDING_SPIN.slowBounce` | `spin` on later bounces | below this impact speed (8.15 m/s into the turf) the transfer rises toward the rigid 2.5, so the small hops after a landing cannot turn spin into backward speed. Raise it and pitches start running; lower it and the come-back grows |
-| `PLOUGH_BY_FIRMNESS` | `plough` | flat across firmness on a green — see below |
-| `gripScale` | `mu` | weak; friction takes spin and speed together and cannot express firmness cleanly |
+| `TILT.power` | `src/bounce.js` | how the pitch-mark tilt grows with speed into the ground. Lower: gentle bounces dig relatively more, so chips and later bounces lose more. 0.7, fitted |
+| `TILT.fade` | `src/bounce.js` | over how many degrees before grazing the tilt dies away. Lower it too far and a rolling ball is kicked into the air |
+| `SEVERITY.power`, `digMax` | `src/bounce.js` | how quickly firmness comes into play as landings get harder, and how far past the reference impact `dig` keeps growing |
+| `E_FAST` | `src/turf.js` | the speed into the ground (20 m/s) at which restitution reaches `eHi` |
+| `SETTLE_SPEED` | `src/physics.js` | a bounce that leaves slower than this (0.3 m/s, a 5 mm hop) is over: the ball is on the ground |
+| `ROLL.power` | `src/turf.js` | how much harder mown turf resists a faster-rolling ball. 0 is a flat deceleration; 0.42 is fitted to a measured long putt. The Stimp is exact at any value |
+| `ROLL.floor` | `src/turf.js` | below this speed (0.5 m/s) the resistance is flat. Sets the steepest slope a ball can stop on |
 
-**A SOFTER GREEN CHECKS HARDER.** A soft, receptive green grips a spinning ball
-and stops it; a firm one is harder to hold because the ball bounces and runs.
-That is why course setups FIRM greens to protect par, and it is the single thing
-this model had backwards for a long time. The television backspin everyone
-pictures happens on *receptive* greens, not the baked ones players complain they
-cannot hold.
+## Flight — `AERO` in `src/aero.js`
 
-The mechanism is `SPIN_BY_FIRMNESS`: a ball skids across hard tight turf and the surface
-takes the spin off it, while a soft green closes round the ball and cushions the
-contact so the spin survives to walk it home. **Backspin the ball still has when
-it settles is the only thing that can bring it back.**
+Refit with `node tools/flight-fit.mjs --fit`; never by hand. Check peak height,
+landing angle and time in the air, not only carry.
 
-**Ploughing is flat across firmness on a green**, and the fit put it there rather
-than being told to. A putting surface is tight, sand-based and shallow-marking;
-how firm it is barely changes how far a ball sinks.
-
-**How far a ball comes back, and the first hop** (13 October 2026; RESEARCH.md,
-*Spin-back reined in*). Flat green, Stimp 10, a full wedge landing at 52 degrees:
-8,500 rpm checks on every green; 10,000 starts (0.3 yd on Normal); 12,000 comes
-back 4.4 / 3.2 / 1.4 / 0.5 yd from Soft to Burnt. A steeper landing comes back
-sooner. The wedge hops about 2 ft on Normal and still goes forward first. To
-move any of this, change the targets in `tools/green-fit.mjs` and refit: the
-green's `cor`, `tilt`, `mu`, `spin`, `PLOUGH_BY_FIRMNESS`, `SPIN_BY_FIRMNESS`
-and `slowBounce` are fitted together, and moving one by hand undoes the others.
-**The trade inside it:** less come-back, a 7 iron that stops, and a forward first
-hop pull against each other; the owner chose the hop, so a tour 7 iron runs
-about 10 yd on a Normal green and a 50 yd pitch about 10.
-
----
-
-## Flight — `AERO` in `src/physics.js`
-
-Fitted against measured tour carry and apex. One curve for every shot, keyed only
-on the spin parameter. **No club ever enters it.**
-
-| knob | effect |
+| Knob | What it changes |
 |---|---|
-| `liftK`, `liftP`, `liftC` | how much lift spin generates (CL = liftK · S^liftP − liftC) → **carry and apex**. Fitted 6 October against Trackman, a GC3 and the owner's R50 |
-| `liftCap` | ceiling on lift; binds on the highest-spin clubs |
-| `liftTaper` | below this spin parameter (0.04) lift fades smoothly to zero, so a ball with no spin gets no lift. Touches only knuckleballs: the lowest-spin real shots seen are at 0.044 and up. Placed, not published |
-| `spinDrag` | extra drag from spin → shortens high-spin shots |
-| `dragBase`, `dragCrisis` | drag past the dimples' drag crisis, and the extra below it → how fast a ball slows, most of all slow, high wedges |
-| `spinTau` | how fast the ball loses spin in flight: 21.5 s at 100 mph, quicker at higher speed, so a driver sheds spin faster than a wedge. **Feeds spin-back**: a slower decay delivers more spin to the green (fitted freely it tripled a tour wedge's spin-back on a Soft green), so it is held at the published rate |
+| `liftMax`, `liftHalf` | lift against spin ratio: how high every shot flies and how steeply it lands. `liftHalf` lower gives low-spin shots (drives) more lift |
+| `dragBase` | drag at a drive's low spin ratio: drive carry |
+| `dragRise`, `dragHalf` | how drag grows with spin ratio: iron and wedge carry, and how steeply they come down |
+| `dragLow`, `lowRe`, `lowReWidth` | extra drag on a slow ball: chips, pitches, the end of a high wedge |
+| `spinTau` | how fast spin dies in the air: spin at landing, so everything a ball does on a green |
+| `windHeight`, `windShear`, `windFloor` | the height the stated wind is at, and how much slower it is near the ground: how much less a low shot is moved than a high one |
 
-Descent angle falls out of these; it is not set directly.
+## The hole — `CUP` in `src/cup.js`
 
-**The skip of a rolling ball is not a physics knob.** `src/roll-hop.js` lifts the drawn ball a few centimetres at random while it rolls (most on fairways, least on a green; the owner set the heights by eye on 6 October). Nothing in this file is affected by it: the simulation, where the ball stops and every readout ignore it. It ships switched off (`ROLL_HOP.enabled`).
-
----
-
-## Roll-out — `src/turf.js`
-
-| knob | effect |
+| Knob | What it changes |
 |---|---|
-| `stimp` | green rolling resistance. **Putting lives here** |
-| `fairway` / `semi` / `rough` roll % | rolling resistance off the green (30–180%, lower = more resistance) |
-| `ROLL_SPEED_GAIN` | how much resistance rises with speed. Flat below 1.83 m/s so putting is untouched; only fast approach roll-outs change |
-| `SLIDE_FRICTION`, `SLIDE_BASE` | the skid before true rolling begins |
-
-The Stimpmeter measures a ball released at **1.83 m/s**. Anything faster is
-extrapolation, which is what `ROLL_SPEED_GAIN` exists to correct.
-
----
-
-## Contact model — `src/contact.js`
-
-| knob | effect |
-|---|---|
-| `SPIN_GAIN` | default spin transfer; the per-surface `spin` column overrides it |
-| `normalDamping` | solved to hit a wanted restitution — not set by hand |
-| `NORMAL_RATE`, `TANGENT_RATE` | **no effect on outcome.** The model is scale-invariant in these: stiffening the spring shortens the contact by the same factor. Contact *duration* cannot change a bounce |
-| `wall`, `craterRelief` | crater asymmetry. Both inert — `wall` is ploughing in disguise, `craterRelief` only acts while the ball moves backward *during* contact, which never happens |
-
----
+| `rimE` | the rim's bounce. Raise it and firmer centred putts drop (a ball popped up by the back rim comes down in the hole): Holmes, 1.63 m/s at 0, 1.97 at 0.3 |
+| `rimMu`, `wallMu` | grip of the rim and the liner: how long a ball rides round before it drops or lips out |
+| `wallE`, `floorE` | how much a ball rattles off the liner and the bottom |
+| `hardE`, `hardSpeed` | how dead the cup is to a HARD hit: by `hardSpeed` m/s into the rim, wall or floor the bounce has fallen to `hardE`. Raise `hardSpeed` and a ball flown into the hole starts bouncing back out |
+| `pinE`, `pinMu` | the flagstick's give and grip. Raise `pinMu` and a ball rolling into the stick climbs it and pops back out |
+| `dt` | the cup's time step. Not a tuning knob |
+| `FLAGSTICK_HIT_R`, `FLAGSTICK_HOLE_R` (`src/physics.js`) | the stick a ball meets: 0.75 in across in the air, 0.5 in inside the hole. The drawn stick (`FLAGSTICK_TOP_R`, `FLAGSTICK_BASE_R`) is wider and is the picture only; at the drawn inch nothing could be holed with it in |
 
 ## Things that are NOT knobs
 
-- **The club.** Nothing in the model knows which club was swung. Everything comes
-  from the five launch-monitor numbers: ball speed, launch angle, launch
-  direction, spin rate, spin axis. Direction and axis mean what the monitor
-  means: positive starts the ball right and curves it right (a fade), negative
-  left (a draw). Until 5 October the game flew both mirrored.
-- **Contact duration.** See above — structurally cannot matter.
-- **Dispersion.** Not modelled. The simulator never invents ball data. The
-  Swing Meter's misses are the golfer's own timing, and the lie's ball-speed
-  penalty on a monitor shot is a stated round rule shown beside the measured
-  number, not a model of the strike (PROJECT_HANDOFF *The simulator never
-  invents ball data*).
-
----
-
-## What each surface is anchored to
-
-Not house numbers — measurements, each pointed at the surface the shot really
-finishes on. This distinction cost four failed fits before it was spotted: the
-published tour "total minus carry" figures are real fairway roll-outs for a
-driver and meaningless for a wedge, because a wedge lands on a **green**.
-
-| surface | fitted against | anchor |
-|---|---|---|
-| fairway | driver, 3 wood, 5 iron layup | published totals — 21 / 19 / 15 yd |
-| green | full wedge across spin and firmness, steep wedge, 7 iron, pitches, chips (`tools/green-fit.mjs`) | the owner's come-back table inside tour backspin 15–20 **feet** max; Haake's measured green bounce |
-
-Since 13 October 2026 the green is fitted to the owner's come-back table, which
-sits inside that 15-20 ft (12,000 rpm on Soft: 4.4 yd), and to the one measured
-bounce on a real green (Haake: 18.6 m/s at 44.4 deg leaves at 2.78 m/s up, 4.28
-forward), with `tools/green-fit.mjs`. **A green now bounces lower than a
-fairway**: the fairway is fitted to measured tee turf, native soil, and a green
-is a watered sand rootzone.
-
-Other fixed points, none of them chosen by us:
-
-- The first bounce goes **forward**; reversal begins at the **second**. Titleist
-  slow-motion footage.
-- A ball needs roughly **7,500 rpm** to hold a green at all.
-- A full 56 degree wedge spins **8,500–10,500 rpm**. The 10,400 rpm 7 iron this
-  model was previously tuned against is not a shot anybody hits.
-- **Chipping** is checked against carry-to-roll ratios, and the published ones
-  disagree by a factor of three: a pitching wedge is 1:3 (GolfWRX, Golf Sidekick),
-  1:2 (Personal Golf Instruction) or 1:1 (Golf Distillery); a lob wedge 1:1, 1:0.5
-  or about 1:0.3. The model's 1:1.9, 1:0.9 (56°) and 1:0.5 (60°) sit inside that
-  spread for every club. It was once recorded as a defect against the 1:3 chart
-  alone; it is not one, and nothing should be tuned toward any single chart
-  (2 October, RESEARCH.md *After the ball lands*).
-
-**Sanity check for any hand-written short-game input:** spin per mph of ball
-speed. A full tour pitching wedge is **91 rpm per mph**, and a chip cannot exceed
-its own club's full-swing figure -- the clubhead is barely moving. Trackman's chips
-average 1,500-3,000 rpm over carries of 1.25 to 24 yards, which puts a lofted chip
-nearer 100 rpm per mph than the 40-65 this file once called realistic; that band
-was a judgement with no source and is withdrawn. Testing chips at 3,800 rpm once
-produced 173 rpm per mph and made the model look badly wrong when the input was
-the problem.
-
-**A club's full-swing launch and spin** come from its kind, `CLUB_KINDS` in `clubs.js` (stock eight unchanged; eleven more placed between them on 12 October 2026 -- RESEARCH.md *The bag belongs to the player*). They change apex, descent and roll, never carry: the ball speed is solved to the carry the golfer typed.
-
-**Keyboard, touch and controller spin** is `spinForPower` in `clubs.js`: spin in
-proportion to power for chips (the same spin per mph as the full shot), the square
-root of power for pitches and full swings, blended between 30% and 70% power.
-The square root alone gave a 10% wedge 337 rpm per mph and spun chips back behind
-their marks. Anchored on Trackman: chips 1,500-3,000 rpm, a 50 yard wedge about
-6,500. Since 14 October 2026 "power" here is the Swing Meter's ball speed as a
-share of the club's full-swing speed.
+- **The Stimp.** A released ball runs exactly the reading at any `ROLL`
+  setting. Do not tune a green's speed anywhere but the player's setting.
+- **Whether a ball grips or skids, drops or lips out.** Neither is decided
+  anywhere; both fall out of the numbers above. A request to "make it lip out
+  less" is a request about `rimE` or `rimMu`.
+- **Graphics quality.** No tier touches a played surface.
+- **The firm green.** It is fitted to the USGA and R&A's launcher measurements
+  as one piece (`tilt`, `eHi`, `mu`, `shear`, `arm` together). Moving one alone
+  breaks the `firmgreen` section of the bench.
 
 ## The Swing Meter — `src/swing-meter.js`
 
@@ -253,43 +143,36 @@ Swing Meter* says so.
 | `CURVE_AXIS` | Draw and Fade: ±8° of spin axis, with the start line turned the other way by as much as it bends (`curveCompensation`) so it lands on the aim line |
 | `shapedLaunch` heights | Low −4°, High +4° launch; near the green a wedge's Bump & run is 55% of its launch on half its spin, Flop +10° |
 | `SPIN_SCALE` | the spin setting (X, the Spin box): −1 is 75% of the club's spin, +1 to +3 add a tenth each |
-| `HEIGHT_SPIN`, `KIND_SPIN` | **the guard that a ball with no spin added never comes back**: High and Flop carry less of the club's spin, and the pitching and lob wedges carry 95% and 85% on the meter. Found by sweeping, not chosen; `tests/swing-meter.test.mjs` sweeps the corner where a come-back was ever found. Raising any of these can break that rule |
-| `LIE_SPEED` | **the lie, for every golfer**: semi-rough keeps 96% of ball speed, rough 90%, sand 80% (72% until 14 October 2026). A launch monitor's measured speed takes the same share unless the round switches it off (`monitorLie`) |
+| `HEIGHT_SPIN` | what a height does to the club's spin, from the geometry of the strike: Low 0.92, High 1.08, Bump & run 0.5, Flop 0.85. Nothing here is tuned to what the ball does on the green; `node tools/meter-landings.mjs` prints that |
+| `LIE_SPEED` | **the lie, for every golfer**: semi-rough keeps 96% of ball speed, rough 90%, sand 85% (PLACED). A launch monitor's measured speed takes the same share unless the round switches it off (`monitorLie`) |
+| `LIE_SPIN` (`lieSpin`) | **the flyer**: grass takes spin from a lofted shot. `from` (16 degrees of launch) is where it starts, `full` (28) where the whole `loss` is reached: rough 0.45, semi-rough 0.20. Raise `loss.rough` and wedges out of the rough run further; raise `from` and fewer clubs are touched. Sand has no loss |
 | `RUN_UP` | the marker starts at the bar's left edge and runs this far (the miss area, 0.3 bar lengths) to the strike line; taps before it are ignored |
 | `SWING_RANGES`, `swingZoom` | a short full shot's bar: half or quarter of the club's full carry, the shortest that holds the circle with a quarter to spare; `startSwing`'s `zoom` runs a half bar 12% and a quarter bar 25% slower (putts too) |
 | `PUTT_RANGES` | how far the putting bar reaches: a quarter of the putter's roll up to six times it, so a putt can cross any green at any Stimp; `puttSpeedFor`'s cap (3x the putter's speed) has to allow the longest |
 | `targetShare` | the blue target marker: the circle's distance through `playsLike` (slope and air always, wind only where the difficulty's `wind` is true -- Easy), then the bar share for that carry with the lie's lost speed made up |
 
-**Sand takes the spin.** A ball landing in a bunker keeps no spin past that
-contact (`physics.js`, after the bounce), so in sand only gravity moves it back.
-
-**The cup wall grips no harder than the ball presses into it**: `WALL_FRICTION`,
-the green's own sliding friction (0.305), times the press of going round. Raise it
-and slow balls ride the inside of the cup longer (at the old unlimited grip, up to
-three and a half laps); lower it and fast balls lose the grip to horseshoe out.
-The lip EDGE above the wall follows the same rule (3 October): it grips at most
-`WALL_FRICTION` times the ball's press on it, and the ball slides over the edge
-when rolling would need more. Lip-outs ride up to about two thirds of a lap
-(212 degrees at Stimp 10, 231 at 13), and that barely moves across a friction
-of 0.3 to 0.7 -- what limits it is the instants the ball is barely pressing on
-the lip. The full 360-degree lip-out it removed is the trade-off;
-docs/reports/LIP_GRIP_REPORT.md.
-
 ## How to ask for a change
 
-Naming the outcome is enough — the knob follows from it. Useful shapes:
+Naming the outcome is enough; the knob follows from it. Useful shapes:
 
 - *"on a firm green the first hop should be higher and go further"*
 - *"ordinary shots should hold a soft green better"*
 - *"a ripped wedge should come back further than it does, but only on firm"*
 - *"the driver should run out more on a fairway"*
+- *"a 20 ft putt should need less speed"*
 
-Worth knowing: some pairs **cannot both be satisfied**, and it is better to hear
-it than to have one quietly traded for the other. Two live examples —
+Worth knowing: some things **cannot both be had**, and it is better to hear it
+than to have one quietly traded for the other.
 
-- `plough` ordered by ground firmness alone makes rough run further than fairway;
-  ordered by canopy alone makes a fairway softer than a green. Hence the split.
-- Fitting a surface against ONE club looks excellent on that club and wrecks the
-  rest. A green fitted to a 56 degree wedge alone left a 7 iron running 12.3 yd
-  on it; a fairway fitted to the driver alone left the 5 iron six yards short.
-  Every surface is fitted against every club that actually lands on it.
+- **Spin decides when a ball stops sliding, not how fast it is then going.** On
+  hard ground a ball that lands with a given speed and spin ends up rolling at
+  the same speed however the friction is set. Only the turf giving way (`tilt`,
+  `dig`, `arm`) changes where it finishes. So "more friction" does not mean
+  "stops sooner".
+- **A green cannot both hold a 5 iron and let a wedge come back a long way.**
+  What holds the 5 iron (a deep pitch mark) also swallows the wedge. Soft greens
+  stop everything near its mark; the long come-backs are on firm, fast ones.
+- **Putt speed.** Fairway models the skid, so a 10 ft putt on Stimp 10 needs
+  5.3 mph; GSPro needs 4.1. Making Fairway match it means removing the skid
+  (docs/BALL_PHYSICS.md, *The putt speed question*), which every laboratory
+  measurement says is there.

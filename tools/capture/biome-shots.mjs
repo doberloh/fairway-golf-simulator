@@ -18,7 +18,7 @@
 //       the PICKS below, from the masters, as WebP at WIDTH into src/shots/,
 //       and the total the page grows by
 //
-// THE PICKS are chosen by eye, in rounds (UI_POLISH.md has each round): a view
+// THE PICKS are chosen by eye, in rounds (history/UI_POLISH.md has each round): a view
 // earns its place by showing what that landscape is -- its ground from above,
 // a dramatic shot down a hole, a green, its light at the end of the day.
 // Change a pick, then `encode`; the game picks the files up at the next build.

@@ -17,7 +17,9 @@ TODO.md or RESEARCH.md whole dates from 7 October 2026. The old rule said "read
 PROJECT_HANDOFF first" and "check every document every pass"; measured that
 day, PROJECT_HANDOFF was about 83 thousand tokens, TODO about 93 thousand and
 RESEARCH about 141 thousand, so a session following the rules literally spent
-most of its budget before any work began.
+most of its budget before any work began. (By 12 November 2026 they were about
+150, 170 and 280 thousand; that day TODO's finished work became DONE.md, below,
+and the rule names DONE.md in TODO's place.)
 
 ## One branch per journey
 
@@ -61,6 +63,12 @@ for v0.4, a combined push-and-release command printed "failed to push some
 refs" and went on to publish anyway; the push had in fact landed, but a release
 published against a commit not on GitHub would hand every Download button the
 wrong thing -- hence pushing `main` alone and checking it landed first.
+
+**A release's TODO entry replaces the last one's.** Every release from 0.9 to
+0.9.12 added a "play it by hand" entry and none was ever closed, so by 11
+November 2026 the open list carried twelve of them, eleven for versions nobody
+could download any more -- part of how it reached 233 entries. The owner had
+the list pared that day and agreed the rule on 12 November.
 
 ## What stays local
 
@@ -106,6 +114,27 @@ batched at the end.
 accumulated nested as notes under finished ones, invisible. One open entry
 once asserted the exact opposite of what the physics did, which is how a
 correct behaviour nearly got "fixed" back into a bug.
+
+**`# Done` became DONE.md** on 12 November 2026, at the owner's request ("the
+TODO list is still really lengthy with completed actions"). The day before,
+the open list had been pared from 233 entries to 31, and the file was still
+8,270 lines: 308 of open work and 660 KB of finished work under them, 97% of
+it. Reading the list meant knowing where to stop, and 45 ticked entries had
+sat in the open half for weeks because ticking one felt like finishing it.
+Hence a finished entry moves to DONE.md in the same pass, never ticked and
+left.
+
+**`docs/history/` came the same day.** The owner asked whether the older
+documents could be folded into the main ones and deleted. They could not:
+every one had been edited within three weeks, and the code names them in
+comments (22 files name CARTOON_OVERHAUL.md, 21 UI_POLISH.md, and
+`tools/capture/overhaul-showcase.mjs` reads the first as data). But both of
+those were a short part that still governs work under a long round-by-round
+journal of a merged branch, so each kept its name and its live sections (16
+of 136 KB, 31 of 64 KB) and the journal moved to `docs/history/`, word for
+word. The folder is outside `docs/*.md` on purpose: a subject search during
+the documentation sweep no longer matches 160 KB of rounds about landscapes
+and screens that have since been replaced.
 
 **IDEAS.md was split off TODO.md** on 16 October 2026, at the owner's request.
 A month after the first split the open list had grown to about 120 entries,

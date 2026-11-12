@@ -1,198 +1,232 @@
-// The cup.
+// THE HOLE. A ball meeting the cup, as a rigid sphere meeting real shapes: the
+// green round the hole, the sharp rim, the cylinder below it, the floor, and
+// the flagstick when it is in.
 //
-// USGA geometry: hole radius 53.975 mm, ball radius 21.335 mm, a 102 mm bore
-// with the liner starting 25.4 mm below the surface.
+// NOTHING HERE DECIDES WHETHER A PUTT DROPS. There is no capture speed, no
+// lip-out rule and no scripted fall. The ball is stepped at a few thousand
+// hertz under gravity; wherever it overlaps one of those shapes it is pushed
+// out and given the impulse a collision gives (a bounce along the contact
+// normal, friction against its slip, spin to match). A slow putt topples over
+// the front edge and drops; a firm one crosses the opening falling, meets the
+// back wall below its equator and stays in, or meets the back rim above it and
+// hops out; one that catches the side rides the rim round and either falls or
+// horseshoes. All of that is what the contacts produce, and tests/cup.test.mjs
+// checks it against the published capture limits (Holmes 1991, Penner 2002).
 //
-// What was wrong before this module existed: the hole asked exactly one
-// question -- is this ball slow enough, on a good enough line, to be captured?
-// -- and if the answer was no, it did nothing whatsoever. Measured on a flat
-// Stimp 10 green, balls crossing the opening at 0.6, 0.8, 0.95 and 1.05 of the
-// cup radius all finished 1.310 m past it, to the millimetre. A ball that
-// caught the lip and a ball that missed by a metre ended in the same place.
-// There were no lip outs in this game, because nothing that failed to drop was
-// ever touched by the hole.
-//
-// The middle outcome is what this adds, and it comes out of one quantity. A
-// ball crossing the opening is falling the whole time it crosses:
-//
-//   chord = 2 sqrt(R^2 - d^2)     how much of the opening its centre crosses
-//   t     = chord / v             how long that takes
-//   drop  = 1/2 g t^2             how far it falls while it does
-//
-// Enough drop and it is captured. Not enough and it must still climb back out
-// of whatever it fell into, over a rim that turns it as it goes. That costs
-// speed and bends the line, which is what a lip out is. A ball crossing quickly
-// barely falls, loses almost nothing and carries on -- which is the behaviour
-// the old model had for every case, and the reason it was only ever right for
-// the fast ones.
-//
-// The capture rule is one sentence: the ball is caught if it falls its own
-// radius while its centre crosses the opening. Nothing else is needed, and the
-// number that falls out is not a fitted one --
-//
-//   v_max = chord . sqrt(g / 2r)   =  1.6365 m/s dead centre
-//
-// against Penner's published full-capture figure of 1.63 m/s. Within 0.8%, from
-// geometry alone. (Penner's free-fall-only figure is 1.31; the higher number is
-// what you get once capture by the far wall and by the lip is included, and it
-// is the one this matches.)
-//
-// This replaces the previous envelope, 1.63(1 - (d/R)^2), which was the right
-// value dead centre attached to the wrong shape. The drop rule gives
-// 1.63 sqrt(1 - (d/R)^2) instead, and the difference is large where it matters:
-// at 0.8 of the cup radius the old form allowed 0.59 m/s and this allows 0.98.
-// The old shape turned balls away that had already fallen two and a half ball
-// radii below the rim.
-//
-// Everything else is the same quantity read differently. A ball that falls less
-// than a radius did still fall, and has to climb back out of it over a rim that
-// turns it as it goes -- so the exit speed goes smoothly to zero as the drop
-// approaches a full radius, and to the entry speed as it approaches nothing.
-// There is no seam between holing out, lipping out and racing across: they are
-// three readings of one number.
-
-// Slope does not belong in here, and the reason is worth writing down because
-// the obvious "fix" makes it wrong.
-//
-// A hole in a sloping green has its far rim lower than its near one by
-// chord.theta when the ball is running downhill, so it looks as though the ball
-// must fall further to be caught and downhill putts should need a lower capture
-// speed. Half of that is true. The other half is that a ball rolling down a
-// slope is already descending at v.theta when it leaves the near rim, so over
-// the crossing time chord/v it falls an extra chord.theta of its own accord.
-//
-//   required:  r + chord.theta        head start:  chord.theta
-//
-// They cancel exactly, and the criterion collapses back to (1/2)g t^2 >= r with
-// no theta in it. Modelling the lowered far rim WITHOUT the head start -- which
-// is what you get if you reason from geometry alone -- introduces a slope
-// dependence of about 20% in the required drop at 4% and is worse than leaving
-// both out.
-//
-// Measured against the simulator to confirm it: from 6% uphill to 6% downhill
-// the launch speed that holes swings 27%, from 2.848 to 2.240 m/s, while the
-// speed the ball is actually doing as it reaches the cup stays between 1.599 and
-// 1.632. Downhill putts are harder because the ball arrives faster, which the
-// roll model already accounts for, and not because the hole is fussier.
+// Pure: no DOM, no three.js, no course. physics.js hands a ball over with
+// `cupSim` once it reaches the hole and takes it back when it leaves or rests.
+// docs/BALL_PHYSICS.md, *The hole*.
 
 const G = 9.80665;
-export const CUP_RADIUS = 0.053975;
+export const CUP_RADIUS = 0.053975;   // 4.25 in across
 export const BALL_RADIUS = 0.021335;
-export const CUP_DEPTH = 0.1016;
-// Penner (2002): the fastest a ball can be moving straight through the middle
-// and still be caught.
-// Penner's published dead-centre figure for capture by ALL mechanisms together:
-// free fall, the far wall, and the lip. Kept as the number the finished model is
-// checked against, not as an input to it.
-export const CAPTURE_SPEED = 1.63;
-// Penner's free-fall-only figure, and the one Hurrion & Sheppard treat as the
-// operative maximum in measured putts on a Stimp 10 green. Free fall alone is
-// what this constant governs; the far wall and the lip are modelled separately
-// in rimContact, so letting free fall reach 1.63 on its own would count the same
-// capture twice.
-export const FREE_FALL_CAPTURE = 1.31;
+export const CUP_DEPTH = 0.1016;      // 4 in, the Rules' minimum
+const R = BALL_RADIUS;
 
-// The far rim is turf, not plastic. The liner starts 25.4 mm below the surface
-// and a lip out has by definition fallen less than a ball radius, 21.3 mm, so
-// the edge a lipping ball clips is always cut turf and never the cup liner.
-// That fixes the restitution rather than leaving it to taste: 0.32 is the
-// short-turf value the bounce model already uses, and the tangential limit of
-// 0.4 is its short-turf friction.
-const RIM_RESTITUTION = 0.32;
-const RIM_FRICTION = 0.40;
-// A ball riding the inside of the wall is carried around it and comes out on the
-// side it went in -- the horseshoe. A single contact impulse cannot produce that,
-// because it is a sustained rolling contact rather than a strike, so it stays a
-// separate term applied in proportion to how deeply the ball engaged.
-const MAX_TURN = 1.05;
-// Below this it has not got out, whatever the arithmetic says.
-const ESCAPE_SPEED = 0.02;
+// What the hole is made of. Restitution is how much of the speed into a surface
+// comes back out of it; friction is the grip available per unit of press.
+//   rim    the cut edge of the turf, and the inch of soil above the liner
+//   wall   the liner
+//   floor  the bottom of the liner
+//   pin    a fibreglass flagstick. It gives, and it is smooth: a square hit
+//          all but stops the ball (Mase, Cal Poly 2019), so a centred putt
+//          far too fast for the hole alone still drops, while one that
+//          glances the stick is as likely knocked out as helped.
+// `settle` is the approach speed below which a contact no longer bounces.
+export const CUP = {
+ rimE: .10, rimMu: .40,
+ wallE: .40, wallMu: .30,
+ floorE: .30, floorMu: .40,
+ pinE: .10, pinMu: .10,
+ // A HARD HIT IS DEAD. Those are the bounces of a ball rattling in at putting
+ // pace. A ball that flies into the hole off a full shot arrives at ten times
+ // the speed, and the liner, the soil behind it and the cut turf give as a
+ // green does under a hard landing (turf.js): by `hardSpeed` m/s into a
+ // surface the bounce is down to `hardE`. Without this a slam dunk came back
+ // out of the cup a metre high (the owner, 11 November 2026).
+ hardE: .04, hardSpeed: 9,
+ settle: .12,
+ // The micro-step, seconds. 1/4000 s moves a 2 m/s ball half a millimetre.
+ dt: 1 / 4000,
+ // How far from the middle of the hole the ball is handed back to the course.
+ zone: CUP_RADIUS + R + .035,
+};
 
-export const crossingChord = offset =>
- 2 * Math.sqrt(Math.max(0, CUP_RADIUS * CUP_RADIUS - offset * offset));
+const cross = (a, b, o) => { const x = a[1] * b[2] - a[2] * b[1], y = a[2] * b[0] - a[0] * b[2], z = a[0] * b[1] - a[1] * b[0]; o[0] = x; o[1] = y; o[2] = z; return o; };
+const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const tmp = [0, 0, 0], tmp2 = [0, 0, 0], nrm = [0, 0, 0];
 
-// How far the ball falls in the time its centre spends over the opening.
-// How far the ball has to fall to be past saving. 33.3 mm, about 1.56 ball
-// radii: more than a radius, because it must get low enough that the far edge
-// passes over it rather than catching it on the way through.
-const CAPTURE_DROP = G * (2 * CUP_RADIUS) ** 2 / (2 * FREE_FALL_CAPTURE ** 2);
-
-export function crossingDrop(speed, offset) {
- if (!(speed > 0)) return CUP_DEPTH;
- const t = crossingChord(offset) / speed;
- return Math.min(CUP_DEPTH, 0.5 * G * t * t);
+// One collision, resolved. `n` is the unit normal out of the surface at the
+// contact, `pen` how far the ball has sunk into it. Moves the ball out, bounces
+// it, and applies Coulomb friction with a solid sphere's inertia (I = 2/5 m r^2:
+// an impulse at the surface changes the contact point's velocity 7/2 times as
+// fast as the centre's). Returns the normal impulse per unit mass, which is how
+// hard the surface was pressed -- rolling resistance is charged against it.
+function collide(p, v, w, n, pen, e, mu, settle) {
+ p[0] += n[0] * pen; p[1] += n[1] * pen; p[2] += n[2] * pen;
+ const vn = dot(v, n);
+ if (vn >= 0) return 0;
+ const soft = Math.max(0, 1 + vn / CUP.hardSpeed);
+ const jn = -(1 + (-vn > settle ? CUP.hardE + (e - CUP.hardE) * soft * soft : 0)) * vn;
+ // Velocity of the point of the ball touching the surface.
+ cross(w, n, tmp);
+ const sx = v[0] - vn * n[0] - R * tmp[0], sy = v[1] - vn * n[1] - R * tmp[1], sz = v[2] - vn * n[2] - R * tmp[2];
+ const slip = Math.hypot(sx, sy, sz);
+ v[0] += jn * n[0]; v[1] += jn * n[1]; v[2] += jn * n[2];
+ if (slip > 1e-9) {
+  const jt = Math.min(slip / 3.5, mu * jn), ux = sx / slip, uy = sy / slip, uz = sz / slip;
+  v[0] -= jt * ux; v[1] -= jt * uy; v[2] -= jt * uz;
+  tmp2[0] = ux; tmp2[1] = uy; tmp2[2] = uz;
+  cross(n, tmp2, tmp);
+  const k = 2.5 * jt / R;
+  w[0] += k * tmp[0]; w[1] += k * tmp[1]; w[2] += k * tmp[2];
+ }
+ return jn;
 }
 
-// The fastest a ball on this line can be going and still fall a full radius
-// before it reaches the far side.
-// The fastest a ball on this line can be going and still fall a full radius
-// before it reaches the far side.
-export const captureSpeed = offset =>
- crossingChord(offset) * Math.sqrt(G / (2 * CAPTURE_DROP));
-
-// Where the ball meets the far edge, and what that contact does to it.
+// A ball at the hole, stepped until it rests or leaves.
 //
-// Crossing the opening the centre falls from a ball radius above the rim plane
-// to r - drop, so the far edge stands as a step of height `drop` in its way. A
-// rolling ball meeting a step does not bounce off it -- it PIVOTS over it, and
-// that has a classical answer. Angular momentum about the edge is conserved
-// through the impact:
-//
-//   before  m v [(7/5)r - drop]        after  (7/5) m r^2 w'
-//   so      v' = v (1 - 5 drop / 7 r)
-//
-// which is the whole speed loss, with no restitution in it. That matters: the
-// impulse treatment this replaces rebounded the ball BACKWARD off the edge at
-// every ordinary putting speed, and clamping that at zero left putts stopping
-// dead on the far lip instead of rolling on.
-//
-// The lift falls out of the same geometry. While pivoting, the centre travels on
-// a circle about the edge, so its velocity is tangential -- forward AND up. If
-// the ball is quick enough to leave contact rather than be held on the circle
-// (v'^2 > g h, the usual condition for leaving a convex surface) it keeps that
-// tangential direction, and that is the hop.
-// NOTE: rimContact and cupOutcome below are the ANALYTIC capture model, kept as a
-// documented reference and as the anchor the geometry is checked against. They
-// are no longer what the simulator runs. simulateShot resolves the rim as an
-// actual surface -- see the note at the top of physics.js -- so a lip out there
-// is a rolling contact carried through time, not a single impulse, and that is
-// why it can produce the sustained rides this file says a single contact cannot.
-export function rimContact(speed, offset, drop) {
- const r = BALL_RADIUS;
- // Over a step this deep the pivot takes everything it has: it cannot get over.
- const kept = 1 - 5 * drop / (7 * r);
- if (kept <= 0) return null;
- const pivot = speed * kept;
- // Climbing the step raises the centre by `drop`, and a rolling ball pays that
- // out of (7/10) m v^2. Short of it, the ball rocks back into the hole.
- if (pivot * pivot < (10 / 7) * G * drop) return null;
- const h = Math.max(0, r - drop), d = Math.sqrt(Math.max(0, r * r - h * h));
- // Tangent to the pivot circle, in the direction of travel: forward and up.
- const leaves = pivot * pivot > G * h;
- const alongX = leaves ? h / r : 1, alongY = leaves ? d / r : 0;
- return {speed: pivot * alongX, lift: pivot * alongY, reach: d, inside: h <= 0};
+// `ball` is {p, v, w}: position, velocity and angular velocity (rad/s) as
+// arrays, in the same frame as `hole`. They are advanced in place.
+// `hole` is {x, z, y, gx, gz}: the middle of the hole, the height of the green
+// there, and the green's slope (rise per metre along x and z) -- the lip
+// follows the slope, as a cup cut straight down into a tilted green does.
+// `env`: {rollAt: the green's rolling deceleration at a speed (m/s^2), slide: its sliding
+// friction, e: its restitution for a slow bounce, pin: flagstick radius or 0,
+// t: the clock on entry, sample: seconds between recorded points, maxTime}.
+// Returns {holed, lipped, pinHits, rest, t, points, contacts}.
+export function cupSim(ball, hole, env = {}) {
+ const {p, v, w} = ball, dt = env.dt || CUP.dt;
+ const slide = env.slide ?? .4, greenE = env.e ?? .3, pin = env.pin || 0;
+ // The green's rolling deceleration at a given speed (turf.js); a Stimp 10
+ // green's flat average when none is handed in.
+ const rollAt = env.rollAt || (() => env.roll ?? .55);
+ const sample = env.sample ?? 1 / 240, maxTime = env.maxTime ?? 8;
+ const points = [], contacts = [];
+ let t = env.t || 0, next = t, lipped = false, pinHits = 0, holed = false, rest = false;
+ const slopeLen = Math.hypot(hole.gx, 1, hole.gz);
+ const N = [-hole.gx / slopeLen, 1 / slopeLen, -hole.gz / slopeLen];
+ const floorY = hole.y - CUP_DEPTH;
+ let still = 0, lastTouch = null;
+ // For the sound (audio.js): the ball landing on the green beside the hole,
+ // striking the flagstick, and -- once -- rattling into the cup. The rim itself
+ // is silent; a ball riding it makes no sound a golfer would name.
+ let rattled = false;
+ const heard = (what, speed) => {
+  if (what === 'rim' || (what === 'cup' && rattled)) return;
+  if (speed > .25 && lastTouch !== what) { contacts.push({t, what, speed, x: p[0], y: p[1], z: p[2]}); if (what === 'cup') rattled = true; }
+  lastTouch = what;
+ };
+ const end = t + maxTime;
+ while (t < end) {
+  v[1] -= G * dt;
+  p[0] += v[0] * dt; p[1] += v[1] * dt; p[2] += v[2] * dt;
+  t += dt;
+  const dx = p[0] - hole.x, dz = p[2] - hole.z, rho = Math.hypot(dx, dz);
+  let pressed = 0, touching = false;
+  if (rho >= CUP_RADIUS) {
+   // On the green beside the hole.
+   const gap = (p[1] - (hole.y + hole.gx * dx + hole.gz * dz)) * N[1] - R;
+   if (gap < 0) {
+    const vn = dot(v, N);
+    if (-vn > .6) heard('green', -vn);
+    pressed = collide(p, v, w, N, -gap, greenE, slide, CUP.settle); touching = true;
+    nrm[0] = N[0]; nrm[1] = N[1]; nrm[2] = N[2];
+   }
+  } else {
+   const ux = rho > 1e-9 ? dx / rho : 1, uz = rho > 1e-9 ? dz / rho : 0;
+   // The lip at this bearing: the green's own height at the rim.
+   const lip = hole.y + (hole.gx * ux + hole.gz * uz) * CUP_RADIUS;
+   const up = p[1] - lip;
+   if (up >= 0) {
+    // Above the lip: only the sharp edge can touch it.
+    const out = CUP_RADIUS - rho, dist = Math.hypot(out, up);
+    if (dist < R && dist > 1e-9) {
+     nrm[0] = -ux * out / dist; nrm[1] = up / dist; nrm[2] = -uz * out / dist;
+     const vn = dot(v, nrm);
+     if (-vn > .3) heard('rim', -vn);
+     pressed = collide(p, v, w, nrm, R - dist, CUP.rimE, CUP.rimMu, CUP.settle); touching = true; lipped = true;
+    }
+   } else if (rho > CUP_RADIUS - R) {
+    // Below the lip: the wall.
+    nrm[0] = -ux; nrm[1] = 0; nrm[2] = -uz;
+    const vn = dot(v, nrm);
+    if (-vn > .3) heard('cup', -vn);
+    pressed = collide(p, v, w, nrm, rho - (CUP_RADIUS - R), CUP.wallE, CUP.wallMu, CUP.settle); touching = true; lipped = true;
+   }
+   if (p[1] - R < floorY) {
+    nrm[0] = 0; nrm[1] = 1; nrm[2] = 0;
+    const vn = v[1];
+    if (-vn > .3) heard('cup', -vn);
+    pressed += collide(p, v, w, nrm, floorY - (p[1] - R), CUP.floorE, CUP.floorMu, CUP.settle); touching = true;
+   }
+  }
+  if (pin > 0 && rho < pin + R && rho > 1e-9 && p[1] - R < hole.y + 2.4) {
+   nrm[0] = dx / rho; nrm[1] = 0; nrm[2] = dz / rho;
+   const vn = dot(v, nrm);
+   if (vn < -.05) { pinHits++; heard('flagstick', -vn); }
+   collide(p, v, w, nrm, pin + R - rho, CUP.pinE, CUP.pinMu, CUP.settle);
+  }
+  // Rolling resistance: the turf's own, charged against how hard the ball is
+  // pressed onto whatever it is rolling on. On the level green that press is
+  // its weight and this is exactly the Stimp's deceleration; round the rim it
+  // is weight plus the press of going round, so a fast rim ride is scrubbed
+  // harder than a slow one.
+  if (touching && pressed > 0) {
+   const speed = Math.hypot(v[0], v[1], v[2]);
+   if (speed > 1e-6) {
+    const k = Math.max(0, 1 - rollAt(speed) / G * pressed / speed);
+    v[0] *= k; v[1] *= k; v[2] *= k; w[0] *= k; w[1] *= k; w[2] *= k;
+   }
+  }
+  if (t >= next) { points.push({x: p[0], y: p[1], z: p[2], t, v: Math.hypot(v[0], v[1], v[2]), w: Math.hypot(w[0], w[1], w[2]) * 30 / Math.PI}); next = t + sample; }
+  const speed = Math.hypot(v[0], v[1], v[2]);
+  const inside = rho < CUP_RADIUS && p[1] < hole.y - R * .5;
+  // Down in the hole with no way to climb out: holed. It is still stepped
+  // until it lies still, so what is drawn is the ball actually coming to rest.
+  if (inside && !holed) {
+   const climb = (hole.y + R) - p[1];
+   if (.5 * speed * speed + .2 * R * R * dot(w, w) < G * climb * .9) holed = true;
+  }
+  if (touching && speed < .012) { still += dt; if (still > .05) { rest = true; break; } } else still = 0;
+  if (holed && p[1] - R < floorY + .002 && speed < .06) { rest = true; break; }
+  // Clear of the hole and going away: back to the course.
+  if (!holed && rho > CUP.zone && dx * v[0] + dz * v[2] > 0) break;
+  if (!holed && p[1] - hole.y > .6) break;
+ }
+ // Out of time and neither in nor away: it is perched on the lip, and there it
+ // stays. (Without this the course would hand the same ball straight back.)
+ if (t >= end) rest = true;
+ if (holed || rest) { v[0] = 0; v[1] = 0; v[2] = 0; w[0] = 0; w[1] = 0; w[2] = 0; }
+ points.push({x: p[0], y: p[1], z: p[2], t, v: Math.hypot(v[0], v[1], v[2]), w: Math.hypot(w[0], w[1], w[2]) * 30 / Math.PI});
+ return {holed, lipped: lipped && !holed, pinHits, rest: rest || holed, t, points, contacts};
 }
 
-// What the hole does to a ball whose centre crosses the opening at `speed`,
-// `offset` from the middle. Both are magnitudes; which way the ball is turned is
-// decided by the caller, which knows the geometry.
-export function cupOutcome(speed, offset) {
- if (!(offset < CUP_RADIUS)) return {kind: 'miss'};
- const drop = crossingDrop(speed, offset);
- if (drop >= CAPTURE_DROP) return {kind: 'capture'};
- const hit = rimContact(speed, offset, drop);
- // No pivot means it could not get over the step at all, so it is in the hole.
- // Passing it through at full speed here was why balls short of the free-fall
- // limit sailed on untouched.
- if (!hit) return {kind: 'capture'};
- // Getting off the edge is not the same as getting out -- but only for a ball
- // that was actually in. Once its centre is below the rim plane it has to cover
- // `reach` before it comes down again or it lands back in the hole, which is what
- // becomes of a ball stopped dead on the lip. A ball still riding high over the
- // edge is simply crossing, and asking it to hop clear was what let the cup
- // swallow balls at 2.8 m/s.
- if (hit.speed <= ESCAPE_SPEED && hit.lift <= ESCAPE_SPEED) return {kind: 'capture'};
- const fell = Math.min(1, drop / CAPTURE_DROP);
- return {kind: 'lip', speed: hit.speed, lift: hit.lift,
-  turn: MAX_TURN * fell * (offset / CUP_RADIUS), drop};
+// A putt rolled straight at a hole on a level green, for tests and benches:
+// `speed` is how fast it is rolling as it reaches the front edge, `offset` how
+// far off the middle its line runs (m). Returns cupSim's result.
+export function rollAtCup(speed, offset = 0, env = {}) {
+ const slope = env.slope || 0;   // rise per metre along the putt's line (+ uphill)
+ const hole = {x: 0, z: 0, y: 0, gx: 0, gz: slope};
+ // Started a few millimetres short of the front edge, so `speed` is the speed
+ // it reaches the hole with and not one it has since lost on the green.
+ const z0 = -(CUP_RADIUS + .004);
+ const p = [offset, slope * z0 + R * Math.hypot(1, slope), z0];
+ const v = [0, slope * speed, speed], w = [speed / R, 0, 0];
+ return cupSim({p, v, w}, hole, env);
+}
+// A ball arriving ON THE FLY, for tests and benches: `speed` m/s, `descent`
+// degrees below horizontal, backspin `rpm`, crossing lip height `at` metres
+// along the hole's diameter from its middle (negative is the near side) and
+// `side` metres off line. Returns cupSim's result.
+export function flyAtCup({speed, descent, rpm = 0, at = 0, side = 0}, env = {}) {
+ const a = descent * Math.PI / 180, vz = speed * Math.cos(a), vy = -speed * Math.sin(a), up = .25, t = up / -vy;
+ return cupSim({p: [side, R + up, at - vz * t], v: [0, vy, vz], w: [-rpm * Math.PI / 30, 0, 0]}, {x: 0, z: 0, y: 0, gx: 0, gz: 0}, {e: .12, ...env});
+}
+// The fastest a ball can be rolling at the front edge and still be holed, at a
+// given offset from the middle of the hole (m/s), by bisection.
+export function captureSpeed(offset = 0, env = {}) {
+ let lo = 0, hi = 4;
+ for (let i = 0; i < 22; i++) { const mid = (lo + hi) / 2; if (rollAtCup(mid, offset, env).holed) lo = mid; else hi = mid; }
+ return (lo + hi) / 2;
 }

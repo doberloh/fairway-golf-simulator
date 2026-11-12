@@ -13,38 +13,25 @@ test('automatic putting obeys circles, interpolation and the green boundary',()=
 test('hole-out ignores legacy gimmes; only captured balls finish',()=>{const r=new Round({gimme:3});r.takeShot(finish(.01),pin);assert(!r.done[0]);r.takeShot({...finish(0),holed:true},pin);assert.equal(r.cards[0][0],2);});
 test('cup capture respects actual ball clearance and speed',()=>{const c={...flat,pin:{x:0,z:3}};assert(CUP_RADIUS>R);const roll=extra=>({...shot,vla:0,spin:0,...extra,roll:extra.speed});
  assert(simulateShot(roll({speed:1.9}),c).holed);assert(!simulateShot(roll({speed:5}),c).holed);
- // A line 45 mm off the middle -- 0.83 of the cup radius -- used to be asserted
- // as a miss at launch 1.9. It is not one. That ball arrives at 0.56 m/s and its
- // centre spends 0.106 s crossing a 60 mm chord of the opening, falling 55 mm in
- // the process: two and a half ball radii, well below the rim. It is in the hole,
- // and what it does next is climb out of a hole it is already inside, which it
- // has nowhere near enough speed to do. The old envelope sailed it over the top.
- assert(simulateShot(roll({origin:{x:.045,z:0},speed:1.9}),c).holed);
- // Hit the same line harder and it no longer has time to fall in: it catches the
- // rim, is turned by it, and climbs back out poorer for it. Compared against the
- // identical putt with the hole moved out of the way, which is the only way to
- // show the hole did anything -- and before this it demonstrably did not, both
- // balls finishing in the same place to the millimetre.
- const lipped=simulateShot(roll({origin:{x:.045,z:0},speed:2.3}),c);
- const untouched=simulateShot(roll({origin:{x:.045,z:0},speed:2.3}),{...flat,pin:{x:0,z:9e9}});
- assert(!lipped.holed&&lipped.lipped);
- const stopped=Math.hypot(lipped.end.x,lipped.end.z-3),past=Math.hypot(untouched.end.x,untouched.end.z-3);
- assert(stopped<past-.1,`the rim cost it only ${(past-stopped).toFixed(3)} m`);
- // The line is changed as well as the speed. Which way is no longer a tuned
- // choice: the contact normal at the far edge points back toward the middle of
- // the hole, so the impulse turns the ball inward, and the horseshoe term that
- // throws it outward only wins when the ball engaged deeply enough to ride the
- // wall. Direction is therefore not asserted, only that the rim changed the line.
- assert(Math.abs(lipped.end.x-untouched.end.x)>.005,'a lipped putt is turned, not just slowed');
- // Not an absolute distance any more: a ball that rides the rim and comes off
- // it still carrying speed genuinely runs a few feet, and pinning this to the
- // old single-contact numbers would be asserting the model it replaced.
- assert(stopped<past*.75,`the rim should cost it real distance: ${stopped.toFixed(2)} m against ${past.toFixed(2)} untouched`);
- // Ease off on the same line and it drops instead. 45 mm off centre the ball
- // arrives across the rim rather than into it, so it rides the lip: fast enough
- // and the outward press walks it back out, slow enough and it settles in.
+ // 45 mm off the middle is 0.83 of the cup's radius: still inside the rim, so
+ // a ball rolled to die there drops. That ball arrives at a crawl.
  const softer=simulateShot(roll({origin:{x:.045,z:0},speed:1.9}),c);
- assert(softer.holed,'the same line struck softer should hole out');});
+ assert(softer.holed,'a dying putt 45 mm off the middle drops');
+ // 30 mm off the middle and hit to run well past: somewhere between dropping
+ // and missing clean it catches the rim, is turned by it, and finishes
+ // somewhere else than the same putt with the hole moved out of its way --
+ // which is the only way to show the hole did anything.
+ let lips=0;
+ for(let speed=2.3;speed<=3.3;speed+=.05){
+  const lipped=simulateShot(roll({origin:{x:.03,z:0},speed}),c);
+  if(!lipped.lipped)continue;
+  lips++;assert(!lipped.holed);
+  const untouched=simulateShot(roll({origin:{x:.03,z:0},speed}),{...flat,pin:{x:0,z:9e9}});
+  const moved=Math.hypot(lipped.end.x-untouched.end.x,lipped.end.z-untouched.end.z);
+  assert(moved>.02,`at ${speed.toFixed(2)} m/s the rim moved the ball only ${moved.toFixed(3)} m`);
+  assert(Math.hypot(lipped.end.x,lipped.end.z-3)>CUP_RADIUS,'a lipped ball is not in the hole');
+ }
+ assert(lips>=2,`${lips} lip-outs between dropping and missing`);});
 test('decimal stroke scoring adds the shot, keeps golfer order, and restores fractional scores',()=>{const r=new Round({players:players.slice(0,2),putting:{mode:'decimal',one:2,two:8,three:16}});r.takeShot(finish(5,false),pin);assert.equal(r.active,0);r.takeShot(finish(5),pin);assert.equal(r.cards[0][0],3.5);assert.equal(r.active,1);r.takeShot(finish(12),pin);assert(r.holeComplete);assert.equal(r.cards[1][0],3.5);const copy=Round.restore(JSON.parse(JSON.stringify(r)));assert.equal(copy.cards[0][0],3.5);});
 test('scramble waits for selection and adds only selected automatic putts',()=>{const r=new Round({players:[players[0],players[2]],mode:'scramble',putting:{mode:'decimal',one:2,two:8,three:16}});r.takeShot(finish(12),pin);assert(!r.holeComplete);r.takeShot(finish(5),pin);assert(r.scrambleSelection);r.chooseScramble(1);assert.equal(r.teamCards.A[0],2.5);assert(r.holeComplete);assert(r.mulligan());assert.equal(r.active,1);assert.equal(r.candidates.length,1);assert(!r.holeComplete);});
 test('decimal match scoring and mulligan restore match outcome',()=>{const r=new Round({players:players.slice(0,2),mode:'match',holes:3,putting:{mode:'decimal',one:2,two:8,three:16}});r.takeShot(finish(5),pin);r.takeShot(finish(12),pin);assert.equal(r.match.A,1);assert(r.mulligan());assert.equal(r.match.A,0);assert.equal(r.active,1);assert(!r.holeComplete);});

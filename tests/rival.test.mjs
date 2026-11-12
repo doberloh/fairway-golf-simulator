@@ -19,7 +19,7 @@ const flat = {height: () => 0, surface: () => 'fairway', bounds: {x: 2000, minZ:
 const rawDrive = {origin: {x: 3.0004917, z: -1.2345678}, aim: 1.23456789, speed: 150 * MPH, vla: 12.3456, hla: 1.0987, spin: 2600.4, spinAxis: 6.789};
 const rawPitch = {origin: {x: 0.5, z: 230.25}, aim: -3.3333333, speed: 60 * MPH, vla: 30.123, hla: -0.555, spin: 7000.7, spinAxis: 0, roll: 2.345};
 const settings = {...DEFAULT_COURSE, seed: 'RIVAL-1', holes: 9};
-const rules = {tee: 'white', putting: {mode: 'holeout', one: 3, two: 10, three: 20, gimme: 3}, ob: 'stroke', lie: true, input: 'meter', turf: {stimp: 11, fairway: 100, semi: 100, rough: 100, firmness: 0.45}};
+const rules = {tee: 'white', putting: {mode: 'holeout', one: 3, two: 10, three: 20, gimme: 3}, ob: 'stroke', lie: true, input: 'meter', turf: {stimp: 11, greenFirmness: 'medium', courseFirmness: 'medium'}};
 const card = [4, 5, 3, 4, 4, 6, 3, 5, 4];
 // Seat 0 drives, then pitches from where the drive stopped; seat 1 hits one
 // pitch a hole. As main.js does: grid the shot, fly it, log it.
@@ -133,8 +133,11 @@ test('the rules are shown, and only the ones that differed are named', () => {
  const mine = {...rules, tee: 'blue', input: 'monitor', putting: {mode: 'dartboard', one: 3, two: 10, three: 20}, turf: {...rules.turf, stimp: 12}};
  assert.deepEqual(R.rulesDiff(rules, mine, 'Sam'), ['Tees: Sam White, you Blue.', 'Putting: Sam hole out, you dartboard putting (3/10/20 yd).', 'Played on: Sam the Swing Meter, you a launch monitor.', 'Green speed: Sam Stimp 11, you Stimp 12.']);
  const round = new Round({players: [{name: 'Alex', team: 'A', hand: 'RH', tee: 'red'}], putting: {mode: 'decimal'}, outOfBounds: 'e5', monitorLie: false});
- const r = R.rulesOf(round, 0, {turf: {stimp: 12, firmness: 0.45, fairway: 100, semi: 90, rough: 80}}, 'monitor');
- assert.deepEqual([r.tee, r.putting.mode, r.ob, r.lie, r.input, r.turf.stimp, r.turf.rough], ['red', 'decimal', 'e5', false, 'monitor', 12, 80]);
+ const r = R.rulesOf(round, 0, {turf: {stimp: 12, greenFirmness: 'firm', courseFirmness: 'soft'}}, 'monitor');
+ assert.deepEqual([r.tee, r.putting.mode, r.ob, r.lie, r.input, r.turf.stimp, r.turf.greenFirmness, r.turf.courseFirmness], ['red', 'decimal', 'e5', false, 'monitor', 12, 'firm', 'soft']);
+ // A golfer's conditions from before the three still read (turf.js).
+ assert.deepEqual(R.rulesOf(round, 0, {turf: {stimp: 9, firmness: 0.6, fairway: 100, semi: 90, rough: 80}}, 'monitor').turf, {stimp: 9, greenFirmness: 'soft', courseFirmness: 'medium'});
+ assert.deepEqual(R.describeRules(r).slice(-3), [['Green speed', 'Stimp 12'], ['Greens', 'firm'], ['Fairways', 'soft']]);
 });
 
 test('the shot log takes back a mulligan and drops what a damaged save carries', () => {
@@ -175,7 +178,7 @@ test('a round played against a challenge remembers it through a save', () => {
 test('shots from a code fly again to the same millimetre on a freshly grown course', async () => {
  const {generateWorld} = await import('../src/course.js');
  const {localWind} = await import('../src/shot-visuals.js');
- const turf = {stimp: 11, fairway: 100, semi: 100, rough: 100, firmness: 0.45};
+ const turf = {stimp: 11, greenFirmness: 'medium', courseFirmness: 'medium'};
  const fly = (shot, hole, s, f) => simulateShot(shot, hole, {wind: localWind(s, hole.rotation), altitude: hole.bio.altitude, temperature: hole.bio.temperature, turf, flagsticks: {current: f}});
  const mine = {...DEFAULT_COURSE, seed: 'RIVAL-WORLD', holes: 9, trees: 70, wind: 12};
  const here = generateWorld(mine), l = [];

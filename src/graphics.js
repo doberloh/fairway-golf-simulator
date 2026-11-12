@@ -90,7 +90,7 @@ export const TIERS = {
   // screen's height, a 15 m tree from about 55 m. The overhaul's stands put
   // thousands of crowns in view, all solid, so none can be left out; swapping
   // at 30% rather than 15% measured 10-17% of a Low frame on Autumn
-  // (CARTOON_OVERHAUL *Frame rate*). PLACED.
+  // (history/CARTOON_OVERHAUL.md *Frame rate*). PLACED.
   farPainted: .3,
   // The ground drawn coarser with distance (ground-lod.js; the frame-rate goal,
   // 9 November 2026): the most a square may stand off the ground the ball
@@ -397,7 +397,7 @@ export const GREEN_READ_GEN = 5;
 //   map      clear, with contour lines -- every metre, every 5 cm on a green
 // The keys stay in the record and the renderer reads them as before; the
 // choice writes them. Clear is the default -- PLACED in the readability rounds
-// (CARTOON_OVERHAUL *Reading the ground*), the owner's to overrule.
+// (history/CARTOON_OVERHAUL.md *Reading the ground*), the owner's to overrule.
 export const READINGS = ['natural', 'clear', 'map'];
 export const READING_DEFAULT = 'clear';
 export const READING_LABELS = {natural: 'Natural', clear: 'Clear', map: 'Map lines'};

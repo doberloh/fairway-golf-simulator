@@ -42,7 +42,8 @@
 # second outruns; fixed the same day (docs/PROJECT_HANDOFF.md, *A harness tap
 # that has to land*), and not yet seen green here: the first push of the fix
 # ran out of time on a slow runner (below, `timeout-minutes`). Open in
-# docs/TODO.md, *Found on GitHub*, until it has been.
+# docs/TODO.md, *The smoke step on GitHub still fails now and then*, until it
+# has been.
 name: tests
 
 on:
