@@ -152,7 +152,8 @@ here is a claim of support until it is done.
     "· wedges spin less" and the spin tile's lie tag, on a phone too; the
     seven pickers in Play's rules step on a phone; the range's Lab firmness
     slider and its three chips.
-  - **The gimme circle** (0.9.13; tested in Node only, no smoke run): the
+  - **The gimme circle** (0.9.13; tested in Node only -- the 41 smoke
+    journeys pass, and none of them chooses this mode): the
     circle drawn and easy to see at 3 ft and at 30 ft; the size field showing
     only for this mode, in the rules step and in Putting options, with the
     ring distances hidden; the shot card saying "Gimme"; the scorecard
@@ -257,14 +258,9 @@ here is a claim of support until it is done.
 ## Housekeeping
 
 - [ ] **What the rebuilt ball still owes** (merged and released as 0.9.13, 12
-  November 2026). **Smoke journeys never run on the new ball:** no-late-shaders,
-  ball-light-shaders, floodlit-night, Course studio, every-landscape,
-  text-size, home-screen, bridge, weekly, look, and the two phone menu-panel
-  journeys; and no smoke run at all since the flyer, sand at 85%, the height
-  spin factors, the real-width flagstick and the gimme circle went in (28
-  journeys passed on 11 November, before them). Graphics card: ask first.
-  **The website's sample shots** and any clip made with the old ball.
-  **A re-bake of `src/golfer-table.js`**, which was made with the old ball;
+  November 2026; all 41 smoke journeys passed on the released build that
+  afternoon, DONE.md, *Release 0.9.13*). **The website's sample shots** and
+  any clip made with the old ball. **A re-bake of `src/golfer-table.js`**, which was made with the old ball;
   it moves generated markings, so it is a `GENERATOR_VERSION` bump and wants
   its own reason. (was: *The rebuilt ball: play it, then merge*)
 - [ ] **Clean up after the retired landscapes** (42 pared to 15, 6-8 November

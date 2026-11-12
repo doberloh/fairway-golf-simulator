@@ -53,6 +53,16 @@ entry.
   a new patch release. Push to github and the live website demo"): the
   rebuilt ball and the gimme circle (DISTRIBUTION_REVIEW, the addendum for
   v0.9.13). "Patch" was read as the next number after 0.9.12.
+- **The smoke journeys on the new ball.** DONE the same afternoon, at the
+  owner's word ("Run smoke test"), after the release had gone out: all 41
+  journeys passed on the released build, in seven batches. That closes the
+  journeys never run on the rebuilt ball (no-late-shaders,
+  ball-light-shaders, floodlit-night, Course studio, every-landscape,
+  text-size, home-screen, bridge, weekly, look, the two phone menu-panel
+  journeys) and the run owed since the flyer, sand at 85%, the height spin
+  factors, the real-width flagstick and the gimme circle. A smoke run proves
+  it works, not that it looks right. (was part of: *What the rebuilt ball
+  still owes*)
 
 ## The open list before the 11 November 2026 prune
 
