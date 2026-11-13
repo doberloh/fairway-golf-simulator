@@ -15,7 +15,10 @@ offline; it goes online only when you ask it for something from the internet
 
 - **Generate and modify a course** -- a made-up course in a minute: pick a
   landscape, grow it, take it over, change anything. New here? Start with this
-  one: there is nothing to download, and every tool is there to try.
+  one: there is nothing to download, and every tool is there to try. Its
+  sliders open on Fairway's starting course -- the settings the course of the
+  week is grown with: wide fairways, a few doglegs, large shaped greens, a
+  lake and plenty of trees -- and every one of them can be moved.
 - **Generate a real life course** -- a real course, from its survey, its
   photograph and its map. Find it by name, box it on the map, and **Build it
   for me** does the steps -- or **Build it myself**.

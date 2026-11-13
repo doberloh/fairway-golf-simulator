@@ -107,7 +107,7 @@ import {listCourses,findCourse,saveCourse,deleteCourse,renameCourse,exportCourse
 import {loadGraphics,saveGraphics,needsRebuild,greenCues,QUALITY,QUALITY_LABELS,FRAME_CAPS,READINGS,READING_LABELS,readingCues,isSoftwareRenderer,hasSavedGraphics} from './graphics.js';
 import {createAutoResolution} from './auto-resolution.js';
 import {createGameAudio,canopyContacts,nearestWater} from './audio.js';
-import {randomSettings} from './settings-schema.js';
+import {surpriseSettings} from './settings-schema.js';
 const $=id=>document.getElementById(id),escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const icon=()=>createIcons({icons});
 // BUILT COURSES (Fairway Course Builder; docs/COURSE_BUILDER.md): their files
@@ -1126,7 +1126,7 @@ const endlessFor=(seed,hole,from)=>({...endlessSettings(endlessHole(seed,hole)),
 // 2 November 2026; every landscape is offered all year.)
 const freshRunSeed=()=>newRunSeed();
 const seasonalBiomes=()=>Object.entries(BIOMES);
-const surpriseSettings=()=>randomSettings(Math.random);
+// Surprise me is settings-schema.js `surpriseSettings`: a roll on the starting course.
 // Carrying the keys is only half of it -- they have to be made live. Boot and
 // import each did this by hand and `resumeRound` did not, so resuming a round
 // saved under a different bag played it with the CURRENT one while the bag panel

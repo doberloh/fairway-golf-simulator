@@ -2032,16 +2032,20 @@ about 16 minutes, the card at 42 to 52 °C). The nine builder journeys were not 
 code did not change in this release. **Played by the owner** on the branch on 12 November ("it feels way better"); what
 nobody has reported seeing is in TODO, *Play the current build by hand*.
 
-## The course of the week's length (12 November 2026, branch `weekly-course-length`; not released)
+## The course of the week's length and settings (12 November 2026, branch `weekly-course-length`; not released)
 
-- **The course of the week does not change for any week before Monday 16
-  November 2026** (weekly.js `WEEKLY_LENGTH`, week 150). From that week a copy
+- **The course of the week does not change for any week before Monday 9
+  November 2026** (weekly.js `WEEKLY_COURSE`, week 149). From that week a copy
   with this change grows a full-length course (6,400 to 6,850 yards from the
-  blue tees) and a copy without it, 0.9.13 and earlier, keeps growing the
-  short one (about 4,680 yards, par 68) from the same week and generator. So
-  **"the same course on every copy" holds only between copies on the same
-  side of this change**, and a best carried across an update made in or after
-  week 150 was made on the short course. A release before that Monday keeps
-  it to players who have not updated; one after it should move `from` on
-  (TODO, *The owner's calls*).
+  blue tees) on the starting course's settings, and a copy without it, 0.9.13
+  and earlier, keeps growing the short one (about 4,680 yards, par 68, at the
+  defaults) from the same week and generator. So **"the same course on every
+  copy" holds only between copies on the same side of this change**, and the
+  two sides keep their bests under the same key. **Week 149 itself changes
+  under players who update during it** (the owner's choice: "Make it for
+  this week too"): a best saved on the short course before updating stands
+  against the long one for the rest of that week.
+- **Course codes, saved courses, saved rounds, Endless runs and the challenges
+  are unchanged**: the schema's defaults did not move, so nothing saved or
+  shared decodes differently.
 - Nothing about the offline build, its size or its files changed.

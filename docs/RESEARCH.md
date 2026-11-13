@@ -7343,9 +7343,45 @@ and about one week in three is a par 71.
 stream `<week seed>:length`, to one of the 46 ten-yard steps, each as likely
 as the next. Over four years of weeks the draws fell 46 / 42 / 40 / 44 / 36
 across five equal bands, and the mean change from one week to the next was
-0.320 of the range (a third is what independent draws give). **PLACED:** the
-first week it applies, week 150 (Monday 16 November 2026), so no earlier
-week's course or best moves.
+0.320 of the range (a third is what independent draws give). **The first
+week it applies is week 149** (Monday 9 November 2026), the week it was
+found in, on the owner's say; it was first placed at week 150 so that no
+best already saved stood against a longer course, and the owner chose to
+have the week's course fixed at once. No earlier week's course or best moves.
+
+**The starting course** (settings-schema.js `STARTING_CHOICES`; the owner's
+figures, 12 November 2026, no outside source). Used by the course of the
+week from week 149, by Surprise me and by the Course Builder's Generate
+door; the schema's defaults did not move.
+
+| Setting | Default | Starting course |
+|---|---|---|
+| Doglegs (share of par 4s and 5s that bend) | 65% | 30% |
+| Fairway width | 38 m | 42 m |
+| Semi-rough width | 6 m | 4 m |
+| Green shape | 30% | 70% |
+| Green size | 100% | 110% |
+| Raised greens | 25% | 5% |
+| Sunken greens | 10% | 5% |
+| False fronts | 20% | 5% |
+| Fairway bunkers | 35% | 20% |
+| Bunker shape | 30% | 90% |
+| Bunker gap | 2 m | 4 m |
+| Water in play | 35% | 15% |
+| Water depth | 0.5 to 2.5 m | 2 to 5 m |
+| Lakes | 0 | 1 |
+| Trees | 65% | 80% |
+| Trees close to greens | 40% | 50% |
+| Fairway feature | 20% | 5% |
+
+The owner wrote "change dogleg to 30%"; it was read as the share of holes
+that bend (the setting measured in per cent), not the bend's angle, which
+stays 45 degrees. Week 46 of 2026 on the starting course at its drawn
+length: 6,420 yards from the blue tees, 5,819 from the white, 5,235 from the
+red, par 71, five holes that bend where the short course had nine.
+**PLACED: how Surprise me uses it** -- the eighteen settings above are held
+at the owner's figures and every other setting still rolls in its band
+(`VARY`); the owner did not say how a default sits with a roll.
 
 **What did not change with length.** A dogleg is an angle, so a fairway
 still swings 12 to 16% of its hole's length to the side of the line from tee

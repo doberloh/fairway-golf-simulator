@@ -2,8 +2,9 @@
 //
 // The same course on every copy of Fairway, with no server: its seed is made
 // from the year and the week, and its landscape rotates through every one, one
-// a week. Eighteen holes at the default settings, at a length drawn from the
-// week (`weeklyYards`). Pure; the menu tile and the round live in main.js.
+// a week. Eighteen holes on the starting course (settings-schema.js
+// `STARTING_CHOICES`), at a length drawn from the week (`weeklyYards`). Pure;
+// the menu tile and the round live in main.js.
 //
 // SAME WEEK, SAME COURSE -- ON THE SAME GENERATOR. The seed only fixes the
 // recipe; when courses are made differently (GENERATOR_VERSION) the same seed
@@ -15,7 +16,7 @@
 // over at their midnight, Sunday to Monday. `weekIndex` counts weeks since
 // Monday 1 January 2024 and drives the landscape and the streak.
 
-import {BIOME_KEYS, DEFAULT_COURSE, GENERATOR_VERSION, validateSettings} from './settings-schema.js';
+import {BIOME_KEYS, DEFAULT_COURSE, STARTING_CHOICES, GENERATOR_VERSION, validateSettings} from './settings-schema.js';
 import {challenge, better, seeded} from './challenges.js';
 import {dayOf} from './progression.js';
 
@@ -141,21 +142,31 @@ export const weeklyBiome = (date = new Date()) => biomeForWeek(weekIndex(date), 
 // below 6,560 from the blues and 72 from there up (RESEARCH, *The course of
 // the week's length*).
 //
-// IT STARTS ON A WEEK OF ITS OWN (`from`), like a new landscape: every week
-// before it keeps the short course its bests were made on, and a player who
-// updates mid-week does not have the week's course change under a best
-// already saved. Monday 16 November 2026, week 150 -- PLACED by Claude (12
-// November 2026), the first Monday after the change. If the release lands
-// after that Monday, move `from` on to a week after it (TODO).
-export const WEEKLY_LENGTH = {from: 150, lo: 6400, hi: 6850, step: 10};
+// AND THE WEEK'S COURSE IS THE STARTING COURSE, not the bare defaults (the
+// owner, the same day): fewer doglegs, wider fairways, bigger and shapelier
+// greens with less built up round them, less water but a lake, more trees --
+// settings-schema.js `STARTING_CHOICES`, which Surprise me and the Course
+// Builder start from too. A figure changed there changes this course on every
+// copy.
+//
+// BOTH START ON A WEEK OF THEIR OWN (`from`), like a new landscape: every
+// week before it keeps the short course at the defaults that its bests were
+// made on. THAT WEEK IS THE ONE THE CHANGE WAS MADE IN, week 149 (Monday 9
+// November 2026), on the owner's say ("Make it for this week too") -- so a
+// best saved earlier that week on the short course stands against the longer
+// one, and a player who updates mid-week sees the week's course change. It
+// was first PLACED at week 150 to avoid exactly that; the owner chose to have
+// the week's course fixed now.
+export const WEEKLY_COURSE = {from: 149, lo: 6400, hi: 6850, step: 10};
+const isNewWeek = date => weekIndex(date) >= WEEKLY_COURSE.from;
 export function weeklyYards(date = new Date()) {
- if (weekIndex(date) < WEEKLY_LENGTH.from) return DEFAULT_COURSE.courseYards;
- const {lo, hi, step} = WEEKLY_LENGTH, n = Math.round((hi - lo) / step) + 1;
+ if (!isNewWeek(date)) return DEFAULT_COURSE.courseYards;
+ const {lo, hi, step} = WEEKLY_COURSE, n = Math.round((hi - lo) / step) + 1;
  return lo + Math.floor(seeded(`${weekSeed(isoWeek(date))}:length`)() * n) * step;
 }
-// The week's course: the defaults, its seed, landscape and length, eighteen holes.
+// The week's course: the starting course, its seed, landscape and length, eighteen holes.
 export function weeklySettings(date = new Date()) {
- return validateSettings({...DEFAULT_COURSE, seed: weekSeed(isoWeek(date)), biome: weeklyBiome(date), holes: 18, courseYards: weeklyYards(date)});
+ return validateSettings({...DEFAULT_COURSE, ...(isNewWeek(date) ? STARTING_CHOICES : {}), seed: weekSeed(isoWeek(date)), biome: weeklyBiome(date), holes: 18, courseYards: weeklyYards(date)});
 }
 export const WEEKLY_XP = {first: 150, best: 50};
 const KEEP = 60;

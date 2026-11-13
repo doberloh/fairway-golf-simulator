@@ -126,16 +126,18 @@ wrong, unfinished, or owed a check.
   paths, clubhouse, road or lot on a generated course*, *Cart paths with no
   right angles and no dead ends*, *Small cart path blemishes on Classic
   Parkland*)
-- [ ] **The course of the week's new length: its first week, and the
-  Challenge Course** (12 November 2026, branch `weekly-course-length`; not
-  released). The length starts on Monday 16 November 2026 (weekly.js
-  `WEEKLY_LENGTH.from`, week 150, PLACED): **if the release lands after that
-  Monday, move `from` on to a week after it**, or a player updating mid-week
-  has the course change under a best already saved. And the fixed Challenge
-  Course has the same mistake (eighteen holes asked for at 3,240 yards, so
-  4,650 yards, par 68) and was left alone: lengthening it moves every
-  challenge's spots and makes every saved challenge best a best on another
-  course. Lengthen it, or keep it short on purpose?
+- [ ] **The starting course: three calls left** (12 November 2026, branch
+  `weekly-course-length`; not released). **The Challenge Course** has the
+  mistake the course of the week had (eighteen holes asked for at 3,240
+  yards, so 4,650 yards, par 68) and stands on the old defaults; it was left
+  alone because changing it moves every challenge's spots and makes every
+  saved challenge best a best on another course. Lengthen it and move it to
+  the starting course, or keep it? **Surprise me** holds the eighteen
+  settings the owner chose and rolls the rest (PLACED; settings-schema.js
+  `surpriseSettings`): hold them, or roll them in narrow bands round the
+  owner's figures? **The game's own course studio** still opens a new course
+  on the old defaults (the owner named the course of the week, Surprise me
+  and the Course Builder): move it too?
 - [ ] **Small calls on the round screen and the look.** The skins value of
   the hole being played is not shown anywhere on the round screen. The typed
   aim distance has no home there (arrows and the map still aim). Text size
@@ -162,14 +164,20 @@ here is a claim of support until it is done.
     "· wedges spin less" and the spin tile's lie tag, on a phone too; the
     seven pickers in Play's rules step on a phone; the range's Lab firmness
     slider and its three chips.
-  - **The course of the week at full length** (branch
-    `weekly-course-length`, 12 November 2026; tested in Node only, not seen
-    in the game, and it does not show until the week of Monday 16 November):
-    The week's page saying about 6,400 to 6,850 yards and par 71 or 72; the
-    holes reading as ordinary par 4s from the tee, and whether the doglegs
-    still make the tee look set off to one side (the bends are as sharp as
-    before in proportion: if so, the default dogleg angle of 45 degrees is
-    what to look at).
+  - **The starting course** (branch `weekly-course-length`, 12 November
+    2026; tested in Node only, nothing of it seen in the game or the
+    builder, and no smoke run since `main.js` changed by two lines). The
+    course of the week: The week's page saying about 6,400 to 6,850 yards
+    and par 71 or 72 (week 46: 6,420 yards, par 71, one par 3 and seventeen
+    par 4s); the holes reading as ordinary par 4s from the tee; whether the
+    five holes that still bend make the tee look set off to one side (the
+    bends are as sharp as before, 45 degrees: that angle is what to look at
+    next); the lake, the 80% trees and the strongly shaped greens and
+    bunkers looking right in each landscape, and the frame rate with them.
+    Surprise me: a rolled nine with the same fairways, greens and trees.
+    The Course Builder: *Generate and modify* opening on the new figures,
+    and a course file opened there keeping its own (the builder guide has
+    no picture of that door's sliders, so none is owed).
   - **The gimme circle** (0.9.13; tested in Node only -- the 41 smoke
     journeys pass, and none of them chooses this mode): the
     circle drawn and easy to see at 3 ft and at 30 ft; the size field showing

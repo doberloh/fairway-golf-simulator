@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {SCHEMA_VERSION,GENERATOR_VERSION,SETTINGS,FIELD,CATEGORIES,BIOME_KEYS,FOOTPRINT_KEYS,DEFAULT_COURSE,bound,validateSettings,migrateSettings,generationKeys,PLAY_KEYS,playScope} from '../src/settings-schema.js';
-import {randomSettings} from '../src/settings-schema.js';
+import {randomSettings,surpriseSettings,STARTING_CHOICES,STARTING_COURSE} from '../src/settings-schema.js';
 import {BIOMES,generateCourse,random} from '../src/course.js';
 import {FOOTPRINTS} from '../src/footprints.js';
 
@@ -183,6 +183,45 @@ test('a surprise course is always valid, always a nine, and never the same twice
  // Overrides win, so callers can pin anything they need.
  assert.equal(randomSettings(random('x'),{biome:'seaside',holes:18,courseYards:6480}).biome,'seaside');
  assert.equal(randomSettings(random('x'),{holes:18,courseYards:6480}).holes,18);
+});
+
+// THE STARTING COURSE (settings-schema.js STARTING_CHOICES; the owner, 12
+// November 2026): what a new course is for the course of the week, Surprise
+// me and the Course Builder. The defaults themselves must not move -- a
+// missing key in a code or a save means the default.
+test('the starting course is the owner\'s choices on the defaults, and the defaults have not moved',()=>{
+ assert.deepEqual({...STARTING_CHOICES},{doglegs:30,width:42,semiRough:4,greenShape:70,greenScale:110,raisedGreens:5,sunkenGreens:5,falseFronts:5,
+  fairwayBunkers:20,bunkerShape:90,bunkerGap:4,water:15,waterMin:2,waterMax:5,lakes:1,trees:80,greenTrees:50,fairwayFeature:5});
+ for(const [k,v] of Object.entries(STARTING_CHOICES)){
+  const f=FIELD[k];
+  assert.ok(f,`${k} is not a setting`);
+  assert.ok(v>=bound(f.min,STARTING_COURSE)&&v<=bound(f.max,STARTING_COURSE),`${k} is outside its control`);
+  assert.notEqual(v,f.def,`${k} is listed and is only the default`);
+  // On the slider's own steps, so the builder's control can show it.
+  assert.ok(Math.abs((v-f.min)/(f.step||1)-Math.round((v-f.min)/(f.step||1)))<1e-6,`${k} is between two steps of its control`);
+ }
+ assert.doesNotThrow(()=>validateSettings(STARTING_COURSE));
+ assert.deepEqual(STARTING_COURSE,{...DEFAULT_COURSE,...STARTING_CHOICES});
+ // What the defaults were before the starting course existed, for the
+ // settings it changes: codes, Endless, the Challenge Course and the range hang on them.
+ const were={doglegs:65,width:38,semiRough:6,greenShape:30,greenScale:100,raisedGreens:25,sunkenGreens:10,falseFronts:20,
+  fairwayBunkers:35,bunkerShape:30,bunkerGap:2,water:35,waterMin:.5,waterMax:2.5,lakes:0,trees:65,greenTrees:40,fairwayFeature:20};
+ for(const [k,v] of Object.entries(were))assert.equal(DEFAULT_COURSE[k],v,`the default ${k} moved`);
+});
+
+test('Surprise me rolls a nine on the starting course: the owner\'s choices held, the rest rolled',()=>{
+ const seeds=new Set(),biomes=new Set(),lands=new Set(),yards=new Set();
+ for(let i=0;i<60;i++){
+  const s=surpriseSettings(random('surprise-me-'+i));
+  assert.doesNotThrow(()=>validateSettings(s),`roll ${i}`);
+  assert.equal(s.holes,9);
+  for(const [k,v] of Object.entries(STARTING_CHOICES))assert.equal(s[k],v,`roll ${i}: ${k}`);
+  seeds.add(s.seed);biomes.add(s.biome);lands.add(s.landform);yards.add(s.courseYards);
+ }
+ assert(seeds.size>55&&biomes.size>=5&&lands.size>20&&yards.size>20,'the rest should still roll');
+ // The roll underneath is untouched: Endless grows its holes from it.
+ const a=randomSettings(random('same')),b=surpriseSettings(random('same'));
+ for(const k of Object.keys(a))if(!(k in STARTING_CHOICES))assert.equal(b[k],a[k],k);
 });
 
 test('the pond size default reproduces the dimensions earlier courses were built with',()=>{

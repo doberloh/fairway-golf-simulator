@@ -25,10 +25,39 @@ kept whole: *The open list before the 11 November 2026 prune* and *The open
 list before the 16 October prune*, each with a table of what became of every
 entry.
 
-## The course of the week at full length (branch `weekly-course-length`, 12 November 2026)
+## The course of the week at full length, and the starting course (branch `weekly-course-length`, 12 November 2026)
 
+- **The starting course: the owner's settings for a new course, in three
+  places.** The owner, 12 November 2026, went through the week's settings
+  group by group and set eighteen of them (RESEARCH, *The course of the
+  week's length*, has the table), "for course of the week and also ... the
+  default settings for surprise me and the course builder". Built:
+  settings-schema.js `STARTING_CHOICES` and `STARTING_COURSE`; the course of
+  the week uses them from week 149; Surprise me is `surpriseSettings`, the
+  old roll with those eighteen held; the Course Builder's Generate door
+  opens a new course on them. Tested in tests/settings-schema.test.mjs and
+  tests/weekly.test.mjs; **not seen in the game or the builder** (TODO,
+  *Play the current build by hand*).
+- **Ruled out: changing the schema's defaults.** It looks like the obvious
+  way and the one-list rule seems to ask for it, but a default is also what
+  a missing key means: course codes and friends' challenges carry only
+  differences from the defaults, Endless rolls its holes on them, the
+  Challenge Course and the range are grown from them, and the fingerprints
+  are taken at them -- so old codes would decode to other courses, saved
+  Endless runs would get other ground, and a `GENERATOR_VERSION` bump would
+  start every week's bests again. The defaults stay; the choices are a list
+  of differences (PROJECT_HANDOFF, *The starting course is not the
+  defaults*).
+- **Ruled out: laying an opened course file over the starting course** in
+  the builder's door. A key a file does not state means the default it was
+  saved under.
+- **PLACED: Surprise me holds the chosen settings and rolls the rest**
+  (TODO, *The owner's calls*, with the game's own course studio, which was
+  not named and still opens on the defaults).
 - **The course of the week was a short course every week, and is a
-  full-length eighteen from Monday 16 November 2026.** The owner, 12 November
+  full-length eighteen from Monday 9 November 2026** -- the week it was
+  found in, on the owner's say ("Make it for this week too"); the first
+  build started it a week later, below. The owner, 12 November
   2026: it "got generated very SHORT and was really hard to play with tee
   boxes offset from center drastically", and suspected the settings were
   being randomised. They were not: only the seed and the landscape change. The
@@ -37,13 +66,15 @@ entry.
   68, about 4,680 yards, every week since 14 October. Built: weekly.js
   `weeklyYards` draws the length from the week's seed, **6,400 to 6,850 yards
   from the blue tees** (the owner's range, after first asking for 6,200 from
-  the white tees), from week 150; earlier weeks are untouched. No version
+  the white tees), from week 149; earlier weeks are untouched. No version
   number moved: the generator grows the same course from the same settings,
   and no setting changed shape. Tested in tests/weekly.test.mjs; **not seen
   in the game** (TODO, *Play the current build by hand*).
-- **Ruled out: changing this week's course too.** A best already saved for
-  the week would sit against a longer course and could not be beaten, which
-  is the mistake `WEEKLY_ROTATION`'s debut weeks exist to avoid.
+- **Overruled by the owner: leaving this week's course alone.** It was first
+  built to start on week 150, because a best already saved for the week
+  sits against a longer course and cannot be beaten -- the mistake
+  `WEEKLY_ROTATION`'s debut weeks exist to avoid. The owner chose to have
+  the week's course fixed at once; week 149's earlier bests are the cost.
 - **Ruled out: leaving the length out so the generator's own 6,480 applies.**
   `validateSettings` fills the default in first, so the fallback never runs.
 - **Left open:** the fixed Challenge Course has the same short length (TODO,

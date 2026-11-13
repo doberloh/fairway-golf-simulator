@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {isoWeek, weekIndex, weekSeed, weekKey, weeklyBiome, weeklySettings, weeklyYards, WEEKLY_LENGTH, recordWeekly, normaliseWeekly, bestEverWeekly, biomeForWeek, WEEKLY_ROTATION} from '../src/weekly.js';
-import {BIOME_KEYS, GENERATOR_VERSION, DEFAULT_COURSE} from '../src/settings-schema.js';
+import {isoWeek, weekIndex, weekSeed, weekKey, weeklyBiome, weeklySettings, weeklyYards, WEEKLY_COURSE, recordWeekly, normaliseWeekly, bestEverWeekly, biomeForWeek, WEEKLY_ROTATION} from '../src/weekly.js';
+import {BIOME_KEYS, GENERATOR_VERSION, DEFAULT_COURSE, STARTING_CHOICES} from '../src/settings-schema.js';
 import {planScorecard} from '../src/course-plan.js';
 import {Round} from '../src/game.js';
 
@@ -72,16 +72,30 @@ test('the tenth landscape joins on its own week and moves no earlier week', () =
  for (let w = 100; w < 200; w++) assert.equal(copy(w, JSON.parse(JSON.stringify(WEEKLY_ROTATION))), biomeForWeek(w, WEEKLY_ROTATION));
 });
 
-// THE WEEK'S LENGTH (weekly.js WEEKLY_LENGTH): eighteen holes used to keep the
+// THE WEEK'S COURSE (weekly.js WEEKLY_COURSE): eighteen holes used to keep the
 // default length for nine, 3,240 yards, and every hole came out at its
-// shortest. From its first week the length is drawn from the week's seed,
-// 6,400 to 6,850 yards from the blue tees; no earlier week moves.
-test('the week\'s course is a full-length eighteen from its first week, and no earlier week moves', () => {
- const monday = w => new Date(2024, 0, 1 + 7 * w, 12), {from, lo, hi, step} = WEEKLY_LENGTH;
- assert.equal(weekIndex(at('2026-11-16')), from, 'the first week is Monday 16 November 2026');
- // Every earlier week keeps the course its bests were made on.
- for (let w = from - 60; w < from; w++) assert.equal(weeklySettings(monday(w)).courseYards, DEFAULT_COURSE.courseYards, `week ${w}`);
- assert.equal(weeklySettings(at('2026-11-15')).courseYards, DEFAULT_COURSE.courseYards, 'the Sunday before is still the old length');
+// shortest. From its first week -- the week the owner found it, 149 -- the
+// length is drawn from the week's seed, 6,400 to 6,850 yards from the blue
+// tees, and the course is the starting course, not the bare defaults; no
+// earlier week moves.
+test('the week\'s course is a full-length eighteen on the starting course from week 149, and no earlier week moves', () => {
+ const monday = w => new Date(2024, 0, 1 + 7 * w, 12), {from, lo, hi, step} = WEEKLY_COURSE;
+ assert.equal(from, 149);
+ assert.equal(weekIndex(at('2026-11-09')), from, 'the first week is Monday 9 November 2026');
+ // Every earlier week keeps the course its bests were made on: the defaults,
+ // and nothing but the seed, the landscape and the eighteen holes changed.
+ for (let w = from - 60; w < from; w++) {
+  const {seed, biome, holes, ...rest} = weeklySettings(monday(w)), {seed: s0, biome: b0, holes: h0, ...defaults} = DEFAULT_COURSE;
+  assert.deepEqual(rest, defaults, `week ${w}`);
+ }
+ assert.equal(weeklySettings(at('2026-11-08')).courseYards, DEFAULT_COURSE.courseYards, 'the Sunday before is still the old length');
+ // From it, every choice of the starting course is the week's, and
+ // everything else is still the default.
+ for (const w of [from, from + 1, from + 40]) {
+  const s = weeklySettings(monday(w));
+  for (const [k, v] of Object.entries(STARTING_CHOICES)) assert.equal(s[k], v, `week ${w}: ${k}`);
+  for (const k of Object.keys(DEFAULT_COURSE)) if (!(k in STARTING_CHOICES) && !['seed', 'biome', 'holes', 'courseYards'].includes(k)) assert.equal(s[k], DEFAULT_COURSE[k], `week ${w}: ${k}`);
+ }
  const seen = new Set();
  for (let w = from; w < from + 208; w++) {
   const d = monday(w), yards = weeklyYards(d);
@@ -103,11 +117,12 @@ test('the week\'s course is a full-length eighteen from its first week, and no e
   assert.ok(card.par === 71 || card.par === 72, `week ${w}: par ${card.par}`);
   assert.ok(card.teeTotals.white.total > 5700 && card.teeTotals.white.total < 6300, `week ${w}: white tees ${card.teeTotals.white.total}`);
  }
- // The week this was found (week 149, 9 to 15 November 2026) is unchanged:
- // every hole at its shortest, as it was played.
- const short = planScorecard(weeklySettings(at('2026-11-12')));
+ // The week before it was found (week 148) is unchanged: every hole at its
+ // shortest, as it was played. The week it was found in is not.
+ const short = planScorecard(weeklySettings(at('2026-11-05')));
  assert.equal(short.par, 68);
  assert.ok(short.yards < 4700);
+ assert.ok(planScorecard(weeklySettings(at('2026-11-12'))).yards >= lo - 10);
 });
 
 test('a week\'s best is kept, and only a better round replaces it', () => {
