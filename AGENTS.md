@@ -51,6 +51,51 @@ and the graphics card used without asking. **Both ended with the merge.**
 - **Before more work on the look, read docs/CARTOON_OVERHAUL.md, *Working on
   the branch*** -- its capture views, how a round ran, and its lessons.
 
+## The surroundings rework (branch `surroundings-rework`, from 12 November 2026)
+
+The owner asked for every landscape's surroundings -- the land nobody plays
+on, past the property line to the horizon -- to be reworked so they match the
+playable land, and for the Course Builder to choose them. The plan, the
+rounds and what was decided are in docs/SURROUNDINGS.md. **These rules hold
+on this branch only and end when it is merged** (as the cartoon overhaul's
+did); delete this section in the merge's own pass.
+
+- **The graphics card and the processor are free, and in parallel.** No
+  asking for smoke runs, captures, profiles, the game in a browser or
+  Blender, and several jobs at once are allowed (the owner, 12 November 2026:
+  "you have the full GPU and CPU at your disposal ... full use and
+  parallelization until this branch is merged"). Subagents are allowed too.
+  What does not change: run game jobs through `tools/gpu-run.mjs --goal
+  surroundings` so each is logged; if the owner says they are playing a
+  game, stop graphics work until they say otherwise; leave nothing running
+  when a turn ends.
+- **Earlier decisions about the surrounding landscape bind nothing here.**
+  The far ring, the far woods' clusters, domes and cones, the painted forest
+  on the far hills, their distances, counts, shapes and colours, and every
+  "round N of the far landscape" ruling in the code, PROJECT_HANDOFF, DONE,
+  RESEARCH and docs/history may be reversed or replaced where they get in
+  the way of the rework. Say which was reversed and why, in
+  docs/SURROUNDINGS.md and in the old claim's own place (*Documentation is
+  part of the change*).
+- **What the owner said to keep:** one mountain on one side with desert round
+  it (Desert Mountain), the ocean on Seaside Links, and the surroundings
+  changing colour with the season. What the owner said is wrong: surroundings
+  plainly lower in polygons and resolution than the course, no way to change
+  them in the builder, the "tree domes", and the tree pattern painted on
+  hills and mountains.
+- **Frame rate is not allowed to get worse on any tier** (the standing rule,
+  *The cartoon look is main's*), and should get better where it can. Every
+  round that changes what is drawn is measured against main with
+  `tools/frame-ab.mjs` before it is called done.
+- **The played ground does not move for this.** Surroundings are scenery: a
+  round that makes `node tools/biome-fingerprint.mjs --check` speak has
+  touched the course and owes its own reason and a `GENERATOR_VERSION` line.
+- **A new model is made in Blender and improved over five to ten rounds**
+  beside reference pictures (`tools/blender/iterate.mjs`), each round logged,
+  before it ships.
+- **The owner follows the work on a status page** (an HTML page, republished
+  as the work moves). Updating it never holds work up.
+
 ## Ideas live in IDEAS.md, and are read only when wanted
 
 `docs/IDEAS.md` holds what could be built and nobody has decided to build;
@@ -299,7 +344,9 @@ browser pane, `npm run profile`. Earlier permission does not carry over -- the
 exceptions are Blender (below) and a `/goal` that says so (next section).
 The cartoon-overhaul branch's no-ask terms ended when it was merged (*The
 cartoon look is main's*), and the frame-rate-all-tiers branch's when it was
-merged (9 November 2026; RULES_HISTORY.md). The builder-ux branch's ended
+merged (9 November 2026; RULES_HISTORY.md). **The surroundings-rework branch
+has its own terms until it is merged** (*The surroundings rework*, above).
+The builder-ux branch's ended
 when it was merged (10 November 2026).
 
 - **If `nvidia-smi` shows the card busy, the owner is using the machine**: do not

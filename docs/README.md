@@ -58,6 +58,11 @@ the change that made it stale, not a follow-up.
   share. The owner's decisions, the file format, the stages and what each was
   measured against, the test course. Read it first when working on the
   builder.
+- **[SURROUNDINGS.md](SURROUNDINGS.md)** — the surroundings rework (branch
+  `surroundings-rework`, from 12 November 2026): what the owner asked for,
+  what the land past the property line is today, the plan, each round, and
+  the earlier decisions it reverses. Read it first when working on anything
+  nobody plays on.
 - **[CARTOON_OVERHAUL.md](CARTOON_OVERHAUL.md)** — the cartoon
   overhaul, merged 27 October 2026: what still governs work on the look --
   its art direction, every rule it set aside, its tools, and how its rounds
