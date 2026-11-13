@@ -58,7 +58,9 @@ export const SCREENS = [
  {name: 'scorecard', go: async p => { await round(p); await p.keyboard.press('Escape'); await wait(p, 800); await click(p, 'scoreNav'); await wait(p, 1800); }},
  {name: 'night-round', go: async p => { await round(p, {biome: 'seaside', seed: 'DUNE', hole: 3, hour: 21.5}); await p.evaluate(() => window.__view.setFloodlights(true)); await wait(p, 4000); }},
  // A putt being read (added for the website's greens panel): one golfer, a
- // 7-iron onto Links' 176-yard par 3, then the slope grid and the heat map on.
+ // 7-iron onto Links' 176-yard par 3, then the slope grid and the heat map on,
+ // and since 13 November 2026 the downhill markers too (readFlow; the owner:
+ // "It should show the break indicators too").
  // Fails rather than saving if the ball misses the green.
  {name: 'putting', go: async p => {
   await round(p, {biome: 'seaside', seed: 'DUNE', hole: 3, when: 'afternoon', group: {...GROUP, players: GROUP.players.slice(0, 1)}});
@@ -67,8 +69,8 @@ export const SCREENS = [
   await p.evaluate(() => { const v = window.__view, pin = v.course.pin, tee = v.course.tee || v.course.worldTee; const dx = (tee?.x ?? pin.x) - pin.x, dz = (tee?.z ?? pin.z - 40) - pin.z, d = Math.hypot(dx, dz) || 1; window.__play({x: pin.x + dx / d * 4, z: pin.z + dz / d * 4}); });
   await wait(p, 4000);
   if (!await p.evaluate(() => window.lab.state().camera.onGreen)) throw Error('the ball is not on the green');
-  await p.evaluate(() => { for (const id of ['readSlope', 'readHeat']) document.getElementById(id).click(); });
-  await wait(p, 2500);
+  await p.evaluate(() => { for (const id of ['readSlope', 'readFlow', 'readHeat']) document.getElementById(id).click(); });
+  await wait(p, 3500);
  }},
  {name: 'driving-range', go: async p => {
   await click(p, 'menuRange'); await wait(p, 1200);
