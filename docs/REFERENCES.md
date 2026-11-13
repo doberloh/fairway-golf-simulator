@@ -943,3 +943,7 @@ tables, the pages that could not be fetched, and the sources read and not used.
 ## The gimme circle (10 November 2026)
 
 - The Rules of Golf, Rule 3.2b(1), Conceding the next stroke -- https://www.usga.org/content/usga/home-page/rules/rules-2019/rules-of-golf/rule-3.html -- a conceded next stroke means the player has holed out with that stroke, so it counts. Cited from the Rules as known; not fetched this session. Taken: a gimme adds one stroke. Not taken: concessions belong to match play; the game's gimme circle is a simulator convention in every format (RESEARCH *The gimme circle*).
+
+## The mountainsides (13 November 2026, the surroundings rework)
+
+- Inigo Quilez, "More noise" -- https://iquilezles.org/articles/morenoise/ -- value noise with its derivatives, and scales summed with each divided by one plus the squared slopes so far. The idea and the form taken, from memory; not fetched in this session (his site has refused automated requests before, above), nothing copied. RESEARCH.md, *The mountainsides (round 10)*, says where the build departs.

@@ -374,8 +374,14 @@ order:
    landscape's own, open country, rolling hills (160 m), a range (850 m), one
    big mountain (900 m), mesas (240 m), the sea, sea and islands, or a lake
    with a far shore; corners blend, and a shore wanders 40 to 300 m out.
-   COURSE_BUILDER.md, *A course's own surroundings*.
-4. **The trees** (surround.js) are the landscape's own stand carried outward:
+   COURSE_BUILDER.md, *A course's own surroundings*. **A peaked range has
+   crags** (13 November 2026, `crags`): a ridged noise over four scales, 320
+   m down to 40 m, up to about a quarter of the range's lift, none on a
+   valley floor and no scale the ring's cells are too wide to draw. And every
+   ring vertex carries a baked shade, hollows dark and ribs light (`shade`).
+4. **The trees** (surround.js) are the landscape's own stand carried outward
+   (or the plants the landscape names for past its line, `farPlants`: the
+   Desert Resort's desert plants, Hawaii's broad crowns):
    its mix of species, each sized as the course sizes it, never closer than
    12 m, nine sites in ten kept at the line and thinning by one stand spacing
    every 3.2 km out, to the tier's reach (Low 1.5 km, Medium 2.5 km, High

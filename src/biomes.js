@@ -39,6 +39,11 @@ const DEFAULTS = {
  // the far-landscape goal): the landscape's own rock, so a far cliff is rock
  // rather than rough stretched up it. Null where the far land is dune or sea.
  ringFace: 'rock',
+ // How a far rock face is marked (ground.js FAR_FACE, cragFace): null is the
+ // plain rock, its planes as wide as tall. And the plants that grow past
+ // the property line where they are not the stand's own (surround.js):
+ // null is the stand's.
+ farFace: null, farPlants: null,
  // Far land as mesas and buttes (landscape-edge.js `mesas`): off unless asked.
  ringMesas: false,
  // Far islets out of the sea (landscape-edge.js `isles`): how many; none unless asked.
@@ -223,6 +228,10 @@ const TRAITS = {
   // `ringPeaks` (the polish goal): the far range as peaks and aretes
   // (landscape-edge.js), not sine-wave rolls.
   bank: '#7b8982', hills: {base: 70, severity: 180, reach: 90}, ringLift: 950, ringPeaks: true,
+  // Granite walls: planes taller than wide, as jointed granite breaks;
+  // snow from 640 m over the course (the surroundings rework, 13
+  // November 2026). PLACED.
+  farFace: {wide: .8, tall: 1.6, contrast: .2, crack: .07, snow: 640},
   scatter: {rocks: 550, grass: 110000, tufts: 1600, tallGrass: false,
    rockScale: 2, bladeLength: .65, bladeWidth: .8, bladeTint: null,
    flowers: ['#f0cf63', '#bc80b4']},
@@ -646,6 +655,14 @@ WORLD.northwoods = {...WORLD.northeast, clubhouse: 'loglodge', path: 'gravel', b
 // monkeypods, ironwoods, Cook pines, palms and ohia; ti and heliconia.
 TRAITS.hawaii = {...TRAITS.midwest, light: {shade: '#7ea0c4'}, sea: true, edgeCoast: true, shoreSand: true, warm: true,
  hills: {base: 30, severity: 80, reach: 80}, ringLift: 700, ringPeaks: true, ringFace: 'rock', rockStyle: 'lava', rockMoss: '#4a7a3a',
+ // The pali: green to the crest and fluted top to bottom, the lava dark in
+ // the troughs (the Ko'olau and Na Pali cliffs; the surroundings rework, 13
+ // November 2026). And past the property line the windward forest's
+ // broad crowns, the resort's Cook pines only here and there: at 42% of
+ // the far trees, a seventh as wide as tall, they stood on the slopes as
+ // sticks. PLACED.
+ farFace: {wide: .42, tall: 3.6, contrast: .3, crack: .4, green: '#2f6833', greenShare: .94},
+ farPlants: [['himonkeypod', .5], ['hiironwood', .34], ['hicookpine', .08], ['flcoconut', .08]],
  longGrass: {families: [['grassbunch', 2, 1], ['grassfescue', 1, .8]], count: 3500, near: 20, leaf: '#6a9a44', accent: '#a8b060'},
  farForest: {cover: .85, size: 11, colors: ['#2e6a34', '#3a7638', '#4a823e']},
  scatter: {...DEFAULTS.scatter, rocks: 260},
@@ -1030,7 +1047,13 @@ const TERRAIN = {
  // the sign-off, 7 November 2026.
  dresort: {landform: {type: 'knobs', cell: 280, chance: .1, radius: [20, 40], size: [4, 10], profile: 1.3, round: .6, floor: 1, wash: 0, bare: .2, reach: 80,
   kinds: {a: 'rock', b: 'waste', floor: 'hardpan'}, gates: {a: gate(16, 8), b: gate(18, 6), floor: gate(14, 3)}}, groundTints: {hardpan: '#c6b69a', waste: '#b5a68c', rock: '#a09a8e'},
-  hills: {base: 8, severity: 20, reach: 80}, ringLift: 620, ringPeaks: true, ringMesas: false},
+  hills: {base: 8, severity: 20, reach: 80}, ringLift: 620, ringPeaks: true, ringMesas: false,
+  // Grey limestone in beds, a little tilted, ledge over ledge (the ranges
+  // round the Las Vegas valley); and past the property line the desert's own
+  // plants -- the resort's Afghan pines stood up the mountain as dark
+  // spires (the surroundings rework, 13 November 2026). PLACED.
+  farFace: {wide: 2.4, tall: .5, contrast: .13, crack: 0, beds: .3},
+  farPlants: [['creosote', .5], ['brittlebush', .2], ['dtmesquite', .3]]},
  // Florida Palms: low and flat behind the beach, wet hollows for its lakes. The Florida
  // Flatwoods' lowland recipe, a little broader (PLACED); the Flatwoods left at the sign-off.
  // Pacific Northwest: Puget Sound's glacial ground, its hummocks a metre taller (PLACED, so the two

@@ -72,6 +72,7 @@ function wildUniforms(w, hasWild, hasFallen) {
   // A carved far country: the course's own threshold (the ring keeps the rock
   // going past the property line), narrower in the shader so its grass stays grass.
   ringFaceFrom: {value: biomeOf(w.settings.biome).ringCarve ? .9 : biomeOf(w.settings.biome).ringMesas ? .86 : .74},
+  ...farFaceUniforms(biomeOf(w.settings.biome)),
   wildGateA: {value: gate(gates.a)}, wildGateB: {value: gate(gates.b)}, wildGateF: {value: gate(gates.floor)},
   // Up to two rock-tee outcrops (course.js, *Tees up on the rock*): centre and long axis, then
   // half-length, half-width and whether it is there.
@@ -85,6 +86,18 @@ function wildUniforms(w, hasWild, hasFallen) {
   // course stands at its real height (built-world.js skyBaseOf).
   heightBase: {value: w.skyBase ?? 0},
  };
+}
+// A FAR FACE'S OWN LOOK (the surroundings rework, 13 November 2026; biomes.js
+// farFace): the shape of the planes a far rock face is broken into (wide,
+// tall), how far their tones differ and how dark the cracks between them,
+// beds of tone by height, a green to grow over it and how much of it
+// (Hawaii's pali), and the height its snow starts at (Mountain). The
+// shader's cragFace reads them.
+export const FAR_FACE = {wide: 1, tall: 1, contrast: .2, crack: .04, beds: 0, green: null, greenShare: 0, snow: null};
+function farFaceUniforms(bio) {
+ const o = {...FAR_FACE, ...(bio.farFace || {})}, g = new T.Color(o.green ?? '#000000');
+ // (A plane `wide` times as wide and `tall` times as tall as the plain one: the pattern's own scale is the inverse.)
+ return {cragShape: {value: new T.Vector4(1 / o.wide, 1 / o.tall, o.contrast, o.crack)}, cragMore: {value: new T.Vector4(o.beds, 0, 0, 0)}, cragGreen: {value: new T.Vector4(g.r, g.g, g.b, o.green ? o.greenShare : 0)}, farSnow: {value: o.snow ?? 1e5}};
 }
 // BANDED STRATA (the Badlands, 3 November 2026; biomes.js `strata`): a
 // landscape whose rock is layered clay paints its rock faces -- and its
@@ -358,9 +371,9 @@ export function groundMaterial(view,palette){
    // The overhaul's ground types: which type each channel holds (GROUND_CODE),
    // the gate each starts at, and the colours they paint with.
    ...wildUniforms(w,!!wild,!!fallen),field:{value:fieldTex},fieldOn:{value:sandField&&!built?1:0},builtB:{value:builtBTex},builtFringe:{value:w.settings.fringe??2},gt_path:{value:new T.Color(w.bio.mapTurf?.path??GROUNDS.path.map)},gt_road:{value:new T.Color(GROUNDS.road.map)},...farForestUniforms(bio,view.quality?.surround?.reach??5000,w.surround?.cover),farProp:{value:new T.Vector2(w.halfX,w.halfZ)}});
- shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 groundPoint;varying vec3 groundNormal;\nattribute float localRelief;varying float vRelief;').replace('#include <begin_vertex>','#include <begin_vertex>\ngroundPoint=position;groundNormal=normal;vRelief=localRelief;');
+ shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 groundPoint;varying vec3 groundNormal;\nattribute float localRelief;varying float vRelief;attribute float farShade;varying float vFarShade;').replace('#include <begin_vertex>','#include <begin_vertex>\ngroundPoint=position;groundNormal=normal;vRelief=localRelief;vFarShade=farShade;');
  shader.fragmentShader=shader.fragmentShader.replace('#include <common>',`#include <common>
- varying float vRelief;uniform float cueRelief,cueSlope,cueContours,cueStripes,cuePatches,cueShade,cueSheen,greenLift,greenBend,greenBandSoft;
+ varying float vRelief;varying float vFarShade;uniform vec4 cragShape,cragMore,cragGreen;uniform float farSnow;uniform float cueRelief,cueSlope,cueContours,cueStripes,cuePatches,cueShade,cueSheen,greenLift,greenBend,greenBandSoft;
  uniform vec3 sunDir;
  uniform float farOn,farPaint,farCover,farLine,farSize,farSea,farReach,farOpen;uniform vec3 farC0,farC1,farC2,farC3;uniform vec2 farProp;
  // The same rounded box course.js uses, so paint and lie cannot disagree
@@ -516,6 +529,55 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  // designer was removed, 2 November 2026; every ground type keeps the soft
  // edge above.)
  float wildEdge(float code,float f){return wildSoft(f);}
+ // A FAR ROCK FACE, AT ANY DISTANCE (the surroundings rework, 13 November
+ // 2026). The rock above is laid from overhead in metres: on a cliff it
+ // stretched into smears (so a steep far face was given 85% of one flat
+ // tone), and past a few hundred metres its 5 to 9 m marks are under a pixel
+ // (so the rest went flat too). A mountain over the course was a plain grey
+ // sheet beside the course's own crags -- the owner's "definitively more low
+ // poly and low rez". Here a face is broken into planes as the course's own
+ // rock is: irregular cells, each its own tone, a dark crack where two meet.
+ // They are laid on the side the face looks to (its height and the way along
+ // it, so nothing stretches) and sized by
+ // the distance to the camera -- about 45 pixels across wherever the face
+ // stands, each size fading into the next -- so a wall 2 km off is in planes
+ // as a crag at 50 m is. cragShape stretches the cells by the landscape's
+ // rock: taller than wide for jointed granite, wide and flat for bedded
+ // limestone, long ribs for a fluted pali. Round 1 drew joints and ledges as
+ // evenly spaced lines: a net over the mountain, zebra stripes on Hawaii.
+ // PLACED: every number.
+ // (What it costs. The first build blended the two views wherever a face
+ // stood between them and gave every cell two hashes: up to eight patterns a
+ // pixel, 3.6% of a High frame on Mountain and five seconds of the wait for a
+ // course, the shader having grown that much. Now the one view the face looks
+ // to most squarely -- where it turns from one to the other the cells change,
+ // which on rock in planes is one more edge between planes -- two sizes, one
+ // hash a cell: fewer sums than the overhead rock it replaces.)
+ float cragTone(vec2 u){
+  u*=cragShape.xy;
+  vec2 i=floor(u),fr=fract(u);float best=9.,next=9.,id=0.;
+  for(int a=-1;a<=1;a++)for(int b=-1;b<=1;b++){
+   vec2 g=vec2(float(a),float(b));float h=hashGround(i+g);
+   vec2 v=g+.12+.76*vec2(h,fract(h*61.7))-fr;float d=dot(v,v);
+   if(d<best){next=best;best=d;id=h;}else if(d<next)next=d;
+  }
+  float crack=1.-smoothstep(0.,.1,sqrt(next)-sqrt(best));
+  return (1.+cragShape.z*(id-.5)*2.)*(1.-cragShape.w*crack);
+ }
+ vec3 cragFace(vec3 n){
+  vec3 P=groundPoint;
+  float l=log2(clamp(distance(cameraPosition,P)*.054,5.,420.)/5.),l0=floor(l),f=smoothstep(.25,.75,l-l0),U=5.*exp2(l0);
+  vec2 u=abs(n.x)>abs(n.z)?P.zy+31.:P.xy;
+  // Size k is the same pattern whichever of the two a pixel reaches it as.
+  float tone=mix(cragTone(u/U+l0*13.7),cragTone(u/(2.*U)+(l0+1.)*13.7),f);
+  // Beds: a tone to every 40 m or so of height, a little tilted (limestone).
+  if(cragMore.x>0.){float ys=(P.y+P.x*.11+P.z*.07)/42.+.6*patchNoise(P.xz/260.);tone*=1.+cragMore.x*(hashGround(vec2(floor(ys),3.1))-.5)*smoothstep(0.,.12,fract(ys));}
+  vec3 c=gt_rock*.92*tone;
+  // Growth over the face (Hawaii): all but the steepest of it, the rock dark
+  // in the cracks between the ribs.
+  if(cragGreen.a>0.){float g=cragGreen.a*smoothstep(.08,.34,n.y);c=mix(c,cragGreen.rgb*tone,g);}
+  return c;
+ }
  // One layer of painted ground over c: layer i of the wild ground's four, or
  // the far ring's floor (0) and face (1), which also settle to a flat colour
  // where their pattern is under a pixel (ringGrain, -1 off the ring).
@@ -524,7 +586,10 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   // Banded clay keeps its beds on a far face, four times as thick, as a far
   // wall's show in the photographs; it is its faces' whole look.
   float bedScale=faceLayer&&strataOn>.5?.25:1.;bedFine=beds*bedScale;
-  vec3 under=ring?c:turf,paint=groundPaint(code,wp,groundPoint.y*bedScale,gn,under);
+  vec3 under=ring?c:turf;
+  // A far rock face has marks of its own (cragFace); banded clay keeps its beds.
+  if(faceLayer&&code<1.5&&strataOn<.5)return mix(c,mix(cragFace(gn),under,smoothstep(.62,.9,gn.y)*.3),share);
+  vec3 paint=groundPaint(code,wp,groundPoint.y*bedScale,gn,under);
   if(ring){
    // A ground type's average colour, for where its pattern is under a pixel.
    // Round 5: the steeper the face the plainer: a pattern laid from above
@@ -1457,6 +1522,15 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
    turf*=1.+tone*smoothstep(0.,160.,fo);
   }
  }
+ // SNOW ON THE HIGH GROUND (the surroundings rework, 13 November 2026;
+ // biomes.js farFace.snow, Mountain): from that height above the course, a
+ // ragged line, lower in the gullies (the ring's baked hollows) and never on
+ // a wall. Past the course's own ground only. PLACED.
+ if(farSnow<9e4&&(abs(wp.x)>=extent.x||abs(wp.y)>=extent.y)){
+  float sy=groundPoint.y-heightBase-farSnow+(patchNoise(wp/230.)-.5)*260.-vFarShade*110.;
+  float sn=smoothstep(0.,140.,sy)*smoothstep(.34,.6,normalize(groundNormal).y-.12*vFarShade);
+  turf=mix(turf,vec3(.93,.95,.99),sn*.94);
+ }
  if(farOn>.5){
   // THE POLISH GOAL: from the property line, where the stands stop, fading in
   // over 40 m -- not from the ground's edge 150 m further out and over 70 m,
@@ -1480,7 +1554,9 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
    // bare at 42 degrees -- Mountain's pale vertical streaks. Past the
    // course's ground the woods hold on to 55 degrees.
    float far=step(extent.x,abs(wp.x))+step(extent.y,abs(wp.y));
-   mask*=far>0.?smoothstep(.36,.58,normalize(groundNormal).y):smoothstep(.5,.74,normalize(groundNormal).y);
+   // (13 November 2026: to 52 degrees, where surround.js stops planting; to 69
+   // the floor lay dark over rock no tree stood on -- Mountain.)
+   mask*=far>0.?smoothstep(.54,.66,normalize(groundNormal).y):smoothstep(.5,.74,normalize(groundNormal).y);
    // Nor under the sea (the far-landscape goal; the owner: "Lakeshore Dunes
    // and Links have trees underwater?"): the canopy was painted on the sea
    // bed too, and the clear shelf showed its crowns through the water. It
@@ -1518,13 +1594,17 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
    vec3 avgLeaf=(farC0+farC1+farC2+farC3)*.25,mosaic=mPick<.3?farC0:mPick<.55?farC1:mPick<.8?farC2:farC3;
    float mSharp=1.-smoothstep(.15,.6,length(fwidth(wp))/26.);
    vec3 farLeaf=mix(mix(avgLeaf,groveLeaf,.5),mix(mosaic,groveLeaf,.35),mSharp*.75)*(.84+.24*patchNoise(wp/19.));
-   vec3 floorTone=avgLeaf*.52*(.86+.28*patchNoise(wp/23.));
+   // (13 November 2026: a part of it the ground's own colour, more on a rock
+   // face: a floor of pure leaf-shade lay on Mountain's grey slopes as dark
+   // green cloth where the trees were thin.)
+   vec3 floorTone=mix(avgLeaf*.52,turf*.82,.22+.48*paintShare.y)*(.86+.28*patchNoise(wp/23.));
    float beyond=smoothstep(.12,1.,clamp((outside-100.)/max(farReach-100.,1.),0.,1.));
    vec3 canopy=mix(floorTone,farLeaf*.72,beyond);
    turf=mix(turf,canopy,mask);
   }
  }
- diffuseColor.rgb=turf;
+ // The ring's baked hollows and ribs (landscape-edge.js; nothing inside the course's ground).
+ diffuseColor.rgb=turf*(1.+clamp(vFarShade,-1.,1.)*.2);
  `);
- };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v80';return m;
+ };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v82';return m;
 }

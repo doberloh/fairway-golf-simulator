@@ -116,12 +116,21 @@ wrong, unfinished, or owed a check.
   Pines*, *Bare tree branches*, *Regenerate the grasses on Meshy*)
 
 - [ ] **The surroundings rework (branch `surroundings-rework`), open** (12-13
-  November 2026; docs/SURROUNDINGS.md). **The mountainsides are not done on
-  Mountain, Desert Resort and Hawaiian Resort**: rock faces close over the course are
-  still smooth or coarse and plain beside the course, which is the owner's
-  first complaint (SURROUNDINGS, *All fifteen on the final build*; pictures
-  in bench/shots/overhaul/sur-final). The Badlands and Prairie & Sand Hills got the
-  finer ground only. **Mountain's forest floor reads dark
+  November 2026; docs/SURROUNDINGS.md). **The mountainsides on Mountain,
+  Desert Resort and Hawaiian Resort are built but UNFINISHED**
+  (SURROUNDINGS, *Round 10*): crags, rock in planes, snow, each landscape's
+  own far plants. The look was photographed (bench/shots/overhaul/sur-m5);
+  as first built it cost 3.4 to 3.8% of a High frame on Mountain and five
+  seconds of the wait for a course; the change that cuts that **has never
+  been drawn on a graphics card** -- the card was lost on 13 November 2026
+  at 12:03 and graphics work stopped. Owed, when the owner says the card may
+  be used: the cut build drawn and looked at on the three, all fifteen
+  photographed again, frame rate against 0.9.14 on every tier, the wait for
+  a course, both smoke runs. If the cut build is wrong or still slower, the
+  round is taken out or cut further before the branch is handed over.
+  The Badlands and Prairie & Sand Hills got the finer ground only.
+  **Mountain's forest floor (round 10 lightened it and took it off the
+  rock; in the unseen build) read dark
   and flat where the trees are thin** (ground.js, the floor tone under the
   far trees; SURROUNDINGS round 5). **High on Mountain is not shown to be level
   with 0.9.14**: 0.04 to 0.09 ms (0.6 to 1.4%) slower at the two tees in the

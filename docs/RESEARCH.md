@@ -14925,7 +14925,7 @@ LIDAR, and searches and downloads only a box drawn round the course on it
 
 Branch `surroundings-rework`. The plan, each round and every decision it
 reversed are in **docs/SURROUNDINGS.md**; this is its figures. **No outside
-source was used**: every number below was measured here or PLACED, and says
+source was used** but one, for round 10's crags (below, *The mountainsides*): every number below was measured here or PLACED, and says
 which. Seed FAIRWAY, eighteen holes, the starting course, unless said.
 
 **Before (main, 0.9.14), measured.** The far ring: 26 rings, 13,000 triangles
@@ -15036,3 +15036,55 @@ sea 2.5 m under the lowest ground of the land when the file names none.
 
 What went wrong on the way is in SURROUNDINGS.md, rounds 2 to 4 and 8, and
 PROJECT_HANDOFF, *THE SURROUNDINGS ARE THE COURSE'S OWN TREES, AS PICTURES*.
+
+### The mountainsides (round 10, 13 November 2026) -- unfinished
+
+docs/SURROUNDINGS.md, *Round 10*, has the rounds and what is owed.
+
+**Source.** Inigo Quilez, *More noise* (value noise with analytic
+derivatives, and a sum of scales in which each is divided by one plus the
+squared size of the slopes summed so far, so detail gathers on gentle ground
+and steep ground stays clean): https://iquilezles.org/articles/morenoise/ .
+Taken: the idea and the form of the divisor. Written from memory, not
+fetched in this session; nothing was copied. Departures: each scale is
+ridged (1 - |2n - 1|, a crest line) where his is plain; the slopes are
+summed as squared sizes scale by scale (summed as a vector, a ridge's two
+sides cancel and the scales below step at every crest); the divisor's weight
+is .35 where his is 1; scales stop where the ring's cells are too wide. All
+PLACED.
+
+**The crags** (landscape-edge.js `crags`): four scales from 320 m, each
+half the last and turned; amplitude .24 of the range's lift times the sum
+about its middle (the sum runs about -.75 to +1.1), weighted by how high the
+range stands there (min(1, 1.5a + .5b) of its two broad ridge fields), so
+about +250 m to -170 m at the most on Mountain's 950 m lift, nothing on a
+valley floor. A scale of wavelength L shows where the ring's cell is under
+L/4 and is gone by L/2.4. PLACED: every number.
+
+**The baked shade** (`shade`): a ring vertex's height less the mean of
+those three cells either way along its ring and three rings in and out,
+over 45% of that radius, clamped to -1..1, fading in from 120 to 400 m. Its
+mean size 600 m to 4 km out, measured: Mountain about three times Classic
+Parkland's (the test holds 1.5 times). The shader multiplies by 1 + .2 of
+it. PLACED.
+
+**The rock face's cells** (ground.js `cragFace`): a jittered grid, the
+nearest point's own tone; unit 5 m doubled until it is .054 of the distance
+to the camera (about 45 pixels at 900 lines and a 60 degree view), two sizes
+blended. Contrast and crack by landscape: plain rock .2 and .04; Mountain
+.2 and .07, cells .8 wide by 1.6 tall; Desert Resort .13 and none, 2.4 by
+.5, beds of tone .3 every 42 m of height tilted .11 and .07; Hawaiian Resort
+.3 and .4, .42 by 3.6, under 94% green (#2f6833) on all but the steepest.
+Snow on Mountain from 640 m over the course by a 230 m noise of 260 m,
+110 m lower in a full hollow. PLACED: every number; set by eye over five
+rounds of pictures.
+
+**Measured, once, loosely** (High on Mountain, three rounds, against the
+branch before the round, the card 25 to 40% busy with the desktop;
+bench/ab/sur-m5-mountains-high.json, local): as first built, two views and
+two hashes a cell, card time 6.74 to 7.00 ms, 2.78 to 2.88 ms and 7.73 to
+7.99 ms at tee 1, tee 5 and 250 m up (3.4 to 3.8% slower), draws and
+triangles equal, the wait for a course 13.5 s to 18.6 s. The cut to one view
+and one hash a cell is **not measured and not drawn**: the graphics card was
+lost before its run (13 November 2026, 12:03).
+

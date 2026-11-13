@@ -1,6 +1,6 @@
 import * as T from 'three';
 import {biomeOf} from './biomes.js';
-import {fbm,saltOf,carvedField,landformOf,massifHeading} from './landforms.js';
+import {fbm,hash,saltOf,carvedField,landformOf,massifHeading} from './landforms.js';
 import {SURROUND_SIDES,SIDE_ANGLE} from './surround-sides.js';
 // Join the detailed ground's exact perimeter vertices to progressively wider
 // landscape rings. No overlapping rectangular backdrop or exposed tile edge.
@@ -54,12 +54,12 @@ function sidedRelief(w,sur,{auto,peaks,mesas,massif,isles}){
  const sShore=saltOf(w.settings.seed,'shore'),bay=(x,z)=>260*fbm(x/500,z/500,sShore,2);
  const rolling=(x,z)=>Math.abs(Math.sin(x/520+Math.sin(z/430)))*.55+Math.abs(Math.sin(z/680+x/810))*.3+Math.abs(Math.sin(x/173-z/230))*.15;
  const mountainSide=SURROUND_SIDES.find(k=>sur.sides[k]==='mountain');
- const kindAt=(side,x,z,d,y0)=>{
+ const kindAt=(side,x,z,d,y0,cell)=>{
   const kind=sur.sides[side]??'auto',rise=ss(d,0,900);
   switch(kind==='mountain'&&side!==mountainSide?'range':kind){
    case 'flat':return 0;
    case 'hills':return 160*H*rolling(x,z)*rise;
-   case 'range':return 850*H*peaks(x,z)*rise;
+   case 'range':return 850*H*peaks(x,z,cell)*rise;
    case 'mountain':return 900*H*massif(x,z)*rise;
    case 'mesas':return 240*H*mesas(x,z)*rise;
    // Water asks for a level, not a lift: the ground as it stands is `y0`
@@ -67,13 +67,13 @@ function sidedRelief(w,sur,{auto,peaks,mesas,massif,isles}){
    case 'sea':{if(y0===undefined)return 0;const b=bay(x,z);return (level-8-y0)*ss(d,40+b,160+b);}
    case 'islands':{if(y0===undefined)return 0;const b=bay(x,z);return (level-8-y0)*ss(d,40+b,160+b)+(isles?isles(x,z):0);}
    case 'lake':{if(y0===undefined)return 0;const b=bay(x,z),far=3*bay(x+900,z-700);return (level-5-y0)*ss(d,40+b,160+b)*(1-ss(d,1100+far,1500+far))+110*H*rolling(x,z)*ss(d,1400+far,2600+far);}
-   default:return auto(x,z,d);
+   default:return auto(x,z,d,y0,cell);
   }
  };
- return (x,z,distance,y0)=>{
+ return (x,z,distance,y0,cell)=>{
   const qx=Math.max(0,Math.abs(x)-w.halfX),qz=Math.max(0,Math.abs(z)-w.halfZ),a=qx*qx,b=qz*qz,t=a+b;
   if(t<=0)return 0;
-  return (a?a/t*kindAt(x>0?'e':'w',x,z,distance,y0):0)+(b?b/t*kindAt(z>0?'s':'n',x,z,distance,y0):0);
+  return (a?a/t*kindAt(x>0?'e':'w',x,z,distance,y0,cell):0)+(b?b/t*kindAt(z>0?'s':'n',x,z,distance,y0,cell):0);
  };
 }
 export function ringRelief(w){
@@ -84,8 +84,40 @@ export function ringRelief(w){
  // A course's own surroundings (a built course's file; `sidedRelief` below)
  // may ask for a range, mesas or a mountain on a landscape that has none.
  const sur=w.surround?.sides?w.surround:null,wants=k=>!!sur&&Object.values(sur.sides).includes(k);
+ // CRAGS ON A MOUNTAINSIDE (the surroundings rework, 13 November 2026). The
+ // owner asked whether the rework was done on every landscape; on the three
+ // with a range close over the course (Mountain, Desert Resort, Hawaiian
+ // Resort) it was not: three scales of ridge, the smallest 240 m, left each
+ // flank a smooth sheet between crests. A fourth layer now breaks the flanks
+ // into buttresses, gullies and benches: a noise summed over four scales from
+ // 320 m down to 40 m, each scale held back where the ones above it are
+ // already steep (so a gully keeps a clean floor and a crest stays broken --
+ // the look of worn rock; after Quilez's derivative-damped noise, RESEARCH),
+ // strongest high on the range and nothing on a valley floor. A scale is left
+ // out where the ring's cells (`cell` metres; the ring says) are too wide to
+ // draw it, so nothing aliases far out. Scenery only. PLACED: every number.
+ const crags=bio.ringPeaks||wants('range')?(()=>{const s=saltOf(w.settings.seed,'crags'),ss=T.MathUtils.smoothstep;
+  return (x,z,cell)=>{
+   let sum=0,mid=0,amp=1,g2=0,px=x/320,pz=z/320,L=320;
+   for(let o=0;o<4;o++){
+    const show=ss(L,cell*2.4,cell*4);if(show<=0)break;
+    const i=Math.floor(px),j=Math.floor(pz),fx=px-i,fz=pz-j,ux=fx*fx*(3-2*fx),uz=fz*fz*(3-2*fz);
+    const a=hash(i,j,s+o*7919),b=hash(i+1,j,s+o*7919),c=hash(i,j+1,s+o*7919),d=hash(i+1,j+1,s+o*7919),k=a-b-c+d;
+    // (Ridged: each scale a crest line, sharp, as a buttress's edge is.)
+    // The steepness is summed as a size, never a direction: a ridge's two
+    // sides slope opposite ways, and summing directions made the scales
+    // below step at every crest line (an edge of 18 to 1 in the ring).
+    const n=a+(b-a)*ux+(c-a)*uz+k*ux*uz,ex=12*fx*(1-fx)*((b-a)+k*uz),ez=12*fz*(1-fz)*((c-a)+k*ux);
+    sum+=show*amp*(1-Math.abs(2*n-1))/(1+.35*g2);mid+=show*amp*.4;g2+=ex*ex+ez*ez;
+    amp*=.5;L/=2;const nx=1.6*px-1.2*pz+3.7,nz=1.2*px+1.6*pz-5.1;px=nx;pz=nz;
+   }
+   // About its own middle, so a scale left out lifts and lowers nothing.
+   return sum-mid;
+  };})():null;
  const peaks=bio.ringPeaks||wants('range')?(()=>{const s=saltOf(w.settings.seed,'peaks'),rg=(x,z,k,o)=>{const r=1-Math.abs(2*fbm(x,z,s+k,o)-1);return r*r;};
-  return (x,z)=>{const a=rg(x/1500,z/1500,0,3),b=rg(x/560+3.1,z/560-7.7,11,2),c=rg(x/240-5.3,z/240+2.9,23,2);return Math.min(1.25,Math.pow(a,1.6)*.85+Math.pow(b,2)*.3*(.4+a)+c*.09*a);};})():null;
+  return (x,z,cell=1e9)=>{const a=rg(x/1500,z/1500,0,3),b=rg(x/560+3.1,z/560-7.7,11,2),c=rg(x/240-5.3,z/240+2.9,23,2);
+   const rough=cell<1e8?crags(x,z,cell)*.24*Math.min(1,a*1.5+b*.5):0;
+   return Math.max(0,Math.min(1.25,Math.pow(a,1.6)*.85+Math.pow(b,2)*.3*(.4+a)+c*.09*a+rough));};})():null;
  // MESAS AND BUTTES (the far-landscape goal; the owner: "I think we need more
  // plateaus"). A landscape with `ringMesas` raises its far land as flat-topped
  // tables: a smooth field, warped so the outlines wander, cut into up to three
@@ -139,7 +171,7 @@ export function ringRelief(w){
    const lean=r(2)<.5?-1:1,crest=.8+.1*lean*along/half+.12*rg(along/1600,1.3,2)+.03*Math.pow(rg(along/500,4.1,2),2);
    return rise*crest*(1-ss(u,.72,1.15));
   };})():null;
- const ridgeAt=(x,z)=>massif?massif(x,z):peaks?peaks(x,z):mesas?mesas(x,z):Math.abs(Math.sin(x/520+Math.sin(z/430)))*.55+Math.abs(Math.sin(z/680+x/810))*.3+Math.abs(Math.sin(x/173-z/230))*.15;
+ const ridgeAt=(x,z,cell)=>massif?massif(x,z):peaks?peaks(x,z,cell):mesas?mesas(x,z):Math.abs(Math.sin(x/520+Math.sin(z/430)))*.55+Math.abs(Math.sin(z/680+x/810))*.3+Math.abs(Math.sin(x/173-z/230))*.15;
  // FAR ISLANDS (the far-landscape goal, round 3): a landscape with
  // `ringIslands` (Island: sea to every horizon) raises a few islets out of its
  // far sea -- each a low hill with a beach skirt, its outline wandering, from
@@ -149,7 +181,7 @@ export function ringRelief(w){
  const isles=isleCount?(()=>{const s=saltOf(w.settings.seed,'islands'),r=k=>{const v=Math.sin((s+k*7919)*12.9898)*43758.5453;return v-Math.floor(v);},ss=T.MathUtils.smoothstep;
   const list=Array.from({length:isleCount},(_,i)=>{const a=r(i*3)*6.2832,d=2500+r(i*3+1)*3500,R=260+r(i*3+2)*520;return {x:Math.cos(a)*(w.halfX+d),z:Math.sin(a)*(w.halfZ+d),R,H:24+r(i*5+4)*46};});
   return (x,z)=>{let h=0;for(const q of list){const dd=Math.hypot(x-q.x,z-q.z)/q.R*(1+.25*(fbm(x/260,z/260,s+11,2)-.5));if(dd<1.3)h=Math.max(h,(1-ss(dd,.85,1.25))*3.5+(1-ss(dd,.2,.95))*q.H);}return h;};})():null;
- const auto=(x,z,distance)=>(lift*ridgeAt(x,z)*shore(x,z)+(isles?isles(x,z):0))*T.MathUtils.smoothstep(distance,0,900)+carvedAt(x,z,distance);
+ const auto=(x,z,distance,y0,cell)=>(lift*ridgeAt(x,z,cell)*shore(x,z)+(isles?isles(x,z):0))*T.MathUtils.smoothstep(distance,0,900)+carvedAt(x,z,distance);
  return {peaks,mesas,isles,carved,massif,at:sur?sidedRelief(w,sur,{auto,peaks,mesas,massif,isles}):auto};
 }
 // THE RING AS PLAIN ARRAYS (the far-landscape goal, 26 October 2026). The
@@ -223,7 +255,9 @@ function buildRing(w,detail){
   const first=positions.length/3,ts=[];
   if(ring===0){for(let i=0;i<count;i++){const id=edge[i];positions.push(g.positions[id*3],g.positions[id*3+1],g.positions[id*3+2]);ts.push(i);along.push(i);out.push(0);}}
   else{
-   const outward=distance-steps[ring-1];
+   // (The last ring stops at the reach, a short step after long ones: the
+   // crags are told the longer of the two, or they would all stand up on it.)
+   const outward=distance-steps[ring-1],cell=Math.max(outward,ring>1?steps[ring-1]-steps[ring-2]:0);
    // A peaked range twice as dense along each ring (round 5: at one vertex
    // per ring step its nearest faces were single planes hundreds of metres
    // wide); a few thousand triangles more, out where nothing else is drawn.
@@ -232,7 +266,7 @@ function buildRing(w,detail){
    const n=Math.max(48,Math.min(count,Math.round(around(distance)/Math.max(outward,3))));
    for(let j=0;j<n;j++){
     const t=j/n*count,[x0,z0]=perimeter(t),r=Math.hypot(x0,z0),x=x0+x0/r*distance,z=z0+z0/r*distance;
-    const y0=w.height(x,z);positions.push(x,y0+relief.at(x,z,distance,y0),z);ts.push(t);along.push(t);out.push(distance);
+    const y0=w.height(x,z);positions.push(x,y0+relief.at(x,z,distance,y0,cell),z);ts.push(t);along.push(t);out.push(distance);
    }
   }
   rings.push({first,ts});
@@ -254,7 +288,26 @@ function buildRing(w,detail){
   }
   bands.push({first,reach});
  }
- return {positions,indices,edge,along,out,count,steps,bands};
+ // HOLLOWS DARK, RIBS LIGHT, BAKED (the surroundings rework, 13 November
+ // 2026). The course's own ground carries a baked relief (ground.js
+ // attachRelief) that darkens its hollows and lifts its crowns; the ring had
+ // none past the seam, so a far gully and the rib beside it were one tone and
+ // only the light told them apart. Each ring vertex now carries how far it
+ // stands above or below the vertices three cells away along its ring and
+ // across it -- a radius that grows with the cells, so it is about the same
+ // size on the screen at any distance -- as -1 to 1, fading in from 120 to
+ // 400 m out (the seam's own value covers the first 300). Free in the frame:
+ // one number a vertex. PLACED: three cells, 45% of that radius for full.
+ const shade=new Float32Array(positions.length/3),ssm=T.MathUtils.smoothstep,M=3;
+ for(let r=1;r<rings.length;r++){
+  const A=rings[r],n=A.ts.length,R=(steps[r]-steps[r-1])*M;
+  for(let j=0;j<n;j++){
+   const v=A.first+j,y=positions[v*3+1];let sum=positions[(A.first+(j+M)%n)*3+1]+positions[(A.first+(j-M+n)%n)*3+1],c=2;
+   for(const q of [r-M,r+M]){if(q<1||q>=rings.length)continue;const B=rings[q],nb=B.ts.length;sum+=positions[(B.first+Math.round(A.ts[j]/count*nb)%nb)*3+1];c++;}
+   shade[v]=Math.max(-1,Math.min(1,(y-sum/c)/(R*.45)))*ssm(out[v],120,400);
+  }
+ }
+ return {positions,indices,edge,along,out,count,steps,bands,shade};
 }
 // THE HEIGHT OF THE GROUND AS DRAWN at any point: the course's grid inside its
 // edge (`w.height` interpolates the same cells the ground mesh draws), the
@@ -325,10 +378,12 @@ export function drawnVertices(w,detail){
  by.set(key,f);return f;
 }
 export function landscapeGeometry(w,detail){
- const {positions,indices,edge,along,out,count}=ringMesh(w,detail);
+ const {positions,indices,edge,along,out,count,shade}=ringMesh(w,detail);
  const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(positions,3));geo.setIndex(indices);geo.computeVertexNormals();geo.userData.innerCount=count;geo.userData.edge=edge;geo.userData.along=along;geo.userData.out=out;
  // Filled from the course's own relief by stitchSeam; zero until then.
  geo.setAttribute('localRelief',new T.BufferAttribute(new Float32Array(positions.length/3),1));
+ // The ring's own hollows and ribs (buildRing, HOLLOWS DARK, RIBS LIGHT).
+ geo.setAttribute('farShade',new T.BufferAttribute(shade,1));
  return geo;
 }
 // THE RING IN PIECES (the surroundings rework, 12 November 2026). The ring was
@@ -353,7 +408,7 @@ export function landscapeChunks(geo,w,detail){
  const out=[];
  for(const list of lists.values()){
   const g=new T.BufferGeometry();
-  for(const name of ['position','normal','localRelief'])if(geo.attributes[name])g.setAttribute(name,geo.attributes[name]);
+  for(const name of ['position','normal','localRelief','farShade'])if(geo.attributes[name])g.setAttribute(name,geo.attributes[name]);
   g.setIndex(list);
   const box=new T.Box3(),v=new T.Vector3();for(const i of list)box.expandByPoint(v.set(P[i*3],P[i*3+1],P[i*3+2]));
   g.boundingBox=box;g.boundingSphere=box.getBoundingSphere(new T.Sphere());

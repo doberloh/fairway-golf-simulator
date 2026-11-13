@@ -431,3 +431,93 @@ What the pictures show, landscape by landscape:
     with a blotched green edge near its top.
   These are the owner's first complaint (surroundings plainly lower in
   polygons and resolution than the course) still standing on a mountainside.
+
+### Round 10: the mountainsides (13 November 2026) -- UNFINISHED, the card was lost
+
+The owner: "Fix the three". **Where it stands: the look was reached and
+photographed; the last change, which cuts its cost, has never been drawn on
+a graphics card, and nothing is measured against 0.9.14.** The graphics
+card dropped out of the machine at 12:03 (below) and all graphics work
+stopped there.
+
+What was built (landscape-edge.js, ground.js, biomes.js, surround.js):
+
+- **Crags on a peaked range** (`crags`): a ridged noise over four scales,
+  320 m down to 40 m, each held back where the ones above are steep, added
+  to Mountain's, Desert Resort's and Hawaiian Resort's far range (and a
+  built course's `range` side), up to about a quarter of the range's lift,
+  nothing on a valley floor. A scale is left out where the ring's cells are
+  too wide to draw it. Three scales of ridge, the smallest 240 m, had left
+  every flank a smooth sheet. After Quilez's derivative-damped noise
+  (RESEARCH); every number PLACED.
+- **Hollows dark, ribs light, baked into the ring** (`shade`, the `farShade`
+  attribute): each ring vertex against those three cells away, -1 to 1,
+  nothing within 120 m of the seam; the ground shader darkens or lifts by up
+  to a fifth. Every landscape has it; on rolling country it is faint.
+- **A far rock face in planes** (ground.js `cragFace`, biomes.js `farFace`):
+  irregular cells each its own tone, laid on the side the face looks to and
+  sized by the camera's distance (about 45 pixels across at any range), in
+  place of one flat tone. Stretched by the rock: taller than wide on
+  Mountain's granite, wide and flat with beds of tone every 42 m on Desert
+  Resort's limestone, long ribs under green on Hawaii's pali.
+- **Snow on Mountain** from 640 m over the course, lower in the gullies,
+  never on a wall.
+- **The forest floor** only where trees stand (to 52 degrees, as surround.js
+  plants; it lay to 69) and partly the ground's own colour, more on rock:
+  it lay on Mountain's grey slopes as dark green cloth.
+- **A landscape names its far plants** (`farPlants`): the Desert Resort's
+  are creosote, brittlebush and mesquite (its Afghan pines stood up the
+  mountain as dark spires); Hawaii's are monkeypod and ironwood with Cook
+  pine and coconut at 8% each (Cook pine was 42% and read as sticks).
+
+The rounds, each photographed from the first tee, past the line and from
+above (bench/shots/overhaul/sur-m1 to sur-m5, local):
+
+1. Joints and ledges as evenly spaced lines, sized by the pixel's
+   footprint: a net of wavy lines over Mountain and the Desert Resort, zebra
+   stripes on Hawaii, and the faces as smooth as before. Rejected.
+2. Cells with a dark crack between every pair, sized by distance: Hawaii's
+   ribs right; Mountain and the Desert Resort read as stone paving.
+3. No cracks (a trace on granite), stronger crags: rock in planes, sharp
+   peaks, snow, bedded limestone. The look kept.
+4. Hawaii's green deepened; all fifteen photographed: the other twelve
+   unchanged to the eye but for the faint shade.
+5. **A bug three rounds old, found by a new test**: the crags were being
+   sized by the ground's HEIGHT, not the ring's cell (`auto` took four
+   arguments where `at` passes five). Also found: the noise stepped at every
+   crest line (steepness summed as a direction), a scale left out lowered
+   the whole range (not centred), and every crag stood up on the ring's last
+   row (a short step after long ones). All four fixed; crags eased from .42
+   to .24 of the lift; photographed again and the look held.
+
+**What it cost, as first built** (`bench/ab/sur-m5-mountains-high.json`,
+High on Mountain, three rounds, against the branch BEFORE this round, not
+0.9.14; the card 25 to 40% busy with the desktop throughout, so read it
+loosely): card time 6.74 to 7.00 ms at tee 1, 2.78 to 2.88 at tee 5, 7.73
+to 7.99 from above -- **3.4 to 3.8% slower** -- and the wait for a course
+13.5 s to 18.6 s. Not allowed. The cause: the rock pattern worked out up to
+eight times a pixel (two views blended, two sizes, two hashes a cell), and a
+shader that much larger takes seconds to compile.
+
+**The cut, NOT DRAWN, NOT MEASURED**: one view a pixel (the one the face
+looks to most squarely), one hash a cell -- fewer sums than the overhead
+rock it replaces, by count. It was built into `dist/` and its comparison was
+starting when the card was found lost. It has not been compiled by a
+graphics card, so even that it draws is unproven; the pictures above are of
+the build before it.
+
+**The graphics card was lost, 13 November 2026, 12:03.** `nvidia-smi`:
+"GPU is lost. Reboot the system to recover this GPU". The last run (run 52
+in bench/ab/gpu-runs.jsonl, the comparison above, 233 s) ended normally at
+12:02:58 with the card at 13% and 58 C; the next run's gate, about 15
+seconds later after a processor-only build, could not read the card. Nothing
+of this work was on the card at that moment. Before it: the card had stood
+at 25 to 40% all session with no game in its process list (the desktop,
+Chrome, Slack), which held the capture tool's 30% gate shut for fifteen
+minutes; the gate was raised to 45% for the last two runs (sur-m5's captures
+and run 52) on that reading. Whether that was right is the owner's to say.
+No graphics work since, and none until the owner says.
+
+Owed before this round is done: the cut build drawn and looked at on the
+three; all fifteen photographed again; frame rate against 0.9.14 on Low,
+Medium, High (Mountain) and Ultra; the wait for a course; both smoke runs.

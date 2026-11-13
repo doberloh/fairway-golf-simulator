@@ -111,7 +111,8 @@ export function surroundTrees(w, options = {}) {
  const bio = biomeOf(w.settings.biome), stands = w.settings.range ? null : standsOf(bio, w.seed), cover = coverField(w.bio ?? bio, w.seed, w.surround?.cover);
  if (!cover || !w.groundGrid) return out;
  const f = bio.farForest, line = f.line ?? 1e5;
- const mix = (stands?.plants ?? bio.plants).filter(([k]) => f.scrub || !GROUND_PLANTS.has(k));
+ // (A landscape may name what grows past its line: biomes.js farPlants.)
+ const mix = (bio.farPlants ?? stands?.plants ?? bio.plants).filter(([k]) => f.scrub || !GROUND_PLANTS.has(k));
  if (!mix.length) return out;
  const scales = Object.fromEntries(bio.plants.map(([k, , s]) => [k, s ?? 1]));
  const sizeOf = w.treeSize ?? ((kind, a, b) => TREE_SIZE[kind] ? {h: TREE_SIZE[kind][0] + a * (TREE_SIZE[kind][1] - TREE_SIZE[kind][0]), r: TREE_SIZE[kind][2] + b * (TREE_SIZE[kind][3] - TREE_SIZE[kind][2])}
