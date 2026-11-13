@@ -118,13 +118,13 @@ wrong, unfinished, or owed a check.
 - [ ] **The surroundings rework (branch `surroundings-rework`), open** (12-13
   November 2026; docs/SURROUNDINGS.md). **Mountain's forest floor reads dark
   and flat where the trees are thin** (ground.js, the floor tone under the
-  far trees; SURROUNDINGS round 5). **One two-build frame comparison is owed**
-  (`tools/frame-ab.mjs` against 0.9.14) since the far trees were moved to
-  draw after everything solid: before that move High and Ultra were 1 to 2%
-  slower at a tee and level from above, Medium level, Low 2% faster
-  (SURROUNDINGS, round 9), and the move was measured only on one page. **The builder guide's editor picture
-  owes a retake**: it lacks the Surroundings block
-  (`tools/capture/builder-guide.mjs`, graphics card, asked for first).
+  far trees; SURROUNDINGS round 5). **High on Mountain is not shown to be level
+  with 0.9.14**: 0.04 to 0.09 ms (0.6 to 1.4%) slower at the two tees in the
+  last comparison, level from above, where one build's own runs differ by as
+  much; Ultra is faster, Medium level, Low 2% faster (SURROUNDINGS, round 9).
+  What is left to take out is the far trees' shading at a tee on a landscape
+  whose slopes stand over the course's own trees (the haze worked out a
+  pixel; it could be worked out a corner of each picture).
   **`bench/baseline.json` still holds the far woods' `farSeated` keys** until
   the next `node tools/bench.mjs --save`; the `surround` metric has no
   baseline until then. Not gone through one landscape at a time against

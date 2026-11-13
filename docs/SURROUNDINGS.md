@@ -349,9 +349,17 @@ were (render order -1), because from a tee most of them are behind the
 course's own stands and were shaded and painted over. Drawn after
 everything solid and before the ground (.5 to .7) they cost about 1%, and
 the unchanged frame fell from 4.48-4.61 ms to 4.42-4.49 at tee 1 and from
-4.70 to 4.61 at tee 5. The far ground costs 0.5%. **No two-build comparison
-has been run since that last change**; the figures in the table are from
-before it.
+4.70 to 4.61 at tee 5. The far ground costs 0.5%.
+
+The two builds compared again after that change (`bench/ab/sur-r11-*.json`,
+three rounds, card time at tee 1, tee 5 and 250 m up): Ultra on Classic
+Parkland 4.59, 4.88 and 5.94 ms on 0.9.14 against 4.51, 4.67 and 5.91 ms on
+the branch -- faster at every spot; High on Mountain 6.16, 6.37 and 7.15 ms
+against 6.20, 6.46 and 7.15 ms -- level from above and 0.04 to 0.09 ms (0.6
+to 1.4%) slower at the two tees, where one build's own runs differ by as
+much (6.14 to 6.20; 6.32 to 6.42). Course load 14.5 s against 14.9 s and
+15.1 s against 15.3 s. So: Low 2% faster, Medium level, Ultra 0.5 to 4%
+faster, High on Mountain within 1.4% and not shown to be level.
 
 **The Surroundings block pressed in the builder's own page**
 (`tools/builder-journeys/surroundings.mjs`, the `builder-surroundings`
@@ -359,7 +367,10 @@ journey): a nine grown and taken over; a mountain north, the sea east, a
 lake south, mesas west, Height 1.4, Trees half wooded; the editor holds
 exactly that record; Game view draws it and goes back; the saved file's
 record read back; every side set back leaves none; the game opens the file
-and a shot is played, no errors. 1,599 Node tests pass.
+and a shot is played, no errors. 1,599 Node tests pass. On the final build
+every smoke journey passes: the game's 41 of 41 and the builder's 10 of 10
+(13 November 2026). The builder guide's editor picture was retaken with the
+block in it (docs/builder-guide/editor.webp).
 
 **Not as the plan said.** Step 4 planned a `surround` recipe for every
 landscape in biomes.js. What was built is narrower: each landscape keeps its
