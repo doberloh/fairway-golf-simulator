@@ -401,3 +401,33 @@ sur-r6): no errors. Desert Mountain keeps its one mountain with saguaro,
 mesquite and palo verde in clumps to the horizon; Seaside Links keeps its sea
 with gorse and shore pine beyond the course; Redwood Coast's hill behind the
 first hole is redwoods.
+
+### All fifteen on the final build (13 November 2026)
+
+The owner asked whether the work is done on every landscape. Round 6's
+pictures were taken before rounds 7 to 9 (no real models past the line, the
+meadows, the whole-number hash, the drawing order), and after those only
+eight landscapes had been photographed again. All fifteen were taken again
+from the last commit (bench/shots/overhaul/sur-final, four views each, a
+sheet a view): no errors, no dome and no painted crown on any of them.
+
+What the pictures show, landscape by landscape:
+
+- **Read well:** Classic Parkland, California Coast, Florida Palms,
+  Lowcountry and Gulf, Northern Woods, Pacific Northwest, Redwood Coast,
+  Southern Pines (wooded to the horizon with their own trees, meadows
+  between), Desert Mountain (its mountain, cactus and mesquite in clumps),
+  Seaside Links (dunes, shore pines in groups, the sea).
+- **Changed least:** the Badlands and Prairie & Sand Hills have next to no trees past
+  the line, so what they got is the finer ground and nothing else.
+- **Not done: the three with big mountains close to the course.** The work
+  went into trees and a finer ground; a rock face got neither.
+  - *Mountain*: the land just past the property line is coarse grey rock
+    facets with a dark green floor draped over them and few trees on it; from
+    the tee the walls behind are plain grey.
+  - *Desert Resort*: the mountains over the course are smooth, pale and
+    blank, a handful of trees on them.
+  - *Hawaiian Resort*: the mountain behind the first hole is one smooth dark mass
+    with a blotched green edge near its top.
+  These are the owner's first complaint (surroundings plainly lower in
+  polygons and resolution than the course) still standing on a mountainside.
