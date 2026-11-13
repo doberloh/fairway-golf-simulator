@@ -126,6 +126,16 @@ wrong, unfinished, or owed a check.
   paths, clubhouse, road or lot on a generated course*, *Cart paths with no
   right angles and no dead ends*, *Small cart path blemishes on Classic
   Parkland*)
+- [ ] **The course of the week's new length: its first week, and the
+  Challenge Course** (12 November 2026, branch `weekly-course-length`; not
+  released). The length starts on Monday 16 November 2026 (weekly.js
+  `WEEKLY_LENGTH.from`, week 150, PLACED): **if the release lands after that
+  Monday, move `from` on to a week after it**, or a player updating mid-week
+  has the course change under a best already saved. And the fixed Challenge
+  Course has the same mistake (eighteen holes asked for at 3,240 yards, so
+  4,650 yards, par 68) and was left alone: lengthening it moves every
+  challenge's spots and makes every saved challenge best a best on another
+  course. Lengthen it, or keep it short on purpose?
 - [ ] **Small calls on the round screen and the look.** The skins value of
   the hole being played is not shown anywhere on the round screen. The typed
   aim distance has no home there (arrows and the map still aim). Text size
@@ -152,6 +162,14 @@ here is a claim of support until it is done.
     "· wedges spin less" and the spin tile's lie tag, on a phone too; the
     seven pickers in Play's rules step on a phone; the range's Lab firmness
     slider and its three chips.
+  - **The course of the week at full length** (branch
+    `weekly-course-length`, 12 November 2026; tested in Node only, not seen
+    in the game, and it does not show until the week of Monday 16 November):
+    The week's page saying about 6,400 to 6,850 yards and par 71 or 72; the
+    holes reading as ordinary par 4s from the tee, and whether the doglegs
+    still make the tee look set off to one side (the bends are as sharp as
+    before in proportion: if so, the default dogleg angle of 45 degrees is
+    what to look at).
   - **The gimme circle** (0.9.13; tested in Node only -- the 41 smoke
     journeys pass, and none of them chooses this mode): the
     circle drawn and easy to see at 3 ft and at 30 ft; the size field showing

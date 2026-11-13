@@ -7308,6 +7308,53 @@ holes played over 18. Weeks are ISO weeks in the player's local time, so the
 course turns over at their midnight Sunday to Monday, not at one moment
 everywhere.
 
+### The course of the week's length (12 November 2026)
+
+No outside source; the range is the owner's choice. **What was measured.**
+The week's course asked for eighteen holes at `DEFAULT_COURSE.courseYards`,
+3,240 yards -- the default for nine. `planCourse` clamps a request to what the
+par mix can reach, so every hole came out at its minimum (`PAR_YARDS`: 300
+for a par 4, 120 for a par 3): weeks 41 to 46 of 2026 planned at 4,640 to
+4,680 yards, par 68; week 46 was fourteen 300-yard par 4s and four 120-yard
+par 3s, 4,182 yards from the white tees and 3,713 from the red.
+
+**What a length gives** (27 weekly seeds, week 40 of 2026 to week 13 of 2027, each
+planned with `planScorecard` at a fixed request from the blue tees; white-tee
+total as lowest / mean / highest, red-tee mean):
+
+| Blue request | Par | White tees | Red tees |
+|---|---|---|---|
+| 6,400 yd | 71 | 5,747 / 5,780 / 5,821 yd | 5,167 yd |
+| 6,480 yd | 71 | 5,820 / 5,854 / 5,896 yd | 5,236 yd |
+| 6,550 yd | 71 | 5,885 / 5,919 / 5,959 yd | 5,295 yd |
+| 6,560 yd | 72 | 5,902 / 5,928 / 5,970 yd | 5,300 yd |
+| 6,625 yd | 72 | 5,963 / 5,988 / 6,030 yd | 5,355 yd |
+| 6,850 yd | 72 | 6,168 / 6,196 / 6,233 yd | 5,546 yd |
+
+The white tees sit about 9% of a hole's length forward on par 4s and 5s
+(`holeLine`), so a white-tee total is about 0.904 of the blue. Par turns from
+71 to 72 at 6,560 yards (`planCourse`'s par formula). The owner first asked
+for 6,200 from the white tees (6,850 from the blue; solved week by week the
+request ranged 6,810 to 6,880), then chose **a range, 6,400 to 6,850 from the
+blue tees**, so the whites run about 5,750 to 6,230 and average near 5,990,
+and about one week in three is a par 71.
+
+**How it is drawn** (weekly.js `weeklyYards`): the first draw of the seeded
+stream `<week seed>:length`, to one of the 46 ten-yard steps, each as likely
+as the next. Over four years of weeks the draws fell 46 / 42 / 40 / 44 / 36
+across five equal bands, and the mean change from one week to the next was
+0.320 of the range (a third is what independent draws give). **PLACED:** the
+first week it applies, week 150 (Monday 16 November 2026), so no earlier
+week's course or best moves.
+
+**What did not change with length.** A dogleg is an angle, so a fairway
+still swings 12 to 16% of its hole's length to the side of the line from tee
+to green: 35 to 47 yards on the 300-yard holes of week 46, 47 to 62 on the
+same seed's par 4s at 6,840 yards. The tees themselves sit within 3 m of the
+playing line at every length. And the mix of pars is the seed's draw, not the
+length's: week 46 draws one par 3, sixteen par 4s and one par 5 at par 72 (2
+of the 27 seeds did; most draw four, ten and four).
+
 ### Rewards: tracer styles and ball finishes (14 October 2026)
 
 No outside source: the reward table is the agreed spec's (7.1), names as its

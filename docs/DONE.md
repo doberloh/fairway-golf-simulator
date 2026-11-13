@@ -25,6 +25,32 @@ kept whole: *The open list before the 11 November 2026 prune* and *The open
 list before the 16 October prune*, each with a table of what became of every
 entry.
 
+## The course of the week at full length (branch `weekly-course-length`, 12 November 2026)
+
+- **The course of the week was a short course every week, and is a
+  full-length eighteen from Monday 16 November 2026.** The owner, 12 November
+  2026: it "got generated very SHORT and was really hard to play with tee
+  boxes offset from center drastically", and suspected the settings were
+  being randomised. They were not: only the seed and the landscape change. The
+  week's course asked for eighteen holes and kept the default length for
+  nine, 3,240 yards, so the planner shrank every hole to its shortest -- par
+  68, about 4,680 yards, every week since 14 October. Built: weekly.js
+  `weeklyYards` draws the length from the week's seed, **6,400 to 6,850 yards
+  from the blue tees** (the owner's range, after first asking for 6,200 from
+  the white tees), from week 150; earlier weeks are untouched. No version
+  number moved: the generator grows the same course from the same settings,
+  and no setting changed shape. Tested in tests/weekly.test.mjs; **not seen
+  in the game** (TODO, *Play the current build by hand*).
+- **Ruled out: changing this week's course too.** A best already saved for
+  the week would sit against a longer course and could not be beaten, which
+  is the mistake `WEEKLY_ROTATION`'s debut weeks exist to avoid.
+- **Ruled out: leaving the length out so the generator's own 6,480 applies.**
+  `validateSettings` fills the default in first, so the fallback never runs.
+- **Left open:** the fixed Challenge Course has the same short length (TODO,
+  *The owner's calls*). **Not fixed by this:** the doglegs bend as sharply as
+  before in proportion to the hole (RESEARCH, *The course of the week's
+  length*).
+
 ## The ball rebuilt (branch `ball-physics-rework`, 10-12 November 2026)
 
 - **The rebuilt ball: play it, then merge.** DONE: played by the owner on 12

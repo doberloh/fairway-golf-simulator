@@ -2,8 +2,8 @@
 //
 // The same course on every copy of Fairway, with no server: its seed is made
 // from the year and the week, and its landscape rotates through every one, one
-// a week. Eighteen holes at the default settings. Pure; the menu tile and the
-// round live in main.js.
+// a week. Eighteen holes at the default settings, at a length drawn from the
+// week (`weeklyYards`). Pure; the menu tile and the round live in main.js.
 //
 // SAME WEEK, SAME COURSE -- ON THE SAME GENERATOR. The seed only fixes the
 // recipe; when courses are made differently (GENERATOR_VERSION) the same seed
@@ -122,9 +122,40 @@ export function biomeForWeek(w, rotation) {
  return rotation.retired?.[biome] ?? biome;
 }
 export const weeklyBiome = (date = new Date()) => biomeForWeek(weekIndex(date), WEEKLY_ROTATION);
-// The week's course: the defaults, its seed and landscape, eighteen holes.
+// THE WEEK'S LENGTH IS DRAWN FROM THE WEEK, 6,400 TO 6,850 YARDS FROM THE BLUE
+// TEES (the owner, 12 November 2026: the course of the week "got generated
+// very SHORT").
+//
+// What was wrong: the week's course asked for eighteen holes and kept
+// `DEFAULT_COURSE.courseYards`, 3,240 -- the default for NINE. The planner
+// cannot fit eighteen holes into that, so every hole came out at its shortest
+// (300-yard par 4s, 120-yard par 3s): par 68 and about 4,680 yards, every week
+// since 14 October 2026. The generator's own fallback for a missing length
+// (6,480 for eighteen) never ran, because the defaults had already filled the
+// length in.
+//
+// The range is the owner's. The length is drawn from the week's seed, never
+// from Math.random, so every copy agrees; the first draw of its own stream
+// (`<seed>:length`), in steps of 10 yards like the slider, each as likely as
+// the next. From the white tees that is about 5,750 to 6,230 yards; par is 71
+// below 6,560 from the blues and 72 from there up (RESEARCH, *The course of
+// the week's length*).
+//
+// IT STARTS ON A WEEK OF ITS OWN (`from`), like a new landscape: every week
+// before it keeps the short course its bests were made on, and a player who
+// updates mid-week does not have the week's course change under a best
+// already saved. Monday 16 November 2026, week 150 -- PLACED by Claude (12
+// November 2026), the first Monday after the change. If the release lands
+// after that Monday, move `from` on to a week after it (TODO).
+export const WEEKLY_LENGTH = {from: 150, lo: 6400, hi: 6850, step: 10};
+export function weeklyYards(date = new Date()) {
+ if (weekIndex(date) < WEEKLY_LENGTH.from) return DEFAULT_COURSE.courseYards;
+ const {lo, hi, step} = WEEKLY_LENGTH, n = Math.round((hi - lo) / step) + 1;
+ return lo + Math.floor(seeded(`${weekSeed(isoWeek(date))}:length`)() * n) * step;
+}
+// The week's course: the defaults, its seed, landscape and length, eighteen holes.
 export function weeklySettings(date = new Date()) {
- return validateSettings({...DEFAULT_COURSE, seed: weekSeed(isoWeek(date)), biome: weeklyBiome(date), holes: 18});
+ return validateSettings({...DEFAULT_COURSE, seed: weekSeed(isoWeek(date)), biome: weeklyBiome(date), holes: 18, courseYards: weeklyYards(date)});
 }
 export const WEEKLY_XP = {first: 150, best: 50};
 const KEEP = 60;

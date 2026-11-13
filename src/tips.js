@@ -23,7 +23,7 @@ export const TIPS = [
  {text: '? lists every key.', keys: ['?']},
  // hud-places.js: the map and the Tab numbers keep the place they are dragged to, per device.
  {text: 'Drag the small map or the shot numbers where you like them. They stay there.'},
- // weekly.js: the week's course from the date and DEFAULT_COURSE, the same on every copy.
+ // weekly.js: the week's course from the date, DEFAULT_COURSE and the week's own length, the same on every copy.
  {text: 'The course of the week is the same course for everyone. A new one comes every Monday.'},
  // course-library.js exportCourse / importCourse; Saved courses has the import box.
  {text: 'A saved course can be sent as a short code. Paste a friend\'s code into Saved courses to play it.'},
