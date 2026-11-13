@@ -2,7 +2,7 @@ import {addHomes} from './homes.js';
 import {mailboxAt} from './roads.js';
 import {phoneLift,liftsView} from './phone-view.js';
 import {addStreams} from './streams.js';
-import {landscapeGeometry,stitchSeam} from './landscape-edge.js';
+import {landscapeGeometry,landscapeChunks,stitchSeam} from './landscape-edge.js';
 import {Line2} from 'three/addons/lines/Line2.js';
 import {polesFor,orderPoles,POLE_REACH,lampBudget} from './floodlights.js';
 import {LineGeometry} from 'three/addons/lines/LineGeometry.js';
@@ -1106,7 +1106,12 @@ export class GolfView{
   this.addSky(sunDir);
   this.addLandscape();
   const palette=blue?{rough:'#193c50',semi:'#285d6a',fairway:'#397e85',fringe:'#5caba6',green:'#9ad2bc',sand:'#bdc2a0'}:toon?{rough:new T.Color(bio.rough).lerp(new T.Color(bio.roughTint??'#b6bc65'),.23),semi:new T.Color(bio.semi).multiplyScalar(1.13),fairway:new T.Color(bio.fairway).offsetHSL(.015,.1,.04),fringe:new T.Color(bio.fringe).offsetHSL(0,.1,.07),green:new T.Color(bio.green).offsetHSL(.01,.05,.08),sand:'#ffebbd'}:{rough:bio.rough,semi:bio.semi,fairway:bio.fairway,fringe:bio.fringe,green:bio.green,sand:bio.sand};
-  const terrain=groundGeometry(world.groundGrid);stitchSeam(terrain,this.landscape.geometry);this.terrain=add(new T.Mesh(terrain,groundMaterial(this,palette)));this.landscape.material.dispose();this.landscape.material=this.terrain.material;this.landscape.receiveShadow=true;this.terrain.name='Continuous ground';this.terrain.receiveShadow=true;
+  const terrain=groundGeometry(world.groundGrid);stitchSeam(terrain,this.landscape.geometry);this.terrain=add(new T.Mesh(terrain,groundMaterial(this,palette)));this.landscape.material.dispose();this.landscape.material=this.terrain.material;this.landscape.receiveShadow=true;
+  // The ring is drawn as its pieces (landscape-edge.js landscapeChunks), each
+  // skipped when out of view; the whole ring's own mesh stays for its bounds
+  // and its seam, and draws nothing.
+  this.landscape.geometry.setDrawRange(0,0);
+  for(const g of landscapeChunks(this.landscape.geometry,world,this.quality?.farGround)){const piece=new T.Mesh(g,this.terrain.material);piece.receiveShadow=true;piece.renderOrder=1;piece.name='Far ground';this.landscape.add(piece);}this.terrain.name='Continuous ground';this.terrain.receiveShadow=true;
   // THE GROUND IS DRAWN AFTER EVERYTHING ELSE SOLID (the frame-rate goal, 22
   // October 2026). three sorts solid things by material before distance, and
   // the ground's material is made first, so the ground -- the hungriest shader
@@ -1139,7 +1144,9 @@ export class GolfView{
   // its islands, at its stored level -- the same water body a pond is.
   for(const b of world.builtWater||[]){const [outer,...islands]=b.rings,points=outer.map(([x,z])=>new T.Vector2(x,-z)),shape=new T.Shape(points);for(const ring of islands)shape.holes.push(new T.Path(ring.map(([x,z])=>new T.Vector2(x,-z))));let cx=0,cz=0;for(const [x,z] of outer){cx+=x;cz+=z;}this.addWaterBody(new T.ShapeGeometry(shape),b.level,2,{x:cx/outer.length,z:cz/outer.length});this.addShoreFoam(points,b.level,b.kind==='lake');}
   this.flushFurniture();
-  if(bio.sea)this.addWaterBody(new T.PlaneGeometry(14000,14000),0,4,{x:0,z:0},true);
+  // (At the world's own sea level: zero on every generated coast; a built
+  // course that chose a side of water stands the sea under its land.)
+  if(bio.sea)this.addWaterBody(new T.PlaneGeometry(14000,14000),world.waterLevel??0,4,{x:0,z:0},true);
   addStreams(this);
   // EVERY BODY OF WATER IS THE SAME THING NOW.
   //
@@ -1986,7 +1993,7 @@ export class GolfView{
   if(b?.probeEnv)this.probeCapture(false,(cam,pmrem)=>this.takeProbe(cam,pmrem,b,b.probeEnv));
   if(!q.list.length){this.probeQueue=null;if(this.probeAgain){this.probeAgain=false;this.queueWaterProbes();}}
  }
- addLandscape(){this.landscape=new T.Mesh(landscapeGeometry(this.world),new T.MeshBasicMaterial());this.group.add(this.landscape);}
+ addLandscape(){this.landscape=new T.Mesh(landscapeGeometry(this.world,this.quality?.farGround),new T.MeshBasicMaterial());this.group.add(this.landscape);}
  // One flagstick and cup at a world point. The range builds one per green (its
  // targets' sticks taller and in their colour: `tall` and `cloth` scale them,
  // and holdFlagsticks keeps the scale), every course hole one.

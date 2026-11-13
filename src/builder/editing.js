@@ -19,6 +19,7 @@
 // THE LAND is the document's own grid and patches, changed in place; every
 // brush is a weight that falls off smoothly to nothing at its edge.
 import {GROUND_KINDS} from '../grounds.js';
+import {normaliseSurround} from '../surround-sides.js';
 import {createLayers, LAYER_ORDER, tidyMask} from './layers.js';
 import {facingFrom, turnedCells, POCK, SPECK} from './trace-edit.js';
 import {layerRings} from './real-course.js';
@@ -108,6 +109,9 @@ export function createEditor(doc) {
   treeScale: 1,
   // The trees placed for the player (tree-plan.js): no undo step, as treeScale.
   treePlan: doc.treePlan ?? null,
+  // What stands past the property line on each side (surround-sides.js; the
+  // surroundings rework): scenery, so no undo step, as the tree plan.
+  surround: doc.surround ?? null,
   surfacesEdited: false, changed: false, undo: [], redo: [],
   // Where the land has been shaped, merged into boxes: the game refines its
   // mesh to the land there (built-world.js), so a hill plays as drawn.
@@ -409,6 +413,7 @@ export function createEditor(doc) {
   },
   setTreeScale(f) { state.treeScale = Math.max(.25, Math.min(3, f)); state.changed = true; },
   setTreePlan(plan) { state.treePlan = plan ?? null; state.changed = true; },
+  setSurround(record) { state.surround = normaliseSurround(record); state.changed = true; },
   // The tree whose crown holds a point (at least 1.5 m round its trunk), the
   // nearest of several; -1 for none.
   treeAt({x, z}) {
@@ -728,8 +733,8 @@ export function createEditor(doc) {
    for (const w of water) digInto(grids, w.rings, w.level);
    const trees = new Float32Array(state.trees.length * TREE_STRIDE), f = state.treeScale;
    state.trees.forEach((t, i) => trees.set(f === 1 ? t : [t[0], t[1], t[2] * f, t[3] * f, t[4] * f, ...t.slice(5)], i * TREE_STRIDE));
-   const {treePlan: _old, ...rest} = doc;
-   return {...rest, ...(state.treePlan ? {treePlan: state.treePlan} : {}), name: state.name, landscape: state.landscape, land: grids[0], patches: grids.slice(1),
+   const {treePlan: _old, surround: _was, ...rest} = doc;
+   return {...rest, ...(state.treePlan ? {treePlan: state.treePlan} : {}), ...(state.surround ? {surround: state.surround} : {}), name: state.name, landscape: state.landscape, land: grids[0], patches: grids.slice(1),
     surfaces, water, creeks: structuredClone(state.creeks), holes: structuredClone(state.holes), trees, treeKinds: [...state.treeKinds], rocks: structuredClone(state.rocks), homes: structuredClone(state.homes), landEdits: state.landEdits.map(b => [...b])};
   },
  };

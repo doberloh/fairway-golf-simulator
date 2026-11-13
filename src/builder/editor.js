@@ -16,6 +16,7 @@ import {withEditorWork} from './round-trip.js';
 import {saveBytes} from './saving.js';
 import {BUILT_VERSION, BIOME_KEYS} from '../settings-schema.js';
 import {BIOMES} from '../biomes.js';
+import {SURROUND_KINDS, SURROUND_SIDES, SURROUND_NAMES} from '../surround-sides.js';
 import {fileName} from '../course-file.js';
 import {GROUNDS} from '../grounds.js';
 import {checkCourse} from './checks.js';
@@ -304,6 +305,26 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
  // ---- the right: the course, its holes, the checks, Save.
  const nameInput = el('input', {value: s.name, maxlength: 60, oninput: e => { s.name = e.target.value.trim() || s.name; setTitle(s.name); refreshSave(); }});
  const landscape = el('select', {onchange: e => { editor.setLandscape(e.target.value); if (!treeChoices(BIOMES[s.landscape]).some(([k]) => k === treeKind)) treeKind = ''; view.refreshAll(); buildTools(); setTool({kind: 'navigate'}); refreshLayers(); }}, BIOME_KEYS.map(k => el('option', {value: k, selected: k === s.landscape}, BIOMES[k].name)));
+ // THE SURROUNDINGS (the surroundings rework, 12 November 2026; the owner: "I
+ // would also like to have the users have control over what the surrounding
+ // landscape looks like in the builder"): what stands past the property line
+ // on each side, how high, and how wooded. Scenery, seen in Game view; saved
+ // in the file (surround-sides.js), and left out of it while every choice is
+ // the landscape's own.
+ const SIDE_LABELS = {n: 'North', e: 'East', s: 'South', w: 'West'}, COVER = [['', 'As the landscape'], ['0', 'No trees'], ['0.2', 'A few'], ['0.5', 'Half wooded'], ['0.9', 'Thick woods']];
+ const surroundNow = () => ({sides: {n: 'auto', e: 'auto', s: 'auto', w: 'auto', ...(s.surround?.sides ?? {})}, height: s.surround?.height ?? 1, ...(s.surround?.cover !== undefined ? {cover: s.surround.cover} : {})});
+ const setSurround = change => { const next = surroundNow(); change(next); editor.setSurround(next); refreshSave(); };
+ const sideSelects = Object.fromEntries(SURROUND_SIDES.map(k => [k, el('select', {title: `What stands past the course's ${SIDE_LABELS[k].toLowerCase()} side: seen in Game view`, onchange: e => setSurround(n => { n.sides[k] = e.target.value; })},
+  SURROUND_KINDS.map(kind => el('option', {value: kind}, SURROUND_NAMES[kind])))]));
+ const surroundHeight = el('input', {type: 'range', min: .3, max: 2, step: .1, title: 'How high the hills, ranges and mesas round the course stand', oninput: e => setSurround(n => { n.height = +e.target.value; })});
+ const surroundCover = el('select', {title: 'How wooded the land round the course is', onchange: e => setSurround(n => { if (e.target.value === '') delete n.cover; else n.cover = +e.target.value; })}, COVER.map(([value, text]) => el('option', {value}, text)));
+ const showSurround = () => { const now = surroundNow(); for (const k of SURROUND_SIDES) sideSelects[k].value = now.sides[k]; surroundHeight.value = now.height; surroundCover.value = now.cover === undefined ? '' : String(COVER.map(c => c[0]).filter(v => v !== '').reduce((best, v) => Math.abs(+v - now.cover) < Math.abs(+best - now.cover) ? v : best)); };
+ showSurround();
+ const surroundBox = el('div', {class: 'cb-surround'},
+  ...SURROUND_SIDES.map(k => el('div', {class: 'cb-field'}, el('label', {}, SIDE_LABELS[k]), sideSelects[k])),
+  el('div', {class: 'cb-field'}, el('label', {}, 'Height'), surroundHeight),
+  el('div', {class: 'cb-field'}, el('label', {}, 'Trees'), surroundCover),
+  el('p', {class: 'cb-note'}, 'Scenery past the property line. Press Game view to see it.'));
  const holeList = el('ul');
  const checkList = el('ul'), roundList = el('ul');
  async function runTest() {
@@ -349,6 +370,7 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
  side.replaceChildren(
   el('h4', {}, 'The course'), el('div', {class: 'cb-field'}, el('label', {}, 'Name'), nameInput),
   el('div', {class: 'cb-field'}, el('label', {}, 'Landscape (the look; the land and lies stay)'), landscape),
+  el('h4', {style: 'margin-top:10px'}, 'Surroundings'), surroundBox,
   el('h4', {style: 'margin-top:10px'}, 'Holes'), holeList, holeTools,
   el('h4', {style: 'margin-top:10px'}, 'Checks'), el('button', {class: 'cb-btn', type: 'button', onclick: runChecks}, 'Check the course'), checkList,
   el('h4', {style: 'margin-top:10px'}, 'Test round'), el('button', {class: 'cb-btn', type: 'button', onclick: runTest}, 'Play a test round'), roundList);

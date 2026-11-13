@@ -144,6 +144,25 @@ gone through one at a time against pictures, keeping what the owner liked.
 Listed as each is made (AGENTS.md: earlier surroundings decisions bind
 nothing on this branch).
 
+- **The far ring's coarse rows** (28% apart; 16% and never over 220 m for
+  mesas, islands and the big mountain; 70 m rows over the Badlands' first
+  3.6 km; doubled vertices along a peaked range). One rule now, finer than
+  any of them: landscape-edge.js `RING_DETAIL`.
+- **The far woods** (the polish goal, 26 October 2026, and the far-landscape
+  goal's rounds 1 to 8: clusters, spruces, domes, cones, snags, scrub clumps;
+  "LODs can fade but should not transition to just bare ground"; each crown
+  seated on the drawn ground over its whole footprint, `seatOn`, bench
+  `farSeated`). Replaced by the course's own trees: surround.js, far-trees.js.
+  What that goal wanted still holds -- trees to the tier's reach, never a bare
+  band -- by other means.
+- **The painted crowns** (the cartoon overhaul's far forest, ground.js THE
+  FOREST ON THE FAR HILLS: lumps lit from the sun's side). The patches, the
+  treeline and the far-off canopy colour stay; the lumps are a plain forest
+  floor.
+- **Low and Medium drawing far woods as grove domes only** (graphics.js
+  `farWoods: 'groves'`): no tier draws domes; each tier has its own reach,
+  thinning and picture size instead (`surround`).
+
 ## Rounds
 
 One entry a round: what changed, what the pictures showed, what it cost.
@@ -154,3 +173,205 @@ Branch cut from main de937532. Before pictures of all fifteen landscapes from
 main's own build, seven views each (`node tools/capture/overhaul.mjs sur-main
 --views h1-tee,far-band,far-band-b,far-out,far-side,far-high,overview`), kept
 locally in bench/shots/overhaul/sur-main. The measurements above.
+
+### Round 1: the far ground, fourteen times finer
+
+landscape-edge.js: the ring's fineness is one record, `RING_DETAIL` (first
+step 8 m, each step 2% longer, never over 220 m): 180 rings, 93,000 vertices
+and 182,000 triangles on Classic Parkland where there were 26 rings and
+13,000 triangles; cells 20 m across at 600 m, 50 m at 2 km. Built in 0.12 s
+(0.27 s on Desert Mountain, whose mountain costs more a point). A tier may
+take a coarser ring (graphics.js `farGround`: Low 6% a step, Medium 3.5%);
+`ringMesh`, `drawnGround` and `drawnVertices` take the detail, so anything
+standing on the ring asks for the one it is drawn on. Pictures: Desert
+Mountain's ranges have ridges and gullies instead of a few flat faces.
+Not chunked: the ring is still one mesh drawn whole (PLACED: measure first).
+
+### Rounds 2 to 4: the far trees
+
+src/surround.js (pure) plants the land past the property line by the
+landscape's own stand: its spacing and mix, each tree sized by the course's
+own rule (`world.treeSize`, which course.js now puts on the world), where the
+far forest record says woods grow. The first 110 m are tree records drawn by
+vegetation.js with the real models (never in `world.trees`). Beyond, each
+site is drawn by src/far-trees.js as two triangles standing upright and
+turned to the camera, wearing a picture of its own model: vegetation.js keeps
+one `specimen` a model (the parts and colours the first tree of it was drawn
+with), and far-trees.js draws each from the side into one atlas when the
+course is built.
+
+Counts on seed FAIRWAY, Ultra: Classic Parkland 3,057 near and 159,612 far;
+Mountain 5,250 and 77,189. Placing them takes 0.5 to 0.7 s (the far woods'
+seating took 0.5 to 0.8 s and is gone).
+
+What went wrong on the way, so nobody repeats it:
+
+- **A fixed `customProgramCacheKey` on the far trees' material.** The
+  renderer wraps every material's `onBeforeCompile` afterwards (haze,
+  cascades, cloud shadows) and three tells programs apart by that function's
+  text; a fixed key would reuse a program built before the wrapping.
+  Removed.
+- **Replacing `#include <begin_vertex>` outright.** mist.js patches only a
+  shader that still includes it, so the far trees stood crisp and three
+  times too bright in front of the haze (no haze and no cascade lighting).
+  The chunk is kept and `transformed` set after it.
+- **Pictures in flat colour** stood out vivid beside the real trees, whose
+  crowns go through the coloured toon ramp. Each picture is now shaded
+  through the scene's own ramp from a sun over the viewer's left shoulder.
+- **Too few trees**: thinning by one stand spacing every 1.5 km left hillsides
+  half bare from above. Now every 3.2 km, nine sites in ten kept at the line.
+- **No trees on Mountain's slopes**: the cliff test (slope .85) is the near
+  band's; far sites hold on to 1.3, as the painted forest did, because the
+  drawn faces are steeper than the land they stand for.
+
+### Round 5: no crowns painted on the ground
+
+ground.js: the lumps are gone from the far forest's paint. Under the trees
+the ground is the leaf colours' average at about half the light, mottled at
+23 m; past the tier's tree reach (`farReach`) it rises to the canopy colour
+it always had far off. surround.js reads the same 380 m patch noise as the
+shader, so trees stand where the floor is painted. Pictures: Classic
+Parkland from above is a course cut out of a forest that runs to the
+horizon; Mountain's slopes are wooded with its own conifers and aspens.
+Still to do there: the floor is dark and flat where trees are thin.
+
+### Round 6: what it cost, and the cap on real models
+
+First comparison with 0.9.14 (`tools/frame-ab.mjs`, Classic Parkland, 18
+holes, tee 1, tee 5 and 250 m up; two rounds; helpers were using the
+processor at the time, so the frame times are rough and the counts are what
+to trust):
+
+| Tier | 0.9.14 | Branch | Triangles a frame |
+| --- | --- | --- | --- |
+| Ultra | 7.9 ms | 8.9 ms | 42.9 M to 55.4 M |
+| Medium | 2.00 ms | 1.67 ms | 9.4 M to 9.6 M |
+| Low | 1.77 ms | 2.50 ms (card time equal: 1.03 to 0.98 ms) | 7.5 M to 7.4 M |
+
+The 12 million more triangles on Ultra were the near band: 3,057 real
+models past the line, each the whole tree on Ultra. The 160,000 pictures
+are a third of a million. So only the nearest `nearMax` of the band are real
+models (300; High 250, Medium 120, Low none) and the rest of the band are
+pictures like the others. Course load was 2 to 2.7 s longer in that
+comparison; placing the trees is 0.1 to 0.5 s of it and the pictures 0.05 s
+(`view.surroundMs`, read by the captures), so most was the real models too.
+To be measured again.
+
+Also in this round: the ring is drawn in 24 pieces (eight directions, three
+distances: `landscapeChunks`) that share its vertices, so the card skips
+what is out of view; a far tree count never passes `most` (200,000; a
+Northern Woods course came to 354,000) and its spacing is never under 12 m;
+the far ground is toned by three broad noises so no hillside is one colour;
+far off, a tree's picture is a quarter wider and let a sixth into the ground
+(thin pictures of bare-boled pines read from above as a field of sticks).
+
+### Round 7: a side at a time, and the builder
+
+- src/surround-sides.js (pure): the record a course may carry, `surround:
+  {sides: {n, e, s, w}, height, cover}`; nine kinds (as the landscape, open
+  country, rolling hills, a range, one big mountain, mesas, the sea, sea and
+  islands, a lake); `normaliseSurround`; `seaLevelUnder`.
+- landscape-edge.js `sidedRelief`: each side raised by its kind, corners
+  blended by the squares of the distances past each side.
+- course-doc.js keeps the record in the file; absent when every choice is the
+  landscape's own. `BUILT_VERSION` unchanged: scenery only.
+- built-world.js: `world.surround`; a side of water makes the world one with
+  a sea, standing 2.5 m under the lowest of the land unless the file has a
+  sea of its own (so neither sea nor beach reaches any of the course);
+  ground.js paints beach and wet sand from `seaAt`, the sea's own level, and
+  the ocean is drawn at `world.waterLevel` (it was always drawn at zero).
+- The Course Builder's editor has a Surroundings block under Landscape: North,
+  East, South, West, Height, Trees. Carried through drafts, Back to 2D and
+  door 2's course. No undo step (as the tree plan). Seen in Game view.
+- **Not seen working in the builder yet**: built and unit-tested only.
+
+### Round 8: measured clean, no real models past the line, open country
+
+Second comparison with 0.9.14, the machine quiet (three rounds on Classic
+Parkland, two on Mountain; medians; `bench/ab/sur-r7-*.json`, local):
+
+| Tier, course | 0.9.14 | Branch | Triangles a frame | Course load |
+| --- | --- | --- | --- | --- |
+| Ultra, Classic Parkland | 5.09 ms | 5.43 ms (card: +2%, +6%, +2% at the three spots) | 42.9 M to 44.2 M | 21.3 s to 19.8 s |
+| High, Mountain | 6.65 ms | 6.75 ms | 68.4 M to 69.6 M | 17.8 s to 20.6 s (two runs each, 2 s apart among themselves) |
+| Low, Classic Parkland | 1.53 ms | 1.53 ms (card time 0.87 to 0.92, 0.79 to 0.74, 0.73 to 0.60) | 7.5 M to 7.3 M | 18.8 s to 17.3 s |
+
+The whole of what the branch drew over 0.9.14 on Ultra and High was the
+300 (250) real models kept past the line: 1.3 million triangles. So
+`nearMax` is 0 on every tier: pictures from the line. Seen from 6 m inside
+the line at eye height (the capture tool's new `edge-eye` views) the nearest
+pictures read as the trees they are of; a picture is 256 pixels high on
+Ultra, 192 on High, 160 and 128 below.
+
+The owner, 13 November 2026: "I dont think we always need 'full forest' on
+the outside. We could generate patches with no trees to save on polygon count
+if needed." A second, broader noise (900 m) now opens meadows in the far
+forest: about a quarter of the wooded country (`FAR_OPEN`, .36; a landscape
+may set `farForest.open`; scrub takes none). Classic Parkland's far trees
+went from 180,000 to 129,000 on Ultra, placing them from 0.36 s to 0.13 s
+in the game.
+
+**The trees stand where the floor is painted, exactly.** Trees and paint
+both read a hash of the 380 m cell; through sin() the card and the page get
+different numbers a few cells from the middle, and the first rounds had dark
+forest floor with no trees on it beside trees on bare ground (Classic
+Parkland, the California Coast). Both now hash in whole numbers (ground.js
+and surround.js `coverHash`).
+
+A built course with sides of its own seen in the game: the owner's Home
+Course (a copy; the file itself only read) with a mountain north, the sea
+east, a lake south and mesas west, opened by `tools/capture/overhaul.mjs
+--built`: no errors. Its first shore was a ruled line with a square corner;
+shores now wander in bays and points (40 to 300 m out by a 500 m noise).
+
+### Round 9: the last of the cost, and the builder's own page
+
+Third comparison, with no real model past the line and the meadows open
+(`bench/ab/sur-r9-*.json`, `sur-r10-*.json`, local; medians, the machine
+quiet; card time in brackets where the page's own time was noisy):
+
+| Tier, course | 0.9.14 | Branch | Triangles a frame | Course load |
+| --- | --- | --- | --- | --- |
+| Low, Redwood Coast | 1.63 ms | 1.60 ms | 27.6 M to 27.4 M | 14.7 s to 14.4 s |
+| Medium, Desert Mountain | 2.32 ms | 2.32 ms | 20.1 M to 20.0 M | 17.8 s to 18.5 s |
+| High, Mountain | 6.57 ms | 6.63 ms (card 6.18 to 6.23, 6.36 to 6.48, 7.16 to 7.18) | 68.4 M both | 14.9 s to 14.8 s |
+| Ultra, Classic Parkland | card 4.56, 4.69, 5.94 | card 4.63, 4.78, 5.90 | 42.9 M to 42.7 M | 14.2 s to 14.3 s |
+
+Mountain's slower load in round 8 did not repeat: it was noise.
+
+Two things took the far trees from 5% over on one Ultra view to within 2%:
+each piece's trees are drawn nearest the property line first, and the
+pieces nearest band first (a wooded hillside is ten pictures deep).
+Then, measured on one page with the far trees switched off and on
+(`tools/frame-variants.mjs --variants tools/variants/far-woods.mjs`): they
+cost 2.1 to 3.1% of an Ultra frame drawn BEFORE everything, as the far woods
+were (render order -1), because from a tee most of them are behind the
+course's own stands and were shaded and painted over. Drawn after
+everything solid and before the ground (.5 to .7) they cost about 1%, and
+the unchanged frame fell from 4.48-4.61 ms to 4.42-4.49 at tee 1 and from
+4.70 to 4.61 at tee 5. The far ground costs 0.5%. **No two-build comparison
+has been run since that last change**; the figures in the table are from
+before it.
+
+**The Surroundings block pressed in the builder's own page**
+(`tools/builder-journeys/surroundings.mjs`, the `builder-surroundings`
+journey): a nine grown and taken over; a mountain north, the sea east, a
+lake south, mesas west, Height 1.4, Trees half wooded; the editor holds
+exactly that record; Game view draws it and goes back; the saved file's
+record read back; every side set back leaves none; the game opens the file
+and a shot is played, no errors. 1,599 Node tests pass.
+
+**Not as the plan said.** Step 4 planned a `surround` recipe for every
+landscape in biomes.js. What was built is narrower: each landscape keeps its
+own far relief (`ringLift`, `ringPeaks`, `ringMesas`, `ringMassif`,
+`ringCarve`, the coasts) and its far forest record, now with `open`; the
+sided record is a built course's. A generated course cannot yet be asked
+for, say, a lake on its north side. And the far heath's domes (Seaside
+Links, `addFarHeath`) still stand: they are heather cushions a metre high
+past the heather tiles, not trees, and were left until looked at.
+
+All fifteen landscapes photographed on the branch (bench/shots/overhaul/
+sur-r6): no errors. Desert Mountain keeps its one mountain with saguaro,
+mesquite and palo verde in clumps to the horizon; Seaside Links keeps its sea
+with gorse and shore pine beyond the course; Redwood Coast's hill behind the
+first hole is redwoods.

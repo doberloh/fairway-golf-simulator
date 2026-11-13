@@ -176,6 +176,34 @@ press Delete to take it away. W A S D fly, Q and E go down and up, **G** shows
 the course in the game's own picture. **Back to 2D** takes your 3D work back to
 the plan.
 
+### Surroundings
+
+In the panel on the right, under **Landscape**, **Surroundings** chooses what
+stands past the edge of your course -- the land nobody plays, out to the
+horizon.
+
+- **North, East, South, West**: one choice for each side.
+  - **As the landscape** -- whatever that landscape has there anyway.
+  - **Open country** -- the course's own ground carried on, nothing raised.
+  - **Rolling hills**
+  - **A mountain range**
+  - **One big mountain** -- on one side only; ask for it on a second side and
+    that side gets a mountain range.
+  - **Mesas** -- flat-topped tables with cliffs.
+  - **The sea**
+  - **Sea and islands**
+  - **A lake** -- water, with a far shore of low hills beyond it.
+- **Height**: how high the hills, ranges and mesas stand, from about a third
+  of their usual height to twice it.
+- **Trees**: how wooded the land round the course is -- As the landscape, No
+  trees, A few, Half wooded or Thick woods. The trees are the landscape's own
+  kinds.
+
+It is scenery. Nothing on your course changes, and water on a side stands
+below the lowest of your land, so it never floods a hole. Press **Game view** (G) to see it. It is saved with the
+course, and Fairway draws it when the course is played. It is not an Undo
+step: set a side back to **As the landscape** to take a choice away.
+
 ## Saving, and playing it in Fairway
 
 ![The review: Play it in Fairway](builder-guide/review.webp)

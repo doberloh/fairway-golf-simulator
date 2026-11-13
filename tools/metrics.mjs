@@ -5,7 +5,7 @@ import {roadOnPlay, roadOnHouse} from '../src/roads.js';
 import {GROUND_PLANTS} from '../src/species.js';
 import {seatGap, FLOAT_TOLERANCE} from '../src/tree-seat.js';
 import {allows} from '../src/grounds.js';
-import {farWoodSites, FAR_SHAPES} from '../src/far-woods.js';
+import {surroundTrees} from '../src/surround.js';
 import {drawnGround} from '../src/landscape-edge.js';
 // What a generated course is measured on.
 //
@@ -537,38 +537,29 @@ METRICS.seated = {
  },
 };
 
-// THE FAR WOODS ON THE GROUND AS DRAWN (the far-landscape goal; src/far-woods.js
-// seatOn). Every far crown and grove, in each shape it may be drawn as (a near
-// crown is a grove on Low and Medium), checked on its own points -- three rings
-// of twenty at 90%, 60% and 30% of its base, turned off the seat's -- against
-// `drawnGround`, the landscape's own triangles: its flat base must not stand
-// more than 2% of its radius (at least 30 cm) above the ground anywhere under
-// it (PLACED: under a pixel at the distance a crown that size stands), and no
-// point of its base may be in water -- the sea below its level, or a pond,
-// lake or creek inside the course's ground. Runs on every course; no setting.
-METRICS.farSeated = {
- describe: 'far crowns and groves floating above the drawn ground, or reaching water',
+// THE TREES PAST THE PROPERTY LINE (the surroundings rework, 12 November 2026;
+// src/surround.js, which replaced the far woods and their `farSeated`). Every
+// near tree and far site `surroundTrees` returns, at its default options:
+// none inside the property line (the course's own stands are there), none
+// whose ground is water -- a pond, lake or creek inside the course's ground,
+// or below the sea's level on a landscape with a sea -- and each standing on
+// the ground drawn under it: a near tree on the course's own ground
+// (`w.height`), a far site on the landscape's triangles (`drawnGround`), to
+// 5 cm. Runs on every course; no setting.
+METRICS.surround = {
+ describe: 'trees past the property line: inside the property, in water, or off the drawn ground',
  run(w) {
-  const counts = {farCrowns: 0}, invariants = {farFloating: 0, farInWater: 0}, series = {farGap: []};
-  const at = drawnGround(w), sea = !!w.bio?.sea, gx = w.groundGrid.halfX, gz = w.groundGrid.halfZ;
-  const wet = (x, z, y) => (sea && y < (w.waterLevel ?? 0)) || (Math.abs(x) < gx && Math.abs(z) < gz && w.surface(x, z) === 'water');
-  for (const groves of [false, true]) for (const s of farWoodSites(w, {groves})) {
-   const seat = s.seat, r = s.r, shape = FAR_SHAPES[s.shape];
-   {
-    counts.farCrowns++;
-    let worst = -Infinity, inWater = false;
-    for (const q of [.9, .6, .3]) for (let k = 0; k < 20; k++) {
-     const a = (k + .53) * Math.PI / 10, dx = Math.cos(a) * r * shape.foot * q, dz = Math.sin(a) * r * shape.foot * q;
-     const g = at(s.x + dx, s.z + dz), base = seat.y - (seat.ux * dx + seat.uz * dz) / seat.uy;
-     worst = Math.max(worst, base - g);
-     if (wet(s.x + dx, s.z + dz, g)) inWater = true;
-    }
-    series.farGap.push(worst);
-    if (worst > Math.max(.3, .02 * r)) invariants.farFloating++;
-    if (inWater) invariants.farInWater++;
-   }
-  }
-  return {series, counts, invariants};
+  const {near, far} = surroundTrees(w), at = drawnGround(w);
+  const counts = {surroundNear: near.length, surroundFar: far.length}, invariants = {surroundInside: 0, surroundWet: 0, surroundOffGround: 0};
+  const gx = w.groundGrid.halfX, gz = w.groundGrid.halfZ, sea = !!w.bio?.sea, level = w.waterLevel ?? 0;
+  const check = (s, ground) => {
+   if (Math.abs(s.x) <= w.halfX && Math.abs(s.z) <= w.halfZ) invariants.surroundInside++;
+   if ((Math.abs(s.x) < gx && Math.abs(s.z) < gz && w.surface(s.x, s.z) === 'water') || (sea && s.y < level)) invariants.surroundWet++;
+   if (!(Math.abs(s.y - ground(s.x, s.z)) <= .05)) invariants.surroundOffGround++;
+  };
+  for (const t of near) check(t, w.height);
+  for (const s of far) check(s, at);
+  return {series: {}, counts, invariants};
  },
 };
 

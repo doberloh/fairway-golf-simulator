@@ -1,6 +1,7 @@
 import * as T from 'three';
 import {biomeOf} from './biomes.js';
 import {fbm,saltOf,carvedField,landformOf,massifHeading} from './landforms.js';
+import {SURROUND_SIDES,SIDE_ANGLE} from './surround-sides.js';
 // Join the detailed ground's exact perimeter vertices to progressively wider
 // landscape rings. No overlapping rectangular backdrop or exposed tile edge.
 //
@@ -19,12 +20,71 @@ import {fbm,saltOf,carvedField,landformOf,massifHeading} from './landforms.js';
 // course's own height, `distance` metres out from the ground's edge. One
 // function for the ring's vertices and for anything that stands on the ring
 // (far-woods.js), so the two cannot drift apart.
+// WHAT STANDS ON EACH SIDE, WHEN THE COURSE SAYS (the surroundings rework, 12
+// November 2026; the owner: "I would also like to have the users have control
+// over what the surrounding landscape looks like in the builder"). A world
+// may carry `surround: {sides: {n, e, s, w}, height}` (a built course's file,
+// course-doc.js): each side one of SURROUND_KINDS, `auto` being whatever the
+// landscape itself raises there. North is -z, east +x, as the builder's plan
+// is drawn. A point past a side takes that side's kind; past a corner, the
+// two sides' by the squares of how far it lies past each, so nothing steps.
+//
+//  flat      the course's own country carried on, nothing added
+//  hills     rolling hills, 160 m
+//  range     a peaked range, 850 m (Mountain's)
+//  mountain  one mountain standing off that side, 900 m (Desert Mountain's);
+//            one a course -- a second side that asks for it gets a range
+//  mesas     flat-topped tables with cliffs, 240 m (the desert's)
+//  sea       the ground falls under the water over the first 220 m
+//  islands   a sea with a few islets in it
+//  lake      water for about 1.5 km, then low hills: a far shore
+//
+// `height` scales every one of them (0.3 to 2). PLACED: every number.
+// (The kinds, the sides and the record's own checks are in surround-sides.js,
+// which has no three.js in it: course-doc.js and built-world.js read them.)
+export {SURROUND_KINDS,SURROUND_SIDES,waterSide,normaliseSurround} from './surround-sides.js';
+const MOUNTAIN={at:2200,length:9000,face:1400,back:3500};
+function sidedRelief(w,sur,{auto,peaks,mesas,massif,isles}){
+ const ss=T.MathUtils.smoothstep,H=sur.height??1,level=w.waterLevel??0;
+ // A SHORE WANDERS. The first picture of a sea side (the owner's Home Course,
+ // 13 November 2026) had the water meet the land along a ruled line 100 m
+ // past the property and turn a square corner with it. The shore now starts
+ // 40 to 300 m out by a 500 m noise -- bays and points -- and a lake's far
+ // shore wanders the same way. PLACED.
+ const sShore=saltOf(w.settings.seed,'shore'),bay=(x,z)=>260*fbm(x/500,z/500,sShore,2);
+ const rolling=(x,z)=>Math.abs(Math.sin(x/520+Math.sin(z/430)))*.55+Math.abs(Math.sin(z/680+x/810))*.3+Math.abs(Math.sin(x/173-z/230))*.15;
+ const mountainSide=SURROUND_SIDES.find(k=>sur.sides[k]==='mountain');
+ const kindAt=(side,x,z,d,y0)=>{
+  const kind=sur.sides[side]??'auto',rise=ss(d,0,900);
+  switch(kind==='mountain'&&side!==mountainSide?'range':kind){
+   case 'flat':return 0;
+   case 'hills':return 160*H*rolling(x,z)*rise;
+   case 'range':return 850*H*peaks(x,z)*rise;
+   case 'mountain':return 900*H*massif(x,z)*rise;
+   case 'mesas':return 240*H*mesas(x,z)*rise;
+   // Water asks for a level, not a lift: the ground as it stands is `y0`
+   // (the ring passes it; without it a side of water adds nothing).
+   case 'sea':{if(y0===undefined)return 0;const b=bay(x,z);return (level-8-y0)*ss(d,40+b,160+b);}
+   case 'islands':{if(y0===undefined)return 0;const b=bay(x,z);return (level-8-y0)*ss(d,40+b,160+b)+(isles?isles(x,z):0);}
+   case 'lake':{if(y0===undefined)return 0;const b=bay(x,z),far=3*bay(x+900,z-700);return (level-5-y0)*ss(d,40+b,160+b)*(1-ss(d,1100+far,1500+far))+110*H*rolling(x,z)*ss(d,1400+far,2600+far);}
+   default:return auto(x,z,d);
+  }
+ };
+ return (x,z,distance,y0)=>{
+  const qx=Math.max(0,Math.abs(x)-w.halfX),qz=Math.max(0,Math.abs(z)-w.halfZ),a=qx*qx,b=qz*qz,t=a+b;
+  if(t<=0)return 0;
+  return (a?a/t*kindAt(x>0?'e':'w',x,z,distance,y0):0)+(b?b/t*kindAt(z>0?'s':'n',x,z,distance,y0):0);
+ };
+}
 export function ringRelief(w){
  const bio=biomeOf(w.settings.biome),lift=bio.ringLift;
  // The coast's own line (course.js `coastAt`; halfX - 90 unless it seeks play).
  const cx=z=>(w.coastAt?w.coastAt(z):w.halfX-90)+90;
  const shore=bio.edgeCoast?((x,z)=>1-T.MathUtils.smoothstep(x,cx(z)-260,cx(z)+40)):(()=>1);
- const peaks=bio.ringPeaks?(()=>{const s=saltOf(w.settings.seed,'peaks'),rg=(x,z,k,o)=>{const r=1-Math.abs(2*fbm(x,z,s+k,o)-1);return r*r;};
+ // A course's own surroundings (a built course's file; `sidedRelief` below)
+ // may ask for a range, mesas or a mountain on a landscape that has none.
+ const sur=w.surround?.sides?w.surround:null,wants=k=>!!sur&&Object.values(sur.sides).includes(k);
+ const peaks=bio.ringPeaks||wants('range')?(()=>{const s=saltOf(w.settings.seed,'peaks'),rg=(x,z,k,o)=>{const r=1-Math.abs(2*fbm(x,z,s+k,o)-1);return r*r;};
   return (x,z)=>{const a=rg(x/1500,z/1500,0,3),b=rg(x/560+3.1,z/560-7.7,11,2),c=rg(x/240-5.3,z/240+2.9,23,2);return Math.min(1.25,Math.pow(a,1.6)*.85+Math.pow(b,2)*.3*(.4+a)+c*.09*a);};})():null;
  // MESAS AND BUTTES (the far-landscape goal; the owner: "I think we need more
  // plateaus"). A landscape with `ringMesas` raises its far land as flat-topped
@@ -33,7 +93,7 @@ export function ringRelief(w){
  // below it, over a low rolling floor -- Monument Valley and the Colorado
  // Plateau's mesas, buttes where the field only just crosses a tier. Seeded
  // from the course's seed; scenery only. PLACED: every number.
- const mesas=bio.ringMesas?(()=>{const s=saltOf(w.settings.seed,'mesas'),ss=T.MathUtils.smoothstep;
+ const mesas=bio.ringMesas||wants('mesas')?(()=>{const s=saltOf(w.settings.seed,'mesas'),ss=T.MathUtils.smoothstep;
   return (x,z)=>{
    // Round 2 of the far landscape: a 2.4 km field in four octaves with 6 m
    // cliffs broke into a scatter of jagged fragments, and cliffs narrower than
@@ -58,8 +118,10 @@ export function ringRelief(w){
  // axis across the line of sight so its face looks at the course -- an apron of talus, then cliff
  // bands to a crest broken into knobs and notches, a long gentler back, steep ends -- and flat
  // desert everywhere else. Every number PLACED; scenery only.
- const massif=bio.ringMassif?(()=>{const o=bio.ringMassif,s=saltOf(w.settings.seed,'massif'),ss=T.MathUtils.smoothstep,r=k=>{const v=Math.sin((s+k*7919)*12.9898)*43758.5453;return v-Math.floor(v);};
-  const a=massifHeading(w.settings.seed),R=Math.max(w.halfX,w.halfZ)+o.at,cx=Math.cos(a)*R,cz=Math.sin(a)*R,nx=Math.cos(a),nz=Math.sin(a),half=o.length/2;
+ // (A course's own surroundings may stand the mountain on a side it names: `mountainSide`.)
+ const mountainSide=sur?Object.keys(sur.sides).find(k=>sur.sides[k]==='mountain'):null;
+ const massif=bio.ringMassif||mountainSide?(()=>{const o=bio.ringMassif??MOUNTAIN,s=saltOf(w.settings.seed,'massif'),ss=T.MathUtils.smoothstep,r=k=>{const v=Math.sin((s+k*7919)*12.9898)*43758.5453;return v-Math.floor(v);};
+  const a=mountainSide?SIDE_ANGLE[mountainSide]:massifHeading(w.settings.seed),R=Math.max(w.halfX,w.halfZ)+o.at,cx=Math.cos(a)*R,cz=Math.sin(a)*R,nx=Math.cos(a),nz=Math.sin(a),half=o.length/2;
   // Where it stands, for a camera to look at (tools/capture's `massif` view).
   w.massifSpot={x:cx,z:cz};
   const rg=(x,k,oc)=>{const q=1-Math.abs(2*fbm(x,k,s+k,oc)-1);return q*q;};
@@ -83,10 +145,12 @@ export function ringRelief(w){
  // far sea -- each a low hill with a beach skirt, its outline wandering, from
  // 2.5 to 6 km out (inside the sea's 7 km plane). Seeded; scenery only, the
  // far woods plant them as they plant any far land. PLACED.
- const isles=bio.ringIslands?(()=>{const s=saltOf(w.settings.seed,'islands'),r=k=>{const v=Math.sin((s+k*7919)*12.9898)*43758.5453;return v-Math.floor(v);},ss=T.MathUtils.smoothstep;
-  const list=Array.from({length:bio.ringIslands},(_,i)=>{const a=r(i*3)*6.2832,d=2500+r(i*3+1)*3500,R=260+r(i*3+2)*520;return {x:Math.cos(a)*(w.halfX+d),z:Math.sin(a)*(w.halfZ+d),R,H:24+r(i*5+4)*46};});
+ const isleCount=bio.ringIslands||(wants('islands')?5:0);
+ const isles=isleCount?(()=>{const s=saltOf(w.settings.seed,'islands'),r=k=>{const v=Math.sin((s+k*7919)*12.9898)*43758.5453;return v-Math.floor(v);},ss=T.MathUtils.smoothstep;
+  const list=Array.from({length:isleCount},(_,i)=>{const a=r(i*3)*6.2832,d=2500+r(i*3+1)*3500,R=260+r(i*3+2)*520;return {x:Math.cos(a)*(w.halfX+d),z:Math.sin(a)*(w.halfZ+d),R,H:24+r(i*5+4)*46};});
   return (x,z)=>{let h=0;for(const q of list){const dd=Math.hypot(x-q.x,z-q.z)/q.R*(1+.25*(fbm(x/260,z/260,s+11,2)-.5));if(dd<1.3)h=Math.max(h,(1-ss(dd,.85,1.25))*3.5+(1-ss(dd,.2,.95))*q.H);}return h;};})():null;
- return {peaks,mesas,isles,carved,massif,at:(x,z,distance)=>(lift*ridgeAt(x,z)*shore(x,z)+(isles?isles(x,z):0))*T.MathUtils.smoothstep(distance,0,900)+carvedAt(x,z,distance)};
+ const auto=(x,z,distance)=>(lift*ridgeAt(x,z)*shore(x,z)+(isles?isles(x,z):0))*T.MathUtils.smoothstep(distance,0,900)+carvedAt(x,z,distance);
+ return {peaks,mesas,isles,carved,massif,at:sur?sidedRelief(w,sur,{auto,peaks,mesas,massif,isles}):auto};
 }
 // THE RING AS PLAIN ARRAYS (the far-landscape goal, 26 October 2026). The
 // drawn landscape is these triangles, not `ringRelief` sampled finely: out
@@ -95,11 +159,29 @@ export function ringRelief(w){
 // further in. Anything that stands on the ring asks `drawnGround`, which reads
 // these same triangles; the renderer builds its geometry from them. Built
 // once per world.
+// HOW FINE THE RING IS (the surroundings rework, 12 November 2026). Each ring
+// stands one step past the last and every step is `grow` times the one
+// before, starting at `start` metres: the cells stay square and their size
+// is `start` plus (grow - 1) of the distance out. Until the rework the rings
+// grew 28% a time (16% for mesas), 13,000 triangles to 13 km, and a hillside
+// two kilometres off was drawn as faces 300 m wide -- the owner: "surrounding
+// landscape is definitively more low poly and low rez". At 2% a ring is 177
+// rings and about 190,000 triangles: 20 m cells at 600 m, 50 m at 2 km.
+// A graphics tier may take a coarser one (graphics.js `farGround`); anything
+// standing on the ring must ask for the same one it is drawn with.
+// PLACED: 8 m, 2%, never over 220 m.
+export const RING_DETAIL={start:8,grow:1.02,most:220};
 const RINGS=new WeakMap();
-export function ringMesh(w){
- let m=RINGS.get(w);if(!m){m=buildRing(w);RINGS.set(w,m);}return m;
+const detailKey=d=>d.start+'|'+d.grow+'|'+d.most;
+// (A world's own surroundings are part of the key: the builder changes them
+// on a world it keeps.)
+const surroundKey=w=>w.surround?JSON.stringify(w.surround):'';
+export function ringMesh(w,detail=RING_DETAIL){
+ let by=RINGS.get(w);if(!by)RINGS.set(w,by=new Map());
+ const d={...RING_DETAIL,...detail},k=detailKey(d)+surroundKey(w);
+ let m=by.get(k);if(!m){m=buildRing(w,d);by.set(k,m);}return m;
 }
-function buildRing(w){
+function buildRing(w,detail){
  const g=w.groundGrid,edge=[];for(let i=0;i<g.nx;i++)edge.push(i);for(let j=0;j<g.nz;j++)edge.push(j*(g.nx+1)+g.nx);for(let i=g.nx;i>0;i--)edge.push(g.nz*(g.nx+1)+i);for(let j=g.nz;j>0;j--)edge.push(j*(g.nx+1));
  const bio=biomeOf(w.settings.biome),count=edge.length;
  // A SEA ALONG ONE EDGE HAS NO FAR SHORE. The rings lift hills out of every
@@ -129,13 +211,11 @@ function buildRing(w){
  // fog has to reach full density before that or the world visibly ends. The
  // outermost reach (13 km) is the one the high tiers' draw distance was set for.
  const REACH=13000,steps=[0];
- // Mesas (and far islands) need their cliffs drawn: rings 16% apart, never more than 220 m (were
- // 28% and unbounded -- 500 m rows smeared a cliff into a ramp), and 2.5 times
- // as many vertices round each ring.
- // Carved far country: rows of 70 m out to where its ridges are lost in the
- // haze, about the size of its own drainage.
- const mesaRings=!!(relief.mesas||relief.isles||relief.carved||relief.massif),grow=mesaRings?1.16:1.28,most=mesaRings?220:1e9,fineTo=relief.carved?3600:0;
- for(let step=8;steps[steps.length-1]<REACH;step=Math.min(steps[steps.length-1]<fineTo?70:most,step*grow))steps.push(Math.min(REACH,steps[steps.length-1]+step));
+ // (Until the surroundings rework mesas, islands, the carved country and the
+ // big mountain had finer rings of their own -- 16% apart, never over 220 m, 70 m
+ // rows over the Badlands' first 3.6 km -- and every other landscape 28%. Every
+ // landscape now takes `detail`, which is finer than any of those were.)
+ for(let step=detail.start;steps[steps.length-1]<REACH;step=Math.min(detail.most,step*detail.grow))steps.push(Math.min(REACH,steps[steps.length-1]+step));
  // How long each ring is, from a coarse walk round it, to size its spacing.
  const around=d=>{let L=0,prev=null;for(let k=0;k<=256;k++){const [x0,z0]=perimeter(k/256*count),r=Math.hypot(x0,z0),p=[x0+x0/r*d,z0+z0/r*d];if(prev)L+=Math.hypot(p[0]-prev[0],p[1]-prev[1]);prev=p;}return L;};
  const positions=[],indices=[],rings=[],along=[],out=[];
@@ -147,10 +227,12 @@ function buildRing(w){
    // A peaked range twice as dense along each ring (round 5: at one vertex
    // per ring step its nearest faces were single planes hundreds of metres
    // wide); a few thousand triangles more, out where nothing else is drawn.
-   const dense=peaks?2:mesaRings?2.5:1,n=Math.max(48,Math.min(Math.round(count*dense),Math.round(around(distance)/Math.max(outward,3)*dense)));
+   // (Square cells on every landscape since the rework: the doubled vertices
+   // along a peaked range's rings, 2.5 times a mesa's, made up for coarse rows.)
+   const n=Math.max(48,Math.min(count,Math.round(around(distance)/Math.max(outward,3))));
    for(let j=0;j<n;j++){
     const t=j/n*count,[x0,z0]=perimeter(t),r=Math.hypot(x0,z0),x=x0+x0/r*distance,z=z0+z0/r*distance;
-    positions.push(x,w.height(x,z)+relief.at(x,z,distance),z);ts.push(t);along.push(t);out.push(distance);
+    const y0=w.height(x,z);positions.push(x,y0+relief.at(x,z,distance,y0),z);ts.push(t);along.push(t);out.push(distance);
    }
   }
   rings.push({first,ts});
@@ -177,8 +259,8 @@ function buildRing(w){
 // THE HEIGHT OF THE GROUND AS DRAWN at any point: the course's grid inside its
 // edge (`w.height` interpolates the same cells the ground mesh draws), the
 // ring's own triangles outside it.
-export function drawnGround(w){
- const g=w.groundGrid,{positions:P,indices:I,count,steps,bands}=ringMesh(w),gx=g.halfX,gz=g.halfZ,dx=2*gx/g.nx,dz=2*gz/g.nz;
+export function drawnGround(w,detail){
+ const g=w.groundGrid,{positions:P,indices:I,count,steps,bands}=ringMesh(w,detail),gx=g.halfX,gz=g.halfZ,dx=2*gx/g.nx,dz=2*gz/g.nz;
  const last=steps.length-2;
  // A triangle's test writes how far inside the point is and its height to
  // these two, not to a new object: a placement asks this hundreds of
@@ -222,9 +304,10 @@ export function drawnGround(w){
 // gully). The ring's vertices from a hash of 64 m cells; the course's grid
 // vertices from its own spacing, with the points of any refined cell.
 const VERTS=new WeakMap();
-export function drawnVertices(w){
- let f=VERTS.get(w);if(f)return f;
- const {positions:P}=ringMesh(w),C=64,cells=new Map(),g=w.groundGrid,gx=g.halfX,gz=g.halfZ,dx=2*gx/g.nx,dz=2*gz/g.nz;
+export function drawnVertices(w,detail){
+ const key=(detail?detailKey({...RING_DETAIL,...detail}):'')+surroundKey(w);let by=VERTS.get(w);if(!by)VERTS.set(w,by=new Map());
+ let f=by.get(key);if(f)return f;
+ const {positions:P}=ringMesh(w,detail),C=64,cells=new Map(),g=w.groundGrid,gx=g.halfX,gz=g.halfZ,dx=2*gx/g.nx,dz=2*gz/g.nz;
  for(let v=0;v<P.length/3;v++){const k=Math.floor(P[v*3]/C)+','+Math.floor(P[v*3+2]/C);let c=cells.get(k);if(!c)cells.set(k,c=[]);c.push(v);}
  f=(x,z,r)=>{
   const out=[];
@@ -239,14 +322,44 @@ export function drawnVertices(w){
    }
   return out;
  };
- VERTS.set(w,f);return f;
+ by.set(key,f);return f;
 }
-export function landscapeGeometry(w){
- const {positions,indices,edge,along,out,count}=ringMesh(w);
+export function landscapeGeometry(w,detail){
+ const {positions,indices,edge,along,out,count}=ringMesh(w,detail);
  const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(positions,3));geo.setIndex(indices);geo.computeVertexNormals();geo.userData.innerCount=count;geo.userData.edge=edge;geo.userData.along=along;geo.userData.out=out;
  // Filled from the course's own relief by stitchSeam; zero until then.
  geo.setAttribute('localRelief',new T.BufferAttribute(new Float32Array(positions.length/3),1));
  return geo;
+}
+// THE RING IN PIECES (the surroundings rework, 12 November 2026). The ring was
+// one mesh, drawn whole every frame; at 13,000 triangles nobody minded. At
+// 182,000 the two thirds of it behind and beside the camera are worth
+// skipping, so it is drawn as pieces -- eight directions by three distances
+// (to 600 m, to 2.5 km, beyond) -- each with bounds of its own for the card to
+// test. The pieces share the whole ring's vertices (position, normal, the
+// seam's relief: one copy on the card) and differ only in which triangles
+// they list, so `stitchSeam` still mends one surface. PLACED: 8 by 3.
+const CHUNK_SECTORS=8,CHUNK_EDGES=[600,2500];
+export function landscapeChunks(geo,w,detail){
+ const {positions:P,indices:I,steps,bands}=ringMesh(w,detail),lists=new Map();
+ for(let r=0;r<bands.length;r++){
+  const end=r+1<bands.length?bands[r+1].first:I.length/3,band=steps[r]<CHUNK_EDGES[0]?0:steps[r]<CHUNK_EDGES[1]?1:2;
+  for(let k=bands[r].first;k<end;k++){
+   const a=I[k*3]*3,b=I[k*3+1]*3,c=I[k*3+2]*3,cx=P[a]+P[b]+P[c],cz=P[a+2]+P[b+2]+P[c+2];
+   const key=Math.floor((Math.atan2(cz,cx)/(2*Math.PI)+1)*CHUNK_SECTORS)%CHUNK_SECTORS*3+band;
+   let l=lists.get(key);if(!l)lists.set(key,l=[]);l.push(I[k*3],I[k*3+1],I[k*3+2]);
+  }
+ }
+ const out=[];
+ for(const list of lists.values()){
+  const g=new T.BufferGeometry();
+  for(const name of ['position','normal','localRelief'])if(geo.attributes[name])g.setAttribute(name,geo.attributes[name]);
+  g.setIndex(list);
+  const box=new T.Box3(),v=new T.Vector3();for(const i of list)box.expandByPoint(v.set(P[i*3],P[i*3+1],P[i*3+2]));
+  g.boundingBox=box;g.boundingSphere=box.getBoundingSphere(new T.Sphere());
+  out.push(g);
+ }
+ return out;
 }
 // ONE SURFACE ACROSS THE SEAM. The course's ground and this landscape each work
 // out their normals from their own triangles only, so along the join each side

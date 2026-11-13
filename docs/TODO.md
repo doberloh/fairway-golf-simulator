@@ -115,6 +115,23 @@ wrong, unfinished, or owed a check.
   (was: *Models to check*, *The limb fix...*, *One look left in Southern
   Pines*, *Bare tree branches*, *Regenerate the grasses on Meshy*)
 
+- [ ] **The surroundings rework (branch `surroundings-rework`), open** (12-13
+  November 2026; docs/SURROUNDINGS.md). **Mountain's forest floor reads dark
+  and flat where the trees are thin** (ground.js, the floor tone under the
+  far trees; SURROUNDINGS round 5). **One two-build frame comparison is owed**
+  (`tools/frame-ab.mjs` against 0.9.14) since the far trees were moved to
+  draw after everything solid: before that move High and Ultra were 1 to 2%
+  slower at a tee and level from above, Medium level, Low 2% faster
+  (SURROUNDINGS, round 9), and the move was measured only on one page. **The builder guide's editor picture
+  owes a retake**: it lacks the Surroundings block
+  (`tools/capture/builder-guide.mjs`, graphics card, asked for first).
+  **`bench/baseline.json` still holds the far woods' `farSeated` keys** until
+  the next `node tools/bench.mjs --save`; the `surround` metric has no
+  baseline until then. Not gone through one landscape at a time against
+  pictures with the owner (the plan's step 5), and no per-landscape
+  `surround` recipe in biomes.js (the plan's step 4): the builder's record
+  and the landscapes' existing far relief are what there is.
+
 ## The owner's calls
 
 - [ ] **Cart paths, the clubhouse, the road and the lot are off on generated
@@ -147,6 +164,24 @@ here is a claim of support until it is done.
 - [ ] **Play the current build by hand** (0.9.14, 12 November 2026). What has
   been built and seen only in captures, measurements or smoke runs, and still
   exists in the game. The archive has each item's full list.
+  - **The surroundings** (branch `surroundings-rework`, 12-13 November 2026,
+    not merged or released; docs/SURROUNDINGS.md). Seen in captures only,
+    all fifteen landscapes, with no errors; the owner has looked at none of
+    them in the game. To look at, on each landscape and each tier: the land
+    past the property line from a tee, from the property's edge and from
+    above -- do the pictures of trees read as the course's own trees, is
+    there a line where the course's trees stop and the pictures start, do
+    they turn oddly as the camera moves or flies, do the open meadows look
+    right; the far hills' shape; Desert Mountain's mountain, Seaside Links'
+    sea and the season's colours, which were to be kept. **The builder's
+    Surroundings block has been pressed only by a script** (the
+    `builder-surroundings` journey), never by a person: each side's
+    nine choices, Height and Trees, seen in Game view, saved, reopened,
+    carried through Back to 2D and a door 2 course, then played in Fairway
+    (a side of water against a low course and a high one). **Frame rate
+    was measured on one desktop graphics card only**: no phone, no laptop,
+    no machine without a graphics card, and nothing since the last real
+    models past the line were taken out and the meadows opened.
   - **The rebuilt ball** (0.9.13; the owner played the branch on 12 November
     and said it "feels way better", naming no single check): the hole-out
     banner, the cameras and the cup sound against a ball that now falls and
@@ -200,8 +235,9 @@ here is a claim of support until it is done.
     diamond-mown greens and tee stripes not shimmering as the camera moves;
     Reading the ground (Natural, Clear, Map lines) changing a green at once;
     the lie on rock, hardpan, heather and waste sand agreeing with the painted
-    edge; Seaside Links' shared fairways from the tee; no line where near
-    trees become far woods; the ball easy to find at dusk and at night.
+    edge; Seaside Links' shared fairways from the tee; the ball easy to find
+    at dusk and at night. (Its "no line where near trees become far woods"
+    went with the far woods; see *The surroundings*, above.)
   - **The interface** (0.9 to 0.9.6): a controller through every menu; VIEWS,
     FLY and the fly pad with a thumb; the bay's projector; the hole-out and
     menu sounds, loud or quiet (`CHIP_LEVELS`, chiptune.js); whether the green
@@ -289,8 +325,9 @@ here is a claim of support until it is done.
   2026). Unused now: the retired landscapes' entries in course-names, crest,
   hole-names, renderer, seasons and the palettes; models no landscape plants
   (kept so far, because built courses name trees by species); the island code
-  (`ringIslands`, the far islets: unreachable and untested since the Keys
-  left); the karst recipe and the `upInto` trial in landforms.js; pine needles
+  (`ringIslands`: no landscape has far islets since the Keys left. The
+  islets themselves are reached again since 12 November 2026, by a built
+  course's *Sea and islands* side, so landscape-edge.js `isles` stays); the karst recipe and the `upInto` trial in landforms.js; pine needles
   (`fallen`) taken from a region by a landscape that plants no conifer. Also
   check whether the per-hole tree list (`h.trees` in `generateCourse`) is
   still dead code, and that Classic Parkland's eight weekly slots a cycle and

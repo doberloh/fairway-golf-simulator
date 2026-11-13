@@ -171,7 +171,11 @@ not counted as a change. Typical loop:
    `node tools/capture/overhaul.mjs <label> <up to three biomes> --views a,b`.
    Pictures land in `bench/shots/overhaul/<label>/<biome>/` (git-ignored).
    Options: `--homes` (house views; `--houses 1,4` picks which), `--tier
-   high`, `--cues '<json>'`, `--seed`. Views worth knowing: `h1-teekit`,
+   high`, `--cues '<json>'`, `--seed`; since the surroundings rework,
+   `--built <x.fairway>` (a built course from its file) and `--goal`,
+   `--rest`, `--look` (whose run it is in the card's log, and its gate's
+   rest and watch; CAPTURE.md), with the views `edge-eye` and `edge-eye-b`
+   from just inside the property line. Views worth knowing: `h1-teekit`,
    `h1-sign-near`, `h1-markers`, `h2-flag`, `h2-flag-back`, `h2-bunker`,
    `h1-pond`, `h1-cliff`, `h1-heath`, `h2-putt`, `h2-green-b`, and the four
    hours of `h2-side` (`h2-dawn`, `h2-dusk`, `h2-night`, `h2-flood`).

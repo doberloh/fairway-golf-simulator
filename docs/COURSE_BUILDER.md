@@ -66,7 +66,7 @@ seed.** One reader returns a *course document* for either:
 
 | Part | What | Notes |
 | --- | --- | --- |
-| `course.json` | name, landscape, the designer it came from, extent, every surface as outlines (green, fairway, tee, sand, semi, path, native, waste; a polygon is rings, the first outer), water (outline, level, kind), holes (number, par, stroke index, tee sets, green, the line with its bends), credits, source notes, where it came from (seed and settings, or null), picture, `builtVersion` | Coordinates in world metres, rounded to the centimetre |
+| `course.json` | name, landscape, the designer it came from, extent, every surface as outlines (green, fairway, tee, sand, semi, path, native, waste; a polygon is rings, the first outer), water (outline, level, kind), holes (number, par, stroke index, tee sets, green, the line with its bends), credits, source notes, where it came from (seed and settings, or null), picture, `builtVersion`; optionally `treePlan` and `surround` (both below), each absent unless the course chose | Coordinates in world metres, rounded to the centimetre |
 | `land.bin` | the land's height grid | Heights to the centimetre (PLACED) as 16-bit steps above the lowest point, each row differenced so the deflate finds the runs; a relief over 655 m takes a coarser step |
 | `patches.bin` | finer grids on greens and tees | Same encoding |
 | `trees.bin` | every tree a ball can hit: x, z, height, crown, trunk, role | 24 bytes a tree. The landscape picks the species drawn, in its planting shares among those of the tree's height; the sizes are stored, so a tree plays the same in every landscape |
@@ -129,6 +129,29 @@ trees until they lose it. The whole-course size slider does not reach trees size
 by the landscape. With sizes off the height rule (`speciesFor`) has no height to
 fit, so the shares alone decide.
 
+**A course's own surroundings** (`surround`, the surroundings rework, 12-13
+November 2026; the owner: "I would also like to have the users have control
+over what the surrounding landscape looks like in the builder if they want
+to"; surround-sides.js, docs/SURROUNDINGS.md). An optional field of the course:
+
+| Field | Values | Notes |
+| --- | --- | --- |
+| `sides.n`, `sides.e`, `sides.s`, `sides.w` | `auto`, `flat`, `hills`, `range`, `mountain`, `mesas`, `sea`, `islands`, `lake` | What stands past the property line on that side. North is -z and east +x, as the plan is drawn. `auto` is whatever the landscape raises there. An unknown kind reads as `auto` |
+| `height` | 0.3 to 2, default 1 | Scales the hills (160 m), a range (850 m), the one mountain (900 m) and mesas (240 m). Out of range is held to the range |
+| `cover` | 0 to 1, optional | How wooded the land round the course is, over the landscape's own. 0 is no trees. Absent: the landscape's |
+
+- **Absent when it changes nothing.** Every side `auto`, height 1 and no
+  cover is no record (`normaliseSurround` returns null), so the field is left
+  out and a course that never chose keeps its bytes and its hash.
+- **Scenery only: no `BUILT_VERSION`.** Nothing a ball meets changes, and a
+  file without the field plays and looks as before.
+- **One big mountain a course**: a second side that asks for `mountain` gets
+  a range. `lake` is water for about 1.5 km and then a far shore of low hills;
+  `islands` is the sea with a few islets.
+- **It travels beside `treePlan`** through the editor, the kept draft, Back to
+  2D and door 2's course (PROJECT_HANDOFF, *A COURSE'S OWN SURROUNDINGS*).
+- Every number is PLACED.
+
 **Limits a file is checked against** (PLACED; `LIMITS` in course-doc.js): 16
 million land samples (a 3 x 3 km property at 1 m is 9 million), 4 million in
 patches, 200 thousand trees, 2 million outline points, 9 or 18 holes. A file
@@ -156,7 +179,17 @@ agree; surfaces from a baked field the shader and `surface()` both read (and
 since 8 November 2026 the green's and the tee's mowing read their edges from it
 too: ground.js `greenD=dGreen`, `teeBuilt`); holes
 from records; water from stored outlines and levels; trees from the list; the
-landscape's far ring past the property. Clubhouse, cart paths, markings and
+landscape's far ring past the property, with the landscape's own trees on it.
+**When the file has a `surround`** (12 November 2026) the world carries it as
+`world.surround`: the far ring is raised side by side by it
+(landscape-edge.js `sidedRelief`, corners blended), and the trees past the
+line follow its `cover`. A side of water (`sea`, `islands`, `lake`) makes the
+world one with a sea (`bio.sea`) even on a landscape that has none; unless
+the file has a sea of its own, the water stands 2.5 m under the lowest ground
+of the land (`seaLevelUnder`, PLACED), so neither the sea nor its beach
+reaches any of the course, and no lie on the course changes. A course on low
+ground gets a beach just past its line; one on high ground stands on a bluff.
+Clubhouse, cart paths, markings and
 story are not carried in the first version. The test that proves it: a
 generated course frozen and rebuilt from its file compared with the generated
 world -- surfaces at many points, heights, tees, greens, pins and the virtual
@@ -181,6 +214,25 @@ holes (tees, green, the line, bends, par, stroke index, renumbering), water
 (outline and level), trees (place, remove, thin, paint a wood), bunker and
 green shaping by recipe (the generator's own), checks with fly-to, a test round
 by the virtual golfer, undo and redo, plan and 3D views, autosave.
+
+**Surroundings** (12 November 2026; builder/editor.js, editing.js
+`setSurround`). A block under Landscape in the right panel: **North**,
+**East**, **South** and **West**, each a list of the nine kinds by their
+player names (As the landscape, Open country, Rolling hills, A mountain range,
+One big mountain, Mesas, The sea, Sea and islands, A lake); **Height**, a
+slider from 0.3 to 2; **Trees** (As the landscape, No trees, A few, Half
+wooded, Thick woods: no cover, 0, 0.2, 0.5, 0.9). It writes the course's
+`surround` (*Course files*), marks the course changed, and is seen in Game
+view, which builds the course again when it changes. No undo step, as the
+tree plan. Unit-tested (tests/surround-built.test.mjs) and pressed in the
+builder's own page by the `builder-surroundings` smoke journey
+(tools/builder-journeys/surroundings.mjs): a nine grown and taken over, a
+mountain, the sea, a lake and mesas chosen, Height and Trees set, Game view
+opened and left, the file saved and its record read back, every side set
+back (the record gone), and a shot played on the saved course in the game.
+**No person has used it yet.** The game has also drawn a real course with
+sides of its own, from a copy of a course file with the record written in by
+hand (`tools/capture/overhaul.mjs --built`; SURROUNDINGS.md, round 8).
 
 ## Real land: LIDAR
 
@@ -1671,6 +1723,12 @@ owner can overrule them:
   LIDAR's smoothness and slope limits doubled when a picture decides the
   edge; the fairway within 70 m of a line, nearer its colour than 0.85 of the
   rough's distance; semi-rough a 2 m collar; a call under 0.45 left rough.
+- A course's own surroundings (12 November 2026): the nine kinds and their
+  heights (hills 160 m, a range 850 m, the one mountain 900 m, mesas 240 m);
+  Height 0.3 to 2; a sea 2.5 m under the lowest ground of the land; a shore
+  starting 40 to 300 m past the property; a lake about 1.5 km across; one
+  mountain a course; the Trees choices as cover 0, 0.2, 0.5 and 0.9; no undo
+  step for the block.
 
 ## Graphics card log
 

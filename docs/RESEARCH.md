@@ -3885,7 +3885,10 @@ start 8 m apart and widen by 1.28 each step to 13 km, and each ring carries
 only as many vertices as keep its spacing along the ring near its step outward
 (at least 48); rings with different counts are stitched by walking both at
 once. Worst aspect among triangles over 50 m: 6.6 to 1. Vertices: ~6,600
-against ~20,000 before (Redwood nine); built in 19 ms.
+against ~20,000 before (Redwood nine); built in 19 ms. (The 1.28 step was
+replaced on 12 November 2026 by 2% a step, never over 220 m, about fourteen
+times the triangles: *The surroundings rework*, below, and SURROUNDINGS.md.
+The stitching and the 13 km reach are unchanged.)
 
 **The rectangle was two things.** Normals: each mesh computed them from its own
 triangles only, so they disagreed along the seam; `stitchSeam` gives both the
@@ -8913,6 +8916,11 @@ the far hills (below).
 
 ## The overhaul's far forest (25 October 2026)
 
+(The crown-sized lumps described here were replaced on 12 November 2026 by a
+plain forest floor under trees that are now placed and drawn: *The
+surroundings rework*, below, and SURROUNDINGS.md. The patches, the cover, the
+treeline and the far-off canopy colour stand.)
+
 Past the course's own ground the landscape rings (landscape-edge.js) were bare
 hills; the stands stop at the property line. The far forest is PAINTED by the
 ground shader (ground.js, biomes.js `farForest`), not planted -- no geometry,
@@ -9503,6 +9511,10 @@ third of the fairway's width. Holes joined on five 18-hole seeds: 3, 0, 3, 2,
 
 ### The far woods (the polish goal, 26 October 2026)
 
+(The far woods were replaced on 12 November 2026 by the course's own trees
+drawn as pictures -- surround.js, far-trees.js: *The surroundings rework*,
+below, and SURROUNDINGS.md. far-woods.js now holds only `FAR_SHAPES`.)
+
 far-woods.js: bands from the property line to 12,800 m; spacing max(13 m,
 0.06 x (d + 150 m)); each band max(4 spacings, d/4) deep; jitter 0.8 spacing;
 kept by the painting's patch noise (380 m cells) against cover +/- 0.12,
@@ -9518,6 +9530,10 @@ them starts at the property line, fading in over 40 m (was the ground's edge
 and 70 m). All PLACED by eye.
 
 ### The far landscape, seated on the drawn ground (the far-landscape goal, 26 October 2026)
+
+(`seatOn` and the bench's `farSeated` went with the far woods on 12 November
+2026; `drawnGround` stays and the bench's `surround` holds each far tree to
+it: *The surroundings rework*, below, and SURROUNDINGS.md.)
 
 Measured first (scratch `bench/shots/overhaul/_drawn.mjs`, seed `overhaul`,
 nine holes): a far crown's centre stood above the ground as DRAWN (the ring's
@@ -9573,7 +9589,9 @@ apron below each, 0.12 and 0.06 (29 and 14 m) over the field's last 0.08 to
 0.02 before the tier; a floor of fbm(x/900) x 0.06 (14 m). Faded in over the
 ring's first 900 m as every ring relief is. Rings: 16% wider each, at most
 220 m (were 28% and unbounded), and 2.5 times the vertices round each (peaks
-take 2): 50,664 vertices and 96,801 triangles on seed `overhaul`. Round 1's
+take 2): 50,664 vertices and 96,801 triangles on seed `overhaul` (rows of
+their own for mesas and peaks ended on 12 November 2026: every landscape
+takes one finer rule, `RING_DETAIL` -- *The surroundings rework*, below). Round 1's
 field (2.4 km, four octaves, 6 m cliffs, three tiers) broke into jagged
 fragments a few rows wide (`bench/shots/overhaul/ring/desert-mesa1.png`,
 CPU hillshade). All PLACED by eye against Monument Valley's buttes (about
@@ -9690,7 +9708,9 @@ tees: one set of passes along the line of play, x 1.3 clamped to 1. PLACED.
 
 Far scrub in clumps (far-woods.js, round 7): past the cover patchwork (380 m
 cells), a scrub site is kept with chance smoothstep(0.5, 0.7) of a second
-value noise at 150 m cells -- about two in five, gathered. PLACED.
+value noise at 150 m cells -- about two in five, gathered. PLACED. (Since
+12 November 2026 scrub clumps are surround.js `coverField`'s, by a noise of
+its own: *The surroundings rework*, below.)
 
 ### Links shared fairways, the far-landscape goal (26 October 2026)
 
@@ -14900,3 +14920,111 @@ LIDAR, and searches and downloads only a box drawn round the course on it
   box changed and nothing is traced -- PLACED (a rebuild clears the trace).
   No new timings: the Worthington figures under *Build it for me, on a real
   course* are from the 1.5 km square.
+
+## The surroundings rework (12-13 November 2026)
+
+Branch `surroundings-rework`. The plan, each round and every decision it
+reversed are in **docs/SURROUNDINGS.md**; this is its figures. **No outside
+source was used**: every number below was measured here or PLACED, and says
+which. Seed FAIRWAY, eighteen holes, the starting course, unless said.
+
+**Before (main, 0.9.14), measured.** The far ring: 26 rings, 13,000 triangles
+on most landscapes (108,000 on Desert Mountain), each ring 28% further out
+than the last. The far woods: 19,500 sites on Classic Parkland, 10,900 on
+Mountain, 1,400 scrub clumps on Desert Mountain, 65 on the Prairie; domes 20
+to 300 m across beside real crowns 8 m across. A height asked of the land far
+from the course costs 1.2 to 3.8 millionths of a second.
+
+**The far ground** (landscape-edge.js `RING_DETAIL`). First step 8 m, each
+step 2% longer, never over 220 m -- all PLACED. On Classic Parkland: 180
+rings, 93,000 vertices, 182,000 triangles; cells 20 m across at 600 m and
+50 m at 2 km. Built in 0.12 s (0.27 s on Desert Mountain, whose mountain
+costs more a point). Low's rings grow 6% a step (about 30,000 triangles) and
+Medium's 3.5% (about 90,000) -- PLACED, graphics.js `farGround`. Drawn in 24
+pieces, eight directions by three distances (to 600 m, to 2.5 km, beyond) --
+PLACED.
+
+**The trees** (surround.js `SURROUND_TREES`, every number PLACED: `near`
+110 m, `reach` 5,000 m, `fall` 3,200 m, `keep` 0.9, `most` 200,000, spacing
+never under 12 m, `FAR_OPEN` 0.36).
+
+| Count, Ultra | Near band | Far sites |
+| --- | --- | --- |
+| Classic Parkland, rounds 2 to 4 | 3,057 | 159,612 |
+| Mountain, rounds 2 to 4 | 5,250 | 77,189 |
+| Classic Parkland, after the open meadows (round 8) | -- | 129,000 (from 180,000) |
+
+A Northern Woods course, its stand 7 m apart, came to 354,000 sites and
+0.76 s before the 12 m floor and the cap. Placing them took 0.5 to 0.7 s in
+rounds 2 to 4 (the far woods' seating took 0.5 to 0.8 s and is gone), 0.1 to
+0.5 s by round 6, and on Classic Parkland 0.36 s falling to 0.13 s in the
+game once the meadows opened. Taking the pictures: 0.05 s.
+
+Per tier (graphics.js `surround`, PLACED then measured):
+
+| Tier | Trees to | Thins every | Picture height | Most sites |
+| --- | --- | --- | --- | --- |
+| Low | 1.5 km | 1.2 km | 128 px | 30,000 |
+| Medium | 2.5 km | 2.0 km | 160 px | 70,000 |
+| High | 4 km | 2.8 km | 192 px | 140,000 |
+| Ultra | 5 km | 3.2 km | 256 px | 200,000 |
+
+The atlas is 2,048 px wide. A far tree is drawn up to twice its size as the
+sites thin (the square root of the spacing's growth); from 700 m a quarter
+wider and a sixth into the ground; a plant under 3 m is not placed past 700 m.
+Far sites hold on slopes to 1.3 (52 degrees), near ones to 0.85. All PLACED.
+
+**The paint** (ground.js). Three tone noises of 610, 173 and 47 m, up to a
+fifth lighter or darker, fading in over 160 m. The forest's floor: the leaf
+colours' average at 0.52 of the light, mottled at 23 m. Patches on 380 m
+cells, meadows on 900 m cells. All PLACED.
+
+**First frame comparison with 0.9.14** (`tools/frame-ab.mjs`, Classic
+Parkland, eighteen holes, tee 1, tee 5 and 250 m up; two rounds; real
+graphics card; other work was using the processor, so the times are rough
+and the counts are what to trust):
+
+| Tier | 0.9.14 | Branch | Triangles a frame |
+| --- | --- | --- | --- |
+| Ultra | 7.9 ms | 8.9 ms | 42.9 M to 55.4 M |
+| Medium | 2.00 ms | 1.67 ms | 9.4 M to 9.6 M |
+| Low | 1.77 ms | 2.50 ms (card time equal: 1.03 to 0.98 ms) | 7.5 M to 7.4 M |
+
+The 12 million more on Ultra were 3,057 real models past the line; the
+160,000 pictures were a third of a million. Course load was 2 to 2.7 s longer.
+
+**Second comparison, the machine quiet** (three rounds on Classic Parkland,
+two on Mountain; medians; real graphics card; `bench/ab/sur-r7-*.json`,
+local; real models past the line capped at 300, High 250):
+
+| Tier, course | 0.9.14 | Branch | Triangles a frame | Course load |
+| --- | --- | --- | --- | --- |
+| Ultra, Classic Parkland | 5.09 ms | 5.43 ms (card: +2%, +6%, +2% at the three spots) | 42.9 M to 44.2 M | 21.3 s to 19.8 s |
+| High, Mountain | 6.65 ms | 6.75 ms | 68.4 M to 69.6 M | 17.8 s to 20.6 s |
+| Low, Classic Parkland | 1.53 ms | 1.53 ms (card time 0.87 to 0.92, 0.79 to 0.74, 0.73 to 0.60) | 7.5 M to 7.3 M | 18.8 s to 17.3 s |
+
+All of what the branch drew over 0.9.14 on Ultra and High was those 300
+(250) real models: 1.3 million triangles. So `nearMax` is 0 on every tier
+-- pictures from the line. Measured again with `nearMax` 0 and the meadows open (SURROUNDINGS, round
+9; medians): Low on the Redwood Coast 1.63 ms on 0.9.14 and 1.60 ms on the
+branch; Medium on Desert Mountain 2.32 ms both; High on Mountain 6.57 ms and
+6.63 ms; Ultra on Classic Parkland, card time at tee 1, tee 5 and 250 m up,
+4.56, 4.69 and 5.94 ms against 4.63, 4.78 and 5.90 ms. Triangles a frame
+level or fewer on every one. Course load within half a second either way on
+all four (Mountain's 2.8 s in the table above was noise: 14.9 s and 14.8 s
+over three runs each). The far trees alone, switched off and on in one page
+(`tools/frame-variants.mjs`): 2.1 to 3.1% of an Ultra frame drawn before
+everything else, about 1% drawn after everything solid and before the
+ground, which is how they are drawn; no two-build comparison has been run
+since that last change. No phone or software-renderer run.
+
+**A course's own surroundings** (surround-sides.js, landscape-edge.js
+`sidedRelief`), all PLACED: hills 160 m, a range 850 m, one mountain 900 m
+(2,200 m past the edge, 9,000 m long), mesas 240 m; `height` 0.3 to 2; relief
+fading in over 900 m; a sea bed 8 m under the water and a lake's 5 m, the
+shore starting 40 to 300 m out by a 500 m noise; a lake's water out to
+1,100 to 1,500 m, hills of 110 m beyond; five islets on a side of sea and islands; the
+sea 2.5 m under the lowest ground of the land when the file names none.
+
+What went wrong on the way is in SURROUNDINGS.md, rounds 2 to 4 and 8, and
+PROJECT_HANDOFF, *THE SURROUNDINGS ARE THE COURSE'S OWN TREES, AS PICTURES*.
