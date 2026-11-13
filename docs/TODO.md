@@ -123,15 +123,33 @@ wrong, unfinished, or owed a check.
   range is rounded and lower, no plant past the line stands on ground over
   40 degrees, Desert Mountain and the Desert Resort are bare above their
   lower slopes, and the far trees are lit by the scene's own sun instead of
-  a light baked into their pictures. **Seen in captures only, on three landscapes** (Hawaii, Desert Mountain, Mountain; and the far growth at six hours on Classic Parkland and Mountain). **Owed:** the other twelve landscapes photographed on this build; the six hours on the other thirteen (`light-*` views of tools/capture/overhaul.mjs); frame rate against 0.9.14 on every tier and the wait for a course (nothing about frame rate has been measured since round 10 began: the card has stood at 16 to 54% with the desktop alone, and the frame tools' 30% gate was not loosened); both smoke runs. **The owner's wide views** ("framerates when looking across a whole landscape are tending to tank. we need a fix for that") are NOT answered: earlier rounds measured the surroundings at about 1.5% of an Ultra frame and the course's own trees at nearly all of its 43 to 68 million triangles, so the fix is most likely there; tools/variants/wide-view.mjs and wide-count.js are ready to say, on the first quiet card.
+  a light baked into their pictures. **Seen in captures only**: all fifteen photographed with no errors,
+  and the far growth at six hours on all fifteen. **Measured once, on High
+  at Mountain**: 1.2%, 2.2% and 0.8% slower than 0.9.14 at two tees and from
+  above (rounds 10 and 11 themselves cost under 1%, inside the noise).
+  **Wrong and not found: a course takes about 1.1 s longer to load** than
+  before round 10 (11.7 s to 12.8 s on Mountain; not the processor's work).
+  Owed: that comparison with the round's shader additions off, and with the
+  normals picture not baked (SURROUNDINGS, *Round 11*). **Owed besides:**
+  frame rate against 0.9.14 on Low, Medium and Ultra; both smoke runs. (The
+  card stood at 16 to 54% with the desktop alone for most of 13 November;
+  the frame tools' and gpu-run's thirty-second gate was not loosened.)
+  **The owner's wide views** ("framerates when looking across a whole
+  landscape are tending to tank. we need a fix for that") **are NOT
+  fixed.** Measured on High at Mountain from 250 m up: the course's own
+  trees and plants are 60% of the frame, the far ground 10%, the far trees
+  0.4%. Two fixes, neither started: the course's own distant trees drawn as
+  pictures past some size on screen (touches the owner's rulings of 9
+  November: theirs to decide), and a lean shader path for the far ground
+  (the surroundings' own work; pictures must not change by a pixel).
   The Badlands and Prairie & Sand Hills got the finer ground only.
   **Mountain's forest floor (round 10 lightened it and took it off the
   rock) read dark
   and flat where the trees are thin** (ground.js, the floor tone under the
   far trees; SURROUNDINGS round 5). **High on Mountain is not shown to be level
-  with 0.9.14**: 0.04 to 0.09 ms (0.6 to 1.4%) slower at the two tees in the
-  last comparison, level from above, where one build's own runs differ by as
-  much; Ultra is faster, Medium level, Low 2% faster (SURROUNDINGS, round 9).
+  with 0.9.14** (the figures above; in round 9 it read 0.6 to 1.4% slower at
+  the two tees and level from above). Ultra was faster, Medium level and Low
+  2% faster in round 9 and have not been measured since.
   What is left to take out is the far trees' shading at a tee on a landscape
   whose slopes stand over the course's own trees (the haze worked out a
   pixel; it could be worked out a corner of each picture).

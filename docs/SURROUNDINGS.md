@@ -624,52 +624,111 @@ copied from the course's trees: their rim of sky (textures.js `rimLit`),
 an edge a few pixels wide; and no far tree casts or takes a shadow, as
 before.
 
-**What was seen (round 11), and what was not.** The card stood at 16 to 54%
-all afternoon with the desktop alone (Chrome Remote Desktop serving the
-owner's screen). The capture tool's gate, a five-second look under 30%, got
-through four times; the frame tools' gate, thirty seconds under 30%, never
-did, and it was not loosened (round 10's lesson).
+**The edge of a wood wanders** (surround.js `farWarp`, and the same wave
+in ground.js). Found in this round's own pictures, not in the owner's
+notes: from the course's north edge on seed `overhaul`, Hawaii's far wood
+ended in a ruled line straight up a hill. It was the edge of an open meadow
+(round 8): the meadows and the woods' patches are value noise on 900 m and
+380 m cells, and where a cell's two corners on one side are high and the two
+on the other low, the edge between runs dead straight along the cell -- 900
+m here, at x = 0, seen end-on. Both noises are now read at a point pushed
+up to 160 m sideways by a slow wave (wavelengths about 900 m and 1,050 m),
+on the page and on the card alike, so the trees still stand where the floor
+is painted. Every landscape's far woods and meadows keep their size and
+share and change their outline. Two sines a far-ground pixel.
 
-- Photographed, no errors (bench/shots/overhaul/sur-r11a, run 54): Hawaii,
-  Desert Mountain and Mountain from the first tee, past the line and from
-  above. The cells are gone on all three; Hawaii's range is round green
-  domes with woods on their flanks; Desert Mountain's rock is plain and its
-  scrub stops at the foot; Mountain's trees stand on its ledges and its
-  walls are bare grey, the tone drifting.
-- The far growth through the day (the capture tool's new `light-dawn`,
-  `-morning`, `-noon`, `-golden`, `-dusk`, `-night` views: one
-  camera at the course's edge, its own trees in front, the far ones
-  behind; sur-r11-light, run 55): Classic Parkland and Mountain. At golden
-  hour the far wood has a warm side and a shaded one as the course's trees
-  do; at dusk and at night it goes dark with them. Far off, wood and ground
-  alike are lighter than what is near, which is the haze.
+**What was seen and measured (round 11), and what was not.** The card stood
+at 16 to 54% most of the afternoon with the desktop alone (Chrome Remote
+Desktop serving the owner's screen). The capture tool's gate, a five-second
+look under 30%, got through each time within some minutes; the frame tools'
+gate, thirty seconds under 30%, did not, and was not loosened (round 10's
+lesson). From about 15:03 to 15:27 the card was quiet (9 to 13%) and four
+frame runs went through; a fifth ran into the card going busy again and is
+thrown away.
+
+- **All fifteen photographed, no errors** (bench/shots/overhaul/sur-r11 and
+  sur-r11a, runs 54 and 58 to 63; first tee, past the line, from above, the
+  whole course). The cells are gone wherever rock shows; Hawaii's range is
+  round green domes with woods on their flanks; Desert Mountain's rock is
+  plain and its scrub stops at the foot; the Desert Resort's range is soft
+  bedded stone with scrub low down; Mountain's trees stand on its ledges
+  and its walls are bare grey, the tone drifting; the woods' edges curve.
+  The other eleven look as they did but for those edges.
+- **The far growth through the day, on all fifteen** (the capture tool's
+  new `light-dawn`, `-morning`, `-noon`, `-golden`, `-dusk`, `-night`
+  views: one camera at the course's north edge, its own trees in front, the
+  far ones behind). At golden hour a far wood has a warm side and a shaded
+  one as the course's trees do; at dusk and at night it goes dark with
+  them; far off, wood and ground alike are lighter than what is near, which
+  is the haze. Nothing was found lit apart from the rest. (Mountain's north
+  edge faces its own crags, so little far growth shows in its six.)
 - That, in numbers (run 57; Classic Parkland from its east edge; mean
   colour of a box of the finished picture, 0 to 255): at night the far wood
   36, 44, 49 and the far open hill 25, 33, 31, against the course's own
   trees 3, 6, 4 and its grass 5, 21, 7; at noon 110, 139, 129 and 122, 154,
   106 against 65, 113, 46 and 90, 133, 39. With every far tree's normal
-  forced straight up again (as it was before the round) the far wood read
-  37, 46, 50 at night and 116, 145, 131 at noon: as a whole about as bright
-  either way. What the round changed is each tree having a lit side and a
-  shaded one that follow the sun.
-- **Not seen:** the other twelve landscapes on this round's build (the
-  rock's paint and the steepness rule reach all of them); the six hours on
-  the other thirteen (the first try at Hawaii looked east, at the sea; the
-  camera now looks north); either smoke run.
-- **Not measured: anything about frame rate.** By count the rock's paint is
-  cheaper than round 10's (twelve hashes a pixel at most for eighteen) and
-  a far tree's pixel reads one more texture; Mountain has 39% fewer far
-  trees, the Desert Resort 45% and Desert Mountain 30% fewer, Hawaii 28%
-  more (more of its rounded land can hold them). Counts are not frame
-  times.
-- **The owner's wide views.** "framerates when looking across a whole
-  landscape are tending to tank. we need a fix for that" is not answered by
-  this round. What earlier rounds measured (rounds 6 and 9): the far trees
-  about 1% of an Ultra frame, the far ground half a percent, and a frame of
-  43 to 68 million triangles, nearly all of them the course's own trees
-  drawn as whole models. So the fix is most likely the course's own distant
-  trees, not the surroundings. Two tools are ready for the first quiet
-  card: tools/variants/wide-view.mjs (what each part of a wide view costs,
-  for tools/frame-variants.mjs) and tools/variants/wide-count.js (the same
-  by triangle count, a few frames only, for the capture tool's `--eval`).
-  Nothing is proposed until one of them has run.
+  forced straight up again (as before the round) the far wood read 37, 46,
+  50 at night and 116, 145, 131 at noon: as a whole about as bright either
+  way. What the round changed is each tree having a lit side and a shaded
+  one that follow the sun.
+- **Frame rate, High on Mountain** (tools/frame-ab.mjs, three rounds, the
+  card at 13% at the gate; card time at tee 1, tee 5 and 250 m up). Against
+  0.9.14 (`bench/ab/sur-r11-mountains-high.json`): 6.27, 2.42 and 7.09 ms
+  to 6.34, 2.47 and 7.15 ms -- **1.2%, 2.2% and 0.8% slower**, 0.05 to 0.07
+  ms, with 10 to 13 more draws and the same triangles. Against the branch
+  before round 10 (`sur-r11-vs-pre-crags-high.json`): 6.21 and 7.10 ms to
+  6.26 and 7.15 ms at tee 1 and from above, 0.9% and 0.6%, inside what one
+  build's own runs differ by (6.17 to 6.26). So rounds 10 and 11 cost a
+  frame nothing that shows, and High on Mountain is where round 9 left it:
+  about 1% behind 0.9.14 and not shown level.
+- **The wait for a course is about 1.1 s longer, and that is not found.**
+  Course load on that same course: 11.23 s on 0.9.14, 11.74 s on the branch
+  before round 10, 12.43 to 12.94 s now (medians of three; each build's own
+  runs within 0.4 s). Start to the main menu 13.35 s to 14.4 to 15.0 s.
+  Not the processor's work (timed in Node: the ring 0.10 s, placing the far
+  plants 0.15 to 0.28 s); a load profile shows 6.2 s of the 17 s as the
+  browser's own work and 4.5 s idle, which is the card compiling and
+  drawing. Tried: working the far rock's paint out once a pixel instead of
+  inside a function the shader includes twice (kept: the shader is smaller)
+  -- the load did not move (12.94 s). A build with this round's shader
+  additions switched off was being compared when the card went busy; its
+  numbers swung from 11.5 to 17.6 s and say nothing. **Owed: find it** --
+  that comparison again, then one with the second (normals) picture not
+  baked.
+- **Where a wide view's time goes** (tools/frame-variants.mjs with
+  tools/variants/wide-view.mjs, run 65; High on Mountain; each part hidden
+  between unchanged frames):
+
+  | Hidden | 250 m up | Tee 1 |
+  | --- | --- | --- |
+  | The course's own trees and plants | 7.26 to 2.92 ms, **-60%** (72.4 M triangles to 7.2 M) | 6.27 to 2.38 ms, -62% |
+  | The far ground | 7.24 to 6.51 ms, **-10%** | 6.31 to 5.98 ms, -5% |
+  | The far trees | 7.15 to 7.12 ms, -0.4% | -0.5% |
+  | Shadow maps not redrawn | +0.8% (nothing) | +0.8% |
+  | Bloom | +0.5% (nothing) | 0 |
+  | Half the pixels each way | 7.08 to 5.32 ms, -25% | -22% |
+
+  And by count on Ultra (tools/variants/wide-count.js, run 60; nine holes,
+  seed `overhaul`, from 250 m up; a reading moves by about 2 M as the tree
+  cull settles): Hawaiian Resort 20.6 M triangles a frame, 14.8 M of them
+  (72%) the course's own planting; Mountain 40.0 M, 35.8 M (90%); Classic
+  Parkland 20.5 M, 16.6 M (81%); the far ground 0.06 to 0.10 M and the far
+  trees two triangles a site (0.04 to 0.24 M).
+- **So, of the owner's "framerates when looking across a whole landscape
+  are tending to tank. we need a fix for that": not fixed, and two things
+  would fix it.** (1) *The course's own distant trees*, three fifths of the
+  frame: the frame-rate goal's far versions (instance-cull.js, 9 November
+  2026) taken a step further -- past some size on screen, a tree drawn as
+  its picture, two triangles, lit as this round lights the far ones. That
+  touches the owner's rulings of 9 November (every tree drawn on Medium and
+  up; a far version keeps its model's outline) and what a shadow map draws,
+  so it is put to the owner, not built here. (2) *The far ground's
+  shading*, a tenth of a wide frame on Mountain (it was as much on 0.9.14:
+  the same shader on the same pixels): every pixel past the course's edge
+  runs the whole of the course's ground shader -- the holes' tables, the
+  greens, the tees, the water's edge -- to throw the answer away. A lean
+  path for those pixels is the surroundings' own work and needs no ruling;
+  it is checked by pictures that must not change by a pixel, then measured.
+  Not started.
+- **Not run:** either smoke (they go through tools/gpu-run.mjs, whose gate
+  is the thirty-second one); the frame comparison on Low, Medium and Ultra.

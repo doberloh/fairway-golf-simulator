@@ -100,6 +100,15 @@ function broad(x, z, cell = 380) {
  const a = n00 + (n10 - n00) * fx, b = n01 + (n11 - n01) * fx;
  return a + (b - a) * fz;
 }
+// THE EDGE OF A WOOD WANDERS (round 11, 13 November 2026). Both noises are
+// read at a point pushed up to 160 m sideways by a slow wave (ground.js: the
+// same two numbers, `farWarp`). Without it the edge of a wood or a meadow
+// ran dead straight wherever a cell's two corners on one side were high and
+// the two on the other low -- on seed `overhaul` Hawaii's far wood ended in a
+// ruled line straight up a hill for 900 m, north of the first hole, seen
+// end-on from the course. A wave, not a hash: the card and the page agree on
+// a sine to well under a metre. PLACED.
+export const farWarp = (x, z) => [x + 160 * Math.sin(z / 143 + 1.3), z + 160 * Math.sin(x / 167 + 2.6)];
 // `own`: the course's own choice of cover (a built course's `surround.cover`),
 // over the landscape's.
 // A cover of nothing is no trees at all: the patches' soft edge would leave
@@ -111,9 +120,10 @@ export function coverField(bio, seed, own) {
  if (!f) return null;
  const sClump = saltOf(seed, 'surround-clump'), cover = noneAt(own ?? f.cover ?? 0), open = f.scrub ? 0 : f.open ?? FAR_OPEN;
  return (x, z) => {
-  let c = smooth(1 - cover - .12, 1 - cover + .12, broad(x, z));
+  const [wx, wz] = farWarp(x, z);
+  let c = smooth(1 - cover - .12, 1 - cover + .12, broad(wx, wz));
   // Open country among the woods (ground.js FAR_OPEN: the same 900 m noise).
-  if (open > 0) c *= smooth(open - .06, open + .06, broad(x + 31.7 * 900, z + 31.7 * 900, 900));
+  if (open > 0) c *= smooth(open - .06, open + .06, broad(wx + 31.7 * 900, wz + 31.7 * 900, 900));
   if (f.scrub) c *= .25 + .75 * smooth(.42, .6, fbm(x / 140, z / 140, sClump, 2));
   return c;
  };

@@ -15129,6 +15129,49 @@ before to after: Mountain 33.7% (of 38,240) to 5.1% (of 23,436), steepest
 18 holes, six ways against three: Mountain 149 to 165 ms, Pacific Northwest
 244 to 340 ms, Classic Parkland 204 to 283 ms.
 
+**The wandering edge** (surround.js `farWarp`; ground.js, the far
+forest's mask). The patch and meadow noises are read at x + 160 sin(z /
+143 + 1.3), z + 160 sin(x / 167 + 2.6): a push of up to 160 m, wavelengths
+898 m and 1,049 m (2 pi times 143 and 167), unequal so the two never fall
+into step. Measured on seed `overhaul`, Hawaii, far sites in 100 m columns
+of x across the old ruled edge, 100 to 900 m north of the line: 264, 166,
+5, 0 (x = -200 to +100) before; 176, 116, 62, 24 after.
+
+**What a wide view draws** (tools/variants/wide-count.js through the
+capture tool, run 60, 13 November 2026; Ultra, nine holes, seed `overhaul`,
+250 m over the first tee looking down the course, 1,600 by 900; triangles
+and draws of one whole frame from the renderer's own counters, every pass).
+Hawaiian Resort 20.55 M triangles and 275 draws, of which the course's own
+planting (every instanced tree and plant, its far versions and shadow twins)
+14.76 M and 169 draws; Mountain 39.95 M and 254, planting 35.79 M and 159;
+Classic Parkland 20.54 M and 346, planting 16.57 M and 248. The far ground
+0.06 to 0.10 M. Far tree sites 56,137, 17,983 and 118,173, two triangles
+each. Readings a few seconds apart differ by about 2 M as the cull
+settles (hiding the far trees read +2.09 M, +2.17 M and -2.21 M), so
+nothing smaller than that is to be read from a difference. Not times: no
+frame time was measured (the card).
+
+**Measured, 13 November 2026, 15:03 to 15:27, the card quiet** (High,
+Mountain, seed PROFILE, 1,600 by 900 at density 2; tools/frame-ab.mjs, three
+rounds, the builds taking turns; card time). Against 0.9.14: tee 1 6.27 to
+6.34 ms, tee 5 2.42 to 2.47 ms, 250 m up 7.09 to 7.15 ms; draws 424 to 435,
+309 to 322, 388 to 398; triangles 69.2 M, 21.5 M and 72.5 M on both; course
+load 11.23 s to 12.43 s; start to the main menu 13.35 s to 15.02 s; heaviest
+frames p99 12.1 to 12.5 ms. Against the branch before round 10
+(bench/ab/sur-pre-crags.html): tee 1 6.21 to 6.26 ms, 250 m up 7.10 to 7.15
+ms, draws and triangles equal, course load 11.74 s to 12.82 s. With the far
+rock's paint worked out once a pixel: tee 1 6.32 to 6.15 ms against that
+same earlier build in that run (read as noise: the earlier build read 6.21
+five minutes before), course load 11.61 s to 12.94 s. What each part of a
+wide frame costs (tools/frame-variants.mjs, tools/variants/wide-view.mjs,
+120 frames, each variant between two unchanged measurements): from 250 m up,
+the course's planting 7.26 to 2.92 ms and 398 to 201 draws, the far ground
+7.24 to 6.51 ms, the far trees 7.15 to 7.12 ms, pixel ratio 1 for 2 7.08 to
+5.32 ms; from tee 1, 6.27 to 2.38 ms, 6.31 to 5.98 ms, 6.30 to 6.27 ms and
+6.32 to 4.95 ms. A course's load on that (unminified) build: 17.0 s, of which
+6.15 s the browser's own work and 4.51 s idle; no function of the game over
+0.5 s.
+
 **Bare heights** (biomes.js `farLine`). Desert Mountain 250 m over the
 course: the massif's talus apron is .22 of its rise, about 160 to 200 m of
 720 to 900. Desert Resort 320 m of a range that tops out at 811 m. A site

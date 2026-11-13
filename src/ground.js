@@ -567,6 +567,12 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   if(cragGreen.a>0.){float g=cragGreen.a*smoothstep(.1,.46,n.y+(m-.5)*.3);c=mix(c,cragGreen.rgb*(.84+.3*smoothstep(.3,.8,n.y))*(.5+.5*tone),g);}
   return c;
  }
+ // WORKED OUT ONCE A PIXEL, BEFORE THE LAYERS ARE PAINTED (round 11). The
+ // card's compiler writes a function out in full wherever it is called, and
+ // paintLayer is called twice a pixel; called from inside it, the far face
+ // was in the shader twice though only the upper layer is ever a far face.
+ // The shader's size is paid for when a course loads.
+ vec3 cragPaint;
  // One layer of painted ground over c: layer i of the wild ground's four, or
  // the far ring's floor (0) and face (1), which also settle to a flat colour
  // where their pattern is under a pixel (ringGrain, -1 off the ring).
@@ -577,7 +583,7 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   float bedScale=faceLayer&&strataOn>.5?.25:1.;bedFine=beds*bedScale;
   vec3 under=ring?c:turf;
   // A far rock face has marks of its own (cragFace); banded clay keeps its beds.
-  if(faceLayer&&code<1.5&&strataOn<.5)return mix(c,mix(cragFace(gn,ringGrain),under,smoothstep(.62,.9,gn.y)*.3),share);
+  if(faceLayer&&code<1.5&&strataOn<.5)return mix(c,mix(cragPaint,under,smoothstep(.62,.9,gn.y)*.3),share);
   vec3 paint=groundPaint(code,wp,groundPoint.y*bedScale,gn,under);
   if(ring){
    // A ground type's average colour, for where its pattern is under a pixel.
@@ -1005,6 +1011,7 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   int top=paintShare.w>0.?3:paintShare.z>0.?2:paintShare.y>0.?1:0;
   int low=top>2&&paintShare.z>0.?2:top>1&&paintShare.y>0.?1:top>0&&paintShare.x>0.?0:-1;
   vec3 c=turf;
+  if(ringGrain>=0.&&top==1&&paintCode.y<1.5&&strataOn<.5)cragPaint=cragFace(gn,ringGrain);
   if(low>=0&&paintShare[top]<1.)c=paintLayer(c,turf,low,paintCode[low],paintShare[low],ringGrain,beds,wp,gn);
   turf=paintLayer(c,turf,top,paintCode[top],paintShare[top],ringGrain,beds,wp,gn);
  }
@@ -1528,12 +1535,14 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   // between them.
   vec2 qd=abs(wp)-farProp;float outside=length(max(qd,0.));
   if(outside>0.){
-   float patchN=coverHash(floor(wp/380.));
-   vec2 pf=fract(wp/380.);pf=pf*pf*(3.-2.*pf);
-   float n00=patchN,n10=coverHash(floor(wp/380.)+vec2(1.,0.));
-   float n01=coverHash(floor(wp/380.)+vec2(0.,1.)),n11=coverHash(floor(wp/380.)+vec2(1.,1.));
+   // (The edge of a wood wanders: surround.js farWarp, the same numbers.)
+   vec2 ww=wp+160.*sin(wp.yx/vec2(143.,167.)+vec2(1.3,2.6)),wc=floor(ww/380.);
+   float patchN=coverHash(wc);
+   vec2 pf=fract(ww/380.);pf=pf*pf*(3.-2.*pf);
+   float n00=patchN,n10=coverHash(wc+vec2(1.,0.));
+   float n01=coverHash(wc+vec2(0.,1.)),n11=coverHash(wc+vec2(1.,1.));
    float broad=mix(mix(n00,n10,pf.x),mix(n01,n11,pf.x),pf.y);
-   vec2 oq=wp/900.+31.7,oi=floor(oq),ofr=fract(oq);ofr=ofr*ofr*(3.-2.*ofr);
+   vec2 oq=ww/900.+31.7,oi=floor(oq),ofr=fract(oq);ofr=ofr*ofr*(3.-2.*ofr);
    float openN=mix(mix(coverHash(oi),coverHash(oi+vec2(1.,0.)),ofr.x),mix(coverHash(oi+vec2(0.,1.)),coverHash(oi+vec2(1.,1.)),ofr.x),ofr.y);
    float mask=smoothstep(0.,40.,outside)*smoothstep(farOpen-.06,farOpen+.06,openN)*smoothstep(1.-farCover-.12,1.-farCover+.12,broad)*(1.-smoothstep(farLine-60.,farLine+40.,groundPoint.y-heightBase));
    // No forest on a cliff: the pattern is laid from above and stretches into
@@ -1595,5 +1604,5 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  // The ring's baked hollows and ribs (landscape-edge.js; nothing inside the course's ground).
  diffuseColor.rgb=turf*(1.+clamp(vFarShade,-1.,1.)*.2);
  `);
- };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v83';return m;
+ };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v85';return m;
 }

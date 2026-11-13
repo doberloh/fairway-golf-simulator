@@ -391,7 +391,8 @@ order:
    4 km, Ultra 5 km) and never more than the tier's cap (200,000 on Ultra).
    They stand where the landscape's far forest record says woods grow:
    patches by a 380 m noise, about a quarter of the wooded country left open
-   as meadows by a 900 m one (`FAR_OPEN`), never in water, on ground over
+   as meadows by a 900 m one (`FAR_OPEN`), both read through a slow wave of
+   up to 160 m so no edge runs straight (`farWarp`), never in water, on ground over
    40 degrees (`FAR_STEEP`, the steepest of six ways round the site) or
    above the treeline (the far forest's `line`, or the landscape's own
    `farLine`: Desert Mountain is bare from 250 m over the course, the

@@ -93,3 +93,33 @@ test('no landscape asks the far rock for the cells it was broken into', () => {
   if (face) for (const k of Object.keys(face)) assert.ok(known.has(k), `${key}: farFace.${k} is not a setting the paint reads`);
  }
 });
+
+test('the edge of a far wood wanders, by the same wave on the page and on the card', async () => {
+ const {farWarp, coverField} = await import('../src/surround.js');
+ const fs = await import('node:fs');
+ // Up to 160 m either way, and not the same push everywhere.
+ let least = Infinity, most = -Infinity;
+ for (let k = 0; k < 400; k++) {
+  const x = (k * 37.7) % 4000 - 2000, z = (k * 91.3) % 4000 - 2000, [wx, wz] = farWarp(x, z);
+  assert.ok(Math.abs(wx - x) <= 160 && Math.abs(wz - z) <= 160, 'never more than 160 m');
+  least = Math.min(least, wx - x); most = Math.max(most, wx - x);
+ }
+ assert.ok(most - least > 250, `the push varies (${least.toFixed(0)} to ${most.toFixed(0)} m)`);
+ // The ground's paint reads the same wave: the numbers appear in its shader as written here.
+ const shader = fs.readFileSync(new URL('../src/ground.js', import.meta.url), 'utf8');
+ assert.ok(shader.includes('wp+160.*sin(wp.yx/vec2(143.,167.)+vec2(1.3,2.6))'), 'ground.js warps by the same wave');
+ assert.deepEqual(farWarp(100, 200).map(n => +n.toFixed(6)), [100 + 160 * Math.sin(200 / 143 + 1.3), 200 + 160 * Math.sin(100 / 167 + 2.6)].map(n => +n.toFixed(6)));
+ // And no meadow edge is a ruled line: along a line of constant x through
+ // wooded country, the cover does not flip at the same x for 900 m of z.
+ // (Before: on seed `overhaul` Hawaii's wood ended at x = 0 for a whole cell.)
+ const w = worldOf('hiresort'), cover = coverField(biomeOf('hiresort'), w.seed);
+ let ruled = 0, edges = 0;
+ for (let x = -3000; x <= 3000; x += 50) {
+  let flips = 0, rows = 0;
+  for (let z = -3000; z <= -2100; z += 100) { rows++; if ((cover(x - 60, z) > .5) !== (cover(x + 60, z) > .5)) flips++; }
+  if (flips) edges++;
+  if (flips === rows) ruled++;
+ }
+ assert.ok(edges > 5, 'there are edges to look at');
+ assert.equal(ruled, 0, 'no edge holds one x for 900 m');
+});
