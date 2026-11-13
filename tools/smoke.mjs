@@ -2971,11 +2971,14 @@ const JOURNEYS = [
     await chalClick(t, '[data-challenge="par3s"]');
     await challengeGo(t);
     await t.inPlay(180 * SLOW);
-    await t.until(() => bar(/Ball 1 of 7/), 'the bar on ball 1 of 7', 20 * SLOW);
+    // One ball for each par 3 on the Challenge Course: three since 0.9.14
+    // (seed CHALLENGE-13 on the starting course), seven on the short course
+    // before it. The count is the course's, so only "more than one" is asked.
+    await t.until(() => bar(/Ball 1 of [2-9]/), 'the bar on ball 1 of the par 3s', 20 * SLOW);
     if (await t.page.textContent('#holePar') !== '3') throw new Error('not on a par 3');
     const first = await t.page.textContent('#holeNumber');
     await t.shot();
-    await t.until(() => bar(/Ball 2 of 7/), 'ball 2', 15 * SLOW);
+    await t.until(() => bar(/Ball 2 of [2-9]/), 'ball 2', 15 * SLOW);
     await t.until(async () => (await t.page.textContent('#holeNumber')) !== first, 'the next par 3', 15 * SLOW);
     if (await t.page.textContent('#holePar') !== '3') throw new Error('the second hole is not a par 3');
     if (await t.page.evaluate(() => localStorage.getItem('fairway-round-v1'))) throw new Error('the challenge wrote the round slot');

@@ -56,13 +56,16 @@ wrong, unfinished, or owed a check.
 
 ## Known wrong
 
-- [ ] **Two builder smoke journeys fail** (found 9 November 2026, on main at
-  21eecc1; not re-run since the builder-ux goal). `builder-door-2`: "the tree
-  height scale should grow the trees ... 0 -> 0", the journey reads no trees
-  to measure. `builder-door-2-worthington` (local only) expects the Heartland,
-  which is retired; the survey now suggests Classic Parkland. Update the
-  journeys, or look at the slider. (was: *Two builder smoke journeys fail on
-  main too*)
+- [ ] **A friend's challenge can throw as its round starts, now and then**
+  (12 November 2026, the 0.9.14 smoke run: `friend-challenge` failed once in
+  four runs and passed the other three). The journey's first swing found no
+  course under it -- the page's "Cannot read properties of undefined (reading
+  'toLocal')" -- and the game itself threw "Cannot read properties of null
+  (reading 'x')". The play screen is up, with the loading cover down, a
+  moment before the course exists; a key pressed in that moment reaches code
+  that expects one. Nothing in this path changed in 0.9.14. Find the gap
+  (main.js `startRivalRound`, `startRoundOn`) and hold input until the
+  course is there; then see whether the other ways into a round share it.
 - [ ] **A built tee's stripes can turn where two holes meet** (8 November
   2026; Worthington's 1st). The stripes follow the hole that owns the ground;
   a tee's own hole would need to be in the baked field. Small. (was: *A built
@@ -141,7 +144,7 @@ wrong, unfinished, or owed a check.
 Hardware, browsers and hands the development machine does not have. Nothing
 here is a claim of support until it is done.
 
-- [ ] **Play the current build by hand** (0.9.13, 12 November 2026). What has
+- [ ] **Play the current build by hand** (0.9.14, 12 November 2026). What has
   been built and seen only in captures, measurements or smoke runs, and still
   exists in the game. The archive has each item's full list.
   - **The rebuilt ball** (0.9.13; the owner played the branch on 12 November
@@ -152,6 +155,24 @@ here is a claim of support until it is done.
     "· wedges spin less" and the spin tile's lie tag, on a phone too; the
     seven pickers in Play's rules step on a phone; the range's Lab firmness
     slider and its three chips.
+  - **The starting course** (0.9.14; every smoke journey passed on it, the
+    game's 41 and the builder's 9, which proves it works and not how it
+    looks or plays). The Challenge Course, new in every hole: each
+    challenge's hole and spots making sense to a golfer -- *Every par 3* is
+    three balls now, where the short course had seven; *Over the water*
+    and the short side, where the tests' steady golfer scored nothing; the
+    tee challenges' fairway. The
+    course of the week: The week's page saying about 6,400 to 6,850 yards
+    and par 71 or 72 (week 46: 6,420 yards, par 71, one par 3 and seventeen
+    par 4s); the holes reading as ordinary par 4s from the tee; whether the
+    five holes that still bend make the tee look set off to one side (the
+    bends are as sharp as before, 45 degrees: that angle is what to look at
+    next); the lake, the 80% trees and the strongly shaped greens and
+    bunkers looking right in each landscape, and the frame rate with them.
+    Surprise me: a rolled nine with the same fairways, greens and trees.
+    The Course Builder: *Generate and modify* opening on the new figures,
+    and a course file opened there keeping its own (the builder guide has
+    no picture of that door's sliders, so none is owed).
   - **The gimme circle** (0.9.13; tested in Node only -- the 41 smoke
     journeys pass, and none of them chooses this mode): the
     circle drawn and easy to see at 3 ft and at 30 ft; the size field showing
@@ -260,7 +281,8 @@ here is a claim of support until it is done.
 - [ ] **What the rebuilt ball still owes** (merged and released as 0.9.13, 12
   November 2026; all 41 smoke journeys passed on the released build that
   afternoon, DONE.md, *Release 0.9.13*). **The website's sample shots** and
-  any clip made with the old ball. **A re-bake of `src/golfer-table.js`**, which was made with the old ball;
+  any clip made with the old ball; since 0.9.14 its course-of-the-week and
+  challenge screenshots also show the old short courses. **A re-bake of `src/golfer-table.js`**, which was made with the old ball;
   it moves generated markings, so it is a `GENERATOR_VERSION` bump and wants
   its own reason. (was: *The rebuilt ball: play it, then merge*)
 - [ ] **Clean up after the retired landscapes** (42 pared to 15, 6-8 November

@@ -7,7 +7,7 @@
 // growing again.
 import {show, setTitle, setBusy, topTools, home, ui, setSaver} from './builder.js';
 import {courseFile, fileName} from '../course-file.js';
-import {SETTINGS, CATEGORIES, DEFAULT_COURSE, validateSettings, bound} from '../settings-schema.js';
+import {SETTINGS, CATEGORIES, DEFAULT_COURSE, STARTING_COURSE, validateSettings, bound} from '../settings-schema.js';
 import {BIOMES} from '../biomes.js';
 import {landscapeMap} from '../ui-map.js';
 import {generateWorldSteps} from '../course.js';
@@ -67,7 +67,11 @@ function field(f, s, onChange) {
 
 export function open(start = null) {
  setTitle('Generate and modify');
- let s = validateSettings({...DEFAULT_COURSE, ...(start?.settings || {})});
+ // A new course opens on the starting course (settings-schema.js
+ // `STARTING_COURSE`, the owner's choices of 12 November 2026). A course file
+ // opened into this door is laid over the DEFAULTS, never over the starting
+ // course: a key a file does not state means the default it was saved under.
+ let s = start?.settings ? validateSettings({...DEFAULT_COURSE, ...start.settings}) : {...STARTING_COURSE};
  let world = null;
  const preview = el('div', {class: 'cb-row'}), facts = el('p', {class: 'cb-note', style: 'text-align:left'});
  const form = el('div');

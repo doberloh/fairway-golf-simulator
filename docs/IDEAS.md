@@ -27,6 +27,13 @@ open list before the 11 November 2026 prune*.
 
 ## Ways to play
 
+- **A steadier mix of pars on a generated course.** The mix is a weighted
+  draw (course-plan.js `planCourse`), and now and then it lands on one par 3,
+  sixteen par 4s and one par 5 -- 2 of 27 course-of-the-week seeds at par 72,
+  week 46 of 2026 among them. Narrow the draw to three to five of each, or
+  keep the odd course as variety. Small, but it moves ground on the seeds it
+  changes: a `GENERATOR_VERSION` bump. (Claude, 12 November 2026, found while
+  fixing the course of the week's length)
 - **The rest of the penalty rules**: an unplayable ball (Rule 19), a
   provisional (18.3), yellow penalty areas, and choosing the drop spot by hand.
   RESEARCH *Penalty relief* lists what was left out and why. Medium. (from

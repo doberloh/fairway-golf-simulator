@@ -7133,8 +7133,11 @@ challenges were the only farmable ones, which is why they moved onto medals.
 repeats capped").
 
 **Where they play** (the owner, 16 October 2026: one fixed course rather than
-any course). The Challenge Course is `DEFAULT_COURSE` with seed
-`CHALLENGE-1`, biome pnw, 18 holes, at generator 36. Checked on the day:
+any course). The Challenge Course was `DEFAULT_COURSE` with seed
+`CHALLENGE-1`, biome pnw, 18 holes, at generator 36 (**since 12 November
+2026 it is seed `CHALLENGE-13` on the starting course at 6,480 yards** --
+*The course of the week's length*, below -- so the holes named in this
+paragraph are the old course's). Checked on the day:
 `CHALLENGE-1` hosts all 21 course challenges; `CHALLENGE-2` (pnw) and
 `CHALLENGE-3` (links) have no hole with water to carry. On `CHALLENGE-1` the
 long hole is the 1st (par 5), the par 3 the 3rd, the long par 4 the 6th, the
@@ -7307,6 +7310,118 @@ shot counts, and a fairway bunker 150 yards out counts if the next shot holes);
 holes played over 18. Weeks are ISO weeks in the player's local time, so the
 course turns over at their midnight Sunday to Monday, not at one moment
 everywhere.
+
+### The course of the week's length (12 November 2026)
+
+No outside source; the range is the owner's choice. **What was measured.**
+The week's course asked for eighteen holes at `DEFAULT_COURSE.courseYards`,
+3,240 yards -- the default for nine. `planCourse` clamps a request to what the
+par mix can reach, so every hole came out at its minimum (`PAR_YARDS`: 300
+for a par 4, 120 for a par 3): weeks 41 to 46 of 2026 planned at 4,640 to
+4,680 yards, par 68; week 46 was fourteen 300-yard par 4s and four 120-yard
+par 3s, 4,182 yards from the white tees and 3,713 from the red.
+
+**What a length gives** (27 weekly seeds, week 40 of 2026 to week 13 of 2027, each
+planned with `planScorecard` at a fixed request from the blue tees; white-tee
+total as lowest / mean / highest, red-tee mean):
+
+| Blue request | Par | White tees | Red tees |
+|---|---|---|---|
+| 6,400 yd | 71 | 5,747 / 5,780 / 5,821 yd | 5,167 yd |
+| 6,480 yd | 71 | 5,820 / 5,854 / 5,896 yd | 5,236 yd |
+| 6,550 yd | 71 | 5,885 / 5,919 / 5,959 yd | 5,295 yd |
+| 6,560 yd | 72 | 5,902 / 5,928 / 5,970 yd | 5,300 yd |
+| 6,625 yd | 72 | 5,963 / 5,988 / 6,030 yd | 5,355 yd |
+| 6,850 yd | 72 | 6,168 / 6,196 / 6,233 yd | 5,546 yd |
+
+The white tees sit about 9% of a hole's length forward on par 4s and 5s
+(`holeLine`), so a white-tee total is about 0.904 of the blue. Par turns from
+71 to 72 at 6,560 yards (`planCourse`'s par formula). The owner first asked
+for 6,200 from the white tees (6,850 from the blue; solved week by week the
+request ranged 6,810 to 6,880), then chose **a range, 6,400 to 6,850 from the
+blue tees**, so the whites run about 5,750 to 6,230 and average near 5,990,
+and about one week in three is a par 71.
+
+**How it is drawn** (weekly.js `weeklyYards`): the first draw of the seeded
+stream `<week seed>:length`, to one of the 46 ten-yard steps, each as likely
+as the next. Over four years of weeks the draws fell 46 / 42 / 40 / 44 / 36
+across five equal bands, and the mean change from one week to the next was
+0.320 of the range (a third is what independent draws give). **The first
+week it applies is week 149** (Monday 9 November 2026), the week it was
+found in, on the owner's say; it was first placed at week 150 so that no
+best already saved stood against a longer course, and the owner chose to
+have the week's course fixed at once. No earlier week's course or best moves.
+
+**The starting course** (settings-schema.js `STARTING_CHOICES`; the owner's
+figures, 12 November 2026, no outside source). Used by the course of the
+week from week 149, by Surprise me and by the Course Builder's Generate
+door; the schema's defaults did not move.
+
+| Setting | Default | Starting course |
+|---|---|---|
+| Doglegs (share of par 4s and 5s that bend) | 65% | 30% |
+| Fairway width | 38 m | 42 m |
+| Semi-rough width | 6 m | 4 m |
+| Green shape | 30% | 70% |
+| Green size | 100% | 110% |
+| Raised greens | 25% | 5% |
+| Sunken greens | 10% | 5% |
+| False fronts | 20% | 5% |
+| Fairway bunkers | 35% | 20% |
+| Bunker shape | 30% | 90% |
+| Bunker gap | 2 m | 4 m |
+| Water in play | 35% | 15% |
+| Water depth | 0.5 to 2.5 m | 2 to 5 m |
+| Lakes | 0 | 1 |
+| Trees | 65% | 80% |
+| Trees close to greens | 40% | 50% |
+| Fairway feature | 20% | 5% |
+
+The owner wrote "change dogleg to 30%"; it was read as the share of holes
+that bend (the setting measured in per cent), not the bend's angle, which
+stays 45 degrees. Week 46 of 2026 on the starting course at its drawn
+length: 6,420 yards from the blue tees, 5,819 from the white, 5,235 from the
+red, par 71, five holes that bend where the short course had nine.
+**How Surprise me uses it** -- the eighteen settings above are held at the
+owner's figures and every other setting still rolls in its band (`VARY`);
+placed by Claude and confirmed by the owner the same day. **Endless does not
+use it**: the owner wants its holes "highly variable", so they keep rolling
+across the wide bands on the defaults.
+
+**The Challenge Course on the starting course** (the owner, the same day:
+it is fine to move its spots and records, there being no users yet). It had
+the week's mistake -- eighteen holes asked for at 3,240 yards, so 4,650
+yards and par 68. It now asks for the default's 360 yards a hole (6,480 for
+the eighteen, 3,240 for the Bogey-free nine, as that nine always had), so no
+new length was placed. **Its seed had to move.** With water at 15%,
+`CHALLENGE-1` has no fairway spot 100 to 170 yards out with water on the way
+to the green, so *Over the water* had no hole. Seeds `CHALLENGE-1` to
+`CHALLENGE-40` were each grown on the new settings and asked for a hole for
+every course challenge (the picks tests/challenge-spots.test.mjs makes): 38
+lacked the water carry and nothing else; **13 and 22 host everything**.
+The steady golfer of tests/challenge-virtual.test.mjs (250-yard driver) was
+then played through all 25 course challenges on both:
+
+| Seed | Pars (3s/4s/5s) | Medals | Scored nothing in |
+|---|---|---|---|
+| `CHALLENGE-22` | 4 / 11 / 3 | 17 of 25 | Fairway finder, the streak, the shape, the ace, sand, the putting ladder |
+| `CHALLENGE-13` | 3 / 13 / 2 | 20 of 25 | Over the water, the short side |
+
+On 22 the tee challenges' hole (the 2nd, 417 yards) has a fairway bunker
+257 yards out on the line, and every drive finished in it. **`CHALLENGE-13`
+was taken** (PLACED: the judgement that a course a 250-yard driver cannot
+hit the fairway on is the worse one, over 22's more ordinary pars). Over all
+31 medal challenges, range ones included, the steady golfer medals in 26 on
+it, against 23 on the old course. Its card: par 71, 6,480 yards from the
+blue tees, 5,876 from the white, 5,253 from the red.
+
+**What did not change with length.** A dogleg is an angle, so a fairway
+still swings 12 to 16% of its hole's length to the side of the line from tee
+to green: 35 to 47 yards on the 300-yard holes of week 46, 47 to 62 on the
+same seed's par 4s at 6,840 yards. The tees themselves sit within 3 m of the
+playing line at every length. And the mix of pars is the seed's draw, not the
+length's: week 46 draws one par 3, sixteen par 4s and one par 5 at par 72 (2
+of the 27 seeds did; most draw four, ten and four).
 
 ### Rewards: tracer styles and ball finishes (14 October 2026)
 
@@ -14113,7 +14228,7 @@ making the overall playing landscape larger for 9 and 18 hole courses help with 
 we need to pull back the mountain size a bit?" Puget Sound, Monterey, SoCal Canyons, Wine Country,
 Scottish Links, Oregon Dunes and Lake Dunes left (GENERATOR 94, SCHEMA 42; OLD_KEYS, the weekly's
 `retired`, the map); 28 landscapes. The Challenge Course moved from Puget Sound to the Pacific
-Northwest with its seed (`CHALLENGE-1`; tests/challenge-spots still finds every spot). Found on the
+Northwest with its seed (`CHALLENGE-1`; tests/challenge-spots still finds every spot; the seed moved to `CHALLENGE-13` on 12 November 2026, with the starting course). Found on the
 way: the Pacific Northwest and the California Coast laid no pine needles at all -- their `fallen`
 came from the region's trait and named pine, spruce and cedar, which they no longer plant -- so each
 now names its own conifers (GENERATOR 95). Highplains, Sand Hills, Badlands, Hawaiian Resort, Hill

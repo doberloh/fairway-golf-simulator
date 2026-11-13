@@ -25,6 +25,100 @@ kept whole: *The open list before the 11 November 2026 prune* and *The open
 list before the 16 October prune*, each with a table of what became of every
 entry.
 
+## The course of the week at full length, and the starting course (branch `weekly-course-length`, 12 November 2026)
+
+### Release 0.9.14 (12 November 2026)
+
+- **Released at the owner's word** ("run full tests on everything. Fix any
+  failures and adjust tests if needed for these new settings then merge this
+  back to Main create a new patch release and push to get up and to the live
+  site demo"): the course of the week at full length, the starting course in
+  its four places, and the new Challenge Course (DISTRIBUTION_REVIEW, the
+  addendum for v0.9.14). "Patch" was read as the next number after 0.9.13.
+- **Everything was run before the release this time**: the Node tests, the
+  fingerprints, the game's 41 smoke journeys in seven batches and the
+  builder's 9 in three, through `tools/gpu-run.mjs` with the card at 4 to 7%
+  and about 41 °C. Two things came of it. `challenge-more` expected "Ball 1
+  of 7" in *Every par 3* -- the short course's seven par 3s, written into
+  the journey -- and the new course has three; the game was right and the
+  journey now asks only for more than one. `friend-challenge` failed once
+  in four runs on a path this release does not touch (TODO, *Known wrong*).
+- **Two builder smoke journeys fail.** Closed 12 November 2026: not any
+  more. `builder-door-2` and `builder-door-2-worthington`, found failing on
+  9 November and not re-run since the builder-ux goal, both passed in this
+  run with no change made for them here. (was: same heading)
+
+- **The starting course: the owner's settings for a new course, in three
+  places.** The owner, 12 November 2026, went through the week's settings
+  group by group and set eighteen of them (RESEARCH, *The course of the
+  week's length*, has the table), "for course of the week and also ... the
+  default settings for surprise me and the course builder". Built:
+  settings-schema.js `STARTING_CHOICES` and `STARTING_COURSE`; the course of
+  the week uses them from week 149; Surprise me is `surpriseSettings`, the
+  old roll with those eighteen held; the Course Builder's Generate door
+  opens a new course on them; and the Challenge Course is grown on them
+  (below). Tested in tests/settings-schema.test.mjs and
+  tests/weekly.test.mjs; **not seen in the game or the builder** (TODO,
+  *Play the current build by hand*).
+- **Ruled out: changing the schema's defaults.** It looks like the obvious
+  way and the one-list rule seems to ask for it, but a default is also what
+  a missing key means: course codes and friends' challenges carry only
+  differences from the defaults, Endless rolls its holes on them, the
+  Challenge Course and the range are grown from them, and the fingerprints
+  are taken at them -- so old codes would decode to other courses, saved
+  Endless runs would get other ground, and a `GENERATOR_VERSION` bump would
+  start every week's bests again. The defaults stay; the choices are a list
+  of differences (PROJECT_HANDOFF, *The starting course is not the
+  defaults*).
+- **Ruled out: laying an opened course file over the starting course** in
+  the builder's door. A key a file does not state means the default it was
+  saved under.
+- **The starting course: three calls left.** DONE the same day, each
+  answered by the owner. *Surprise me holds the chosen settings and rolls the
+  rest*, and *the game's own course studio is not one of the places*: "Your
+  reads on my messages are good." Endless: "needs to stay highly variable,
+  so let's not apply any narrow defaults to that" -- it was never touched.
+  The range: "doesn't need to change". **The Challenge Course: "add these
+  defaults to that and we also don't have any users yet so it's OK to move
+  those things."** Built: challenges.js `challengeCourseSettings(holes)` is
+  the starting course at the default's 360 yards a hole (6,480 for the
+  eighteen where it had asked for 3,240 and come out at 4,650, par 68; the
+  Bogey-free nine keeps its 3,240). **Its seed moved to `CHALLENGE-13`**:
+  at 15% water `CHALLENGE-1` has no water to carry, and of forty seeds only
+  13 and 22 host every challenge. 22 has the more ordinary pars and was
+  turned down: a fairway bunker sits 257 yards out on the line of the hole
+  its tee challenges use, and the tests' steady golfer drove into it every
+  time (RESEARCH, *The course of the week's length*, has the table). On 13
+  that golfer medals in 26 of the 31 medal challenges, against 23 on the old
+  course. Every spot moved; medals and bests are kept. Not seen in the game
+  until the smoke run.
+- **The course of the week was a short course every week, and is a
+  full-length eighteen from Monday 9 November 2026** -- the week it was
+  found in, on the owner's say ("Make it for this week too"); the first
+  build started it a week later, below. The owner, 12 November
+  2026: it "got generated very SHORT and was really hard to play with tee
+  boxes offset from center drastically", and suspected the settings were
+  being randomised. They were not: only the seed and the landscape change. The
+  week's course asked for eighteen holes and kept the default length for
+  nine, 3,240 yards, so the planner shrank every hole to its shortest -- par
+  68, about 4,680 yards, every week since 14 October. Built: weekly.js
+  `weeklyYards` draws the length from the week's seed, **6,400 to 6,850 yards
+  from the blue tees** (the owner's range, after first asking for 6,200 from
+  the white tees), from week 149; earlier weeks are untouched. No version
+  number moved: the generator grows the same course from the same settings,
+  and no setting changed shape. Tested in tests/weekly.test.mjs; **not seen
+  in the game** (TODO, *Play the current build by hand*).
+- **Overruled by the owner: leaving this week's course alone.** It was first
+  built to start on week 150, because a best already saved for the week
+  sits against a longer course and cannot be beaten -- the mistake
+  `WEEKLY_ROTATION`'s debut weeks exist to avoid. The owner chose to have
+  the week's course fixed at once; week 149's earlier bests are the cost.
+- **Ruled out: leaving the length out so the generator's own 6,480 applies.**
+  `validateSettings` fills the default in first, so the fallback never runs.
+- **Not fixed by this:** the doglegs bend as sharply as
+  before in proportion to the hole (RESEARCH, *The course of the week's
+  length*).
+
 ## The ball rebuilt (branch `ball-physics-rework`, 10-12 November 2026)
 
 - **The rebuilt ball: play it, then merge.** DONE: played by the owner on 12

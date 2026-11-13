@@ -57,7 +57,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 ## Where things live
 
 **Making a world**
-- `src/settings-schema.js` -- every generation setting: default, bounds, help text; `GENERATOR_VERSION`, `SCHEMA_VERSION`, migrations
+- `src/settings-schema.js` -- every generation setting: default, bounds, help text; `STARTING_CHOICES` / `STARTING_COURSE` (the owner's starting course) and `surpriseSettings`; `GENERATOR_VERSION`, `SCHEMA_VERSION`, migrations
 - `src/course.js` -- biomes applied, seeded hole geometry, landforms, surface queries (`surface()`), ecology; `generateWorld`
 - `src/course-plan.js` -- yardage, par bounds, tee distances, the green contour; owns each hole's skeleton (`holeLine`) and the one seeded RNG
 - `src/tees.js` -- the six tee sets (black to red), the nearest a course has (`teeFor`, `teeOn`), a built course's sets (`courseSets`), OpenStreetMap's tee tags (`setsFromTag`); pure
@@ -297,7 +297,8 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - A meter skin is colours only, set as custom properties; tests hold every skin's zone, band and target apart for colour-blind players. [Frames, meter skins and flourishes]
 - A practice challenge never calls `round.takeShot` and saves nothing; every path that replaces `round` clears `challenge`; hole challenges play on one fixed Challenge Course, which a test proves hosts them all -- move its seed on, never loosen the test; a challenge is set up only through `planChallenge`/`playContext`. [A practice challenge is not a round]
 - Rounds with a goal are real rounds (`round.goal`); the goal never changes play, and a sudden-death run is never finished. [Rounds with a goal are real rounds]
-- The course of the week is the date plus `DEFAULT_COURSE`, `WEEKLY_ROTATION` and the generator; changing any changes it on every copy, and a new landscape joins on a debut week, never by being appended. [The course of the week is the date]
+- The course of the week is the date plus `DEFAULT_COURSE`, `STARTING_CHOICES` (the owner's starting course, settings-schema.js), `WEEKLY_ROTATION`, `WEEKLY_COURSE` (its length, drawn from the week's seed; both from week 149) and the generator; changing any changes it on every copy, and a new landscape or a new course joins on a week of its own, never by being appended.
+- A new course starts as `STARTING_COURSE`, not `DEFAULT_COURSE`, in four places only (the course of the week, Surprise me, the builder's Generate door, the Challenge Course); the defaults never move, because a missing key in a code, an Endless hole, the range and the fingerprints all mean the default, and Endless stays wide on purpose. [The starting course is not the defaults] [The course of the week is the date]
 - The challenge of the week is the date plus `WEEKLY_POOLS`; a pool row is never edited once shipped -- a new pool starts at a future week. [The challenge of the week is the date]
 - A friend's challenge plays only on the same version (package.json plus commit) and re-flies its shots: `gridShot` stays before `simulateShot`, and anything new `simulateShot` reads must travel in the code. [A friend's challenge is the version]
 - A tracer style or ball finish is uniforms and buffers, never a new program: every tracer line is one dashed, vertex-coloured material, the ball always has a texture, and tracer colours go in linear. [A LOOK IS NEVER A NEW SHADER]

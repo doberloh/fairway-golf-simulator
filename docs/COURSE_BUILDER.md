@@ -1002,7 +1002,11 @@ the builder has been played by a person (TODO lists what to check).
 - **Door 1** (`src/builder/door-generate.js`): the game's own settings
   schema as a form (every setting, by category), *Grow this course* in
   slices so the page keeps painting, a
-  picture from above, *Take it over* (freeze.js) into the editor.
+  picture from above, *Take it over* (freeze.js) into the editor. (Since 12
+  November 2026 a new course opens on `STARTING_COURSE`, the owner's
+  starting course, and a seeded file opened into the door is laid over
+  `DEFAULT_COURSE` as before; PROJECT_HANDOFF, *The starting course is not
+  the defaults*.)
 - **The editor** (`editor.js`, `view.js`, `editing.js`, `checks.js`): a
   working 3D view (the land as plain meshes, every stored sample to about
   1 km a side and coarser past it to stay under 2.2 million vertices, PLACED;

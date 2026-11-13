@@ -841,6 +841,57 @@ export function validateSettings(input={}){
  return s;
 }
 
+// THE STARTING COURSE: what a NEW course is, where the game or the builder
+// makes one up (the owner, 12 November 2026, who set every figure below).
+//
+// `DEFAULT_COURSE` means two things, and only one of them can move. It is what
+// a new course starts as -- and it is also what a MISSING KEY MEANS: a course
+// code carries only its differences from it (`settingsDiff`), an Endless hole
+// is rolled on top of it, the fixed Challenge Course and the range are grown
+// from it, and every landscape's fingerprint is taken at it. Changing a `def`
+// to change the first would change all of the second: old codes would decode
+// to other courses, a saved Endless run would get other ground, every
+// challenge's spots would move, and `GENERATOR_VERSION` would owe a bump that
+// starts every week's bests again. So the defaults stay, and the owner's
+// choices sit here as a short list of differences from them.
+//
+// WHO USES IT, AND NOBODY ELSE WITHOUT THE OWNER SAYING SO: the course of the
+// week (weekly.js, from week 149), Surprise me (`surpriseSettings`), the
+// Course Builder's Generate door when nothing is opened into it
+// (builder/door-generate.js) and the Challenge Course (challenges.js). NOT
+// Endless -- the owner: it "needs to stay highly variable", so its holes keep
+// rolling across the wide bands on the bare defaults -- and not the range or
+// the game's own course studio.
+//
+// CHANGING A FIGURE HERE CHANGES THE COURSE OF THE WEEK ON EVERY COPY, this
+// week's included, under bests already saved, AND THE CHALLENGE COURSE under
+// every medal -- and may leave the Challenge Course without a hole for a
+// challenge, which tests/challenge-spots.test.mjs catches. Treat this list
+// as part of both (PROJECT_HANDOFF, *The course of the week is the date*).
+//
+// Not a second list of defaults to keep in step: only the keys that differ,
+// each checked against the schema's own bounds (tests/settings-schema.test.mjs).
+export const STARTING_CHOICES=Object.freeze({
+ doglegs:30,
+ width:42,semiRough:4,greenShape:70,greenScale:110,raisedGreens:5,sunkenGreens:5,falseFronts:5,
+ fairwayBunkers:20,bunkerShape:90,bunkerGap:4,
+ water:15,waterMin:2,waterMax:5,lakes:1,
+ trees:80,greenTrees:50,fairwayFeature:5,
+});
+export const STARTING_COURSE=Object.freeze(validateSettings({...DEFAULT_COURSE,...STARTING_CHOICES}));
+// SURPRISE ME: a rolled nine on the starting course. PLACED by Claude (12
+// November 2026; the owner said "make them the default settings for surprise
+// me" and not how a default sits with a roll): every setting the owner chose
+// is HELD at their figure, and everything they did not name still rolls --
+// the seed, the landscape, the length, the land, the bends' angle and place,
+// the greens' difficulty, how many bunkers, ponds, rivers and creeks, the
+// houses and the wind. Rolling the chosen ones across their old bands would
+// have put water back to 70% and raised greens to 50% on a course whose owner
+// had just set them to 15 and 5. The roll itself is `randomSettings`,
+// untouched, because Endless rolls its holes with it and a saved run must
+// grow the holes it always did.
+export const surpriseSettings=(rng=Math.random)=>randomSettings(rng,STARTING_CHOICES);
+
 // Each entry upgrades a settings object from that version to the next one.
 const MIGRATIONS={
  // 1 -> 2: the per-tee toggles never did anything, since all three tee sets are

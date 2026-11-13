@@ -2,8 +2,9 @@
 //
 // The same course on every copy of Fairway, with no server: its seed is made
 // from the year and the week, and its landscape rotates through every one, one
-// a week. Eighteen holes at the default settings. Pure; the menu tile and the
-// round live in main.js.
+// a week. Eighteen holes on the starting course (settings-schema.js
+// `STARTING_CHOICES`), at a length drawn from the week (`weeklyYards`). Pure;
+// the menu tile and the round live in main.js.
 //
 // SAME WEEK, SAME COURSE -- ON THE SAME GENERATOR. The seed only fixes the
 // recipe; when courses are made differently (GENERATOR_VERSION) the same seed
@@ -15,7 +16,7 @@
 // over at their midnight, Sunday to Monday. `weekIndex` counts weeks since
 // Monday 1 January 2024 and drives the landscape and the streak.
 
-import {BIOME_KEYS, DEFAULT_COURSE, GENERATOR_VERSION, validateSettings} from './settings-schema.js';
+import {BIOME_KEYS, DEFAULT_COURSE, STARTING_CHOICES, GENERATOR_VERSION, validateSettings} from './settings-schema.js';
 import {challenge, better, seeded} from './challenges.js';
 import {dayOf} from './progression.js';
 
@@ -122,9 +123,50 @@ export function biomeForWeek(w, rotation) {
  return rotation.retired?.[biome] ?? biome;
 }
 export const weeklyBiome = (date = new Date()) => biomeForWeek(weekIndex(date), WEEKLY_ROTATION);
-// The week's course: the defaults, its seed and landscape, eighteen holes.
+// THE WEEK'S LENGTH IS DRAWN FROM THE WEEK, 6,400 TO 6,850 YARDS FROM THE BLUE
+// TEES (the owner, 12 November 2026: the course of the week "got generated
+// very SHORT").
+//
+// What was wrong: the week's course asked for eighteen holes and kept
+// `DEFAULT_COURSE.courseYards`, 3,240 -- the default for NINE. The planner
+// cannot fit eighteen holes into that, so every hole came out at its shortest
+// (300-yard par 4s, 120-yard par 3s): par 68 and about 4,680 yards, every week
+// since 14 October 2026. The generator's own fallback for a missing length
+// (6,480 for eighteen) never ran, because the defaults had already filled the
+// length in.
+//
+// The range is the owner's. The length is drawn from the week's seed, never
+// from Math.random, so every copy agrees; the first draw of its own stream
+// (`<seed>:length`), in steps of 10 yards like the slider, each as likely as
+// the next. From the white tees that is about 5,750 to 6,230 yards; par is 71
+// below 6,560 from the blues and 72 from there up (RESEARCH, *The course of
+// the week's length*).
+//
+// AND THE WEEK'S COURSE IS THE STARTING COURSE, not the bare defaults (the
+// owner, the same day): fewer doglegs, wider fairways, bigger and shapelier
+// greens with less built up round them, less water but a lake, more trees --
+// settings-schema.js `STARTING_CHOICES`, which Surprise me and the Course
+// Builder start from too. A figure changed there changes this course on every
+// copy.
+//
+// BOTH START ON A WEEK OF THEIR OWN (`from`), like a new landscape: every
+// week before it keeps the short course at the defaults that its bests were
+// made on. THAT WEEK IS THE ONE THE CHANGE WAS MADE IN, week 149 (Monday 9
+// November 2026), on the owner's say ("Make it for this week too") -- so a
+// best saved earlier that week on the short course stands against the longer
+// one, and a player who updates mid-week sees the week's course change. It
+// was first PLACED at week 150 to avoid exactly that; the owner chose to have
+// the week's course fixed now.
+export const WEEKLY_COURSE = {from: 149, lo: 6400, hi: 6850, step: 10};
+const isNewWeek = date => weekIndex(date) >= WEEKLY_COURSE.from;
+export function weeklyYards(date = new Date()) {
+ if (!isNewWeek(date)) return DEFAULT_COURSE.courseYards;
+ const {lo, hi, step} = WEEKLY_COURSE, n = Math.round((hi - lo) / step) + 1;
+ return lo + Math.floor(seeded(`${weekSeed(isoWeek(date))}:length`)() * n) * step;
+}
+// The week's course: the starting course, its seed, landscape and length, eighteen holes.
 export function weeklySettings(date = new Date()) {
- return validateSettings({...DEFAULT_COURSE, seed: weekSeed(isoWeek(date)), biome: weeklyBiome(date), holes: 18});
+ return validateSettings({...DEFAULT_COURSE, ...(isNewWeek(date) ? STARTING_CHOICES : {}), seed: weekSeed(isoWeek(date)), biome: weeklyBiome(date), holes: 18, courseYards: weeklyYards(date)});
 }
 export const WEEKLY_XP = {first: 150, best: 50};
 const KEEP = 60;
