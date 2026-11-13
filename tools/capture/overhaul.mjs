@@ -338,6 +338,14 @@ export const VIEWS = [
  // ground and the far woods or hills, looking out from 25 m up.
  {name: 'far-band', hole: 0, when: 'afternoon', caption: 'Looking out from the course\'s edge', cam: `w => ({x: w.halfX * .82, z: w.halfZ * .1, yaw: 90, height: 25, pitch: -3})`},
  {name: 'far-band-b', hole: 0, when: 'afternoon', caption: 'Looking out from the course\'s other edge', cam: `w => ({x: -w.halfX * .1, z: -w.halfZ * .82, yaw: 180, height: 25, pitch: -3})`},
+ // THE FAR GROWTH BESIDE THE COURSE'S OWN, THROUGH THE DAY (the surroundings
+ // rework, round 11; the owner, 13 November 2026: "double check the colors of
+ // the external landscape growth on all biomes at different times of the day
+ // and ensure they are lit the same way as everything else"). One camera at
+ // the course's edge (far-band-b's: the first try looked east, which on a
+ // coast is the sea), its own trees in front and the far ones behind, at six
+ // hours: light-dawn, -morning, -noon, -golden, -dusk, -night.
+ ...['dawn', 'morning', 'noon', 'golden', 'dusk', 'night'].map(when => ({name: `light-${when}`, hole: 0, when, caption: `Looking out from the course's edge, ${when}`, cam: `w => ({x: -w.halfX * .1, z: -w.halfZ * .82, yaw: 180, height: 25, pitch: -3})`})),
  // The back tee from above (the tee boxes' mowing), and a links tee's
  // surround from behind and low (the fade into the tall grass).
  {name: 'tee-top', hole: 0, when: 'noon', caption: 'Hole 1, the back tee from above', cam: `w => { const h = w.holes[0], t = h.tees.blue || Object.values(h.tees)[0], p = h.pin;

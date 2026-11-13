@@ -116,19 +116,14 @@ wrong, unfinished, or owed a check.
   Pines*, *Bare tree branches*, *Regenerate the grasses on Meshy*)
 
 - [ ] **The surroundings rework (branch `surroundings-rework`), open** (12-13
-  November 2026; docs/SURROUNDINGS.md). **The mountainsides on Mountain,
-  Desert Resort and Hawaiian Resort are built but UNFINISHED**
-  (SURROUNDINGS, *Round 10*): crags, rock in planes, snow, each landscape's
-  own far plants. The look was photographed (bench/shots/overhaul/sur-m5);
-  as first built it cost 3.4 to 3.8% of a High frame on Mountain and five
-  seconds of the wait for a course; the change that cuts that was drawn
-  after the reboot and looks the same (sur-m6) but **has not been
-  measured** -- the card was lost on 13 November 2026 at 12:03, and since
-  the reboot it has stood at 17 to 65% with the desktop alone, over the 30%
-  gate. Owed, when the card is quiet or the owner names a limit: all fifteen
-  photographed again, frame rate against 0.9.14 on every tier, the wait for
-  a course, both smoke runs. If the cut build is wrong or still slower, the
-  round is taken out or cut further before the branch is handed over.
+  November 2026; docs/SURROUNDINGS.md). **The mountainsides and the far growth, rounds 10 and 11
+  (SURROUNDINGS, *Round 11*), are built and not finished.** Round 11 (13
+  November 2026) acted on the owner's words about round 10: the rock's cell
+  pattern is gone from every landscape (soft tone, no pattern), Hawaii's
+  range is rounded and lower, no plant past the line stands on ground over
+  40 degrees, Desert Mountain and the Desert Resort are bare above their
+  lower slopes, and the far trees are lit by the scene's own sun instead of
+  a light baked into their pictures. **Seen in captures only, on three landscapes** (Hawaii, Desert Mountain, Mountain; and the far growth at six hours on Classic Parkland and Mountain). **Owed:** the other twelve landscapes photographed on this build; the six hours on the other thirteen (`light-*` views of tools/capture/overhaul.mjs); frame rate against 0.9.14 on every tier and the wait for a course (nothing about frame rate has been measured since round 10 began: the card has stood at 16 to 54% with the desktop alone, and the frame tools' 30% gate was not loosened); both smoke runs. **The owner's wide views** ("framerates when looking across a whole landscape are tending to tank. we need a fix for that") are NOT answered: earlier rounds measured the surroundings at about 1.5% of an Ultra frame and the course's own trees at nearly all of its 43 to 68 million triangles, so the fix is most likely there; tools/variants/wide-view.mjs and wide-count.js are ready to say, on the first quiet card.
   The Badlands and Prairie & Sand Hills got the finer ground only.
   **Mountain's forest floor (round 10 lightened it and took it off the
   rock) read dark

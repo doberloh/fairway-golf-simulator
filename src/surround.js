@@ -26,7 +26,9 @@
 // WHERE TREES STAND: the landscape's far forest record (biomes.js farForest:
 // `cover` the share of the country wooded, `line` its treeline, `scrub` a
 // desert's or a links' thin low growth), in patches by a broad noise; never
-// on a cliff, in water or above the treeline.
+// on ground steeper than `FAR_STEEP`, in water or above the treeline (a
+// landscape's own `farLine` over its forest's: a desert mountain is bare
+// from a little way up).
 //
 // Pure (no three.js): hashed from the course's seed with salts of its own.
 // PLACED: every number.
@@ -64,6 +66,23 @@ export const FAR_OPEN = .36;
 export const farGrowth = rel => Math.min(2, Math.sqrt(rel));
 // Past this a plant under 3 m is a pixel or less: the ground's paint carries it.
 const SMALL_REACH = 700;
+// THE STEEPEST GROUND A PLANT STANDS ON: 0.84, 40 degrees (round 11, 13
+// November 2026). The owner, of Hawaii, Desert Mountain and Mountain: "We
+// also have trees growing on almost vertical surfaces". Until then woods held
+// on to 52 degrees past the near band (1.3), measured between the site and
+// two points up to 29 m off on one side of it: a tree at the lip or the foot
+// of a wall measured the gentle ground beside it. On seed FAIRWAY a third of
+// Mountain's far trees (34%), 28% of Hawaii's and 22% of Desert Resort's
+// stood on ground over 40 degrees, the steepest at 75. Now the steepest of
+// six ways round the site, 7 m off -- the drawn face it stands on and the
+// ones beside it: 5%, 1% and 2% left by a stricter count than the rule
+// itself (eight ways, 8 m), the steepest 58. Three ways left 11% on
+// Mountain; six cost 0.08 s more of the wait on an 18-hole Classic Parkland
+// (0.20 to 0.28 s for 128,000 sites). PLACED: 40 degrees is about what a
+// forest holds to on real mountains; a picture standing upright on more
+// reads as growing from a wall.
+export const FAR_STEEP = .84;
+const STEEP_STEP = 7, WAYS = [[1, 0], [-.5, .866], [-.5, -.866], [-1, 0], [.5, -.866], [.5, .866]];
 
 // HOW WOODED THE COUNTRY IS at a point, 0..1, before the ground has its say:
 // the far forest's share in broad patches, a scrub's in clumps.
@@ -110,7 +129,8 @@ export function surroundTrees(w, options = {}) {
  by.set(key, out);
  const bio = biomeOf(w.settings.biome), stands = w.settings.range ? null : standsOf(bio, w.seed), cover = coverField(w.bio ?? bio, w.seed, w.surround?.cover);
  if (!cover || !w.groundGrid) return out;
- const f = bio.farForest, line = f.line ?? 1e5;
+ // (Heights above the course's own base, as the ground's paint counts them: ground.js farLine.)
+ const f = bio.farForest, line = bio.farLine ?? f.line ?? 1e5, base = w.skyBase ?? 0;
  // (A landscape may name what grows past its line: biomes.js farPlants.)
  const mix = (bio.farPlants ?? stands?.plants ?? bio.plants).filter(([k]) => f.scrub || !GROUND_PLANTS.has(k));
  if (!mix.length) return out;
@@ -140,16 +160,14 @@ export function surroundTrees(w, options = {}) {
    if (u(7) >= cover(x, z)) continue;
    const inside = Math.abs(x) < gx && Math.abs(z) < gz, y = inside ? w.height(x, z) : at(x, z);
    if (y < level + (sea ? .8 : .5)) continue;
-   if (y > line - 60 && u(8) > (line + 20 - y) / 80) continue;                 // thinning up to the treeline
+   if (y - base > line - 60 && u(8) > (line + 20 - (y - base)) / 80) continue;   // thinning up to the treeline
    if (inside) { const lie = w.surface(x, z); if (lie === 'water' || !allows(lie, 'trees')) continue; }
-   const e = Math.max(3, cell * .3), hAt = inside ? w.height : at;
-   // (From the site's own height and two more: asking four cost a third of
-   // the placing, and a cliff reads as steep either way.)
-   const slope = Math.hypot(hAt(x + e, z) - y, hAt(x, z + e) - y) / e;
-   // A cliff. Far off the drawn faces are steeper than the land they stand
-   // for, and a picture stands upright whatever is under it: woods hold on to
-   // 52 degrees there, as the painted forest did.
-   if (slope > (d < o.near ? .85 : 1.3)) continue;
+   // A steep face (FAR_STEEP says what changed and why): the first way
+   // that is too steep ends it, so most steep sites cost one or two asks.
+   const hAt = inside ? w.height : at;
+   let steep = false;
+   for (const [ax, az] of WAYS) if (Math.abs(hAt(x + ax * STEEP_STEP, z + az * STEEP_STEP) - y) > FAR_STEEP * STEEP_STEP) { steep = true; break; }
+   if (steep) continue;
    const kind = choose(mix, u(2)), small = GROUND_PLANTS.has(kind), size = sizeOf(kind, u(3), u(4)), k = small ? 1 : grow, h = size.h * k, r = size.r * k;
    if (d < o.near && inside) { out.near.push({x, z, y, h, r, shade: u(5), kind, surround: true, d}); continue; }
    if (h < 3 && d > SMALL_REACH) continue;

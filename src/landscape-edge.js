@@ -114,10 +114,20 @@ export function ringRelief(w){
    // About its own middle, so a scale left out lifts and lowers nothing.
    return sum-mid;
   };})():null;
- const peaks=bio.ringPeaks||wants('range')?(()=>{const s=saltOf(w.settings.seed,'peaks'),rg=(x,z,k,o)=>{const r=1-Math.abs(2*fbm(x,z,s+k,o)-1);return r*r;};
+ // ROUNDED, WHERE A LANDSCAPE ASKS (`ringRound` 0 to 1, `ringCrags`; round 11,
+ // Hawaii). The owner, 13 November 2026, of Hawaii's range: "Lets make the
+ // mountains more rounded and less steep". A ridged noise has a crest line
+ // wherever the field crosses its middle -- aretes, which is Mountain -- and
+ // crags stand buttresses on every flank. Rounded, each scale is a hill
+ // instead: the field's high ground as a smooth dome, its low ground a valley
+ // floor, no crest line anywhere; the two smaller scales count for less, and
+ // the landscape sets its own share of crags (Hawaii none). PLACED.
+ const peaks=bio.ringPeaks||wants('range')?(()=>{const s=saltOf(w.settings.seed,'peaks'),round=bio.ringRound??0,cragShare=bio.ringCrags??.24,
+   rg=(x,z,k,o)=>{const n=fbm(x,z,s+k,o),r=1-Math.abs(2*n-1),sharp=r*r;if(round<=0)return sharp;
+    const u=Math.max(0,Math.min(1,(n-.36)/.34));return sharp+(u*u*(3-2*u)-sharp)*round;};
   return (x,z,cell=1e9)=>{const a=rg(x/1500,z/1500,0,3),b=rg(x/560+3.1,z/560-7.7,11,2),c=rg(x/240-5.3,z/240+2.9,23,2);
-   const rough=cell<1e8?crags(x,z,cell)*.24*Math.min(1,a*1.5+b*.5):0;
-   return Math.max(0,Math.min(1.25,Math.pow(a,1.6)*.85+Math.pow(b,2)*.3*(.4+a)+c*.09*a+rough));};})():null;
+   const rough=cell<1e8&&cragShare>0?crags(x,z,cell)*cragShare*Math.min(1,a*1.5+b*.5):0;
+   return Math.max(0,Math.min(1.25,Math.pow(a,1.6)*.85+(Math.pow(b,2)*.3*(.4+a)+c*.09*a)*(1-.6*round)+rough));};})():null;
  // MESAS AND BUTTES (the far-landscape goal; the owner: "I think we need more
  // plateaus"). A landscape with `ringMesas` raises its far land as flat-topped
  // tables: a smooth field, warped so the outlines wander, cut into up to three

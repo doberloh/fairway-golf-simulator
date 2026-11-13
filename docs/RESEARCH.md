@@ -14972,7 +14972,9 @@ Per tier (graphics.js `surround`, PLACED then measured):
 The atlas is 2,048 px wide. A far tree is drawn up to twice its size as the
 sites thin (the square root of the spacing's growth); from 700 m a quarter
 wider and a sixth into the ground; a plant under 3 m is not placed past 700 m.
-Far sites hold on slopes to 1.3 (52 degrees), near ones to 0.85. All PLACED.
+No site on ground over 0.84 (40 degrees), the steepest of six ways round it
+at 7 m (round 11; until then far sites held to 1.3, 52 degrees, and near
+ones to 0.85, measured to one side). All PLACED.
 
 **The paint** (ground.js). Three tone noises of 610, 173 and 47 m, up to a
 fifth lighter or darker, fading in over 160 m. The forest's floor: the leaf
@@ -15068,16 +15070,15 @@ mean size 600 m to 4 km out, measured: Mountain about three times Classic
 Parkland's (the test holds 1.5 times). The shader multiplies by 1 + .2 of
 it. PLACED.
 
-**The rock face's cells** (ground.js `cragFace`): a jittered grid, the
-nearest point's own tone; unit 5 m doubled until it is .054 of the distance
-to the camera (about 45 pixels at 900 lines and a 60 degree view), two sizes
-blended. Contrast and crack by landscape: plain rock .2 and .04; Mountain
-.2 and .07, cells .8 wide by 1.6 tall; Desert Resort .13 and none, 2.4 by
-.5, beds of tone .3 every 42 m of height tilted .11 and .07; Hawaiian Resort
-.3 and .4, .42 by 3.6, under 94% green (#2f6833) on all but the steepest.
-Snow on Mountain from 640 m over the course by a 230 m noise of 260 m,
-110 m lower in a full hollow. PLACED: every number; set by eye over five
-rounds of pictures.
+**The rock face's cells -- taken out in round 11** (ground.js `cragFace`;
+the owner: "actively bad", "terrible"; the next section has what replaced
+them). As they were: a jittered grid, the nearest point's own tone; unit
+5 m doubled until it is .054 of the distance to the camera (about 45 pixels
+at 900 lines and a 60 degree view), two sizes blended; contrast and crack
+by landscape (plain rock .2 and .04; Mountain .2 and .07, cells .8 wide by
+1.6 tall; Desert Resort .13 and none, 2.4 by .5; Hawaiian Resort .3 and .4,
+.42 by 3.6). Still so: snow on Mountain from 640 m over the course by a
+230 m noise of 260 m, 110 m lower in a full hollow. PLACED: every number.
 
 **Measured, once, loosely** (High on Mountain, three rounds, against the
 branch before the round, the card 25 to 40% busy with the desktop;
@@ -15089,4 +15090,49 @@ and one hash a cell is drawn (after the reboot; no errors, the same to the
 eye) and **not measured**: the graphics card was lost before its run (13
 November 2026, 12:03), and afterwards stood at 17 to 65% with the desktop
 alone, over the 30% gate.
+
+### Round 11 of the surroundings (13 November 2026): the numbers
+
+docs/SURROUNDINGS.md, *Round 11*, has the owner's words and what was done.
+No outside source; every number PLACED unless it says measured.
+
+**The far rock face** (ground.js `cragFace`). Tone 1 + contrast x 2(m -
+.5), where m is .5 of a value noise at 230 m, .32 of one at 61 m and .18 of
+one at 13 m (the last fades out as a pixel covers 0.3 to 2.5 m of ground and
+is a flat .5 beyond), each read at the point's plan position leaned .37 and
+-.29 of its height so a wall is not one tone top to bottom. Times .86 on a
+cliff to 1.05 where the ground lies back (the normal's upward part .1 to
+.62). Contrast: plain rock .2, Mountain .18, Desert Resort .14 with beds
+.3 (a smooth noise along height, 42 m a bed, tilted .11 and .07). Hawaii's
+green (#2f6833, .94): from the normal's upward part .1 to .46, its edge
+moved .3 of (m - .5), .84 to 1.14 of its colour from steep to gentle.
+Counted: twelve hashes a pixel at most, eight far off, sixteen with beds;
+the cells were eighteen with a square root.
+
+**The rounded range** (landscape-edge.js `peaks`, `ringRound`). A scale's
+field n (0 to 1) becomes a dome s x s x (3 - 2s), s = (n - .36) / .34
+clamped, in place of the ridge (1 - |2n - 1|) squared; the 560 m and 240 m
+scales times 1 - .6 x round. Hawaii: round 1, crags 0, lift 520 m (700).
+Measured on seed FAIRWAY, nine holes, the drawn ring's triangles to 4 km by
+plan area: over 35 degrees 34.9% to 9.4%, over 45 degrees 25.2% to 4.9%,
+over 55 degrees 14.7% to 1.9%, top 930 m to 598 m. For comparison, same
+measure: Mountain 80.0%, 65.8%, 46.3%, top 1,329 m; Desert Resort 58.7%,
+38.8%, 19.1%, 811 m; Desert Mountain 9.0%, 4.2%, 1.3%, 996 m.
+
+**Steep ground** (surround.js `FAR_STEEP` .84, six ways, 7 m). Measured on
+seed FAIRWAY, far plants standing on over 40 degrees by eight ways at 8 m,
+before to after: Mountain 33.7% (of 38,240) to 5.1% (of 23,436), steepest
+74 to 58 degrees; Hawaii 27.9% (of 41,431, the old range) to 0.7% (of
+53,002, the rounded one), 75 to 45; Desert Resort 22.5% (of 9,159) to 1.7%
+(of 5,029), 68 to 46; Desert Mountain 5.0% (of 21,212) to 0.2% (of 14,860),
+63 to 45. With three ways at 4 m or 7 m Mountain kept 11 to 12%. Placing,
+18 holes, six ways against three: Mountain 149 to 165 ms, Pacific Northwest
+244 to 340 ms, Classic Parkland 204 to 283 ms.
+
+**Bare heights** (biomes.js `farLine`). Desert Mountain 250 m over the
+course: the massif's talus apron is .22 of its rise, about 160 to 200 m of
+720 to 900. Desert Resort 320 m of a range that tops out at 811 m. A site
+within 60 m under the line is kept with a chance falling to nothing 20 m
+over it (the far forest's own rule). Highest far plant, measured: Desert
+Mountain 972 m to 266 m, Desert Resort 805 m to 337 m.
 

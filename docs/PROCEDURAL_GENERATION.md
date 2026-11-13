@@ -379,6 +379,9 @@ order:
    m down to 40 m, up to about a quarter of the range's lift, none on a
    valley floor and no scale the ring's cells are too wide to draw. And every
    ring vertex carries a baked shade, hollows dark and ribs light (`shade`).
+   **A landscape may round its range** (`ringRound`, `ringCrags`; Hawaii,
+   13 November 2026): domes over the field's high ground instead of crest
+   lines, no crags, 520 m of lift.
 4. **The trees** (surround.js) are the landscape's own stand carried outward
    (or the plants the landscape names for past its line, `farPlants`: the
    Desert Resort's desert plants, Hawaii's broad crowns):
@@ -388,8 +391,12 @@ order:
    4 km, Ultra 5 km) and never more than the tier's cap (200,000 on Ultra).
    They stand where the landscape's far forest record says woods grow:
    patches by a 380 m noise, about a quarter of the wooded country left open
-   as meadows by a 900 m one (`FAR_OPEN`), never in water, on a cliff or
-   above the treeline; a desert's or a links' scrub in thin clumps. Each is
+   as meadows by a 900 m one (`FAR_OPEN`), never in water, on ground over
+   40 degrees (`FAR_STEEP`, the steepest of six ways round the site) or
+   above the treeline (the far forest's `line`, or the landscape's own
+   `farLine`: Desert Mountain is bare from 250 m over the course, the
+   Desert Resort's range from 320); a desert's or a links' scrub in thin
+   clumps. Each is
    drawn as an upright picture of the course's own model (far-trees.js). On
    seed FAIRWAY, Ultra: 129,000 on Classic Parkland.
 5. **The paint** (ground.js): the far ground toned by three broad noises

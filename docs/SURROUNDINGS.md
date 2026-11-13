@@ -162,6 +162,13 @@ nothing on this branch).
 - **Low and Medium drawing far woods as grove domes only** (graphics.js
   `farWoods: 'groves'`): no tier draws domes; each tier has its own reach,
   thinning and picture size instead (`surround`).
+- **This branch's own round 10, in three parts** (reversed in round 11 on
+  the owner's word, 13 November 2026): the far rock face broken into cells
+  ("actively bad", "terrible"); Hawaii's range as fluted knife crests with
+  crags ("more rounded and less steep"); far woods holding on to 52
+  degrees ("trees growing on almost vertical surfaces"). And rounds 2 to
+  4's far trees lit with a light baked into their picture and a normal
+  straight up ("lit the same way as everything else"). *Round 11* has each.
 
 ## Rounds
 
@@ -432,7 +439,12 @@ What the pictures show, landscape by landscape:
   These are the owner's first complaint (surroundings plainly lower in
   polygons and resolution than the course) still standing on a mountainside.
 
-### Round 10: the mountainsides (13 November 2026) -- UNFINISHED: drawn, not measured
+### Round 10: the mountainsides (13 November 2026) -- partly reversed by round 11
+
+**Read with round 11, below: the owner turned down the rock's cells,
+Hawaii's shape and the trees on steep ground. What stands of this round is
+the crags on Mountain and the Desert Resort, the baked shade, the snow, the
+forest floor and `farPlants`.** The record below is as it was written.
 
 The owner: "Fix the three". **Where it stands: the look was reached and
 photographed; the last change, which cuts its cost, was drawn after the
@@ -528,3 +540,136 @@ No graphics work since, and none until the owner says.
 
 Owed before this round is done: all fifteen photographed again; frame rate against 0.9.14 on Low,
 Medium, High (Mountain) and Ultra; the wait for a course; both smoke runs.
+(Carried into round 11, whose own list replaces this one.)
+
+### Round 11: what the owner said of round 10 (13 November 2026)
+
+The owner, with two screenshots (Hawaii's range and Desert Mountain's):
+
+- "the hexagonal texture on hawaiian mountains is not good... it looks like
+  actively bad. Lets make the mountains more rounded and less steep and fix
+  that texture. We also have trees growing on almost vertical surfaces."
+- "desert mountain has the same texture problem. that texture looks
+  terrible. we also shouldnt have trees growing on top of that mountain. and
+  trees on almost vertical surfaces again."
+- "no screenshot but mountain has the same issue"
+- "for all three of the above i do like the ground shading though, where
+  grass is growing on more horizontal surfaces depending on how steep."
+- "double check the colors of the external landscape growth on all biomes
+  at different times of the day and ensure they are lit the same way as
+  everything else."
+- "framerates when looking across a whole landscape are tending to tank. we
+  need a fix for that."
+
+**The rock's cells are gone** (ground.js `cragFace`). Round 10's cells
+reached every landscape with a rock face and no banded clay -- Desert
+Mountain's one mountain among them, which that round was never meant to
+touch and never photographed. A far rock face now has no pattern of its own:
+its tone drifts by soft noises at 230 m and 61 m (13 m too, only near the
+eye), a cliff is a little darker than a ledge, the Desert Resort's
+limestone keeps beds of tone by height, soft now, and Hawaii's green lies on
+all but the steepest ground, lighter where the ground lies back. `farFace`
+lost `wide`, `tall` and `crack`. What the owner liked -- what grows by
+steepness -- is untouched. Lesson: cells of one size are a pattern however
+irregular each is, and three patterns in a row (lines, paving, planes) each
+read as a pattern over the whole mountain; and a change to a shared paint
+is photographed on every landscape it reaches, not the three it was made
+for.
+
+**Hawaii's mountains are rounded** (landscape-edge.js `peaks`, biomes.js
+`ringRound: 1`, `ringCrags: 0`, `ringLift` 520 for 700). Each scale of
+the range is a smooth dome over its field's high ground, where a ridged
+noise puts a knife crest wherever the field crosses its middle; the two
+smaller scales count for 40% of what they did; no crags. On seed FAIRWAY the
+far ground to 4 km steeper than 45 degrees went from 25.2% to 4.9%, steeper
+than 35 from 34.9% to 9.4%, and the top from 930 m to 598 m. Mountain and
+the Desert Resort keep crests and crags (`ringRound` 0); the owner's words
+were of Hawaii.
+
+**No plant past the line stands on ground over 40 degrees** (surround.js
+`FAR_STEEP` .84). Far woods had held to 52 degrees, measured between the
+site and two points up to 29 m off on one side of it, so a tree at the lip
+or the foot of a wall measured the gentle ground beside it. Counted on seed
+FAIRWAY, eight ways at 8 m: on over 40 degrees stood 34% of Mountain's far
+trees, 28% of Hawaii's, 22% of the Desert Resort's and 5% of Desert
+Mountain's, the steepest at 75. Now the steepest of six ways round the
+site, 7 m off: 5%, 1%, 2% and 0.2% by that stricter count, the steepest
+58. Three ways left 11% on Mountain. Six ways cost 0.08 s of the wait on an
+18-hole Classic Parkland (placing 128,000 sites: 0.20 s to 0.28 s). What it
+means for Mountain: two thirds of its far ground to 4 km is steeper than 45
+degrees, so its far trees (38,200 to 23,400 on that seed) stand on the
+ledges and benches and the walls are bare.
+
+**The deserts' mountains are bare above a line** (biomes.js `farLine`,
+metres over the course; read by surround.js and by the ground's paint):
+Desert Mountain 250 (the scrub thins from 190 and is gone by 270, the top
+of the talus apron; its highest far plant was at 972 m, on the crest),
+the Desert Resort 320 (805 m). Mountain keeps its forest's own treeline,
+520. Heights are counted from the course's base (`skyBase`) in both
+places now; surround.js had counted from zero.
+
+**The far trees are lit by the scene's own sun** (far-trees.js). Checked by
+reading the code before any picture: each far tree's picture was baked with
+a light of its own -- a sun over the viewer's left shoulder, through the
+toon ramp -- and the upright quad was then lit as flat ground is, its normal
+straight up. So a far wood kept a lit left side whatever the hour and
+wherever the sun stood, had no lit and shaded side of its own at a low sun,
+and went from light to shade all at once where the ramp steps, while the
+course's own trees beside it turned a warm side to the sun. Now two
+pictures a model, its colours with no light in them and its normals as the
+camera saw them; the quad stands the normal up in the world (mirrored where
+the picture is) and the scene's sun, sky light, ramp, haze and grade light
+each pixel as they light the model. One more texture read a pixel. Not
+copied from the course's trees: their rim of sky (textures.js `rimLit`),
+an edge a few pixels wide; and no far tree casts or takes a shadow, as
+before.
+
+**What was seen (round 11), and what was not.** The card stood at 16 to 54%
+all afternoon with the desktop alone (Chrome Remote Desktop serving the
+owner's screen). The capture tool's gate, a five-second look under 30%, got
+through four times; the frame tools' gate, thirty seconds under 30%, never
+did, and it was not loosened (round 10's lesson).
+
+- Photographed, no errors (bench/shots/overhaul/sur-r11a, run 54): Hawaii,
+  Desert Mountain and Mountain from the first tee, past the line and from
+  above. The cells are gone on all three; Hawaii's range is round green
+  domes with woods on their flanks; Desert Mountain's rock is plain and its
+  scrub stops at the foot; Mountain's trees stand on its ledges and its
+  walls are bare grey, the tone drifting.
+- The far growth through the day (the capture tool's new `light-dawn`,
+  `-morning`, `-noon`, `-golden`, `-dusk`, `-night` views: one
+  camera at the course's edge, its own trees in front, the far ones
+  behind; sur-r11-light, run 55): Classic Parkland and Mountain. At golden
+  hour the far wood has a warm side and a shaded one as the course's trees
+  do; at dusk and at night it goes dark with them. Far off, wood and ground
+  alike are lighter than what is near, which is the haze.
+- That, in numbers (run 57; Classic Parkland from its east edge; mean
+  colour of a box of the finished picture, 0 to 255): at night the far wood
+  36, 44, 49 and the far open hill 25, 33, 31, against the course's own
+  trees 3, 6, 4 and its grass 5, 21, 7; at noon 110, 139, 129 and 122, 154,
+  106 against 65, 113, 46 and 90, 133, 39. With every far tree's normal
+  forced straight up again (as it was before the round) the far wood read
+  37, 46, 50 at night and 116, 145, 131 at noon: as a whole about as bright
+  either way. What the round changed is each tree having a lit side and a
+  shaded one that follow the sun.
+- **Not seen:** the other twelve landscapes on this round's build (the
+  rock's paint and the steepness rule reach all of them); the six hours on
+  the other thirteen (the first try at Hawaii looked east, at the sea; the
+  camera now looks north); either smoke run.
+- **Not measured: anything about frame rate.** By count the rock's paint is
+  cheaper than round 10's (twelve hashes a pixel at most for eighteen) and
+  a far tree's pixel reads one more texture; Mountain has 39% fewer far
+  trees, the Desert Resort 45% and Desert Mountain 30% fewer, Hawaii 28%
+  more (more of its rounded land can hold them). Counts are not frame
+  times.
+- **The owner's wide views.** "framerates when looking across a whole
+  landscape are tending to tank. we need a fix for that" is not answered by
+  this round. What earlier rounds measured (rounds 6 and 9): the far trees
+  about 1% of an Ultra frame, the far ground half a percent, and a frame of
+  43 to 68 million triangles, nearly all of them the course's own trees
+  drawn as whole models. So the fix is most likely the course's own distant
+  trees, not the surroundings. Two tools are ready for the first quiet
+  card: tools/variants/wide-view.mjs (what each part of a wide view costs,
+  for tools/frame-variants.mjs) and tools/variants/wide-count.js (the same
+  by triangle count, a few frames only, for the capture tool's `--eval`).
+  Nothing is proposed until one of them has run.
