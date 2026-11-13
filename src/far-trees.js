@@ -156,8 +156,13 @@ export function farTreeMeshes(sites, cells, material, {spreadOf = () => 0} = {})
    // field of sticks: in a real wood the crowns hide the trunks. So with
    // distance (full at 700 m) a picture is drawn a quarter wider and let a
    // sixth of its height into the ground. PLACED.
+   // A NARROW TREE MORE SO (Hawaii's Cook pine is a seventh as wide as it is
+   // tall, and a hillside of them stayed a field of sticks at a quarter
+   // wider): the narrower the picture -- from under 0.45 wide for its height,
+   // most under 0.15 -- the more it is widened, up to 1.85 times.
    const off = Math.min(1, (s.d ?? 0) / 700), tree = !c.spread && s.h > 4 ? off : 0;
-   const k = (c.spread ? s.r / c.spread : s.h) * s.grow, flip = (s.pick * 31 % 1) < .5, w = c.halfW * k * (1 + .25 * tree), tall = (c.y1 - c.y0) * k, y = s.y + c.y0 * k - (.03 + .16 * tree) * tall;
+   const narrow = Math.min(1, Math.max(0, (.45 - 2 * c.halfW / (c.y1 - c.y0)) / .3));
+   const k = (c.spread ? s.r / c.spread : s.h) * s.grow, flip = (s.pick * 31 % 1) < .5, w = c.halfW * k * (1 + (.25 + .6 * narrow) * tree), tall = (c.y1 - c.y0) * k, y = s.y + c.y0 * k - (.03 + .16 * tree) * tall;
    foot.set([s.x, y, s.z], i * 3); size.set([-w, w, tall], i * 3);
    cell.set(flip ? [c.u1, c.v0, c.u0, c.v1] : [c.u0, c.v0, c.u1, c.v1], i * 4);
    const shade = .88 + .24 * (s.pick * 131 % 1); tint.set([shade, shade, shade], i * 3);
