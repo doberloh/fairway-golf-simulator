@@ -121,16 +121,17 @@ wrong, unfinished, or owed a check.
   (SURROUNDINGS, *Round 10*): crags, rock in planes, snow, each landscape's
   own far plants. The look was photographed (bench/shots/overhaul/sur-m5);
   as first built it cost 3.4 to 3.8% of a High frame on Mountain and five
-  seconds of the wait for a course; the change that cuts that **has never
-  been drawn on a graphics card** -- the card was lost on 13 November 2026
-  at 12:03 and graphics work stopped. Owed, when the owner says the card may
-  be used: the cut build drawn and looked at on the three, all fifteen
+  seconds of the wait for a course; the change that cuts that was drawn
+  after the reboot and looks the same (sur-m6) but **has not been
+  measured** -- the card was lost on 13 November 2026 at 12:03, and since
+  the reboot it has stood at 17 to 65% with the desktop alone, over the 30%
+  gate. Owed, when the card is quiet or the owner names a limit: all fifteen
   photographed again, frame rate against 0.9.14 on every tier, the wait for
   a course, both smoke runs. If the cut build is wrong or still slower, the
   round is taken out or cut further before the branch is handed over.
   The Badlands and Prairie & Sand Hills got the finer ground only.
   **Mountain's forest floor (round 10 lightened it and took it off the
-  rock; in the unseen build) read dark
+  rock) read dark
   and flat where the trees are thin** (ground.js, the floor tone under the
   far trees; SURROUNDINGS round 5). **High on Mountain is not shown to be level
   with 0.9.14**: 0.04 to 0.09 ms (0.6 to 1.4%) slower at the two tees in the

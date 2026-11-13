@@ -15085,6 +15085,8 @@ bench/ab/sur-m5-mountains-high.json, local): as first built, two views and
 two hashes a cell, card time 6.74 to 7.00 ms, 2.78 to 2.88 ms and 7.73 to
 7.99 ms at tee 1, tee 5 and 250 m up (3.4 to 3.8% slower), draws and
 triangles equal, the wait for a course 13.5 s to 18.6 s. The cut to one view
-and one hash a cell is **not measured and not drawn**: the graphics card was
-lost before its run (13 November 2026, 12:03).
+and one hash a cell is drawn (after the reboot; no errors, the same to the
+eye) and **not measured**: the graphics card was lost before its run (13
+November 2026, 12:03), and afterwards stood at 17 to 65% with the desktop
+alone, over the 30% gate.
 

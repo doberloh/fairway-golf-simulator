@@ -432,13 +432,14 @@ What the pictures show, landscape by landscape:
   These are the owner's first complaint (surroundings plainly lower in
   polygons and resolution than the course) still standing on a mountainside.
 
-### Round 10: the mountainsides (13 November 2026) -- UNFINISHED, the card was lost
+### Round 10: the mountainsides (13 November 2026) -- UNFINISHED: drawn, not measured
 
 The owner: "Fix the three". **Where it stands: the look was reached and
-photographed; the last change, which cuts its cost, has never been drawn on
-a graphics card, and nothing is measured against 0.9.14.** The graphics
-card dropped out of the machine at 12:03 (below) and all graphics work
-stopped there.
+photographed; the last change, which cuts its cost, was drawn after the
+reboot and looks the same; nothing is measured against 0.9.14.** The
+graphics card dropped out of the machine at 12:03 (below); after the
+owner's reboot one capture was made, and the comparison has not run because
+the card has not come under the gate.
 
 What was built (landscape-edge.js, ground.js, biomes.js, surround.js):
 
@@ -499,12 +500,19 @@ to 7.99 from above -- **3.4 to 3.8% slower** -- and the wait for a course
 eight times a pixel (two views blended, two sizes, two hashes a cell), and a
 shader that much larger takes seconds to compile.
 
-**The cut, NOT DRAWN, NOT MEASURED**: one view a pixel (the one the face
+**The cut, DRAWN, NOT MEASURED**: one view a pixel (the one the face
 looks to most squarely), one hash a cell -- fewer sums than the overhead
 rock it replaces, by count. It was built into `dist/` and its comparison was
-starting when the card was found lost. It has not been compiled by a
-graphics card, so even that it draws is unproven; the pictures above are of
-the build before it.
+starting when the card was found lost. After the owner's reboot ("reboot
+complete. Continue.") it was photographed on the three
+(bench/shots/overhaul/sur-m6, run 53, the card at 28% at its gate): no
+errors, and to the eye the same as round 5 -- the seam where a face turns
+from one view to the other does not show among the planes. Its comparison
+with 0.9.14 was then asked for at the 30% gate and never started: the card
+stood at 17 to 65% with no game and nothing of this work on it (the
+desktop's programs, with Chrome Remote Desktop serving the owner's screen),
+and after eleven minutes the waiting job was stopped. So what it costs is
+still unknown.
 
 **The graphics card was lost, 13 November 2026, 12:03.** `nvidia-smi`:
 "GPU is lost. Reboot the system to recover this GPU". The last run (run 52
@@ -518,6 +526,5 @@ minutes; the gate was raised to 45% for the last two runs (sur-m5's captures
 and run 52) on that reading. Whether that was right is the owner's to say.
 No graphics work since, and none until the owner says.
 
-Owed before this round is done: the cut build drawn and looked at on the
-three; all fifteen photographed again; frame rate against 0.9.14 on Low,
+Owed before this round is done: all fifteen photographed again; frame rate against 0.9.14 on Low,
 Medium, High (Mountain) and Ultra; the wait for a course; both smoke runs.
