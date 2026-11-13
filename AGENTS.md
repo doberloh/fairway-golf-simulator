@@ -93,6 +93,13 @@ did); delete this section in the merge's own pass.
 - **A new model is made in Blender and improved over five to ten rounds**
   beside reference pictures (`tools/blender/iterate.mjs`), each round logged,
   before it ships.
+- **From 13 November 2026 the branch also carries a frame-rate pass on every
+  landscape** (the owner, signing off the look: "Iterate as many times as
+  needed to improve the framerates of all of our landscapes. The GPU and CPU
+  are yours to use. Focus on gains on high and ultra settings"). Its rounds
+  are in docs/SURROUNDINGS.md, *The frame-rate pass*. It may touch the
+  course's own trees and ground, not only the surroundings; a round is kept
+  only if it is measured faster and its pictures are as they were meant.
 - **The owner follows the work on a status page** (an HTML page, republished
   as the work moves). Updating it never holds work up.
 

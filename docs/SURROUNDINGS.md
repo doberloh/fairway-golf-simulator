@@ -732,3 +732,33 @@ thrown away.
   Not started.
 - **Not run:** either smoke (they go through tools/gpu-run.mjs, whose gate
   is the thirty-second one); the frame comparison on Low, Medium and Ultra.
+
+## The look signed off (13 November 2026)
+
+The owner, after round 11: "Mark all actions complete for the work that we
+did on the surroundings rework except for frame rate items. Ive taken a look
+and it looks great." The rounds above are closed on that word (DONE.md, *The
+surroundings rework: the look*). Open from here: frame rate, and the second a
+course takes longer to load.
+
+## The frame-rate pass (from 13 November 2026)
+
+The owner, in the same message: "Then Iterate as many times as needed to
+improve the framerates of all of our landscapes. The GPU and CPU are yours
+to use. Focus on gains on high and ultra settings as those things should
+trickle down to the lower settings."
+
+**How it is run.** One graphics job at a time, each through the gate and the
+log (tools/gpu-gate.mjs; goal `surroundings`). The card's own gate is the
+owner's word now: with Chrome Remote Desktop serving the owner's screen the
+card stands at 16 to 54% with nothing of this work on it, so a run is
+started at up to 60% when no game is in the card's process list, and never
+when one is. A comparison made on a busy card is read by its counts and by
+the two builds taking turns, not by one number. Every round is measured on
+High and Ultra before it is kept, and photographed: a round that changes
+the picture where it was not meant to is not kept.
+
+**Where it started** (round 11's measurements, High on Mountain): the
+course's own trees and plants 60% of a frame from 250 m up, the far ground
+10% (5% from a tee), the far trees 0.4%; a frame of 69 to 72 million
+triangles; a course 1.1 s longer to load than before round 10.

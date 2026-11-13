@@ -25,6 +25,97 @@ kept whole: *The open list before the 11 November 2026 prune* and *The open
 list before the 16 October prune*, each with a table of what became of every
 entry.
 
+## The surroundings rework: the look (branch `surroundings-rework`, 12-13 November 2026)
+
+**Signed off by the owner, 13 November 2026**, after round 11: "Mark all
+actions complete for the work that we did on the surroundings rework except
+for frame rate items. Ive taken a look and it looks great." So everything
+below is closed on the owner's word. What it says was owed a check is kept
+as it stood, so the record shows what the owner's look covered and what
+nobody ran: neither smoke was run on the last build before the sign-off, and
+the builder's Surroundings block had been pressed only by a script. Frame
+rate, and the second a course takes longer to load, stayed open: TODO.md,
+*Frame rate on High and Ultra, every landscape*. Not merged or released at
+the sign-off.
+
+**What was built** (docs/SURROUNDINGS.md has every round): the far ground
+fourteen times finer; the tree domes and the painted tree pattern replaced
+by pictures of the course's own tree models to the tier's reach, lit by the
+round's own sun; open meadows among the far woods, their edges wandering; a
+Surroundings block in the Course Builder (a kind for each side, height,
+trees) saved in the course file; crags and snow on Mountain, soft-bedded
+limestone over the Desert Resort, rounded green mountains over Hawaii; no
+pattern on far rock; no plant past the line on ground over 40 degrees or on
+the desert mountains' heights.
+
+### The open entry as it stood at the sign-off
+
+- [x] **The surroundings rework (branch `surroundings-rework`), open** (12-13
+  November 2026; docs/SURROUNDINGS.md). **The mountainsides and the far growth, rounds 10 and 11
+  (SURROUNDINGS, *Round 11*), are built and not finished.** Round 11 (13
+  November 2026) acted on the owner's words about round 10: the rock's cell
+  pattern is gone from every landscape (soft tone, no pattern), Hawaii's
+  range is rounded and lower, no plant past the line stands on ground over
+  40 degrees, Desert Mountain and the Desert Resort are bare above their
+  lower slopes, and the far trees are lit by the scene's own sun instead of
+  a light baked into their pictures. **Seen in captures only**: all fifteen photographed with no errors,
+  and the far growth at six hours on all fifteen. **Measured once, on High
+  at Mountain**: 1.2%, 2.2% and 0.8% slower than 0.9.14 at two tees and from
+  above (rounds 10 and 11 themselves cost under 1%, inside the noise).
+  **Wrong and not found: a course takes about 1.1 s longer to load** than
+  before round 10 (11.7 s to 12.8 s on Mountain; not the processor's work).
+  Owed: that comparison with the round's shader additions off, and with the
+  normals picture not baked (SURROUNDINGS, *Round 11*). **Owed besides:**
+  frame rate against 0.9.14 on Low, Medium and Ultra; both smoke runs. (The
+  card stood at 16 to 54% with the desktop alone for most of 13 November;
+  the frame tools' and gpu-run's thirty-second gate was not loosened.)
+  **The owner's wide views** ("framerates when looking across a whole
+  landscape are tending to tank. we need a fix for that") **are NOT
+  fixed.** Measured on High at Mountain from 250 m up: the course's own
+  trees and plants are 60% of the frame, the far ground 10%, the far trees
+  0.4%. Two fixes, neither started: the course's own distant trees drawn as
+  pictures past some size on screen (touches the owner's rulings of 9
+  November: theirs to decide), and a lean shader path for the far ground
+  (the surroundings' own work; pictures must not change by a pixel).
+  The Badlands and Prairie & Sand Hills got the finer ground only.
+  **Mountain's forest floor (round 10 lightened it and took it off the
+  rock) read dark
+  and flat where the trees are thin** (ground.js, the floor tone under the
+  far trees; SURROUNDINGS round 5). **High on Mountain is not shown to be level
+  with 0.9.14** (the figures above; in round 9 it read 0.6 to 1.4% slower at
+  the two tees and level from above). Ultra was faster, Medium level and Low
+  2% faster in round 9 and have not been measured since.
+  What is left to take out is the far trees' shading at a tee on a landscape
+  whose slopes stand over the course's own trees (the haze worked out a
+  pixel; it could be worked out a corner of each picture).
+  **`bench/baseline.json` still holds the far woods' `farSeated` keys** until
+  the next `node tools/bench.mjs --save`; the `surround` metric has no
+  baseline until then. Not gone through one landscape at a time against
+  pictures with the owner (the plan's step 5), and no per-landscape
+  `surround` recipe in biomes.js (the plan's step 4): the builder's record
+  and the landscapes' existing far relief are what there is.
+
+### From *Play the current build by hand*, as it stood at the sign-off
+
+  - **The surroundings** (branch `surroundings-rework`, 12-13 November 2026,
+    not merged or released; docs/SURROUNDINGS.md). Seen in captures only,
+    all fifteen landscapes, with no errors; the owner has looked at none of
+    them in the game. To look at, on each landscape and each tier: the land
+    past the property line from a tee, from the property's edge and from
+    above -- do the pictures of trees read as the course's own trees, is
+    there a line where the course's trees stop and the pictures start, do
+    they turn oddly as the camera moves or flies, do the open meadows look
+    right; the far hills' shape; Desert Mountain's mountain, Seaside Links'
+    sea and the season's colours, which were to be kept. **The builder's
+    Surroundings block has been pressed only by a script** (the
+    `builder-surroundings` journey), never by a person: each side's
+    nine choices, Height and Trees, seen in Game view, saved, reopened,
+    carried through Back to 2D and a door 2 course, then played in Fairway
+    (a side of water against a low course and a high one). **Frame rate
+    was measured on one desktop graphics card only**: no phone, no laptop,
+    no machine without a graphics card, and nothing since the last real
+    models past the line were taken out and the meadows opened.
+
 ## The course of the week at full length, and the starting course (branch `weekly-course-length`, 12 November 2026)
 
 ### Release 0.9.14 (12 November 2026)

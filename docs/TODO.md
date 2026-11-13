@@ -115,50 +115,21 @@ wrong, unfinished, or owed a check.
   (was: *Models to check*, *The limb fix...*, *One look left in Southern
   Pines*, *Bare tree branches*, *Regenerate the grasses on Meshy*)
 
-- [ ] **The surroundings rework (branch `surroundings-rework`), open** (12-13
-  November 2026; docs/SURROUNDINGS.md). **The mountainsides and the far growth, rounds 10 and 11
-  (SURROUNDINGS, *Round 11*), are built and not finished.** Round 11 (13
-  November 2026) acted on the owner's words about round 10: the rock's cell
-  pattern is gone from every landscape (soft tone, no pattern), Hawaii's
-  range is rounded and lower, no plant past the line stands on ground over
-  40 degrees, Desert Mountain and the Desert Resort are bare above their
-  lower slopes, and the far trees are lit by the scene's own sun instead of
-  a light baked into their pictures. **Seen in captures only**: all fifteen photographed with no errors,
-  and the far growth at six hours on all fifteen. **Measured once, on High
-  at Mountain**: 1.2%, 2.2% and 0.8% slower than 0.9.14 at two tees and from
-  above (rounds 10 and 11 themselves cost under 1%, inside the noise).
-  **Wrong and not found: a course takes about 1.1 s longer to load** than
-  before round 10 (11.7 s to 12.8 s on Mountain; not the processor's work).
-  Owed: that comparison with the round's shader additions off, and with the
-  normals picture not baked (SURROUNDINGS, *Round 11*). **Owed besides:**
-  frame rate against 0.9.14 on Low, Medium and Ultra; both smoke runs. (The
-  card stood at 16 to 54% with the desktop alone for most of 13 November;
-  the frame tools' and gpu-run's thirty-second gate was not loosened.)
-  **The owner's wide views** ("framerates when looking across a whole
-  landscape are tending to tank. we need a fix for that") **are NOT
-  fixed.** Measured on High at Mountain from 250 m up: the course's own
-  trees and plants are 60% of the frame, the far ground 10%, the far trees
-  0.4%. Two fixes, neither started: the course's own distant trees drawn as
-  pictures past some size on screen (touches the owner's rulings of 9
-  November: theirs to decide), and a lean shader path for the far ground
-  (the surroundings' own work; pictures must not change by a pixel).
-  The Badlands and Prairie & Sand Hills got the finer ground only.
-  **Mountain's forest floor (round 10 lightened it and took it off the
-  rock) read dark
-  and flat where the trees are thin** (ground.js, the floor tone under the
-  far trees; SURROUNDINGS round 5). **High on Mountain is not shown to be level
-  with 0.9.14** (the figures above; in round 9 it read 0.6 to 1.4% slower at
-  the two tees and level from above). Ultra was faster, Medium level and Low
-  2% faster in round 9 and have not been measured since.
-  What is left to take out is the far trees' shading at a tee on a landscape
-  whose slopes stand over the course's own trees (the haze worked out a
-  pixel; it could be worked out a corner of each picture).
-  **`bench/baseline.json` still holds the far woods' `farSeated` keys** until
-  the next `node tools/bench.mjs --save`; the `surround` metric has no
-  baseline until then. Not gone through one landscape at a time against
-  pictures with the owner (the plan's step 5), and no per-landscape
-  `surround` recipe in biomes.js (the plan's step 4): the builder's record
-  and the landscapes' existing far relief are what there is.
+- [ ] **Frame rate on High and Ultra, every landscape (branch
+  `surroundings-rework`, from 13 November 2026; docs/SURROUNDINGS.md, *The
+  frame-rate pass*).** The owner, 13 November 2026, after looking at the
+  surroundings ("it looks great"; that work is in DONE.md): "Iterate as many
+  times as needed to improve the framerates of all of our landscapes. The
+  GPU and CPU are yours to use. Focus on gains on high and ultra settings as
+  those things should trickle down to the lower settings." Where it started
+  (High on Mountain, 13 November): from 250 m over the first tee the
+  course's own trees and plants are 60% of a frame, the far ground 10% (5%
+  from a tee), the far trees 0.4%; the branch 1.2%, 2.2% and 0.8% slower
+  than 0.9.14 at two tees and from above. **Also open, found that day: a
+  course takes about 1.1 s longer to load** than before round 10 of the
+  surroundings (11.7 s to 12.8 s on Mountain; not the processor's work).
+  What each round did, measured, and what is still owed is in SURROUNDINGS,
+  *The frame-rate pass*; this entry is rewritten as it goes.
 
 ## The owner's calls
 
@@ -192,24 +163,10 @@ here is a claim of support until it is done.
 - [ ] **Play the current build by hand** (0.9.14, 12 November 2026). What has
   been built and seen only in captures, measurements or smoke runs, and still
   exists in the game. The archive has each item's full list.
-  - **The surroundings** (branch `surroundings-rework`, 12-13 November 2026,
-    not merged or released; docs/SURROUNDINGS.md). Seen in captures only,
-    all fifteen landscapes, with no errors; the owner has looked at none of
-    them in the game. To look at, on each landscape and each tier: the land
-    past the property line from a tee, from the property's edge and from
-    above -- do the pictures of trees read as the course's own trees, is
-    there a line where the course's trees stop and the pictures start, do
-    they turn oddly as the camera moves or flies, do the open meadows look
-    right; the far hills' shape; Desert Mountain's mountain, Seaside Links'
-    sea and the season's colours, which were to be kept. **The builder's
-    Surroundings block has been pressed only by a script** (the
-    `builder-surroundings` journey), never by a person: each side's
-    nine choices, Height and Trees, seen in Game view, saved, reopened,
-    carried through Back to 2D and a door 2 course, then played in Fairway
-    (a side of water against a low course and a high one). **Frame rate
-    was measured on one desktop graphics card only**: no phone, no laptop,
-    no machine without a graphics card, and nothing since the last real
-    models past the line were taken out and the meadows opened.
+  - **The surroundings' frame rate** (branch `surroundings-rework`; the look
+    was signed off by the owner on 13 November 2026 and is in DONE.md).
+    **Frame rate was measured on one desktop graphics card only**: no phone,
+    no laptop, no machine without a graphics card.
   - **The rebuilt ball** (0.9.13; the owner played the branch on 12 November
     and said it "feels way better", naming no single check): the hole-out
     banner, the cameras and the cup sound against a ball that now falls and
