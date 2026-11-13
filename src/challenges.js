@@ -26,7 +26,7 @@
 // Pure. Every name, medal score and spot rule is PLACED (RESEARCH.md
 // *Challenges and medals*).
 
-import {DEFAULT_COURSE, validateSettings} from './settings-schema.js';
+import {DEFAULT_COURSE, STARTING_CHOICES, validateSettings} from './settings-schema.js';
 
 const FOOT = .3048, YARD = .9144;
 
@@ -38,15 +38,39 @@ export function seeded(seed) {
 }
 
 
-// THE CHALLENGE COURSE: eighteen holes at the default settings from a fixed
+// THE CHALLENGE COURSE: eighteen holes on the starting course from a fixed
 // seed, chosen because it hosts every challenge (a par 3, water to carry, a
 // greenside bunker, a short side, a green big enough for long lag putts) --
 // tests/challenge-spots.test.mjs proves it. When a generator change means it
 // no longer does, the seed moves on (`CHALLENGE-2`), written down in RESEARCH
 // like a generator bump; records and medals are kept across it.
-export const CHALLENGE_SEED = 'CHALLENGE-1';
+//
+// ON THE STARTING COURSE, AND A FULL LENGTH (the owner, 12 November 2026:
+// "add these defaults to that ... we also don't have any users yet so it's OK
+// to move those things"). Until then it was the bare defaults, and it had the
+// mistake the course of the week had: eighteen holes asked for at the default
+// length for NINE, 3,240 yards, so every hole came out at its shortest (4,650
+// yards, par 68). The length is now the default's 360 yards a hole for
+// however many holes are asked for -- 6,480 for the eighteen, and the 3,240
+// the Bogey-free nine always had -- so no new figure was placed. EVERY SPOT
+// MOVED WITH IT, and a medal or best saved before 0.9.14 was won on the old
+// course; they are kept, as across a seed change.
+//
+// THE SEED MOVED ON WITH IT, to `CHALLENGE-13`. At 15% water `CHALLENGE-1`
+// has no fairway shot with water between it and the green, so *Over the
+// water* had no hole. Of `CHALLENGE-1` to `-40` on the starting course, only
+// 13 and 22 host every challenge, and 22 was turned down although its mix of
+// pars is the more ordinary (4, 11 and 3 against 13's three par 3s, thirteen
+// par 4s and two par 5s): the hole its tee challenges are played on has a
+// fairway bunker 257 yards out on the line, and a golfer with a 250-yard
+// driver found it with every ball (the steady golfer of
+// tests/challenge-virtual.test.mjs scored nothing in Fairway finder, the
+// streak and the shape, and medalled in 17 of the 25 course challenges
+// against 20 on 13). Less water makes a hosting seed rare, so expect to
+// search again after any change to the starting course or the generator.
+export const CHALLENGE_SEED = 'CHALLENGE-13';
 export const CHALLENGE_BIOME = 'pacnw';
-export const challengeCourseSettings = () => validateSettings({...DEFAULT_COURSE, seed: CHALLENGE_SEED, biome: CHALLENGE_BIOME, holes: 18});
+export const challengeCourseSettings = (holes = 18) => validateSettings({...DEFAULT_COURSE, ...STARTING_CHOICES, seed: CHALLENGE_SEED, biome: CHALLENGE_BIOME, holes, courseYards: DEFAULT_COURSE.courseYards * holes / 9});
 export const CHALLENGE_COURSE_NAME = 'The Challenge Course';
 
 // The tabs, in order. Head to head and Rounds join in the plan's third step.

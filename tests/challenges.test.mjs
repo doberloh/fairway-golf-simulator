@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import {CHALLENGES, GROUPS, challenge, challengesIn, medalOf, medalTargets, better, recordChallenge, normaliseRecords, normaliseMedals,
  medalsFromRecords, recordScore, feetText, scoreText, targetText, isUpAndDown, MEDAL_TOTAL, challengeCourseSettings, CHALLENGE_SEED, CHALLENGE_RULES, challengeGroup, CHALLENGE_RULE_ROWS} from '../src/challenges.js';
 import {rewardsOf} from '../src/rewards.js';
+import {STARTING_CHOICES} from '../src/settings-schema.js';
 
 const ORDERS = ['turns', 'streak', 'spotOut', 'knockout', 'holes', 'round'], PLAYS = ['max', 'min', 'sum', 'mean', 'updown', 'knockout', 'points', 'round'];
 const SHOWS = ['feet', 'yards', 'points', 'count', 'updown', 'percent', 'strokes', 'versus'];
@@ -50,11 +51,20 @@ test('every challenge is open: one row in the reward table, at level 1', () => {
  for (const c of CHALLENGES) assert.equal(c.level, undefined, `${c.id} carries no level`);
 });
 
-test('the Challenge Course is fixed: one seed, eighteen holes, the default settings otherwise', () => {
+test('the Challenge Course is fixed: one seed, eighteen holes at a full length, on the starting course', () => {
  const a = challengeCourseSettings(), b = challengeCourseSettings();
  assert.deepEqual(a, b);
  assert.equal(a.seed, CHALLENGE_SEED);
  assert.equal(a.holes, 18);
+ // 360 yards a hole, the default's own: it was 3,240 for the eighteen until
+ // 0.9.14, the default for nine, and every hole came out at its shortest.
+ assert.equal(a.courseYards, 6480);
+ for (const [k, v] of Object.entries(STARTING_CHOICES)) assert.equal(a[k], v, k);
+ // The Bogey-free nine is the same course asked for as nine holes.
+ const nine = challengeCourseSettings(9);
+ assert.equal(nine.holes, 9);
+ assert.equal(nine.courseYards, 3240);
+ assert.deepEqual({...nine, holes: 18, courseYards: 6480}, a);
 });
 
 test('medals are scored against the golfer: their driver, or the hole\'s length', () => {

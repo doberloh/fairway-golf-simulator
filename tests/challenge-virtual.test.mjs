@@ -140,7 +140,7 @@ test('Sudden death: an endless run played until everyone is out', () => {
  assert.equal(r.finished, false, 'an endless run is never finished');
 });
 test('Bogey-free nine: nine holes of the Challenge Course\'s nine, bogeys counted', () => {
- const s = {...challengeCourseSettings(), holes: 9}, nine = world(s);
+ const s = challengeCourseSettings(9), nine = world(s);
  const players = [{name: 'Alex', team: 'A'}];
  const r = new Round({players, mode: 'stroke', holes: 9, goal: 'bogeyfree', putting: {mode: 'holeout'}, tee: TEE});
  const golfers = [virtualGolfer({seed: 'bf'})];

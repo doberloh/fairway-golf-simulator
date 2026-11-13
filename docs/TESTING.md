@@ -165,7 +165,10 @@ a challenge a day. What a single ball scores is pinned by hand in
 `challenge-play` (which also flies the Swing Meter's High, Low, draw and fade
 through the ball model, so High and low and Curve it stay reachable), and
 `challenge-spots` checks on the real Challenge Course that it hosts every
-challenge and every spot is on ground its challenge allows.
+challenge and every spot is on ground its challenge allows (the course is the
+starting course at full length on seed `CHALLENGE-13` since 12 November 2026;
+`challenges` pins that, and the Bogey-free nine as the same course asked for
+as nine holes).
 `challenge-matrix` also plays the head-to-heads: a referee of its own follows every
 knockout (who is out each round, who wins) and checks every hole of Bingo
 Bango Bongo by what must hold (the farthest plays, the first in has bongo, no

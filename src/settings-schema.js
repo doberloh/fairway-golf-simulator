@@ -856,14 +856,18 @@ export function validateSettings(input={}){
 // choices sit here as a short list of differences from them.
 //
 // WHO USES IT, AND NOBODY ELSE WITHOUT THE OWNER SAYING SO: the course of the
-// week (weekly.js, from week 149), Surprise me (`surpriseSettings`) and the
+// week (weekly.js, from week 149), Surprise me (`surpriseSettings`), the
 // Course Builder's Generate door when nothing is opened into it
-// (builder/door-generate.js). The game's own course studio, Endless, the
-// Challenge Course and the range are untouched.
+// (builder/door-generate.js) and the Challenge Course (challenges.js). NOT
+// Endless -- the owner: it "needs to stay highly variable", so its holes keep
+// rolling across the wide bands on the bare defaults -- and not the range or
+// the game's own course studio.
 //
 // CHANGING A FIGURE HERE CHANGES THE COURSE OF THE WEEK ON EVERY COPY, this
-// week's included, under bests already saved -- treat this list as part of it
-// (PROJECT_HANDOFF, *The course of the week is the date*).
+// week's included, under bests already saved, AND THE CHALLENGE COURSE under
+// every medal -- and may leave the Challenge Course without a hole for a
+// challenge, which tests/challenge-spots.test.mjs catches. Treat this list
+// as part of both (PROJECT_HANDOFF, *The course of the week is the date*).
 //
 // Not a second list of defaults to keep in step: only the keys that differ,
 // each checked against the schema's own bounds (tests/settings-schema.test.mjs).

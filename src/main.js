@@ -895,7 +895,7 @@ let goalSummary=null,goalShown='';
 async function startGoalRound(def,group){
  goalSummary=null;
  if(def.goal==='suddendeath'){await startEndless({...group,mode:'stroke',goal:'suddendeath'});return;}
- await startRoundOn({...challengeCourseSettings(),holes:9},{...group,mode:'stroke',goal:'bogeyfree'},`${CHALLENGE_COURSE_NAME} · the nine`);
+ await startRoundOn(challengeCourseSettings(9),{...group,mode:'stroke',goal:'bogeyfree'},`${CHALLENGE_COURSE_NAME} · the nine`);
 }
 function roundGoalDone(prof,seat,items){
  if(!round.goal)return;

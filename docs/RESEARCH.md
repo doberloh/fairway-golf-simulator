@@ -7133,8 +7133,11 @@ challenges were the only farmable ones, which is why they moved onto medals.
 repeats capped").
 
 **Where they play** (the owner, 16 October 2026: one fixed course rather than
-any course). The Challenge Course is `DEFAULT_COURSE` with seed
-`CHALLENGE-1`, biome pnw, 18 holes, at generator 36. Checked on the day:
+any course). The Challenge Course was `DEFAULT_COURSE` with seed
+`CHALLENGE-1`, biome pnw, 18 holes, at generator 36 (**since 12 November
+2026 it is seed `CHALLENGE-13` on the starting course at 6,480 yards** --
+*The course of the week's length*, below -- so the holes named in this
+paragraph are the old course's). Checked on the day:
 `CHALLENGE-1` hosts all 21 course challenges; `CHALLENGE-2` (pnw) and
 `CHALLENGE-3` (links) have no hole with water to carry. On `CHALLENGE-1` the
 long hole is the 1st (par 5), the par 3 the 3rd, the long par 4 the 6th, the
@@ -7379,9 +7382,38 @@ that bend (the setting measured in per cent), not the bend's angle, which
 stays 45 degrees. Week 46 of 2026 on the starting course at its drawn
 length: 6,420 yards from the blue tees, 5,819 from the white, 5,235 from the
 red, par 71, five holes that bend where the short course had nine.
-**PLACED: how Surprise me uses it** -- the eighteen settings above are held
-at the owner's figures and every other setting still rolls in its band
-(`VARY`); the owner did not say how a default sits with a roll.
+**How Surprise me uses it** -- the eighteen settings above are held at the
+owner's figures and every other setting still rolls in its band (`VARY`);
+placed by Claude and confirmed by the owner the same day. **Endless does not
+use it**: the owner wants its holes "highly variable", so they keep rolling
+across the wide bands on the defaults.
+
+**The Challenge Course on the starting course** (the owner, the same day:
+it is fine to move its spots and records, there being no users yet). It had
+the week's mistake -- eighteen holes asked for at 3,240 yards, so 4,650
+yards and par 68. It now asks for the default's 360 yards a hole (6,480 for
+the eighteen, 3,240 for the Bogey-free nine, as that nine always had), so no
+new length was placed. **Its seed had to move.** With water at 15%,
+`CHALLENGE-1` has no fairway spot 100 to 170 yards out with water on the way
+to the green, so *Over the water* had no hole. Seeds `CHALLENGE-1` to
+`CHALLENGE-40` were each grown on the new settings and asked for a hole for
+every course challenge (the picks tests/challenge-spots.test.mjs makes): 38
+lacked the water carry and nothing else; **13 and 22 host everything**.
+The steady golfer of tests/challenge-virtual.test.mjs (250-yard driver) was
+then played through all 25 course challenges on both:
+
+| Seed | Pars (3s/4s/5s) | Medals | Scored nothing in |
+|---|---|---|---|
+| `CHALLENGE-22` | 4 / 11 / 3 | 17 of 25 | Fairway finder, the streak, the shape, the ace, sand, the putting ladder |
+| `CHALLENGE-13` | 3 / 13 / 2 | 20 of 25 | Over the water, the short side |
+
+On 22 the tee challenges' hole (the 2nd, 417 yards) has a fairway bunker
+257 yards out on the line, and every drive finished in it. **`CHALLENGE-13`
+was taken** (PLACED: the judgement that a course a 250-yard driver cannot
+hit the fairway on is the worse one, over 22's more ordinary pars). Over all
+31 medal challenges, range ones included, the steady golfer medals in 26 on
+it, against 23 on the old course. Its card: par 71, 6,480 yards from the
+blue tees, 5,876 from the white, 5,253 from the red.
 
 **What did not change with length.** A dogleg is an angle, so a fairway
 still swings 12 to 16% of its hole's length to the side of the line from tee
@@ -14196,7 +14228,7 @@ making the overall playing landscape larger for 9 and 18 hole courses help with 
 we need to pull back the mountain size a bit?" Puget Sound, Monterey, SoCal Canyons, Wine Country,
 Scottish Links, Oregon Dunes and Lake Dunes left (GENERATOR 94, SCHEMA 42; OLD_KEYS, the weekly's
 `retired`, the map); 28 landscapes. The Challenge Course moved from Puget Sound to the Pacific
-Northwest with its seed (`CHALLENGE-1`; tests/challenge-spots still finds every spot). Found on the
+Northwest with its seed (`CHALLENGE-1`; tests/challenge-spots still finds every spot; the seed moved to `CHALLENGE-13` on 12 November 2026, with the starting course). Found on the
 way: the Pacific Northwest and the California Coast laid no pine needles at all -- their `fallen`
 came from the region's trait and named pine, spruce and cedar, which they no longer plant -- so each
 now names its own conifers (GENERATOR 95). Highplains, Sand Hills, Badlands, Hawaiian Resort, Hill

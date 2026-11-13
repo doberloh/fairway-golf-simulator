@@ -2032,7 +2032,17 @@ about 16 minutes, the card at 42 to 52 °C). The nine builder journeys were not 
 code did not change in this release. **Played by the owner** on the branch on 12 November ("it feels way better"); what
 nobody has reported seeing is in TODO, *Play the current build by hand*.
 
-## The course of the week's length and settings (12 November 2026, branch `weekly-course-length`; not released)
+## Addendum, 12 November 2026: v0.9.14
+
+**v0.9.14** is published at the owner's request ("merge this back to Main create a new patch
+release and push to get up and to the live site demo"; "patch" read as the next number after
+0.9.13), as "Fairway 0.9.14 (beta)", tag `v0.9.14`, not a pre-release, the same six files, from
+the merge of `weekly-course-length` into `main`, notes in `docs/releases/v0.9.14.md`. Content: the
+course of the week at a full length drawn from the week and on the owner's starting course, from
+week 149; Surprise me and the Course Builder's Generate door on the same settings; the Challenge
+Course on them too, at full length, on a new seed. **Version numbers unchanged** (generator 103,
+schema 47, built 3): no setting changed shape and the generator grows the same course from the
+same settings (biome fingerprints unchanged).
 
 - **The course of the week does not change for any week before Monday 9
   November 2026** (weekly.js `WEEKLY_COURSE`, week 149). From that week a copy
@@ -2045,7 +2055,30 @@ nobody has reported seeing is in TODO, *Play the current build by hand*.
   under players who update during it** (the owner's choice: "Make it for
   this week too"): a best saved on the short course before updating stands
   against the long one for the rest of that week.
-- **Course codes, saved courses, saved rounds, Endless runs and the challenges
-  are unchanged**: the schema's defaults did not move, so nothing saved or
-  shared decodes differently.
-- Nothing about the offline build, its size or its files changed.
+- **Course codes, saved courses, saved rounds and Endless runs are
+  unchanged**: the schema's defaults did not move, so nothing saved or shared
+  decodes differently.
+- **What does not carry over exactly: challenge medals and bests.** The
+  Challenge Course is a different course (seed `CHALLENGE-13`, the starting
+  course, 6,480 yards and par 71 where it was 4,650 and par 68), so every
+  challenge has a new hole and new spots, and a medal or best kept from
+  0.9.13 was won on the old one. They are kept, not wiped (the owner: "we
+  also don't have any users yet so it's OK to move those things"). *Every
+  par 3* is three balls where it was seven. A challenge of the week played
+  on the course of the week moves with that course.
+- **Sizes:** the game page 60.4 MB (60,430,446 bytes on the branch), the
+  builder's 56.1 MB, the guide 2.0 MB; the zips, built on the branch before
+  the merge: Windows 107.1 MB (107,143,483 bytes), Linux 103.7 (103,740,229),
+  Apple Silicon 93.0 (92,987,768), Intel 95.4 (95,357,525), source 36.9 --
+  each within 2 KB of 0.9.13's. Nothing about the offline build changed.
+- **Checked, before the release:** the full tests (1,587; none failing), the
+  biome fingerprints (unchanged), the packager's verification of every zip,
+  and **every smoke journey on the branch's build** -- the game's 41 in seven
+  batches and the builder's 9 in three (`tools/gpu-run.mjs`, the card at 4
+  to 7% and about 41 °C before each). `challenge-more` first failed on the
+  journey's own stale count of par 3s and passed once corrected;
+  `friend-challenge` failed once in four runs on a start-up error this
+  release did not cause or fix (TODO, *Known wrong*). The published page
+  differs from the one driven only in the commit named in its version.
+  **Not played by a person**; what nobody has seen is in TODO, *Play the
+  current build by hand*.
