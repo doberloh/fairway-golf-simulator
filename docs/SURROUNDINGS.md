@@ -372,6 +372,21 @@ every smoke journey passes: the game's 41 of 41 and the builder's 10 of 10
 (13 November 2026). The builder guide's editor picture was retaken with the
 block in it (docs/builder-guide/editor.webp).
 
+Last of the round: a narrow tree's picture is widened more with distance,
+up to 1.85 times (Hawaii's Cook pines, a seventh as wide as tall, read from
+above as sticks; they still do a little, within 500 m). The full generator
+bench on 70 courses: every rule at zero, `surroundInside`, `surroundWet` and
+`surroundOffGround` among them, 4.95 million far sites in all.
+`bench/baseline.json` was left alone: it was saved long before this branch
+(its medians differ from today's generator on main too), and saving it is a
+choice of what to defend.
+
+**Where the branch stands (13 November 2026, 02:03).** Four commits on
+`surroundings-rework` past the plan's; `dist/` rebuilt from the last; not
+merged, not pushed. Seen by captures, smoke journeys and measurements only:
+no person has looked at any of it in the game or pressed the builder's
+block.
+
 **Not as the plan said.** Step 4 planned a `surround` recipe for every
 landscape in biomes.js. What was built is narrower: each landscape keeps its
 own far relief (`ringLift`, `ringPeaks`, `ringMesas`, `ringMassif`,
