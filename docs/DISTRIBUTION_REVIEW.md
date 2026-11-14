@@ -2083,7 +2083,25 @@ same settings (biome fingerprints unchanged).
   **Not played by a person**; what nobody has seen is in TODO, *Play the
   current build by hand*.
 
-## Addendum: the frame-rate pass on `surroundings-rework` (13 November 2026, not released)
+## Addendum, 14 November 2026: v0.9.15
+
+**v0.9.15** is published at the owner's request ("you have permission to merge
+to main. Generate a new patch version. release to github, as well as the
+live website demo"; the next patch number after 0.9.14), as "Fairway 0.9.15
+(beta)", tag `v0.9.15`, not a pre-release, the same six files, from the merge
+of `surroundings-rework` into `main`, notes in `docs/releases/v0.9.15.md`.
+Content: the surroundings rework and the frame-rate pass. Generator 103,
+schema 47 and built 3 are unchanged, and every landscape's fingerprint is as
+it was: no saved round, course or code moves. The built page is 60,474,432
+bytes against 0.9.14's 60,430,446 (44 KB more). Nothing new is fetched, no
+dependency or asset was added, and the page still opens from a file URL
+with no network. Checked on the released code: 1,624 Node tests (1,623
+pass, one skipped, none failing), the game's 41 smoke journeys and the
+builder's 10, all fifteen landscapes drawn with no errors. Not played by a
+person; frame rate measured on one desktop graphics card.
+
+What the frame-rate pass added to the file, written while it was a branch:
+
 
 A tree's middle version (High and Ultra) is made in the browser from the
 model the file already holds, when a course is built: nothing is fetched

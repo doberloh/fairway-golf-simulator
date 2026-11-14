@@ -157,6 +157,21 @@ open list before the 11 November 2026 prune*.
 
 ## Under the hood
 
+- **Near shadows cast by a tree's middle version.** In the nearest shadow
+  map a tree drawn whole is cast whole; its middle version would cast for a
+  third of the triangles (7.5 of 34 million at a large-screen tee). The
+  catch: a crown shaded by a shape other than the one it is drawn with goes
+  dark where they differ, and the nearest map's texels are about 9 cm. It
+  needs pictures of near crowns at several hours, and probably a caster
+  shrunk inside the model. Medium. instance-cull.js, by `record.caster`.
+  (the frame-rate pass, 14 November 2026; the owner asked, not built)
+- **A cheaper far ground from high above.** From 250 m up on open country
+  the far ground is 5 to 14% of the card's time, drawn with the course's
+  whole ground shader. A lighter paint for a pixel past the course's edge
+  (it needs no mowing, cups, hazards or cues) could halve that. Needs
+  pictures beside the signed-off look, and four loads a build to measure.
+  Medium. ground.js `offCourse`. (the frame-rate pass, 14 November 2026; the owner
+  asked, not built)
 - **Tell the launch monitor the distance to the hole** (`DistanceToTarget`),
   so a device can switch itself into putting mode. Blocked on units: a wrong
   guess switches modes at the wrong distance; it needs the connector's

@@ -8208,3 +8208,129 @@ engineering provenance pass, not legal advice.
   moves a late sound to now whole, so the whoosh came after the crack. It now
   has a 0.1 s lead and nothing is scheduled in the past (RESEARCH, *Round 5*).
   This also closed "the first shot of a fresh page plays late".
+
+## Frame rate on High and Ultra, every landscape (13-14 November 2026; released in 0.9.15)
+
+The owner, signing off the surroundings' look: "Iterate as many times as
+needed to improve the framerates of all of our landscapes. The GPU and CPU
+are yours to use. Focus on gains on high and ultra settings as those things
+should trickle down to the lower settings." And the next night, having
+tried the branch: "All of these are way faster than they were."
+
+**What was built** (docs/history/SURROUNDINGS.md, *The frame-rate pass*, has
+every round and its dead ends):
+
+- **F1, a tree's middle version** on High and Ultra: the model itself made
+  coarser when a course is built (a quarter of its triangles on High, a
+  third on Ultra), drawn where a tree is under 300 or 200 of the picture's
+  pixels, each model's grid chosen ahead so its outline holds
+  (`tools/mid-cells.mjs`, `src/mid-cells.js`); thirteen models on High and
+  nine on Ultra keep the old way.
+- **F2, the far twin again** where a tree is small enough for it, so there
+  are three versions; the middle version's far shadow is its twin's.
+- **F3, the far ground** no longer looks for tees and hazards past the
+  course's edge.
+- **F4, a part with no middle version** (a trunk) still goes to its twin,
+  and where the two lines meet (the Redwood Coast) there is no middle.
+  Trunks swap without a dissolve.
+- **F5, one shadow caster a part** in the two far shadow maps: 5% fewer
+  draws on Classic Parkland, no measurable change in time.
+- **Squares out of the picture, kept for their shadows**, are drawn as far
+  versions on every tier; a model is swapped by its own height, not the
+  tallest thing near it.
+- **The tools:** the card's gate reads real work; `tools/gpu-watch.mjs`;
+  `tools/frame-sweep.mjs`; frame-ab's best load of several and its
+  processor profile; `tools/late-shaders.mjs`.
+
+**What it came to.** Wooded landscapes: 30 to 50% less card time from a tee
+and from 250 m up on High and Ultra, for 40 to 60% fewer triangles. Open
+ones less: Prairie & Sand Hills on Ultra 7 to 14% in like-for-like loads.
+Medium on Mountain 18% less from a tee and level from above; Low 18% less
+from a tee and its whole frame 16% longer from above (open, TODO). No
+landscape is known to be slower than 0.9.14 on High or Ultra.
+
+**What went wrong on the way, and is worth knowing.** Three explanations of
+"slower" readings were written down and overturned in a night: the card's
+clock, then a real slowdown on Prairie, then the truth -- a load of either
+build runs in one of two modes, and one or two loads a build compared the
+modes. The graphics card was lost three times and the machine went down
+twice more (RULES_HISTORY.md). Not built: near shadows from the middle
+version, a cheaper far ground from above (IDEAS.md).
+
+**The entry as it stood in TODO when it closed:**
+
+- [ ] **Frame rate on High and Ultra, every landscape (branch
+  `surroundings-rework`, from 13 November 2026; docs/SURROUNDINGS.md, *The
+  frame-rate pass*).** The owner, 13 November 2026, after looking at the
+  surroundings ("it looks great"; that work is in DONE.md): "Iterate as many
+  times as needed to improve the framerates of all of our landscapes. The
+  GPU and CPU are yours to use. Focus on gains on high and ultra settings as
+  those things should trickle down to the lower settings." Where it started
+  (High on Mountain, 13 November): from 250 m over the first tee the
+  course's own trees and plants are 60% of a frame, the far ground 10% (5%
+  from a tee), the far trees 0.4%; the branch 1.2%, 2.2% and 0.8% slower
+  than 0.9.14 at two tees and from above. **Also open, found that day: a
+  course takes about 1.1 s longer to load** than before round 10 of the
+  surroundings (11.7 s to 12.8 s on Mountain; not the processor's work).
+  **Rounds F1 to F3 (13 November): a tree's middle version on High and
+  Ultra, its twin again when it is small, and the far ground's two loops.**
+  Against 0.9.14, card time at tee 1, tee 5 and from 250 m up: High on
+  Mountain 34%, 19% and 40% less (and 2 to 4% more off that with F3); Ultra
+  on Classic Parkland 40%, 4% and 46% less. **Wrong: at a light tee on Ultra
+  (tee 5, Classic Parkland, about 400 frames a second) the frame is 5%
+  SLOWER** for 46% more draws; one draw a crown was taken out since and it
+  is not measured again. **Owed:** every landscape measured and photographed
+  on High and Ultra; Low and Medium measured (the cull's changes reach
+  them). **Smoke on round F3's build: the builder 10 of 10, the game 40 of
+  41 -- `no-late-shaders` failed once** (Ultra, a drawn Lowcountry nine, seed
+  HOLLOW-1812: one lit shader built 142 ms after the course appeared) and
+  passed ten times run alone; not traced, and not known to be this
+  branch's. The journey now names the shader; tools/late-shaders.mjs loads
+  a named course and lists what is built late. **Course load is about a second longer than
+  0.9.14**: 0.56 s of it is the ground shader this branch grew (measured),
+  the rest not found. Next: fewer meshes a crown; whole models in the
+  nearest shadow map; which shader addition costs the load.
+  **The graphics card was lost twice on 13 November (12:03 and about
+  21:39), each time in the gap after a full-load run ended.** Windows records
+  nothing for it; the suspicion is the card's drop to idle (its link falls
+  from generation 4 to 1) failing now and then, and the checks are the
+  owner's (RULES_HISTORY, *The card is lost on the way back to idle*).
+  tools/gpu-watch.mjs records the card each second while graphics work runs.
+  **Every landscape was measured once (the first sweep, all 30 runs): raw
+  card time 19 to 23% less on average, with three Ultra runs reading slower
+  -- and those readings are the card's clock, not the game.** This card
+  slows its clock for a lighter frame; the tools now read the clock and give
+  card time at full clock ("work"). **Neither that nor the "58% slower" read after it was right: a
+  load of EITHER build runs in one of two modes** (card-bound, or held up on
+  the processor's side at up to twice the frame; 0.9.14 slow in 7 loads of
+  8), and one or two loads a build compared the modes. Like for like,
+  Prairie & Sand Hills on Ultra is 7 to 14% faster than 0.9.14 in the slow
+  mode and a quarter to a third in the fast one (SURROUNDINGS, *A load runs
+  in one of two modes*). **No landscape is known to be slower.** The
+  sweeps' small differences either way are not to be trusted; their large
+  gains on wooded landscapes showed in both modes. What puts a load in the
+  slow mode is not known and is the same in 0.9.14. **A second sweep with the
+  clock is 6 of 30 done** (stopped 13 November 23:24 for the owner's game;
+  `node tools/frame-sweep.mjs --goal surroundings --a bench/ab/base-0914.html
+  --b bench/ab/fr9.html --tiers high,ultra --spots tee1,flyhigh --rounds 1
+  --settle 600 --frames 400 --label sweep2-fr9 --util 30 --temp 75 --rest 2`
+  carries on): High so far 9 to 42% less work from a tee; **from above, open
+  country is 3 to 10% heavier** (Redwood Coast, Badlands, Prairie), not
+  looked into. The trunk's hard swap (8c171542) is still not drawn or
+  measured, and `dist/` is the build before it.
+  **Round F5 (14 November): one shadow caster a part in the far maps** --
+  Classic Parkland on High, 5% fewer draws, no measurable change in time
+  (four loads a build), pictures unchanged. **Low and Medium measured on
+  Mountain:** 18% less card time from a tee on both; Medium level from
+  above; **Low's whole frame 16% longer from 250 m up** (0.2 ms on the
+  processor's side, 14 more draws; not looked into). The nearest shadow map was left alone (a
+  crown shaded by another shape goes dark). **The owner has played the
+  build before F5 and found every landscape faster; the build with F5 and
+  the trunk's hard swap is not played.**
+  **On the final build (14 November): all fifteen landscapes photographed
+  with no errors; the game's smoke run 41 of 41. NOT run: the builder's
+  smoke run (the card was lost a third time as it started, 01:42, idle at
+  44 C with its clock capped), the full Node suite and the fingerprint
+  check since round F4.** Run those three after a restart, before any merge.
+  What each round did, measured, and what is still owed is in SURROUNDINGS,
+  *The frame-rate pass*; this entry is rewritten as it goes.
