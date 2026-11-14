@@ -105,7 +105,7 @@ import {simulateShot,parseLaunchMessage,MPH,YARD,clamp,rollPreview,R as BALL_R,o
 import {reliefOptions,crossingPoint,OB_RULES,pathRelief,OBSTRUCTIONS} from './relief.js';
 import {SCHEMA_VERSION,GENERATOR_VERSION,SETTINGS,FIELD,CATEGORIES,bound,validateSettings,migrateSettings,generationKeys,playScope,generatorFor} from './settings-schema.js';
 import {listCourses,findCourse,saveCourse,deleteCourse,renameCourse,exportCourse,importCourse,courseSettings,MAX_NAME} from './course-library.js';
-import {loadGraphics,saveGraphics,needsRebuild,greenCues,QUALITY,QUALITY_LABELS,FRAME_CAPS,READINGS,READING_LABELS,readingCues,isSoftwareRenderer,hasSavedGraphics} from './graphics.js';
+import {loadGraphics,saveGraphics,needsRebuild,greenCues,QUALITY,QUALITY_LABELS,FRAME_CAPS,READINGS,READING_LABELS,readingCues,isSoftwareRenderer,hasSavedGraphics,isPhoneDevice,PHONE} from './graphics.js';
 import {createAutoResolution} from './auto-resolution.js';
 import {createGameAudio,canopyContacts,nearestWater} from './audio.js';
 import {surpriseSettings} from './settings-schema.js';
@@ -292,6 +292,13 @@ diagnosticErrors.install();
 // than the rate the display offered.
 const diagnosticFrames=frameMeter();
 let appMode='menu',studioDirty=false,studioBiome=null,graphics=loadGraphics();
+// A PHONE STARTS ON THE PHONE TIER, every time the game opens (graphics.js
+// `isPhoneDevice`; branch phone-performance): whatever was saved, and with
+// automatic resolution off -- fewer pixels bought nothing measurable on the
+// owner's iPhone, and the owner found it "a blurry mess". The picker still
+// offers the others for the session, for comparing with Measure this device.
+const phoneDevice=isPhoneDevice(globalThis.navigator);
+if(phoneDevice)graphics={...graphics,quality:PHONE,autoResolution:false};
 // TEXT SIZE (ui-scale.js). Applied before anything is laid out, again whenever the
 // setting or the bay changes, and on a resize: automatic in a bay depends on how
 // many CSS pixels wide the browser is.
@@ -3987,6 +3994,11 @@ async function runDeviceBench(){
  closePanel();
  benchProbe={gaps:[],work:[],counts:{},sync:false,count:false,last:null,wait:null,notes:new Set()};
  const notes=benchProbe.notes;
+ // AT THE TIER'S OWN RESOLUTION: automatic resolution may have stepped it
+ // down (the owner's first run read at 50%), which measured a quarter of the
+ // tier's pixels. Put back as it was after.
+ const scaleWas=view.resolutionScale??1;
+ view.setResolutionScale(1);
  const note=(i,n)=>toast(`Measuring this device: ${i} of ${n}. Keep the screen on and leave it be.`);
  note(0,1);
  let rows=null;
@@ -3996,11 +4008,13 @@ async function runDeviceBench(){
    frames:benchFrames,
    measure:benchMeasure,
    hide:benchHide,
-   restore:()=>{benchProbe=null;cameraMode(mode==='free'?'player':mode);},
+   restore:()=>{benchProbe=null;view.setResolutionScale(scaleWas);cameraMode(mode==='free'?'player':mode);},
   },{hole:at,length:h.length??300,onStep:note});
  }catch(e){benchProbe=null;toast(`The benchmark stopped: ${e?.message??e}`);return null;}
  const c=view.renderer.domElement;
- lastBench={rows,tier:graphics.quality,ratio:Math.round(view.renderer.getPixelRatio()*100)/100,canvas:[c.width,c.height],
+ // What it measured at: the tier's own ratio and the size of the first reading
+ // (the resolution has been put back by now).
+ lastBench={rows,tier:graphics.quality,ratio:Math.round(view.pixelCeiling()*100)/100,canvas:rows[0]?.canvas??[c.width,c.height],
   seconds:Math.round((performance.now()-started)/1000),course:`${playingCourseName()}, hole ${round.hole+1}`,notes:[...notes]};
  toast('Measured. Help → Report a problem → Copy diagnostic carries the figures.');
  return lastBench;
@@ -6472,7 +6486,7 @@ function renderPanel(name,content){
    $(id).addEventListener('input',()=>gameAudio?.setPrefs({[key]:Number($(id).value)}));
  }else if(name==='graphics'){
   content.innerHTML=`<p>These stay on this device and never travel with a course, so the same course looks the way each machine can afford on every screen it is opened on.</p>
-  <label class="field">Quality${QUALITY.map(q=>'').join('')}<select id="gfxQuality">${QUALITY.map(q=>`<option value="${q}">${QUALITY_LABELS[q]}</option>`).join('')}</select></label>
+  <label class="field">Quality${QUALITY.map(q=>'').join('')}<select id="gfxQuality">${(phoneDevice?[PHONE,...QUALITY]:QUALITY).map(q=>`<option value="${q}">${QUALITY_LABELS[q]}</option>`).join('')}</select></label>
   <p class="note" id="gfxNote"></p>
   <label class="field">Frame rate cap<select id="gfxFrameCap">${FRAME_CAPS.map(f=>`<option value="${f}">${f?f+' fps':'Follow the display'}</option>`).join('')}</select></label>
   <p class="note">A cap trades refresh rate for headroom. Leave it following the display unless the fans are loud or the picture is uneven.</p>
@@ -6502,6 +6516,7 @@ function renderPanel(name,content){
   <p class="note">With the course floodlit, the lamps nearest your shot throw shadows — five of them, or three on High and Ultra, whose own sun shadows take the room. Redrawn only when the lamps or the view move, so they cost nothing frame to frame. The first switch on a course takes a few seconds to prepare, longer on Ultra, while you play on; after that it is instant.</p>
 `;
   const note=()=>$('gfxNote').textContent={
+   phone:'Made for a phone: the hole you are playing is drawn in full and the rest of the course more lightly, shadows are redrawn less often, and the ground away from you is coarser. Picked every time the game opens on a phone.',
    low:'Trims shadows, draw distance and planting so older laptops and integrated graphics keep up.',
    medium:'Renders exactly as Fairway always has.',
    high:'Soft shadows everywhere, drifting cloud shade, light shafts, a far horizon and thicker planting. Wants a discrete GPU.',

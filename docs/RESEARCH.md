@@ -15378,6 +15378,48 @@ These are the project's first frame figures from a real phone; every
 earlier phone figure was an estimate scaled from this desktop card
 (tools/devices.mjs, PLACED there). No outside source.
 
+**Measure this device on the owner's iPhone** (14 November 2026, 21:09; build
+8fdd88d2 served from the PC; Chrome on iOS 26.5.2, WebKit underneath; "Mosswood
+Canopy", Redwood Coast, 18 holes, seed WANDER-8565, 6,480 yd, hole 1;
+Medium, with automatic resolution on and at 50%, so drawn at a 0.88 ratio,
+385 by 667 -- a quarter of Medium's own pixels). Work of a frame (the draw and
+a one-pixel read back), whole frame either side of a part's reading:
+
+| place | reading | fps | work ms | change | draws | triangles |
+|---|---|---|---|---|---|---|
+| tee | as drawn | 29 | 31 | | 356 | 17.7 M |
+| tee | no trees or plants | 59 | 13 | -57% | 47 | 5.0 M |
+| tee | no course ground | 42 | 23 | -23% | 354 | 12.8 M |
+| tee | no far ground | 33 | 30 | 0% | 345 | 17.6 M |
+| tee | no far trees | 33 | 29 | -3% | 346 | 17.7 M |
+| tee | shadows not redrawn | 45 | 22 | -51% | 218 | 9.7 M |
+| tee | half the pixels (272x472) | 14 | 74 | +9% | 356 | 17.7 M |
+| fairway | as drawn | 15 | 66 | | 341 | 13.9 M |
+| green | as drawn | 14 | 76 | | 313 | 16.2 M |
+| 250 m up | as drawn | 14 | 67 | | 276 | 9.0 M |
+| 250 m up | no trees or plants | 22 | 43 | -36% | 50 | 5.1 M |
+| 250 m up | no course ground | 23 | 41 | -38% | 274 | 4.1 M |
+| 250 m up | no far ground | 15 | 65 | -2% | 264 | 8.9 M |
+| 250 m up | no far trees | 14 | 67 | +1% | 264 | 8.9 M |
+| 250 m up | shadows not redrawn | 18 | 54 | -18% | 186 | 5.8 M |
+| 250 m up | half the pixels | 16 | 61 | -8% | 276 | 9.0 M |
+
+**The phone slowed during the run**: the tee read 31 ms at the start and the
+whole frame round the later tee readings rose to about 45 then 68 ms within
+some 20 seconds, at the same view. So the tee's later rows straddle the step:
+its "shadows not redrawn" -51% lies somewhere between about -27% and -63%,
+and its pixels row is noise; the 250 m rows, all after the step, are the
+clean ones. Cause not known (heat, the phone's power management, Chrome on
+iOS). The benchmark since re-reads the tee at the end and prints the whole
+frame beside each part, so drift shows in the table, and pins the resolution
+to the tier's own while it measures.
+
+What it says, as far as it can: **the cost is geometry, not pixels** -- the
+trees and plants (309 of 356 draws, 12.7 M triangles at the tee, 8 M of them
+drawn a second time into the one shadow map, since Medium casts every tree
+whole), then the course's ground; the far land costs nothing. Fewer pixels
+was not shown to be free: it was a quarter of Medium's pixels already.
+
 **Measure this device on the PC, for comparison** (14 November 2026; the
 capture build, Classic Parkland seed "overhaul", hole 1, Medium, 1,600 by
 900 at density 1, frames capped by the display at 60; tools/variants/

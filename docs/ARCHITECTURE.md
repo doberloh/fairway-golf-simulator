@@ -110,7 +110,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 
 **Drawing it**
 - `src/renderer.js` -- the three.js scene, ball, cup, flag, cameras, maps
-- `src/graphics.js` -- quality tiers; the one table every graphics setting reads
+- `src/graphics.js` -- quality tiers; the one table every graphics setting reads; the Phone tier and `isPhoneDevice`
 - `src/textures.js`, `src/mesh-assets.js`, `src/asset-meshes.js` (generated; never edit) -- textures, wind, imported models
 - `src/instance-cull.js`, `src/occlusion.js`, `src/owner-atlas.js` -- drawing only what is seen, soft shade, ground ownership
 - `src/low-trees.js` -- Low's rule for drawing fewer trees, never the hole's (pure; tests/low-trees.test.mjs)
@@ -296,7 +296,8 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - A far tree's picture has no light in it: colours and normals are baked apart and the scene lights each pixel; mirror the picture and its normal's red must mirror too -- PROJECT_HANDOFF *The atlas is TWO pictures*
 - A built course's `surround` is scenery (never `BUILT_VERSION`); a water side stands the sea under the lowest of the land, and the record travels beside `treePlan` through the builder -- PROJECT_HANDOFF *A COURSE'S OWN SURROUNDINGS*.
 - A sea among the holes (`sea` without `edgeCoast`, Lowcountry and Gulf's creeks) needs the ground near the sea, the marsh above the beach band and the band its own colour -- PROJECT_HANDOFF *A sea among the holes*.
-- Graphics tiers never touch a played surface; two players on different tiers hit the same trees. Only Low may leave trees undrawn, never the hole being played's (9 Nov). [GRAPHICS TIERS MAY NOT TOUCH]
+- Graphics tiers never touch a played surface; two players on different tiers hit the same trees. Only Low and Phone may leave trees undrawn, never the hole being played's (9 and 14 Nov). [GRAPHICS TIERS MAY NOT TOUCH]
+- A phone starts on the Phone tier every time (not one of `QUALITY`); a check on a tier's name that should include it uses renderer.js `lightTier()` -- PROJECT_HANDOFF *THE PHONE TIER*.
 - A fading tree's level rides in its instance colour's red (steps of four); a material on a culled tree mesh without ditherFade draws it red. [AN INSTANCE'S RED CARRIES ITS DISSOLVE]
 - The drawn ground is squares of varying detail; never raycast it, pick along world.height. [THE DRAWN GROUND IS NOT THE GROUND]
 - The range is a hand-built hole and must keep filling the same contract. [The range is a hole]

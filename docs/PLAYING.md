@@ -1020,6 +1020,15 @@ average, because an average hides the thing worth reporting: a run that mostly
 holds 60 and stalls twice a second averages out respectable and is horrible to
 play.
 
+**On a phone the game starts on the Phone graphics setting** every time it
+opens (an iPhone, or an Android phone; not an iPad or a tablet). It draws every
+tree of the hole you are playing and round your ball, and fewer the further off
+they are; its shadows are cast by the trees' lighter far versions and redrawn
+a few times a second rather than every frame, so a shadow can lag a moving ball
+a little; the ground away from you is coarser; there are no animals or course
+markings. Automatic resolution starts off. Settings, Graphics still offers the
+other four for the rest of that session.
+
 **Measure this device**, under the same heading, is for a game that runs
 slowly. In a round (a course or an endless hole), it closes the help and
 stands the camera at four places on the hole you are on -- the tee, the

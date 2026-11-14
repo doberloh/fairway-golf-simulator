@@ -24,8 +24,9 @@ test('the tour reads every place, and takes the frame apart at the tee and from 
  const io = fakeIo(), steps = [];
  const rows = await runBench(io, {hole: 3, length: 400, onStep: (i, n) => steps.push([i, n])});
  const withParts = BENCH_SPOTS.filter(s => s.parts).length;
- assert.equal(rows.length, BENCH_SPOTS.length + withParts * BENCH_PARTS.length, 'one row a place and one a part');
- assert.equal(io.readings, BENCH_SPOTS.length + withParts * BENCH_PARTS.length * 2, 'a whole-frame reading after every part');
+ assert.equal(rows.length, BENCH_SPOTS.length + withParts * BENCH_PARTS.length + 1, 'one row a place, one a part, and the first place again');
+ assert.equal(io.readings, BENCH_SPOTS.length + withParts * BENCH_PARTS.length * 2 + 1, 'a whole-frame reading after every part');
+ assert.deepEqual([rows.at(-1).spot, rows.at(-1).part], ['tee', 'again'], 'the tee read again at the end, to show any drift');
  // The camera is put on the hole being played, never another.
  for (const [kind, pose] of io.log.filter(e => e[0] === 'place')) assert.equal(pose.hole, 3, kind);
  // Never two parts off at once, and each is back on before the next reading of the whole.
@@ -65,7 +66,8 @@ test('the report says what each part costs, and rides in the diagnostic', async 
  assert.match(text, /DEVICE BENCHMARK/);
  assert.match(text, /tier +medium/);
  assert.match(text, /1\.75 pixel ratio, 770x1565/);
- assert.match(text, /tee +no trees or plants +30 +50 +20 +-50%/);
+ assert.match(text, /tee +no trees or plants +30 +50 +20 +40\.0 +-50%/);
+ assert.match(text, /tee +as drawn, at the end/);
  assert.match(text, /250 m up +as drawn/);
  assert.equal(formatBench(null), '');
  assert.match(formatBench({rows, tier: 'medium', notes: ['the page was put away during the run']}), /note +the page was put away/, 'what may have spoiled it is said');

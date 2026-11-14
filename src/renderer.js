@@ -1001,6 +1001,28 @@ export class GolfView{
   // so they follow on the next frame without being told.
   if(Math.abs(this.renderer.getPixelRatio()-ratio)>1e-6)this.renderer.setPixelRatio(ratio);
  }
+ // THE ONE SHADOW MAP, REDRAWN LESS OFTEN (graphics.js `shadowEvery`, the Phone
+ // tier). Without cascades the sun's map is a box that follows the camera's
+ // position (not its heading); redrawing it every frame was half of an iPhone's
+ // frame from a tee. With `shadowEvery` it is drawn every that many frames, and
+ // at once when the camera has moved two metres since it was last drawn, so a
+ // camera flight never leaves ground under an old box. A map not redrawn keeps
+ // the matrices it was drawn with (three reads `shadow.matrix`, set only when
+ // it draws), so what it shows stays where it was cast. The ball's shadow and a
+ // tree's sway then step at a quarter of the frame rate. Other tiers: every frame.
+ // Low and Phone leave out the animals and the course's markings, and step the light ones at 30 a second.
+ lightTier(){return this.quality===tierOf('low')||this.quality===tierOf('phone');}
+ scheduleSunShadow(){
+  const s=this.sun?.shadow,every=this.quality.shadowEvery??1;
+  if(!s||this.csm||!this.sun.castShadow)return;
+  if(every<=1){if(s.autoUpdate===false){s.autoUpdate=true;this.sunShadowAt=null;}return;}
+  const f=this.sunShadowFrame=(this.sunShadowFrame??0)+1,cam=this.camera.position,last=this.sunShadowAt;
+  // (The sun as the cascades judge it: a quarter of a degree, CASCADE_SUN_TURN;
+  // a timed day moves it every frame by far less.)
+  const draw=!s.map||!last||f%every===0||last.distanceToSquared(cam)>4||!this.sunShadowDir||!this.sunDir||this.sunShadowDir.dot(this.sunDir)<CASCADE_SUN_TURN;
+  s.autoUpdate=draw;s.needsUpdate=false;
+  if(draw){(this.sunShadowAt??=new T.Vector3()).copy(cam);(this.sunShadowDir??=new T.Vector3()).copy(this.sunDir);}
+ }
  applyQuality(name){
   this.quality=tierOf(name);
   this.setResolutionScale(this.resolutionScale??1);
@@ -2244,7 +2266,7 @@ export class GolfView{
   place(0);
   this.group.add(group);
   let since=0;
-  return {group,update:(dt,t)=>{since+=dt;if(this.quality===tierOf('low')&&since<1/30)return;since=0;place(t);}};
+  return {group,update:(dt,t)=>{since+=dt;if(this.lightTier()&&since<1/30)return;since=0;place(t);}};
  }
  // AN ARCHITECT COURSE'S MARKINGS (architect-courses, phase 2; markings.js,
  // tools/blender/architect_people.py): stakes, yardage posts and rakes, a few
@@ -3668,9 +3690,9 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   // update further down puts back what the photograph had to show.
   this.stepWaterProbes();
   // Life on an Architect course (phase 6): never on Low.
-  if(this.life){const on=this.quality!==tierOf('low');this.life.group.visible=on;if(on)this.life.update(dt,this.elapsed);}
+  if(this.life){const on=!this.lightTier();this.life.group.visible=on;if(on)this.life.update(dt,this.elapsed);}
   this.fountains?.update(dt,this.elapsed);
-  if(this.markings)this.markings.visible=this.quality!==tierOf('low');
+  if(this.markings)this.markings.visible=!this.lightTier();
   const fog=this.quality.fog,over=this.config.mode==='overview';this.scene.fog.near=over?fog.overviewNear:fog.near;this.scene.fog.far=over?fog.overviewFar:fog.far;
   // THE FOG IS THE DRAW DISTANCE (F5a in TODO). The far plane was a fixed 20 km
   // while fog only faded what was drawn, so Low's short fog hid the distance and
@@ -3706,6 +3728,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   // After the cascades have moved, so each shadow map gets the trees it can
   // reach this frame (instance-cull.js). Their shadow cameras are placed here
   // exactly as three places them when it draws the map.
+  this.scheduleSunShadow();
   this.updateGroundLod();
   if(this.cull){
    const lights=this.csm?this.csm.lights:this.sun?.castShadow?[this.sun]:[];

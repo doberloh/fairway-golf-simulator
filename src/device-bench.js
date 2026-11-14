@@ -64,7 +64,7 @@ const mean2 = (a, b) => a == null ? b : b == null ? a : (a + b) / 2;
 // `onStep(i, n)` is told how far along it is, for the player's progress line.
 export async function runBench(io, {hole = 0, length = 300, spots = BENCH_SPOTS, parts = BENCH_PARTS, onStep = null} = {}) {
  const rows = [];
- const steps = spots.reduce((n, s) => n + 1 + (s.parts ? parts.length : 0), 0);
+ const steps = spots.reduce((n, s) => n + 1 + (s.parts ? parts.length : 0), 1);
  let done = 0;
  const step = () => { done++; onStep?.(done, steps); };
  try {
@@ -90,6 +90,15 @@ export async function runBench(io, {hole = 0, length = 300, spots = BENCH_SPOTS,
     step();
    }
   }
+  // THE FIRST PLACE AGAIN, AT THE END (the owner's first run, 14 November
+  // 2026: the same view read 31 ms of work at the start and 60 to 70 ms twenty
+  // seconds later, as the phone slowed). Read against the first row, it says
+  // how far the device drifted over the run.
+  const first = spots[0];
+  io.place(first.pose(hole, length));
+  await io.frames(BENCH.settle);
+  rows.push({spot: first.id, part: 'again', ...await io.measure()});
+  step();
  } finally {
   io.restore();
  }
@@ -128,12 +137,14 @@ export function formatBench(bench) {
  if (seconds != null) out.push(`  took            ${seconds} s`);
  // What may have spoiled the readings (main.js: the page put away, a shot flown).
  for (const n of bench.notes ?? []) out.push(`  note            ${n}`);
- out.push(`  ${pad('place', 9)}${pad('reading', 29)}${lpad('fps', 4)}${lpad('worst', 7)}${lpad('work ms', 9)}${lpad('vs whole', 10)}${lpad('draws', 7)}${lpad('tris', 9)}`);
+ // `whole ms`: the whole frame's work either side of a part's reading, so a
+ // device slowing over the run shows in the column itself.
+ out.push(`  ${pad('place', 9)}${pad('reading', 29)}${lpad('fps', 4)}${lpad('worst', 7)}${lpad('work ms', 9)}${lpad('whole ms', 10)}${lpad('vs whole', 10)}${lpad('draws', 7)}${lpad('tris', 9)}`);
  for (const r of rows) {
   const vs = r.part && r.workMs != null && r.baseWork ? `${r.workMs <= r.baseWork ? '-' : '+'}${Math.round(Math.abs(r.workMs - r.baseWork) / r.baseWork * 100)}%` : '';
   // The pixels row says the size it drew at, so it proves itself.
-  const what = r.part ? label(BENCH_PARTS, r.part) + (r.part === 'pixels' && r.canvas ? ` ${r.canvas[0]}x${r.canvas[1]}` : '') : 'as drawn';
-  out.push(`  ${pad(label(BENCH_SPOTS, r.spot), 9)}${pad(what, 29)}${lpad(r.fps ?? '-', 4)}${lpad(r.worstMs ?? '-', 7)}${lpad(r.workMs ?? '-', 9)}${lpad(vs, 10)}${lpad(r.draws ?? '-', 7)}${lpad(millions(r.triangles), 9)}`);
+  const what = r.part === 'again' ? 'as drawn, at the end' : r.part ? label(BENCH_PARTS, r.part) + (r.part === 'pixels' && r.canvas ? ` ${r.canvas[0]}x${r.canvas[1]}` : '') : 'as drawn';
+  out.push(`  ${pad(label(BENCH_SPOTS, r.spot), 9)}${pad(what, 29)}${lpad(r.fps ?? '-', 4)}${lpad(r.worstMs ?? '-', 7)}${lpad(r.workMs ?? '-', 9)}${lpad(r.baseWork != null ? r.baseWork.toFixed(1) : '', 10)}${lpad(vs, 10)}${lpad(r.draws ?? '-', 7)}${lpad(millions(r.triangles), 9)}`);
  }
  return out.join('\n');
 }

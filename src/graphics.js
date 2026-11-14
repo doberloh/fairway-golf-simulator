@@ -14,7 +14,23 @@ export const QUALITY = ['low', 'medium', 'high', 'ultra'];
 // 0 means uncapped, which in practice means the display's own refresh rate.
 export const FRAME_CAPS = [0, 30, 60, 120, 144];
 
+// THE PHONE TIER (branch phone-performance, 14 November 2026; the owner: "I
+// would still like to target 45-60fps on an iPhone. We might need to hide
+// graphics options entirely from phone users"). Not one of QUALITY: a phone
+// starts on it every time the game opens (main.js, `isPhoneDevice`), its
+// picker offers it first, and no other machine is offered it.
+export const PHONE = 'phone';
+// A phone, from what the browser says it is: an iPhone or iPod, or Android
+// with "Mobile" (an Android tablet leaves it out). An iPad is not a phone: it
+// says it is a Mac and keeps the four tiers (PLACED). Read once at boot, never
+// from the screen's size, so turning the phone over never changes the tier.
+export function isPhoneDevice(nav = globalThis.navigator) {
+ const ua = String(nav?.userAgent ?? '');
+ return /iPhone|iPod/.test(ua) || /Android/.test(ua) && /Mobile/.test(ua);
+}
+
 export const QUALITY_LABELS = {
+ phone: 'Phone · made for this phone',
  low: 'Low · older laptops and integrated graphics',
  medium: 'Medium · the balanced default',
  high: 'High · discrete GPU',
@@ -41,7 +57,9 @@ export const TIERS = {
  // November: "Medium should still show all trees. Low can draw less trees but
  // only if we can ensure that we draw all of the trees for the hole we are on
  // at a minimum." Medium and up draw every tree; Low may skip far ones, never
- // one of the hole being played. Every tier collides with all of them.
+ // one of the hole being played. So may Phone (the owner, 14 November 2026,
+ // of phones: "maybe we only render things in the hole we are on?"; PHONE,
+ // above). Every tier collides with all of them.
  low: {
   pixelRatio: .75,
   // (Until the surroundings rework Low and Medium drew the far woods as grove
@@ -107,7 +125,7 @@ export const TIERS = {
   groundTolerance: 4,
   // LOW DRAWS FEWER TREES, NEVER THE HOLE'S (the owner, 9 November 2026;
   // low-trees.js has the rule and its PLACED distances; instance-cull.js
-  // draws it). Medium and up draw every tree.
+  // draws it). Medium and up draw every tree; Phone draws as Low does.
   thinTrees: true,
   // A quarter of a stand's understory, for a laptop with no graphics card. PLACED.
   understory: .25,
@@ -146,6 +164,58 @@ export const TIERS = {
   // size is the only part of it a tier can currently reach. See TODO.
   reflection: 256,
   // Trees in still water (water-mirror.js): an extra small render a frame.
+  mirrorTwins: false,
+ },
+ // PHONE (branch phone-performance; docs/RESEARCH.md *The first figures from a
+ // real phone*). Measure this device on the owner's iPhone, Redwood Coast on
+ // Medium, 14 November 2026: from the tee every tree and plant off saved 57% of
+ // a frame's work and 309 of 356 draws; not redrawing the shadow map 51% (the
+ // map draws every tree whole a second time: 8 of the frame's 17.7 million
+ // triangles); the course's ground 23% (38% from 250 m up); the far ground and
+ // far trees nothing; fewer pixels nothing measurable. So the first Phone tier
+ // spends on geometry, not pixels:
+ //   - Low's rule for trees: every tree of the hole being played and round the
+ //     ball, fewer and fewer further off (low-trees.js) -- the owner's "only
+ //     render things in the hole we are on", which an endless hole already is;
+ //   - the shadow map cast by the trees' far twins (`thinShadowsFrom: 0`): a
+ //     painted crown never receives the shadow map (PROJECT_HANDOFF *A PAINTED
+ //     CROWN*), so the reason Low and Medium keep twins out of their one map,
+ //     crowns shading themselves from another shape, does not reach it;
+ //   - the shadow map redrawn every fourth frame, or at once when the camera
+ //     has moved two metres (renderer.js, `shadowEvery`);
+ //   - the ground coarser: six pixels off the ball's ground at most;
+ //   - Low's far land, grass and planting under the trees.
+ // Medium's pixel ratio, kept: fewer pixels bought nothing, and the owner
+ // found automatic resolution "a blurry mess". Every number here PLACED, to be
+ // measured on the phone and moved.
+ phone: {
+  pixelRatio: 1.75,
+  farGround: {grow: 1.06},
+  surround: {near: 60, reach: 1500, fall: 1200, cell: 128, nearMax: 0, most: 30000},
+  shadow: {size: 1024, radius: 1},
+  shadowEvery: 4,
+  fog: {near: 1300, far: 5500, overviewNear: 4500, overviewFar: 14000},
+  grass: .35,
+  foliage: .55,
+  anisotropy: 4,
+  // A 1,024 map over 280 m is about 0.27 m a texel; the offset goes with it
+  // (*A SHADOW'S NORMAL OFFSET GOES WITH ITS TEXEL*).
+  shadowSpan: {half: 140, top: 190, bottom: -120, far: 700},
+  shadowBias: {normal: .4, constant: -.0002, flood: .15},
+  cascades: 0, shadowFar: 0, overviewShadowFar: 0,
+  thinShadowsFrom: 0,
+  farTrees: .15,
+  farPainted: .25,
+  groundTolerance: 6,
+  thinTrees: true,
+  understory: .25,
+  longGrassReach: 90,
+  godRays: 0,
+  clouds: 0,
+  mist: 0,
+  floodShadows: 3,
+  bloom: 0,
+  reflection: 256,
   mirrorTwins: false,
  },
  medium: {
@@ -437,7 +507,7 @@ const cueValue = (g, key) => current(g) ? bool(g?.[key], readingCues(readingOf(g
 const clean = g => ({
  greenReadGen: GREEN_READ_GEN,
  groundReading: readingOf(g),
- quality: QUALITY.includes(g?.quality) ? g.quality : 'medium',
+ quality: QUALITY.includes(g?.quality) || g?.quality === PHONE ? g.quality : 'medium',
  frameCap: FRAME_CAPS.includes(g?.frameCap) ? g.frameCap : 0,
  relief: cueValue(g, 'relief'),
  slopeTint: cueValue(g, 'slopeTint'),
