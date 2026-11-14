@@ -146,6 +146,12 @@ wrong, unfinished, or owed a check.
   0.9.14**: 0.56 s of it is the ground shader this branch grew (measured),
   the rest not found. Next: fewer meshes a crown; whole models in the
   nearest shadow map; which shader addition costs the load.
+  **The graphics card was lost twice on 13 November (12:03 and about
+  21:39), each time in the gap after a full-load run ended.** Windows records
+  nothing for it; the suspicion is the card's drop to idle (its link falls
+  from generation 4 to 1) failing now and then, and the checks are the
+  owner's (RULES_HISTORY, *The card is lost on the way back to idle*).
+  tools/gpu-watch.mjs records the card each second while graphics work runs.
   What each round did, measured, and what is still owed is in SURROUNDINGS,
   *The frame-rate pass*; this entry is rewritten as it goes.
 

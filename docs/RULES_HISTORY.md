@@ -503,3 +503,65 @@ still not known; nothing here says it was the gate's raising.
 
 The lesson for a reading: before acting on a number from one tool, ask what
 it is a share OF.
+
+## The card is lost on the way back to idle (13 November 2026)
+
+The rules: *Nothing runs on the graphics card unless the owner asks* and the
+gate (AGENTS.md). What follows is evidence, not yet a cause.
+
+The card was lost twice on 13 November, at 12:03 and at about 21:39, and the
+owner (who restarts by hand each time: "every time this happens im hard
+rebooting") asked what causes it: "I really need to understand what is
+causing this issue." Read from the machine that night:
+
+- **Windows' System log holds 17 unexpected restarts in 30 days**
+  (Kernel-Power 41: 15 October 23:46; 16 October 16:10 and 21:18; 17 October
+  00:31; 18 October 01:04; 21 October 10:20; 3 November 12:15; 6 November
+  22:50 and 23:55; 7 November 22:16, 22:19 and 22:55; 8 November 01:32 and
+  01:50; 9 November 21:07; 11 November 00:04; 13 November 12:14). **Every one
+  has bugcheck code 0**: no blue screen, no dump, and there is no
+  hardware-error (WHEA) record in the month. They are the owner's hard
+  restarts, not Windows failing.
+- **The driver logged one error in those 30 days** (nvlddmkm 153, "Error
+  occurred on GPUID: 100", 9 November 20:59, eight minutes before a
+  restart) and nothing for either loss of 13 November.
+- **The rest of the machine keeps running.** Both times this work's own
+  processes carried on and found the card gone: `nvidia-smi` "GPU is lost.
+  Reboot the system to recover this GPU" at 12:03; at 21:39 the next run's
+  browser "got a software rasteriser, not the card".
+- **Both losses came in the gap after a full-load run ended normally.** 12:03:
+  about 15 seconds after run 52 ended (13% busy, 58 C). 21:39: between run
+  136 ending at 21:38:42 (99% busy, 65.8 C) and run 137 starting, with the
+  sweep running its runs back to back, no rest between. Not during the
+  load, and not hot: 66 C was the highest reading before either.
+- **What the card does in that gap.** Idle, it drops to its lowest power
+  state (P8, the core clock about 250 MHz of 2,520) and the slot's link
+  drops from PCIe generation 4 to generation 1 (`nvidia-smi`
+  pcie.link.gen.current: 1 at idle, read 2 a little later); under load it
+  climbs back. Windows' own link power saving is off in the active power
+  plan (Link State Power Management 0), so this is the driver's doing.
+
+**The suspicion, not proven:** the link's change of speed, or the power
+state's, fails now and then, and the card falls off its slot. This work
+forces that change far more often than a game does -- every run is idle,
+flat out, idle -- which fits 18 October (Playwright sweeps), 3 November (18
+renders back to back) and 13 November, and a load change happens in games
+too, which fits the losses with nothing of this work running (6 November).
+**What cannot be told from here:** whether the weak point is the driver's
+power saving, the slot or a riser cable (generation 4 over a riser is a
+known cause), or the card's 16-pin power plug or supply. Put to the owner as
+checks only they can make: NVIDIA's "Prefer maximum performance", the slot
+fixed at generation 3 in the BIOS if there is a riser, the plug reseated.
+
+**What was built:** tools/gpu-watch.mjs reads the card once a second (power
+state, clock, watts, link speed and width, busy, temperature, fan) and
+writes each reading to disk at once, so the last line before a loss is the
+card's state at the loss; `--last 40` prints the end of it and every change
+of power state or link speed. Windows will not say what happened; this will.
+
+**What changed in how the work is run:** the rest between graphics runs is
+back (the sweep had been run with none for forty minutes, at the owner's
+"can you parallelize more?", when the card was lost), and nothing is run on
+the processor alongside a frame comparison (it also spoils the comparison:
+two landscapes read 12 to 28% slow in a round that shared the processor
+with a test run).

@@ -117,5 +117,6 @@ Saved under `bench/shots/media/` (not committed), or wherever `MEDIA_OUT` points
 | `node tools/build-meshes.mjs` | Ingests every picked model in `vendor/` into `src/asset-meshes.js` |
 | `node tools/mid-cells.mjs` | Writes `src/mid-cells.js`: the grid each tree's middle version (High and Ultra) is made on, the coarsest that keeps its outline. Run after a model changes or a tier's `midTrees` does; `--check` says if it is out of date (a test runs that), `--list` what each model got |
 | `node tools/gpu-gate.mjs [seconds]` | Says what the graphics card is really doing (each program's share by Windows' counters, beside nvidia-smi's misleading idle figure) and whether a run may start |
+| `node tools/gpu-watch.mjs` | Reads the graphics card once a second and writes each reading to `bench/ab/gpu-watch.csv` at once (power state, clock, watts, link speed, temperature), until stopped. After the card has been lost and the machine restarted, `node tools/gpu-watch.mjs --last 40` shows what it was doing at the end |
 | `node tools/frame-sweep.mjs --goal <goal> --a <old build> --b dist/index.html` | Compares two builds on every landscape, High and Ultra, one run after another through the gate, and prints a table (`--table` prints it again from the saved runs). About two and a half minutes a landscape and tier |
 | `npm run sheet` | Builds the model-gallery page only |

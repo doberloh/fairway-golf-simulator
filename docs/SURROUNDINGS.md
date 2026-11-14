@@ -1021,3 +1021,20 @@ After both, the Redwood Coast on High: card time -12% at tee 1 and +3% from
 above, the whole frame +3% and -14%. **The lesson is round 11's, again: a
 change is measured on every landscape it reaches, not on the two it was
 tuned on.** Mountain and Classic Parkland have no `farPaintedFrom`.
+
+### The card lost again, during the sweep (13 November 2026, about 21:39)
+
+The sweep of every landscape (round F4's build against 0.9.14) had 22 of
+its 30 runs saved when the card was lost between two runs: all fifteen on
+High (Seaside Links' is spoiled, below) and seven on Ultra. The owner
+restarted the machine. What was found about why, and what changed in how
+runs are made, is in RULES_HISTORY.md, *The card is lost on the way back to
+idle*; tools/gpu-watch.mjs now records the card once a second while this
+work runs.
+
+Two things the sweep taught besides: **a frame comparison shares the
+processor with nothing** -- Hawaii's and Seaside Links' High runs each had
+one round of the new build read 30 to 50% slower than its other round, at
+the moments a test run and a capture were using the processor (Hawaii
+measured again alone: 23% and 31% faster) -- and **two rounds are too few to
+see that from the summary**, which takes the higher of two.
