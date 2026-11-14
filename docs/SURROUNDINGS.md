@@ -967,3 +967,25 @@ ring's crags are the candidates. The middle versions add their own: 1.5 to
 5 ms a model with the grid known. Course load against 0.9.14 in the last
 comparisons: 14.4 s to 15.5 s on High at Mountain, 13.6 s to 15.1 s on
 Ultra at Classic Parkland.
+
+### The smoke runs on round F3's build (13 November 2026, 19:30 to 20:10)
+
+The first since round 9: rounds 10 and 11 of the surroundings and F1 to F3
+of this pass had none (the gate).
+
+- **The Course Builder: all 10 journeys pass.**
+- **The game: 40 of 41 pass. `no-late-shaders` failed once**: on Ultra, on
+  the course "Surprise me" drew (a Lowcountry and Gulf nine, seed
+  HOLLOW-1812), one lit shader -- a MeshToonMaterial -- was built 142 ms
+  after the course appeared, which is a hitch a player can feel. **Not
+  traced.** Run alone the journey passed ten times in a row: six on this
+  build and once each on round F1's, round 11's and the branch before round
+  10 (each draws its own course). That seed and landscape loaded by hand on
+  Ultra (tools/late-shaders.mjs, made for this: it lists every program
+  first used after a course is up, with its defines, standing at the tee,
+  turning right round and from above) built none late -- but a course loaded
+  that way has the default season and hour, and the drawn one's are not
+  known. So it is one drawn course in eleven tries, cause unknown, and
+  whether 0.9.14 does it is unknown too. The journey now says which shader
+  (its defines and the telling names in its text), so the next failure
+  names it.

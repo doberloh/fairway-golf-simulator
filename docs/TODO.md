@@ -137,7 +137,12 @@ wrong, unfinished, or owed a check.
   SLOWER** for 46% more draws; one draw a crown was taken out since and it
   is not measured again. **Owed:** every landscape measured and photographed
   on High and Ultra; Low and Medium measured (the cull's changes reach
-  them); both smoke runs. **Course load is about a second longer than
+  them). **Smoke on round F3's build: the builder 10 of 10, the game 40 of
+  41 -- `no-late-shaders` failed once** (Ultra, a drawn Lowcountry nine, seed
+  HOLLOW-1812: one lit shader built 142 ms after the course appeared) and
+  passed ten times run alone; not traced, and not known to be this
+  branch's. The journey now names the shader; tools/late-shaders.mjs loads
+  a named course and lists what is built late. **Course load is about a second longer than
   0.9.14**: 0.56 s of it is the ground shader this branch grew (measured),
   the rest not found. Next: fewer meshes a crown; whole models in the
   nearest shadow map; which shader addition costs the load.
