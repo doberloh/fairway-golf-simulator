@@ -253,8 +253,18 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
   // left as it was (a small trunk) has no far mesh and is drawn whole.
   const mids = midShare > 0 && painted && !own && mesh.userData.model ? midParts(mesh.userData.model, midShare) : null;
   const midGeo = mids?.[mesh.userData.part]?.geometry;
-  const shown = mids ? (midGeo && midGeo !== geo ? midGeo : null) : far;
-  record.mid = !!mids;
+  // A PART WITH NO MIDDLE VERSION STILL GOES TO ITS TWIN (the frame-rate pass,
+  // found by the first sweep of every landscape). A trunk is left out of the
+  // middle versions (too few triangles to be worth three meshes), and as first
+  // built that left it with no far mesh at all: whole at every distance. On
+  // the Redwood Coast, where nearly every tree is its twin, ten thousand
+  // trunks of 600 to 1,200 triangles stood where twins of 45 had: 28% more
+  // card time from above than 0.9.14. So such a part is an ordinary pair --
+  // whole, then its twin under the twin's own line -- beside a crown that
+  // goes whole, middle, twin.
+  const usesMid = !!(midGeo && midGeo !== geo);
+  const shown = usesMid ? midGeo : far;
+  record.mid = usesMid;
   // ONLY A CROWN OF MANY SPRAYS HAS A TWIN. Thinning keeps a third of the
   // pieces and grows each, which a grown redwood's thousands of sprays survive
   // and a cartoon crown does not: Kenney's oak is 64 triangles in a handful of
@@ -305,7 +315,7 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
    this.count = record.cum[k];
   };
   mesh.onAfterShadow = restore;
-  const swaps = mids ? !!shown : thins;
+  const swaps = usesMid || thins;
   if (!swaps || (painted ? Math.max(farPainted, farPaintedPx) : farTrees) <= 0) return [record];
   // A CROWN FAR ENOUGH AWAY TO BE SMALL ON SCREEN IS DRAWN AS ITS TWIN (F2).
   // Its own mesh with its own buffer, holding the squares whose trees are
@@ -339,7 +349,7 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
   // 2,700 triangles went into every map where 300 had gone: 23 of the 42
   // million triangles of a frame from Mountain's first tee. The same twin, the
   // same rule, riding the far mesh's own buffer.
-  if (mids && thins && thinShadowsFrom !== Infinity && farMesh.castShadow) {
+  if (usesMid && thins && thinShadowsFrom !== Infinity && farMesh.castShadow) {
    const twin = new T.InstancedMesh(far, mesh.material, n);
    twin.instanceMatrix = farMesh.instanceMatrix;
    if (farMesh.instanceColor) twin.instanceColor = farMesh.instanceColor;
@@ -363,7 +373,7 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
   // course seen from 250 m up -- every tree 50 to 150 pixels tall -- was all
   // middle versions where 0.9.14 had drawn twins. A second pair on the same
   // runs: the middle version is its near side, by levels of its own (`lvl2`).
-  if (!(mids && thins && painted)) return [record, farRecord];
+  if (!(usesMid && thins && painted)) return [record, farRecord];
   const tinyMesh = new T.InstancedMesh(far, mesh.material, n);
   if (srcColour) tinyMesh.instanceColor = new T.InstancedBufferAttribute(new Float32Array(n * 3), 3);
   tinyMesh.castShadow = mesh.castShadow; tinyMesh.receiveShadow = mesh.receiveShadow; tinyMesh.frustumCulled = false;
@@ -454,6 +464,14 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
  // a quarter the size casts the same. It turns whole again inside the view's
  // margin, before it is on screen.
  const unseen = new Uint8Array(boxes.length);
+ // WHERE THE TWO LINES MEET THERE IS NO MIDDLE (the frame-rate pass). The
+ // middle version lives between its line in pixels and the twin's line; on
+ // the Redwood Coast the twin's line is a third of the screen
+ // (`farPaintedFrom`), above 300 pixels on any screen over 880 lines, so
+ // there is no between. The whole tree then swaps straight to its twin, as
+ // before the pass, and the middle version is not drawn at all -- left in, a
+ // tree in the swap band was three meshes at once.
+ let midOff = false, midOffWas = false;
  const paired = records.filter(r => r.near && r.lvl);
  const pass = new Uint8Array(boxes.length), shadowOf = new Map(), shadowFrustum = new T.Frustum();
  const casterPos = new T.Vector3(), casterAim = new T.Vector3();
@@ -473,12 +491,13 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
    sig[o] = visible[c]; sig[o + 1] = pass[c]; sig[o + 2] = Math.round(thin[c] * FADE_STEPS); sig[o + 3] = Math.round(thinPainted[c] * FADE_STEPS); sig[o + 4] = Math.round(keep[c] * 64);
    for (let r = 0; r < reaches.length; r++) sig[o + 5 + r] = dist[c] > reaches[r] ? 1 : 0;
   }
-  let equal = written;
+  let equal = written && midOff === midOffWas;
+  midOffWas = midOff;
   if (equal) for (let k = 0; k < sig.length; k++) if (sig[k] !== was[k]) { equal = false; break; }
   was.set(sig); written = true;
   // Each painted pair's levels, run by run; any that moved is a change.
   for (const r of paired) {
-   const {runs, tallRun, lvl, lvlWas} = r, scale = r.mid ? scaleP : scaleT;
+   const {runs, tallRun, lvl, lvlWas} = r, scale = r.mid && !midOff ? scaleP : scaleT;
    for (let i = 0; i < lvl.length; i++) {
     const ratio = unseen[runs[i * 3]] ? 0 : tallRun[i] * scale[runs[i * 3]];
     const l = ratio <= 1 ? 0 : ratio >= SWAP_BAND ? FADE_STEPS : Math.round((ratio - 1) / (SWAP_BAND - 1) * FADE_STEPS);
@@ -524,6 +543,7 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
      // band it is the near side of the second pair. (The two bands are a
      // factor of three and more apart: a run is never in both.)
      let asFar = r.far, side = mix;
+     if (r.lvl2 && r.far && midOff && !all) continue;
      if (r.lvl2 && r.far && !all) { const raw = r.lvl2[j / 3] / FADE_STEPS, low = r.srcColour ? raw : raw >= .5 ? 1 : 0; if (low <= 0) continue; if (low < 1) { asFar = false; side = low; } }
      // Inside the band: the near version leaves (1 - mix) of its pixels, the
      // far version draws exactly those (levels 16 and up).
@@ -680,6 +700,7 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
    const px = tune.farPaintedPx ?? farPaintedPx, line = tune.farPainted ?? farPainted;
    const paintedLine = px > 0 && screenPx ? Math.max(line, px / Math.max(1, screenPx())) : line;
    mark(thinPainted, paintedLine);
+   midOff = !(paintedLine > line * SWAP_BAND * SWAP_BAND);
    for (let c = 0; c < boxes.length; c++) {
     const d = boxes[c].distanceToPoint(camera.position);
     scaleP[c] = !(paintedLine > 0) || d < tune.near ? Infinity : focal / (d * paintedLine);

@@ -989,3 +989,35 @@ of this pass had none (the gate).
   whether 0.9.14 does it is unknown too. The journey now says which shader
   (its defines and the telling names in its text), so the next failure
   names it.
+
+### Round F4: what the first sweep of every landscape found
+
+tools/frame-sweep.mjs (made for this: tools/frame-ab.mjs on each landscape
+and tier in turn) was started on round F3's build against 0.9.14. Its first
+landscape, the Redwood Coast on High, was **28% SLOWER from 250 m up** (card
+time 3.22 to 4.13 ms; triangles 17.2 M to 21.2 M) where Mountain and
+Classic Parkland, the two landscapes every round had been measured on, were
+a third to a half faster. The sweep was stopped. Two faults, both the
+pass's own:
+
+- **Trunks were never their twins.** Round F1 left a part under 1,500
+  triangles out of the middle versions, and as written that left it with no
+  far mesh at all: whole at every distance. On Mountain nearly every tree
+  had been whole on 0.9.14, so nothing showed. On the Redwood Coast the
+  twin is drawn from a third of the screen (`farPaintedFrom`), nearly every
+  tree was its twin, and ten thousand trunks of 600 to 1,200 triangles now
+  stood where twins of 45 had. Such a part is an ordinary pair again --
+  whole, then its twin under the twin's own line -- beside a crown that goes
+  whole, middle, twin.
+- **Where the two lines meet there is no middle.** The middle version lives
+  between its line in pixels and the twin's line. With the twin's line at a
+  third of the screen, above 300 pixels on any screen over 880 lines, there
+  is no between; the code drew all three meshes for a tree in the swap band.
+  Now, where the pixel line is not at least a band and a bit above the
+  twin's (`midOff`), the whole tree swaps straight to its twin as before the
+  pass and the middle version is not drawn.
+
+After both, the Redwood Coast on High: card time -12% at tee 1 and +3% from
+above, the whole frame +3% and -14%. **The lesson is round 11's, again: a
+change is measured on every landscape it reaches, not on the two it was
+tuned on.** Mountain and Classic Parkland have no `farPaintedFrom`.

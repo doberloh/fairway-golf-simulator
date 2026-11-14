@@ -179,3 +179,41 @@ test('with a middle version a tree has three: whole near, the middle version bet
  cullInstances(g2, {farPainted: .03}).update(camera(), null);
  assert.equal(g2.children.filter(o => o.name === 'far trees').length, 1);
 });
+
+test('a part with no middle version of its own (a trunk) still goes to its twin when it is small', () => {
+ // The oak's trunk is under the middle versions' least size: it has none.
+ const parts = modelParts('Blender_Oak_1'), bark = parts.findIndex(p => p.role === 'bark'), mids = midParts('Blender_Oak_1', .25);
+ assert.equal(mids[bark].geometry, parts[bark].geometry, 'the trunk has no middle version');
+ const group = new T.Group(), m = new T.Matrix4(), n = 120;
+ const mesh = new T.InstancedMesh(parts[bark].geometry, new T.MeshBasicMaterial(), n);
+ for (let i = 0; i < n; i++) { mesh.setMatrixAt(i, m.makeScale(30, 30, 30).setPosition((i % 2) * 6 - 3, 0, -440 + i * 25)); mesh.setColorAt(i, new T.Color(1, 1, 1)); }
+ mesh.userData = {model: 'Blender_Oak_1', part: bark, role: 'bark'}; mesh.castShadow = true;
+ group.add(mesh);
+ const cull = cullInstances(group, {farPainted: .03, midShare: .25, farPaintedPx: 200, screenPx: () => 1000, thinShadowsFrom: 1});
+ cull.update(camera(), null);
+ const fars = group.children.filter(o => o.name === 'far trees' && o.userData.farOf === mesh);
+ assert.equal(fars.length, 1, 'one far mesh');
+ assert.equal(fars[0].geometry, modelParts('Blender_Oak_1_Far')[bark].geometry, 'its twin');
+ assert.ok(fars[0].count > 0 && mesh.count > 0, `whole near (${mesh.count}), the twin far off (${fars[0].count})`);
+ // By the twin's own line (3% of the screen), not the middle version's 200 pixels.
+ const far = o => { let z = Infinity; const p = new T.Vector3(); for (let i = 0; i < o.count; i++) { o.getMatrixAt(i, m); z = Math.min(z, p.setFromMatrixPosition(m).z); } return z; };
+ assert.ok(far(fars[0]) + 520 > 30 * 1.0 / .03 * .8, `the nearest trunk drawn as a twin is ${Math.round(far(fars[0]) + 520)} m off`);
+});
+
+test('where the twin\'s line is above the middle version\'s there is no middle: whole, then the twin', () => {
+ const parts = modelParts('Blender_Oak_1'), at = parts.findIndex(p => p.role === 'leaf');
+ const group = new T.Group(), m = new T.Matrix4(), n = 120;
+ const mesh = new T.InstancedMesh(parts[at].geometry, new T.MeshBasicMaterial(), n);
+ for (let i = 0; i < n; i++) { mesh.setMatrixAt(i, m.makeScale(30, 30, 30).setPosition((i % 2) * 6 - 3, 0, -440 + i * 25)); mesh.setColorAt(i, new T.Color(1, 1, 1)); }
+ mesh.userData = {model: 'Blender_Oak_1', part: at, role: 'leaf'};
+ group.add(mesh);
+ // The Redwood Coast's case: the twin from a third of the screen, the middle version's 300 pixels a sixth of it.
+ const cull = cullInstances(group, {farPainted: .34, midShare: .25, farPaintedPx: 300, screenPx: () => 1800});
+ cull.update(camera(), null);
+ const fars = group.children.filter(o => o.name === 'far trees' && o.userData.farOf === mesh);
+ const mid = fars.find(o => o.geometry === midParts('Blender_Oak_1', .25)[at].geometry), twin = fars.find(o => o.geometry === modelParts('Blender_Oak_1_Far')[at].geometry);
+ assert.equal(mid.count, 0, 'no tree is drawn as its middle version');
+ assert.ok(twin.count > 80, `nearly all are twins (${twin.count})`);
+ const fades = group.children.filter(o => o.name === 'fading trees').reduce((a, o) => a + o.count, 0);
+ assert.ok(mesh.count + twin.count + fades <= n + fades, 'and each is held once');
+});
