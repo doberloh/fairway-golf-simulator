@@ -58,6 +58,11 @@ the change that made it stale, not a follow-up.
   share. The owner's decisions, the file format, the stages and what each was
   measured against, the test course. Read it first when working on the
   builder.
+- **[SURROUNDINGS.md](SURROUNDINGS.md)** — the surroundings rework, merged
+  14 November 2026 and released in 0.9.15: what the owner asked for, the plan, the
+  earlier decisions it reversed, and what still governs the land past the
+  property line and the trees' three versions. Read it first when working
+  on anything nobody plays on.
 - **[CARTOON_OVERHAUL.md](CARTOON_OVERHAUL.md)** — the cartoon
   overhaul, merged 27 October 2026: what still governs work on the look --
   its art direction, every rule it set aside, its tools, and how its rounds
@@ -70,8 +75,11 @@ the change that made it stale, not a follow-up.
   word, cut from the two pages above on 12 November 2026:
   [history/CARTOON_OVERHAUL.md](history/CARTOON_OVERHAUL.md) (every round of
   every model, texture and light, the two later goals, the frame-rate pass)
-  and [history/UI_POLISH.md](history/UI_POLISH.md) (the rounds, the audits,
-  the owner's lists after playing). Searched when asking why something was
+  [history/UI_POLISH.md](history/UI_POLISH.md) (the rounds, the audits,
+  the owner's lists after playing), and, from 14 November 2026,
+  [history/SURROUNDINGS.md](history/SURROUNDINGS.md) (every round of the
+  surroundings and of the frame-rate pass, the sweeps, the lost graphics
+  card). Searched when asking why something was
   done; not kept up with the game.
 - **[TESTING.md](TESTING.md)** — the four layers of testing (Node suites,
   generator checks, the smoke test, the frame profile), what each can and

@@ -39,6 +39,17 @@ const DEFAULTS = {
  // the far-landscape goal): the landscape's own rock, so a far cliff is rock
  // rather than rough stretched up it. Null where the far land is dune or sea.
  ringFace: 'rock',
+ // How a far rock face is marked (ground.js FAR_FACE, cragFace): null is the
+ // plain rock, its planes as wide as tall. And the plants that grow past
+ // the property line where they are not the stand's own (surround.js):
+ // null is the stand's.
+ farFace: null, farPlants: null,
+ // The height over the course above which nothing grows past the line, where
+ // it is not the far forest's own `line` (surround.js; ground.js farLine).
+ farLine: null,
+ // A peaked range's crests rounded into domes, 0 to 1, and how much of its
+ // flanks is crags (landscape-edge.js `peaks`, `crags`).
+ ringRound: 0, ringCrags: .24,
  // Far land as mesas and buttes (landscape-edge.js `mesas`): off unless asked.
  ringMesas: false,
  // Far islets out of the sea (landscape-edge.js `isles`): how many; none unless asked.
@@ -223,6 +234,11 @@ const TRAITS = {
   // `ringPeaks` (the polish goal): the far range as peaks and aretes
   // (landscape-edge.js), not sine-wave rolls.
   bank: '#7b8982', hills: {base: 70, severity: 180, reach: 90}, ringLift: 950, ringPeaks: true,
+  // Granite walls, their tone drifting; snow from 640 m over the course
+  // (the surroundings rework, 13 November 2026; until round 11 the walls
+  // were broken into planes taller than wide, which the owner turned
+  // down -- ground.js cragFace). PLACED.
+  farFace: {contrast: .18, snow: 640},
   scatter: {rocks: 550, grass: 110000, tufts: 1600, tallGrass: false,
    rockScale: 2, bladeLength: .65, bladeWidth: .8, bladeTint: null,
    flowers: ['#f0cf63', '#bc80b4']},
@@ -645,7 +661,20 @@ WORLD.northwoods = {...WORLD.northeast, clubhouse: 'loglodge', path: 'gravel', b
 // sea along one side, green volcanic slopes and peaks behind, black lava,
 // monkeypods, ironwoods, Cook pines, palms and ohia; ti and heliconia.
 TRAITS.hawaii = {...TRAITS.midwest, light: {shade: '#7ea0c4'}, sea: true, edgeCoast: true, shoreSand: true, warm: true,
- hills: {base: 30, severity: 80, reach: 80}, ringLift: 700, ringPeaks: true, ringFace: 'rock', rockStyle: 'lava', rockMoss: '#4a7a3a',
+ // ROUNDED GREEN MOUNTAINS (round 11 of the surroundings rework, 13 November
+ // 2026). The owner, of the range as rounds 5 and 10 left it -- knife crests
+ // 700 m up, crags on every flank, the faces fluted with dark troughs: "Lets
+ // make the mountains more rounded and less steep". So: domes, not crests
+ // (`ringRound`), no crags (`ringCrags`), and 520 m of lift for 700 --
+ // the old shield slopes of Kohala and West Maui's foothills more than the
+ // Ko'olau pali. PLACED.
+ hills: {base: 30, severity: 80, reach: 80}, ringLift: 520, ringPeaks: true, ringRound: 1, ringCrags: 0, ringFace: 'rock', rockStyle: 'lava', rockMoss: '#4a7a3a',
+ // Green to the crest, the lava showing only on the steepest ground. And
+ // past the property line the windward forest's broad crowns, the resort's
+ // Cook pines only here and there: at 42% of the far trees, a seventh as
+ // wide as tall, they stood on the slopes as sticks. PLACED.
+ farFace: {contrast: .2, green: '#2f6833', greenShare: .94},
+ farPlants: [['himonkeypod', .5], ['hiironwood', .34], ['hicookpine', .08], ['flcoconut', .08]],
  longGrass: {families: [['grassbunch', 2, 1], ['grassfescue', 1, .8]], count: 3500, near: 20, leaf: '#6a9a44', accent: '#a8b060'},
  farForest: {cover: .85, size: 11, colors: ['#2e6a34', '#3a7638', '#4a823e']},
  scatter: {...DEFAULTS.scatter, rocks: 260},
@@ -1022,6 +1051,12 @@ const TERRAIN = {
   // `wideFade`; the owner, round 6). PLACED.
   tilt: {height: 38, over: 1400}, wideFade: 130, pondShare: .37,
   ringMassif: {at: 2200, length: 9000, face: 1400, back: 3500},
+  // The big mountain is bare rock from its apron up (round 11 of the
+  // surroundings rework; the owner, 13 November 2026, of scrub standing along
+  // its crest 900 m up: "we also shouldnt have trees growing on top of that
+  // mountain"). The scrub thins from 190 m over the course and is gone by
+  // 270, the top of the talus. PLACED.
+  farLine: 250,
   // About 1.5 holes in 18 tee off a rock outcrop (course.js, *Tees up on the rock*).
   rockTees: .083},
  // Desert Resort: nearly flat, built ground -- a rare low knob, no washes, and the desert's pale
@@ -1030,7 +1065,16 @@ const TERRAIN = {
  // the sign-off, 7 November 2026.
  dresort: {landform: {type: 'knobs', cell: 280, chance: .1, radius: [20, 40], size: [4, 10], profile: 1.3, round: .6, floor: 1, wash: 0, bare: .2, reach: 80,
   kinds: {a: 'rock', b: 'waste', floor: 'hardpan'}, gates: {a: gate(16, 8), b: gate(18, 6), floor: gate(14, 3)}}, groundTints: {hardpan: '#c6b69a', waste: '#b5a68c', rock: '#a09a8e'},
-  hills: {base: 8, severity: 20, reach: 80}, ringLift: 620, ringPeaks: true, ringMesas: false},
+  hills: {base: 8, severity: 20, reach: 80}, ringLift: 620, ringPeaks: true, ringMesas: false,
+  // Grey limestone in soft beds, a little tilted (the ranges round the Las
+  // Vegas valley); and past the property line the desert's own plants -- the
+  // resort's Afghan pines stood up the mountain as dark spires (the
+  // surroundings rework, 13 November 2026). PLACED.
+  farFace: {contrast: .14, beds: .3},
+  // And the range bare from 320 m over the course, as Desert Mountain's is
+  // from 250 (round 11). PLACED.
+  farLine: 320,
+  farPlants: [['creosote', .5], ['brittlebush', .2], ['dtmesquite', .3]]},
  // Florida Palms: low and flat behind the beach, wet hollows for its lakes. The Florida
  // Flatwoods' lowland recipe, a little broader (PLACED); the Flatwoods left at the sign-off.
  // Pacific Northwest: Puget Sound's glacial ground, its hummocks a metre taller (PLACED, so the two

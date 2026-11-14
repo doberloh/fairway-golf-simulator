@@ -29,6 +29,15 @@ const argv = process.argv.slice(2);
 const opt = (name, d) => { const i = argv.indexOf(name); if (i < 0) return d; const v = argv[i + 1]; argv.splice(i, 2); return v; };
 const build = opt('--build', undefined), only = opt('--views', null)?.split(','), seed = opt('--seed', 'overhaul');
 const utilMax = Math.min(60, Number(opt('--util', 30)));
+// `--goal surroundings --rest 0 --look 5`: whose run this is in the log, the
+// minutes rested since that goal's last run and the seconds the card is
+// watched first (the surroundings rework, whose terms let runs follow one
+// another: AGENTS.md). The defaults are the cartoon overhaul's.
+// `--built <x.fairway>`: a BUILT course from its file (the Course Builder's)
+// in place of the seeded one, for the views that need no hole of their own;
+// name the landscape it wears as the one biome, for the hour of each view.
+const builtFile = opt('--built', null);
+const goalName = opt('--goal', 'cartoon-overhaul'), restMin = Number(opt('--rest', 1)), lookSeconds = Number(opt('--look', 30));
 // `--tier high`: another graphics tier than Ultra (the shadows' round 3 checked High).
 const tier = opt('--tier', 'ultra');
 // `--cues '{"greenDefinition":70}'`: the ground-reading settings to draw with
@@ -329,6 +338,14 @@ export const VIEWS = [
  // ground and the far woods or hills, looking out from 25 m up.
  {name: 'far-band', hole: 0, when: 'afternoon', caption: 'Looking out from the course\'s edge', cam: `w => ({x: w.halfX * .82, z: w.halfZ * .1, yaw: 90, height: 25, pitch: -3})`},
  {name: 'far-band-b', hole: 0, when: 'afternoon', caption: 'Looking out from the course\'s other edge', cam: `w => ({x: -w.halfX * .1, z: -w.halfZ * .82, yaw: 180, height: 25, pitch: -3})`},
+ // THE FAR GROWTH BESIDE THE COURSE'S OWN, THROUGH THE DAY (the surroundings
+ // rework, round 11; the owner, 13 November 2026: "double check the colors of
+ // the external landscape growth on all biomes at different times of the day
+ // and ensure they are lit the same way as everything else"). One camera at
+ // the course's edge (far-band-b's: the first try looked east, which on a
+ // coast is the sea), its own trees in front and the far ones behind, at six
+ // hours: light-dawn, -morning, -noon, -golden, -dusk, -night.
+ ...['dawn', 'morning', 'noon', 'golden', 'dusk', 'night'].map(when => ({name: `light-${when}`, hole: 0, when, caption: `Looking out from the course's edge, ${when}`, cam: `w => ({x: -w.halfX * .1, z: -w.halfZ * .82, yaw: 180, height: 25, pitch: -3})`})),
  // The back tee from above (the tee boxes' mowing), and a links tee's
  // surround from behind and low (the fade into the tall grass).
  {name: 'tee-top', hole: 0, when: 'noon', caption: 'Hole 1, the back tee from above', cam: `w => { const h = w.holes[0], t = h.tees.blue || Object.values(h.tees)[0], p = h.pin;
@@ -440,6 +457,11 @@ export const VIEWS = [
  // just past the property line (40 m), above the canopy, looking out -- one
  // on the inland side, one on the west -- and one high over the course's
  // edge, where the land recedes to the horizon.
+ // The surroundings rework: standing 6 m inside the property line at eye
+ // height, looking straight out -- the nearest trees past the line as a
+ // golfer whose ball is by the boundary sees them.
+ {name: 'edge-eye', hole: 0, when: 'afternoon', caption: 'At the property line, eye height, looking out (west)', cam: `w => ({x: -(w.halfX - 6), z: w.halfZ * .15, yaw: 270, height: 1.8, pitch: 2})`},
+ {name: 'edge-eye-b', hole: 0, when: 'afternoon', caption: 'At the property line, eye height, looking out (north)', cam: `w => ({x: w.halfX * .2, z: -(w.halfZ - 6), yaw: 180, height: 1.8, pitch: 2})`},
  {name: 'far-out', hole: 0, when: 'afternoon', caption: 'Past the property line, 45 m up, looking out (south)', cam: `w => ({x: -w.halfX * .2, z: -(w.halfZ + 40), yaw: 180, height: 45, pitch: -4})`},
  {name: 'far-side', hole: 0, when: 'afternoon', caption: 'Past the property line, 45 m up, looking out (west)', cam: `w => ({x: -(w.halfX + 40), z: w.halfZ * .2, yaw: 270, height: 45, pitch: -4})`},
  {name: 'far-high', hole: 0, when: 'afternoon', caption: 'High over the course\'s edge, the land receding', cam: `w => ({x: -w.halfX * .3, z: -w.halfZ * .6, yaw: 200, height: 160, pitch: -9})`},
@@ -452,7 +474,7 @@ const OUT = path.join('bench', 'shots', 'overhaul', label);
 // `--util 50`: a higher load limit for the gate, when the owner says the card's
 // load is theirs and harmless (26 October 2026: a remote-desktop session read
 // 27-38% with nothing else running). Never past 60; the temperature limit stays.
-const card = gpuGate({goal: 'cartoon-overhaul', cap: Infinity, restMin: 1, utilMax, tempMax: 80, lookSeconds: 30});
+const card = gpuGate({goal: goalName, cap: Infinity, restMin, utilMax, tempMax: 80, lookSeconds});
 const started = new Date().toISOString(), results = {};
 const b = await launch();
 try {
@@ -463,7 +485,10 @@ try {
   p.on('pageerror', e => errors.push(`page error: ${e.message}`));
   p.on('console', m => { if (m.type() === 'error') errors.push(`console.error: ${m.text().slice(0, 300)}`); });
   const t0 = Date.now();
-  await p.evaluate(c => window.lab.course(c), {biome, holes: 9, seed, ...(homes ? {homes: true} : {}), ...courseExtra});
+  if (builtFile) await p.evaluate(async ([b64, c]) => { const t = atob(b64), bytes = new Uint8Array(t.length); for (let i = 0; i < t.length; i++) bytes[i] = t.charCodeAt(i);
+   // The file goes into the game's store, which answers with its hash; the course is then asked for by it.
+   return window.lab.course({...c, built: await window.lab.built(bytes)}); }, [fs.readFileSync(builtFile).toString('base64'), {biome, holes: 18, seed}]);
+  else await p.evaluate(c => window.lab.course(c), {biome, holes: 9, seed, ...(homes ? {homes: true} : {}), ...courseExtra});
   if (cues) await p.evaluate(c => window.__view.setGroundCues(c), cues);
   if (evalAfter) console.log(biome, 'eval:', JSON.stringify(await p.evaluate(code => (0, eval)(code)(window.__view), evalAfter)));
   const built = Date.now() - t0;
@@ -487,5 +512,5 @@ try {
 } finally {
  await b.close();
  const after = readCard();
- logRun({goal: 'cartoon-overhaul', what: `overhaul captures ${label}: ${biomes.join(', ')}`, started, before: card, after, result: Object.fromEntries(Object.entries(results).map(([k, r]) => [k, r.errors.length ? `${r.errors.length} errors` : 'ok']))});
+ logRun({goal: goalName, what: `overhaul captures ${label}: ${biomes.join(', ')}`, started, before: card, after, result: Object.fromEntries(Object.entries(results).map(([k, r]) => [k, r.errors.length ? `${r.errors.length} errors` : 'ok']))});
 }

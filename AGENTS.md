@@ -299,17 +299,27 @@ browser pane, `npm run profile`. Earlier permission does not carry over -- the
 exceptions are Blender (below) and a `/goal` that says so (next section).
 The cartoon-overhaul branch's no-ask terms ended when it was merged (*The
 cartoon look is main's*), and the frame-rate-all-tiers branch's when it was
-merged (9 November 2026; RULES_HISTORY.md). The builder-ux branch's ended
+merged (9 November 2026; RULES_HISTORY.md). The surroundings-rework branch's ended when it
+was merged (14 November 2026; docs/SURROUNDINGS.md).
+The builder-ux branch's ended
 when it was merged (10 November 2026).
 
-- **If `nvidia-smi` shows the card busy, the owner is using the machine**: do not
-  start, even with permission; say so and wait.
+- **If a game is on the card, the owner is using the machine**: do not start,
+  even with permission; say so and wait. **That means everything, not only
+  graphics**: no tests, builds or benches beside a game either (13 November
+  2026: two test files on the processor, the machine down;
+  RULES_HISTORY.md, *Nothing at all while the owner plays*). `node tools/gpu-gate.mjs` says what
+  the card is really doing: each program's share of it by Windows' own
+  counters, and one program taking 15% or more by itself is a game. **Not
+  `nvidia-smi`'s busy figure**: this card idles at a third of its clock, where
+  a launcher and a chat window read 18 to 50% (13 November 2026;
+  RULES_HISTORY.md, *The gate read an idle card as busy*).
 - **Blender may use the graphics card without asking**, in any turn or goal
   (the owner, 23 October 2026: keeping it off the GPU would make it worthless).
   It is asset work, not the game, so the crashes above do not describe it --
-  but keep their lessons: read `nvidia-smi` first and do not start while a game
-  is running (a game in its process list, or the card above about 30% -- PLACED;
-  the desktop alone read 7-25% that day); one Blender process at a time, each
+  but keep their lessons: read the card first (`node tools/gpu-gate.mjs`) and do
+  not start while a game is running (one program taking 15% of the card or more,
+  or its real work above about 30% -- PLACED); one Blender process at a time, each
   job minutes rather than a long batch; and close Blender before the turn ends.
   Smoke, captures, the pane game and profiles are unchanged.
 - **When the game cannot be driven,** run the CPU checks (`npm test`, `npm run
@@ -326,10 +336,11 @@ ask as above.
 - **Only `node tools/profile.mjs --only <group>`**, about a minute each. Never a full
   sweep, never the software `weak` group, never `npm run smoke`, Playwright
   captures or the game in the browser pane -- those are still asked for.
-- **Before every run, read `nvidia-smi` for about 30 seconds**: start only if
-  use stays under 10% and the card is below 60 °C (idle here is about 5% and
-  44 °C). If not, do not start; pause the goal and say so -- a busy card is the
-  owner playing.
+- **Before every run, read the card for about 30 seconds** (the gate does, by
+  Windows' counters of real work, not `nvidia-smi`'s figure): start only if its
+  work stays under 10%, no one program takes 15%, and the card is below 60 °C
+  (idle here is about 6% and 44 °C). If not, do not start; pause the goal and
+  say so -- a busy card is the owner playing.
 - **One run at a time, at least 5 minutes apart, at most 6 per goal** unless
   the owner names another number when starting it (the 22 October frame-rate
   goal: 40). Past the cap, stop and ask.

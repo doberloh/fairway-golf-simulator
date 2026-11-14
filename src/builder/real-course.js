@@ -183,7 +183,7 @@ export function layerRings(m, {nx, nz, cell, halfX, halfZ, x0 = -halfX, z0 = -ha
   .map(r => smoothRing(simplify(relaxRing(r, 8), cell * .1), 1)).filter(r => r.length >= 3 && ringArea(r) > SPECK);
 }
 
-export function docFromLand({land, traced = null, holes, trees = [], homes = [], name = 'Real course', landscape = 'heartland', credits = [], source = {}, landEdits = null, creeks = [], rocks = [], bunkers = [], creekLines = [], treePlan = null}) {
+export function docFromLand({land, traced = null, holes, trees = [], homes = [], name = 'Real course', landscape = 'heartland', credits = [], source = {}, landEdits = null, creeks = [], rocks = [], bunkers = [], creekLines = [], treePlan = null, surround = null}) {
  const {nx, nz, cell, halfX, halfZ} = land, ground = Float32Array.from(land.ground);
  // THE LAYERS, TIDIED (the owner, 31 October 2026: "features should not have
  // jagged or pock marked edges"): on each layer, patches under SPECK go and
@@ -307,7 +307,7 @@ export function docFromLand({land, traced = null, holes, trees = [], homes = [],
  }
  return {type: 'built', name, landscape, designer: null, halfX: halfX - GRID_MARGIN, halfZ: halfZ - GRID_MARGIN,
   land: {x0: -halfX, z0: -halfZ, cell, nx, nz, heights: ground}, patches: [], surfaces, water, creeks: [...structuredClone(creeks), ...drawnCreeks], holes: recs,
-  trees: new Float32Array(treeData), treeKinds, rocks: structuredClone(rocks), homes, credits, source: {kind: 'lidar', ...source}, from: null, picture: null, landEdits: [], ...(treePlan ? {treePlan} : {})};
+  trees: new Float32Array(treeData), treeKinds, rocks: structuredClone(rocks), homes, credits, source: {kind: 'lidar', ...source}, from: null, picture: null, landEdits: [], ...(treePlan ? {treePlan} : {}), ...(surround ? {surround} : {})};
 }
 const inside = (ring, [x, z]) => { let c = false; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) { const [ax, az] = ring[j], [bx, bz] = ring[i]; if ((bz > z) !== (az > z) && x < (ax - bx) * (z - bz) / (az - bz) + bx) c = !c; } return c; };
 const ringArea = r => { let a = 0; for (let i = 0, j = r.length - 1; i < r.length; j = i++) a += r[j][0] * r[i][1] - r[i][0] * r[j][1]; return Math.abs(a) / 2; };

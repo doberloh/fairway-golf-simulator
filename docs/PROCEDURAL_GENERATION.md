@@ -20,7 +20,7 @@ every generated course: *The world round the holes*, at the end of this file.
 5. **Sculpt bunkers and hazards.** Seeded sizes, proportions and continuous boundary waves generate green and bunker outlines. Water uses sampled curving banks with changing widths, shaped relative to the nearby fairway edge. A clearance buffer protects turf; identical bank profiles drive the rendered water, terrain basin and map. Bunker count, position, distance from the fringe and placement inside fairways follow the studio settings. This is a constrained mathematical shape generator, not an unrestricted landscape-design AI.
 6. **Site three tee sets.** Blue sets the reference route length; white and red move forward by independently varied amounts and shift to either side of the playing line. All three are always built and the golfer chooses during play or round setup. The pads are SITED rather than placed: a hole commits to a rough tee area before any terrain exists, and once the land is there each pad is scored over candidate positions on how flat the ground is, how little it has to be cut or filled, and how far it sits out of line with every tee already placed on that hole. The last of those is why a tee is rarely directly in front of another one -- across 945 tees, pairs sitting in line fell from 110 to 10 when the stagger began scoring against all of them rather than only the nearest. Each pad is 7.2 m long by 6 m wide with a rounded apron, its shoulder falling away 35% faster directly ahead than to the sides or behind so it does not build a lip in front of the shot; the two markers stand 6 inches in from each edge, and the hole-and-yardage sign stands off to the right of the blue tee. Facing is computed AFTER siting -- a tee squared to the shot from where it used to be is squared to nothing.
 7. **Route the whole course.** The chosen footprint provides a seed-varied guiding curve: an organic sweep, elongated loop, crescent, winding ribbon, original square, figure eight, butterfly, clover, spiral, horseshoe, rounded triangle, diamond, coastal sweep or island chain. The dropdown includes small selectable SVG previews. These guide overall land use rather than prescribing individual hole shapes. Seeded candidate positions and bearings place holes near the preceding green. Corridor clearance checks reject overlaps; distance from the guiding curve, progression, compactness and walking distance guide the choice. A fallback expands the footprint if a tight placement fails. This remains a heuristic, not a certified golf-course safety or architecture model.
-8. **Build one landscape.** Regional landform rules create ridges, dunes, channels and biome vegetation around the routed holes. One connected mesh carries all playing surfaces. Extra detail around greens, bunkers, pond beds/shorelines and flowing channels joins the wider terrain without cracks. The distant landscape shares the detailed ground’s perimeter vertices, eliminating exposed rectangular tile edges. Trees grow around the routed corridors, giving the course an irregular outer woodland boundary. Ball contact, shading, hazard boundaries and maps consume the same course data.
+8. **Build one landscape.** Regional landform rules create ridges, dunes, channels and biome vegetation around the routed holes. One connected mesh carries all playing surfaces. Extra detail around greens, bunkers, pond beds/shorelines and flowing channels joins the wider terrain without cracks. The distant landscape shares the detailed ground’s perimeter vertices, eliminating exposed rectangular tile edges (what stands out there is in *Past the property line*, at the end). Trees grow around the routed corridors, giving the course an irregular outer woodland boundary. Ball contact, shading, hazard boundaries and maps consume the same course data.
 
 ## Why keep rules?
 
@@ -348,3 +348,63 @@ tucking fairway, turned greens, mounds, the land's templates (Dell, Alps,
 Barranca, Pit), history by age, hand-made shapes, routing home to the
 clubhouse, designed tree lines and avenues; and tournament week and the
 people with it.
+
+## Past the property line (scenery; no generator number)
+
+Reworked 12-13 November 2026 (docs/SURROUNDINGS.md). Nothing here is in
+`world.trees`, the fingerprint or a saved round: it is made when the course
+is drawn, from the course's seed, and no version number moves for it. In
+order:
+
+1. **The course's own ground** carries on about 150 m past the property line,
+   in the same 3 m cells as the course.
+2. **The far ring** (landscape-edge.js) joins that ground's edge vertex for
+   vertex and runs to 13 km. Its rings start 8 m apart and each step is 2%
+   longer than the last, never over 220 m (`RING_DETAIL`, PLACED): cells
+   about 20 m across at 600 m and 50 m at 2 km, 182,000 triangles on Classic
+   Parkland where there were 13,000. Low takes 6% a step (about 30,000
+   triangles) and Medium 3.5% (about 90,000). It is drawn in 24 pieces, eight
+   directions by three distances, so what is behind the camera is skipped.
+3. **Its height** is the course's own land function carried outward, plus the
+   landscape's far relief fading in over the first 900 m (`ringRelief`:
+   rolling ridges, Mountain's peaked range, the desert's mesas, Desert
+   Mountain's one mountain, a far sea's islets, the Badlands' carving), and
+   fading out toward a sea along one edge. **A built course may name its own
+   on each side** (`surround`, surround-sides.js; `sidedRelief`): the
+   landscape's own, open country, rolling hills (160 m), a range (850 m), one
+   big mountain (900 m), mesas (240 m), the sea, sea and islands, or a lake
+   with a far shore; corners blend, and a shore wanders 40 to 300 m out.
+   COURSE_BUILDER.md, *A course's own surroundings*. **A peaked range has
+   crags** (13 November 2026, `crags`): a ridged noise over four scales, 320
+   m down to 40 m, up to about a quarter of the range's lift, none on a
+   valley floor and no scale the ring's cells are too wide to draw. And every
+   ring vertex carries a baked shade, hollows dark and ribs light (`shade`).
+   **A landscape may round its range** (`ringRound`, `ringCrags`; Hawaii,
+   13 November 2026): domes over the field's high ground instead of crest
+   lines, no crags, 520 m of lift.
+4. **The trees** (surround.js) are the landscape's own stand carried outward
+   (or the plants the landscape names for past its line, `farPlants`: the
+   Desert Resort's desert plants, Hawaii's broad crowns):
+   its mix of species, each sized as the course sizes it, never closer than
+   12 m, nine sites in ten kept at the line and thinning by one stand spacing
+   every 3.2 km out, to the tier's reach (Low 1.5 km, Medium 2.5 km, High
+   4 km, Ultra 5 km) and never more than the tier's cap (200,000 on Ultra).
+   They stand where the landscape's far forest record says woods grow:
+   patches by a 380 m noise, about a quarter of the wooded country left open
+   as meadows by a 900 m one (`FAR_OPEN`), both read through a slow wave of
+   up to 160 m so no edge runs straight (`farWarp`), never in water, on ground over
+   40 degrees (`FAR_STEEP`, the steepest of six ways round the site) or
+   above the treeline (the far forest's `line`, or the landscape's own
+   `farLine`: Desert Mountain is bare from 250 m over the course, the
+   Desert Resort's range from 320); a desert's or a links' scrub in thin
+   clumps. Each is
+   drawn as an upright picture of the course's own model (far-trees.js). On
+   seed FAIRWAY, Ultra: 129,000 on Classic Parkland.
+5. **The paint** (ground.js): the far ground toned by three broad noises
+   (610, 173 and 47 m) so no hillside is one colour; under the trees a plain
+   forest floor, by the same patches the trees were placed by; past the
+   trees' reach, the canopy's own colour.
+
+Until the rework the trees past the line were the far woods (clusters,
+spruces, domes and cones) and the forest's paint drew crown-sized lumps;
+both are gone.

@@ -3885,7 +3885,10 @@ start 8 m apart and widen by 1.28 each step to 13 km, and each ring carries
 only as many vertices as keep its spacing along the ring near its step outward
 (at least 48); rings with different counts are stitched by walking both at
 once. Worst aspect among triangles over 50 m: 6.6 to 1. Vertices: ~6,600
-against ~20,000 before (Redwood nine); built in 19 ms.
+against ~20,000 before (Redwood nine); built in 19 ms. (The 1.28 step was
+replaced on 12 November 2026 by 2% a step, never over 220 m, about fourteen
+times the triangles: *The surroundings rework*, below, and SURROUNDINGS.md.
+The stitching and the 13 km reach are unchanged.)
 
 **The rectangle was two things.** Normals: each mesh computed them from its own
 triangles only, so they disagreed along the seam; `stitchSeam` gives both the
@@ -8913,6 +8916,11 @@ the far hills (below).
 
 ## The overhaul's far forest (25 October 2026)
 
+(The crown-sized lumps described here were replaced on 12 November 2026 by a
+plain forest floor under trees that are now placed and drawn: *The
+surroundings rework*, below, and SURROUNDINGS.md. The patches, the cover, the
+treeline and the far-off canopy colour stand.)
+
 Past the course's own ground the landscape rings (landscape-edge.js) were bare
 hills; the stands stop at the property line. The far forest is PAINTED by the
 ground shader (ground.js, biomes.js `farForest`), not planted -- no geometry,
@@ -9503,6 +9511,10 @@ third of the fairway's width. Holes joined on five 18-hole seeds: 3, 0, 3, 2,
 
 ### The far woods (the polish goal, 26 October 2026)
 
+(The far woods were replaced on 12 November 2026 by the course's own trees
+drawn as pictures -- surround.js, far-trees.js: *The surroundings rework*,
+below, and SURROUNDINGS.md. far-woods.js now holds only `FAR_SHAPES`.)
+
 far-woods.js: bands from the property line to 12,800 m; spacing max(13 m,
 0.06 x (d + 150 m)); each band max(4 spacings, d/4) deep; jitter 0.8 spacing;
 kept by the painting's patch noise (380 m cells) against cover +/- 0.12,
@@ -9518,6 +9530,10 @@ them starts at the property line, fading in over 40 m (was the ground's edge
 and 70 m). All PLACED by eye.
 
 ### The far landscape, seated on the drawn ground (the far-landscape goal, 26 October 2026)
+
+(`seatOn` and the bench's `farSeated` went with the far woods on 12 November
+2026; `drawnGround` stays and the bench's `surround` holds each far tree to
+it: *The surroundings rework*, below, and SURROUNDINGS.md.)
 
 Measured first (scratch `bench/shots/overhaul/_drawn.mjs`, seed `overhaul`,
 nine holes): a far crown's centre stood above the ground as DRAWN (the ring's
@@ -9573,7 +9589,9 @@ apron below each, 0.12 and 0.06 (29 and 14 m) over the field's last 0.08 to
 0.02 before the tier; a floor of fbm(x/900) x 0.06 (14 m). Faded in over the
 ring's first 900 m as every ring relief is. Rings: 16% wider each, at most
 220 m (were 28% and unbounded), and 2.5 times the vertices round each (peaks
-take 2): 50,664 vertices and 96,801 triangles on seed `overhaul`. Round 1's
+take 2): 50,664 vertices and 96,801 triangles on seed `overhaul` (rows of
+their own for mesas and peaks ended on 12 November 2026: every landscape
+takes one finer rule, `RING_DETAIL` -- *The surroundings rework*, below). Round 1's
 field (2.4 km, four octaves, 6 m cliffs, three tiers) broke into jagged
 fragments a few rows wide (`bench/shots/overhaul/ring/desert-mesa1.png`,
 CPU hillshade). All PLACED by eye against Monument Valley's buttes (about
@@ -9690,7 +9708,9 @@ tees: one set of passes along the line of play, x 1.3 clamped to 1. PLACED.
 
 Far scrub in clumps (far-woods.js, round 7): past the cover patchwork (380 m
 cells), a scrub site is kept with chance smoothstep(0.5, 0.7) of a second
-value noise at 150 m cells -- about two in five, gathered. PLACED.
+value noise at 150 m cells -- about two in five, gathered. PLACED. (Since
+12 November 2026 scrub clumps are surround.js `coverField`'s, by a noise of
+its own: *The surroundings rework*, below.)
 
 ### Links shared fairways, the far-landscape goal (26 October 2026)
 
@@ -14900,3 +14920,435 @@ LIDAR, and searches and downloads only a box drawn round the course on it
   box changed and nothing is traced -- PLACED (a rebuild clears the trace).
   No new timings: the Worthington figures under *Build it for me, on a real
   course* are from the 1.5 km square.
+
+## The surroundings rework (12-13 November 2026)
+
+Branch `surroundings-rework`. The plan, each round and every decision it
+reversed are in **docs/SURROUNDINGS.md**; this is its figures. **No outside
+source was used** but one, for round 10's crags (below, *The mountainsides*): every number below was measured here or PLACED, and says
+which. Seed FAIRWAY, eighteen holes, the starting course, unless said.
+
+**Before (main, 0.9.14), measured.** The far ring: 26 rings, 13,000 triangles
+on most landscapes (108,000 on Desert Mountain), each ring 28% further out
+than the last. The far woods: 19,500 sites on Classic Parkland, 10,900 on
+Mountain, 1,400 scrub clumps on Desert Mountain, 65 on the Prairie; domes 20
+to 300 m across beside real crowns 8 m across. A height asked of the land far
+from the course costs 1.2 to 3.8 millionths of a second.
+
+**The far ground** (landscape-edge.js `RING_DETAIL`). First step 8 m, each
+step 2% longer, never over 220 m -- all PLACED. On Classic Parkland: 180
+rings, 93,000 vertices, 182,000 triangles; cells 20 m across at 600 m and
+50 m at 2 km. Built in 0.12 s (0.27 s on Desert Mountain, whose mountain
+costs more a point). Low's rings grow 6% a step (about 30,000 triangles) and
+Medium's 3.5% (about 90,000) -- PLACED, graphics.js `farGround`. Drawn in 24
+pieces, eight directions by three distances (to 600 m, to 2.5 km, beyond) --
+PLACED.
+
+**The trees** (surround.js `SURROUND_TREES`, every number PLACED: `near`
+110 m, `reach` 5,000 m, `fall` 3,200 m, `keep` 0.9, `most` 200,000, spacing
+never under 12 m, `FAR_OPEN` 0.36).
+
+| Count, Ultra | Near band | Far sites |
+| --- | --- | --- |
+| Classic Parkland, rounds 2 to 4 | 3,057 | 159,612 |
+| Mountain, rounds 2 to 4 | 5,250 | 77,189 |
+| Classic Parkland, after the open meadows (round 8) | -- | 129,000 (from 180,000) |
+
+A Northern Woods course, its stand 7 m apart, came to 354,000 sites and
+0.76 s before the 12 m floor and the cap. Placing them took 0.5 to 0.7 s in
+rounds 2 to 4 (the far woods' seating took 0.5 to 0.8 s and is gone), 0.1 to
+0.5 s by round 6, and on Classic Parkland 0.36 s falling to 0.13 s in the
+game once the meadows opened. Taking the pictures: 0.05 s.
+
+Per tier (graphics.js `surround`, PLACED then measured):
+
+| Tier | Trees to | Thins every | Picture height | Most sites |
+| --- | --- | --- | --- | --- |
+| Low | 1.5 km | 1.2 km | 128 px | 30,000 |
+| Medium | 2.5 km | 2.0 km | 160 px | 70,000 |
+| High | 4 km | 2.8 km | 192 px | 140,000 |
+| Ultra | 5 km | 3.2 km | 256 px | 200,000 |
+
+The atlas is 2,048 px wide. A far tree is drawn up to twice its size as the
+sites thin (the square root of the spacing's growth); from 700 m a quarter
+wider and a sixth into the ground; a plant under 3 m is not placed past 700 m.
+No site on ground over 0.84 (40 degrees), the steepest of six ways round it
+at 7 m (round 11; until then far sites held to 1.3, 52 degrees, and near
+ones to 0.85, measured to one side). All PLACED.
+
+**The paint** (ground.js). Three tone noises of 610, 173 and 47 m, up to a
+fifth lighter or darker, fading in over 160 m. The forest's floor: the leaf
+colours' average at 0.52 of the light, mottled at 23 m. Patches on 380 m
+cells, meadows on 900 m cells. All PLACED.
+
+**First frame comparison with 0.9.14** (`tools/frame-ab.mjs`, Classic
+Parkland, eighteen holes, tee 1, tee 5 and 250 m up; two rounds; real
+graphics card; other work was using the processor, so the times are rough
+and the counts are what to trust):
+
+| Tier | 0.9.14 | Branch | Triangles a frame |
+| --- | --- | --- | --- |
+| Ultra | 7.9 ms | 8.9 ms | 42.9 M to 55.4 M |
+| Medium | 2.00 ms | 1.67 ms | 9.4 M to 9.6 M |
+| Low | 1.77 ms | 2.50 ms (card time equal: 1.03 to 0.98 ms) | 7.5 M to 7.4 M |
+
+The 12 million more on Ultra were 3,057 real models past the line; the
+160,000 pictures were a third of a million. Course load was 2 to 2.7 s longer.
+
+**Second comparison, the machine quiet** (three rounds on Classic Parkland,
+two on Mountain; medians; real graphics card; `bench/ab/sur-r7-*.json`,
+local; real models past the line capped at 300, High 250):
+
+| Tier, course | 0.9.14 | Branch | Triangles a frame | Course load |
+| --- | --- | --- | --- | --- |
+| Ultra, Classic Parkland | 5.09 ms | 5.43 ms (card: +2%, +6%, +2% at the three spots) | 42.9 M to 44.2 M | 21.3 s to 19.8 s |
+| High, Mountain | 6.65 ms | 6.75 ms | 68.4 M to 69.6 M | 17.8 s to 20.6 s |
+| Low, Classic Parkland | 1.53 ms | 1.53 ms (card time 0.87 to 0.92, 0.79 to 0.74, 0.73 to 0.60) | 7.5 M to 7.3 M | 18.8 s to 17.3 s |
+
+All of what the branch drew over 0.9.14 on Ultra and High was those 300
+(250) real models: 1.3 million triangles. So `nearMax` is 0 on every tier
+-- pictures from the line. Measured again with `nearMax` 0 and the meadows open (SURROUNDINGS, round
+9; medians): Low on the Redwood Coast 1.63 ms on 0.9.14 and 1.60 ms on the
+branch; Medium on Desert Mountain 2.32 ms both; High on Mountain 6.57 ms and
+6.63 ms; Ultra on Classic Parkland, card time at tee 1, tee 5 and 250 m up,
+4.56, 4.69 and 5.94 ms against 4.63, 4.78 and 5.90 ms. Triangles a frame
+level or fewer on every one. Course load within half a second either way on
+all four (Mountain's 2.8 s in the table above was noise: 14.9 s and 14.8 s
+over three runs each). The far trees alone, switched off and on in one page
+(`tools/frame-variants.mjs`): 2.1 to 3.1% of an Ultra frame drawn before
+everything else, about 1% drawn after everything solid and before the
+ground, which is how they are drawn. The two builds compared again after that change (`bench/ab/sur-r11-*.json`,
+three rounds, card time at tee 1, tee 5 and 250 m up): Ultra on Classic
+Parkland 4.59, 4.88 and 5.94 ms on 0.9.14 against 4.51, 4.67 and 5.91 ms on
+the branch -- faster at every spot; High on Mountain 6.16, 6.37 and 7.15 ms
+against 6.20, 6.46 and 7.15 ms -- level from above and 0.04 to 0.09 ms (0.6
+to 1.4%) slower at the two tees, where one build's own runs differ by as
+much (6.14 to 6.20; 6.32 to 6.42). Course load 14.5 s against 14.9 s and
+15.1 s against 15.3 s. So: Low 2% faster, Medium level, Ultra 0.5 to 4%
+faster, High on Mountain within 1.4% and not shown to be level.
+No phone or software-renderer run.
+
+**A course's own surroundings** (surround-sides.js, landscape-edge.js
+`sidedRelief`), all PLACED: hills 160 m, a range 850 m, one mountain 900 m
+(2,200 m past the edge, 9,000 m long), mesas 240 m; `height` 0.3 to 2; relief
+fading in over 900 m; a sea bed 8 m under the water and a lake's 5 m, the
+shore starting 40 to 300 m out by a 500 m noise; a lake's water out to
+1,100 to 1,500 m, hills of 110 m beyond; five islets on a side of sea and islands; the
+sea 2.5 m under the lowest ground of the land when the file names none.
+
+What went wrong on the way is in SURROUNDINGS.md, rounds 2 to 4 and 8, and
+PROJECT_HANDOFF, *THE SURROUNDINGS ARE THE COURSE'S OWN TREES, AS PICTURES*.
+
+### The mountainsides (round 10, 13 November 2026) -- unfinished
+
+docs/SURROUNDINGS.md, *Round 10*, has the rounds and what is owed.
+
+**Source.** Inigo Quilez, *More noise* (value noise with analytic
+derivatives, and a sum of scales in which each is divided by one plus the
+squared size of the slopes summed so far, so detail gathers on gentle ground
+and steep ground stays clean): https://iquilezles.org/articles/morenoise/ .
+Taken: the idea and the form of the divisor. Written from memory, not
+fetched in this session; nothing was copied. Departures: each scale is
+ridged (1 - |2n - 1|, a crest line) where his is plain; the slopes are
+summed as squared sizes scale by scale (summed as a vector, a ridge's two
+sides cancel and the scales below step at every crest); the divisor's weight
+is .35 where his is 1; scales stop where the ring's cells are too wide. All
+PLACED.
+
+**The crags** (landscape-edge.js `crags`): four scales from 320 m, each
+half the last and turned; amplitude .24 of the range's lift times the sum
+about its middle (the sum runs about -.75 to +1.1), weighted by how high the
+range stands there (min(1, 1.5a + .5b) of its two broad ridge fields), so
+about +250 m to -170 m at the most on Mountain's 950 m lift, nothing on a
+valley floor. A scale of wavelength L shows where the ring's cell is under
+L/4 and is gone by L/2.4. PLACED: every number.
+
+**The baked shade** (`shade`): a ring vertex's height less the mean of
+those three cells either way along its ring and three rings in and out,
+over 45% of that radius, clamped to -1..1, fading in from 120 to 400 m. Its
+mean size 600 m to 4 km out, measured: Mountain about three times Classic
+Parkland's (the test holds 1.5 times). The shader multiplies by 1 + .2 of
+it. PLACED.
+
+**The rock face's cells -- taken out in round 11** (ground.js `cragFace`;
+the owner: "actively bad", "terrible"; the next section has what replaced
+them). As they were: a jittered grid, the nearest point's own tone; unit
+5 m doubled until it is .054 of the distance to the camera (about 45 pixels
+at 900 lines and a 60 degree view), two sizes blended; contrast and crack
+by landscape (plain rock .2 and .04; Mountain .2 and .07, cells .8 wide by
+1.6 tall; Desert Resort .13 and none, 2.4 by .5; Hawaiian Resort .3 and .4,
+.42 by 3.6). Still so: snow on Mountain from 640 m over the course by a
+230 m noise of 260 m, 110 m lower in a full hollow. PLACED: every number.
+
+**Measured, once, loosely** (High on Mountain, three rounds, against the
+branch before the round, the card 25 to 40% busy with the desktop;
+bench/ab/sur-m5-mountains-high.json, local): as first built, two views and
+two hashes a cell, card time 6.74 to 7.00 ms, 2.78 to 2.88 ms and 7.73 to
+7.99 ms at tee 1, tee 5 and 250 m up (3.4 to 3.8% slower), draws and
+triangles equal, the wait for a course 13.5 s to 18.6 s. The cut to one view
+and one hash a cell is drawn (after the reboot; no errors, the same to the
+eye) and **not measured**: the graphics card was lost before its run (13
+November 2026, 12:03), and afterwards stood at 17 to 65% with the desktop
+alone, over the 30% gate.
+
+### Round 11 of the surroundings (13 November 2026): the numbers
+
+docs/SURROUNDINGS.md, *Round 11*, has the owner's words and what was done.
+No outside source; every number PLACED unless it says measured.
+
+**The far rock face** (ground.js `cragFace`). Tone 1 + contrast x 2(m -
+.5), where m is .5 of a value noise at 230 m, .32 of one at 61 m and .18 of
+one at 13 m (the last fades out as a pixel covers 0.3 to 2.5 m of ground and
+is a flat .5 beyond), each read at the point's plan position leaned .37 and
+-.29 of its height so a wall is not one tone top to bottom. Times .86 on a
+cliff to 1.05 where the ground lies back (the normal's upward part .1 to
+.62). Contrast: plain rock .2, Mountain .18, Desert Resort .14 with beds
+.3 (a smooth noise along height, 42 m a bed, tilted .11 and .07). Hawaii's
+green (#2f6833, .94): from the normal's upward part .1 to .46, its edge
+moved .3 of (m - .5), .84 to 1.14 of its colour from steep to gentle.
+Counted: twelve hashes a pixel at most, eight far off, sixteen with beds;
+the cells were eighteen with a square root.
+
+**The rounded range** (landscape-edge.js `peaks`, `ringRound`). A scale's
+field n (0 to 1) becomes a dome s x s x (3 - 2s), s = (n - .36) / .34
+clamped, in place of the ridge (1 - |2n - 1|) squared; the 560 m and 240 m
+scales times 1 - .6 x round. Hawaii: round 1, crags 0, lift 520 m (700).
+Measured on seed FAIRWAY, nine holes, the drawn ring's triangles to 4 km by
+plan area: over 35 degrees 34.9% to 9.4%, over 45 degrees 25.2% to 4.9%,
+over 55 degrees 14.7% to 1.9%, top 930 m to 598 m. For comparison, same
+measure: Mountain 80.0%, 65.8%, 46.3%, top 1,329 m; Desert Resort 58.7%,
+38.8%, 19.1%, 811 m; Desert Mountain 9.0%, 4.2%, 1.3%, 996 m.
+
+**Steep ground** (surround.js `FAR_STEEP` .84, six ways, 7 m). Measured on
+seed FAIRWAY, far plants standing on over 40 degrees by eight ways at 8 m,
+before to after: Mountain 33.7% (of 38,240) to 5.1% (of 23,436), steepest
+74 to 58 degrees; Hawaii 27.9% (of 41,431, the old range) to 0.7% (of
+53,002, the rounded one), 75 to 45; Desert Resort 22.5% (of 9,159) to 1.7%
+(of 5,029), 68 to 46; Desert Mountain 5.0% (of 21,212) to 0.2% (of 14,860),
+63 to 45. With three ways at 4 m or 7 m Mountain kept 11 to 12%. Placing,
+18 holes, six ways against three: Mountain 149 to 165 ms, Pacific Northwest
+244 to 340 ms, Classic Parkland 204 to 283 ms.
+
+**The wandering edge** (surround.js `farWarp`; ground.js, the far
+forest's mask). The patch and meadow noises are read at x + 160 sin(z /
+143 + 1.3), z + 160 sin(x / 167 + 2.6): a push of up to 160 m, wavelengths
+898 m and 1,049 m (2 pi times 143 and 167), unequal so the two never fall
+into step. Measured on seed `overhaul`, Hawaii, far sites in 100 m columns
+of x across the old ruled edge, 100 to 900 m north of the line: 264, 166,
+5, 0 (x = -200 to +100) before; 176, 116, 62, 24 after.
+
+**What a wide view draws** (tools/variants/wide-count.js through the
+capture tool, run 60, 13 November 2026; Ultra, nine holes, seed `overhaul`,
+250 m over the first tee looking down the course, 1,600 by 900; triangles
+and draws of one whole frame from the renderer's own counters, every pass).
+Hawaiian Resort 20.55 M triangles and 275 draws, of which the course's own
+planting (every instanced tree and plant, its far versions and shadow twins)
+14.76 M and 169 draws; Mountain 39.95 M and 254, planting 35.79 M and 159;
+Classic Parkland 20.54 M and 346, planting 16.57 M and 248. The far ground
+0.06 to 0.10 M. Far tree sites 56,137, 17,983 and 118,173, two triangles
+each. Readings a few seconds apart differ by about 2 M as the cull
+settles (hiding the far trees read +2.09 M, +2.17 M and -2.21 M), so
+nothing smaller than that is to be read from a difference. Not times: no
+frame time was measured (the card).
+
+**Measured, 13 November 2026, 15:03 to 15:27, the card quiet** (High,
+Mountain, seed PROFILE, 1,600 by 900 at density 2; tools/frame-ab.mjs, three
+rounds, the builds taking turns; card time). Against 0.9.14: tee 1 6.27 to
+6.34 ms, tee 5 2.42 to 2.47 ms, 250 m up 7.09 to 7.15 ms; draws 424 to 435,
+309 to 322, 388 to 398; triangles 69.2 M, 21.5 M and 72.5 M on both; course
+load 11.23 s to 12.43 s; start to the main menu 13.35 s to 15.02 s; heaviest
+frames p99 12.1 to 12.5 ms. Against the branch before round 10
+(bench/ab/sur-pre-crags.html): tee 1 6.21 to 6.26 ms, 250 m up 7.10 to 7.15
+ms, draws and triangles equal, course load 11.74 s to 12.82 s. With the far
+rock's paint worked out once a pixel: tee 1 6.32 to 6.15 ms against that
+same earlier build in that run (read as noise: the earlier build read 6.21
+five minutes before), course load 11.61 s to 12.94 s. What each part of a
+wide frame costs (tools/frame-variants.mjs, tools/variants/wide-view.mjs,
+120 frames, each variant between two unchanged measurements): from 250 m up,
+the course's planting 7.26 to 2.92 ms and 398 to 201 draws, the far ground
+7.24 to 6.51 ms, the far trees 7.15 to 7.12 ms, pixel ratio 1 for 2 7.08 to
+5.32 ms; from tee 1, 6.27 to 2.38 ms, 6.31 to 5.98 ms, 6.30 to 6.27 ms and
+6.32 to 4.95 ms. A course's load on that (unminified) build: 17.0 s, of which
+6.15 s the browser's own work and 4.51 s idle; no function of the game over
+0.5 s.
+
+**Bare heights** (biomes.js `farLine`). Desert Mountain 250 m over the
+course: the massif's talus apron is .22 of its rise, about 160 to 200 m of
+720 to 900. Desert Resort 320 m of a range that tops out at 811 m. A site
+within 60 m under the line is kept with a chance falling to nothing 20 m
+over it (the far forest's own rule). Highest far plant, measured: Desert
+Mountain 972 m to 266 m, Desert Resort 805 m to 337 m.
+
+### The frame-rate pass, round F1 (13 November 2026): a tree's middle version
+
+docs/SURROUNDINGS.md, *Round F1*, has what was built and why. No outside
+source. Every number PLACED unless it says measured.
+
+**The line.** High `midTrees` {share .25, px 300}, Ultra {share .33, px
+200}: a painted tree under that many of the picture's own pixels tall is
+its middle version (the cull compares the model's height over the square's
+distance, times the focal length, with px over the drawing buffer's height,
+or with `farPainted` -- 5% and 3% -- where that is more). The swap band is
+15% above the line, cross-faded in 16 steps, as it was. Found by eye:
+every tree as its far twin against every tree whole, 1,600 by 900, High
+(bench/shots/overhaul/fr-far, fr-full): alike under about 100 pixels, lumps
+at 235; every tree as its middle version at a fifth (fr-mid): alike at every
+size in those pictures (the largest about 250 pixels); the nearest trees
+too (fr-mid-near): a pine at 290 pixels a little softer, an oak at 550 and
+a spruce at 480 plainly faceted.
+
+**The outline rule** (tools/mid-cells.mjs `MID_OUTLINE`): kept .90, extra
+.08, area .85 of the model's outline at the tier's px, by the packer's
+score (four views; tools/far-cluster.mjs `outlineScore`), where the far
+versions' own rule is .85, .10, .80 at 100 pixels. Measured over the 329
+models with a far version and a part of 1,500 triangles or more: at a
+quarter and 300 pixels, before the rule, 200 fell under kept .93, extra
+.06 or area .90, the worst kept .63 and area .62 (palo verde .75 and .64 to
+.70, creosote .73 and .67, sagebrush .79 and .75); under the rule 316 have
+a middle version on High and 320 on Ultra, at the tier's share or at .4 or
+.5, and 13 and 9 have none.
+
+**A middle version, measured** (Node, the grid known): Lodgepole pine 1
+leaf 11,730 triangles to 3,165, Engelmann spruce 1 11,456 to 2,971,
+quaking aspen 1 9,476 to 2,432, ponderosa pine 2 11,220 to 2,862; their
+twins 220 to 360. 1.5 to 5.2 ms a model with the grid from the table, 10
+to 16 ms searching for it. The middle version's outermost points sit up to
+half a grid cell inside the model's: at a quarter, 0 to 1.3% of the part's
+size on the conifers, 5.4% at the foot of an aspen's crown, 7.4% and 6.2%
+on Blender_Oak_1 (3,168 leaf triangles, the coarsest grid).
+
+**What a frame drew, by count** (the capture tool's `--eval`; 1,600 by
+900, the line set to 150 pixels to stand for 300 on 1,800 lines; High,
+Mountain, seed PROFILE, first tee). Before the pass, the picture's buffers
+54.3 M triangles, eight tree models at 4.1 to 7.6 M each and 36 far twins
+(tools/frame-tris.mjs; that tool counts a model's parts twice over, so read
+its shares, not its sizes). With middle versions and the square's own
+tallest thing: picture 26.1 M (whole models about 9 M, middle versions
+about 10 M), shadow maps 10.2, 1.75 and 1.95 M. With each kind by its own
+height: picture 22.7 M, shadow maps 7.5, 1.6 and 1.8 M. Draws at tee 5,
+Ultra, Classic Parkland, with trunks swapped too: other instanced things
+110 in the picture and 86 in the maps, whole 47 and 37, stand-ins 82,
+middle versions 22 and 22, fading 18 and 27 (every one under 8 instances).
+
+**Where the line could sit, measured** (tools/frame-variants.mjs,
+tools/variants/far-versions.mjs; High, Mountain, 1,600 by 900 at density 2;
+the FAR TWIN drawn under each share of the screen, card time against the
+frames either side): 8% of the screen -12.6% at tee 1 and -26.3% from 250
+m up; 12% -28.4% and -44.9%; 18% -41.7% and -53.3%; 25% -48.5% and -53.3%;
+40% -51.3% and -55.0%; triangles 61.5 M to 50.3, 38.5, 28.2, 21.2 and 14.9
+M at tee 1. (The twin cannot be drawn at those sizes; the figures are what
+the middle version was built to reach.)
+
+**Against 0.9.14, card time at tee 1, tee 5 and 250 m up** (three rounds,
+the builds taking turns). The first build (share .2, trunks swapped, the
+middle version in every shadow map): High, Mountain 6.24, 2.54, 7.29 ms to
+4.76, 2.50, 4.72 ms; triangles 69.2, 21.5, 72.5 M to 41.6, 17.7, 28.6 M.
+With the far shadow maps' stand-in: 6.63, 2.58, 7.58 to 4.59, 2.54, 4.66
+ms; 38.3, 17.2, 23.8 M. With each kind by its own height and share .25:
+6.25, 2.43, 7.19 to 4.33, 2.28, 4.68 ms; 34.4, 14.1, 26.9 M; draws 424,
+309, 388 to 455, 379, 305. Ultra, Classic Parkland, that build: 6.19, 2.51,
+7.70 to 3.10, 2.29, 3.88 ms; the whole frame at tee 5 2.44 to 2.74 ms
+(+12.5%), draws 234 to 354. With trunks whole: 3.35, 2.19, 3.72 ms; tee 5's
+frame 2.79 to 2.77 ms, draws 321. The last build (the outline rule, the
+unseen squares): High, Mountain 6.62, 2.68, 7.41 to 4.64, 2.17, 5.07 ms,
+35.6, 14.5, 30.4 M triangles, draws 417, 341, 302, course load 14.32 to
+15.47 s; Ultra, Classic Parkland 6.19, 2.61, 7.86 to 3.21, 2.10, 4.24 ms,
+19.7, 12.2, 18.0 M, draws 381, 322, 311, course load 13.88 to 14.59 s.
+The readings of one build differ by up to 0.2 ms between runs made an hour
+apart on a card the desktop was using; within a run the builds took turns.
+
+**Rounds F2 and F3, measured** (the same tool and picture size). The twin
+again under `farPainted` (High 5%, Ultra 3% of the screen's height),
+against 0.9.14: High, Mountain 6.48, 2.63 and 7.41 ms to 4.31, 2.13 and
+4.46 ms, triangles 31.3, 14.0 and 23.6 M, draws 459, 374 and 380 (0.9.14:
+424, 309, 388), p99 12.4 to 5.9 ms, course load 14.44 to 15.52 s; Ultra,
+Classic Parkland 4.95, 2.35 and 6.73 ms to 2.97, 2.25 and 3.62 ms (0.9.14
+read 6.19, 2.61 and 7.86 ms in the run before: the card's clock state
+differed between runs, which is why only a run's own two builds are
+compared), triangles 17.7, 11.9 and 14.7 M, draws 427, 341 and 378
+(0.9.14: 375, 234, 375), the whole frame at tee 5 2.43 to 2.55 ms. The far
+ground's loops and one shadow draw fewer a fading twin, against the build
+before: High, Mountain 4.32, 2.14, 4.48 ms to 4.14, 2.09, 4.39 ms; pixels
+changed A against B 0.44%, 0.06%, 0.29%, A against A 0.80%, 0.33%, 0.34%,
+B against B 0.62%, 0.44%, 0.34% (summed RGB difference over 24). The
+ground shader's additions on this branch, on and off, four rounds: course
+load 15.77 s (15.37, 15.40, 15.90, 15.77) against 15.21 s (15.35, 15.21,
+15.11, 15.10); start to the main menu 16.40 s against 15.83 s.
+
+**The card's gate** (tools/gpu-gate.mjs, since 13 November 2026): the sum
+of Windows' GPU Engine utilisation counters over every program and engine,
+the highest of samples two seconds apart; one program at 15% or more
+refuses a run (PLACED: the desktop's programs measured 0.6 to 4.7% each,
+6.7 to 8.4% together, while `nvidia-smi` read 19 to 35%).
+
+### The card picks its clock from the load (13 November 2026)
+
+This machine's RTX 4090 (top core clock 3,105 MHz by `nvidia-smi`
+clocks.max.gr) does not run a light frame at full clock. Measured with
+tools/gpu-watch.mjs and tools/frame-ab.mjs, headless Chrome, frames not
+capped, 1,600 by 900 at density 2:
+
+- At rest: power state P8, 255 to 345 MHz, about 20 W, link generation 1.
+- Timing frames of 4 to 8 ms on Ultra: 800 to 1,700 MHz, 50 to 180 W, 24 to
+  97% busy by `nvidia-smi`. On High (lighter frames, more of them): 2,190
+  to 2,730 MHz in five runs of six, 1,238 to 1,775 in the sixth.
+- **One page, two builds:** Prairie & Sand Hills on Ultra from tee 1, 0.9.14
+  at 1,603 MHz, 169 W, 97% busy, 4.63 ms a frame on the card; this branch
+  (round F4) at 1,226 MHz, 134 W, 80% busy, 6.09 and 6.23 ms -- 34% more
+  time for 40% fewer triangles (20.3 to 12.1 million) and the same draws
+  (333, 335).
+- **Card time x clock / top clock** ("work", the time at full clock; PLACED
+  as a correction, work is not exactly proportional to the core clock):
+  2.39, 2.39 ms against 2.41, 2.43 ms at the tee; 2.73, 2.70 against 3.00,
+  3.00 ms from 250 m up. Rounds of one build agree to 1 or 2%.
+- **Processor time inside GL calls is waiting, not work:** a Chrome profile
+  of that page charged 0.98 to 1.56 ms a frame to uniformMatrix4fv and 0.65
+  to 1.58 ms to uniform4fv; a count of the calls found 13,700 to 14,800
+  numbers in 452 to 500 array calls a frame over 355 to 411 draws.
+
+**Neither reading below was the build: a load runs in one of two modes**
+(docs/SURROUNDINGS.md, *A load runs in one of two modes*; the figures are
+there). Card-bound, or held up on the processor's side with the card 60 to
+75% busy and the frame up to twice as long, in either build, in runs:
+0.9.14 slow in 7 loads of 8, this branch in 1 of 5. Four loads a build and
+the least card time of them is the comparison.
+
+**The correction misleads where the card is not the limit** (14 November,
+with the clock capped by the owner, `nvidia-smi -lgc 210,2520`, and both
+builds reading 2,610 MHz): the same page read 3.15 against 4.98 ms at the
+tee and 3.34 against 5.58 ms from above -- 58 and 67% more for this branch,
+not the 2 and 10% the corrected figures gave. A frame held up by something
+other than the card leaves it idle, the clock falls, and time x clock
+comes out level. Use the corrected figure only when both builds show the
+card as busy as each other (97% and 80% here: they did not).
+
+Raw card milliseconds from this machine are therefore what it did in its
+power mode, and compare two builds fairly only when both ran at one clock.
+The first sweep of the frame-rate pass (`sweep-fr9`) recorded no clock; the
+second (`sweep2-fr9`) does. No outside source was used; nothing here is
+published.
+
+### The frame-rate pass, round F5 (14 November 2026): one caster a part in the far shadow maps
+
+tools/frame-ab.mjs, Classic Parkland, High, seed PROFILE, 1,600 by 900 at
+density 2, two rounds, `--settle 600 --frames 400`; A the build before the
+change, B with it; the card at 2,610 to 2,730 MHz throughout. Draws, card
+time at full clock, whole frame (the page's main thread a frame):
+
+- **The times in this list compared two modes, not the change** (A's loads
+  75% busy, B's 99%); the draws and triangles stand. Four loads a build
+  afterwards: least card time 2.47 to 2.18, 1.66 to 1.63 and 2.64 to 2.65
+  ms at the three spots; whole frame by the median of four 3.76 to 3.88,
+  2.75 to 2.46 and 2.89 to 3.04 ms.
+- tee 1: 422 to 402 draws; 2.36 to 1.90 ms; 3.54 to 2.32 ms. Rounds: A 2.68
+  and 2.45 ms raw card time, B 2.17 and 2.17.
+- tee 5: 343 to 326; 1.49 to 1.50 ms; 2.82 to 1.78 ms.
+- 250 m over tee 1: 384 to 371; 2.42 to 2.27 ms; 3.22 to 2.72 ms.
+- The card's busy share at the tees: A 75 and 76% at 318 to 327 W, B 99 and
+  100% at 392 to 407 W.
+- Triangles a frame: 11.3 to 11.2, 9.5 to 9.5, 9.2 to 9.0 million.
+- Pixels changed (summed colour difference over 24): A against B 3.81%,
+  2.08%, 6.39%; A against A 3.24%, 2.39%, 2.93%; B against B 2.85%, 2.27%,
+  0.27%.
+
+No outside source.

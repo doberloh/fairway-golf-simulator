@@ -72,6 +72,7 @@ function wildUniforms(w, hasWild, hasFallen) {
   // A carved far country: the course's own threshold (the ring keeps the rock
   // going past the property line), narrower in the shader so its grass stays grass.
   ringFaceFrom: {value: biomeOf(w.settings.biome).ringCarve ? .9 : biomeOf(w.settings.biome).ringMesas ? .86 : .74},
+  ...farFaceUniforms(biomeOf(w.settings.biome)),
   wildGateA: {value: gate(gates.a)}, wildGateB: {value: gate(gates.b)}, wildGateF: {value: gate(gates.floor)},
   // Up to two rock-tee outcrops (course.js, *Tees up on the rock*): centre and long axis, then
   // half-length, half-width and whether it is there.
@@ -85,6 +86,18 @@ function wildUniforms(w, hasWild, hasFallen) {
   // course stands at its real height (built-world.js skyBaseOf).
   heightBase: {value: w.skyBase ?? 0},
  };
+}
+// A FAR FACE'S OWN LOOK (the surroundings rework, 13 November 2026; biomes.js
+// farFace): how far the rock's tone drifts from place to place (contrast),
+// soft beds of tone by height (beds), a green to grow over it and how much of
+// it (Hawaii's pali), and the height its snow starts at (Mountain). The
+// shader's cragFace reads them. (Until round 11 it also shaped the cells a
+// face was broken into -- wide, tall, crack; the cells are gone, cragFace
+// says why.)
+export const FAR_FACE = {contrast: .2, beds: 0, green: null, greenShare: 0, snow: null};
+function farFaceUniforms(bio) {
+ const o = {...FAR_FACE, ...(bio.farFace || {})}, g = new T.Color(o.green ?? '#000000');
+ return {cragShape: {value: new T.Vector4(o.contrast, o.beds, 0, 0)}, cragGreen: {value: new T.Vector4(g.r, g.g, g.b, o.green ? o.greenShare : 0)}, farSnow: {value: o.snow ?? 1e5}};
 }
 // BANDED STRATA (the Badlands, 3 November 2026; biomes.js `strata`): a
 // landscape whose rock is layered clay paints its rock faces -- and its
@@ -191,9 +204,16 @@ export const RANGE_GREENS = 8;
 export const HOLE_ATLAS = {route: 0, tees: 3, cups: 9, hazards: 11, greens: 35, width: 35 + 3 * RANGE_GREENS};
 // The painted forest on the far hills (biomes.js `farForest`; the shader says
 // how it is drawn). Off where a biome has none.
-export function farForestUniforms(bio){
+// OPEN COUNTRY AMONG THE WOODS (the owner, 13 November 2026: "I dont think we
+// always need 'full forest' on the outside. We could generate patches with
+// no trees"). A second, broader noise (900 m) opens meadows in the far
+// forest wherever it falls under this: about a quarter of the wooded country
+// at .36, PLACED. A landscape may say its own (`farForest.open`); scrub has
+// its clumps and takes none. surround.js plants by the same number.
+export const FAR_OPEN=.36;
+export function farForestUniforms(bio,reach=5000,cover){
  const f=bio.farForest,c=f?.colors??['#000000','#000000','#000000'];
- return {farOn:{value:f?1:0},farPaint:{value:f?.paint??1},farCover:{value:f?.cover??0},farLine:{value:f?.line??1e5},farSize:{value:f?.size??11},farSea:{value:bio.sea?1:0},
+ return {farOn:{value:f?1:0},farReach:{value:reach},farOpen:{value:f?.scrub?0:f?.open??FAR_OPEN},farPaint:{value:f?.paint??1},farCover:{value:(c=>c<=0?-1:c)(cover??f?.cover??0)},farLine:{value:bio.farLine??f?.line??1e5},farSize:{value:f?.size??11},farSea:{value:bio.sea?1:0},
   farC0:{value:new T.Color(c[0])},farC1:{value:new T.Color(c[1])},farC2:{value:new T.Color(c[2])},
   // A fourth colour where the record names one (Autumn's evergreens); else
   // the first, in shade.
@@ -347,15 +367,15 @@ export function groundMaterial(view,palette){
   Object.assign(shader.uniforms,colors,cues,{bankTint:{value:new T.Color(bio.bank)},streamCount:{value:streamCount},owners:{value:texture(owners,Sx,Sz)},cover:{value:coverTex},detail:{value:detailTex},tables:{value:tables.texture},tableRows:{value:tables.rows},curveSpan:{value:span},extent:{value:extent},rows:{value:N},rock:{value:new T.Color(w.bio.rock)},// NAMED, NOT NUMBERED. This was an index into a four-element array, so a
    // biome not in the list landed on -1 and took whichever branch that turned
    // out to be -- silently, and only visible by looking at the ground.
-   speckleRock:{value:bio.speckleRock?1:0},altitudeRock:{value:bio.altitudeRock?1:0},litterAmount:{value:bio.litter?1:0},litterVary:{value:bio.litterVary??1},seaBeach:{value:bio.sea?1:0},beachOwn:{value:bio.beachTint?1:0},beachTint:{value:new T.Color(bio.beachTint||"#000000")},blowoutOn:{value:blow?1:0},
+   speckleRock:{value:bio.speckleRock?1:0},altitudeRock:{value:bio.altitudeRock?1:0},litterAmount:{value:bio.litter?1:0},litterVary:{value:bio.litterVary??1},seaBeach:{value:bio.sea?1:0},seaAt:{value:bio.sea?w.waterLevel??0:0},beachOwn:{value:bio.beachTint?1:0},beachTint:{value:new T.Color(bio.beachTint||"#000000")},blowoutOn:{value:blow?1:0},
    // The overhaul's ground types: which type each channel holds (GROUND_CODE),
    // the gate each starts at, and the colours they paint with.
-   ...wildUniforms(w,!!wild,!!fallen),field:{value:fieldTex},fieldOn:{value:sandField&&!built?1:0},builtB:{value:builtBTex},builtFringe:{value:w.settings.fringe??2},gt_path:{value:new T.Color(w.bio.mapTurf?.path??GROUNDS.path.map)},gt_road:{value:new T.Color(GROUNDS.road.map)},...farForestUniforms(bio),farProp:{value:new T.Vector2(w.halfX,w.halfZ)}});
- shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 groundPoint;varying vec3 groundNormal;\nattribute float localRelief;varying float vRelief;').replace('#include <begin_vertex>','#include <begin_vertex>\ngroundPoint=position;groundNormal=normal;vRelief=localRelief;');
+   ...wildUniforms(w,!!wild,!!fallen),field:{value:fieldTex},fieldOn:{value:sandField&&!built?1:0},builtB:{value:builtBTex},builtFringe:{value:w.settings.fringe??2},gt_path:{value:new T.Color(w.bio.mapTurf?.path??GROUNDS.path.map)},gt_road:{value:new T.Color(GROUNDS.road.map)},...farForestUniforms(bio,view.quality?.surround?.reach??5000,w.surround?.cover),farProp:{value:new T.Vector2(w.halfX,w.halfZ)}});
+ shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 groundPoint;varying vec3 groundNormal;\nattribute float localRelief;varying float vRelief;attribute float farShade;varying float vFarShade;').replace('#include <begin_vertex>','#include <begin_vertex>\ngroundPoint=position;groundNormal=normal;vRelief=localRelief;vFarShade=farShade;');
  shader.fragmentShader=shader.fragmentShader.replace('#include <common>',`#include <common>
- varying float vRelief;uniform float cueRelief,cueSlope,cueContours,cueStripes,cuePatches,cueShade,cueSheen,greenLift,greenBend,greenBandSoft;
+ varying float vRelief;varying float vFarShade;uniform vec4 cragShape,cragGreen;uniform float farSnow;uniform float cueRelief,cueSlope,cueContours,cueStripes,cuePatches,cueShade,cueSheen,greenLift,greenBend,greenBandSoft;
  uniform vec3 sunDir;
- uniform float farOn,farPaint,farCover,farLine,farSize,farSea;uniform vec3 farC0,farC1,farC2,farC3;uniform vec2 farProp;
+ uniform float farOn,farPaint,farCover,farLine,farSize,farSea,farReach,farOpen;uniform vec3 farC0,farC1,farC2,farC3;uniform vec2 farProp;
  // The same rounded box course.js uses, so paint and lie cannot disagree
 // about where a tee is.
 float teeBox(vec2 d,vec2 h,float r){vec2 q=abs(d)-h+r;return length(max(q,vec2(0.)))+min(max(q.x,q.y),0.)-r;}
@@ -373,7 +393,7 @@ varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cove
 // texture is linear for the curves and banks, and a filtered read of every
 // table texel cost Classic 5-10% of its ground on Low (tools/frame-ab.mjs,
 // 31 October 2026). The row passed is the hole's texel centre, hole + .5.
-vec4 holeTexel(float col,float row){return texelFetch(tables,ivec2(int(col),int(rows)+int(row)),0);}uniform vec2 extent;uniform float streamCount;uniform float curveSpan;uniform float speckleRock,altitudeRock,litterAmount,seaBeach,blowoutOn,beachOwn;uniform vec3 beachTint;
+vec4 holeTexel(float col,float row){return texelFetch(tables,ivec2(int(col),int(rows)+int(row)),0);}uniform vec2 extent;uniform float streamCount;uniform float curveSpan;uniform float speckleRock,altitudeRock,litterAmount,seaBeach,seaAt,blowoutOn,beachOwn;uniform vec3 beachTint;
 vec4 curveAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curveSpan*511.,0.,511.)+.5)/1024.,row/tableRows));}
 vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curveSpan*511.,0.,511.)+512.5)/1024.,row/tableRows)).xy;}
  uniform vec3 bankTint;
@@ -384,6 +404,12 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  uniform float bloomOn;uniform vec3 bloomA,bloomB;
  uniform float strataOn,strataSpacing;uniform vec4 strataShares;uniform vec3 st_a,st_b,st_c,st_d;
  /* Hash without Sine, (c)2014 David Hoskins, MIT: THIRD_PARTY_NOTICES.txt */float hashGround(vec2 p){vec3 q=fract(vec3(p.xyx)*.1031);q+=dot(q,q.yzx+33.33);return fract((q.x+q.y)*q.z);}
+ // THE FOREST'S PATCHES, HASHED IN WHOLE NUMBERS (the surroundings rework):
+ // surround.js plants the trees by this same number, and a hash through
+ // sin() is not the same number on the card as in the page once the cell is
+ // a few away from the middle -- the first round's trees stood beside the
+ // floor painted for them. Integer arithmetic is the same everywhere.
+ float coverHash(vec2 c){ivec2 q=ivec2(c);uint h=uint(q.x)*374761393u+uint(q.y)*668265263u;h=(h^(h>>13u))*1274126177u;h^=h>>16u;return float(h&65535u)/65536.;}
  float patchNoise(vec2 x){vec2 i=floor(x),f=fract(x);f=f*f*(3.-2.*f);return mix(mix(hashGround(i),hashGround(i+vec2(1.,0.)),f.x),mix(hashGround(i+vec2(0.,1.)),hashGround(i+vec2(1.,1.)),f.x),f.y);}
  // The bed a height lies in (strataUniforms): level, a little warped so a
  // bed is not ruled, its colour by a hash of its number.
@@ -503,6 +529,50 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  // designer was removed, 2 November 2026; every ground type keeps the soft
  // edge above.)
  float wildEdge(float code,float f){return wildSoft(f);}
+ // A FAR ROCK FACE, AT ANY DISTANCE (the surroundings rework, 13 November
+ // 2026). The rock above is laid from overhead in metres: on a cliff it
+ // stretched into smears (so a steep far face was given 85% of one flat
+ // tone), and past a few hundred metres its 5 to 9 m marks are under a pixel
+ // (so the rest went flat too). A mountain over the course was a plain grey
+ // sheet beside the course's own crags.
+ // WHAT IT IS NOW (round 11): no pattern of its own. The rock's tone drifts
+ // softly from place to place (a noise at 230 m and 61 m, and one at 13 m
+ // only where the face is near enough to show it), a cliff is a little
+ // darker than a ledge, and a landscape may lay soft beds by height
+ // (limestone) or grow a green over all but the steepest of it (Hawaii's
+ // pali) -- lighter where the ground lies back, as grass is. What tells a
+ // mountainside is its shape and what grows by steepness, which the owner
+ // liked; the paint only keeps it from being one flat sheet.
+ // WHAT IT WAS, AND WHY IT WENT. Round 1 drew joints and ledges as evenly
+ // spaced lines: a net over the mountain, zebra stripes on Hawaii. Rounds 2
+ // to 5 broke the face into irregular cells, each its own tone, a dark crack
+ // where two met, sized by the distance to the camera. The owner, 13
+ // November 2026, of Hawaii and Desert Mountain: "the hexagonal texture ...
+ // looks like actively bad", "that texture looks terrible". Cells of one
+ // size are a pattern however irregular each is, and a pattern over a whole
+ // mountain is what the eye sees first. They also cost up to eighteen hashes
+ // a pixel; this is twelve at most and eight far off. PLACED: every number.
+ vec3 cragFace(vec3 n,float grain){
+  vec3 P=groundPoint;
+  // (Leaning with height, so a wall is not one tone from top to bottom.)
+  vec2 q=P.xz+P.y*vec2(.37,-.29);
+  float fine=grain<.98?mix(patchNoise(q/13.+5.1),.5,grain):.5;
+  float m=.5*patchNoise(q/230.)+.32*patchNoise(q/61.+17.3)+.18*fine;
+  float tone=(1.+cragShape.x*(m-.5)*2.)*mix(.86,1.05,smoothstep(.1,.62,n.y));
+  // Beds: tone drifting with height, about 42 m a bed, a little tilted (limestone).
+  if(cragShape.y>0.){float ys=(P.y+P.x*.11+P.z*.07)/42.+.6*patchNoise(P.xz/260.);tone*=1.+cragShape.y*(patchNoise(vec2(ys,3.1))-.5);}
+  vec3 c=gt_rock*.92*tone;
+  // Growth over the face (Hawaii): all but the steepest of it, its edge
+  // wandering, lighter where the ground lies back.
+  if(cragGreen.a>0.){float g=cragGreen.a*smoothstep(.1,.46,n.y+(m-.5)*.3);c=mix(c,cragGreen.rgb*(.84+.3*smoothstep(.3,.8,n.y))*(.5+.5*tone),g);}
+  return c;
+ }
+ // WORKED OUT ONCE A PIXEL, BEFORE THE LAYERS ARE PAINTED (round 11). The
+ // card's compiler writes a function out in full wherever it is called, and
+ // paintLayer is called twice a pixel; called from inside it, the far face
+ // was in the shader twice though only the upper layer is ever a far face.
+ // The shader's size is paid for when a course loads.
+ vec3 cragPaint;
  // One layer of painted ground over c: layer i of the wild ground's four, or
  // the far ring's floor (0) and face (1), which also settle to a flat colour
  // where their pattern is under a pixel (ringGrain, -1 off the ring).
@@ -511,7 +581,10 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   // Banded clay keeps its beds on a far face, four times as thick, as a far
   // wall's show in the photographs; it is its faces' whole look.
   float bedScale=faceLayer&&strataOn>.5?.25:1.;bedFine=beds*bedScale;
-  vec3 under=ring?c:turf,paint=groundPaint(code,wp,groundPoint.y*bedScale,gn,under);
+  vec3 under=ring?c:turf;
+  // A far rock face has marks of its own (cragFace); banded clay keeps its beds.
+  if(faceLayer&&code<1.5&&strataOn<.5)return mix(c,mix(cragPaint,under,smoothstep(.62,.9,gn.y)*.3),share);
+  vec3 paint=groundPaint(code,wp,groundPoint.y*bedScale,gn,under);
   if(ring){
    // A ground type's average colour, for where its pattern is under a pixel.
    // Round 5: the steeper the face the plainer: a pattern laid from above
@@ -586,6 +659,13 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  }
  `).replace('#include <color_fragment>',`#include <color_fragment>
  vec2 wp=groundPoint.xz;vec2 ownerUv=(wp/extent+1.)*.5;vec4 owner=texture2D(owners,ownerUv);
+ // PAST THE COURSE'S GROUND (the frame-rate pass, 13 November 2026). Every
+ // pixel of the far ring ran the whole of what follows for the hole whose
+ // texel lies nearest the edge -- its three tees, its hazards one by one, up
+ // to 24 table reads and a shoreline each -- to learn that none of them is
+ // within 150 m. The far ground was a tenth of a wide frame on Mountain. The
+ // two loops stop at once out there; nothing they find could reach it.
+ bool offCourse=abs(wp.x)>=extent.x||abs(wp.y)>=extent.y;
  // OWNERSHIP, RESOLVED WHERE IT MATTERS.
  //
  // The atlas is a grid of hole indices sampled NEAREST, so a boundary between
@@ -682,7 +762,7 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  // two thirds fairway, a third fringe, a touch darker, full saturation.
  // Round 3: Desert's read deep and rich against its sand -- 10% toward grey.
  vec3 teeTurf=mix(tint_fairway,tint_fringe,.33)*.96;teeTurf=mix(vec3(dot(teeTurf,vec3(.299,.587,.114))),teeTurf,.9);
- for(int ti=0;ti<3;ti++){vec4 tee=holeTexel(3.+float(ti)*2.,row);
+ for(int ti=0;ti<3;ti++){if(offCourse)break;vec4 tee=holeTexel(3.+float(ti)*2.,row);
   vec4 teeDir=holeTexel(4.+float(ti)*2.,row);
   // Into the pad's own frame: across the line of play, then along it.
   vec2 td=p-tee.xy,tf=vec2(td.x*teeDir.y-td.y*teeDir.x,td.x*teeDir.x+td.y*teeDir.y);
@@ -717,8 +797,8 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  // Its colour is the bunkers' sand unless the landscape names its own
  // (biomes.js beachTint: the Lowcountry's creek banks are pluff mud).
  if(seaBeach>.5&&kind<.5){
-  turf=mix(turf,beachOwn>.5?beachTint:tint_sand,1.-smoothstep(${BEACH_RISE.toFixed(2)},${(BEACH_RISE+BEACH_FADE).toFixed(2)},groundPoint.y));
-  if(groundPoint.y<${BEACH_RISE.toFixed(2)})kind=5.;
+  turf=mix(turf,beachOwn>.5?beachTint:tint_sand,1.-smoothstep(${BEACH_RISE.toFixed(2)},${(BEACH_RISE+BEACH_FADE).toFixed(2)},groundPoint.y-seaAt));
+  if(groundPoint.y-seaAt<${BEACH_RISE.toFixed(2)})kind=5.;
  }
  // How near water this fragment is, for the blowouts below: the hole's ponds
  // and lakes (the hazard loop) and its creek (the channel block).
@@ -730,7 +810,7 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  float mownEdge=min(max(lateralCut,alongCut),greenRing);
  float mownTaper=smin(smax(lateralCut,alongCut,12.),greenRing,12.);
  float fairD=max(fw,max(mowStart-p.y,p.y-(info.x+8.)));
- for(int i=0;i<12;i++){vec4 hz=holeTexel(11.+float(i)*2.,row);vec4 meta=holeTexel(12.+float(i)*2.,row);if(hz==vec4(0.)&&meta==vec4(0.))break;/* the hazards are written from slot 0 on (renderer.js makeHazardAtlas): the first empty slot ends them -- 24 table reads a pixel saved on a hole with none (the frame-rate goal) */if(hz.z>0.){vec2 q=(p-hz.xy)/hz.zw;if(meta.y>.5){float bj=floor(owner.r+.5)*4.+meta.y-1.,br=floor(bj*.5);vec2 bank=texture2D(tables,vec2((bj-br*2.)*.5+(clamp(q.y*.5+.5,0.,1.)*511.+.5)/1024.,(rows*2.+br+.5)/tableRows)).xy;q.x=(p.x-bank.x)/bank.y;}float edge=1.+meta.z*sin(atan(q.y,q.x)*2.+meta.x)+meta.w*sin(atan(q.y,q.x)*3.+meta.x);if(meta.y>.5)edge=1.;float hd=(length(q)-edge)*length(p-hz.xy)/max(length(q),.0001);
+ for(int i=0;i<12;i++){if(offCourse)break;vec4 hz=holeTexel(11.+float(i)*2.,row);vec4 meta=holeTexel(12.+float(i)*2.,row);if(hz==vec4(0.)&&meta==vec4(0.))break;/* the hazards are written from slot 0 on (renderer.js makeHazardAtlas): the first empty slot ends them -- 24 table reads a pixel saved on a hole with none (the frame-rate goal) */if(hz.z>0.){vec2 q=(p-hz.xy)/hz.zw;if(meta.y>.5){float bj=floor(owner.r+.5)*4.+meta.y-1.,br=floor(bj*.5);vec2 bank=texture2D(tables,vec2((bj-br*2.)*.5+(clamp(q.y*.5+.5,0.,1.)*511.+.5)/1024.,(rows*2.+br+.5)/tableRows)).xy;q.x=(p.x-bank.x)/bank.y;}float edge=1.+meta.z*sin(atan(q.y,q.x)*2.+meta.x)+meta.w*sin(atan(q.y,q.x)*3.+meta.x);if(meta.y>.5)edge=1.;float hd=(length(q)-edge)*length(p-hz.xy)/max(length(q),.0001);
  // Ponds and lakes take the same shoreline as a channel instead of a sand bed
  // and sand collar. Their band is capped tighter than a channel's because the
  // owner atlas stops carrying this hole's hazards a short way outside them.
@@ -938,6 +1018,7 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   int top=paintShare.w>0.?3:paintShare.z>0.?2:paintShare.y>0.?1:0;
   int low=top>2&&paintShare.z>0.?2:top>1&&paintShare.y>0.?1:top>0&&paintShare.x>0.?0:-1;
   vec3 c=turf;
+  if(ringGrain>=0.&&top==1&&paintCode.y<1.5&&strataOn<.5)cragPaint=cragFace(gn,ringGrain);
   if(low>=0&&paintShare[top]<1.)c=paintLayer(c,turf,low,paintCode[low],paintShare[low],ringGrain,beds,wp,gn);
   turf=paintLayer(c,turf,top,paintCode[top],paintShare[top],ringGrain,beds,wp,gn);
  }
@@ -1353,7 +1434,7 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  if(farSea>.5){
   // Round 17: to 0.15 m and lighter (.7) -- at 0.45 m a flat beach went dark
   // from the water to the dunes (Lakeshore's lake shore, g3-r10 sea-near).
-  float wetSand=(1.-smoothstep(.03,.15,groundPoint.y))*smoothstep(-.06,0.,turf.r-turf.g);
+  float wetSand=(1.-smoothstep(.03,.15,groundPoint.y-seaAt))*smoothstep(-.06,0.,turf.r-turf.g);
   turf=mix(turf,turf*vec3(.74,.76,.8),wetSand*.7);
  }
  // SOFT OCCLUSION (U1 in TODO): darker at the foot of every trunk and boulder
@@ -1430,6 +1511,29 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  // broad noise (cover), and on Mountain held below a treeline. Far off,
  // where a lump is under a pixel, it settles to its average colour rather
  // than shimmering. PLACED: every number (RESEARCH, *The overhaul's far forest*).
+ // THE FAR GROUND IS NOT ONE FLAT TONE (the surroundings rework, 12 November
+ // 2026; the owner: the surroundings are "definitively more low poly and low
+ // rez"). Past the property line the ground was the rough's one colour to the
+ // horizon. Three broad noises -- 610, 173 and 47 metres -- now lighten and
+ // darken it by up to a fifth, fading in over the first 160 m so nothing shows
+ // at the line. Colour only; before the forest's floor, which is painted over
+ // it. PLACED: every number.
+ {
+  vec2 fq=abs(wp)-farProp;float fo=length(max(fq,0.));
+  if(fo>0.){
+   float tone=(patchNoise(wp/610.)-.5)*.22+(patchNoise(wp/173.+7.3)-.5)*.14+(patchNoise(wp/47.-3.1)-.5)*.07;
+   turf*=1.+tone*smoothstep(0.,160.,fo);
+  }
+ }
+ // SNOW ON THE HIGH GROUND (the surroundings rework, 13 November 2026;
+ // biomes.js farFace.snow, Mountain): from that height above the course, a
+ // ragged line, lower in the gullies (the ring's baked hollows) and never on
+ // a wall. Past the course's own ground only. PLACED.
+ if(farSnow<9e4&&(abs(wp.x)>=extent.x||abs(wp.y)>=extent.y)){
+  float sy=groundPoint.y-heightBase-farSnow+(patchNoise(wp/230.)-.5)*260.-vFarShade*110.;
+  float sn=smoothstep(0.,140.,sy)*smoothstep(.34,.6,normalize(groundNormal).y-.12*vFarShade);
+  turf=mix(turf,vec3(.93,.95,.99),sn*.94);
+ }
  if(farOn>.5){
   // THE POLISH GOAL: from the property line, where the stands stop, fading in
   // over 40 m -- not from the ground's edge 150 m further out and over 70 m,
@@ -1438,12 +1542,16 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   // between them.
   vec2 qd=abs(wp)-farProp;float outside=length(max(qd,0.));
   if(outside>0.){
-   float patchN=fract(sin(dot(floor(wp/380.),vec2(12.9898,78.233)))*43758.5453);
-   vec2 pf=fract(wp/380.);pf=pf*pf*(3.-2.*pf);
-   float n00=patchN,n10=fract(sin(dot(floor(wp/380.)+vec2(1.,0.),vec2(12.9898,78.233)))*43758.5453);
-   float n01=fract(sin(dot(floor(wp/380.)+vec2(0.,1.),vec2(12.9898,78.233)))*43758.5453),n11=fract(sin(dot(floor(wp/380.)+vec2(1.,1.),vec2(12.9898,78.233)))*43758.5453);
+   // (The edge of a wood wanders: surround.js farWarp, the same numbers.)
+   vec2 ww=wp+160.*sin(wp.yx/vec2(143.,167.)+vec2(1.3,2.6)),wc=floor(ww/380.);
+   float patchN=coverHash(wc);
+   vec2 pf=fract(ww/380.);pf=pf*pf*(3.-2.*pf);
+   float n00=patchN,n10=coverHash(wc+vec2(1.,0.));
+   float n01=coverHash(wc+vec2(0.,1.)),n11=coverHash(wc+vec2(1.,1.));
    float broad=mix(mix(n00,n10,pf.x),mix(n01,n11,pf.x),pf.y);
-   float mask=smoothstep(0.,40.,outside)*smoothstep(1.-farCover-.12,1.-farCover+.12,broad)*(1.-smoothstep(farLine-60.,farLine+40.,groundPoint.y-heightBase));
+   vec2 oq=ww/900.+31.7,oi=floor(oq),ofr=fract(oq);ofr=ofr*ofr*(3.-2.*ofr);
+   float openN=mix(mix(coverHash(oi),coverHash(oi+vec2(1.,0.)),ofr.x),mix(coverHash(oi+vec2(0.,1.)),coverHash(oi+vec2(1.,1.)),ofr.x),ofr.y);
+   float mask=smoothstep(0.,40.,outside)*smoothstep(farOpen-.06,farOpen+.06,openN)*smoothstep(1.-farCover-.12,1.-farCover+.12,broad)*(1.-smoothstep(farLine-60.,farLine+40.,groundPoint.y-heightBase));
    // No forest on a cliff: the pattern is laid from above and stretches into
    // scales on steep ground, and real woods stop at the rock anyway.
    // Round 6 of the far landscape: on the far ring the facets are hundreds of
@@ -1451,21 +1559,27 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
    // bare at 42 degrees -- Mountain's pale vertical streaks. Past the
    // course's ground the woods hold on to 55 degrees.
    float far=step(extent.x,abs(wp.x))+step(extent.y,abs(wp.y));
-   mask*=far>0.?smoothstep(.36,.58,normalize(groundNormal).y):smoothstep(.5,.74,normalize(groundNormal).y);
+   // (13 November 2026: to 52 degrees, where surround.js stops planting; to 69
+   // the floor lay dark over rock no tree stood on -- Mountain.)
+   mask*=far>0.?smoothstep(.54,.66,normalize(groundNormal).y):smoothstep(.5,.74,normalize(groundNormal).y);
    // Nor under the sea (the far-landscape goal; the owner: "Lakeshore Dunes
    // and Links have trees underwater?"): the canopy was painted on the sea
    // bed too, and the clear shelf showed its crowns through the water. It
    // stops at the beach, a metre above the water.
-   mask*=1.-farSea*(1.-smoothstep(.3,1.2,groundPoint.y));
+   mask*=1.-farSea*(1.-smoothstep(.3,1.2,groundPoint.y-seaAt));
    // And as strong as the landscape paints it (paint; round 5: none on
    // Desert, faint on Links -- scrub, not a canopy).
    mask*=farPaint;
-   // Lumps: the nearest of a jittered grid of crowns, farSize metres apart.
-   vec2 g=wp/farSize,gi=floor(g);float best=9.;vec2 toC=vec2(0.);float pick=0.;
-   for(int a=-1;a<=1;a++)for(int b=-1;b<=1;b++){vec2 c=gi+vec2(float(a),float(b));vec2 h=fract(sin(vec2(dot(c,vec2(127.1,311.7)),dot(c,vec2(269.5,183.3))))*43758.5453);vec2 v=c+.15+.7*h-g;float dd=dot(v,v);if(dd<best){best=dd;toC=v;pick=h.x;}}
-   float r=sqrt(best)/.62;float lump=clamp(1.-r*r,0.,1.);
-   vec3 nrm=normalize(vec3(-toC.x*1.6,lump+.25,-toC.y*1.6));
-   float lit=.62+.5*max(0.,dot(nrm,normalize(vec3(sunDir.x,max(sunDir.y,.2),sunDir.z))));
+   // NO CROWNS PAINTED ON THE GROUND (the surroundings rework, 12 November
+   // 2026; the owner: "the 'tree' texture on some of the hills and mountains"
+   // looks out of place). Until then a canopy of crown-sized lumps was drawn
+   // here, each lit from the sun's side. The trees are real now (surround.js:
+   // the course's models near, pictures of them beyond), and this is the
+   // ground under them: the forest's floor, the leaf colours' average at about
+   // half the light, mottled at the scale of a few crowns so it is not one
+   // flat tone -- a gap between trees reads as shade. Past the trees' reach
+   // (farReach, the tier's), where a crown is a pixel or two, it rises to the
+   // canopy's own colour in groves and clusters, as it always did far off.
    // GROVES: trees of a kind stand together, so colour drifts in patches about
    // 70 m across -- which, unlike the single crowns, still reads from far off.
    vec2 gq=wp/70.,gc=floor(gq),gf=fract(gq);gf=gf*gf*(3.-2.*gf);
@@ -1473,9 +1587,6 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
    float g01=fract(sin(dot(gc+vec2(0.,1.),vec2(41.3,289.1)))*43758.5453),g11=fract(sin(dot(gc+vec2(1.,1.),vec2(41.3,289.1)))*43758.5453);
    float grove=mix(mix(g00,g10,gf.x),mix(g01,g11,gf.x),gf.y);
    vec3 groveLeaf=grove<.3?mix(farC0,farC1,smoothstep(.2,.3,grove)):grove<.6?mix(farC1,farC2,smoothstep(.5,.6,grove)):mix(farC2,farC3,smoothstep(.7,.85,grove));
-   vec3 leaf=mix(pick<.3?farC0:pick<.55?farC1:pick<.8?farC2:farC3,groveLeaf,.55);
-   vec3 near=leaf*mix(.4,lit,smoothstep(0.,.35,lump));
-   float sharp=1.-smoothstep(.12,.55,length(fwidth(wp))/farSize);
    // Round 6: past the single crowns the forest was its groves alone -- 70 m
    // blobs of one colour, camouflage from above (Autumn's overview). A middle
    // scale between them: clusters of crowns about 26 m across, the nearest
@@ -1488,11 +1599,17 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
    vec3 avgLeaf=(farC0+farC1+farC2+farC3)*.25,mosaic=mPick<.3?farC0:mPick<.55?farC1:mPick<.8?farC2:farC3;
    float mSharp=1.-smoothstep(.15,.6,length(fwidth(wp))/26.);
    vec3 farLeaf=mix(mix(avgLeaf,groveLeaf,.5),mix(mosaic,groveLeaf,.35),mSharp*.75)*(.84+.24*patchNoise(wp/19.));
-   vec3 canopy=mix(farLeaf*.72,near,sharp);
+   // (13 November 2026: a part of it the ground's own colour, more on a rock
+   // face: a floor of pure leaf-shade lay on Mountain's grey slopes as dark
+   // green cloth where the trees were thin.)
+   vec3 floorTone=mix(avgLeaf*.52,turf*.82,.22+.48*paintShare.y)*(.86+.28*patchNoise(wp/23.));
+   float beyond=smoothstep(.12,1.,clamp((outside-100.)/max(farReach-100.,1.),0.,1.));
+   vec3 canopy=mix(floorTone,farLeaf*.72,beyond);
    turf=mix(turf,canopy,mask);
   }
  }
- diffuseColor.rgb=turf;
+ // The ring's baked hollows and ribs (landscape-edge.js; nothing inside the course's ground).
+ diffuseColor.rgb=turf*(1.+clamp(vFarShade,-1.,1.)*.2);
  `);
- };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v75';return m;
+ };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v86';return m;
 }

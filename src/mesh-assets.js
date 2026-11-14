@@ -2,6 +2,8 @@ import * as T from 'three';
 import {MESH_MODELS, MESH_ATLASES, meshBytes} from './asset-meshes.js';
 import {growTwigs, twigMesh} from './twigs.js';
 import {FAMILY_OF} from './plant-families.js';
+import {simplifyCells, clusterSimplify} from './mesh-simplify.js';
+import {MID_CELLS} from './mid-cells.js';
 export {FAMILY_OF};
 
 // Runtime side of tools/build-meshes.mjs. Decodes the packed CC0 geometry and
@@ -103,6 +105,65 @@ export function farParts(name, keep = 1 / 3) {
   : parts.map(p => p.role === 'leaf' ? {role: p.role, geometry: thinSprays(p.geometry, keep)} : p);
  farCache.set(key, far);
  return far;
+}
+
+// A TREE'S MIDDLE VERSION (the frame-rate pass, 13 November 2026). A painted
+// tree is some 12,000 triangles and its far twin some 300: the twin is right
+// under about a hundred pixels tall and plainly lumps above that, so on High
+// and Ultra -- where the twin was kept for crowns under 5% and 3% of the
+// screen -- nearly every tree in view was the whole model: 3,500 of them from
+// Mountain's first tee, 49 million triangles, three fifths of the frame.
+// This is the model itself made coarser, each part merged on a grid until
+// `share` of its triangles are left (mesh-simplify.js: paint, wind and
+// normals kept), for the sizes between. Made the first time a model asks,
+// from the model's own decoded parts: nothing more is shipped. A part too
+// small to gain, or one that carries a texture (the simplifier keeps none),
+// stays as it is; null when nothing in the model was made coarser.
+const midCache = new Map();
+// (1,500: a part under that -- most trunks -- stays whole at every distance.
+// Split, each was a far mesh, a fading mesh and a shadow stand-in of its own,
+// seven or eight draws a trunk for a few hundred triangles: at a tee with
+// little in view the frame's draws rose by half and the frame with them.)
+export const MID_MIN_TRIANGLES = 1500;
+// The arrays the simplifier takes, from a part's geometry.
+export function simplifierInput(g) {
+ const a = g.attributes, n = a.position.count, color = a.color ? new Float32Array(n * 4) : null;
+ if (color) for (let i = 0; i < n; i++) { color[i * 4] = a.color.array[i * 3]; color[i * 4 + 1] = a.color.array[i * 3 + 1]; color[i * 4 + 2] = a.color.array[i * 3 + 2]; color[i * 4 + 3] = a.flex ? a.flex.array[i] : 0; }
+ return {position: a.position.array, normal: a.normal?.array, color, index: g.index.array};
+}
+// Which of a model's parts get a middle version at all.
+export const midWorthy = g => !!g.index && g.index.count / 3 >= MID_MIN_TRIANGLES && !g.attributes.uv;
+export function midParts(name, share = 1 / 5) {
+ const key = name + '|' + share;
+ if (midCache.has(key)) return midCache.get(key);
+ const parts = modelParts(name);
+ let made = 0;
+ const mid = parts?.map((p, index) => {
+  const g = p.geometry, a = g.attributes;
+  if (!midWorthy(g)) return p;
+  // THE GRID IS KNOWN (src/mid-cells.js, written by tools/mid-cells.mjs): one
+  // simplification, where finding the grid is seven or eight. A model or a
+  // share the table has not got is searched for, as the table's maker does.
+  const input = simplifierInput(g), known = MID_CELLS[share]?.[name]?.[index];
+  const s = known === 0 ? null : known ? clusterSimplify(input, known) : simplifyCells(input, share, 60)?.part;
+  if (!s) return p;
+  const out = new T.BufferGeometry(), m = s.position.length / 3;
+  out.setAttribute('position', new T.BufferAttribute(s.position, 3));
+  if (s.normal) out.setAttribute('normal', new T.BufferAttribute(s.normal, 3));
+  if (s.color) {
+   const rgb = new Float32Array(m * 3), flex = new Float32Array(m);
+   for (let i = 0; i < m; i++) { rgb[i * 3] = s.color[i * 4]; rgb[i * 3 + 1] = s.color[i * 4 + 1]; rgb[i * 3 + 2] = s.color[i * 4 + 2]; flex[i] = s.color[i * 4 + 3]; }
+   out.setAttribute('color', new T.BufferAttribute(rgb, 3));
+   if (a.flex) out.setAttribute('flex', new T.BufferAttribute(flex, 1));
+  }
+  out.setIndex(new T.BufferAttribute(m > 65535 ? s.index : Uint16Array.from(s.index), 1));
+  out.computeBoundingSphere();
+  made++;
+  return {...p, geometry: out};
+ }) ?? null;
+ const result = made ? mid : null;
+ midCache.set(key, result);
+ return result;
 }
 
 // A TREE BARE IN WINTER (the seasons; twigs.js): the model with its leaf and

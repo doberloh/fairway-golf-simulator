@@ -111,7 +111,7 @@ export function makeGodRays(view, scale = .25) {
   // normals or not), and a kind behind the camera would still be built late.
   const hidden = [], culled = [];
   scene.traverseVisible(o => {
-   if (o.isLine || o.isPoints || o.isSprite || o.isLineSegments2) { o.visible = false; hidden.push(o); }
+   if (o.isLine || o.isPoints || o.isSprite || o.isLineSegments2 || o.userData.noSunMask) { o.visible = false; hidden.push(o); }
    else if (warm && o.isMesh && o.frustumCulled) { o.frustumCulled = false; culled.push(o); }
   });
   // THE SHADOW MAPS ARE NOT DRAWN AGAIN. Every `render` redraws them while

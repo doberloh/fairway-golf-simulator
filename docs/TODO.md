@@ -115,6 +115,31 @@ wrong, unfinished, or owed a check.
   (was: *Models to check*, *The limb fix...*, *One look left in Southern
   Pines*, *Bare tree branches*, *Regenerate the grasses on Meshy*)
 
+- [ ] **Low from high above is slower than 0.9.14** (found 14 November 2026, the
+  frame-rate pass; released in 0.9.15). Mountain on Low, 250 m over the first
+  tee: the whole frame 1.39 to 1.61 ms on this machine (16%), 215 to 229
+  draws, all on the processor's side; the card's work is level and from a tee
+  it is 18% less. Small here, several times larger on the machines Low is
+  for. Not looked into: the far ground's pieces and the far trees are the
+  likely draws. One landscape measured.
+- [ ] **A course takes about a second longer to load than 0.9.14** (found 13
+  November 2026). 0.56 s of it is the ground shader the surroundings rework
+  grew (measured); the rest is not found. docs/history/SURROUNDINGS.md, *The
+  second of course load*.
+- [ ] **A load of the game runs in one of two modes on the owner's machine,
+  and nobody knows why** (found 14 November 2026; the same in 0.9.14). Card-bound, or
+  held up on the processor's side with the card two-thirds busy and the frame
+  up to twice as long for the same draws; it comes in runs. Seen only in
+  headless Chrome with the frame rate uncapped, so it may be the harness and
+  not what a player gets. Every frame comparison needs four loads a build
+  until it is understood. docs/history/SURROUNDINGS.md, *A load runs in one
+  of two modes*.
+- [ ] **The `no-late-shaders` smoke journey failed once** on round F3's build
+  (Ultra, a drawn Lowcountry nine, seed HOLLOW-1812: one lit shader built 142
+  ms after the course appeared), passed ten times alone, and passed in the
+  full run on the released build. Not traced. tools/late-shaders.mjs lists
+  what a named course builds late.
+
 ## The owner's calls
 
 - [ ] **Cart paths, the clubhouse, the road and the lot are off on generated
@@ -144,9 +169,20 @@ wrong, unfinished, or owed a check.
 Hardware, browsers and hands the development machine does not have. Nothing
 here is a claim of support until it is done.
 
-- [ ] **Play the current build by hand** (0.9.14, 12 November 2026). What has
+- [ ] **Play the current build by hand** (0.9.15, 14 November 2026). What has
   been built and seen only in captures, measurements or smoke runs, and still
   exists in the game. The archive has each item's full list.
+  - **The surroundings and the faster trees** (0.9.15; the owner signed off
+    the look on 13 November and found every landscape faster on the branch
+    the same night; the released build has two changes after that, neither
+    played). **Trunks on High and Ultra swap to their far copy with no
+    fade**: walk or fly toward a wood and watch for a trunk popping or a
+    crown left without one. **Shadows far off come from one mesh a kind of
+    tree**: look for a shadow missing or doubled across a valley. The
+    builder's Surroundings block has not been used by a person. Eleven of
+    the fifteen landscapes' final pictures were not looked at one by one.
+    **Frame rate was measured on one desktop graphics card only**: no
+    phone, no laptop, no machine without a graphics card.
   - **The rebuilt ball** (0.9.13; the owner played the branch on 12 November
     and said it "feels way better", naming no single check): the hole-out
     banner, the cameras and the cup sound against a ball that now falls and
@@ -200,8 +236,9 @@ here is a claim of support until it is done.
     diamond-mown greens and tee stripes not shimmering as the camera moves;
     Reading the ground (Natural, Clear, Map lines) changing a green at once;
     the lie on rock, hardpan, heather and waste sand agreeing with the painted
-    edge; Seaside Links' shared fairways from the tee; no line where near
-    trees become far woods; the ball easy to find at dusk and at night.
+    edge; Seaside Links' shared fairways from the tee; the ball easy to find
+    at dusk and at night. (Its "no line where near trees become far woods"
+    went with the far woods; see *The surroundings*, above.)
   - **The interface** (0.9 to 0.9.6): a controller through every menu; VIEWS,
     FLY and the fly pad with a thumb; the bay's projector; the hole-out and
     menu sounds, loud or quiet (`CHIP_LEVELS`, chiptune.js); whether the green
@@ -289,8 +326,9 @@ here is a claim of support until it is done.
   2026). Unused now: the retired landscapes' entries in course-names, crest,
   hole-names, renderer, seasons and the palettes; models no landscape plants
   (kept so far, because built courses name trees by species); the island code
-  (`ringIslands`, the far islets: unreachable and untested since the Keys
-  left); the karst recipe and the `upInto` trial in landforms.js; pine needles
+  (`ringIslands`: no landscape has far islets since the Keys left. The
+  islets themselves are reached again since 12 November 2026, by a built
+  course's *Sea and islands* side, so landscape-edge.js `isles` stays); the karst recipe and the `upInto` trial in landforms.js; pine needles
   (`fallen`) taken from a region by a landscape that plants no conifer. Also
   check whether the per-hole tree list (`h.trees` in `generateCourse`) is
   still dead code, and that Classic Parkland's eight weekly slots a cycle and

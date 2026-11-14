@@ -44,10 +44,19 @@ export const TIERS = {
  // one of the hole being played. Every tier collides with all of them.
  low: {
   pixelRatio: .75,
-  // The far woods (vegetation.js addFarWoods; the polish goal) are grove
-  // domes only on Low -- 20 triangles a site, never bare ground (the owner),
-  // and the cheapest for the weakest machines (the owner's worry then; every tier counts since 9 November).
-  farWoods: 'groves',
+  // (Until the surroundings rework Low and Medium drew the far woods as grove
+  // domes only, `farWoods: 'groves'`; no tier draws domes now -- `surround`.)
+  // THE FAR GROUND'S FINENESS (landscape-edge.js RING_DETAIL; the surroundings
+  // rework): Low's rings grow 6% a time, about 30,000 triangles to the horizon
+  // (it drew 13,000 until the rework); Medium's 3.5%, about 90,000; High and
+  // Ultra take the full ring, 2%, about 190,000. PLACED, then measured.
+  farGround: {grow: 1.06},
+  // THE SURROUNDINGS' TREES (surround.js SURROUND_TREES, far-trees.js): how far
+  // past the property line the real models run (`near`), how far the pictures
+  // of them run (`reach`), how fast they thin (`fall`) and how many pixels
+  // high each picture is taken (`cell`). Low: 60 m, 1.5 km (its fog closes at
+  // 3.5), 128 px. PLACED, then measured.
+  surround: {near: 60, reach: 1500, fall: 1200, cell: 128, nearMax: 0, most: 30000},
   shadow: {size: 512, radius: 1},
   fog: {near: 900, far: 3500, overviewNear: 3000, overviewFar: 10000},
   grass: .35,
@@ -141,9 +150,8 @@ export const TIERS = {
  },
  medium: {
   pixelRatio: 1.75,
-  // The far woods as grove domes only, as on Low (the polish goal): the
-  // crown clusters cost Medium 7-14% of a frame against the goal's 5%.
-  farWoods: 'groves',
+  farGround: {grow: 1.035},
+  surround: {near: 90, reach: 2500, fall: 2000, cell: 160, nearMax: 0, most: 70000},
   shadow: {size: 2048, radius: 1},
   fog: {near: 1300, far: 5500, overviewNear: 4500, overviewFar: 14000},
   grass: 1,
@@ -186,6 +194,8 @@ export const TIERS = {
   // the air is still clear and the edge of the world shows. 9000 leaves a wide
   // margin while still seeing far past medium's 5500.
   fog: {near: 2800, far: 9000, overviewNear: 6000, overviewFar: 16000},
+  // The surroundings' trees (surround.js): pictures to 4 km.
+  surround: {reach: 4000, fall: 2800, cell: 192, most: 140000},
   grass: 2,
   foliage: 1.8,
   anisotropy: 16,
@@ -211,6 +221,13 @@ export const TIERS = {
   // Painted trees below 5% of the screen's height draw their shipped twin
   // (instance-cull.js; a few dozen draw calls, not the grown trees' hundreds). PLACED.
   farPainted: .05,
+  // A TREE'S MIDDLE VERSION (the frame-rate pass, 13 November 2026;
+  // mesh-assets.js midParts, instance-cull.js). In place of the twin above: a
+  // painted tree under `px` of the picture's own pixels tall is drawn as
+  // itself at `share` of its triangles. The twin is some 300 triangles, right
+  // under about a hundred pixels and lumps above; so the line sat at 5% and
+  // nearly every tree in view was the whole 12,000-triangle model. PLACED.
+  midTrees: {share: .25, px: 300},
   // The ground drawn coarser with distance (ground-lod.js): pixels. PLACED.
   groundTolerance: 2,
   understory: 1,
@@ -263,6 +280,9 @@ export const TIERS = {
   // the air is still clear and the edge of the world shows. 9000 leaves a wide
   // margin while still seeing far past medium's 5500.
   fog: {near: 2800, far: 9000, overviewNear: 6000, overviewFar: 16000},
+  // The surroundings' trees at their fullest: the defaults' reach (5 km), and
+  // a 256-pixel picture a tree, since Ultra is looked at closely.
+  surround: {cell: 256},
   grass: 2,
   foliage: 1.8,
   anisotropy: 16,
@@ -290,6 +310,9 @@ export const TIERS = {
   // screen's height -- about 30 pixels on 1080 lines. PLACED; docs/CARTOON_OVERHAUL.md
   // *Rules set aside*.
   farPainted: .03,
+  // A tree's middle version (High says what and why): finer and from
+  // smaller here. PLACED.
+  midTrees: {share: .33, px: 200},
   // The ground drawn coarser with distance (ground-lod.js; 9 November 2026):
   // the most a square may stand off the ground the ball meets, in the picture's own
   // pixels (a CSS pixel on a screen at twice its density). PLACED.
@@ -500,7 +523,8 @@ export function needsRebuild(a, b) {
  // The thinned twins -- shadow and far -- are made with the course, for the tiers that use them.
  return x.grass !== y.grass || x.foliage !== y.foliage || x.cascades !== y.cascades || (x.forestFloor ?? 0) !== (y.forestFloor ?? 0) ||
   (x.thinShadowsFrom ?? Infinity) !== (y.thinShadowsFrom ?? Infinity) || (x.farTrees ?? 0) !== (y.farTrees ?? 0) ||
-  (x.farPainted ?? 0) !== (y.farPainted ?? 0) || (x.understory ?? 1) !== (y.understory ?? 1) ||
-  (x.longGrassReach ?? 0) !== (y.longGrassReach ?? 0) || (x.farWoods ?? true) !== (y.farWoods ?? true) ||
+  (x.farPainted ?? 0) !== (y.farPainted ?? 0) || JSON.stringify(x.midTrees ?? 0) !== JSON.stringify(y.midTrees ?? 0) || (x.understory ?? 1) !== (y.understory ?? 1) ||
+  (x.longGrassReach ?? 0) !== (y.longGrassReach ?? 0) ||
+  (x.farGround?.grow ?? 0) !== (y.farGround?.grow ?? 0) || JSON.stringify(x.surround ?? 0) !== JSON.stringify(y.surround ?? 0) ||
   !!x.thinTrees !== !!y.thinTrees;
 }

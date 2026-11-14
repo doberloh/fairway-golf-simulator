@@ -36,6 +36,11 @@
 //    treePlan: {sizes: 'landscape', species: [kind]} | absent   the trees placed
 //      for the player (builder/tree-plan.js): the landscape's sizes rather than
 //      the survey's, and which species; a course without one plays as it did,
+//    surround: {sides: {n, e, s, w}, height, cover?} | absent   what stands past
+//      the property line on each side (surround-sides.js: 'auto' the landscape's
+//      own, 'flat', 'hills', 'range', 'mountain', 'mesas', 'sea', 'islands',
+//      'lake'), how high (0.3 to 2) and, when given, how wooded (0 to 1);
+//      scenery only, and a course without one has its landscape's surroundings,
 //    picture: data URL | null}
 //
 // THE FILE: a ZIP (zip.js) of course.json (everything but the big arrays),
@@ -56,6 +61,7 @@ import {writeZip, readZip, zipWithout, isZip} from './zip.js';
 import {BIOME_KEYS} from './settings-schema.js';
 import {currentKey} from './regions.js';
 import {GROUND_KINDS} from './grounds.js';
+import {normaliseSurround} from './surround-sides.js';
 
 export const FILE_KIND = 'fairway-course';
 // The file version a built course writes. A seeded course stays version 1
@@ -197,7 +203,10 @@ export function validateDoc(doc) {
    .map(h => ({x: Math.round(h.x * 10) / 10, z: Math.round(h.z * 10) / 10, rotation: Math.round(h.rotation * 1000) / 1000, width: Math.max(6, Math.min(40, Math.round(h.width * 10) / 10)), depth: Math.max(6, Math.min(40, Math.round(h.depth * 10) / 10))})),
   credits: (doc.credits || []).map(String).slice(0, 20), source: doc.source && typeof doc.source === 'object' ? doc.source : {},
   from: doc.from ?? null, picture: typeof doc.picture === 'string' ? doc.picture : null, builtVersion: doc.builtVersion ?? null,
-  ...(doc.treePlan ? {treePlan: {...(doc.treePlan.sizes === 'landscape' ? {sizes: 'landscape'} : {}), ...(Array.isArray(doc.treePlan.species) ? {species: doc.treePlan.species.map(String).slice(0, 64)} : {})}} : {})};
+  ...(doc.treePlan ? {treePlan: {...(doc.treePlan.sizes === 'landscape' ? {sizes: 'landscape'} : {}), ...(Array.isArray(doc.treePlan.species) ? {species: doc.treePlan.species.map(String).slice(0, 64)} : {})}} : {}),
+  // The surroundings the course chose (surround-sides.js); absent when it is
+  // all the landscape's own, so an old file and an untouched one are the same.
+  ...(normaliseSurround(doc.surround) ? {surround: normaliseSurround(doc.surround)} : {})};
 }
 
 // The file's bytes for a document. `builtVersion` is the game's, stamped on.
@@ -213,7 +222,7 @@ export async function writeBuiltFile(doc, builtVersion, {builder = null} = {}) {
  const json = {kind: FILE_KIND, version: BUILT_FILE_VERSION, type: 'built', builtVersion, name: d.name, landscape: d.landscape, designer: d.designer,
   halfX: d.halfX, halfZ: d.halfZ, fringe: d.fringe, semiRough: d.semiRough, sea: d.sea, landEdits: d.landEdits, land: {x0: d.land.x0, z0: d.land.z0, cell: d.land.cell, cellZ: d.land.cellZ, nx: d.land.nx, nz: d.land.nz, base: land.base, step: land.step},
   patches, surfaces: d.surfaces, water: d.water, creeks: d.creeks, holes: d.holes, trees: d.trees.length / TREE_STRIDE, treeKinds: d.treeKinds, rocks: d.rocks, homes: d.homes,
-  credits: d.credits, source: d.source, from: d.from, picture: d.picture, ...(d.treePlan ? {treePlan: d.treePlan} : {})};
+  credits: d.credits, source: d.source, from: d.from, picture: d.picture, ...(d.treePlan ? {treePlan: d.treePlan} : {}), ...(d.surround ? {surround: d.surround} : {})};
  return writeZip([
   {name: 'course.json', data: JSON.stringify(json)},
   {name: 'land.bin', data: land.bytes},

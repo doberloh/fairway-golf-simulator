@@ -2,7 +2,9 @@ import {darkenBy} from './species.js';
 import {cameraInsideTree,treeBlocksView,viewBlocker,keepsCleared,VIEW_CLEAR_REACH,VIEW_CONE} from './camera-tours.js';
 import * as T from 'three';
 import {mergeGeometries,mergeVertices} from 'three/addons/utils/BufferGeometryUtils.js';
-import {farWoodSites,FAR_SHAPES} from './far-woods.js';
+import {FAR_SHAPES} from './far-woods.js';
+import {surroundTrees} from './surround.js';
+import {addFarTrees} from './far-trees.js';
 import {random} from './course.js';
 import {FAMILY_OF,familyModels,modelRadius,modelExtents,instanceModels,modelParts,bareParts} from './mesh-assets.js';
 import {onShoreBank} from './streams.js';
@@ -295,6 +297,12 @@ function addModelSpecies(view,kind,trees){
   }
   return materials.get(key);
  };
+ // ONE OF EACH MODEL, FOR ITS PICTURE (far-trees.js; the surroundings rework):
+ // the first tree drawn from each model, with the parts and colours it was
+ // given -- this round's season, bare in winter -- is what the far trees of
+ // its species are pictures of.
+ if(view.specimens){const seen=new Set();for(const e of entries){if(seen.has(e.model))continue;seen.add(e.model);
+  view.specimens.push({kind,model:e.model,parts:e.parts??modelParts(e.model),color:e.color,thin,spread:SPREAD_SIZED.has(FAMILY_OF[kind])?modelRadius(e.model):0});}}
  instanceModels(group,entries,materialFor,({mesh,matrices,owners})=>{
   // A BUSH'S SHADOW IS NEAR WORK (the frame-rate pass): knee- to head-high
   // plants by the thousand went into every shadow map, where a texel is half
@@ -491,14 +499,24 @@ export function addVegetation(view){
  // meeting different courses (graphics.js `understory`): picked by a hash of
  // where each stands, so the same ones every time.
  const underShare=view.quality?.understory??1,keepUnder=t=>!t.under||(Math.abs(Math.sin(t.x*12.9898+t.z*78.233)*43758.5453)%1)<underShare;
- const drawn=view.world.trees.filter(keepUnder);
+ // THE SURROUNDINGS' TREES (surround.js; the surroundings rework): past the
+ // property line the landscape's stand carries on -- near, as tree records
+ // drawn here with the course's own models (never in world.trees: nothing a
+ // ball meets); beyond, as sites drawn as pictures of those models
+ // (far-trees.js), which replaced the far woods' clusters, domes and cones.
+ // (What each part of this cost the wait is kept on the view, `surroundMs`,
+ // for tools/capture to read: placing, the real trees' share, the pictures.)
+ const clock=()=>typeof performance==='undefined'?0:performance.now(),t0=clock();
+ const around=view.quality?.surround===false?{near:[],far:[]}:surroundTrees(view.world,{...view.quality?.surround,detail:view.quality?.farGround});
+ view.specimens=[];view.surroundMs={place:Math.round(clock()-t0),near:around.near.length,far:around.far.length};
+ const drawn=view.world.trees.filter(keepUnder).concat(around.near);
  for(const kind of new Set(drawn.map(t=>t.kind)))addSpecies(view,kind,drawn.filter(t=>t.kind===kind));
 
  addDeadfall(view);
  addDriftwood(view);
  addLongGrass(view);
  addFarHeath(view);
- addFarWoods(view);
+ {const t1=clock();addFarTrees(view,around.far);view.surroundMs.pictures=Math.round(clock()-t1);}
  addGroundCover(view);
  addNearbyGrass(view);
 }
@@ -678,17 +696,12 @@ export function teeFade(world) {
   return f * f * (3 - 2 * f);
  };
 }
-// THE FAR WOODS (far-woods.js): real crowns from the property line out to
-// the landscape's edge, by distance bands. Two instanced meshes: NEAR crowns
-// (clusters of three lumps, or two-tier spruces on the conifer landscapes,
-// under 250 triangles), and FAR groves (one low faceted dome each, 20
-// triangles, standing for a stand of trees -- the owner: "LODs can fade but
-// should not transition to just bare ground"). No shadow cast (scenery, past
-// every shadow map), lit by the toon ramp, fogged as the ground is. Low draws
-// every site as a grove dome (graphics.js `farWoods: 'groves'`), the cheapest.
-// The far woods' shapes (far-woods.js FAR_SHAPES), each at unit radius with
-// a flat base at its origin -- the seat in far-woods.js lets that base down
-// onto the drawn ground, so nothing of a crown's underside hangs in the air.
+// THE WATER MIRROR'S TWIN SHAPES (far-woods.js FAR_SHAPES). These were the far
+// woods' shapes until the surroundings rework (12 November 2026) replaced the
+// far woods with the course's own trees (surround.js, far-trees.js). What
+// remains is the low-poly twins the water mirror (water-mirror.js) draws for
+// trees reflected in still water, each at unit radius with a flat base at its
+// origin.
 // Round 2 of the polish goal: a single cone read as a plain spike beside the
 // cartoon spruces, and a single lump as a ball: a spruce is two stacked tiers,
 // a broadleaf three lumps clustered. Round 6 (frame rate): 20-face lumps.
@@ -714,47 +727,6 @@ export function farWoodGeometry(kind){
  geo.computeBoundingBox();geo.translate(0,-geo.boundingBox.min.y,0);
  const [w,h]=FAR_SHAPES[kind].scale;geo.scale(w,h,w);geo.computeVertexNormals();geo.computeBoundingBox();
  return geo;
-}
-function addFarWoods(view){
- const {world}=view,f=biomeOf(world.settings.biome).farForest;
- if(!f||view.quality?.farWoods===false)return;
- const groveOnly=view.quality?.farWoods==='groves',sites=farWoodSites(world,{groves:groveOnly});
- if(!sites.length)return;
- // One instanced set per shape drawn (round 3: Autumn's evergreens add spruces
- // and cones to its clusters and domes).
- const kinds=[...new Set(sites.map(s=>s.shape))];
- const mat=new T.MeshToonMaterial({color:'#ffffff',gradientMap:toonRamp(view)});
- // In the round's season (seasons.js seasonPalette, via world.bio).
- const colors=(world.bio?.farForest?.colors??f.colors).map(c=>new T.Color(c)),c=new T.Color(),dummy=new T.Object3D(),up=new T.Vector3(),Y=new T.Vector3(0,1,0),spin=new T.Quaternion();
-
- // Round 6 (frame rate): in TWELVE SECTORS round the course, each its own
- // mesh with its own bounds, so the card skips every sector out of view --
- // one mesh round the whole course drew all 17,000 crowns every frame
- // (measured 9-11% of a Medium frame). No shadow received either; it made no
- // difference, but none reaches out here.
- const build=(list,geo,place,name)=>{
-  if(!list.length){geo.dispose();return;}
-  const sectors=Array.from({length:12},()=>[]);
-  for(const s of list)sectors[Math.floor(((Math.atan2(s.z,s.x)/(2*Math.PI))+1)*12)%12].push(s);
-  for(const part of sectors){
-   if(!part.length)continue;
-   const mesh=new T.InstancedMesh(geo,mat,part.length);
-   part.forEach((s,i)=>{place(s);mesh.setMatrixAt(i,dummy.matrix);
-    c.copy(s.evergreen?colors[colors.length-1]:colors[Math.floor(s.pick*colors.length)%colors.length]).multiplyScalar(.88+s.size*.2);mesh.setColorAt(i,c);});
-   // Drawn BEFORE the ground (renderOrder -1): the cost was filling pixels
-   // over landscape already shaded by the ground's long shader; drawn first,
-   // the ground behind a crown fails the depth test and is never shaded.
-   mesh.castShadow=false;mesh.receiveShadow=false;mesh.name=name;mesh.userData.noCull=true;mesh.renderOrder=-1;
-   mesh.computeBoundingSphere();view.group.add(mesh);
-  }
- };
- // Each crown on its seat: its base point, turned to the ground's slope where
- // its shape tilts, spun about its own axis.
- const pose=(seat,r,x,z,pick)=>{up.set(seat.ux,seat.uy,seat.uz);dummy.quaternion.setFromUnitVectors(Y,up).multiply(spin.setFromAxisAngle(Y,pick*6.28));
-  dummy.position.set(x,seat.y,z);dummy.scale.setScalar(r);dummy.updateMatrix();};
- // A grove: as wide as its site's spacing (a stand of trees), drawn smaller
- // where the ground under it is broken (far-woods.js).
- for(const kind of kinds)build(sites.filter(s=>s.shape===kind),farWoodGeometry(kind),s=>pose(s.seat,s.r,s.x,s.z,s.pick),kind==='dome'||kind==='cone'?'Far groves':'Far woods');
 }
 // A LONG GRASS'S OWN COLOURS (seen 3 November 2026): a family with a season
 // table (season-tints.js, the prairie pack's LOOK) wears its own -- tall

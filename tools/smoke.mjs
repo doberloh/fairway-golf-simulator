@@ -1107,7 +1107,7 @@ const JOURNEYS = [
       late.delete(program);
       const text = (parts.get(program) || []).map(s => src.get(s) || '').join('\n');
       const type = (text.match(/#define SHADER_TYPE (\w+)/) || [])[1];
-      const at = {type: type || 'ShaderMaterial', after: Math.round(performance.now() - window.__shownAt)};
+      const at = {type: type || 'ShaderMaterial', after: Math.round(performance.now() - window.__shownAt), marks: [...new Set((text.match(/#define (USE_[A-Z_0-9]+|[A-Z_]*INSTANC[A-Z_]*|DOUBLE_SIDED|FLAT_SHADED|ALPHATEST|OPAQUE)/g) || []).map(d => d.slice(8)))].join(' ') + ' | ' + ['farNormals', 'vThin', 'thinLvl', 'windTime', 'treeRoot', 'flex', 'vMistWorld', 'groundPoint', 'mirrorMap', 'aFoot', 'floodlit', 'snow'].filter(n => text.includes(n)).join(',')};
       window.__lateAny.push(at);
       if (/^Mesh(Toon|Standard|Physical|Lambert|Phong)Material$/.test(type)) window.__lateLit.push(at);
      }
@@ -1137,7 +1137,7 @@ const JOURNEYS = [
     // brings the camera down to where the grass and the forest floor are.
     await t.page.waitForTimeout(5000);
     const late = await t.page.evaluate(() => window.__lateLit);
-    if (late.length) throw new Error(`${late.length} lit shader(s) built after the course appeared: ${late.map(l => `${l.type} at ${l.after} ms`).join(', ')}`);
+    if (late.length) throw new Error(`${late.length} lit shader(s) built after the course appeared: ${late.map(l => `${l.type} at ${l.after} ms${l.marks ? ' [' + l.marks + ']' : ''}`).join(', ')}`);
    });
    // THE FIRST SHOT'S TRACER (Phase 5). The tracer styles moved every line onto
    // one program with per-vertex colour and the dash switch; it is not the aim
@@ -1149,7 +1149,7 @@ const JOURNEYS = [
     await t.until(() => t.inFlight(), 'the first shot to start', 5 * SLOW);
     await t.page.waitForTimeout(2500);
     const late = await t.page.evaluate(() => window.__lateAny);
-    if (late.length) throw new Error(`${late.length} shader(s) built during the first shot: ${late.map(l => `${l.type} at ${l.after} ms`).join(', ')}`);
+    if (late.length) throw new Error(`${late.length} shader(s) built during the first shot: ${late.map(l => `${l.type} at ${l.after} ms${l.marks ? ' [' + l.marks + ']' : ''}`).join(', ')}`);
     await t.key('Enter');
     await t.until(async () => !(await t.inFlight()), 'the shot to end', 30 * SLOW);
    });
@@ -1161,7 +1161,7 @@ const JOURNEYS = [
      await t.page.waitForTimeout(300);
     }
     const late = await t.page.evaluate(() => window.__lateAny);
-    if (late.length) throw new Error(`${late.length} shader(s) built after the course appeared: ${late.map(l => `${l.type} at ${l.after} ms`).join(', ')}`);
+    if (late.length) throw new Error(`${late.length} shader(s) built after the course appeared: ${late.map(l => `${l.type} at ${l.after} ms${l.marks ? ' [' + l.marks + ']' : ''}`).join(', ')}`);
    });
   },
  },

@@ -41,7 +41,7 @@ graphics rules may be set aside where they block the look; nothing else may.
 | *A stream's faded end keeps its full channel's water level and narrows to 8% of its width* (streams.js `downhillProfile`) | The new dune crests stood a faded creek head 8.7 m under the ground: water lying on a dune | Across a fade the level rises toward the surveyed ground, and the channel narrows to no less than 1.2 m (the ground mesh's finest cells are 0.5 m). Every biome's creeks moved a little at their ends | Revert those two lines in `downhillProfile` |
 | Three collider and prop tests' setups (solid-colliders' wall shot, haunted-props' pumpkin roll) | The new ground decided their results, not what they test: a prairie swale rolled a wall shot into the wall, the next house down a denser street was hit, a pumpkin's run-up crossed heather and a pond | The wall shot is lofted 4 degrees and fired with only its house standing; the pumpkin's whole run-up must be rough | Revert the test edits (and generator 37) |
 
-| *Every crown on Ultra is the whole tree* (graphics.js, Ultra's `farTrees: 0`, the owner's "Ultra stays amazing") | The stands put 10,000-16,000 painted crowns on a course; drawn whole that is tens of millions of triangles | Painted trees swap to their shipped far twin (the same lobes, faceted) below 3% of the screen's height on Ultra, 5% on High (`farPainted`); the grown trees keep `farTrees: 0` | Set Ultra's `farPainted` to 0 |
+| *Every crown on Ultra is the whole tree* (graphics.js, Ultra's `farTrees: 0`, the owner's "Ultra stays amazing") | The stands put 10,000-16,000 painted crowns on a course; drawn whole that is tens of millions of triangles | Painted trees swap to their shipped far twin (the same lobes, faceted) below 3% of the screen's height on Ultra, 5% on High (`farPainted`); the grown trees keep `farTrees: 0`. **Since 13 November 2026 (the frame-rate pass) what they swap to on High and Ultra is a middle version -- the model itself at a third or a quarter of its triangles, its outline checked -- under 200 and 300 of the picture's pixels (`midTrees`); the twin is for far shadow maps and for the few models with no middle version** | Remove Ultra's `midTrees` and set its `farPainted` to 0 |
 | *The tee surround is never a clear-cut* (tools/metrics.mjs `teeSurroundClearCut`, tests/tee-corridor.test.mjs) measured every trunked tree against rough alone | A stand stands back from every tee by design, so counted in the average it made every tee look bare (35 courses failed with the surrounds unchanged); its needles turn rough into pine straw | Both measure the open scatter alone (`!t.stand`), per hectare of ground that can hold a tree (`allows(s, 'trees')`); the corridor test counts the open scatter against its target | Drop the `stand` filters (and the stands) |
 
 (More rows are added as each is set aside, in the same commit as the change.)
@@ -171,7 +171,11 @@ not counted as a change. Typical loop:
    `node tools/capture/overhaul.mjs <label> <up to three biomes> --views a,b`.
    Pictures land in `bench/shots/overhaul/<label>/<biome>/` (git-ignored).
    Options: `--homes` (house views; `--houses 1,4` picks which), `--tier
-   high`, `--cues '<json>'`, `--seed`. Views worth knowing: `h1-teekit`,
+   high`, `--cues '<json>'`, `--seed`; since the surroundings rework,
+   `--built <x.fairway>` (a built course from its file) and `--goal`,
+   `--rest`, `--look` (whose run it is in the card's log, and its gate's
+   rest and watch; CAPTURE.md), with the views `edge-eye` and `edge-eye-b`
+   from just inside the property line. Views worth knowing: `h1-teekit`,
    `h1-sign-near`, `h1-markers`, `h2-flag`, `h2-flag-back`, `h2-bunker`,
    `h1-pond`, `h1-cliff`, `h1-heath`, `h2-putt`, `h2-green-b`, and the four
    hours of `h2-side` (`h2-dawn`, `h2-dusk`, `h2-night`, `h2-flood`).

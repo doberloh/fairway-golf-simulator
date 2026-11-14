@@ -38,6 +38,7 @@ export {BUILT_FIELD, BUILT_CHANNELS, BUILT_GROUND_CODE, fieldSize, bakeBuiltFiel
 import {rng} from './course-plan.js';
 import {GENERATED_TEES, colourOf, courseSets, teeFor} from './tees.js';
 import {choosePin} from './course.js';
+import {normaliseSurround, waterSide, seaLevelUnder, SURROUND_SIDES} from './surround-sides.js';
 
 export const YARD = .9144;
 // The field: the finest texel a course can have, and the widest side a
@@ -432,7 +433,13 @@ export function placeBuiltPins(world, seed) {
 export const builtExtent = doc => ({ex: doc.halfX + GRID_MARGIN, ez: doc.halfZ + GRID_MARGIN});
 export function worldFromDoc(doc, settings = {}, {field: baked = null} = {}) {
  const bio0 = biomeOf(doc.landscape);
- const bio = {...bio0, sea: !!doc.sea, inlandWater: true};
+ // THE SURROUNDINGS THE COURSE CHOSE (surround-sides.js; the surroundings
+ // rework). A side of water makes this a landscape with a sea whatever it
+ // was, standing under the lowest of the land unless the file has a sea of
+ // its own. Scenery: the lie inside the land still asks only `doc.sea`.
+ const surround = normaliseSurround(doc.surround), waterSides = !!surround && SURROUND_SIDES.some(k => waterSide(surround.sides[k]));
+ const farSea = waterSides && !doc.sea ? seaLevelUnder(doc.land.heights) : null;
+ const bio = {...bio0, sea: !!doc.sea || waterSides, inlandWater: true};
  const s = {...DEFAULT_COURSE, ...settings, biome: doc.landscape, holes: doc.holes.length, built: settings.built ?? null,
   fringe: doc.fringe ?? DEFAULT_COURSE.fringe, semiRough: doc.semiRough ?? DEFAULT_COURSE.semiRough, seed: settings.seed ?? `built:${doc.name}`};
  const halfX = doc.halfX, halfZ = doc.halfZ, ex = halfX + GRID_MARGIN, ez = halfZ + GRID_MARGIN;
@@ -493,7 +500,7 @@ export function worldFromDoc(doc, settings = {}, {field: baked = null} = {}) {
  const world = {built: true, doc, builtField: field, teeSites: [], lakeOwner: () => null, largeLakes: [], homes, buildings: [], life: [], walls: [], wallBoxes: [],
   storyProps: [], mounds: [], earthworks: [], waterworks: [], rocks: (doc.rocks || []).map(q => rockFrom(q, height(q[0], q[1]))), props: [], paths: [], bridges: [], markers: [], wear: [], streams,
   footprint: null, groundGrid, groundCover: (x, z) => { const g = builtFieldAt(field, x, z, CH.ground) <= 0 ? builtGroundAt(field, x, z) : null; return g === 'pinestraw' || g === 'litter' ? 'straw' : bio.cover; }, straw: [], blowouts: null, wild: null, fallenField: null, surfaceField: null, landform: null,
-  settings: s, bio, holes, halfX, halfZ, waterLevel: doc.sea?.level ?? 0, skyBase: skyBaseOf(doc.land.heights), height, surface, trees, nearby: (x, z) => nearest(x, z).h, nearest,
+  settings: s, bio, holes, halfX, halfZ, waterLevel: doc.sea?.level ?? farSea ?? 0, surround, skyBase: skyBaseOf(doc.land.heights), height, surface, trees, nearby: (x, z) => nearest(x, z).h, nearest,
   land: height, seed: s.seed, ecology: bio.plants.map(([kind]) => kind),
   builtWater: (doc.water || []).map(w => ({rings: w.rings, level: w.level, kind: w.kind})),
   builtOutlines: doc.surfaces};
