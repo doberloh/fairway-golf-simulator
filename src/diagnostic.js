@@ -21,6 +21,7 @@
 // The formatting is kept apart from the gathering so the formatting can be
 // tested without a browser. `diagnosticReport` takes plain facts and returns a
 // string; everything above it is the part that has to touch a real window.
+import {formatBench} from './device-bench.js';
 
 // The build stamp is injected at build time by vite.config.js. It is NOT
 // defined when these modules are imported directly by the test runner, so the
@@ -178,7 +179,7 @@ const optional = (k, v) => blank(v) ? null : `  ${k.padEnd(16)}${v}`;
 // with formatting in it survives exactly one of those.
 export function diagnosticReport(facts = {}) {
  const {build = {}, app = {}, device = {}, webgl = {}, frames = null, errors = [], courseCode = null,
-        takenAt = null} = facts;
+        takenAt = null, bench = null} = facts;
  const out = [
   'Fairway diagnostic',
   // When it was taken, so two reports from one session can be put in order.
@@ -213,6 +214,10 @@ export function diagnosticReport(facts = {}) {
   optional('auto resolution', app.autoResolution == null ? null : app.autoResolution ? `on, drawing at ${app.resolution ?? 100}%` : 'off'),
   required('fps', frames ? `${frames.median} median, ${frames.low} low, worst frame ${frames.worstMs} ms` : 'not measured yet'),
  ].filter(l => l !== null);
+ // Measure this device (device-bench.js), when it has been run this session:
+ // what each part of a frame costs on this machine.
+ const benchText = formatBench(bench);
+ if (benchText) out.push('', benchText);
  if (errors.length) {
   out.push('', ' ERRORS', ...errors.map(e => `  ${e}`));
  }

@@ -56,6 +56,19 @@ wrong, unfinished, or owed a check.
 
 ## Known wrong
 
+- [ ] **The game is too slow on an iPhone: 14 frames a second on a full
+  course** (the owner, 14 November 2026; branch `phone-performance`). "I was
+  running on both medium and low on an iPhone and both were pretty bad ... I
+  would still like to target 45-60fps on an iPhone ... We might need to hide
+  graphics options entirely from phone users." High and Ultra are not to
+  change ("those should be discrete GPU only"). An endless hole runs well on
+  the same phone. Two diagnostics are in RESEARCH, *The first figures from a
+  real phone*. **Step one, built and not yet seen working:** Measure this
+  device (Help, Report a problem), so the phone times itself part by part.
+  Next, once its figures are in: a fixed Phone tier with the options hidden,
+  drawing the hole being played the way an endless hole is drawn and the rest
+  of the course cheaply (the owner's idea). No Android to test on.
+
 - [ ] **A friend's challenge can throw as its round starts, now and then**
   (12 November 2026, the 0.9.14 smoke run: `friend-challenge` failed once in
   four runs and passed the other three). The journey's first swing found no

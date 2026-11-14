@@ -1,0 +1,74 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {runBench, readingOf, formatBench, BENCH, BENCH_SPOTS, BENCH_PARTS} from '../src/device-bench.js';
+import {diagnosticReport} from '../src/diagnostic.js';
+
+// MEASURE THIS DEVICE (src/device-bench.js): the tour a phone runs on itself.
+// What is held here is the order of the tour and the report; what the numbers
+// are is the device's.
+const fakeIo = ({throwOn = null} = {}) => {
+ const log = [];
+ let hidden = new Set(), n = 0;
+ return {
+  log,
+  place: pose => log.push(['place', pose]),
+  frames: async k => log.push(['frames', k]),
+  measure: async () => { n++; log.push(['measure', [...hidden]]); return {fps: 30, worstMs: 50, workMs: hidden.size ? 20 : 40, draws: 300 - hidden.size * 100, triangles: 1e7}; },
+  hide: id => { if (id === throwOn) throw Error('cannot hide ' + id); hidden.add(id); log.push(['hide', id]); return () => { hidden.delete(id); log.push(['show', id]); }; },
+  restore: () => log.push(['restore']),
+  get readings() { return n; },
+ };
+};
+
+test('the tour reads every place, and takes the frame apart at the tee and from above, a whole frame between every two parts', async () => {
+ const io = fakeIo(), steps = [];
+ const rows = await runBench(io, {hole: 3, length: 400, onStep: (i, n) => steps.push([i, n])});
+ const withParts = BENCH_SPOTS.filter(s => s.parts).length;
+ assert.equal(rows.length, BENCH_SPOTS.length + withParts * BENCH_PARTS.length, 'one row a place and one a part');
+ assert.equal(io.readings, BENCH_SPOTS.length + withParts * BENCH_PARTS.length * 2, 'a whole-frame reading after every part');
+ // The camera is put on the hole being played, never another.
+ for (const [kind, pose] of io.log.filter(e => e[0] === 'place')) assert.equal(pose.hole, 3, kind);
+ // Never two parts off at once, and each is back on before the next reading of the whole.
+ const measures = io.log.filter(e => e[0] === 'measure');
+ assert.ok(measures.every(m => m[1].length <= 1), 'one part at a time');
+ let i = 0;
+ for (const e of io.log) { if (e[0] === 'hide') i++; if (e[0] === 'show') i--; assert.ok(i >= 0 && i <= 1); }
+ assert.equal(i, 0, 'every part switched back on');
+ assert.deepEqual(io.log.at(-1), ['restore'], 'the camera is put back last');
+ // A part's row is compared with the whole frame either side of it.
+ const part = rows.find(r => r.part === 'planting');
+ assert.equal(part.workMs, 20); assert.equal(part.baseWork, 40);
+ assert.equal(steps.at(-1)[0], steps.at(-1)[1], 'the progress line reaches the end');
+ assert.ok(BENCH.settle > 0 && BENCH.settlePart > 0);
+});
+
+test('whatever goes wrong, the part is switched back on and the camera put back', async () => {
+ const io = fakeIo({throwOn: 'ground'});
+ await assert.rejects(runBench(io, {hole: 0}), /cannot hide ground/);
+ assert.deepEqual(io.log.at(-1), ['restore']);
+ const open = io.log.filter(e => e[0] === 'hide').length - io.log.filter(e => e[0] === 'show').length;
+ assert.equal(open, 0, 'nothing left switched off');
+});
+
+test('a reading is the median frame, the slowest frame and the median work', () => {
+ const r = readingOf([16, 17, 33, 16, 100], [8, 9, 10, 40], {draws: 412, triangles: 13.5e6});
+ assert.equal(r.fps, 59, '1000 / the median gap of 17 ms');
+ assert.equal(r.worstMs, 100);
+ assert.equal(r.workMs, 10);
+ assert.equal(r.draws, 412);
+ assert.deepEqual(readingOf([], [], {}), {fps: null, worstMs: null, workMs: null, draws: null, triangles: null});
+});
+
+test('the report says what each part costs, and rides in the diagnostic', async () => {
+ const rows = await runBench(fakeIo(), {hole: 0});
+ const text = formatBench({rows, tier: 'medium', ratio: 1.75, canvas: [770, 1565], seconds: 71, course: 'Ridgeline Timbers, hole 1'});
+ assert.match(text, /DEVICE BENCHMARK/);
+ assert.match(text, /tier +medium/);
+ assert.match(text, /1\.75 pixel ratio, 770x1565/);
+ assert.match(text, /tee +no trees or plants +30 +50 +20 +-50%/);
+ assert.match(text, /250 m up +as drawn/);
+ assert.equal(formatBench(null), '');
+ const report = diagnosticReport({build: {label: 'x'}, app: {}, device: {}, webgl: {}, frames: null, errors: [], bench: {rows, tier: 'low'}});
+ assert.match(report, /DEVICE BENCHMARK/, 'the diagnostic carries it');
+ assert.doesNotMatch(diagnosticReport({build: {label: 'x'}, app: {}, device: {}, webgl: {}, frames: null, errors: []}), /DEVICE BENCHMARK/, 'and nothing when none was run');
+});

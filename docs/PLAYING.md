@@ -1020,6 +1020,19 @@ average, because an average hides the thing worth reporting: a run that mostly
 holds 60 and stalls twice a second averages out respectable and is horrible to
 play.
 
+**Measure this device**, under the same heading, is for a game that runs
+slowly. In a round (a course or an endless hole), it closes the help and
+stands the camera at four places on the hole you are on -- the tee, the
+fairway, the green and 250 m up -- for about a minute and a half. At the tee
+and from above it switches parts of the picture off one at a time: the trees
+and plants, the course's ground, the far ground, the far trees, the shadows'
+redraw, and half the pixels. Then it puts the camera back. Nothing about the
+round changes: no hole is skipped and no shot is played. Copy diagnostic
+then carries a table of what it found: frames a second, the slowest frame,
+how long each frame's work took, and how much of that each part was. Leave
+the phone alone while it runs; a phone that dims its screen or warms up
+reads slower.
+
 ## Launch monitor setup
 
 A browser page cannot listen for a launch monitor itself, so the download carries a small program that does: **run_fairway_server**. It serves the game to this computer and to phones and tablets on your Wi-Fi, and it receives shots in the **GSPro Open Connect (v1)** format that launch-monitor connectors already send to GSPro. Nothing needs installing; the download's README walks through starting it on Windows, macOS and Linux.

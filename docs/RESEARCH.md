@@ -15352,3 +15352,28 @@ time at full clock, whole frame (the page's main thread a frame):
   0.27%.
 
 No outside source.
+
+### The first figures from a real phone (14 November 2026)
+
+The owner's iPhone, release 0.9.15 (6abfaed3), Safari 26.5 on iOS 18.7,
+screen 440 by 956 points at three pixels a point, "Apple GPU" (Safari names
+no model), Medium tier (its pixel ratio 1.75), frame cap following the
+display, automatic resolution off (the owner: "Auto resolution turns
+everything into a blurry mess"). From Report a problem's diagnostic:
+
+- **The main menu on Redwood Coast** (the menu's showcase hole, a viewport
+  read as 248 by 503): 37 frames a second median, 29 on the slow 5%,
+  slowest frame 85 ms.
+- **An 18-hole Classic Parkland from hole 1** ("Ridgeline Timbers", seed
+  WANDER-1874, 5,700 yd, trees 80, fairway homes 39; viewport 440 by 894):
+  **14 frames a second median, 11 on the slow 5%, slowest frame 144 ms.**
+- The owner: Low "pretty bad" too (no figures), and an endless hole -- one
+  hole's world -- "great". Taken together: what a phone cannot afford grows
+  with the amount of course, not with the screen, which an endless hole
+  fills as fully. Which part of the course (the trees' triangles, the
+  ground, the far land, the draws) is not known from these; Measure this
+  device (src/device-bench.js) is built to find out on the phone itself.
+
+These are the project's first frame figures from a real phone; every
+earlier phone figure was an estimate scaled from this desktop card
+(tools/devices.mjs, PLACED there). No outside source.

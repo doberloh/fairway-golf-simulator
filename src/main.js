@@ -88,6 +88,7 @@ import {settingsChanges,studioHud,paintStudioHud,buildStudioSheet} from './ui-st
 import {nextFocus,dirOfKey,dirOfPad} from './ui-focus.js';
 import {framedForBall} from './camera.js';
 import {buildLabel,buildStamp,deviceFacts,webglFacts,frameMeter,errorLog,diagnosticReport} from './diagnostic.js';
+import {runBench,readingOf} from './device-bench.js';
 import {gridShot,recordShot,takeBackShot,normaliseShots,shotFrom,rulesOf,describeRules,rulesDiff,makeRivalCode,isRivalCode,saveRival,listRivals,findRival,rivalProblem,compareCards,compareText,holesText} from './rival.js';
 import {relativeToPar,parText,parSide,parTint,holeScoreName,holeOutLabel} from './scoring.js';
 import {endlessHole,newRunSeed,endlessSettings,landscapeSeed} from './endless.js';
@@ -3919,7 +3920,81 @@ function collectDiagnostic(){
   errors:diagnosticErrors.read(),
   courseCode,
   takenAt:new Date().toISOString(),
+  bench:lastBench,
  });
+}
+// MEASURE THIS DEVICE (device-bench.js; branch phone-performance): the game
+// times itself on the hole being played and adds what each part of a frame
+// costs to the diagnostic. `benchProbe` is set only while it runs: the frame
+// loop then times its own draw (benchFrame) instead of drawing as usual.
+let benchProbe=null,lastBench=null;
+const benchPixel=new Uint8Array(4);
+// One frame, timed: the frame's gap, and -- when `sync` -- the draw plus a
+// one-pixel read back, which waits for the graphics chip to finish, so the
+// time is the frame's whole work (Safari has no timer for the chip alone).
+// Draws and triangles are counted over every pass of the frame, shadow maps
+// included, with three's counter held open across them.
+function benchFrame(now,dt){
+ const p=benchProbe,r=view.renderer,info=r.info,keep=info.autoReset;
+ if(p.count){info.autoReset=false;info.reset();}
+ const t0=performance.now();
+ view.render(dt);
+ if(p.sync){const gl=r.getContext();gl.readPixels(0,0,1,1,gl.RGBA,gl.UNSIGNED_BYTE,benchPixel);p.work.push(performance.now()-t0);}
+ else if(p.last!=null)p.gaps.push(now-p.last);
+ p.last=now;
+ if(p.count){p.counts={draws:info.render.calls,triangles:info.render.triangles};p.count=false;info.autoReset=keep;}
+ if(p.wait&&--p.wait.n<=0){const w=p.wait;p.wait=null;w.done();}
+}
+const benchFrames=n=>new Promise(done=>{if(!benchProbe||n<=0)return done();benchProbe.wait={n,done};});
+// A reading: frames as shown (no read back: it would slow them), then the
+// same number timed with it. PLACED: 45 of each.
+const BENCH_READ=45;
+async function benchMeasure(){
+ const p=benchProbe;
+ p.sync=false;p.gaps=[];p.last=null;p.count=true;
+ await benchFrames(BENCH_READ);
+ p.sync=true;p.work=[];
+ await benchFrames(BENCH_READ);
+ p.sync=false;
+ return readingOf(p.gaps,p.work,p.counts);
+}
+// Each part of the scene switched off, and back on by what this returns.
+function benchHide(part){
+ if(part==='shadows'){const s=view.renderer.shadowMap,was=s.autoUpdate;s.autoUpdate=false;s.needsUpdate=false;return()=>{s.autoUpdate=was;s.needsUpdate=true;};}
+ if(part==='pixels'){const was=view.resolutionScale??1;view.setResolutionScale(was*Math.SQRT1_2);return()=>view.setResolutionScale(was);}
+ const test={planting:o=>o.isInstancedMesh&&(o.userData.cullTotal!==undefined||['shadow twin','far trees','fading trees'].includes(o.name)),
+  ground:o=>o.name==='Continuous ground',farGround:o=>o.name==='Far ground',farTrees:o=>o.name==='Far trees'}[part];
+ const off=[];
+ if(test)view.group.traverse(o=>{if(o.visible&&test(o)){o.visible=false;off.push(o);}});
+ return()=>{for(const o of off)o.visible=true;};
+}
+// The tour itself. Only in a round on a course or an endless hole, with no
+// ball in the air; the round is left exactly as it was.
+async function runDeviceBench(){
+ if(benchProbe)return null;
+ // (An endless run's world is one hole, `worldHole`.)
+ const at=world?.holes?worldHole(round.hole):-1;
+ if(appMode!=='play'||rangeMode||flight||!world?.holes?.[at]){toast('Start a round first: the benchmark measures the hole you are on.');return null;}
+ const mode=view.config.mode,started=performance.now(),h=world.holes[at];
+ closePanel();
+ benchProbe={gaps:[],work:[],counts:{},sync:false,count:false,last:null,wait:null};
+ const note=(i,n)=>toast(`Measuring this device: ${i} of ${n}. Keep the screen on and leave it be.`);
+ note(0,1);
+ let rows=null;
+ try{
+  rows=await runBench({
+   place:pose=>placePose(pose),
+   frames:benchFrames,
+   measure:benchMeasure,
+   hide:benchHide,
+   restore:()=>{benchProbe=null;cameraMode(mode==='free'?'player':mode);},
+  },{hole:at,length:h.length??300,onStep:note});
+ }catch(e){benchProbe=null;toast(`The benchmark stopped: ${e?.message??e}`);return null;}
+ const c=view.renderer.domElement;
+ lastBench={rows,tier:graphics.quality,ratio:Math.round(view.renderer.getPixelRatio()*100)/100,canvas:[c.width,c.height],
+  seconds:Math.round((performance.now()-started)/1000),course:`${playingCourseName()}, hole ${round.hole+1}`};
+ toast('Measured. Help → Report a problem → Copy diagnostic carries the figures.');
+ return lastBench;
 }
 function savableCourse(){
  if(appMode==='studio')return {label:'Save this landscape'};
@@ -6686,7 +6761,7 @@ function renderPanel(name,content){
   // The report is shown in the box as well as copied, so a browser that
   // refuses the clipboard is an inconvenience rather than a dead end, and so
   // that nobody has to take on trust what they are about to paste.
-  content.insertAdjacentHTML('beforeend',`<h3>Report a problem</h3><p>Something looking wrong? This copies a short summary of your build, your machine and anything that has gone wrong, ready to paste into a bug report.</p><p class="note"><strong>Nothing is sent anywhere.</strong> Fairway makes no network requests at all. The text is put on your clipboard and shown below, and what happens to it after that is up to you.</p><button class="secondary" id="copyDiagnostic"><i data-lucide="clipboard-list"></i> Copy diagnostic</button><label class="field" id="diagnosticField" hidden>Diagnostic<textarea id="diagnosticText" rows="12" readonly></textarea></label>`);
+  content.insertAdjacentHTML('beforeend',`<h3>Report a problem</h3><p>Something looking wrong? This copies a short summary of your build, your machine and anything that has gone wrong, ready to paste into a bug report.</p><p class="note"><strong>Nothing is sent anywhere.</strong> Fairway makes no network requests at all. The text is put on your clipboard and shown below, and what happens to it after that is up to you.</p><button class="secondary" id="copyDiagnostic"><i data-lucide="clipboard-list"></i> Copy diagnostic</button><p class="note"><strong>Slow on this device?</strong> In a round, Measure this device stands the camera at four places on the hole you are on for about a minute and a half, switching parts of the picture off one at a time, then puts it back. The diagnostic then carries what each part costs here.</p><button class="secondary" id="benchDevice"><i data-lucide="gauge"></i> Measure this device</button><label class="field" id="diagnosticField" hidden>Diagnostic<textarea id="diagnosticText" rows="12" readonly></textarea></label>`);
   $('copyDiagnostic').onclick=async()=>{
    let text;
    // Belt and braces: this is the button somebody presses when the app is
@@ -6698,6 +6773,7 @@ function renderPanel(name,content){
    $('diagnosticText').focus();$('diagnosticText').select();
    toast(await copyText(text)?'Diagnostic copied.':'Diagnostic ready \u2014 copy it from the box.');
   };
+  $('benchDevice').onclick=()=>{runDeviceBench();};
   content.insertAdjacentHTML('beforeend',`<h3>Open source & credits</h3><p>Fairway is MIT licensed. Optional donations support development and are not required to play. Third-party components retain their own licenses.</p><details><summary>Project license</summary><pre class="license-text">${escape(projectLicense)}</pre></details><details><summary>Third-party licenses & credits</summary><pre class="license-text">${escape(thirdPartyNotices)}</pre></details>`);
  }
  // EVERY variant of the round panel is tabbed. Endless and the range both have
@@ -7236,6 +7312,9 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   // The seed the next fresh Endless run takes (the smoke run's
   // --endless-seed): pin, then press Start an endless run as a player does.
   pinRun:seed=>{pinnedRun=String(seed);},
+  // Measure this device (device-bench.js), as Report a problem's button runs
+  // it; resolves with the figures, or null where it cannot run.
+  bench:()=>runDeviceBench(),
   // A BUILT course's file handed in as bytes, kept as an import keeps it; the
   // hash it answers is what lab.course({built}) plays (tools/freeze-capture.mjs).
   built:async bytes=>(await builtStore.put(new Uint8Array(bytes))).hash,
@@ -8053,7 +8132,7 @@ function autoResolutionFrame(now,interval){
  // costs to draw, yet stepped the resolution down, so a round began blurred and
  // took four to eight seconds to sharpen (the text-size journey caught it). The
  // menus, a sheet and the loading screen hold the step; play judges it.
- if(document.hidden||appMode!=='play'||panel||$('generating')?.hidden===false){autoRes.hold(now);return;}
+ if(document.hidden||appMode!=='play'||panel||benchProbe||$('generating')?.hidden===false){autoRes.hold(now);return;}
  const scale=autoRes.sample(interval,now,graphics.frameCap);
  if(scale!==view.resolutionScale){view.setResolutionScale(scale);autoResolutionNote();}
 }
@@ -8137,7 +8216,7 @@ function tick(now){
  // the page until it has -- the loading screen froze during a wait that is
  // meant to leave it moving. The overlay is up; the frame it would cover is
  // drawn by `ready` itself as soon as the programs are done.
- if(!view.readying)view.render(dt);
+ if(!view.readying){if(benchProbe)benchFrame(now,dt);else view.render(dt);}
  setWindArrow();
  // Not over a finished hole: "0.0 FEET TO HOLE" read on after the ball dropped.
  const worldLabels=!flight&&view.config.mode!=='free'&&!round?.holeComplete;
