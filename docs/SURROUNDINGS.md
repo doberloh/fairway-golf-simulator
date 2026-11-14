@@ -1302,3 +1302,33 @@ Low from above is the one figure the wrong way: 1.39 to 1.61 ms of main
 thread a frame (about 700 frames a second on this machine), with 215 to 229
 draws. It is the processor's side, and small here; on the machines Low is
 for it would be several times larger. Not looked into.
+
+### The checks on the final build, and the card lost a third time (14 November 2026, 01:12 to 01:48)
+
+The final build is round F5's (`dist/`, built 13 November 23:58 from the
+code of 28f480bb; the commits after it change tools and documents only).
+
+- **All fifteen landscapes photographed** on it, from the first tee and from
+  high over the course's edge, High: fifteen courses built, no errors
+  (`bench/shots/overhaul/f5-final`). Looked at: Classic Parkland and
+  Mountain from the tee (every crown on its trunk, shadows as before),
+  Redwood Coast and Prairie from above (trunks under the far trees; the open
+  country as it was). The other eleven were not looked at one by one.
+- **The game's smoke run: 41 of 41 journeys passed** (879 s), the one that
+  failed once on round F3's build (`no-late-shaders`) among them.
+- **The builder's smoke run did not happen**: the graphics card was lost as
+  it started (01:42:38; RULES_HISTORY.md, *The card is lost on the way back
+  to idle*, has the watcher's record and what it rules out). It passed 10 of
+  10 on round F3's build; nothing since touches the builder.
+- **The full Node suite has not been run since round F4** (1,614 tests, one
+  skipped, none failing, then). The tree and cull files pass on the final
+  code (30 of 30).
+- **Not done:** `node tools/biome-fingerprint.mjs --check` on the final
+  code (nothing since round F4 touches a generator file); the status page.
+
+**Where the frame-rate pass ends.** Built and kept: rounds F1 to F5 and the
+trunk's swap without a dissolve (drawn in the photographs above, never
+measured by itself). Not built: the nearest shadow map from the middle
+version; a cheaper far ground from above. Open: Low's frame from 250 m up
+(+16% on Mountain, processor's side); the second of course load; what puts
+a load in the slow mode (the same in 0.9.14).

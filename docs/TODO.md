@@ -183,6 +183,11 @@ wrong, unfinished, or owed a check.
   crown shaded by another shape goes dark). **The owner has played the
   build before F5 and found every landscape faster; the build with F5 and
   the trunk's hard swap is not played.**
+  **On the final build (14 November): all fifteen landscapes photographed
+  with no errors; the game's smoke run 41 of 41. NOT run: the builder's
+  smoke run (the card was lost a third time as it started, 01:42, idle at
+  44 C with its clock capped), the full Node suite and the fingerprint
+  check since round F4.** Run those three after a restart, before any merge.
   What each round did, measured, and what is still owed is in SURROUNDINGS,
   *The frame-rate pass*; this entry is rewritten as it goes.
 

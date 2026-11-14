@@ -584,6 +584,31 @@ makes the drop to idle. If the losses stop, that is the best evidence yet
 for the drop; the setting does not survive a restart unless it is made
 again.
 
+**The losses did not stop: 14 November, 01:42:35 to 01:42:38, with the cap
+on.** The watcher's last twenty readings before it: full power state, 2,520
+MHz, link at generation 4, 63 to 67 W, 0 to 4% busy, 44 C -- at rest, cool,
+and making no change of power state or link speed. Seven seconds earlier
+two readings of 10 and 11% busy at 76 to 80 W: the builder's smoke run had
+just started its browser (the gate let it go at 01:41, the card 0.5% busy).
+Then `nvidia-smi`: "GPU is lost. Reboot the system to recover this GPU".
+The run before it, the game's 41 smoke journeys over fifteen minutes, had
+ended at 01:39:57 without trouble.
+
+**What that rules out.** Heat (44 C). Load and power (65 W of 450). The
+drop to the idle power state and the link's change of speed (neither
+happened: the suspicion written above is not the cause, or not the only
+one). The boost clock (capped). **What the four losses with a record have
+in common** (13 November 12:03 and about 21:39; 14 November 01:42; and the
+owner's own with a game): the card nearly idle, within seconds of a
+program starting or ending its work on the card -- a run just finished, the
+next one starting, a browser just opened. Not during sustained load, ever.
+
+**Not known:** whether it is the driver, the card, its power plug or the
+slot. What would tell, all the owner's: a clean install of another driver
+version; the slot set to generation 3 in the BIOS; the card and its
+16-pin plug reseated, or the card tried in another machine. Windows still
+records nothing for it.
+
 ## Nothing at all while the owner plays (13 November 2026)
 
 The rule: AGENTS.md, *Nothing runs on the graphics card unless the owner
