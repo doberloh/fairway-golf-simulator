@@ -128,10 +128,12 @@ export function formatBench(bench) {
  if (seconds != null) out.push(`  took            ${seconds} s`);
  // What may have spoiled the readings (main.js: the page put away, a shot flown).
  for (const n of bench.notes ?? []) out.push(`  note            ${n}`);
- out.push(`  ${pad('place', 9)}${pad('reading', 21)}${lpad('fps', 4)}${lpad('worst', 7)}${lpad('work ms', 9)}${lpad('vs whole', 10)}${lpad('draws', 7)}${lpad('tris', 9)}`);
+ out.push(`  ${pad('place', 9)}${pad('reading', 29)}${lpad('fps', 4)}${lpad('worst', 7)}${lpad('work ms', 9)}${lpad('vs whole', 10)}${lpad('draws', 7)}${lpad('tris', 9)}`);
  for (const r of rows) {
   const vs = r.part && r.workMs != null && r.baseWork ? `${r.workMs <= r.baseWork ? '-' : '+'}${Math.round(Math.abs(r.workMs - r.baseWork) / r.baseWork * 100)}%` : '';
-  out.push(`  ${pad(label(BENCH_SPOTS, r.spot), 9)}${pad(r.part ? label(BENCH_PARTS, r.part) : 'as drawn', 21)}${lpad(r.fps ?? '-', 4)}${lpad(r.worstMs ?? '-', 7)}${lpad(r.workMs ?? '-', 9)}${lpad(vs, 10)}${lpad(r.draws ?? '-', 7)}${lpad(millions(r.triangles), 9)}`);
+  // The pixels row says the size it drew at, so it proves itself.
+  const what = r.part ? label(BENCH_PARTS, r.part) + (r.part === 'pixels' && r.canvas ? ` ${r.canvas[0]}x${r.canvas[1]}` : '') : 'as drawn';
+  out.push(`  ${pad(label(BENCH_SPOTS, r.spot), 9)}${pad(what, 29)}${lpad(r.fps ?? '-', 4)}${lpad(r.worstMs ?? '-', 7)}${lpad(r.workMs ?? '-', 9)}${lpad(vs, 10)}${lpad(r.draws ?? '-', 7)}${lpad(millions(r.triangles), 9)}`);
  }
  return out.join('\n');
 }

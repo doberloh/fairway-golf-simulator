@@ -63,8 +63,11 @@ wrong, unfinished, or owed a check.
   graphics options entirely from phone users." High and Ultra are not to
   change ("those should be discrete GPU only"). An endless hole runs well on
   the same phone. Two diagnostics are in RESEARCH, *The first figures from a
-  real phone*. **Step one, built and not yet seen working:** Measure this
-  device (Help, Report a problem), so the phone times itself part by part.
+  real phone*. **Step one, built:** Measure this device (Help, Report a
+  problem), so the phone times itself part by part. Seen working on the PC
+  (14 November, Classic Parkland, Medium: 50 s, every part's switch moved its
+  draws, triangles or drawn size, the camera back in the player's view);
+  **not yet run on a phone**.
   Next, once its figures are in: a fixed Phone tier with the options hidden,
   drawing the hole being played the way an endless hole is drawn and the rest
   of the course cheaply (the owner's idea). No Android to test on.

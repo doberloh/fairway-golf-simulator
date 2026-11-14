@@ -15377,3 +15377,17 @@ everything into a blurry mess"). From Report a problem's diagnostic:
 These are the project's first frame figures from a real phone; every
 earlier phone figure was an estimate scaled from this desktop card
 (tools/devices.mjs, PLACED there). No outside source.
+
+**Measure this device on the PC, for comparison** (14 November 2026; the
+capture build, Classic Parkland seed "overhaul", hole 1, Medium, 1,600 by
+900 at density 1, frames capped by the display at 60; tools/variants/
+device-bench-run.js). Work of a frame (the draw and a one-pixel read back)
+3.5 ms at the tee, 3.0 from 250 m up; 291 and 219 draws; 6.1 and 4.5
+million triangles a frame, shadow maps included. Each part off, against the
+whole frame either side: the trees and plants -28% and -23% (222 and 155
+draws, 2.1 and 0.8 M triangles); **the course's ground -7% and -13%, but 3.6
+of the tee's 6.1 M triangles and 3.6 of the 4.5 M from above**; the far
+ground and far trees within the noise (12 to 16 draws); the shadows' redraw
+-12% and -13% (95 and 69 draws, 2.7 and 2.0 M triangles); a quarter fewer
+pixels on each side (1,131 by 636) -3% and -8%. On this card the frame is
+draws more than pixels; a phone's own table decides what it is there.

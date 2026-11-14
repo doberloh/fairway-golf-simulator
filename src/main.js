@@ -3962,7 +3962,9 @@ async function benchMeasure(){
  p.sync=true;p.work=[];
  await benchFrames(BENCH_READ);
  p.sync=false;
- return readingOf(p.gaps,p.work,p.counts);
+ // The size actually drawn, which is what proves the half-the-pixels reading.
+ const c=view.renderer.domElement;
+ return {...readingOf(p.gaps,p.work,p.counts),canvas:[c.width,c.height]};
 }
 // Each part of the scene switched off, and back on by what this returns.
 function benchHide(part){
@@ -7322,6 +7324,8 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   // Measure this device (device-bench.js), as Report a problem's button runs
   // it; resolves with the figures, or null where it cannot run.
   bench:()=>runDeviceBench(),
+  // The diagnostic's text, as Copy diagnostic makes it.
+  diagnostic:()=>collectDiagnostic(),
   // A BUILT course's file handed in as bytes, kept as an import keeps it; the
   // hash it answers is what lab.course({built}) plays (tools/freeze-capture.mjs).
   built:async bytes=>(await builtStore.put(new Uint8Array(bytes))).hash,
