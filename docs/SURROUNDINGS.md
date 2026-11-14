@@ -749,16 +749,114 @@ to use. Focus on gains on high and ultra settings as those things should
 trickle down to the lower settings."
 
 **How it is run.** One graphics job at a time, each through the gate and the
-log (tools/gpu-gate.mjs; goal `surroundings`). The card's own gate is the
-owner's word now: with Chrome Remote Desktop serving the owner's screen the
-card stands at 16 to 54% with nothing of this work on it, so a run is
-started at up to 60% when no game is in the card's process list, and never
-when one is. A comparison made on a busy card is read by its counts and by
+log (tools/gpu-gate.mjs; goal `surroundings`), and the gate stays where it
+was: a run starts only when the card has been under 30% for the gate's
+look. With Chrome Remote Desktop serving the owner's screen the card stands
+at 16 to 54% with nothing of this work on it, so runs wait for a quiet
+moment; a first try at starting one at up to 60% on the strength of "the
+GPU and CPU are yours to use" was refused by the session's own safety check
+and was not tried another way. A comparison is read by its counts and by
 the two builds taking turns, not by one number. Every round is measured on
-High and Ultra before it is kept, and photographed: a round that changes
-the picture where it was not meant to is not kept.
+High and Ultra before it is kept, and photographed: a round that changes the
+picture where it was not meant to is not kept.
+(Once, later that day, the owner set the gate aside for one test: "Nothing
+is running on the card. Ignore the gate for this time and run the test."
+The two comparisons of round F1 that had waited twenty minutes were run on
+that word and on nothing else; the gate stands for every other run.)
 
 **Where it started** (round 11's measurements, High on Mountain): the
 course's own trees and plants 60% of a frame from 250 m up, the far ground
 10% (5% from a tee), the far trees 0.4%; a frame of 69 to 72 million
 triangles; a course 1.1 s longer to load than before round 10.
+
+### Round F1: a tree's middle version (13 November 2026)
+
+**What was wrong.** From Mountain's first tee on High, 3,500 trees were
+each drawn as the whole 12,000-triangle model and 36 as their far twin: 49
+of the picture's 54 million triangles. Two causes.
+
+- **The far twin is only good small.** A painted tree's twin is its lobes
+  rebuilt as icosahedra, some 300 triangles. Photographed with every tree
+  as its twin (bench/shots/overhaul/fr-far against fr-full), it is the
+  model to the eye under about a hundred pixels tall and plainly lumps at
+  250. So High drew it only under 5% of the screen's height and Ultra under
+  3%, and between a tree 30 pixels tall and one filling the screen there
+  was nothing but the whole model.
+- **A square was judged by its ground.** The swap is decided for each 64 m
+  square of trees by "the tallest thing in the square" over its distance.
+  The code took the height of the square's box, which holds the ground's
+  rise across the square as well as its trees: on Mountain a square is
+  often three trees tall from lowest root to highest tip, so it read three
+  times its size. And where it was a tree, it was the tallest tree: one 35
+  m ponderosa kept thirty aspens a third its height whole.
+
+**What was built.**
+
+- **A middle version** (src/mesh-assets.js `midParts`, src/mesh-simplify.js;
+  High and Ultra, graphics.js `midTrees`). The model itself made coarser:
+  each part merged on a grid (the model packer's own simplifier, moved into
+  the game's source) until about a quarter (High) or a third (Ultra) of its
+  triangles are left -- 2,400 to 3,200 for a Mountain conifer -- keeping its
+  paint, its wind and its normals. Made from the model's own decoded parts
+  when a course is built: nothing more is shipped but a 20 KB table. A part
+  under 1,500 triangles (most trunks) stays whole. On High and Ultra it is
+  what a tree small on screen is drawn as, in place of the twin; the twin
+  is still what the two far shadow maps draw. Low and Medium are unchanged.
+- **The outline kept, model by model** (tools/mid-cells.mjs, which writes
+  src/mid-cells.js). The owner's rule for far versions (9 November) held
+  tighter, a middle version being seen two and three times as large: each
+  model is scored against its middle version at the size its tier swaps at
+  (kept 0.90, extra 0.08, area 0.85 of the outline: PLACED) at the tier's
+  share and then at 0.4 and 0.5, and takes the coarsest that passes. A
+  quarter was wrong for thin wood: a palo verde kept 0.75 of its outline, a
+  creosote 0.73. On High 316 of 329 models have a middle version and 13
+  have none (the palo verdes, a mesquite, creosote, brittlebush, jojoba,
+  saw palmetto and five others); those swap to their twin at the old 5% as
+  before. The table also holds each part's grid, so the game simplifies
+  once where finding the grid is seven or eight tries: 1.5 to 5 ms a model
+  for 10 to 16.
+- **The line in pixels** (`midTrees.px`: 300 on High, 200 on Ultra). What
+  a coarser model may be drawn at is a matter of the picture's own pixels,
+  whatever the screen: photographed with even the nearest trees as middle
+  versions (fr-mid-near), they are the model to the eye to about 250 or 300
+  pixels and faceted by 400. The old share still holds where it is more of
+  the screen (the Redwood Coast's third).
+- **Each kind of tree by its own height** (src/instance-cull.js `tallRun`,
+  `lvl`). A square's size on screen is its tallest thing's height, not its
+  box's (this is every tier's); and a painted pair is swapped run by run --
+  each model's own tallest tree in each square -- so the aspens leave when
+  they are small, not when the ponderosa over them is. The model's height,
+  not the part's, so a trunk and its crown still leave together.
+- **The far shadow maps take the twin from the middle version too.** As
+  first built a tree drawn as its middle version had no stand-in, and went
+  into every shadow map at 2,700 triangles where 300 had gone.
+- **A tree out of the picture, kept for its shadow, is its far version**
+  (the cull's `unseen`). From a tee most of the trees near enough to be
+  whole models stand beside and behind the player; each was written whole
+  into the picture's buffer and the nearest shadow map for a shadow a model
+  a quarter the size casts the same. It turns whole inside the view's 7
+  degree margin, before it is on screen.
+
+**Tried and changed.** Trunks were given middle versions too (the first
+grid kept parts over 600 triangles): each was then a far mesh, a fading
+mesh and a shadow stand-in of its own, seven or eight draws for a few
+hundred triangles, and at a tee with little in view (tee 5 on Ultra, Classic
+Parkland) the frame's draws went from 234 to 354 and the frame was 12%
+SLOWER for 9% less work on the card. At 1,500 that tee is level.
+
+**Measured against 0.9.14** (tools/frame-ab.mjs, three rounds, the builds
+taking turns, 1,600 by 900 at density 2 -- a 4K-class picture; card time at
+tee 1, tee 5 and 250 m up). High on Mountain (`bench/ab/fr6-mountains-high.json`): 6.62, 2.68 and 7.41 ms to 4.64, 2.17 and 5.07 ms -- **30%, 19% and 32% less**; the whole frame as the page sees it 34%, 15% and 46% less; triangles 69.2, 21.5 and 72.5 M to 35.6, 14.5 and 30.4 M; draws 424, 309 and 388 to 417, 341 and 302; the heaviest frames (p99) 12.2 ms to 9.1 ms. Ultra on Classic Parkland (`fr6-parkland-ultra.json`): 6.19, 2.61 and 7.86 ms to 3.21, 2.10 and 4.24 ms -- **48%, 20% and 46% less**; the whole frame 50%, 9% and 57% less; triangles 35.1, 17.3 and 36.6 M to 19.7, 12.2 and 18.0 M; draws 375, 234 and 375 to 381, 322 and 311; p99 41.5 ms to 17.2 ms (one frame of 71 ms in the new build's runs, one of 47 in the old's). Course load 14.3 s to 15.5 s and 13.9 s to 14.6 s: still about a second longer than 0.9.14, the second found in round 11 and not yet found. Earlier in the round, before the outline rule made many middle versions finer, the same two comparisons read 31%, 6% and 35% and 47%, 16% and 52% (`fr3-mountains-high.json`, `fr4-parkland-ultra.json`): the rule cost a few points from above and nothing from a tee. These last two runs were made with the gate set aside on the owner's word ("Nothing is running on the card. Ignore the gate for this time and run the test"): the card read 34% before the first and 8% after the second, with the desktop alone.
+
+**What a frame is now** (High, Mountain, seed PROFILE, the line as on an
+1,800-line picture; tools/variants/mesh-passes.js): the picture 22.7 M
+triangles, the nearest shadow map 7.5 M, the two beyond 1.6 M and 1.8 M.
+Whole models are 5 M of the picture and all of the nearest shadow map: the
+next thing to take out is there. The far ground is 8.5% of the frame from
+the tee and 10% from above (it was 5% and 10% of a slower frame).
+
+**Tools made for the pass:** tools/variants/far-versions.mjs (the swap line
+moved on one page), wide-view.mjs, wide-count.js, pass-count.js,
+planting-count.js and mesh-passes.js (which pass and which mesh a frame's
+triangles are drawn in; the last three through the capture tool's
+`--eval`, a few frames each, so they run when a frame comparison cannot).

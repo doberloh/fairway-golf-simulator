@@ -128,6 +128,15 @@ wrong, unfinished, or owed a check.
   than 0.9.14 at two tees and from above. **Also open, found that day: a
   course takes about 1.1 s longer to load** than before round 10 of the
   surroundings (11.7 s to 12.8 s on Mountain; not the processor's work).
+  **Round F1 (13 November): a tree's middle version on High and Ultra.**
+  Against 0.9.14, High on Mountain is 30%, 19% and 32% faster at tee 1, tee 5
+  and from 250 m up; Ultra on Classic Parkland 48%, 20% and 46%. Seen in
+  captures on three landscapes only; **not yet measured or photographed on
+  the other landscapes, not on Low or Medium (which it should not have
+  changed, but the cull's "tallest thing" fix reaches them), no smoke run.**
+  Next: whole models in the nearest shadow map (7.5 M triangles of a 34 M
+  frame), the far ground's shading (8 to 10% of a frame on Mountain), the
+  second of course load.
   What each round did, measured, and what is still owed is in SURROUNDINGS,
   *The frame-rate pass*; this entry is rewritten as it goes.
 

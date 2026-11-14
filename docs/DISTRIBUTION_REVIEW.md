@@ -2082,3 +2082,13 @@ same settings (biome fingerprints unchanged).
   differs from the one driven only in the commit named in its version.
   **Not played by a person**; what nobody has seen is in TODO, *Play the
   current build by hand*.
+
+## Addendum: the frame-rate pass on `surroundings-rework` (13 November 2026, not released)
+
+A tree's middle version (High and Ultra) is made in the browser from the
+model the file already holds, when a course is built: nothing is fetched
+and no model is added. What the file gains is `src/mid-cells.js`, a table
+of about 20 KB (each model's grid for each tier), and the simplifier that
+until now only the model packer used. Still one file, still opens from a
+file URL with no network. The built page is 60,471,006 bytes against
+0.9.14's 60,430,446: 40 KB more for the whole branch.

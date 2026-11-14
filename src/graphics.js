@@ -221,6 +221,13 @@ export const TIERS = {
   // Painted trees below 5% of the screen's height draw their shipped twin
   // (instance-cull.js; a few dozen draw calls, not the grown trees' hundreds). PLACED.
   farPainted: .05,
+  // A TREE'S MIDDLE VERSION (the frame-rate pass, 13 November 2026;
+  // mesh-assets.js midParts, instance-cull.js). In place of the twin above: a
+  // painted tree under `px` of the picture's own pixels tall is drawn as
+  // itself at `share` of its triangles. The twin is some 300 triangles, right
+  // under about a hundred pixels and lumps above; so the line sat at 5% and
+  // nearly every tree in view was the whole 12,000-triangle model. PLACED.
+  midTrees: {share: .25, px: 300},
   // The ground drawn coarser with distance (ground-lod.js): pixels. PLACED.
   groundTolerance: 2,
   understory: 1,
@@ -303,6 +310,9 @@ export const TIERS = {
   // screen's height -- about 30 pixels on 1080 lines. PLACED; docs/CARTOON_OVERHAUL.md
   // *Rules set aside*.
   farPainted: .03,
+  // A tree's middle version (High says what and why): finer and from
+  // smaller here. PLACED.
+  midTrees: {share: .33, px: 200},
   // The ground drawn coarser with distance (ground-lod.js; 9 November 2026):
   // the most a square may stand off the ground the ball meets, in the picture's own
   // pixels (a CSS pixel on a screen at twice its density). PLACED.
@@ -513,7 +523,7 @@ export function needsRebuild(a, b) {
  // The thinned twins -- shadow and far -- are made with the course, for the tiers that use them.
  return x.grass !== y.grass || x.foliage !== y.foliage || x.cascades !== y.cascades || (x.forestFloor ?? 0) !== (y.forestFloor ?? 0) ||
   (x.thinShadowsFrom ?? Infinity) !== (y.thinShadowsFrom ?? Infinity) || (x.farTrees ?? 0) !== (y.farTrees ?? 0) ||
-  (x.farPainted ?? 0) !== (y.farPainted ?? 0) || (x.understory ?? 1) !== (y.understory ?? 1) ||
+  (x.farPainted ?? 0) !== (y.farPainted ?? 0) || JSON.stringify(x.midTrees ?? 0) !== JSON.stringify(y.midTrees ?? 0) || (x.understory ?? 1) !== (y.understory ?? 1) ||
   (x.longGrassReach ?? 0) !== (y.longGrassReach ?? 0) ||
   (x.farGround?.grow ?? 0) !== (y.farGround?.grow ?? 0) || JSON.stringify(x.surround ?? 0) !== JSON.stringify(y.surround ?? 0) ||
   !!x.thinTrees !== !!y.thinTrees;

@@ -15179,3 +15179,81 @@ within 60 m under the line is kept with a chance falling to nothing 20 m
 over it (the far forest's own rule). Highest far plant, measured: Desert
 Mountain 972 m to 266 m, Desert Resort 805 m to 337 m.
 
+### The frame-rate pass, round F1 (13 November 2026): a tree's middle version
+
+docs/SURROUNDINGS.md, *Round F1*, has what was built and why. No outside
+source. Every number PLACED unless it says measured.
+
+**The line.** High `midTrees` {share .25, px 300}, Ultra {share .33, px
+200}: a painted tree under that many of the picture's own pixels tall is
+its middle version (the cull compares the model's height over the square's
+distance, times the focal length, with px over the drawing buffer's height,
+or with `farPainted` -- 5% and 3% -- where that is more). The swap band is
+15% above the line, cross-faded in 16 steps, as it was. Found by eye:
+every tree as its far twin against every tree whole, 1,600 by 900, High
+(bench/shots/overhaul/fr-far, fr-full): alike under about 100 pixels, lumps
+at 235; every tree as its middle version at a fifth (fr-mid): alike at every
+size in those pictures (the largest about 250 pixels); the nearest trees
+too (fr-mid-near): a pine at 290 pixels a little softer, an oak at 550 and
+a spruce at 480 plainly faceted.
+
+**The outline rule** (tools/mid-cells.mjs `MID_OUTLINE`): kept .90, extra
+.08, area .85 of the model's outline at the tier's px, by the packer's
+score (four views; tools/far-cluster.mjs `outlineScore`), where the far
+versions' own rule is .85, .10, .80 at 100 pixels. Measured over the 329
+models with a far version and a part of 1,500 triangles or more: at a
+quarter and 300 pixels, before the rule, 200 fell under kept .93, extra
+.06 or area .90, the worst kept .63 and area .62 (palo verde .75 and .64 to
+.70, creosote .73 and .67, sagebrush .79 and .75); under the rule 316 have
+a middle version on High and 320 on Ultra, at the tier's share or at .4 or
+.5, and 13 and 9 have none.
+
+**A middle version, measured** (Node, the grid known): Lodgepole pine 1
+leaf 11,730 triangles to 3,165, Engelmann spruce 1 11,456 to 2,971,
+quaking aspen 1 9,476 to 2,432, ponderosa pine 2 11,220 to 2,862; their
+twins 220 to 360. 1.5 to 5.2 ms a model with the grid from the table, 10
+to 16 ms searching for it. The middle version's outermost points sit up to
+half a grid cell inside the model's: at a quarter, 0 to 1.3% of the part's
+size on the conifers, 5.4% at the foot of an aspen's crown, 7.4% and 6.2%
+on Blender_Oak_1 (3,168 leaf triangles, the coarsest grid).
+
+**What a frame drew, by count** (the capture tool's `--eval`; 1,600 by
+900, the line set to 150 pixels to stand for 300 on 1,800 lines; High,
+Mountain, seed PROFILE, first tee). Before the pass, the picture's buffers
+54.3 M triangles, eight tree models at 4.1 to 7.6 M each and 36 far twins
+(tools/frame-tris.mjs; that tool counts a model's parts twice over, so read
+its shares, not its sizes). With middle versions and the square's own
+tallest thing: picture 26.1 M (whole models about 9 M, middle versions
+about 10 M), shadow maps 10.2, 1.75 and 1.95 M. With each kind by its own
+height: picture 22.7 M, shadow maps 7.5, 1.6 and 1.8 M. Draws at tee 5,
+Ultra, Classic Parkland, with trunks swapped too: other instanced things
+110 in the picture and 86 in the maps, whole 47 and 37, stand-ins 82,
+middle versions 22 and 22, fading 18 and 27 (every one under 8 instances).
+
+**Where the line could sit, measured** (tools/frame-variants.mjs,
+tools/variants/far-versions.mjs; High, Mountain, 1,600 by 900 at density 2;
+the FAR TWIN drawn under each share of the screen, card time against the
+frames either side): 8% of the screen -12.6% at tee 1 and -26.3% from 250
+m up; 12% -28.4% and -44.9%; 18% -41.7% and -53.3%; 25% -48.5% and -53.3%;
+40% -51.3% and -55.0%; triangles 61.5 M to 50.3, 38.5, 28.2, 21.2 and 14.9
+M at tee 1. (The twin cannot be drawn at those sizes; the figures are what
+the middle version was built to reach.)
+
+**Against 0.9.14, card time at tee 1, tee 5 and 250 m up** (three rounds,
+the builds taking turns). The first build (share .2, trunks swapped, the
+middle version in every shadow map): High, Mountain 6.24, 2.54, 7.29 ms to
+4.76, 2.50, 4.72 ms; triangles 69.2, 21.5, 72.5 M to 41.6, 17.7, 28.6 M.
+With the far shadow maps' stand-in: 6.63, 2.58, 7.58 to 4.59, 2.54, 4.66
+ms; 38.3, 17.2, 23.8 M. With each kind by its own height and share .25:
+6.25, 2.43, 7.19 to 4.33, 2.28, 4.68 ms; 34.4, 14.1, 26.9 M; draws 424,
+309, 388 to 455, 379, 305. Ultra, Classic Parkland, that build: 6.19, 2.51,
+7.70 to 3.10, 2.29, 3.88 ms; the whole frame at tee 5 2.44 to 2.74 ms
+(+12.5%), draws 234 to 354. With trunks whole: 3.35, 2.19, 3.72 ms; tee 5's
+frame 2.79 to 2.77 ms, draws 321. The last build (the outline rule, the
+unseen squares): High, Mountain 6.62, 2.68, 7.41 to 4.64, 2.17, 5.07 ms,
+35.6, 14.5, 30.4 M triangles, draws 417, 341, 302, course load 14.32 to
+15.47 s; Ultra, Classic Parkland 6.19, 2.61, 7.86 to 3.21, 2.10, 4.24 ms,
+19.7, 12.2, 18.0 M, draws 381, 322, 311, course load 13.88 to 14.59 s.
+The readings of one build differ by up to 0.2 ms between runs made an hour
+apart on a card the desktop was using; within a run the builds took turns.
+

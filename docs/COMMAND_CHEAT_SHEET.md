@@ -115,4 +115,5 @@ Saved under `bench/shots/media/` (not committed), or wherever `MEDIA_OUT` points
 | `npm run assets` | Rebuilds the asset contact sheet from `vendor/` |
 | `npm run blender -- <pack> [--render]` | Rebuilds a Blender-built model pack (`tools/blender/<pack>.py`, e.g. `cartoon_lakeshore`) into `vendor/blender-<pack>/`; `--render` adds a contact sheet in `bench/shots/blender/`. Needs Blender installed. Then `node tools/build-meshes.mjs`. docs/BLENDER_ASSETS.md |
 | `node tools/build-meshes.mjs` | Ingests every picked model in `vendor/` into `src/asset-meshes.js` |
+| `node tools/mid-cells.mjs` | Writes `src/mid-cells.js`: the grid each tree's middle version (High and Ultra) is made on, the coarsest that keeps its outline. Run after a model changes or a tier's `midTrees` does; `--check` says if it is out of date (a test runs that), `--list` what each model got |
 | `npm run sheet` | Builds the model-gallery page only |
