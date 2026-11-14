@@ -3940,14 +3940,20 @@ function benchFrame(now,dt){
  const t0=performance.now();
  view.render(dt);
  if(p.sync){const gl=r.getContext();gl.readPixels(0,0,1,1,gl.RGBA,gl.UNSIGNED_BYTE,benchPixel);p.work.push(performance.now()-t0);}
- else if(p.last!=null)p.gaps.push(now-p.last);
+ // A gap over a second is the page put away, not a slow frame (as frameMeter).
+ else if(p.last!=null){const g=now-p.last;if(g<=1000)p.gaps.push(g);else p.notes.add('the page was put away during the run');}
  p.last=now;
+ if(flight)p.notes.add('a shot was in the air during the run');
  if(p.count){p.counts={draws:info.render.calls,triangles:info.render.triangles};p.count=false;info.autoReset=keep;}
- if(p.wait&&--p.wait.n<=0){const w=p.wait;p.wait=null;w.done();}
+ const w=p.wait;
+ if(w&&(--w.n<=0||--w.min<=0&&now>=w.until)){p.wait=null;w.done();}
 }
-const benchFrames=n=>new Promise(done=>{if(!benchProbe||n<=0)return done();benchProbe.wait={n,done};});
+// N FRAMES OR THEIR TIME AT 60, WHICHEVER COMES FIRST (at least three): a
+// tour counted in frames alone ran about four minutes at 14 frames a second,
+// past a phone's auto-lock. Counted this way it is about a minute at any rate.
+const benchFrames=n=>new Promise(done=>{if(!benchProbe||n<=0)return done();benchProbe.wait={n,min:3,until:performance.now()+n*1000/60,done};});
 // A reading: frames as shown (no read back: it would slow them), then the
-// same number timed with it. PLACED: 45 of each.
+// same number timed with it. PLACED: 45 of each, or three quarters of a second.
 const BENCH_READ=45;
 async function benchMeasure(){
  const p=benchProbe;
@@ -3977,7 +3983,8 @@ async function runDeviceBench(){
  if(appMode!=='play'||rangeMode||flight||!world?.holes?.[at]){toast('Start a round first: the benchmark measures the hole you are on.');return null;}
  const mode=view.config.mode,started=performance.now(),h=world.holes[at];
  closePanel();
- benchProbe={gaps:[],work:[],counts:{},sync:false,count:false,last:null,wait:null};
+ benchProbe={gaps:[],work:[],counts:{},sync:false,count:false,last:null,wait:null,notes:new Set()};
+ const notes=benchProbe.notes;
  const note=(i,n)=>toast(`Measuring this device: ${i} of ${n}. Keep the screen on and leave it be.`);
  note(0,1);
  let rows=null;
@@ -3992,7 +3999,7 @@ async function runDeviceBench(){
  }catch(e){benchProbe=null;toast(`The benchmark stopped: ${e?.message??e}`);return null;}
  const c=view.renderer.domElement;
  lastBench={rows,tier:graphics.quality,ratio:Math.round(view.renderer.getPixelRatio()*100)/100,canvas:[c.width,c.height],
-  seconds:Math.round((performance.now()-started)/1000),course:`${playingCourseName()}, hole ${round.hole+1}`};
+  seconds:Math.round((performance.now()-started)/1000),course:`${playingCourseName()}, hole ${round.hole+1}`,notes:[...notes]};
  toast('Measured. Help → Report a problem → Copy diagnostic carries the figures.');
  return lastBench;
 }
@@ -6761,7 +6768,7 @@ function renderPanel(name,content){
   // The report is shown in the box as well as copied, so a browser that
   // refuses the clipboard is an inconvenience rather than a dead end, and so
   // that nobody has to take on trust what they are about to paste.
-  content.insertAdjacentHTML('beforeend',`<h3>Report a problem</h3><p>Something looking wrong? This copies a short summary of your build, your machine and anything that has gone wrong, ready to paste into a bug report.</p><p class="note"><strong>Nothing is sent anywhere.</strong> Fairway makes no network requests at all. The text is put on your clipboard and shown below, and what happens to it after that is up to you.</p><button class="secondary" id="copyDiagnostic"><i data-lucide="clipboard-list"></i> Copy diagnostic</button><p class="note"><strong>Slow on this device?</strong> In a round, Measure this device stands the camera at four places on the hole you are on for about a minute and a half, switching parts of the picture off one at a time, then puts it back. The diagnostic then carries what each part costs here.</p><button class="secondary" id="benchDevice"><i data-lucide="gauge"></i> Measure this device</button><label class="field" id="diagnosticField" hidden>Diagnostic<textarea id="diagnosticText" rows="12" readonly></textarea></label>`);
+  content.insertAdjacentHTML('beforeend',`<h3>Report a problem</h3><p>Something looking wrong? This copies a short summary of your build, your machine and anything that has gone wrong, ready to paste into a bug report.</p><p class="note"><strong>Nothing is sent anywhere.</strong> Fairway makes no network requests at all. The text is put on your clipboard and shown below, and what happens to it after that is up to you.</p><button class="secondary" id="copyDiagnostic"><i data-lucide="clipboard-list"></i> Copy diagnostic</button><p class="note"><strong>Slow on this device?</strong> In a round, Measure this device stands the camera at four places on the hole you are on for about a minute, switching parts of the picture off one at a time, then puts it back. Leave the screen on while it runs. The diagnostic then carries what each part costs here.</p><button class="secondary" id="benchDevice"><i data-lucide="gauge"></i> Measure this device</button><label class="field" id="diagnosticField" hidden>Diagnostic<textarea id="diagnosticText" rows="12" readonly></textarea></label>`);
   $('copyDiagnostic').onclick=async()=>{
    let text;
    // Belt and braces: this is the button somebody presses when the app is
@@ -8123,6 +8130,9 @@ function autoResolutionNote(){
 }
 function autoResolutionFrame(now,interval){
  if(!view)return;
+ // Measure this device sets the resolution itself (its "half the pixels"
+ // reading) and must not have it put back under it, whichever way the switch is.
+ if(benchProbe){autoRes.hold(now);return;}
  if(!graphics.autoResolution){if(view.resolutionScale!==1){autoRes.stop(now);view.setResolutionScale(1);autoResolutionNote();}autoResKey='';return;}
  const key=graphics.quality+':'+view.pixelCeiling();
  if(key!==autoResKey){autoResKey=key;autoRes.setCeiling(view.pixelCeiling(),now);if(view.resolutionScale!==1){view.setResolutionScale(1);autoResolutionNote();}}
@@ -8132,7 +8142,7 @@ function autoResolutionFrame(now,interval){
  // costs to draw, yet stepped the resolution down, so a round began blurred and
  // took four to eight seconds to sharpen (the text-size journey caught it). The
  // menus, a sheet and the loading screen hold the step; play judges it.
- if(document.hidden||appMode!=='play'||panel||benchProbe||$('generating')?.hidden===false){autoRes.hold(now);return;}
+ if(document.hidden||appMode!=='play'||panel||$('generating')?.hidden===false){autoRes.hold(now);return;}
  const scale=autoRes.sample(interval,now,graphics.frameCap);
  if(scale!==view.resolutionScale){view.setResolutionScale(scale);autoResolutionNote();}
 }

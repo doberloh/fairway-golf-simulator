@@ -68,6 +68,7 @@ test('the report says what each part costs, and rides in the diagnostic', async 
  assert.match(text, /tee +no trees or plants +30 +50 +20 +-50%/);
  assert.match(text, /250 m up +as drawn/);
  assert.equal(formatBench(null), '');
+ assert.match(formatBench({rows, tier: 'medium', notes: ['the page was put away during the run']}), /note +the page was put away/, 'what may have spoiled it is said');
  const report = diagnosticReport({build: {label: 'x'}, app: {}, device: {}, webgl: {}, frames: null, errors: [], bench: {rows, tier: 'low'}});
  assert.match(report, /DEVICE BENCHMARK/, 'the diagnostic carries it');
  assert.doesNotMatch(diagnosticReport({build: {label: 'x'}, app: {}, device: {}, webgl: {}, frames: null, errors: []}), /DEVICE BENCHMARK/, 'and nothing when none was run');

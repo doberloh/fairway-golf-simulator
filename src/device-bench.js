@@ -32,7 +32,9 @@
 
 // Frames to settle after a move (the cull's rebuild, the shadow maps catching
 // up) and after a part is switched; the reading's own frames are main.js's.
-// PLACED: about half a second at 60 frames a second, a second at 30.
+// main.js waits that many frames OR their time at 60 frames a second,
+// whichever comes first (at least three), so the tour takes about a minute
+// at any frame rate. PLACED: half a second, a quarter of a second.
 export const BENCH = Object.freeze({settle: 30, settlePart: 15});
 
 // The four places, in a hole's own frame (main.js placePose). The tee and the
@@ -124,6 +126,8 @@ export function formatBench(bench) {
  if (ratio != null || canvas) out.push(`  drawn at        ${ratio != null ? `${ratio} pixel ratio` : ''}${canvas ? `${ratio != null ? ', ' : ''}${canvas[0]}x${canvas[1]}` : ''}`);
  if (course) out.push(`  course          ${course}`);
  if (seconds != null) out.push(`  took            ${seconds} s`);
+ // What may have spoiled the readings (main.js: the page put away, a shot flown).
+ for (const n of bench.notes ?? []) out.push(`  note            ${n}`);
  out.push(`  ${pad('place', 9)}${pad('reading', 21)}${lpad('fps', 4)}${lpad('worst', 7)}${lpad('work ms', 9)}${lpad('vs whole', 10)}${lpad('draws', 7)}${lpad('tris', 9)}`);
  for (const r of rows) {
   const vs = r.part && r.workMs != null && r.baseWork ? `${r.workMs <= r.baseWork ? '-' : '+'}${Math.round(Math.abs(r.workMs - r.baseWork) / r.baseWork * 100)}%` : '';
