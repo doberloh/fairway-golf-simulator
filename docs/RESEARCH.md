@@ -15306,6 +15306,13 @@ capped, 1,600 by 900 at density 2:
   to 1.58 ms to uniform4fv; a count of the calls found 13,700 to 14,800
   numbers in 452 to 500 array calls a frame over 355 to 411 draws.
 
+**Neither reading below was the build: a load runs in one of two modes**
+(docs/SURROUNDINGS.md, *A load runs in one of two modes*; the figures are
+there). Card-bound, or held up on the processor's side with the card 60 to
+75% busy and the frame up to twice as long, in either build, in runs:
+0.9.14 slow in 7 loads of 8, this branch in 1 of 5. Four loads a build and
+the least card time of them is the comparison.
+
 **The correction misleads where the card is not the limit** (14 November,
 with the clock capped by the owner, `nvidia-smi -lgc 210,2520`, and both
 builds reading 2,610 MHz): the same page read 3.15 against 4.98 ms at the
@@ -15328,6 +15335,11 @@ density 2, two rounds, `--settle 600 --frames 400`; A the build before the
 change, B with it; the card at 2,610 to 2,730 MHz throughout. Draws, card
 time at full clock, whole frame (the page's main thread a frame):
 
+- **The times in this list compared two modes, not the change** (A's loads
+  75% busy, B's 99%); the draws and triangles stand. Four loads a build
+  afterwards: least card time 2.47 to 2.18, 1.66 to 1.63 and 2.64 to 2.65
+  ms at the three spots; whole frame by the median of four 3.76 to 3.88,
+  2.75 to 2.46 and 2.89 to 3.04 ms.
 - tee 1: 422 to 402 draws; 2.36 to 1.90 ms; 3.54 to 2.32 ms. Rounds: A 2.68
   and 2.45 ms raw card time, B 2.17 and 2.17.
 - tee 5: 343 to 326; 1.49 to 1.50 ms; 2.82 to 1.78 ms.

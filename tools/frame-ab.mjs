@@ -194,6 +194,23 @@ async function measureBuild(file, tag, round) {
     await page.screenshot({path: shot});
    }
    out[name] = {...st, shot, card: cardWas, gpuFull: cardWas && st.gpuMedian != null ? st.gpuMedian * cardWas.clock / cardWas.clockMax : null};
+   // --cpuprofile: where the page's main thread went over the same view, by
+   // function, heaviest first (the frame-rate pass, 14 November 2026: one
+   // load in five of a build ran its frames at twice the processor time of
+   // the others, for the same draws; this is how the two are told apart).
+   if (flag('cpuprofile', false)) {
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send('Profiler.enable');
+    await cdp.send('Profiler.setSamplingInterval', {interval: 100});
+    await cdp.send('Profiler.start');
+    await frames(page, FRAMES);
+    const {profile} = await cdp.send('Profiler.stop');
+    const self = new Map(), byId = new Map(profile.nodes.map(n => [n.id, n]));
+    const dt = profile.timeDeltas;
+    profile.samples.forEach((id, i) => { const n = byId.get(id).callFrame, key = `${n.functionName || '(anon)'} ${n.url.split('/').pop()}:${n.lineNumber}`; self.set(key, (self.get(key) || 0) + (dt[i] || 0)); });
+    out[name].cpuProfile = [...self].sort((a, b) => b[1] - a[1]).slice(0, 40).map(([k, us]) => [k, +(us / 1000 / FRAMES).toFixed(3)]);
+    await cdp.detach();
+   }
    if (SCENE) {
     const sc = await page.evaluate(() => window.lab.scene());
     out[name].scene = sc;
@@ -281,7 +298,16 @@ for (const name of spotNames) {
   const s = {cpu: med(rs.map(r => r.median)), gpu: med(rs.map(r => r.gpuMedian)), cpuP95: med(rs.map(r => r.p95)),
    draws: med(rs.map(r => r.callsPerFrame)), tris: med(rs.map(r => r.trisPerFrame)), page: med(rs.map(r => r.pageMs)),
    runs: rs.map(r => [+r.median.toFixed(2), +(r.gpuMedian ?? 0).toFixed(2)]),
-   gpuFull: med(rs.map(r => r.gpuFull)), clock: med(rs.map(r => r.card?.clock)), watts: med(rs.map(r => r.card?.watts))};
+   gpuFull: med(rs.map(r => r.gpuFull)), clock: med(rs.map(r => r.card?.clock)), watts: med(rs.map(r => r.card?.watts)),
+   // THE BEST LOAD (14 November 2026). A load of either build runs in one of
+   // two modes on this machine: the card the limit (90 to 100% busy), or
+   // something on the processor's side the limit (60 to 75% busy, the same
+   // draws at up to twice the frame). 0.9.14 was slow in 7 loads of 8 one
+   // minute and a build of this branch in 1 of 5 the minute before, so a
+   // median of two rounds compares modes, not builds. The least card time of
+   // the rounds is the card-bound mode where any round reached it; `busy` is
+   // the card's busy share in that round, and says whether one did.
+   best: Math.min(...rs.map(r => r.gpuMedian ?? Infinity)), bestBusy: rs.reduce((b, r) => (r.gpuMedian ?? Infinity) < (b?.gpuMedian ?? Infinity) ? r : b, null)?.card?.busy ?? null};
   (summary[name] ??= {})[tag] = s;
   console.log(`  ${name.padEnd(9)} ${tag}     ${s.cpu.toFixed(2).padStart(6)}   ${(s.gpu ?? 0).toFixed(2).padStart(6)}  ${Math.round(s.draws).toString().padStart(6)}  ${(s.tris / 1e6).toFixed(1).padStart(8)} M   ${(s.page ?? 0).toFixed(2).padStart(7)}`
    + (scale > 1.01 ? `   ${((s.gpu ?? 0) * scale).toFixed(0).padStart(8)}` : '') + `   runs ${s.runs.map(r => r.join('/')).join(' ')}`);
@@ -289,6 +315,7 @@ for (const name of spotNames) {
  if (B) {
   const a = summary[name].A, b = summary[name].B, pct = (x, y) => ((y - x) / x * 100).toFixed(1) + '%';
   console.log(`  ${''.padEnd(9)} B vs A  ${pct(a.cpu, b.cpu).padStart(6)}   ${pct(a.gpu, b.gpu).padStart(6)}  ${pct(a.draws, b.draws).padStart(6)}  ${pct(a.tris, b.tris).padStart(9)}   ${pct(a.page, b.page).padStart(7)}`);
+  if (Number.isFinite(a.best) && Number.isFinite(b.best)) console.log(`  ${''.padEnd(9)} best load: A ${a.best.toFixed(2)} ms${a.bestBusy != null ? ` (card ${Math.round(a.bestBusy)}% busy)` : ''}  B ${b.best.toFixed(2)} ms${b.bestBusy != null ? ` (${Math.round(b.bestBusy)}%)` : ''}  ${pct(a.best, b.best)}` + (a.bestBusy != null && b.bestBusy != null && Math.min(a.bestBusy, b.bestBusy) < 85 ? '  -- one build never had the card as its limit: more rounds' : ''));
   if (a.gpuFull != null && b.gpuFull != null) console.log(`  ${''.padEnd(9)} card at full clock: A ${a.gpuFull.toFixed(2)} ms (card at ${Math.round(a.clock)} MHz, ${Math.round(a.watts)} W)  B ${b.gpuFull.toFixed(2)} ms (${Math.round(b.clock)} MHz, ${Math.round(b.watts)} W)  ${pct(a.gpuFull, b.gpuFull)}`);
  }
 }

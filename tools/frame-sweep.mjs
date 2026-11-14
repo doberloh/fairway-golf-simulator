@@ -24,6 +24,9 @@
 // repeated to 1 or 2% between rounds where the raw figure moved by 30. Raw
 // card time and the whole frame are printed beside it: they are what this
 // machine did, in the power mode it was in.
+// (14 November 2026: neither figure is safe from one or two rounds. A load of
+// either build runs card-bound or held up on the processor's side, at up to
+// twice the frame; run with --rounds 4 and read frame-ab's best-load line.)
 import fs from 'node:fs';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';

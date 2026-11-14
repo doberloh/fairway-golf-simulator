@@ -1157,10 +1157,16 @@ card at 2,700 MHz in both):
 | tee 5 | 343 to 326 | 1.49 to 1.50 ms | 2.82 to 1.78 ms (-37%) |
 | 250 m up | 384 to 371 | 2.42 to 2.27 ms (-6%) | 3.22 to 2.72 ms (-16%) |
 
-The whole frame fell by far more than 5% fewer draws explains; the old
-build's card was 75% busy at the tees and the new one's 99%, so the old
-frame was waiting on the processor's side and the new one is not. One
-landscape, one tier: not a figure for the others. **Pictures:** old against
+**The card and frame columns of that table are withdrawn** (*A load runs in
+one of two modes*, below): the old build's loads were in the slow mode (its
+card 75% busy) and the new build's in the fast one (99%), and the table
+compared the modes. Measured again with four loads a build: 422 to 402,
+343 to 326 and 384 to 371 draws as before; least card time 2.47 to 2.18 ms
+at tee 1 (neither build card-bound, 81 and 82% busy), 1.66 to 1.63 ms at tee
+5, 2.64 to 2.65 ms from above (both 99% busy); the whole frame +3%, -11%
+and +5% by the median of four, which is inside what one build's loads
+differ by. **So F5 is 5% fewer draws and no measurable change in time** on
+this landscape and tier. Kept: it draws less and the picture is the same. **Pictures:** old against
 new changed 3.8%, 2.1% and 6.4% of pixels at the three spots, old against
 old 3.2%, 2.4% and 2.9%; the difference images show the same things in
 both -- clouds, their shadows on the fairways, a pond, the swap line along a
@@ -1193,7 +1199,7 @@ After the restart the card ran these comparisons at 2,610 to 2,730 MHz and
 320 to 414 W, where before it it had floated at 800 to 1,700 MHz: whatever
 the owner's power setting changed seems to have needed the restart.
 
-### Prairie on Ultra with the clocks equal: really slower (14 November 2026, 00:03 to 00:20) -- NOT FOUND
+### Prairie on Ultra with the clocks equal (14 November 2026, 00:03 to 00:20) -- "really slower" OVERTURNED, next section
 
 After the restart the card held its clock, and during these runs the owner
 also capped it ("limiting the clock of the GPU below its max boost using
@@ -1211,9 +1217,10 @@ With both builds at 2,610 MHz, round F5's build against 0.9.14, one round,
 | Redwood Coast, High | 3.65 to 3.06 ms (-16%) | -21% | 3.03 to 3.36 ms (+11%) | +13% |
 | Badlands, High | 2.36 to 2.19 ms (-7%) | -14% | 2.16 to 2.21 ms (+3%) | -8% |
 
-**So Prairie on Ultra is slower than 0.9.14 by half again, for fewer draws
-(333 to 324) and 40% fewer triangles**, as every raw reading of the evening
-had said (+31 and +57%, +25 and +26%, +34 and +20%) and the clock
+**Read at the time as Prairie on Ultra being slower than 0.9.14 by half
+again, for fewer draws (333 to 324) and 40% fewer triangles -- wrong: one
+load of each build, in different modes (next section)** -- as every raw
+reading of the evening had seemed to say (+31 and +57%, +25 and +26%, +34 and +20%) and the clock
 correction had explained away. Redwood Coast and Badlands agree with the
 second sweep. **Which other Ultra landscapes share it is not known**: the
 first sweep's Mountain (+20% from a tee) and Florida Palms (+12 and +29%)
@@ -1233,3 +1240,65 @@ shader values, 14,000 numbers a frame. **Next:** the same page again on a
 quiet card; the same on 0.9.14 built with the capture hooks, so the two can
 be read part against part; High on Prairie, which the first sweep had 43%
 faster, to see whether this is Ultra's alone.
+
+### A load runs in one of two modes, in either build (14 November 2026, 00:28 to 01:11)
+
+What every odd reading of the night came from. The same build, the same
+course, the same view, loaded again and again in a fresh browser (the card
+at 2,610 MHz throughout), tee 1 on Prairie & Sand Hills, Ultra:
+
+- **round F5's build, five loads:** 2.42, 2.43, 2.49, 2.42 ms of card time
+  with the card 91 to 100% busy -- and the fifth 4.58 ms with it 59% busy.
+  Six more with a processor profile running: three near 2.5 ms, three at
+  4.0 to 4.8.
+- **0.9.14, eight loads, ten minutes later:** 5.27, 4.99, 5.03, 4.91, 5.10,
+  6.23, 5.70 ms with the card 67 to 74% busy -- and the eighth 3.51.
+
+**So a load is either card-bound, or held up on the processor's side with
+the card two-thirds busy and the same draws taking up to twice as long --
+and which one it is has nothing to do with the build.** In a slow load the
+extra time is inside the calls that set shader values (uniformMatrix4fv
+0.08 against 0.64 ms a frame, uniform4fv 0.06 against 0.52, the same calls
+in both): the page waiting on the browser's own graphics process. What
+puts a load in that mode is not known; it comes in runs (one load in five,
+then seven in eight, then every load for a quarter of an hour).
+
+**Like for like, Prairie on Ultra is faster than 0.9.14, not slower.**
+Card-bound loads: 2.42 ms against 3.15 to 3.51 (a quarter to a third less).
+Four loads of each, all in the slow mode: tee 1 5.95 to 5.15 ms (-14%,
+whole frame -13%), from 250 m up 6.13 to 5.68 ms (-7%, frame -7%). The
+"+58% and +67%" above was a fast load of the old game against a slow load of
+the new; the first sweep's slower Ultra readings (Mountain, Prairie,
+Florida Palms) and the bisect's "as fast in one load, 22 to 69% slower in
+the next" were the same thing. The card's clock (*The first sweep read
+again*) was real but was not the cause.
+
+**What the sweeps are worth, then.** Their triangles and draws are exact.
+Their times are one or two loads a build, and a median of two is the slower
+of two: where both builds happened to load in one mode the figure stands,
+and nothing in the saved runs before 22:52 on 13 November says which those
+are (the card's busy share was not recorded). The large gains on wooded
+landscapes (30 to 50% less card time for 40 to 60% fewer triangles) showed
+in every measurement of the day in either mode and are not in doubt; the
+single-figure differences, either way, are.
+
+**What was built:** tools/frame-ab.mjs prints a *best load* line -- the
+least card time of the rounds for each build, with the card's busy share in
+that round, and a warning where either build never had the card as its
+limit -- and takes `--cpuprofile` (the main thread's time by function for
+each spot, saved with the run). Compare with `--rounds 4` or more.
+
+### Low and Medium (14 November 2026): measured on Mountain
+
+The cull's changes reach every tier (a model's own height, squares kept
+only for their shadows). Round F5's build against 0.9.14, three loads each:
+
+| Mountain | triangles, tee 1 | card, tee 1 | card, 250 m up | whole frame, tee / above |
+|---|---|---|---|---|
+| Medium | 24.3 to 13.5 M | 2.25 to 1.85 ms (-18%), both card-bound | 1.79 to 1.82 ms | +1% / -4% |
+| Low | 17.3 to 9.9 M | 1.30 to 1.07 ms (-18%) | 0.84 to 0.82 ms | level / **+16%** |
+
+Low from above is the one figure the wrong way: 1.39 to 1.61 ms of main
+thread a frame (about 700 frames a second on this machine), with 215 to 229
+draws. It is the processor's side, and small here; on the machines Low is
+for it would be several times larger. Not looked into.

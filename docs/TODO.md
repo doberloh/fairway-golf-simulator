@@ -156,12 +156,16 @@ wrong, unfinished, or owed a check.
   card time 19 to 23% less on average, with three Ultra runs reading slower
   -- and those readings are the card's clock, not the game.** This card
   slows its clock for a lighter frame; the tools now read the clock and give
-  card time at full clock ("work"). **WRONG ABOUT PRAIRIE: with the
-  clock capped and equal (14 November), Prairie & Sand Hills on Ultra is 58%
-  slower from a tee and 67% from 250 m up than 0.9.14, for fewer draws and
-  triangles. Not found** (the page that would find it was spoiled by a game
-  starting): SURROUNDINGS, *Prairie on Ultra with the clocks equal*, has what
-  to run next. Mountain and Florida Palms on Ultra are suspects. **A second sweep with the
+  card time at full clock ("work"). **Neither that nor the "58% slower" read after it was right: a
+  load of EITHER build runs in one of two modes** (card-bound, or held up on
+  the processor's side at up to twice the frame; 0.9.14 slow in 7 loads of
+  8), and one or two loads a build compared the modes. Like for like,
+  Prairie & Sand Hills on Ultra is 7 to 14% faster than 0.9.14 in the slow
+  mode and a quarter to a third in the fast one (SURROUNDINGS, *A load runs
+  in one of two modes*). **No landscape is known to be slower.** The
+  sweeps' small differences either way are not to be trusted; their large
+  gains on wooded landscapes showed in both modes. What puts a load in the
+  slow mode is not known and is the same in 0.9.14. **A second sweep with the
   clock is 6 of 30 done** (stopped 13 November 23:24 for the owner's game;
   `node tools/frame-sweep.mjs --goal surroundings --a bench/ab/base-0914.html
   --b bench/ab/fr9.html --tiers high,ultra --spots tee1,flyhigh --rounds 1
@@ -171,9 +175,11 @@ wrong, unfinished, or owed a check.
   looked into. The trunk's hard swap (8c171542) is still not drawn or
   measured, and `dist/` is the build before it.
   **Round F5 (14 November): one shadow caster a part in the far maps** --
-  Classic Parkland on High, 5% fewer draws and the whole frame 16 to 37%
-  shorter than the build before it; pictures unchanged. Measured on that
-  one landscape and tier only. The nearest shadow map was left alone (a
+  Classic Parkland on High, 5% fewer draws, no measurable change in time
+  (four loads a build), pictures unchanged. **Low and Medium measured on
+  Mountain:** 18% less card time from a tee on both; Medium level from
+  above; **Low's whole frame 16% longer from 250 m up** (0.2 ms on the
+  processor's side, 14 more draws; not looked into). The nearest shadow map was left alone (a
   crown shaded by another shape goes dark). **The owner has played the
   build before F5 and found every landscape faster; the build with F5 and
   the trunk's hard swap is not played.**
