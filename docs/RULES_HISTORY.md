@@ -468,3 +468,38 @@ checking: a pond distance scaled by the wrong axis, a sightline ray drawn
 straight through world space while the generator drew it along the centreline,
 three disagreeing beach metrics, and a lake check that consulted only half the
 bodies. `sightline` is exported from `course.js` for exactly this reason.
+
+## The gate read an idle card as busy (13 November 2026)
+
+The rule: *If a game is on the card, the owner is using the machine*
+(AGENTS.md), and the gate that keeps it (tools/gpu-gate.mjs).
+
+All of 13 November the gate held graphics runs back on a card it read as 16
+to 54% busy "with the desktop alone". That morning, on the same reading, the
+capture gate had been raised from 30% to 45% for two runs, and the card
+dropped out of the machine fifteen seconds after the second; the reading was
+written down as Chrome Remote Desktop serving the owner's screen. In the
+evening the frame tools waited over an hour, the owner waived the gate once
+in words ("Nothing is running on the card. Ignore the gate for this time and
+run the test"), and then asked: "What is using the card right now?"
+
+Windows' own counters (GPU Engine, each program's share of each engine)
+said about 6%: the Battle.net launcher 3.5%, Slack 1.2%, the Claude app and
+the desktop compositor 0.6% each, the video encoder nothing. `nvidia-smi`
+said 32% at the same moment. The card idles in a low power state -- P5, 810
+MHz where its full clock is 2,520 MHz, 48 to 60 W -- and `nvidia-smi`'s
+figure is the share of time the card was busy at its CURRENT clock. The same
+work read 8% seconds later at full clock.
+
+So the gate had been measuring how slowly an idle card was running. What it
+cost: most of a day of measurements not made, a gate raised on a reading
+that meant nothing, and a wrong cause written into two documents. The owner:
+"Fix the gate." It now sums the counters (the card's real work) and refuses
+whenever one program takes 15% of the card by itself, whatever limit a run
+asked for, because that is what the owner playing looks like and is the
+thing the gate exists to see. Where the counters cannot be read it falls
+back to `nvidia-smi` and says so. What caused the morning's lost card is
+still not known; nothing here says it was the gate's raising.
+
+The lesson for a reading: before acting on a number from one tool, ask what
+it is a share OF.

@@ -780,6 +780,16 @@ slowly. The gate (tools/gpu-gate.mjs) reads that one figure. It was not
 changed: what it should read instead (Windows' counters, or power drawn,
 with a game's process name still refusing a run) is the owner's to say.
 
+**The gate fixed** (the owner, that evening: "Fix the gate and then proceed
+with the rest of what you need to do"). tools/gpu-gate.mjs now judges by the
+card's real work -- every program's share added up, from Windows' counters,
+the busiest sample of the look -- and refuses on one program taking 15% or
+more by itself (a game) whatever limit the run asked for; it falls back to
+`nvidia-smi` only where the counters cannot be read. Its first look read
+7.1% of work, the launcher 4%, beside `nvidia-smi`'s 33%.
+`node tools/gpu-gate.mjs` prints the reading. AGENTS.md's three lines that
+said "read nvidia-smi" say this instead; RULES_HISTORY.md has the story.
+
 **Where it started** (round 11's measurements, High on Mountain): the
 course's own trees and plants 60% of a frame from 250 m up, the far ground
 10% (5% from a tee), the far trees 0.4%; a frame of 69 to 72 million
