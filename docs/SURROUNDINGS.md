@@ -1125,3 +1125,67 @@ yet looked into.
 from above; the trunk's hard swap (8c171542) drawn and measured; Low and
 Medium; every landscape photographed on the final build; both smoke runs;
 `dist/` rebuilt.
+
+### Round F5: one caster a part in the far shadow maps (13-14 November 2026)
+
+The owner, having tried the build ("All of these are way faster than they
+were"), asked for the three things still in mind -- the open-country view
+from above, the draws at a light tee, the nearest shadow map -- and to check
+frame rates himself: "you only run checks to see if its working as
+intended".
+
+**The draws at a light tee: done.** A crown with three versions met each of
+the two far shadow maps as four meshes -- the whole tree's twin, the middle
+version's twin, the small tree's own mesh, the middle version's fading mesh
+-- all one shape (the shipped twin) with one material. Now such a part has
+ONE mesh for those maps (`record.caster`, instance-cull.js), holding every
+tree of the part a shadow map needs whatever version the picture draws it
+as, with a buffer of its own, written in the maps' order with the rest; the
+family's other meshes and fading meshes draw nothing there. The nearest map
+is as it was. Low and Medium have no middle versions and are untouched.
+
+Measured against the build before it (the same code less this change;
+Classic Parkland, High, two rounds, 600 frames of warm-up, 400 timed; the
+card at 2,700 MHz in both):
+
+| | draws | card, at full clock | whole frame |
+|---|---|---|---|
+| tee 1 | 422 to 402 | 2.36 to 1.90 ms (-19%) | 3.54 to 2.32 ms (-35%) |
+| tee 5 | 343 to 326 | 1.49 to 1.50 ms | 2.82 to 1.78 ms (-37%) |
+| 250 m up | 384 to 371 | 2.42 to 2.27 ms (-6%) | 3.22 to 2.72 ms (-16%) |
+
+The whole frame fell by far more than 5% fewer draws explains; the old
+build's card was 75% busy at the tees and the new one's 99%, so the old
+frame was waiting on the processor's side and the new one is not. One
+landscape, one tier: not a figure for the others. **Pictures:** old against
+new changed 3.8%, 2.1% and 6.4% of pixels at the three spots, old against
+old 3.2%, 2.4% and 2.9%; the difference images show the same things in
+both -- clouds, their shadows on the fairways, a pond, the swap line along a
+ridge -- and no shadow gone or added.
+
+**The nearest shadow map: not built, and why.** There the trees drawn whole
+cast as the whole model. Casting them as their middle version would save
+triangles, but a crown shaded by a shape other than the one it is drawn
+with goes dark where the two differ, which is what threw the twin out of
+Low's shadow map (the cull's own note, F3 of the cartoon overhaul); the
+nearest map's texels are about 9 cm and a middle version's surface moves by
+more than that. It would want pictures of near crowns at several hours
+before it shipped.
+
+**The open-country view from above: not looked into yet** (below).
+
+### Two unexpected shutdowns while the owner played (13 November 2026, 23:40 and 23:51)
+
+The owner stopped the second sweep to play a game, then asked for round F5
+while still playing. The gate read the game on the card (79% of it, 71 C)
+and nothing graphical was started; two Node test files were run on the
+processor at about 23:50 and the machine went down at 23:50:58. The owner:
+"we crashed cause you started making the change while i was gaming."
+Windows also logged an unexpected shutdown at 23:40:08, with the game
+running and nothing of this work running (its last command was a build at
+23:26). The rule taken from it is in RULES_HISTORY.md, *Nothing at all
+while the owner plays*.
+
+After the restart the card ran these comparisons at 2,610 to 2,730 MHz and
+320 to 414 W, where before it it had floated at 800 to 1,700 MHz: whatever
+the owner's power setting changed seems to have needed the restart.

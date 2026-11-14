@@ -166,6 +166,13 @@ wrong, unfinished, or owed a check.
   country is 3 to 10% heavier** (Redwood Coast, Badlands, Prairie), not
   looked into. The trunk's hard swap (8c171542) is still not drawn or
   measured, and `dist/` is the build before it.
+  **Round F5 (14 November): one shadow caster a part in the far maps** --
+  Classic Parkland on High, 5% fewer draws and the whole frame 16 to 37%
+  shorter than the build before it; pictures unchanged. Measured on that
+  one landscape and tier only. The nearest shadow map was left alone (a
+  crown shaded by another shape goes dark). **The owner has played the
+  build before F5 and found every landscape faster; the build with F5 and
+  the trunk's hard swap is not played.**
   What each round did, measured, and what is still owed is in SURROUNDINGS,
   *The frame-rate pass*; this entry is rewritten as it goes.
 

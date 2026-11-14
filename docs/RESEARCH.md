@@ -15311,3 +15311,23 @@ power mode, and compare two builds fairly only when both ran at one clock.
 The first sweep of the frame-rate pass (`sweep-fr9`) recorded no clock; the
 second (`sweep2-fr9`) does. No outside source was used; nothing here is
 published.
+
+### The frame-rate pass, round F5 (14 November 2026): one caster a part in the far shadow maps
+
+tools/frame-ab.mjs, Classic Parkland, High, seed PROFILE, 1,600 by 900 at
+density 2, two rounds, `--settle 600 --frames 400`; A the build before the
+change, B with it; the card at 2,610 to 2,730 MHz throughout. Draws, card
+time at full clock, whole frame (the page's main thread a frame):
+
+- tee 1: 422 to 402 draws; 2.36 to 1.90 ms; 3.54 to 2.32 ms. Rounds: A 2.68
+  and 2.45 ms raw card time, B 2.17 and 2.17.
+- tee 5: 343 to 326; 1.49 to 1.50 ms; 2.82 to 1.78 ms.
+- 250 m over tee 1: 384 to 371; 2.42 to 2.27 ms; 3.22 to 2.72 ms.
+- The card's busy share at the tees: A 75 and 76% at 318 to 327 W, B 99 and
+  100% at 392 to 407 W.
+- Triangles a frame: 11.3 to 11.2, 9.5 to 9.5, 9.2 to 9.0 million.
+- Pixels changed (summed colour difference over 24): A against B 3.81%,
+  2.08%, 6.39%; A against A 3.24%, 2.39%, 2.93%; B against B 2.85%, 2.27%,
+  0.27%.
+
+No outside source.

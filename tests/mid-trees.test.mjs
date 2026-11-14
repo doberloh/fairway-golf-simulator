@@ -237,3 +237,61 @@ test('on a tier with middle versions a trunk swaps to its twin with no fading me
  const medium = build({farPainted: .25});
  assert.ok(medium.fades.length > 0, 'a tier without middle versions keeps the trunk\'s dissolve');
 });
+
+// ONE CASTER A PART IN THE FAR SHADOW MAPS (round F5). A crown with three
+// versions met a far map as four meshes of one shape; now one mesh holds every
+// tree of the part those maps need, and the family's other meshes stay out.
+test('in the far shadow maps a crown with three versions is one draw: every tree once, as its twin', () => {
+ const parts = modelParts('Blender_Oak_1'), at = parts.findIndex(p => p.role === 'leaf'), twinGeo = modelParts('Blender_Oak_1_Far')[at].geometry;
+ const group = new T.Group(), m = new T.Matrix4(), n = 120;
+ const mesh = new T.InstancedMesh(parts[at].geometry, new T.MeshBasicMaterial(), n);
+ for (let i = 0; i < n; i++) { mesh.setMatrixAt(i, m.makeScale(30, 30, 30).setPosition((i % 2) * 6 - 3, 0, -440 + i * 25)); mesh.setColorAt(i, new T.Color(1, 1, 1)); }
+ mesh.userData = {model: 'Blender_Oak_1', part: at, role: 'leaf'}; mesh.castShadow = true;
+ group.add(mesh);
+ const sunOver = half => {
+  const light = new T.DirectionalLight();
+  light.position.set(0, 500, -520); light.target.position.set(0, 0, -520);
+  Object.assign(light.shadow.camera, {left: -half, right: half, top: half, bottom: -half, near: 1, far: 1000});
+  light.shadow.camera.updateProjectionMatrix();
+  light.updateMatrixWorld(); light.target.updateMatrixWorld(); light.shadow.updateMatrices(light);
+  return light;
+ };
+ const inMap = (o, light) => { o.onBeforeShadow?.(null, o, null, light.shadow.camera); const c = o.count; o.onAfterShadow?.(); return c; };
+ const spots = (o, count = o.count) => { const out = [], mm = new T.Matrix4(), p = new T.Vector3(); for (let i = 0; i < count; i++) { o.getMatrixAt(i, mm); p.setFromMatrixPosition(mm); out.push(`${Math.round(p.x)},${Math.round(p.z)}`); } return out; };
+ const cull = cullInstances(group, {farPainted: .03, midShare: .25, farPaintedPx: 200, screenPx: () => 1000, thinShadowsFrom: 1});
+ const near = sunOver(150), far = sunOver(6000);
+ cull.update(camera(), null, [near, far]);
+ const casters = group.children.filter(o => o.name === 'shadow twin');
+ assert.equal(casters.length, 1, 'one stand-in for the whole family, not one a version');
+ const caster = casters[0];
+ assert.equal(caster.geometry, twinGeo, 'cast as the shipped twin, as each version was before');
+ assert.notEqual(caster.instanceMatrix, mesh.instanceMatrix, 'with a buffer of its own');
+ const fars = group.children.filter(o => o.name === 'far trees' && o.userData.farOf === mesh), fades = group.children.filter(o => o.name === 'fading trees');
+ assert.equal(fars.length, 2, 'the middle version and the twin');
+ assert.ok(mesh.count > 0 && fars.every(o => o.count > 0), 'all three versions are in the picture');
+ // The far map: the caster alone, holding every tree in view exactly once.
+ for (const o of [mesh, ...fars, ...fades]) assert.equal(inMap(o, far), 0, `${o.name} stays out of the far map`);
+ const held = new Set([mesh, ...fars, ...fades].flatMap(o => spots(o)));
+ const cast = inMap(caster, far);
+ caster.onBeforeShadow(null, caster, null, far.shadow.camera);
+ const castSpots = spots(caster);
+ caster.onAfterShadow();
+ assert.equal(cast, held.size, `every tree in view is cast (${cast} of ${held.size})`);
+ assert.equal(new Set(castSpots).size, cast, 'and none twice');
+ for (const s of castSpots) assert.ok(held.has(s), `the tree at ${s} is drawn in the picture`);
+ // The nearest map is as it was: each tree by the version it is drawn as.
+ assert.equal(inMap(caster, near), 0, 'the caster is not in the nearest map');
+ assert.ok(inMap(mesh, near) > 0, 'where the whole trees cast for themselves');
+ // Never in the picture, and a shadow camera the cull was not told about gets the trees themselves.
+ caster.onBeforeRender(); assert.equal(caster.count, 0); caster.onAfterRender();
+ const flood = new T.SpotLight();
+ assert.equal(inMap(caster, flood), 0); assert.equal(inMap(mesh, flood), mesh.count);
+ // Low and Medium (no middle versions) are as they were: the twin rides the whole tree's own buffer.
+ const plain = new T.Group(), pm = new T.InstancedMesh(parts[at].geometry, new T.MeshBasicMaterial(), n);
+ for (let i = 0; i < n; i++) pm.setMatrixAt(i, m.makeScale(30, 30, 30).setPosition((i % 2) * 6 - 3, 0, -440 + i * 25));
+ pm.userData = {model: 'Blender_Oak_1', part: at, role: 'leaf'}; pm.castShadow = true;
+ plain.add(pm);
+ cullInstances(plain, {farPainted: .03, thinShadowsFrom: 1}).update(camera(), null, [near, far]);
+ const old = plain.children.filter(o => o.name === 'shadow twin');
+ assert.ok(old.length >= 1 && old.some(o => o.instanceMatrix === pm.instanceMatrix), 'without middle versions the stand-ins are as before');
+});

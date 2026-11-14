@@ -286,7 +286,39 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
   // sprays, and keeping a third of the lobes leaves bubbles floating apart.
   // It carries `flex` (mesh-assets.js), which is how it is known.
   const thins = far && far.index.count < geo.index.count * .6 && (painted || !geo.attributes.flex && geo.index.count >= TWIN_MIN_TRIANGLES * 3);
-  if (thins && thinShadowsFrom !== Infinity && mesh.castShadow) {
+  // ONE CASTER A PART IN THE FAR SHADOW MAPS (the frame-rate pass, round F5).
+  // With three versions of a crown, a far map met the whole tree's twin, the
+  // middle version's twin, the small tree's own mesh and the middle version's
+  // fading mesh: four draws of ONE shape (the shipped twin) with one material,
+  // in each of the two far maps, for every kind of crown on the course. A
+  // tee's draws had risen by a seventh over 0.9.14, and on a tee with few
+  // trees the frame with them, where the card's work had fallen. So such a
+  // part has one mesh for those maps, holding every one of its trees the
+  // maps need whatever version the picture draws it as, with a buffer of its
+  // own; the other meshes of the family draw nothing there. The shape cast is
+  // the one each of them cast before, and a tree part-way through a swap is
+  // cast once where it was cast twice. The nearest map is as it was: each
+  // tree by the version it is drawn as.
+  const union = usesMid && thins && painted && Math.max(farPainted, farPaintedPx) > 0 && thinShadowsFrom !== Infinity && mesh.castShadow && !record.shadowNear;
+  if (union) {
+   const caster = new T.InstancedMesh(far, mesh.material, n);
+   // (Colours of its own, plain: a tree's dissolve rides its colour, and this
+   // mesh holds the trees in another order than any mesh it stands in for.)
+   if (srcColour) caster.instanceColor = new T.InstancedBufferAttribute(new Float32Array(n * 3), 3);
+   caster.castShadow = true; caster.receiveShadow = false; caster.frustumCulled = false;
+   caster.userData.noCull = true; caster.name = 'shadow twin'; caster.count = 0; caster.visible = false;
+   caster.onBeforeRender = function () { this.userData.cullHeld = this.count; this.count = 0; };
+   caster.onAfterRender = function () { this.count = this.userData.cullHeld; this.userData.cullHeld = undefined; };
+   caster.onBeforeShadow = function (renderer, object, camera, shadowCamera) {
+    const k = shadowOf.get(shadowCamera);
+    this.userData.cullHeld = this.count;
+    this.count = k === undefined || k < thinFrom() ? 0 : all || !record.casterCum ? this.count : record.casterCum[k];
+   };
+   caster.onAfterShadow = function () { this.count = this.userData.cullHeld; this.userData.cullHeld = undefined; };
+   mesh.parent.add(caster);
+   record.caster = caster; record.casts = true;
+  }
+  if (!union && thins && thinShadowsFrom !== Infinity && mesh.castShadow) {
    const twin = new T.InstancedMesh(far, mesh.material, n);
    twin.instanceMatrix = mesh.instanceMatrix;
    // ITS COLOURS TOO, though a shadow ignores them. The twin shares the tree's
@@ -319,7 +351,7 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
    const k = shadowOf.get(shadowCamera);
    if (k === undefined) return;
    // Only the nearest map for a plant whose shadow is near work (`shadowNear`).
-   if (record.twin && k >= thinFrom() || record.shadowNear && k > 0) { this.userData.cullHeld = this.count; this.count = 0; return; }
+   if ((record.twin || record.caster) && k >= thinFrom() || record.shadowNear && k > 0) { this.userData.cullHeld = this.count; this.count = 0; return; }
    if (all || !record.cum) return;
    this.userData.cullHeld = this.count;
    this.count = record.cum[k];
@@ -339,7 +371,7 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
   farMesh.userData = {noCull: true, cullHidden: mesh.userData.cullHidden, farOf: mesh};
   farMesh.name = 'far trees'; farMesh.count = 0; farMesh.visible = false;
   mesh.parent.add(farMesh);
-  const farRecord = {mesh: farMesh, n, order, hash: record.hash, thinnable: record.thinnable, src, srcColour, runs: record.runs, drawn: 0, cum: null, twin: null, near: false, far: true, painted, shadowNear: record.shadowNear, hard: record.hard};
+  const farRecord = {mesh: farMesh, n, order, hash: record.hash, thinnable: record.thinnable, src, srcColour, runs: record.runs, drawn: 0, cum: null, twin: null, near: false, far: true, painted, shadowNear: record.shadowNear, hard: record.hard, caster: record.caster ?? null};
   record.near = true;
   // A painted pair is swapped run by run, by its own height (`tallRun`): the
   // two share one list of levels, 0 the far version to FADE_STEPS the whole.
@@ -347,7 +379,7 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
   farMesh.onBeforeShadow = function (renderer, object, camera, shadowCamera) {
    const k = shadowOf.get(shadowCamera);
    if (k === undefined) return;
-   if (farRecord.twin && k >= thinFrom() || farRecord.shadowNear && k > 0) { this.userData.cullHeld = this.count; this.count = 0; return; }
+   if ((farRecord.twin || farRecord.caster) && k >= thinFrom() || farRecord.shadowNear && k > 0) { this.userData.cullHeld = this.count; this.count = 0; return; }
    if (all || !farRecord.cum) return;
    this.userData.cullHeld = this.count;
    this.count = farRecord.cum[k];
@@ -359,7 +391,7 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
   // 2,700 triangles went into every map where 300 had gone: 23 of the 42
   // million triangles of a frame from Mountain's first tee. The same twin, the
   // same rule, riding the far mesh's own buffer.
-  if (usesMid && thins && thinShadowsFrom !== Infinity && farMesh.castShadow) {
+  if (!record.caster && usesMid && thins && thinShadowsFrom !== Infinity && farMesh.castShadow) {
    const twin = new T.InstancedMesh(far, mesh.material, n);
    twin.instanceMatrix = farMesh.instanceMatrix;
    if (farMesh.instanceColor) twin.instanceColor = farMesh.instanceColor;
@@ -392,11 +424,11 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
   mesh.parent.add(tinyMesh);
   record.lvl2 = new Uint8Array(tallRun.length).fill(FADE_STEPS); record.lvl2Was = new Uint8Array(tallRun.length);
   farRecord.lvl2 = record.lvl2;
-  const tinyRecord = {mesh: tinyMesh, n, order, hash: record.hash, thinnable: record.thinnable, src, srcColour, runs: record.runs, drawn: 0, cum: null, twin: null, near: false, far: true, painted, shadowNear: record.shadowNear, lvl: record.lvl2, tiny: true};
+  const tinyRecord = {mesh: tinyMesh, n, order, hash: record.hash, thinnable: record.thinnable, src, srcColour, runs: record.runs, drawn: 0, cum: null, twin: null, near: false, far: true, painted, shadowNear: record.shadowNear, lvl: record.lvl2, tiny: true, caster: record.caster ?? null};
   tinyMesh.onBeforeShadow = function (renderer, object, camera, shadowCamera) {
    const k = shadowOf.get(shadowCamera);
    if (k === undefined) return;
-   if (tinyRecord.shadowNear && k > 0) { this.userData.cullHeld = this.count; this.count = 0; return; }
+   if (tinyRecord.caster && k >= thinFrom() || tinyRecord.shadowNear && k > 0) { this.userData.cullHeld = this.count; this.count = 0; return; }
    if (all || !tinyRecord.cum) return;
    this.userData.cullHeld = this.count;
    this.count = tinyRecord.cum[k];
@@ -425,7 +457,7 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
    const k = shadowOf.get(shadowCamera);
    if (k === undefined) return;
    this.userData.cullHeld = this.count;
-   this.count = r.shadowNear && k > 0 ? 0 : all || !r.fadeCum ? this.count : r.fadeCum[k];
+   this.count = r.shadowNear && k > 0 || r.caster && k >= (tune.thinShadowsFrom ?? thinShadowsFrom) ? 0 : all || !r.fadeCum ? this.count : r.fadeCum[k];
   };
   fade.onAfterShadow = restore;
   r.mesh.parent.add(fade);
@@ -595,6 +627,32 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
    }
    r.drawn = out + fo; mesh.count = out; mesh.visible = out > 0;
    if (r.twin) { r.twin.count = out; r.twin.visible = out > 0; }
+   // The far maps' one caster (F5): every tree of the part in a square some
+   // shadow map needs, in the order the maps need them. The last group --
+   // squares only the camera needs -- is in no map and is not written.
+   if (r.casts) {
+    const c = r.caster, cd = c.instanceMatrix.array, cc = c.instanceColor?.array;
+    if (!r.casterCum || r.casterCum.length !== groups + 1) r.casterCum = new Int32Array(groups + 1);
+    let co = 0;
+    for (let g = 0; g < (all ? 1 : groups); g++) {
+     for (let j = 0; j < runs.length; j += 3) {
+      if (!all && (!visible[runs[j]] || pass[runs[j]] !== g)) continue;
+      if (!all && r.reach && dist[runs[j]] > r.reach) continue;
+      for (let k = runs[j + 1], e = k + runs[j + 2]; k < e; k++) {
+       if (hidden && hidden[order[k]]) continue;
+       for (let q = 0; q < 16; q++) cd[co * 16 + q] = src[k * 16 + q];
+       if (cc) { cc[co * 3] = srcColour[k * 3]; cc[co * 3 + 1] = srcColour[k * 3 + 1]; cc[co * 3 + 2] = srcColour[k * 3 + 2]; }
+       co++;
+      }
+     }
+     r.casterCum[g] = co;
+    }
+    for (let g = all ? 1 : groups; g <= groups; g++) r.casterCum[g] = co;
+    c.count = co; c.visible = co > 0;
+    const cm = c.instanceMatrix; cm.clearUpdateRanges(); cm.addUpdateRange(0, co * 16); cm.needsUpdate = true;
+    const ci = c.instanceColor;
+    if (ci) { ci.clearUpdateRanges(); ci.addUpdateRange(0, co * 3); ci.needsUpdate = true; }
+   }
    // Only the part in use goes to the graphics card.
    const im = mesh.instanceMatrix; im.clearUpdateRanges(); im.addUpdateRange(0, out * 16); im.needsUpdate = true;
    const ic = mesh.instanceColor;
@@ -618,10 +676,11 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
   // toon). Every mesh shown for `fn`, then each put back as it was; the
   // instance counts are untouched -- a compile needs only the object.
   forCompile(fn) {
-   const was = records.map(r => [r.mesh.visible, r.twin ? r.twin.visible : null, r.fade ? r.fade.visible : null]);
-   for (const r of records) { r.mesh.visible = true; if (r.twin) r.twin.visible = true; if (r.fade) r.fade.visible = true; }
+   const stand = r => r.twin ?? (r.casts ? r.caster : null);
+   const was = records.map(r => [r.mesh.visible, stand(r) ? stand(r).visible : null, r.fade ? r.fade.visible : null]);
+   for (const r of records) { r.mesh.visible = true; if (stand(r)) stand(r).visible = true; if (r.fade) r.fade.visible = true; }
    try { return fn(); }
-   finally { records.forEach((r, i) => { r.mesh.visible = was[i][0]; if (r.twin) r.twin.visible = was[i][1]; if (r.fade) r.fade.visible = was[i][2]; }); }
+   finally { records.forEach((r, i) => { r.mesh.visible = was[i][0]; if (stand(r)) stand(r).visible = was[i][1]; if (r.fade) r.fade.visible = was[i][2]; }); }
   },
   // `lights`: the shadow-casting lights to sort for, nearest map first (the
   // cascades, or the one sun). Their shadow cameras must already be placed for

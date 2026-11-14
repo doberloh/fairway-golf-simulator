@@ -357,7 +357,10 @@ The builder-ux branch's ended
 when it was merged (10 November 2026).
 
 - **If a game is on the card, the owner is using the machine**: do not start,
-  even with permission; say so and wait. `node tools/gpu-gate.mjs` says what
+  even with permission; say so and wait. **That means everything, not only
+  graphics**: no tests, builds or benches beside a game either (13 November
+  2026: two test files on the processor, the machine down;
+  RULES_HISTORY.md, *Nothing at all while the owner plays*). `node tools/gpu-gate.mjs` says what
   the card is really doing: each program's share of it by Windows' own
   counters, and one program taking 15% or more by itself is a game. **Not
   `nvidia-smi`'s busy figure**: this card idles at a third of its clock, where

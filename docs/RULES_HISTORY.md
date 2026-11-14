@@ -575,3 +575,23 @@ loss in the three hours after, which proves nothing either way. NVIDIA's own
 "Prefer maximum performance" (its control panel, Manage 3D settings, Power
 management mode) is the setting that would hold the clock up; it is the
 owner's to make.
+
+## Nothing at all while the owner plays (13 November 2026)
+
+The rule: AGENTS.md, *Nothing runs on the graphics card unless the owner
+asks* -- "if a game is on the card, the owner is using the machine".
+
+On 13 November the owner stopped a sweep to play ("I'm going to game for a
+bit. we can restart when im done") and, still playing, asked for more
+frame-rate work. The gate was read (the game at 79% of the card, 71 C) and
+graphics work was kept off, but two Node test files were started on the
+processor, and the machine went down at 23:50:58 -- "we crashed cause you
+started making the change while i was gaming". It had also gone down at
+23:40:08 with nothing of this work running, so the game alone can do it;
+work beside it makes it likelier, as a software-only smoke run did on 13
+October.
+
+**So: while a game is on the card, nothing is run** -- no tests, builds or
+benches, as well as nothing graphical -- until the owner says they are
+done. Reading, editing and git are fine. A new request sent during the game
+is not that word: ask whether it is for now or for after.
