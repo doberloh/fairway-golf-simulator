@@ -15257,3 +15257,27 @@ unseen squares): High, Mountain 6.62, 2.68, 7.41 to 4.64, 2.17, 5.07 ms,
 The readings of one build differ by up to 0.2 ms between runs made an hour
 apart on a card the desktop was using; within a run the builds took turns.
 
+**Rounds F2 and F3, measured** (the same tool and picture size). The twin
+again under `farPainted` (High 5%, Ultra 3% of the screen's height),
+against 0.9.14: High, Mountain 6.48, 2.63 and 7.41 ms to 4.31, 2.13 and
+4.46 ms, triangles 31.3, 14.0 and 23.6 M, draws 459, 374 and 380 (0.9.14:
+424, 309, 388), p99 12.4 to 5.9 ms, course load 14.44 to 15.52 s; Ultra,
+Classic Parkland 4.95, 2.35 and 6.73 ms to 2.97, 2.25 and 3.62 ms (0.9.14
+read 6.19, 2.61 and 7.86 ms in the run before: the card's clock state
+differed between runs, which is why only a run's own two builds are
+compared), triangles 17.7, 11.9 and 14.7 M, draws 427, 341 and 378
+(0.9.14: 375, 234, 375), the whole frame at tee 5 2.43 to 2.55 ms. The far
+ground's loops and one shadow draw fewer a fading twin, against the build
+before: High, Mountain 4.32, 2.14, 4.48 ms to 4.14, 2.09, 4.39 ms; pixels
+changed A against B 0.44%, 0.06%, 0.29%, A against A 0.80%, 0.33%, 0.34%,
+B against B 0.62%, 0.44%, 0.34% (summed RGB difference over 24). The
+ground shader's additions on this branch, on and off, four rounds: course
+load 15.77 s (15.37, 15.40, 15.90, 15.77) against 15.21 s (15.35, 15.21,
+15.11, 15.10); start to the main menu 16.40 s against 15.83 s.
+
+**The card's gate** (tools/gpu-gate.mjs, since 13 November 2026): the sum
+of Windows' GPU Engine utilisation counters over every program and engine,
+the highest of samples two seconds apart; one program at 15% or more
+refuses a run (PLACED: the desktop's programs measured 0.6 to 4.7% each,
+6.7 to 8.4% together, while `nvidia-smi` read 19 to 35%).
+

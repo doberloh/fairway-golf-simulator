@@ -128,20 +128,19 @@ wrong, unfinished, or owed a check.
   than 0.9.14 at two tees and from above. **Also open, found that day: a
   course takes about 1.1 s longer to load** than before round 10 of the
   surroundings (11.7 s to 12.8 s on Mountain; not the processor's work).
-  **Round F1 (13 November): a tree's middle version on High and Ultra.**
-  Against 0.9.14, High on Mountain is 30%, 19% and 32% faster at tee 1, tee 5
-  and from 250 m up; Ultra on Classic Parkland 48%, 20% and 46%. Seen in
-  captures on three landscapes only; **not yet measured or photographed on
-  the other landscapes, not on Low or Medium (which it should not have
-  changed, but the cull's "tallest thing" fix reaches them), no smoke run.**
-  **Round F2 (the twin again under its own old line, for the small trees
-  of a view from above) is BUILT AND NOT DRAWN**: only its Node tests have
-  run; `dist/` is round F1's build. Owed: photographed, measured against
-  F1 on High and Ultra, its draw calls counted (SURROUNDINGS, *Round F2*).
-  Next after it: whole models in the nearest shadow map (7.5 M triangles of
-  a 34 M frame), the far ground's shading (8 to 10% of a frame on Mountain),
-  the second of course load (the test for it is ready: bench/ab's
-  sur-r11-v2-plain-shader.html against sur-r11-hoist.html).
+  **Rounds F1 to F3 (13 November): a tree's middle version on High and
+  Ultra, its twin again when it is small, and the far ground's two loops.**
+  Against 0.9.14, card time at tee 1, tee 5 and from 250 m up: High on
+  Mountain 34%, 19% and 40% less (and 2 to 4% more off that with F3); Ultra
+  on Classic Parkland 40%, 4% and 46% less. **Wrong: at a light tee on Ultra
+  (tee 5, Classic Parkland, about 400 frames a second) the frame is 5%
+  SLOWER** for 46% more draws; one draw a crown was taken out since and it
+  is not measured again. **Owed:** every landscape measured and photographed
+  on High and Ultra; Low and Medium measured (the cull's changes reach
+  them); both smoke runs. **Course load is about a second longer than
+  0.9.14**: 0.56 s of it is the ground shader this branch grew (measured),
+  the rest not found. Next: fewer meshes a crown; whole models in the
+  nearest shadow map; which shader addition costs the load.
   What each round did, measured, and what is still owed is in SURROUNDINGS,
   *The frame-rate pass*; this entry is rewritten as it goes.
 

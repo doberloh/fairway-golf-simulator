@@ -887,14 +887,7 @@ planting-count.js and mesh-passes.js (which pass and which mesh a frame's
 triangles are drawn in; the last three through the capture tool's
 `--eval`, a few frames each, so they run when a frame comparison cannot).
 
-### Round F2: the twin again, when a tree is small enough for it -- BUILT, NOT DRAWN
-
-**Not seen in the game and not measured: only its Node tests have run.**
-`dist/` is still round F1's build (commit b357e0ff), the one that was
-photographed and measured. The card stood at 32 to 50% with the desktop
-alone from about 17:20 on 13 November; the frame tools' gate did not open
-again after the one test the owner waived it for, and by 18:15 the capture
-tool's shorter look did not either.
+### Round F2: the twin again, when a tree is small enough for it
 
 **Why.** Round F1 put the middle version everywhere the twin had been. From
 250 m over a course every tree is 50 to 150 pixels tall: on 0.9.14 those
@@ -913,7 +906,64 @@ version is the far side of one pair and the near side of the other, and
 the two swap bands are a factor of three and more apart, so a tree is
 never in both.
 
-**Owed before it is kept:** photographed (a tee, from above, and a swap
-seen moving), measured against round F1's build on High and Ultra from a
-tee and from above, and its draw calls counted at a light tee (each swapped
-part gains a mesh).
+(It sat built and undrawn for an hour and a half behind the card's gate,
+committed as such, 54660870; *What the gate has been reading*, above.)
+
+**Seen** (bench/shots/overhaul/fr7; High; Mountain, Classic Parkland,
+Hawaiian Resort from a tee, beside a hole and from above): no errors, and to
+the eye as before. **Measured against 0.9.14** (`bench/ab/fr7-*.json`;
+card time at tee 1, tee 5 and 250 m up): High on Mountain 4.31, 2.13 and
+4.46 ms -- **34%, 19% and 40% less** (F1: 30%, 19%, 32%), triangles 31.3,
+14.0 and 23.6 M, the heaviest frames 12.4 to 5.9 ms; Ultra on Classic
+Parkland 2.97, 2.25 and 3.62 ms -- **40%, 4% and 46% less** in that run,
+triangles 17.7, 11.9 and 14.7 M, the heaviest frames 12.8 to 4.2 ms.
+
+**What it costs: draws at a light tee.** Each swapped crown is now a whole
+mesh, a middle one, a twin, their fading meshes and two shadow stand-ins. At
+tee 5 on Ultra, Classic Parkland -- little in view, about 400 frames a second
+-- the frame's draws went from 234 on 0.9.14 to 341 and the frame as the
+page sees it from 2.43 ms to 2.55 ms, 5% SLOWER, for 4% less work on the
+card. One draw a fading twin was then taken out of every shadow map (the
+middle version fading beside it is that pair's caster). Not measured again
+on Ultra since; on High the same tee is 19% less on the card and 5% less
+as a frame. **Open:** fewer meshes a crown (the trunk and the crown of a far
+tree as one mesh would halve them).
+
+### Round F3: the far ground stops looking for tees and hazards
+
+Every pixel of the far ring ran the course's whole ground shader for the
+hole whose table lies nearest the edge: its three tees, then its hazards
+one by one -- up to 24 table reads and a shoreline each -- to learn that
+none is within 150 m. The two loops now stop at once past the course's
+ground (ground.js `offCourse`). Nothing else was cut: the blocks after them
+either apply out there or were already fenced.
+
+**Measured against the build before it** (`bench/ab/fr8-vs-fr7-mountains-
+high.json`, with the fading twin's shadow draw taken out in the same
+build; High, Mountain): 4.32, 2.14 and 4.48 ms to 4.14, 2.09 and 4.39 ms --
+4.1%, 2.7% and 2.0% less -- draws 459, 374, 380 to 449, 369, 365. **The
+picture did not change**: with `--shots`, the pixels differing between the
+two builds were 0.44%, 0.06% and 0.29% of the picture, where two shots of
+ONE build differ by 0.62 to 0.80%, 0.33 to 0.44% and 0.34% (wind, water and
+clouds move).
+
+**Not done:** a path of its own for the far ground. It would mean the
+shader's whole classification moved inside a branch and every later use of
+what it sets checked for a pixel past the course; the loops were the part
+that could be shown harmless in one line each.
+
+### The second of course load: half found
+
+The test that had waited behind the gate ran (`load-bisect-shader`: the
+round 11 build against the same build with this branch's shader additions
+switched off -- the far rock's paint, the snow, the wandering edge, the
+ring's baked shade; four rounds each, High, Mountain): course load 15.21 s
+without and 15.77 s with, start to the main menu 15.83 s and 16.40 s. **So
+0.56 s of the 1.1 s is the ground shader growing**: the card's compiler pays
+for every line when a course is first built. Which of the four costs it is
+not known (each is a build and a three-minute run), and the other half
+second is not found: the second (normals) picture of the far trees and the
+ring's crags are the candidates. The middle versions add their own: 1.5 to
+5 ms a model with the grid known. Course load against 0.9.14 in the last
+comparisons: 14.4 s to 15.5 s on High at Mountain, 13.6 s to 15.1 s on
+Ultra at Classic Parkland.

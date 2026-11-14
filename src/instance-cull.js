@@ -372,7 +372,7 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
   mesh.parent.add(tinyMesh);
   record.lvl2 = new Uint8Array(tallRun.length).fill(FADE_STEPS); record.lvl2Was = new Uint8Array(tallRun.length);
   farRecord.lvl2 = record.lvl2;
-  const tinyRecord = {mesh: tinyMesh, n, order, hash: record.hash, thinnable: record.thinnable, src, srcColour, runs: record.runs, drawn: 0, cum: null, twin: null, near: false, far: true, painted, shadowNear: record.shadowNear, lvl: record.lvl2};
+  const tinyRecord = {mesh: tinyMesh, n, order, hash: record.hash, thinnable: record.thinnable, src, srcColour, runs: record.runs, drawn: 0, cum: null, twin: null, near: false, far: true, painted, shadowNear: record.shadowNear, lvl: record.lvl2, tiny: true};
   tinyMesh.onBeforeShadow = function (renderer, object, camera, shadowCamera) {
    const k = shadowOf.get(shadowCamera);
    if (k === undefined) return;
@@ -396,7 +396,9 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
   fade.instanceColor = new T.InstancedBufferAttribute(new Float32Array(r.n * 3), 3);
   // A near crown fading out casts no shadow: its far half, fading in, casts it --
   // a shape a shadow far off cannot tell apart, and a draw saved in every map.
-  fade.castShadow = r.mesh.castShadow && !r.near; fade.receiveShadow = r.mesh.receiveShadow; fade.frustumCulled = false;
+  // (Nor a twin fading in under a middle version: the middle version, fading
+  // out beside it, is that pair's caster -- one draw in every map, not two.)
+  fade.castShadow = r.mesh.castShadow && !r.near && !r.tiny; fade.receiveShadow = r.mesh.receiveShadow; fade.frustumCulled = false;
   fade.userData = {noCull: true, fadeOf: r.mesh, model: r.mesh.userData.model, role: r.mesh.userData.role};
   fade.name = 'fading trees'; fade.count = 0; fade.visible = false;
   fade.onBeforeShadow = function (renderer, object, camera, shadowCamera) {

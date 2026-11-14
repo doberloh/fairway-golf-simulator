@@ -659,6 +659,13 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  }
  `).replace('#include <color_fragment>',`#include <color_fragment>
  vec2 wp=groundPoint.xz;vec2 ownerUv=(wp/extent+1.)*.5;vec4 owner=texture2D(owners,ownerUv);
+ // PAST THE COURSE'S GROUND (the frame-rate pass, 13 November 2026). Every
+ // pixel of the far ring ran the whole of what follows for the hole whose
+ // texel lies nearest the edge -- its three tees, its hazards one by one, up
+ // to 24 table reads and a shoreline each -- to learn that none of them is
+ // within 150 m. The far ground was a tenth of a wide frame on Mountain. The
+ // two loops stop at once out there; nothing they find could reach it.
+ bool offCourse=abs(wp.x)>=extent.x||abs(wp.y)>=extent.y;
  // OWNERSHIP, RESOLVED WHERE IT MATTERS.
  //
  // The atlas is a grid of hole indices sampled NEAREST, so a boundary between
@@ -755,7 +762,7 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  // two thirds fairway, a third fringe, a touch darker, full saturation.
  // Round 3: Desert's read deep and rich against its sand -- 10% toward grey.
  vec3 teeTurf=mix(tint_fairway,tint_fringe,.33)*.96;teeTurf=mix(vec3(dot(teeTurf,vec3(.299,.587,.114))),teeTurf,.9);
- for(int ti=0;ti<3;ti++){vec4 tee=holeTexel(3.+float(ti)*2.,row);
+ for(int ti=0;ti<3;ti++){if(offCourse)break;vec4 tee=holeTexel(3.+float(ti)*2.,row);
   vec4 teeDir=holeTexel(4.+float(ti)*2.,row);
   // Into the pad's own frame: across the line of play, then along it.
   vec2 td=p-tee.xy,tf=vec2(td.x*teeDir.y-td.y*teeDir.x,td.x*teeDir.x+td.y*teeDir.y);
@@ -803,7 +810,7 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  float mownEdge=min(max(lateralCut,alongCut),greenRing);
  float mownTaper=smin(smax(lateralCut,alongCut,12.),greenRing,12.);
  float fairD=max(fw,max(mowStart-p.y,p.y-(info.x+8.)));
- for(int i=0;i<12;i++){vec4 hz=holeTexel(11.+float(i)*2.,row);vec4 meta=holeTexel(12.+float(i)*2.,row);if(hz==vec4(0.)&&meta==vec4(0.))break;/* the hazards are written from slot 0 on (renderer.js makeHazardAtlas): the first empty slot ends them -- 24 table reads a pixel saved on a hole with none (the frame-rate goal) */if(hz.z>0.){vec2 q=(p-hz.xy)/hz.zw;if(meta.y>.5){float bj=floor(owner.r+.5)*4.+meta.y-1.,br=floor(bj*.5);vec2 bank=texture2D(tables,vec2((bj-br*2.)*.5+(clamp(q.y*.5+.5,0.,1.)*511.+.5)/1024.,(rows*2.+br+.5)/tableRows)).xy;q.x=(p.x-bank.x)/bank.y;}float edge=1.+meta.z*sin(atan(q.y,q.x)*2.+meta.x)+meta.w*sin(atan(q.y,q.x)*3.+meta.x);if(meta.y>.5)edge=1.;float hd=(length(q)-edge)*length(p-hz.xy)/max(length(q),.0001);
+ for(int i=0;i<12;i++){if(offCourse)break;vec4 hz=holeTexel(11.+float(i)*2.,row);vec4 meta=holeTexel(12.+float(i)*2.,row);if(hz==vec4(0.)&&meta==vec4(0.))break;/* the hazards are written from slot 0 on (renderer.js makeHazardAtlas): the first empty slot ends them -- 24 table reads a pixel saved on a hole with none (the frame-rate goal) */if(hz.z>0.){vec2 q=(p-hz.xy)/hz.zw;if(meta.y>.5){float bj=floor(owner.r+.5)*4.+meta.y-1.,br=floor(bj*.5);vec2 bank=texture2D(tables,vec2((bj-br*2.)*.5+(clamp(q.y*.5+.5,0.,1.)*511.+.5)/1024.,(rows*2.+br+.5)/tableRows)).xy;q.x=(p.x-bank.x)/bank.y;}float edge=1.+meta.z*sin(atan(q.y,q.x)*2.+meta.x)+meta.w*sin(atan(q.y,q.x)*3.+meta.x);if(meta.y>.5)edge=1.;float hd=(length(q)-edge)*length(p-hz.xy)/max(length(q),.0001);
  // Ponds and lakes take the same shoreline as a channel instead of a sand bed
  // and sand collar. Their band is capped tighter than a channel's because the
  // owner atlas stops carrying this hole's hazards a short way outside them.
@@ -1604,5 +1611,5 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  // The ring's baked hollows and ribs (landscape-edge.js; nothing inside the course's ground).
  diffuseColor.rgb=turf*(1.+clamp(vFarShade,-1.,1.)*.2);
  `);
- };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v85';return m;
+ };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v86';return m;
 }
