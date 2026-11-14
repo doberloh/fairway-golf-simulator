@@ -356,7 +356,33 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
    mesh.parent.add(twin);
    farRecord.twin = twin;
   }
-  return [record, farRecord];
+  // THE TWIN AGAIN, WHERE A TREE IS SMALL ENOUGH FOR IT (the frame-rate pass).
+  // With a middle version there are three: whole, middle, and under the far
+  // twin's own old line (`farPainted`) the twin, which is right at that size
+  // and a tenth of the middle version's triangles. Without this step a
+  // course seen from 250 m up -- every tree 50 to 150 pixels tall -- was all
+  // middle versions where 0.9.14 had drawn twins. A second pair on the same
+  // runs: the middle version is its near side, by levels of its own (`lvl2`).
+  if (!(mids && thins && painted)) return [record, farRecord];
+  const tinyMesh = new T.InstancedMesh(far, mesh.material, n);
+  if (srcColour) tinyMesh.instanceColor = new T.InstancedBufferAttribute(new Float32Array(n * 3), 3);
+  tinyMesh.castShadow = mesh.castShadow; tinyMesh.receiveShadow = mesh.receiveShadow; tinyMesh.frustumCulled = false;
+  tinyMesh.userData = {noCull: true, cullHidden: mesh.userData.cullHidden, farOf: mesh, twinOf: mesh};
+  tinyMesh.name = 'far trees'; tinyMesh.count = 0; tinyMesh.visible = false;
+  mesh.parent.add(tinyMesh);
+  record.lvl2 = new Uint8Array(tallRun.length).fill(FADE_STEPS); record.lvl2Was = new Uint8Array(tallRun.length);
+  farRecord.lvl2 = record.lvl2;
+  const tinyRecord = {mesh: tinyMesh, n, order, hash: record.hash, thinnable: record.thinnable, src, srcColour, runs: record.runs, drawn: 0, cum: null, twin: null, near: false, far: true, painted, shadowNear: record.shadowNear, lvl: record.lvl2};
+  tinyMesh.onBeforeShadow = function (renderer, object, camera, shadowCamera) {
+   const k = shadowOf.get(shadowCamera);
+   if (k === undefined) return;
+   if (tinyRecord.shadowNear && k > 0) { this.userData.cullHeld = this.count; this.count = 0; return; }
+   if (all || !tinyRecord.cum) return;
+   this.userData.cullHeld = this.count;
+   this.count = tinyRecord.cum[k];
+  };
+  tinyMesh.onAfterShadow = restore;
+  return [record, farRecord, tinyRecord];
  });
 
  for (const r of records) {
@@ -458,6 +484,17 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
     lvl[i] = l;
    }
    lvlWas.set(lvl);
+   // The middle version against its twin, by the twin's own line.
+   if (r.lvl2) {
+    const {lvl2, lvl2Was} = r;
+    for (let i = 0; i < lvl2.length; i++) {
+     const ratio = tallRun[i] * scaleT[runs[i * 3]];
+     const l = ratio <= 1 ? 0 : ratio >= SWAP_BAND ? FADE_STEPS : Math.round((ratio - 1) / (SWAP_BAND - 1) * FADE_STEPS);
+     if (l !== lvl2Was[i]) equal = false;
+     lvl2[i] = l;
+    }
+    lvl2Was.set(lvl2);
+   }
   }
   return equal;
  };
@@ -481,9 +518,14 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
      const mix = all ? 1 : r.srcColour ? own : own >= .5 ? 1 : 0;  // no colours to carry a dissolve: switched at the middle
      if (r.near && mix <= 0) continue;
      if (r.far && mix >= 1) continue;
+     // A middle version below its twin's line is the twin's; inside that
+     // band it is the near side of the second pair. (The two bands are a
+     // factor of three and more apart: a run is never in both.)
+     let asFar = r.far, side = mix;
+     if (r.lvl2 && r.far && !all) { const raw = r.lvl2[j / 3] / FADE_STEPS, low = r.srcColour ? raw : raw >= .5 ? 1 : 0; if (low <= 0) continue; if (low < 1) { asFar = false; side = low; } }
      // Inside the band: the near version leaves (1 - mix) of its pixels, the
      // far version draws exactly those (levels 16 and up).
-     const swapQ = (r.near || r.far) && mix > 0 && mix < 1 ? Math.round((1 - mix) * (FADE_STEPS - 1)) : 0;
+     const swapQ = (r.near || r.far) && side > 0 && side < 1 ? Math.round((1 - side) * (FADE_STEPS - 1)) : 0;
      const start = runs[j + 1];
      let end = start + runs[j + 2];
      // Low: the square's trees up to its share -- a prefix, by hash.
@@ -493,7 +535,7 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
       if (hidden && hidden[order[k]]) continue;
       // Within the fade band of the share: dissolved by how far in (ditherFade).
       const thin = k0 < 1 ? Math.round(Math.max(0, Math.min(1, 1 - (k0 - r.hash[k]) / LOW_TREES.fade)) * FADE_STEPS) : 0;
-      const level = !dstColour ? 0 : r.far ? (swapQ ? FADE_STEPS + swapQ : 0) : Math.max(thin < FADE_STEPS ? thin : FADE_STEPS - 1, swapQ);
+      const level = !dstColour ? 0 : asFar ? (swapQ ? FADE_STEPS + swapQ : 0) : Math.max(thin < FADE_STEPS ? thin : FADE_STEPS - 1, swapQ);
       if (level && fade) {
        for (let q = 0; q < 16; q++) fDst[fo * 16 + q] = src[k * 16 + q];
        fColour[fo * 3] = srcColour[k * 3] + level * 4; fColour[fo * 3 + 1] = srcColour[k * 3 + 1]; fColour[fo * 3 + 2] = srcColour[k * 3 + 2];

@@ -148,3 +148,34 @@ test('a tree out of the picture, kept for its shadow, is drawn as its far versio
  assert.equal(lit.whole, dark.whole, 'the trees in the picture are as they were');
  assert.ok(lit.far >= 15, `the shadow casters beside the view are far versions (${lit.far})`);
 });
+
+test('with a middle version a tree has three: whole near, the middle version between, its twin when it is small', () => {
+ const parts = modelParts('Blender_Oak_1'), at = parts.findIndex(p => p.role === 'leaf');
+ const group = new T.Group(), m = new T.Matrix4(), n = 120;
+ const mesh = new T.InstancedMesh(parts[at].geometry, new T.MeshBasicMaterial(), n);
+ // One oak every 25 m straight ahead, 30 units tall.
+ for (let i = 0; i < n; i++) { mesh.setMatrixAt(i, m.makeScale(30, 30, 30).setPosition((i % 2) * 6 - 3, 0, -440 + i * 25)); mesh.setColorAt(i, new T.Color(1, 1, 1)); }
+ mesh.userData = {model: 'Blender_Oak_1', part: at, role: 'leaf'}; mesh.castShadow = true;
+ group.add(mesh);
+ // The middle version under 200 of 1,000 pixels (a fifth of the screen), the twin under 3% of it.
+ const cull = cullInstances(group, {farPainted: .03, midShare: .25, farPaintedPx: 200, screenPx: () => 1000, thinShadowsFrom: 1});
+ cull.update(camera(), null);
+ const fars = group.children.filter(o => o.name === 'far trees' && o.userData.farOf === mesh);
+ assert.equal(fars.length, 2, 'two far meshes: the middle version and the twin');
+ const mid = fars.find(o => o.geometry === midParts('Blender_Oak_1', .25)[at].geometry), twin = fars.find(o => o.geometry === modelParts('Blender_Oak_1_Far')[at].geometry);
+ assert.ok(mid && twin, 'one of each');
+ const fades = group.children.filter(o => o.name === 'fading trees').reduce((a, o) => a + o.count, 0);
+ assert.ok(mesh.count > 0 && mid.count > 0 && twin.count > 0, `whole ${mesh.count}, middle ${mid.count}, twin ${twin.count}`);
+ // Every tree in view is held once, or twice only where it is fading across a swap.
+ const total = mesh.count + mid.count + twin.count + fades, seen = cull.stats().squaresDrawn;
+ assert.ok(seen > 0 && total >= 100 && total <= n + fades, `${total} held of ${n}, ${fades} fading`);
+ // In order of distance: whole nearest, the twin farthest.
+ const far = o => { let z = 0; const p = new T.Vector3(); for (let i = 0; i < o.count; i++) { o.getMatrixAt(i, m); z += p.setFromMatrixPosition(m).z; } return z / o.count; };
+ assert.ok(far(mesh) < far(mid) && far(mid) < far(twin), 'whole, then the middle version, then the twin');
+ // And a tier that asks for no middle version has only the twin, as before.
+ const g2 = new T.Group(), m2 = new T.InstancedMesh(parts[at].geometry, new T.MeshBasicMaterial(), n);
+ for (let i = 0; i < n; i++) m2.setMatrixAt(i, m.makeScale(30, 30, 30).setPosition(0, 0, -440 + i * 25));
+ m2.userData = {model: 'Blender_Oak_1', part: at, role: 'leaf'}; g2.add(m2);
+ cullInstances(g2, {farPainted: .03}).update(camera(), null);
+ assert.equal(g2.children.filter(o => o.name === 'far trees').length, 1);
+});

@@ -764,6 +764,22 @@ is running on the card. Ignore the gate for this time and run the test."
 The two comparisons of round F1 that had waited twenty minutes were run on
 that word and on nothing else; the gate stands for every other run.)
 
+**What the gate has been reading (found 13 November 2026, 18:28, when the
+owner asked "What is using the card right now?").** Not load. With nothing
+drawing but the desktop, Windows' own counters (GPU Engine, by process) put
+the card's work at about 6%: the Battle.net launcher 3.5%, Slack 1.2%, the
+Claude app and the desktop compositor 0.6% each; no game, the video encoder
+at 0%. `nvidia-smi` at the same moment said 32%. The card idles in a low
+power state (P5, its clock at 810 MHz where full speed is 2,520 MHz, drawing
+48 to 60 W), and `nvidia-smi`'s figure is the share of time the card was
+busy AT THAT CLOCK: the same small work read 8% a few seconds later at full
+clock and 18% back at 810 MHz. So the "16 to 54% with the desktop alone"
+that shut the gate all of 13 November -- and that this page and round 10's
+account put down to Chrome Remote Desktop -- was an idle card running
+slowly. The gate (tools/gpu-gate.mjs) reads that one figure. It was not
+changed: what it should read instead (Windows' counters, or power drawn,
+with a game's process name still refusing a run) is the owner's to say.
+
 **Where it started** (round 11's measurements, High on Mountain): the
 course's own trees and plants 60% of a frame from 250 m up, the far ground
 10% (5% from a tee), the far trees 0.4%; a frame of 69 to 72 million
@@ -860,3 +876,34 @@ moved on one page), wide-view.mjs, wide-count.js, pass-count.js,
 planting-count.js and mesh-passes.js (which pass and which mesh a frame's
 triangles are drawn in; the last three through the capture tool's
 `--eval`, a few frames each, so they run when a frame comparison cannot).
+
+### Round F2: the twin again, when a tree is small enough for it -- BUILT, NOT DRAWN
+
+**Not seen in the game and not measured: only its Node tests have run.**
+`dist/` is still round F1's build (commit b357e0ff), the one that was
+photographed and measured. The card stood at 32 to 50% with the desktop
+alone from about 17:20 on 13 November; the frame tools' gate did not open
+again after the one test the owner waived it for, and by 18:15 the capture
+tool's shorter look did not either.
+
+**Why.** Round F1 put the middle version everywhere the twin had been. From
+250 m over a course every tree is 50 to 150 pixels tall: on 0.9.14 those
+under 5% of the screen (90 pixels on 1,800 lines) were twins of 300
+triangles, and after F1 they were middle versions of 2,400 to 3,200. The
+view from above still came out 32 to 46% faster, because the trees over 90
+pixels had been whole models; but it was drawing ten times what it needed
+to for the small ones.
+
+**What was built** (src/instance-cull.js): a painted tree with a middle
+version has three, on the same runs -- whole; the middle version under the
+tier's line in pixels; and under the far twin's own old line (`farPainted`,
+5% on High and 3% on Ultra) the twin, as 0.9.14 drew it at that size. A
+second pair of levels (`lvl2`) by the same rule as the first: the middle
+version is the far side of one pair and the near side of the other, and
+the two swap bands are a factor of three and more apart, so a tree is
+never in both.
+
+**Owed before it is kept:** photographed (a tee, from above, and a swap
+seen moving), measured against round F1's build on High and Ultra from a
+tee and from above, and its draw calls counted at a light tee (each swapped
+part gains a mesh).

@@ -134,9 +134,19 @@ wrong, unfinished, or owed a check.
   captures on three landscapes only; **not yet measured or photographed on
   the other landscapes, not on Low or Medium (which it should not have
   changed, but the cull's "tallest thing" fix reaches them), no smoke run.**
-  Next: whole models in the nearest shadow map (7.5 M triangles of a 34 M
-  frame), the far ground's shading (8 to 10% of a frame on Mountain), the
-  second of course load.
+  **Round F2 (the twin again under its own old line, for the small trees
+  of a view from above) is BUILT AND NOT DRAWN**: only its Node tests have
+  run; `dist/` is round F1's build. Owed: photographed, measured against
+  F1 on High and Ultra, its draw calls counted (SURROUNDINGS, *Round F2*).
+  Next after it: whole models in the nearest shadow map (7.5 M triangles of
+  a 34 M frame), the far ground's shading (8 to 10% of a frame on Mountain),
+  the second of course load (the test for it is ready: bench/ab's
+  sur-r11-v2-plain-shader.html against sur-r11-hoist.html).
+  **The card's gate is misreading an idle card as busy** (tools/gpu-gate.mjs
+  takes `nvidia-smi`'s busy figure, which reads 18 to 50% for about 6% of
+  real work while the card idles at a third of its clock; SURROUNDINGS,
+  *What the gate has been reading*). It held nearly every measurement of 13
+  November back. Not changed: the owner to say what it should read.
   What each round did, measured, and what is still owed is in SURROUNDINGS,
   *The frame-rate pass*; this entry is rewritten as it goes.
 
