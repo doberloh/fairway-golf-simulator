@@ -576,6 +576,14 @@ loss in the three hours after, which proves nothing either way. NVIDIA's own
 management mode) is the setting that would hold the clock up; it is the
 owner's to make.
 
+**The clock capped (14 November, about 00:10):** the owner ran
+`nvidia-smi -lgc 210,2520` on another session's advice. Since then the
+watcher has the card at 2,520 to 2,610 MHz in its full power state with the
+link at generation 4 at rest as well as under load, 64 W idle: it no longer
+makes the drop to idle. If the losses stop, that is the best evidence yet
+for the drop; the setting does not survive a restart unless it is made
+again.
+
 ## Nothing at all while the owner plays (13 November 2026)
 
 The rule: AGENTS.md, *Nothing runs on the graphics card unless the owner

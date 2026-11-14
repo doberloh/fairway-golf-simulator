@@ -1078,9 +1078,12 @@ full clock, here called work -- repeats to 1 or 2%** where the raw figure
 moved by 30: tee 1, 2.39 and 2.39 ms for 0.9.14, 2.41 and 2.43 for this
 branch (+2%); from above 2.73 and 2.70 against 3.00 and 3.00 (+10%).
 
-So Prairie on Ultra is not 25% slower: it is level from a tee and 10% heavier
-from above (about the far ground's share of that view), and what this
-machine showed as a slower frame was its card saving power. **The raw
+**That reading of Prairie was wrong, and is kept here as what was thought**
+(overturned an hour later, *Prairie on Ultra with the clocks equal*, below):
+that Prairie on Ultra was level from a tee and 10% heavier from above, and
+the slower frame only the card saving power. Multiplying by the clock
+assumes the card is the limit; where something else holds the frame up, the
+card idles, its clock falls, and the correction hides the slowdown. **The raw
 figures of the first sweep stand as what this machine did, not as work**,
 and where the two builds ran at different clocks they are wrong in either
 direction (Hawaii on High, second sweep: +13% raw at 1,734 against 1,238
@@ -1189,3 +1192,44 @@ while the owner plays*.
 After the restart the card ran these comparisons at 2,610 to 2,730 MHz and
 320 to 414 W, where before it it had floated at 800 to 1,700 MHz: whatever
 the owner's power setting changed seems to have needed the restart.
+
+### Prairie on Ultra with the clocks equal: really slower (14 November 2026, 00:03 to 00:20) -- NOT FOUND
+
+After the restart the card held its clock, and during these runs the owner
+also capped it ("limiting the clock of the GPU below its max boost using
+nvidia-smi -lgc 210,2520"): the watcher has it at 2,520 to 2,610 MHz from
+then on, at rest as well, in its full power state with the link at
+generation 4 -- it no longer drops to idle between runs, which is the
+moment both of the day's first losses came in.
+
+With both builds at 2,610 MHz, round F5's build against 0.9.14, one round,
+600 frames of warm-up and 400 timed:
+
+| | tee 1, card | tee 1, frame | 250 m up, card | 250 m up, frame |
+|---|---|---|---|---|
+| Prairie & Sand Hills, Ultra | 3.15 to 4.98 ms (+58%) | +41% | 3.34 to 5.58 ms (+67%) | +54% |
+| Redwood Coast, High | 3.65 to 3.06 ms (-16%) | -21% | 3.03 to 3.36 ms (+11%) | +13% |
+| Badlands, High | 2.36 to 2.19 ms (-7%) | -14% | 2.16 to 2.21 ms (+3%) | -8% |
+
+**So Prairie on Ultra is slower than 0.9.14 by half again, for fewer draws
+(333 to 324) and 40% fewer triangles**, as every raw reading of the evening
+had said (+31 and +57%, +25 and +26%, +34 and +20%) and the clock
+correction had explained away. Redwood Coast and Badlands agree with the
+second sweep. **Which other Ultra landscapes share it is not known**: the
+first sweep's Mountain (+20% from a tee) and Florida Palms (+12 and +29%)
+are the suspects, and its other Ultra figures were taken with a floating
+clock.
+
+**Not found.** One page with each part switched off in turn
+(tools/variants/open-country.mjs) was spoiled: a game came onto the card
+part-way through (the frame with nothing changed read 2.5 ms, then 4 to 10,
+then 17) and the work was stopped there. From its first rows only, before
+that: the course's own ground is 38% of the card's time from the tee, the
+pixels 29% (density 1 against 2), everything planted 44 to 60%, the far
+ground 4%. What is known besides: the earlier page (*The first sweep read
+again*) found the trees' middle versions make it faster, not slower, and a
+processor profile that put a third of the frame inside calls that set
+shader values, 14,000 numbers a frame. **Next:** the same page again on a
+quiet card; the same on 0.9.14 built with the capture hooks, so the two can
+be read part against part; High on Prairie, which the first sweep had 43%
+faster, to see whether this is Ultra's alone.

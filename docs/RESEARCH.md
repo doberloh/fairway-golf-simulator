@@ -15306,6 +15306,15 @@ capped, 1,600 by 900 at density 2:
   to 1.58 ms to uniform4fv; a count of the calls found 13,700 to 14,800
   numbers in 452 to 500 array calls a frame over 355 to 411 draws.
 
+**The correction misleads where the card is not the limit** (14 November,
+with the clock capped by the owner, `nvidia-smi -lgc 210,2520`, and both
+builds reading 2,610 MHz): the same page read 3.15 against 4.98 ms at the
+tee and 3.34 against 5.58 ms from above -- 58 and 67% more for this branch,
+not the 2 and 10% the corrected figures gave. A frame held up by something
+other than the card leaves it idle, the clock falls, and time x clock
+comes out level. Use the corrected figure only when both builds show the
+card as busy as each other (97% and 80% here: they did not).
+
 Raw card milliseconds from this machine are therefore what it did in its
 power mode, and compare two builds fairly only when both ran at one clock.
 The first sweep of the frame-rate pass (`sweep-fr9`) recorded no clock; the

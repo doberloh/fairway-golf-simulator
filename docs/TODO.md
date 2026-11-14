@@ -156,8 +156,12 @@ wrong, unfinished, or owed a check.
   card time 19 to 23% less on average, with three Ultra runs reading slower
   -- and those readings are the card's clock, not the game.** This card
   slows its clock for a lighter frame; the tools now read the clock and give
-  card time at full clock ("work"). Prairie on Ultra is level from a tee and
-  10% heavier from 250 m up, not 25 to 57% slower. **A second sweep with the
+  card time at full clock ("work"). **WRONG ABOUT PRAIRIE: with the
+  clock capped and equal (14 November), Prairie & Sand Hills on Ultra is 58%
+  slower from a tee and 67% from 250 m up than 0.9.14, for fewer draws and
+  triangles. Not found** (the page that would find it was spoiled by a game
+  starting): SURROUNDINGS, *Prairie on Ultra with the clocks equal*, has what
+  to run next. Mountain and Florida Palms on Ultra are suspects. **A second sweep with the
   clock is 6 of 30 done** (stopped 13 November 23:24 for the owner's game;
   `node tools/frame-sweep.mjs --goal surroundings --a bench/ab/base-0914.html
   --b bench/ab/fr9.html --tiers high,ultra --spots tee1,flyhigh --rounds 1
