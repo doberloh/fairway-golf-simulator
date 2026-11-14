@@ -152,6 +152,20 @@ wrong, unfinished, or owed a check.
   from generation 4 to 1) failing now and then, and the checks are the
   owner's (RULES_HISTORY, *The card is lost on the way back to idle*).
   tools/gpu-watch.mjs records the card each second while graphics work runs.
+  **Every landscape was measured once (the first sweep, all 30 runs): raw
+  card time 19 to 23% less on average, with three Ultra runs reading slower
+  -- and those readings are the card's clock, not the game.** This card
+  slows its clock for a lighter frame; the tools now read the clock and give
+  card time at full clock ("work"). Prairie on Ultra is level from a tee and
+  10% heavier from 250 m up, not 25 to 57% slower. **A second sweep with the
+  clock is 6 of 30 done** (stopped 13 November 23:24 for the owner's game;
+  `node tools/frame-sweep.mjs --goal surroundings --a bench/ab/base-0914.html
+  --b bench/ab/fr9.html --tiers high,ultra --spots tee1,flyhigh --rounds 1
+  --settle 600 --frames 400 --label sweep2-fr9 --util 30 --temp 75 --rest 2`
+  carries on): High so far 9 to 42% less work from a tee; **from above, open
+  country is 3 to 10% heavier** (Redwood Coast, Badlands, Prairie), not
+  looked into. The trunk's hard swap (8c171542) is still not drawn or
+  measured, and `dist/` is the build before it.
   What each round did, measured, and what is still owed is in SURROUNDINGS,
   *The frame-rate pass*; this entry is rewritten as it goes.
 

@@ -562,6 +562,16 @@ of power state or link speed. Windows will not say what happened; this will.
 **What changed in how the work is run:** the rest between graphics runs is
 back (the sweep had been run with none for forty minutes, at the owner's
 "can you parallelize more?", when the card was lost), and nothing is run on
-the processor alongside a frame comparison (it also spoils the comparison:
-two landscapes read 12 to 28% slow in a round that shared the processor
-with a test run).
+the processor alongside a frame comparison (two landscapes read 12 to 28%
+slow in a round that shared the processor with a test run; that was put
+down to the processor, and later the same day the card's own clock was
+found to do it alone -- SURROUNDINGS, *The first sweep read again*).
+
+**After the owner's change (13 November, evening: "ive set the power settings
+to max performance"):** the card behaved as before. Between every run it fell
+to its lowest power state (P8, about 250 MHz, 20 W) and its link to
+generation 1, and under these runs it sat at 800 to 1,700 MHz of 3,105. No
+loss in the three hours after, which proves nothing either way. NVIDIA's own
+"Prefer maximum performance" (its control panel, Manage 3D settings, Power
+management mode) is the setting that would hold the clock up; it is the
+owner's to make.

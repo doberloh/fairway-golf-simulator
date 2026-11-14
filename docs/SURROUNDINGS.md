@@ -1032,9 +1032,96 @@ runs are made, is in RULES_HISTORY.md, *The card is lost on the way back to
 idle*; tools/gpu-watch.mjs now records the card once a second while this
 work runs.
 
-Two things the sweep taught besides: **a frame comparison shares the
-processor with nothing** -- Hawaii's and Seaside Links' High runs each had
-one round of the new build read 30 to 50% slower than its other round, at
-the moments a test run and a capture were using the processor (Hawaii
-measured again alone: 23% and 31% faster) -- and **two rounds are too few to
-see that from the summary**, which takes the higher of two.
+Two things the sweep seemed to teach besides, **the first since overturned**
+(*The first sweep read again*, below): Hawaii's and Seaside Links' High runs
+each had one round of the new build read 30 to 50% slower than its other
+round, at moments a test run and a capture were using the processor, and
+that was put down to the processor being shared. It was more likely the
+card's clock: the same split showed later with nothing else running. Nothing
+is run beside a comparison all the same. The second holds: **two rounds are
+too few to see such a split from the summary**, which takes the higher of
+two.
+
+### The first sweep read again: the card's clock (13 November 2026, 22:30 to 23:25)
+
+The sweep finished after the restart, all 30 runs (round F4's build against
+0.9.14, tee 1 and from 250 m up, two rounds each, label `sweep-fr9`). Raw
+card time, the mean over fifteen landscapes: **High 23% less from a tee and
+22% less from above; Ultra 21% and 19% less.** Three Ultra runs read
+SLOWER than 0.9.14 while drawing far fewer triangles: Mountain from a tee
+(+20%), Prairie & Sand Hills (+31% and +57%), Florida Palms (+12% and
++29%). The owner's note that day, which this answers in part: "ive set the
+power settings to max performance".
+
+**What it was not.** Not the once-a-second watcher: Prairie on Ultra
+measured again with it stopped and nothing else running, three rounds, read
+25% and 26% more card time (5.02 to 6.26 ms, 5.71 to 7.20 ms) with 40% fewer
+triangles. Not the trees: on one page, with no middle versions the frame was
+2 to 7% slower, with every planted thing hidden 15 to 17% faster from a tee
+and 5 to 7% from above, the far ground hidden 7 to 8% faster from above
+(tools/variants/mid-line.mjs). Not one round of this branch: two earlier
+builds (round 11's, and round F3's) each read as fast as 0.9.14 in one load
+and 22 to 69% slower in the next. Not the processor: a profile put a third of
+the frame inside uniform4fv and uniformMatrix4fv, but a count found only
+14,000 numbers in 450 such calls a frame (tools/variants/uniform-count.js)
+-- that time is the page waiting on the card, charged to whichever call was
+waiting.
+
+**What it was: the card chooses its clock from how hard it is pushed.**
+The watcher's log over those runs has the card at 800 to 1,350 MHz of its
+3,105 while it was 24 to 93% busy, drawing 50 to 150 W. A frame that asks
+less of it gets a slower card. With the clock read while the frames are
+timed (three seconds of frames first, then 400 timed): Prairie on Ultra,
+0.9.14 at 1,603 MHz and 169 W, this branch at 1,226 MHz and 134 W.
+**Card time times clock over top clock -- the time the frame would take at
+full clock, here called work -- repeats to 1 or 2%** where the raw figure
+moved by 30: tee 1, 2.39 and 2.39 ms for 0.9.14, 2.41 and 2.43 for this
+branch (+2%); from above 2.73 and 2.70 against 3.00 and 3.00 (+10%).
+
+So Prairie on Ultra is not 25% slower: it is level from a tee and 10% heavier
+from above (about the far ground's share of that view), and what this
+machine showed as a slower frame was its card saving power. **The raw
+figures of the first sweep stand as what this machine did, not as work**,
+and where the two builds ran at different clocks they are wrong in either
+direction (Hawaii on High, second sweep: +13% raw at 1,734 against 1,238
+MHz, 19% less work).
+
+**What was built.** tools/frame-ab.mjs reads the card's clock, watts and busy
+share every 300 ms while a spot's frames are timed, saves them with the
+reading, and prints card time at full clock under each spot;
+tools/frame-sweep.mjs prints `work a->b` with the two clocks, and its mean
+and worst, and passes `--settle` and `--frames` on. The correction is rough
+(work is not exactly proportional to the core clock) and is for telling a
+slower card from a heavier frame, not for promising a frame rate.
+
+**The owner's power setting did not change what the card does at rest**: it
+still fell to its lowest power state (about 250 MHz, 20 W) and its link to
+generation 1 between every run that evening, and it floats under load as
+above. Whatever was set, NVIDIA's own "Prefer maximum performance" is not in
+force for these runs.
+
+### The second sweep, with the clock (13 November 2026, from 23:00) -- STOPPED AT 6 OF 30
+
+One round, `--settle 600 --frames 400`, two minutes' rest between runs,
+label `sweep2-fr9`. The owner stopped it to play a game; the runs saved
+carry on with the same command. Work at tee 1 and from 250 m up, this branch
+against 0.9.14, with the raw card time beside it:
+
+| Landscape, High | tee 1, work | tee 1, raw | from above, work | from above, raw |
+|---|---|---|---|---|
+| Redwood Coast | -16% | -15% | +6% | +6% |
+| Badlands | -9% | -6% | +3% | +3% |
+| Classic Parkland | -42% | -32% | -31% | -31% |
+| Southern Pines | -39% | -35% | -33% | -33% |
+| Lowcountry and Gulf | -36% | -51% | -33% | -48% |
+| Hawaiian Resort | -19% | +13% | -16% | +16% |
+
+and Prairie & Sand Hills on Ultra, above. **Open country from above is the
+weak place**: Redwood Coast +6%, Badlands +3% on High, Prairie +10% on
+Ultra -- fewer trees to save on, and the far ground this branch draws. Not
+yet looked into.
+
+**Still owed:** the other 9 on High and 14 on Ultra; the open-country views
+from above; the trunk's hard swap (8c171542) drawn and measured; Low and
+Medium; every landscape photographed on the final build; both smoke runs;
+`dist/` rebuilt.

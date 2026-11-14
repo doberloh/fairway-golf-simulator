@@ -15281,3 +15281,33 @@ the highest of samples two seconds apart; one program at 15% or more
 refuses a run (PLACED: the desktop's programs measured 0.6 to 4.7% each,
 6.7 to 8.4% together, while `nvidia-smi` read 19 to 35%).
 
+### The card picks its clock from the load (13 November 2026)
+
+This machine's RTX 4090 (top core clock 3,105 MHz by `nvidia-smi`
+clocks.max.gr) does not run a light frame at full clock. Measured with
+tools/gpu-watch.mjs and tools/frame-ab.mjs, headless Chrome, frames not
+capped, 1,600 by 900 at density 2:
+
+- At rest: power state P8, 255 to 345 MHz, about 20 W, link generation 1.
+- Timing frames of 4 to 8 ms on Ultra: 800 to 1,700 MHz, 50 to 180 W, 24 to
+  97% busy by `nvidia-smi`. On High (lighter frames, more of them): 2,190
+  to 2,730 MHz in five runs of six, 1,238 to 1,775 in the sixth.
+- **One page, two builds:** Prairie & Sand Hills on Ultra from tee 1, 0.9.14
+  at 1,603 MHz, 169 W, 97% busy, 4.63 ms a frame on the card; this branch
+  (round F4) at 1,226 MHz, 134 W, 80% busy, 6.09 and 6.23 ms -- 34% more
+  time for 40% fewer triangles (20.3 to 12.1 million) and the same draws
+  (333, 335).
+- **Card time x clock / top clock** ("work", the time at full clock; PLACED
+  as a correction, work is not exactly proportional to the core clock):
+  2.39, 2.39 ms against 2.41, 2.43 ms at the tee; 2.73, 2.70 against 3.00,
+  3.00 ms from 250 m up. Rounds of one build agree to 1 or 2%.
+- **Processor time inside GL calls is waiting, not work:** a Chrome profile
+  of that page charged 0.98 to 1.56 ms a frame to uniformMatrix4fv and 0.65
+  to 1.58 ms to uniform4fv; a count of the calls found 13,700 to 14,800
+  numbers in 452 to 500 array calls a frame over 355 to 411 draws.
+
+Raw card milliseconds from this machine are therefore what it did in its
+power mode, and compare two builds fairly only when both ran at one clock.
+The first sweep of the frame-rate pass (`sweep-fr9`) recorded no clock; the
+second (`sweep2-fr9`) does. No outside source was used; nothing here is
+published.

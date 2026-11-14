@@ -38,6 +38,7 @@ import path from 'node:path';
 import {gpuGate, logRun, readCard} from './gpu-gate.mjs';
 import {DEVICES, gpuScale, cpuThrottle} from './devices.mjs';
 import {diffPng} from './png-diff.mjs';
+import {execFile} from 'node:child_process';
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname).replace(/^\/([A-Za-z]:)/, '$1'), '..');
 const argv = process.argv.slice(2);
@@ -117,6 +118,28 @@ const frames = (page, n) => page.evaluate(n => new Promise(done => {
  let i = 0; const step = () => (++i < n ? requestAnimationFrame(step) : done()); requestAnimationFrame(step);
 }), n);
 
+// THE CARD'S CLOCK WHILE THE FRAMES ARE TIMED (13 November 2026). This card
+// picks its clock from how hard it is pushed: over these runs it sat at 800 to
+// 1,350 MHz of 3,105, and a build that asked less of it got a slower card and
+// read no faster (Prairie on Ultra: 40% fewer triangles, 25% more card time).
+// So each spot's reading carries the clock, watts and busy share the card
+// showed while it was timed (nvidia-smi, every 300 ms, off the page's thread),
+// and the summary gives card time AT FULL CLOCK beside the raw figure: ms x
+// clock / the card's top clock. A rough correction (work is not exactly
+// proportional to the core clock), good for telling "the card slowed down"
+// from "the frame got heavier". Null where nvidia-smi is not there.
+function cardDuring() {
+ const rows = []; let on = true, busy = false;
+ const read = () => { if (!on || busy) return; busy = true;
+  execFile('nvidia-smi', ['--query-gpu=clocks.gr,clocks.max.gr,power.draw,utilization.gpu', '--format=csv,noheader,nounits'], {timeout: 4000}, (e, out) => {
+   busy = false; if (e) return; const v = String(out).trim().split(/[\r\n]+/)[0].split(',').map(Number); if (v.every(Number.isFinite)) rows.push(v);
+  }); };
+ read(); const timer = setInterval(read, 300);
+ return {stop: () => { on = false; clearInterval(timer); if (!rows.length) return null;
+  const mean = i => rows.reduce((t, r) => t + r[i], 0) / rows.length;
+  return {clock: mean(0), clockMax: rows[0][1], watts: mean(2), busy: mean(3), n: rows.length}; }};
+}
+
 async function measureBuild(file, tag, round) {
  const {server, port} = await serve(file);
  const browser = await chromium.launch({headless: true, args: GPU_ARGS});
@@ -159,7 +182,9 @@ async function measureBuild(file, tag, round) {
    await frames(page, SETTLE);
    await page.evaluate(() => window.__profStart());
    const b0 = await busy();
+   const card = cardDuring();
    await frames(page, FRAMES);
+   const cardWas = card.stop();
    const b1 = await busy();
    const st = {...await page.evaluate(() => window.__profStop()), ...Object.fromEntries(Object.keys(PARTS).map(k => [k, (b1[k] - b0[k]) / FRAMES]))};
    let shot = null;
@@ -168,7 +193,7 @@ async function measureBuild(file, tag, round) {
     fs.mkdirSync(path.dirname(shot), {recursive: true});
     await page.screenshot({path: shot});
    }
-   out[name] = {...st, shot};
+   out[name] = {...st, shot, card: cardWas, gpuFull: cardWas && st.gpuMedian != null ? st.gpuMedian * cardWas.clock / cardWas.clockMax : null};
    if (SCENE) {
     const sc = await page.evaluate(() => window.lab.scene());
     out[name].scene = sc;
@@ -236,7 +261,7 @@ try {
   process.stdout.write(`  ${tag} round ${round + 1} (${path.basename(file)}) ... `);
   const r = await measureBuild(file, tag, round);
   results[tag].push(r);
-  console.log(spotNames.map(n => `${n} ${r[n].median?.toFixed(2)}/${r[n].gpuMedian?.toFixed(2)}`).join('  ') + (r.errors.length ? `  ERRORS ${r.errors.length}` : ''));
+  console.log(spotNames.map(n => `${n} ${r[n].median?.toFixed(2)}/${r[n].gpuMedian?.toFixed(2)}` + (r[n].card ? ` @${Math.round(r[n].card.clock)} MHz ${Math.round(r[n].card.watts)} W ${Math.round(r[n].card.busy)}%` : '')).join('  ') + (r.errors.length ? `  ERRORS ${r.errors.length}` : ''));
  }
 } catch (e) { failed = String(e.message).split('\n')[0]; console.log(`FAILED ${failed}`); }
 const after = (() => { try { return readCard(); } catch { return null; } })();
@@ -255,7 +280,8 @@ for (const name of spotNames) {
   const rs = results[tag].map(r => r[name]);
   const s = {cpu: med(rs.map(r => r.median)), gpu: med(rs.map(r => r.gpuMedian)), cpuP95: med(rs.map(r => r.p95)),
    draws: med(rs.map(r => r.callsPerFrame)), tris: med(rs.map(r => r.trisPerFrame)), page: med(rs.map(r => r.pageMs)),
-   runs: rs.map(r => [+r.median.toFixed(2), +(r.gpuMedian ?? 0).toFixed(2)])};
+   runs: rs.map(r => [+r.median.toFixed(2), +(r.gpuMedian ?? 0).toFixed(2)]),
+   gpuFull: med(rs.map(r => r.gpuFull)), clock: med(rs.map(r => r.card?.clock)), watts: med(rs.map(r => r.card?.watts))};
   (summary[name] ??= {})[tag] = s;
   console.log(`  ${name.padEnd(9)} ${tag}     ${s.cpu.toFixed(2).padStart(6)}   ${(s.gpu ?? 0).toFixed(2).padStart(6)}  ${Math.round(s.draws).toString().padStart(6)}  ${(s.tris / 1e6).toFixed(1).padStart(8)} M   ${(s.page ?? 0).toFixed(2).padStart(7)}`
    + (scale > 1.01 ? `   ${((s.gpu ?? 0) * scale).toFixed(0).padStart(8)}` : '') + `   runs ${s.runs.map(r => r.join('/')).join(' ')}`);
@@ -263,6 +289,7 @@ for (const name of spotNames) {
  if (B) {
   const a = summary[name].A, b = summary[name].B, pct = (x, y) => ((y - x) / x * 100).toFixed(1) + '%';
   console.log(`  ${''.padEnd(9)} B vs A  ${pct(a.cpu, b.cpu).padStart(6)}   ${pct(a.gpu, b.gpu).padStart(6)}  ${pct(a.draws, b.draws).padStart(6)}  ${pct(a.tris, b.tris).padStart(9)}   ${pct(a.page, b.page).padStart(7)}`);
+  if (a.gpuFull != null && b.gpuFull != null) console.log(`  ${''.padEnd(9)} card at full clock: A ${a.gpuFull.toFixed(2)} ms (card at ${Math.round(a.clock)} MHz, ${Math.round(a.watts)} W)  B ${b.gpuFull.toFixed(2)} ms (${Math.round(b.clock)} MHz, ${Math.round(b.watts)} W)  ${pct(a.gpuFull, b.gpuFull)}`);
  }
 }
 {
