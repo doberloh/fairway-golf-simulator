@@ -265,6 +265,16 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
   const usesMid = !!(midGeo && midGeo !== geo);
   const shown = usesMid ? midGeo : far;
   record.mid = usesMid;
+  // A TRUNK SWAPS WITHOUT A DISSOLVE, on a tier with middle versions (the
+  // frame-rate pass). There the trunk goes to its twin at the twin's line --
+  // a tree 3 to 5% of the screen tall, its trunk two to four pixels wide --
+  // while its crown dissolves from middle version to twin round it. The
+  // dissolve needs a fading mesh for the trunk and another for its twin, each
+  // a draw in the picture and one in every shadow map; with three versions of
+  // every crown fading as well, a tee's draws had risen by a seventh over
+  // 0.9.14 and its frame with them where the card's work had fallen. Low and
+  // Medium swap from a quarter of the screen and keep the dissolve.
+  record.hard = midShare > 0 && painted && !usesMid && mesh.userData.role === 'bark';
   // ONLY A CROWN OF MANY SPRAYS HAS A TWIN. Thinning keeps a third of the
   // pieces and grows each, which a grown redwood's thousands of sprays survive
   // and a cartoon crown does not: Kenney's oak is 64 triangles in a handful of
@@ -329,7 +339,7 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
   farMesh.userData = {noCull: true, cullHidden: mesh.userData.cullHidden, farOf: mesh};
   farMesh.name = 'far trees'; farMesh.count = 0; farMesh.visible = false;
   mesh.parent.add(farMesh);
-  const farRecord = {mesh: farMesh, n, order, hash: record.hash, thinnable: record.thinnable, src, srcColour, runs: record.runs, drawn: 0, cum: null, twin: null, near: false, far: true, painted, shadowNear: record.shadowNear};
+  const farRecord = {mesh: farMesh, n, order, hash: record.hash, thinnable: record.thinnable, src, srcColour, runs: record.runs, drawn: 0, cum: null, twin: null, near: false, far: true, painted, shadowNear: record.shadowNear, hard: record.hard};
   record.near = true;
   // A painted pair is swapped run by run, by its own height (`tallRun`): the
   // two share one list of levels, 0 the far version to FADE_STEPS the whole.
@@ -396,7 +406,7 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
  });
 
  for (const r of records) {
-  if (!r.srcColour || !(r.thinnable || r.near || r.far)) continue;
+  if (!r.srcColour || !(r.thinnable || r.near || r.far) || r.hard && !r.thinnable) continue;
   // A grown tree's pieces carry their root on the geometry (`treeRoot`), which
   // a second mesh would share in another order: those keep the dissolve on
   // their own material.
@@ -536,7 +546,7 @@ export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinit
      // all of it is beyond, where the clumps have sunk away.
      if (!all && r.reach && dist[runs[j]] > r.reach) continue;
      const th = r.painted ? thinPainted : thin, own = r.lvl ? r.lvl[j / 3] / FADE_STEPS : th[runs[j]];
-     const mix = all ? 1 : r.srcColour ? own : own >= .5 ? 1 : 0;  // no colours to carry a dissolve: switched at the middle
+     const mix = all ? 1 : r.srcColour && !r.hard ? own : own >= .5 ? 1 : 0;  // no colours to carry a dissolve: switched at the middle
      if (r.near && mix <= 0) continue;
      if (r.far && mix >= 1) continue;
      // A middle version below its twin's line is the twin's; inside that

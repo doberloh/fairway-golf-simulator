@@ -217,3 +217,23 @@ test('where the twin\'s line is above the middle version\'s there is no middle: 
  const fades = group.children.filter(o => o.name === 'fading trees').reduce((a, o) => a + o.count, 0);
  assert.ok(mesh.count + twin.count + fades <= n + fades, 'and each is held once');
 });
+
+test('on a tier with middle versions a trunk swaps to its twin with no fading mesh; without them it keeps its dissolve', () => {
+ const parts = modelParts('Blender_Oak_1'), bark = parts.findIndex(p => p.role === 'bark');
+ const build = opts => {
+  const group = new T.Group(), m = new T.Matrix4(), n = 120;
+  const mesh = new T.InstancedMesh(parts[bark].geometry, new T.MeshBasicMaterial(), n);
+  for (let i = 0; i < n; i++) { mesh.setMatrixAt(i, m.makeScale(30, 30, 30).setPosition((i % 2) * 6 - 3, 0, -440 + i * 12)); mesh.setColorAt(i, new T.Color(1, 1, 1)); }
+  mesh.userData = {model: 'Blender_Oak_1', part: bark, role: 'bark'};
+  group.add(mesh);
+  cullInstances(group, opts).update(camera(), null);
+  const far = group.children.find(o => o.name === 'far trees' && o.userData.farOf === mesh);
+  return {whole: mesh.count, far: far.count, fades: group.children.filter(o => o.name === 'fading trees')};
+ };
+ const high = build({farPainted: .03, midShare: .25, farPaintedPx: 200, screenPx: () => 1000});
+ assert.equal(high.fades.length, 0, 'no fading mesh for a trunk');
+ assert.equal(high.whole + high.far, 120, `every trunk held exactly once (${high.whole} whole, ${high.far} twins)`);
+ assert.ok(high.whole > 0 && high.far > 0);
+ const medium = build({farPainted: .25});
+ assert.ok(medium.fades.length > 0, 'a tier without middle versions keeps the trunk\'s dissolve');
+});
