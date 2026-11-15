@@ -76,8 +76,9 @@ wrong, unfinished, or owed a check.
   the Phone tier (graphics.js `TIERS.phone`), a phone's default every time it
   opens, the picker still offering the others for comparing. Safari from the
   home screen, Pacific Northwest: **21 ms of work at the tee at the start
-  (about 45 frames a second), 69 ms at the same tee 50 seconds later**; in
-  play 16 frames a second. Its shadows now cost nothing; the ground and the
+  (about 45 frames a second), 69 ms at the same tee 50 seconds later** (the
+  diagnostic's fps line, 16, was the run's end, not play: RESEARCH, *The fps
+  line was never play*). Its shadows now cost nothing; the ground and the
   trees are still a third each at the tee. The slowdown: what it is is not
   known (the processor was later ruled out).
   **Step three, built and not seen on the phone:** its ground drawn in

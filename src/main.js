@@ -4123,14 +4123,16 @@ async function runDeviceWatch(){
  let lock=null;
  try{navigator.wakeLock?.request('screen').then(l=>{lock=l;},()=>{});}catch{}
  const cap=graphics.frameCap,mode=view.config.mode,started=performance.now(),from=Math.floor(started/1000),notes=new Set();
- let hidden=null;
+ let hidden=null,reps=null;
  const show=()=>{if(hidden){for(const o of hidden)o.visible=true;hidden=null;}};
  const wait=s=>new Promise(done=>setTimeout(done,s*1000));
  watching=true;
  const io={
   // THE FRAME CAP LIFTED, so every run is the same whatever the player set;
   // not saved, and put back below. A first probe builds the probes' programs.
-  start:async()=>{graphics.frameCap=0;await new Promise(done=>{watchProbe=done;});},
+  // A new object, never the saved one changed in place; not saved. Then
+  // the probes' first frame (their programs built) and their sizing.
+  start:async()=>{graphics={...graphics,frameCap:0};await new Promise(done=>{watchProbe=()=>{reps=view.calibrateProbes();done();};});},
   phase:async step=>{
    watchPhase=step.id;playRecorder.event(step.label);
    if(step.id==='flyover'){if(!tour)startTour();}
@@ -4144,7 +4146,12 @@ async function runDeviceWatch(){
   // NOTHING DRAWN for n seconds (as Measure this device's "nothing drawn"):
   // the clear and the frame still happen, the scene does not.
   rest:async s=>{hidden=view.scene.children.filter(o=>o.visible);for(const o of hidden)o.visible=false;await wait(s);show();},
-  restore:async()=>{show();watchProbe=null;watchPhase=null;if(tour)stopTour();graphics.frameCap=cap;cameraMode(mode==='free'?'player':mode);try{lock?.release();}catch{}watching=false;},
+  // Every step its own guard, the buttons freed first: one failure here must
+  // not leave the watch or the benchmark refusing to start until a reload.
+  restore:async()=>{
+   watching=false;watchProbe=null;watchPhase=null;
+   for(const step of [show,()=>{if(tour)stopTour();},()=>{graphics={...graphics,frameCap:cap};},()=>cameraMode(mode==='free'?'player':mode),()=>lock?.release()])try{step();}catch(e){notes.add(`putting back: ${e?.message??e}`);}
+  },
  };
  let result=null;
  try{result=await runWatch(io,{onStep:(i,n,s)=>toast(`Watching this device: ${i} of ${n}, ${s.label}. Keep the screen on and leave it be.`)});}
@@ -4152,7 +4159,8 @@ async function runDeviceWatch(){
  if(document.hidden)notes.add('the page was put away during the watch');
  const during=playRecorder.read(from,Infinity).map(l=>({...l,at:l.t-from}));
  if(during.some(l=>l.events.includes('page hidden')))notes.add('the page was put away during the watch');
- lastWatch={seconds:result.seconds,cap,course:`${playingCourseName()}, hole ${round.hole+1}`,before,during,probes:result.probes,notes:[...notes]};
+ if(reps?.failed)notes.add(`probes could not be sized: ${reps.failed}`);
+ lastWatch={seconds:result.seconds,cap,reps:reps?.failed?null:reps,course:`${playingCourseName()}, hole ${round.hole+1}`,before,during,probes:result.probes,notes:[...notes]};
  toast('Watched. Help → Report a problem → Copy diagnostic carries it.');
  return lastWatch;
 }

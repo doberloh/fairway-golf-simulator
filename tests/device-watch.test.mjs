@@ -68,7 +68,8 @@ test('the report shows play before the tap, the watch a probe a line, and the ch
   {at: 33, phase: 'probed', frames: 14, events: []}, {at: 34, phase: 'probed', frames: 15, events: []}];
  const probes = [{at: 32, phase: 'probed', trip: 9.2, math: 1.1, memory: 2.4, cpu: 1.3}, {at: 34, phase: 'probed', trip: 9.4, math: 5.6, memory: 14.2, cpu: 1.4},
   {at: 36, phase: 'flyover', failed: 'no float targets'}];
- const text = formatWatch({seconds: 155, cap: 30, course: 'Cascade View Forest, hole 4', before, during, probes});
+ const text = formatWatch({seconds: 155, cap: 30, reps: {math: 16, memory: 8}, course: 'Cascade View Forest, hole 4', before, during, probes});
+ assert.match(text, /probe sizes +math 16 passes, memory 8 passes/, 'how big each probe was made, Safari counting whole milliseconds');
  assert.match(text, /SPEED WATCH/);
  assert.match(text, /frame cap +30 fps, lifted for the watch/);
  assert.match(text, /play before the tap \(25 s recorded\):/);

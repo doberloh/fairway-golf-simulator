@@ -1024,6 +1024,19 @@ export class GolfView{
  // Called just after a frame is drawn, so the read back first waits that
  // frame out. Any failure is reported, never thrown: a probe that cannot run
  // on a phone must not stop the watch.
+ // SAFARI'S CLOCK COUNTS WHOLE MILLISECONDS (every iPhone figure has been a
+ // whole number), and one pass of each graphics probe is well under one: so
+ // each is drawn `reps` times before its one read back, `reps` found once at
+ // the start (`calibrateProbes`) so the pass takes about 10 ms, then fixed for
+ // the run and printed; the processor probe counts the steps it gets through
+ // in a fixed 15 ms and gives the time a million would take.
+ calibrateProbes(target=10){
+  this.probeReps={math:1,memory:1};
+  for(const key of ['math','memory']){
+   for(let reps=1;reps<=512;reps*=2){this.probeReps[key]=reps;const r=this.probeDevice();if(r.failed)return r;if(r[key]>=target)break;}
+  }
+  return {...this.probeReps};
+ }
  probeDevice(){
   try{
    const r=this.renderer,gl=r.getContext(),px=new Uint8Array(4),now=()=>performance.now();
@@ -1042,10 +1055,14 @@ export class GolfView{
    const k=this.probeKit,was=r.getRenderTarget();
    gl.readPixels(0,0,1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);
    const t1=now();gl.readPixels(0,0,1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);const t2=now();
-   const run=scene=>{const a=now();r.setRenderTarget(k.target);r.render(scene,k.camera);r.readRenderTargetPixels(k.target,0,0,1,1,px);return now()-a;};
-   const math=run(k.math),memory=run(k.memory);
+   const reps=this.probeReps??{math:1,memory:1};
+   const run=(scene,n)=>{const a=now();r.setRenderTarget(k.target);for(let i=0;i<n;i++)r.render(scene,k.camera);r.readRenderTargetPixels(k.target,0,0,1,1,px);return now()-a;};
+   const math=run(k.math,reps.math),memory=run(k.memory,reps.memory);
    r.setRenderTarget(was);
-   const c0=now();let v=0;for(let i=0;i<400000;i++)v=(v*31+i)%1000003;const cpu=now()-c0;
+   // Steps of a fixed loop in 15 ms, as the time a million would take.
+   const c0=now(),end=c0+15;let v=0,steps=0;
+   while(now()<end){for(let i=0;i<1000;i++)v=(v*31+i)%1000003;steps+=1000;}
+   const cpu=(now()-c0)/steps*1e6;
    if(v<0)return {failed:'unreachable'};
    const trip=t2-t1;
    return {trip,math:Math.max(0,math-trip),memory:Math.max(0,memory-trip),cpu};

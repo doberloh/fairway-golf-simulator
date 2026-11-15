@@ -129,6 +129,10 @@ export function formatWatch(w) {
  out.push(`  took            ${w.seconds ?? '?'} s`);
  out.push(`  frame cap       ${w.cap ? `${w.cap} fps, lifted for the watch` : 'none'}`);
  if (w.course) out.push(`  course          ${w.course}`);
+ // How many passes each graphics probe draws (sized once, at the start, to
+ // about 10 ms: Safari's clock counts whole milliseconds); `cpu` is the time
+ // a million steps of the fixed loop take.
+ if (w.reps) out.push(`  probe sizes     math ${w.reps.math} passes, memory ${w.reps.memory} passes`);
  for (const n of w.notes ?? []) out.push(`  note            ${n}`);
  // PLAY BEFORE THE TAP, ten seconds a line: the median second's frames, the
  // slowest second, the slowest gap, the views, what happened.

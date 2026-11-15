@@ -15878,6 +15878,11 @@ repeatable). Built, not run:
   three slow with the game: the whole phone (heat or power); the graphics
   only: its own speed control; memory most: what the ground suggested;
   none: the game. A probe that fails says so and the watch goes on.
+  **Safari's clock counts whole milliseconds** (every iPhone figure so far
+  a whole number), and one pass of a graphics probe is well under one, so
+  each probe draws its pass `reps` times before its one read back -- sized
+  once at the start to about 10 ms and printed -- and the processor probe
+  counts its steps in a fixed 15 ms (as the time a million take).
 - *The script*, about 155 s on the hole being played, the frame cap lifted
   and put back: 30 s of the player's own view with no probes (what play is,
   and what the probes cost against the next phase), 30 s the same with
