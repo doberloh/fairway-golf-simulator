@@ -66,25 +66,44 @@ export const BENCH_PARTS = Object.freeze([
  // The fifth run (15 November) priced the grass round the camera (-8% at the
  // tee), the old 60 m ring (+15%) and the far versions from twice as near
  // (-6%), the far ground (0 to -9%) and the shadows' redraw (0 to -9%); those
- // rows are gone, the Phone tier took what paid. It also found the trees and
- // the ground dearer than their triangles: 2 M more triangles behind the
- // camera cost about 6 ms, the trees in view 22. So now: every tree past the
- // near ring as its far version, and the trees, then the ground, drawn in the
- // plainest paint there is (no light, no wind, one colour a vertex) -- what
- // their shading costs, against what their shapes do.
- {id: 'twinsAll', label: 'far versions past the ring'},
- {id: 'plainTrees', label: 'trees in plain paint'},
+ // rows are gone, the Phone tier took what paid. The sixth tried every tree
+ // past the ring as its far version and the trees in the plainest paint, but
+ // the phone changed speed under them (below, BENCH_HOLD) and they read as
+ // noise; gone too. The ground in plain paint (no light, no shadow, one
+ // colour) read -37% and -39% in the slow state, as much as no ground at all:
+ // kept, to see whether that holds.
  {id: 'plainGround', label: 'ground in plain paint'},
  {id: 'pixels', label: 'half the pixels'},
 ]);
+
+// THE HOLD (the sixth iPhone run, 15 November; the owner: "the game framerate
+// fluctuates quite a bit during play. Things seem to speed up and then slow
+// down for no reason"). The same tee read 14 ms of work at 2 s and 31 ms at
+// 62 s, every draw and triangle the same, and the step began as the
+// what-ifs started switching materials. So before anything is switched or
+// resized, the first place is read over and over for about a minute --
+// as drawn, without the ground, without trees, plants or ground, and with
+// nothing drawn at all (the floor under every work figure: the clear and the
+// read back) -- each reading's second and the game's light beside it. If
+// "as drawn" steps while the floor holds, the step is in what the game
+// draws; if everything steps together, it is the device.
+export const BENCH_HOLD = Object.freeze({
+ cycles: 5,
+ parts: Object.freeze([
+  {id: 'ground', label: 'no course ground'},
+  {id: 'bare', label: 'no trees, plants or ground'},
+  {id: 'empty', label: 'nothing drawn'},
+ ]),
+});
 
 const mean2 = (a, b) => a == null ? b : b == null ? a : (a + b) / 2;
 
 // The tour. Resolves with the rows; `io.restore()` runs whatever happens.
 // `onStep(i, n)` is told how far along it is, for the player's progress line.
-export async function runBench(io, {hole = 0, length = 300, spots = BENCH_SPOTS, parts = BENCH_PARTS, onStep = null} = {}) {
+export async function runBench(io, {hole = 0, length = 300, spots = BENCH_SPOTS, parts = BENCH_PARTS, hold = BENCH_HOLD, onStep = null} = {}) {
  const rows = [];
- const steps = spots.reduce((n, s) => n + 1 + (s.parts ? parts.length : 0), 1);
+ const holdEach = 1 + hold.parts.length;
+ const steps = spots.reduce((n, s, i) => n + 1 + (i === 0 ? hold.cycles * holdEach : 0) + (s.parts ? parts.length : 0), 1);
  let done = 0;
  const step = () => { done++; onStep?.(done, steps); };
  try {
@@ -94,6 +113,23 @@ export async function runBench(io, {hole = 0, length = 300, spots = BENCH_SPOTS,
    let base = await io.measure();
    rows.push({spot: spot.id, part: null, ...base});
    step();
+   // The hold, at the first place only, before anything else is switched.
+   if (spot === spots[0]) {
+    for (let cycle = 1; cycle <= hold.cycles; cycle++) {
+     for (const h of [null, ...hold.parts]) {
+      let reading;
+      const undo = h ? io.hide(h.id) : null;
+      try {
+       await io.frames(BENCH.settlePart);
+       reading = await io.measure();
+      } finally { undo?.(); }
+      rows.push({spot: spot.id, part: 'hold', hold: h?.id ?? null, cycle, ...reading});
+      step();
+     }
+    }
+    await io.frames(BENCH.settlePart);
+    base = await io.measure();
+   }
    if (!spot.parts) continue;
    for (const part of parts) {
     let reading;
@@ -162,12 +198,20 @@ export function formatBench(bench) {
  // `whole ms`: the whole frame's work either side of a part's reading, so a
  // device slowing over the run shows in the column itself.
  // `script`: the part of the work that was the game's own code (see the top).
- out.push(`  ${pad('place', 9)}${pad('reading', 29)}${lpad('fps', 4)}${lpad('worst', 7)}${lpad('work ms', 9)}${lpad('script', 8)}${lpad('whole ms', 10)}${lpad('vs whole', 10)}${lpad('draws', 7)}${lpad('tris', 9)}${lpad('at s', 6)}`);
+ out.push(`  ${pad('place', 9)}${pad('reading', 34)}${lpad('fps', 4)}${lpad('worst', 7)}${lpad('work ms', 9)}${lpad('script', 8)}${lpad('whole ms', 10)}${lpad('vs whole', 10)}${lpad('draws', 7)}${lpad('tris', 9)}${lpad('at s', 6)}`);
  for (const r of rows) {
   const vs = r.part && r.workMs != null && r.baseWork ? `${r.workMs <= r.baseWork ? '-' : '+'}${Math.round(Math.abs(r.workMs - r.baseWork) / r.baseWork * 100)}%` : '';
   // The pixels row says the size it drew at, so it proves itself.
-  const what = r.part === 'again' ? 'as drawn, at the end' : r.part ? label(BENCH_PARTS, r.part) + (r.part === 'pixels' && r.canvas ? ` ${r.canvas[0]}x${r.canvas[1]}` : '') : 'as drawn';
-  out.push(`  ${pad(label(BENCH_SPOTS, r.spot), 9)}${pad(what, 29)}${lpad(r.fps ?? '-', 4)}${lpad(r.worstMs ?? '-', 7)}${lpad(r.workMs ?? '-', 9)}${lpad(r.scriptMs ?? '-', 8)}${lpad(r.baseWork != null ? r.baseWork.toFixed(1) : '', 10)}${lpad(vs, 10)}${lpad(r.draws ?? '-', 7)}${lpad(millions(r.triangles), 9)}${lpad(r.at ?? '-', 6)}`);
+  const what = r.part === 'again' ? 'as drawn, at the end' : r.part === 'hold' ? `hold ${r.cycle}: ${r.hold ? label(BENCH_HOLD.parts, r.hold) : 'as drawn'}` : r.part ? label(BENCH_PARTS, r.part) + (r.part === 'pixels' && r.canvas ? ` ${r.canvas[0]}x${r.canvas[1]}` : '') : 'as drawn';
+  out.push(`  ${pad(label(BENCH_SPOTS, r.spot), 9)}${pad(what, 34)}${lpad(r.fps ?? '-', 4)}${lpad(r.worstMs ?? '-', 7)}${lpad(r.workMs ?? '-', 9)}${lpad(r.scriptMs ?? '-', 8)}${lpad(r.baseWork != null ? r.baseWork.toFixed(1) : '', 10)}${lpad(vs, 10)}${lpad(r.draws ?? '-', 7)}${lpad(millions(r.triangles), 9)}${lpad(r.at ?? '-', 6)}`);
+ }
+ // THE GAME'S LIGHT AND VIEW (main.js `benchState`): once, and again
+ // wherever it changed, so a step in the table can be laid beside it.
+ let was = null;
+ for (const r of rows) {
+  if (r.state == null || r.state === was) continue;
+  out.push(`  ${was == null ? 'state' : 'changed'} at ${r.at ?? '?'} s: ${r.state}`);
+  was = r.state;
  }
  // WHAT THE TRIANGLES ARE, where a place was read as drawn: the heaviest
  // things held in view (main.js `heaviestHeld`), so a heavy row names its

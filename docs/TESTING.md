@@ -402,9 +402,10 @@ the courses several suites share, and builds many at once on worker threads
   (Report a problem), `phone-tier` (a phone is told by what the browser says it is, an iPad is not one; the Phone tier survives a save, is not offered on a desktop, rebuilds the scene, and spends on geometry with a shadow offset of at least a texel, its ground in squares on every course while no other tier's moves), `device-bench` (Measure this device: the tour's order --
   one part off at a time, a whole frame between every two, the camera put back
   whatever goes wrong -- and its section of the diagnostic: the script column,
-  the floor row with trees and ground both off, the what-if rows (far
-  versions past the ring, the trees and the ground in plain paint), when
-  each reading was taken,
+  the hold at the tee before anything is switched (five rounds of as drawn,
+  no ground, bare and nothing drawn), the floor row with trees and ground
+  both off, the ground in plain paint, the game's light where it changed,
+  when each reading was taken,
   and the heaviest things held at each place read as drawn; what the numbers
   are is the device's), `sound`.
 

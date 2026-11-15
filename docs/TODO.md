@@ -78,8 +78,8 @@ wrong, unfinished, or owed a check.
   home screen, Pacific Northwest: **21 ms of work at the tee at the start
   (about 45 frames a second), 69 ms at the same tee 50 seconds later**; in
   play 16 frames a second. Its shadows now cost nothing; the ground and the
-  trees are still a third each at the tee. **The slowdown is the problem
-  now**: what it is (the phone's heat, its processor, the game) is not known.
+  trees are still a third each at the tee. The slowdown: what it is is not
+  known (the processor was later ruled out).
   **Step three, built and not seen on the phone:** its ground drawn in
   squares on every course (`groundSquares` -- it never was: the squares were
   kept for grounds of 4 million triangles or more, so the "coarser ground"
@@ -97,10 +97,19 @@ wrong, unfinished, or owed a check.
   **Step five, built and not seen on the phone:** half the grass round the
   camera (`nearGrass`) and the far versions from twice as near, and three
   new what-ifs (far versions past the ring, the trees and the ground in
-  plain paint). **To check:** its "as drawn" against 45 ms; whether plain
-  paint pays enough to build a cheaper phone shading for trees or ground.
-  Hiding the options waits until its figures are good. No Android to test
-  on.
+  plain paint). **Seen** (02:10, hole 2): the look "ok"; **the same tee 14
+  ms of work at 2 s (59 frames a second, the target met) and 31 ms at 62
+  s**, nothing in the frame changed -- the phone flips between two speeds,
+  which is the owner's "speed up and then slow down for no reason" in play.
+  Cause unknown; it began as the what-ifs switched materials. **Step six,
+  built and not seen on the phone:** the benchmark holds the tee for a
+  minute first (as drawn, no ground, bare, nothing drawn), prints the
+  game's light and view as they change, keeps the screen on. **To check:**
+  whether "as drawn" steps while the floor holds (the game) or everything
+  steps (the device). The ground's shading cost as much as the ground in
+  the slow state (plain paint -37 to -39%): a cheaper phone ground is a
+  candidate, held until the flip is understood. Hiding the options waits
+  until its figures are good. No Android to test on.
 
 - [ ] **A friend's challenge can throw as its round starts, now and then**
   (12 November 2026, the 0.9.14 smoke run: `friend-challenge` failed once in

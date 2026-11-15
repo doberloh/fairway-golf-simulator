@@ -15493,8 +15493,9 @@ What they say:
   at the green); the rest is the wait for the graphics chip.
 - **No drift within either run** (48 then 49, 55 then 51 at the tee), but
   both sat where the earlier run ended (69 ms at 7.0 M triangles), not where
-  it began (21 ms). The fast first half-minute of the 00:41 run has not come
-  back; the phone's sustained state is what to design for.
+  it began (21 ms). (Read at the time as "the slow state is what to design
+  for"; the 02:10 run below began fast again, mid-round, so that was
+  withdrawn: the two states and what flips them are the question.)
 - **The trees and plants are over half the frame** (25 to 33 ms of 48 to 55
   at the tee). The heaviest things held at the tee: the grass round the
   camera (0.9 M triangles, 38,553 clumps), the ground's squares (0.6 M),
@@ -15563,6 +15564,58 @@ The tee re-read at 78 s: 42 ms. Fairway 44, green 51.
   shapes. Not measured: whether the dissolve between a tree and its far
   version costs on this chip; it draws only on trees crossing the line
   (instance-cull.js *THE DISSOLVE ONLY WHERE SOMETHING DISSOLVES*).
+
+**Half the grass and the far versions sooner, on the iPhone** (15 November
+2026, 02:10, build 6db37da9, Safari from the home screen, Cascade View
+Forest **hole 2**; play before it 19 frames a second; the owner: the look
+"ok", and "the game framerate fluctuates quite a bit during play. Things
+seem to speed up and then slow down for no reason").
+
+| at s | reading | work ms | whole either side | draws | triangles |
+|---|---|---|---|---|---|
+| 2 | tee as drawn | 14 | | 173 | 1.5 M |
+| 4 | tee no trees or plants | 13 | 14.5 | 62 | 0.5 M |
+| 7 | tee no course ground | 13 | 14.5 | 161 | 1.2 M |
+| 11 | tee no trees, plants or ground | 12 | 14.0 | 50 | 0.1 M |
+| 14 | tee far versions past the ring | 13 | 16.5 | 169 | 1.2 M |
+| 18 | tee trees in plain paint | 31 | 27.5 | 173 | 1.5 M |
+| 22 | tee ground in plain paint | 23 | 36.5 | 171 | 1.5 M |
+| 25 | tee half the pixels | 30 | 36.0 | 174 | 1.5 M |
+| 30-32 | fairway, green as drawn | 37, 34 | | 169, 156 | 1.6, 1.1 M |
+| 34 | 250 m up as drawn | 38 | | 141 | 1.0 M |
+| 39 | 250 m up no course ground | 22 | 38.0 | 131 | 0.7 M |
+| 43 | 250 m up no trees, plants or ground | 13 | 38.0 | 48 | 0.1 M |
+| 50 | 250 m up trees in plain paint | 30 | 38.5 | 142 | 1.0 M |
+| 54 | 250 m up ground in plain paint | 23 | 38.0 | 142 | 1.0 M |
+| 58 | 250 m up half the pixels | 27 | 38.0 | 139 | 1.0 M |
+| 62 | tee as drawn, at the end | 31 | | 174 | 1.5 M |
+
+- **The same frame at two speeds.** The tee read 14 ms at 2 s and 31 ms at
+  62 s, its draws (173, 174), triangles (1.5 M) and script (5, 6 ms) the
+  same. In the fast state the Phone tier meets the target with room: 59
+  frames a second as shown at the tee.
+- **The step began at the first what-ifs** (the whole frame 14 ms through
+  11 s, 16.5 after the far versions, 27.5 then 36 after the plain paint), so
+  the run itself may set it off. Heat does not fit cleanly: the rested
+  01:29 run began slow, this one began fast mid-round. Cause unknown.
+- **The floor never moves**: no trees, plants or ground reads 12 to 13 ms
+  at 59 frames a second in every run, fast or slow. Either it is mostly the
+  read back's own cost, or the slow state touches only the lit ground and
+  trees.
+- **The ground's shading, in the slow state, is as dear as the ground**:
+  plain paint -37% at the tee, -39% from above, against no ground -42%
+  from above. In the fast state no ground was only -10% at the same tee --
+  about nine times less.
+- **The tree what-ifs are noise**: the tee's straddle the step, and from
+  above plain trees (-22%) beat no trees (-3%), which cannot be. Not used.
+
+**Next (built, not run):** the benchmark holds the tee for about a minute
+before anything is switched (`BENCH_HOLD`: five rounds of as drawn, no
+ground, no trees, plants or ground, and nothing drawn at all -- the floor
+under every work figure), prints the game's hour, sun, floodlights and view
+wherever they change, keeps the screen on, and drops the far-versions and
+plain-trees rows. If "as drawn" steps while the floor holds, the step is in
+what the game draws; if all of it steps together, it is the device.
 
 **Measure this device on the PC, for comparison** (14 November 2026; the
 capture build, Classic Parkland seed "overhaul", hole 1, Medium, 1,600 by

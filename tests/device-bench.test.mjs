@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {runBench, readingOf, formatBench, BENCH, BENCH_SPOTS, BENCH_PARTS} from '../src/device-bench.js';
+import {runBench, readingOf, formatBench, BENCH, BENCH_SPOTS, BENCH_PARTS, BENCH_HOLD} from '../src/device-bench.js';
 import {diagnosticReport} from '../src/diagnostic.js';
 
 // MEASURE THIS DEVICE (src/device-bench.js): the tour a phone runs on itself.
@@ -13,7 +13,7 @@ const fakeIo = ({throwOn = null} = {}) => {
   log,
   place: pose => log.push(['place', pose]),
   frames: async k => log.push(['frames', k]),
-  measure: async () => { n++; log.push(['measure', [...hidden]]); return {fps: 30, worstMs: 50, workMs: hidden.size ? 20 : 40, scriptMs: 5, draws: 300 - hidden.size * 100, triangles: 1e7, heavy: [{name: 'redwood leaf', triangles: 4.2e6, held: 120}, {name: 'ground, fine', triangles: 3e5, held: 9}], at: 2 * n}; },
+  measure: async () => { n++; log.push(['measure', [...hidden]]); return {fps: 30, worstMs: 50, workMs: hidden.size ? 20 : 40, scriptMs: 5, draws: 300 - hidden.size * 100, triangles: 1e7, heavy: [{name: 'redwood leaf', triangles: 4.2e6, held: 120}, {name: 'ground, fine', triangles: 3e5, held: 9}], at: 2 * n, state: n < 5 ? 'hour 10.0, sun 30 deg' : 'hour 10.1, sun 31 deg'}; },
   hide: id => { if (id === throwOn) throw Error('cannot hide ' + id); hidden.add(id); log.push(['hide', id]); return () => { hidden.delete(id); log.push(['show', id]); }; },
   restore: () => log.push(['restore']),
   get readings() { return n; },
@@ -24,8 +24,13 @@ test('the tour reads every place, and takes the frame apart at the tee and from 
  const io = fakeIo(), steps = [];
  const rows = await runBench(io, {hole: 3, length: 400, onStep: (i, n) => steps.push([i, n])});
  const withParts = BENCH_SPOTS.filter(s => s.parts).length;
- assert.equal(rows.length, BENCH_SPOTS.length + withParts * BENCH_PARTS.length + 1, 'one row a place, one a part, and the first place again');
- assert.equal(io.readings, BENCH_SPOTS.length + withParts * BENCH_PARTS.length * 2 + 1, 'a whole-frame reading after every part');
+ const held = BENCH_HOLD.cycles * (1 + BENCH_HOLD.parts.length);
+ assert.equal(rows.length, BENCH_SPOTS.length + withParts * BENCH_PARTS.length + 1 + held, 'one row a place, one a part, one a held reading, and the first place again');
+ assert.equal(io.readings, BENCH_SPOTS.length + withParts * BENCH_PARTS.length * 2 + 1 + held + 1, 'a whole-frame reading after every part, and one after the hold');
+ // THE HOLD: straight after the first reading, before any part is switched.
+ assert.ok(rows.slice(1, 1 + held).every(r => r.part === 'hold' && r.spot === 'tee'), 'the hold comes first');
+ assert.deepEqual(rows.slice(1, 1 + 1 + BENCH_HOLD.parts.length).map(r => r.hold), [null, ...BENCH_HOLD.parts.map(p => p.id)]);
+ assert.equal(rows[held].cycle, BENCH_HOLD.cycles);
  assert.deepEqual([rows.at(-1).spot, rows.at(-1).part], ['tee', 'again'], 'the tee read again at the end, to show any drift');
  // The camera is put on the hole being played, never another.
  for (const [kind, pose] of io.log.filter(e => e[0] === 'place')) assert.equal(pose.hole, 3, kind);
@@ -73,10 +78,15 @@ test('the report says what each part costs, and rides in the diagnostic', async 
  assert.match(text, /heaviest held at the tee:\n +redwood leaf +4\.2 M +x120\n +ground, fine +0\.3 M +x9/);
  assert.equal(text.match(/heaviest held/g).length, BENCH_SPOTS.length);
  // The what-ifs price the next levers in the same run.
- for (const what of ['far versions past the ring', 'trees in plain paint', 'ground in plain paint']) assert.match(text, new RegExp(`tee +${what} `));
+ for (const what of ['ground in plain paint']) assert.match(text, new RegExp(`tee +${what} `));
  // When each reading was taken: a slowdown by time is the device, by place the scene.
  assert.match(text, /draws +tris +at s\n +tee +as drawn +30 +50 +40 +5 +300 +10\.0 M +2\n/);
  assert.match(text, /tee +as drawn, at the end/);
+ assert.match(text, /tee +hold 1: as drawn +30/);
+ assert.match(text, /tee +hold 5: nothing drawn +30/);
+ // The game's light, once and wherever it changed.
+ assert.match(text, /state at 2 s: hour 10\.0[^\n]*\n +changed at 10 s: hour 10\.1/);
+ assert.equal(text.match(/changed at/g).length, 1);
  assert.match(text, /250 m up +as drawn/);
  assert.equal(formatBench(null), '');
  assert.match(formatBench({rows, tier: 'medium', notes: ['the page was put away during the run']}), /note +the page was put away/, 'what may have spoiled it is said');

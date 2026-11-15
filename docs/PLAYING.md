@@ -1032,20 +1032,21 @@ other four for the rest of that session.
 
 **Measure this device**, under the same heading, is for a game that runs
 slowly. In a round (a course or an endless hole), it closes the help and
-stands the camera at four places on the hole you are on -- the tee, the
-fairway, the green and 250 m up -- for about a minute, however slow the
-game is running. At the tee
-and from above it switches parts of the picture off one at a time: the trees
-and plants, the course's ground, both of those together, and half the
-pixels -- and tries three other ways of drawing (every tree past the few
-metres round the camera as its far version, and the trees, then the
-ground, in plain unlit colours). Then it puts the camera
-back. Nothing about the round changes: no hole is skipped and no shot is
+first watches the tee for about a minute, reading it over and over as
+drawn, without its ground, without its trees and ground, and with nothing
+drawn, then stands the camera at four places on the hole you are on -- the tee, the
+fairway, the green and 250 m up -- for about another minute, however slow
+the game is running. At the tee and from above it switches parts of the
+picture off one at a time: the trees and plants, the course's ground, both
+of those together, and half the pixels -- and draws the ground in plain
+unlit colours for a moment. Then it puts the camera back. The screen is
+kept on while it runs, where the browser allows. Nothing about the round changes: no hole is skipped and no shot is
 played. Copy diagnostic then carries a table of what it found: frames a
 second, the slowest frame, how long each frame's work took and how much of
 it was the game's own code (the rest is waiting for the graphics chip), how
 much each part was, and how many seconds into the run each reading came;
-under it, the heaviest things in view at each place. Leave
+under it, the game's time of day and view wherever they changed, and the
+heaviest things in view at each place. Leave
 the phone alone while it runs; a phone that dims its screen or warms up
 reads slower, and Low Power Mode holds an iPhone's browser to about 30
 frames a second. If the page was put away or a shot flew during the run,

@@ -3983,7 +3983,13 @@ async function benchMeasure(){
  // `at`: seconds into the run, so a slowdown can be told by time (the phone
  // warming) or by place (the second iPhone run: 21 ms at the tee at the start,
  // 69 at the same tee at the end).
- return {...readingOf(p.gaps,p.work,p.counts,p.script),canvas:[c.width,c.height],heavy:heaviestHeld(),at:Math.round((performance.now()-p.started)/1000)};
+ return {...readingOf(p.gaps,p.work,p.counts,p.script),canvas:[c.width,c.height],heavy:heaviestHeld(),at:Math.round((performance.now()-p.started)/1000),state:benchState()};
+}
+// What the ground's and the trees' shading reads that can change during a
+// round: the hour (to a tenth), the sun's height, the floodlights, the view.
+function benchState(){
+ const d=view.daylight,s=view.solar;
+ return `hour ${d?.hour!=null?d.hour.toFixed(1):'-'}, sun ${s?Math.round(s.elevation):'-'} deg, ${view.floodlit?'floodlit':'no floodlights'}, view ${view.config.mode}`;
 }
 // THE HEAVIEST THINGS HELD IN VIEW NOW, by triangles: everything drawn (an
 // invisible parent hides its children), the same thing's pieces added
@@ -4011,14 +4017,10 @@ function benchHide(part){
  if(part==='pixels'){const was=view.resolutionScale??1;view.setResolutionScale(was*Math.SQRT1_2);return()=>view.setResolutionScale(was);}
  if(part==='bare'){const a=benchHide('planting'),b=benchHide('ground');return()=>{b();a();};}
  const planting=o=>o.isInstancedMesh&&(o.userData.cullTotal!==undefined||['shadow twin','far trees','fading trees'].includes(o.name));
- // The what-ifs (device-bench.js), put back after. Every tree past the near
- // ring as its far version: the cull's live tuning (instance-cull.js `tune`).
- if(part==='twinsAll'){
-  const c=view.cull;if(!c)return()=>{};
-  const was=c.tune();c.tune({farPainted:100,farTrees:100});
-  return()=>c.tune({farPainted:was.farPainted,farTrees:was.farTrees});
- }
- // The plainest paint (renderer.js `plainPaint`): the shapes drawn as they
+ // Nothing drawn: every top-level thing in the scene hidden, so the frame is
+ // the clear and the read back (device-bench.js BENCH_HOLD).
+ if(part==='empty'){const off=view.scene.children.filter(o=>o.visible);for(const o of off)o.visible=false;return()=>{for(const o of off)o.visible=true;};}
+ // The what-ifs (device-bench.js), put back after. The plainest paint (renderer.js `plainPaint`): the shapes drawn as they
  // are, their shading gone. The shadow maps keep their own materials.
  if(part==='plainTrees'||part==='plainGround'){
   const swapped=[];
@@ -4041,6 +4043,12 @@ async function runDeviceBench(){
  if(appMode!=='play'||rangeMode||flight||!world?.holes?.[at]){toast('Start a round first: the benchmark measures the hole you are on.');return null;}
  const mode=view.config.mode,started=performance.now(),h=world.holes[at];
  closePanel();
+ // THE SCREEN KEPT ON for the two minutes it takes now (the hold): asked for
+ // inside the tap, which Safari wants; a browser that refuses is told
+ // nothing, and the player's own auto-lock decides as before.
+ let lock=null;
+ try{navigator.wakeLock?.request('screen').then(l=>{lock=l;},()=>{});}catch{}
+ const unlock=()=>{try{lock?.release();}catch{}lock=null;};
  benchProbe={gaps:[],work:[],script:[],counts:{},sync:false,count:false,counted:0,last:null,wait:null,notes:new Set(),started};
  const notes=benchProbe.notes;
  // AT THE TIER'S OWN RESOLUTION: automatic resolution may have stepped it
@@ -4059,7 +4067,8 @@ async function runDeviceBench(){
    hide:benchHide,
    restore:()=>{benchProbe=null;view.setResolutionScale(scaleWas);cameraMode(mode==='free'?'player':mode);},
   },{hole:at,length:h.length??300,onStep:note});
- }catch(e){benchProbe=null;toast(`The benchmark stopped: ${e?.message??e}`);return null;}
+ }catch(e){benchProbe=null;unlock();toast(`The benchmark stopped: ${e?.message??e}`);return null;}
+ unlock();
  const c=view.renderer.domElement;
  // What it measured at: the tier's own ratio and the size of the first reading
  // (the resolution has been put back by now).
