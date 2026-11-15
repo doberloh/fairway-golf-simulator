@@ -92,6 +92,9 @@ export const BENCH_PARTS = Object.freeze([
  // (ground-bake.js) against the painter it replaces, and plain paint stays as
  // the most there is to gain.
  {id: 'groundUnbaked', label: 'ground without the bake'},
+ // The tenth: the Phone tier's harder thinning of the trees outside the
+ // hole (graphics.js `lowTrees`) put back to Low's own -- what it saved.
+ {id: 'treesAsLow', label: 'trees thinned as on Low'},
  {id: 'plainGround', label: 'ground in plain paint'},
  {id: 'pixels', label: 'half the pixels'},
 ]);

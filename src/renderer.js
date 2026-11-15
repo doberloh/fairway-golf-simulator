@@ -1287,7 +1287,9 @@ export class GolfView{
    // A tree's middle version and its line in the picture's own pixels (graphics.js midTrees; High and Ultra).
    midShare:this.quality.midTrees?.share??0,farPaintedPx:this.quality.midTrees?.px??0,screenPx:()=>this.renderer.domElement.height,
    // How near a tree is kept whatever the view (graphics.js `cullNear`; the Phone tier).
-   ...(this.quality.cullNear!=null?{near:this.quality.cullNear}:{})});
+   ...(this.quality.cullNear!=null?{near:this.quality.cullNear}:{}),
+   // The Phone tier's harder thinning outside the hole (graphics.js `lowTrees`).
+   ...(this.quality.lowTrees?{lowTrees:this.quality.lowTrees}:{})});
   // The saved preference applies to every course built after it, not only to
   // the one that was on screen when the box was ticked.
   this.setFloodlights(this.daylight?.floodlights);
@@ -3568,6 +3570,17 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   };
   material.customProgramCacheKey=()=>'phone-baked-ground-v1';
   const camera=new T.OrthographicCamera(-1,1,1,-1,1,20000);camera.up.set(0,0,-1);
+  // ITS PROGRAMS BUILT BEHIND THE LOADING SCREEN (the iPhone watch, 15
+  // November 2026: "built ground, coarse / ground, fine / ground, mid" in
+  // play, at a new hole). The ground's squares are made on the first frame,
+  // after the warm-ups have walked the scene, so the painted ground's program
+  // was never among them: each state it had not been drawn in -- a water
+  // probe's render target, the floodlights -- built its version mid-play. A
+  // stand-in (THE STAND-INS, above): one degenerate triangle with the
+  // painted ground's material, shown only through the warm-ups.
+  const standGeo=new T.BufferGeometry();standGeo.setAttribute('position',new T.BufferAttribute(new Float32Array(9),3));standGeo.setAttribute('normal',new T.BufferAttribute(new Float32Array([0,1,0,0,1,0,0,1,0]),3));
+  const standIn=new T.Mesh(standGeo,material);standIn.frustumCulled=false;standIn.visible=false;standIn.receiveShadow=true;standIn.name='painted ground stand-in';
+  this.group.add(standIn);this.standIns.push(standIn);
   this.groundBake={squares,rects,uniforms,material,camera,scene:new T.Scene(),meshes:new Map(),full:null,on:this.groundBakeOn!==false,last:-Infinity,sun:this.sunDir?.clone()??null,prev:null};
  }
  // On or off (the Phone tier's Graphics switch, and Measure this device's

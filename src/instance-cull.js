@@ -146,8 +146,12 @@ function modelRise(name) {
 // The 60 m ring is kept all round the camera, behind it too; on a phone held
 // upright the view is about 28 degrees wide, so most of that ring is off the
 // screen. A tier that does not say gets 60 m back on every build.
-export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinity, farTrees = 0, farPainted = 0, thinTrees = false, midShare = 0, farPaintedPx = 0, screenPx = null, near = CULL_NEAR} = {}) {
+// `lowTrees` (the Phone tier): its own figures over low-trees.js LOW_TREES,
+// set the same way -- every cull says, and a tier that says nothing has
+// Low's own again.
+export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinity, farTrees = 0, farPainted = 0, thinTrees = false, midShare = 0, farPaintedPx = 0, screenPx = null, near = CULL_NEAR, lowTrees = null} = {}) {
  tune.near = near;
+ tune.lowTrees = lowTrees;
  const meshes = [];
  root.traverse(o => {
   if (o.isInstancedMesh && o.count >= minInstances && !o.userData.noCull) meshes.push(o);

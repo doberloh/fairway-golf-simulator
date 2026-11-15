@@ -245,6 +245,15 @@ export const TIERS = {
   // half the grass and the doubled lines. PLACED: to be read on the phone.
   nearGrass: .5,
   thinTrees: true,
+  // LOW'S RULE, HARDER (the owner, 15 November 2026: "on phone we can
+  // massively thin or even get rid of outside gameplay landscape trees"; the
+  // painted ground's watch left the trees the largest piece of the slow
+  // frame, -49% from 250 m up). The hole's trees and the ball's are kept as
+  // Low keeps them (low-trees.js `holeReach`, `ballReach`, untouched);
+  // outside them every tree only to 60 m from the camera, thinning to one in
+  // twenty by 300 m, with a narrow fade band (a fading tree is drawn, so the
+  // band is kept too). PLACED, for the owner's eye.
+  lowTrees: {nearAll: 60, thinTo: 300, minKeep: .05, fade: .05},
   understory: .25,
   longGrassReach: 90,
   godRays: 0,

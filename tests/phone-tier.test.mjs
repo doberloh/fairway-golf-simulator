@@ -68,6 +68,20 @@ test('the Phone tier spends on geometry: the hole\'s trees, shadows from the twi
  for (const key of Object.keys(m)) assert.ok(key in p, `phone has ${key}`);
 });
 
+// LOW'S RULE, HARDER (graphics.js `lowTrees`; the owner, 15 November 2026):
+// the hole's trees and the ball's are kept exactly as Low keeps them; only
+// the share outside them falls, and faster.
+test('the Phone tier thins the trees outside the hole harder, never one of the hole\'s or the ball\'s', async () => {
+ const {LOW_TREES, protectedAt, shareAt} = await import('../src/low-trees.js');
+ const rules = {...LOW_TREES, ...TIERS.phone.lowTrees};
+ for (const k of ['holeReach', 'ballReach', 'flyReach', 'behind', 'past', 'step']) assert.equal(rules[k], LOW_TREES[k], `${k} as Low's`);
+ const region = {path: new Float32Array([0, 0, 0, 400]), ball: {x: 200, z: 100}, camera: {x: 0, z: -50}, flying: false};
+ for (const [x, z] of [[70, 200], [-79, 10], [260, 100]]) assert.equal(protectedAt(region, x, z, rules), protectedAt(region, x, z, LOW_TREES), `(${x}, ${z})`);
+ for (const d of [100, 200, 300, 600]) assert.ok(shareAt(d, rules) < shareAt(d, LOW_TREES), `fewer kept ${d} m off`);
+ assert.ok(shareAt(400, rules) + rules.fade <= .1, 'about one in ten at most past 300 m, the fade band included');
+ for (const q of QUALITY) assert.equal(TIERS[q].lowTrees, undefined, `${q} keeps Low's own figures`);
+});
+
 // THE BUNKER SKIP IS EXACT (ground.js GROUND_HAZARD_REACH): the shader's own
 // arithmetic for a bunker's signed distance, over random bunkers and pixels.
 // Wherever the skip fires, the bunker could not have painted the pixel: its

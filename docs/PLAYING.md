@@ -1022,8 +1022,9 @@ play.
 
 **On a phone the game starts on the Phone graphics setting** every time it
 opens (an iPhone, or an Android phone; not an iPad or a tablet). It draws every
-tree of the hole you are playing and round your ball, and fewer the further off
-they are; its shadows are cast by the trees' lighter far versions and redrawn
+tree of the hole you are playing and round your ball, and away from them only
+the trees near the camera -- beyond 60 m they thin quickly, to one in twenty
+by 300 m; its shadows are cast by the trees' lighter far versions and redrawn
 a few times a second rather than every frame, so a shadow can lag a moving ball
 a little; trees switch to their lighter far versions sooner; the ground away
 from you is coarser; the grass round you is half as thick; there are no
@@ -1057,7 +1058,8 @@ the game is running. At the tee and from above it switches parts of the
 picture off one at a time: the trees and plants, the course's ground, both
 of those together, and half the pixels -- and draws the ground for a moment
 in other ways: without the Phone setting's painted ground, and in plain
-unlit colours (a brief odd look). A row read while the phone changed speed is marked
+unlit colours (a brief odd look) -- and draws the trees away from the hole
+as Low thins them rather than as the Phone setting does. A row read while the phone changed speed is marked
 with a ~. Then it puts the camera back. The screen is
 kept on while it runs, where the browser allows. Nothing about the round changes: no hole is skipped and no shot is
 played. Copy diagnostic then carries a table of what it found: frames a

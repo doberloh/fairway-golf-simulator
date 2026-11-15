@@ -4076,6 +4076,8 @@ function benchHide(part){
  // The Phone tier's painted ground off for the part, and back as it was.
  if(part==='groundUnbaked'){const was=view.groundBake?.on;if(!was)return()=>{};view.setGroundBake(false);return()=>view.setGroundBake(true);}
  if(part==='groundFull')return groundDefine('GROUND_HAZARD_REACH',false);
+ // Low's own thinning for the part (instance-cull.js `tune.lowTrees`).
+ if(part==='treesAsLow'){const c=view.cull;if(!c)return()=>{};const was=c.tune().lowTrees??null;if(!was)return()=>{};c.tune({lowTrees:null});return()=>c.tune({lowTrees:was});}
  if(part==='groundNoHazards')return groundDefine('GROUND_NO_HAZARDS',true);
  if(part==='groundNoMowing')return groundDefine('GROUND_NO_MOWING',true);
  if(part==='groundNoLayers')return groundDefine('GROUND_NO_LAYERS',true);

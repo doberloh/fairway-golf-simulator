@@ -16002,6 +16002,28 @@ painted ground on, cap 30; a Measure and then a Watch).
   flyover; two unnamed ones that are the benchmark's own (plain paint, the
   probes).
 - The owner thinks the PC's graphics card trouble is fixed (15 November).
+- The owner, of the look: "painted ground looks good".
+
+**The two fixes after it** (the owner, 15 November 2026: "go ahead and start
+both of the fixes. Im thinking on phone we can massively thin or even get
+rid of outside gameplay landscape trees?"). Built, not run:
+
+- *The painted ground's program built at loading*: a stand-in mesh with its
+  material joins the warm-ups (renderer.js `buildGroundBake`), so the water
+  probes' render-target version and the floodlit one are built behind the
+  loading screen, not at a new hole. (Why at a new hole: an inference -- a
+  water probe retaken there draws the scene into a render target, which
+  needs its own version of every program it draws with; the warm-ups build
+  those for everything in the scene when they run, and the squares were not
+  yet in it.)
+- *Low's rule, harder, outside the hole* (`lowTrees`, PLACED): every tree to
+  60 m from the camera (Low: 120), thinning to one in twenty (Low: one in
+  five) by 300 m (Low: 600), the fade band 0.05 (Low: 0.15; a fading tree is
+  drawn, so the band is kept too -- at Low's band a square past the line
+  still drew 35% of its trees). The hole's trees within 80 m of its line and
+  the ball's within 150 m are kept as on Low, so the owner's rule stands.
+  Measure this device's "trees thinned as on Low" puts Low's figures back
+  for its reading: what this saved.
 
 Already right on Phone: no bloom,
 god rays, clouds, mist, cascades or tree mirror; tone mapping in the

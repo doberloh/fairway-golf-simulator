@@ -445,3 +445,11 @@ test('a shorter near ring drops the trees behind the camera, and the next cull h
  assert.ok(held(b.mesh).some(t => Math.hypot(t.x - 10, t.z - 10) < 15), 'what stands beside the camera is still held');
  assert.equal(cullInstances(field().group).tune().near, 60, 'a tier that says nothing gets 60 m back');
 });
+
+// The Phone tier's own thinning figures (graphics.js `lowTrees`) are set by
+// its cull and gone with the next: a tier that says nothing has Low's own.
+test('a cull built with its own thinning figures sets them, and the next cull clears them', () => {
+ const phone = cullInstances(field().group, {thinTrees: true, lowTrees: {minKeep: .05}});
+ assert.deepEqual(phone.tune().lowTrees, {minKeep: .05});
+ assert.equal(cullInstances(field().group).tune().lowTrees, null);
+});

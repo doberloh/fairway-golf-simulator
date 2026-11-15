@@ -56,6 +56,17 @@ wrong, unfinished, or owed a check.
 
 ## Known wrong
 
+- [ ] **The grass should be darker on every landscape** (the owner, 15
+  November 2026, looking at the painted ground on the iPhone: "overall
+  across all biomes i want the grass to be darker. Lets make it a todo").
+  Every tier, not only the phone. Where: the landscapes' turf colours
+  (biomes.js palettes, the ground's tints in ground.js) and the near grass
+  (vegetation.js), kept in step so the blades still match the ground under
+  them. A palette is a record change (`node tools/biome-fingerprint.mjs
+  --check` should stay silent; no `GENERATOR_VERSION`). Needs pictures of
+  several landscapes before and after for the owner, which use the graphics
+  card. Not started.
+
 - [ ] **The game is too slow on an iPhone: 14 frames a second on a full
   course** (the owner, 14 November 2026; branch `phone-performance`). "I was
   running on both medium and low on an iPhone and both were pretty bad ... I
@@ -152,9 +163,14 @@ wrong, unfinished, or owed a check.
   bake +27% from 250 m up); slow-state frames 29-30 uncapped (were 21-27);
   play at the cap 22-30, mostly 24-28. Left: the trees (-49% slow from
   above) and hitches -- the painted ground's program is built in play at a
-  new hole (not in the loading screen's warm-ups). The look not yet
-  reported by the owner. Holding 45 sustained needs about half the
-  sustained frame cut.
+  new hole (not in the loading screen's warm-ups). The owner: the painted
+  ground "looks good". **Step eleven, built and not seen on the phone:**
+  the painted ground's program built at loading (a stand-in), and Low's
+  tree rule much harder outside the hole on Phone (`lowTrees`). **To
+  check:** how the course away from the hole looks with so few trees; a
+  Watch after three minutes' play (no "built ground" in play; the lines
+  holding 29-30); Measure's "trees thinned as on Low". Holding 45
+  sustained needs about half the sustained frame cut.
 - [ ] **A smoke run before the phone-performance branch merges** (the
   recorder in main.js runs every frame on every tier: the first change on
   the branch that does). Ask the owner; it uses the graphics card.
