@@ -15892,6 +15892,44 @@ repeatable). Built, not run:
   arithmetic probe against the run's best: more than twice is slow (PLACED).
   No shot is played; the camera, flyover, cap and screen lock are put back.
 
+**The first watch, on the iPhone** (15 November 2026, 04:43, build
+05d4c85f, Safari from the home screen, Cascade View Forest hole 6; the
+owner's cap of 30, lifted for the watch; probes sized to 512 math passes
+-- the most allowed, so under 10 ms -- and 16 memory passes).
+
+- **Play, for the first time** (174 s before the tap, at the cap of 30): 28
+  to 30 frames a second for the first 40 s, then 17 to 25 for the next two
+  minutes; the slowest gap in every ten seconds 70 to 176 ms (a camera
+  flight, a touch or a program built in most of them).
+- **The watch**: the player's own view, uncapped and unprobed, 57 frames a
+  second (median of 30 s; slowest second 25). From about 33 s, 25 to 27
+  -- the step came as the probes began, but the probes ran on through the
+  fast stretch later, so they do not hold it slow. The flyover 24 falling
+  to 16. After the 1 s rest 21 to 22; after the 3 s rest 22; **after the 6 s
+  rest 60, for about 15 s** (138-153 s), then 22 to 23.
+- **The probes**: the processor's (9 to 10 ms a million steps) never moved,
+  fast or slow. The graphics' did: in the fast stretch after the 6 s rest,
+  math 4 to 6 ms and memory 8 to 10, against 7 to 9 and 14 to 15 in the
+  slow -- about 1.5 times. The figures with a 5 or 6 ms trip (42, 54, 61,
+  126 s) are the clock's whole milliseconds taken off a short probe, not
+  the phone: the report's "speed changes" before 138 s are those, noise.
+- **What it says**: **the graphics chip, not the whole phone** -- the
+  processor holds its speed throughout. **It runs fast after a rest and
+  slows under steady load**: fast for about 30 s from the tap (the panel
+  had been open), fast for 15 s after 6 s of drawing nothing, not after 1
+  or 3 s; in earlier runs fast stretches of 15 to 55 s. That is the shape
+  of a power budget -- full speed until a short-term allowance is spent,
+  then a sustained level, the allowance refilling while the chip idles
+  (RESEARCH above: the A18 Pro about 10 W at peak, about 4 W sustained). An
+  inference: the web page cannot read the clock or the budget. **What
+  follows:** the game is played in the sustained state, where it runs at
+  17 to 26 frames a second; a frame there costs about 2.5 times its fast
+  cost. Holding 30 steadily needs the sustained frame cut by about a fifth,
+  45 by about half: the baked ground (the slow state's ground was 33 to 39%)
+  is the largest single piece; less work a second (a 30 cap) spends the
+  allowance slower; programs built during play (seen in the recorder) are
+  hitches of their own, worth building ahead.
+
 Already right on Phone: no bloom,
 god rays, clouds, mist, cascades or tree mirror; tone mapping in the
 materials, no extra pass; no logarithmic depth; highp kept (no evidence

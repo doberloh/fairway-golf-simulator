@@ -135,9 +135,14 @@ wrong, unfinished, or owed a check.
   phone:** Watch this device (device-watch.js): a recorder of play always
   on, probes of the phone's graphics arithmetic, graphics memory and
   processor, and a scripted 155 s (the player's view, the flyover, rests,
-  from above). **To check:** it runs to the end on the phone and its probes
-  do not fail; then what slows with the flip, and whether play flips as the
-  watch does.
+  from above). **Seen** (04:43): it ran to the end, no probe failed. Play
+  at the cap of 30: 28-30 for 40 s, then 17-25. The flip is the graphics
+  chip alone (the processor probe never moved), fast after a rest (6 s of
+  nothing drawn gave 60 for 15 s; 1 and 3 s did not) and slow under steady
+  load: a power budget, by its shape. **Next, the owner's call:** the baked
+  ground on Phone (the sustained frame's largest piece), a 30 cap as the
+  Phone default, programs built ahead of play. Holding 45 sustained needs
+  about half the sustained frame cut.
   Hiding the options waits until its figures are good. No Android to test
   on.
 
