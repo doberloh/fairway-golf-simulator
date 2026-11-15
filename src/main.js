@@ -429,6 +429,9 @@ const courseOnly=s=>{
 };
 const restoreCourse=()=>{
  round.putting=restorePutting();
+ // Out of the range, the green reading the range switched off comes back to
+ // its default, unless the player has chosen their own (READING_DEFAULT).
+ if(view&&!view.config.readingChosen){Object.assign(view.config,READING_DEFAULT);view.setGreenReading?.();}
  if(savedCourse){settings={...savedCourse};savedCourse=null;}
  else if(settings.range)settings=courseFallback(settings);
 };
@@ -1165,10 +1168,19 @@ function clearSave(){try{localStorage.removeItem('fairway-round-v1');}catch{}}
 // a round somebody shares. What a round legitimately carries is which green
 // reading overlays were switched on, because that is a property of the putt you
 // were in the middle of.
-const ROUND_CAMERA_KEYS=['greenGrid','greenFlow','greenHeat'];
+// THE SLOPE GRID AND THE DOWNHILL MARKERS ON BY DEFAULT, every device (the
+// owner, 15 November 2026: "there is no buttons to turn on green reading.
+// But lets not add buttons. Just turn on the grid and indicators by default
+// for all devices" -- a phone's screen has no room for the reading buttons).
+// The heat map stays off. A round saved before this carried them as false
+// whether or not anyone chose that, so a saved value is kept only once the
+// player has pressed one of the reading buttons (`readingChosen`).
+const READING_DEFAULT={greenGrid:true,greenFlow:true,greenHeat:false};
+const ROUND_CAMERA_KEYS=['greenGrid','greenFlow','greenHeat','readingChosen'];
 const roundCamera=()=>Object.fromEntries(ROUND_CAMERA_KEYS.map(k=>[k,!!view.config[k]]));
 function applyRoundCamera(saved){
  if(!saved||typeof saved!=='object')return;
+ if(saved.readingChosen!==true)return;
  for(const k of ROUND_CAMERA_KEYS)if(typeof saved[k]==='boolean')view.config[k]=saved[k];
 }
 // PLAY-SCOPE SETTINGS: what belongs to the GOLFER rather than to the ground.
@@ -7486,7 +7498,7 @@ function bind(){
  $('replayShot').onclick=()=>replayShot();
  $('nextHoleBar').onclick=()=>{if(!round.holeComplete||flight)return;if(round.finished)openPanel('score');else advanceHole();};
  for(const [id,key] of [['readSlope','greenGrid'],['readFlow','greenFlow'],['readHeat','greenHeat']])
-  $(id).onclick=()=>{gameAudio?.ui?.('toggle');view.config[key]=!view.config[key];view.setGreenReading();updateHUD();save();};
+  $(id).onclick=()=>{gameAudio?.ui?.('toggle');view.config[key]=!view.config[key];view.config.readingChosen=true;view.setGreenReading();updateHUD();save();};
 $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;const pristine=round.strokes.every(n=>n===0)&&Object.values(round.scrambleShots).every(n=>n===0)&&!round.candidates.length;round.tee=$('activeTee').value;if(pristine){round.teePlaced=false;round.placeTee(course.tees);setUpTurn();}else{updateHUD();toast('Tee preference saved for the next hole.');}save();};$('pickPrev').onclick=()=>stepPick(-1);$('pickNext').onclick=()=>stepPick(1);
  $('reliefTake').onclick=()=>{const o=reliefList[reliefChoice];if(o)takeReliefOption(o);};
  $('reliefCloser').onclick=()=>moveReliefBack(-10*YARD);$('reliefFurther').onclick=()=>moveReliefBack(10*YARD);
@@ -8558,6 +8570,8 @@ try{
  applyUiScale();addEventListener('resize',applyUiScale);
  globalThis.__splashStep?.('Starting the renderer',.12);
  view=new GolfView($('scene'),graphics.quality);
+ // The green reading's defaults (READING_DEFAULT): on from the first round.
+ for(const [k,v] of Object.entries(READING_DEFAULT))view.config[k]??=v;
  // No graphics card, no tier chosen: start on Low (graphics.js isSoftwareRenderer).
  if(!hasSavedGraphics()&&graphics.quality!=='low'){try{const gl=view.renderer.getContext(),dbg=gl.getExtension('WEBGL_debug_renderer_info'),name=dbg?gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER);if(isSoftwareRenderer(name)){graphics={...graphics,quality:'low'};view.applyQuality('low');}}catch{}}
  globalThis.__splashStep?.('Growing the first hole',.3);
