@@ -16100,6 +16100,25 @@ own milliseconds, the trees' re-sort's, and the main draw's within the
 frame's draw call -- whether the 200 ms is the painting's own script, or
 the next draw waiting on the chip.
 
+**Seen** (10:32, build 593de27c, hole 9; the owner: "Trees from above look
+good. Honestly fly mode on mobile won't be that useful but we are in a good
+spot regardless"). **The hitch is the painting's own call**: "painted 512 m
+(269 ms) ... of it the main draw 1 ms", 216, 184, 79 ms; "painted 128 m"
+86-133 ms. The trees' re-sort 0-4 ms, the main draw 1-4 ms. Both squares
+are 1,024 texels a side, so the cost goes with the texels painted, whatever
+the ground drawn (the coarser ground of 78935925 made no difference). The
+flyover with the flight rule: 28-46 a second (was 20-35), its busiest frame
+2.5 M triangles (was 4.6). Play at the cap 25-29.
+
+Built after it, not run: *a square painted a band a frame* (renderer.js
+`paintGroundStrip`; `BAKE.strips` 8 for a near square, 16 for the course's,
+PLACED): each band draws only the ground squares that reach it into its
+rows of the picture (the target's viewport and scissor), mipmaps after the
+last; a near square paints into a spare picture swapped in when done (16 MB
+more on the phone), so no half-painted picture is drawn; the course's
+square, repainted only when the sun turns or a cue changes, paints in
+place. Expected: the 100-270 ms spread over eight frames as 15-35 ms each.
+
 Already right on Phone: no bloom,
 god rays, clouds, mist, cascades or tree mirror; tone mapping in the
 materials, no extra pass; no logarithmic depth; highp kept (no evidence
