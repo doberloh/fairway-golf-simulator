@@ -1139,7 +1139,7 @@ export class GolfView{
  disposeCourse(){this.pendingFurniture=[];if(!this.group)return;
   // The Phone tier's painted ground (buildGroundBake): its pictures, the
   // meshes it paints with and its own material, none of them in the group.
-  if(this.groundBake){const B=this.groundBake;for(const s of B.squares)s.rt.dispose();for(const m of B.meshes.values())m.geometry.dispose();B.full?.geometry.dispose();B.material.dispose();this.groundBake=null;}
+  if(this.groundBake){const B=this.groundBake;for(const s of B.squares){s.rt.dispose();s.spare?.dispose();}for(const m of B.meshes.values())m.geometry.dispose();B.full?.geometry.dispose();B.material.dispose();this.groundBake=null;}
   this.mirror?.dispose();this.mirror=null;if(this.mirrorUniforms){this.mirrorUniforms.mirrorMap.value=null;this.mirrorUniforms.mirrorOn.value=0;}const geometries=new Set(),materials=new Set(),textures=new Set();this.group.traverse(o=>{if(o.isInstancedMesh)o.dispose();o.shadow?.dispose();if(o.geometry)geometries.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])materials.add(m);});for(const m of materials){for(const v of Object.values(m))if(v?.isTexture)textures.add(v);for(const u of Object.values(m.uniforms||{}))if(u?.value?.isTexture)textures.add(u.value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();for(const r of this.resources)r.dispose();this.resources=[];this.csm?.dispose();this.csm=null;this.cloudUniforms=null;this.clouds?.dispose();this.clouds=null;this.mistUniforms=null;this.godRays?.dispose();this.godRays=null;this.bloom?.dispose();this.bloom=null;this.sky=null;this.skyMaterial=null;this.propRamp=null;this.envScene=null;this.environment?.dispose();this.environment=null;this.scene.environment=null;this.cull=null;this.groundLod=null;this.scene.remove(this.group);}
  build(world,style='cartoon',holeIndex=0){
   style='cartoon';
@@ -3564,8 +3564,14 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   if(!G||!this.quality?.groundBake)return;
   const target=texels=>{const rt=new T.WebGLRenderTarget(texels,texels,{depthBuffer:false,generateMipmaps:true,minFilter:T.LinearMipmapLinearFilter,magFilter:T.LinearFilter,wrapS:T.ClampToEdgeWrapping,wrapT:T.ClampToEdgeWrapping});rt.texture.anisotropy=this.quality.anisotropy??1;return rt;};
   const course=courseSquare(G.grid.halfX,G.grid.halfZ);
-  const squares=[...BAKE.levels.map(size=>({size,rt:target(BAKE.texels),painted:null,want:null,dirty:false})),
+  // A near square has a spare picture, painted a band a frame and swapped in
+  // when done (paintGroundStrip); the course's square paints in place.
+  const squares=[...BAKE.levels.map(size=>({size,rt:target(BAKE.texels),spare:target(BAKE.texels),painted:null,want:null,dirty:false})),
    {size:course.size,rt:target(BAKE.courseTexels),painted:null,want:{x:course.x,z:course.z},dirty:false,course:true}];
+  // Every picture set up now, its mipmaps' storage with it: a spare first set
+  // up by a band painted with its mipmaps off (paintGroundStrip) would be
+  // stored with one level and drawn black once swapped in.
+  for(const sq of squares)for(const t of [sq.rt,sq.spare])if(t)this.renderer.initRenderTarget?.(t);
   const rects=squares.map(()=>new T.Vector4(0,0,1,0));
   const uniforms={bake0:{value:squares[0].rt.texture},bake1:{value:squares[1].rt.texture},bake2:{value:squares[2].rt.texture},bake3:{value:squares[3].rt.texture},bakeRect:{value:rects},bakePin:{value:new T.Vector2(1e9,1e9)}};
   const material=new T.MeshToonMaterial({color:'#ffffff',gradientMap:toonRamp(this)});
@@ -3588,7 +3594,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   const standGeo=new T.BufferGeometry();standGeo.setAttribute('position',new T.BufferAttribute(new Float32Array(9),3));standGeo.setAttribute('normal',new T.BufferAttribute(new Float32Array([0,1,0,0,1,0,0,1,0]),3));
   const standIn=new T.Mesh(standGeo,material);standIn.frustumCulled=false;standIn.visible=false;standIn.receiveShadow=true;standIn.name='painted ground stand-in';
   this.group.add(standIn);this.standIns.push(standIn);
-  this.groundBake={squares,rects,uniforms,material,camera,scene:new T.Scene(),meshes:new Map(),full:null,on:this.groundBakeOn!==false,last:-Infinity,sun:this.sunDir?.clone()??null,prev:null};
+  this.groundBake={squares,rects,uniforms,material,camera,scene:new T.Scene(),meshes:new Map(),full:null,job:null,on:this.groundBakeOn!==false,last:-Infinity,sun:this.sunDir?.clone()??null,prev:null};
  }
  // On or off (the Phone tier's Graphics switch, and Measure this device's
  // "ground without the bake"): the squares change program, nothing rebuilds.
@@ -3615,7 +3621,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
  // coarse grid can stand a metre or two off the ground at worst (the
  // squares' `error`); what is painted by height alone (the beach line,
  // banding, contours) can shift that much in the far pictures.
- groundBakeMeshes(s,at){
+ groundBakeMeshes(s,at,band=null){
   const B=this.groundBake,G=this.groundLod,texel=s.size/(s.course?BAKE.courseTexels:BAKE.texels);
   const mesh=index=>{const g=new T.BufferGeometry();for(const [name,a] of Object.entries(G.attrs))g.setAttribute(name,a);g.setIndex(index);const m=new T.Mesh(g,this.terrain.material);m.frustumCulled=false;m.matrixAutoUpdate=false;return m;};
   // (Strictly under: the 512 m square's 50 cm texels make 1.5 m, which is
@@ -3630,17 +3636,37 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
    if(node.level!==level)continue;
    const b=groundNodeBox(G.grid,node);
    if(b.x1<at.x-h||b.x0>at.x+h||b.z1<at.z-h||b.z0>at.z+h)continue;
+   // A band of the square (paintGroundStrip): only the squares that reach it.
+   if(band&&(b.z1<band.z0||b.z0>band.z1))continue;
    const key=fine?node:node.coarse;
    let m=B.meshes.get(key);if(!m){m=mesh(new T.BufferAttribute(fine?node.fine:node.coarse,1));B.meshes.set(key,m);}
    out.push(m);
   }
   return out;
  }
- paintGroundSquare(i){
+ // A SQUARE PAINTED A STRIP A FRAME (the iPhone watch, 15 November 2026:
+ // "painted 512 m (269 ms) ... of it the main draw 1 ms"; the 128 m square
+ // 86-133 ms: both 1,024 texels square, so the cost is the texels). A job
+ // paints its square in BAKE.strips bands, one a frame, each drawing only the
+ // ground squares that reach its band; a near square paints into its spare
+ // picture and the two swap when the last band is done, so a half-painted
+ // picture is never drawn. The course's square, repainted only when the sun
+ // turns or a cue changes, paints in place: the change between two of its
+ // bands is the sun's two degrees. A square never painted (the first frame,
+ // behind the loading screen) is painted whole at once.
+ startGroundPaint(i){
+  const B=this.groundBake,s=B.squares[i];
+  B.job={i,at:{...s.want},k:0,n:s.painted?(s.course?BAKE.courseStrips:BAKE.strips):1,target:s.painted&&s.spare?s.spare:s.rt};
+ }
+ paintGroundStrip(){
   const p0=performance.now();
-  const B=this.groundBake,s=B.squares[i],at=s.want,r=this.renderer,m=this.terrain.material,cues=m.userData.cues;
-  B.scene.clear();for(const mesh of this.groundBakeMeshes(s,at))B.scene.add(mesh);
-  const cam=B.camera,h=s.size/2;cam.left=-h;cam.right=h;cam.top=h;cam.bottom=-h;cam.position.set(at.x,5000,at.z);cam.lookAt(at.x,0,at.z);cam.updateProjectionMatrix();cam.updateMatrixWorld();
+  const B=this.groundBake,job=B.job,s=B.squares[job.i],at=job.at,r=this.renderer,m=this.terrain.material,cues=m.userData.cues;
+  const rt=job.target,T0=rt.width,rows=Math.ceil(T0/job.n),y0=job.k*rows,band=Math.min(rows,T0-y0),last=job.k+1>=job.n;
+  // The band's own slice of the square, in metres (v runs along -z: ground-bake.js bakeUV).
+  const h=s.size/2,b0=-h+s.size*y0/T0,b1=-h+s.size*(y0+band)/T0;
+  B.scene.clear();
+  for(const mesh of this.groundBakeMeshes(s,at,{z0:at.z-b1,z1:at.z-b0}))B.scene.add(mesh);
+  const cam=B.camera;cam.left=-h;cam.right=h;cam.bottom=b0;cam.top=b1;cam.position.set(at.x,5000,at.z);cam.lookAt(at.x,0,at.z);cam.updateProjectionMatrix();cam.updateMatrixWorld();
   // The sheen looks at the camera, which here is straight overhead: left out.
   const sheen=cues?.cueSheen?.value;if(cues?.cueSheen)cues.cueSheen.value=0;
   m.defines={...m.defines,GROUND_BAKE:1};m.needsUpdate=true;
@@ -3650,17 +3676,26 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   const bake=m.userData.bake;bake?.eye.value.copy(this.camera.position);
   const rough=bake?.rough,enc=v=>encodeTurf(v),fill=rough?new T.Color().setRGB(enc(rough.r),enc(rough.g),enc(rough.b),T.LinearSRGBColorSpace):new T.Color(0,0,0);
   const was=r.getRenderTarget(),clear=r.getClearColor(new T.Color()),alpha=r.getClearAlpha();
-  try{r.setClearColor(fill,1);r.setRenderTarget(s.rt);r.clear(true,false,false);r.render(B.scene,cam);}
+  // Only the band: the target's viewport and scissor (three takes both from
+  // a render target), and its mipmaps made once, after the last band.
+  rt.viewport.set(0,y0,T0,band);rt.scissor.set(0,y0,T0,band);rt.scissorTest=true;rt.texture.generateMipmaps=last;
+  try{r.setClearColor(fill,1);r.setRenderTarget(rt);r.clear(true,false,false);r.render(B.scene,cam);}
   finally{
+   rt.viewport.set(0,0,T0,T0);rt.scissor.set(0,0,T0,T0);rt.scissorTest=false;rt.texture.generateMipmaps=true;
    r.setRenderTarget(was);r.setClearColor(clear,alpha);
    const d={...m.defines};delete d.GROUND_BAKE;m.defines=d;m.needsUpdate=true;
    if(cues?.cueSheen)cues.cueSheen.value=sheen;
   }
-  s.painted={x:at.x,z:at.z};s.dirty=false;B.rects[i].set(at.x,at.z,s.size,1);
-  this.frameWork.paints.push(s.course?'course':`${s.size} m`);this.frameWork.paintMs+=performance.now()-p0;
+  job.k++;
+  if(job.k>=job.n){
+   // Done: a near square's spare becomes its picture.
+   if(job.target===s.spare){const shown=s.rt;s.rt=s.spare;s.spare=shown;B.uniforms['bake'+job.i].value=s.rt.texture;}
+   s.painted={x:at.x,z:at.z};s.dirty=false;B.rects[job.i].set(at.x,at.z,s.size,1);B.job=null;
+  }
+  this.frameWork.paints.push((s.course?'course':s.size+' m')+(job.n>1?' '+job.k+'/'+job.n:''));this.frameWork.paintMs+=performance.now()-p0;
  }
  // Every frame, before the shadow is scheduled: where the near squares want
- // to be, which one (if any) to repaint, and the cup.
+ // to be, the band of a job under way or the next square to repaint, and the cup.
  updateGroundBake(){
   const B=this.groundBake;if(!B||!B.on)return;
   if(this.rangeProps){this.setGroundBake(false,false);return;}
@@ -3670,11 +3705,15 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   if(this.sunDir&&!B.sun)B.sun=this.sunDir.clone();
   if(this.sunDir&&B.sun.angleTo(this.sunDir)*180/Math.PI>BAKE.sunTurn){for(const s of B.squares)s.dirty=true;B.sun.copy(this.sunDir);}
   for(let i=0;i<BAKE.levels.length;i++)B.squares[i].want=levelCenter(c,f,B.squares[i].size);
-  for(let n=0;n<B.squares.length;n++){
+  // A job under way: its next band. Otherwise squares never painted, all at
+  // once (the first frame); then a new job, its first band now.
+  if(B.job)this.paintGroundStrip();
+  else for(let n=0;n<B.squares.length;n++){
    const i=pickRepaint(B.squares,{now,last:B.last,speed});
    if(i<0)break;
    const first=!B.squares[i].painted;
-   this.paintGroundSquare(i);B.last=now;
+   this.startGroundPaint(i);B.last=now;
+   this.paintGroundStrip();
    if(!first)break;
   }
   const pin=this.course?.worldPin;if(pin)B.uniforms.bakePin.value.set(pin.x,pin.z);

@@ -38,6 +38,8 @@ export const BAKE = Object.freeze({
  fast: 10,                  // m/s: past it the finest square is not repainted
  sunTurn: 2,                // degrees of sun before everything is repainted
  edge: .06,                 // the share of a square's half-width blended into the next
+ strips: 8,                 // bands a near square is repainted in, one a frame
+ courseStrips: 16,          // and the course's square
 });
 // PLACED, every number above: the sizes from the arithmetic in this file's
 // head, the rest to be read on the phone (Measure this device's "ground

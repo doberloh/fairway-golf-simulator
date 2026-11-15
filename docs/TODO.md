@@ -190,8 +190,14 @@ wrong, unfinished, or owed a check.
   a crown a full screen tall; the recorder times the paint, the re-sort and
   the main draw apart. **To check:** a Watch after three minutes' play --
   the flyover's last 20 s, how the trees look from the flyover, and which
-  part of a hitch the milliseconds name. Holding 45 sustained needs about
-  half the sustained frame cut.
+  part of a hitch the milliseconds name. **Seen** (10:32): the owner, the
+  trees from above "look good"; the hitch is the painting's own call (512
+  m 79-269 ms, 128 m 86-133), the main draw 1-4 ms; the flyover 28-46.
+  **Step fifteen, built and not seen:** a picture repainted a band a frame
+  into a spare and swapped in. **To check:** a Watch after three minutes'
+  play -- the slowest frames under 100 ms; the ground looks right after
+  repaints (no black or half-painted squares). Holding 45 sustained needs
+  about half the sustained frame cut.
 - [ ] **A smoke run before the phone-performance branch merges** (the
   recorder in main.js runs every frame on every tier: the first change on
   the branch that does). Ask the owner; it uses the graphics card.

@@ -56,3 +56,17 @@ test('the colour survives eight bits, a little over 1 included', () => {
  assert.match(glsl, /2\.\*s\.rgb\*s\.rgb/, 'the shader reads it back the same way');
  assert.match(glsl, /discard/, 'and cuts the cup');
 });
+
+// A SQUARE PAINTED A STRIP A FRAME (renderer.js paintGroundStrip): the bands
+// tile a picture exactly, in whole rows, and a near square's are few enough
+// that a repaint lasts a fraction of a second at 30 frames a second.
+test('the bands tile each picture in whole rows', () => {
+ for (const [texels, strips] of [[BAKE.texels, BAKE.strips], [BAKE.courseTexels, BAKE.courseStrips]]) {
+  assert.equal(texels % strips, 0, `${texels} texels in ${strips} bands`);
+  const rows = Math.ceil(texels / strips);
+  let covered = 0;
+  for (let k = 0; k < strips; k++) covered += Math.min(rows, texels - k * rows);
+  assert.equal(covered, texels);
+ }
+ assert.ok(BAKE.strips / 30 < .5, 'a near repaint done within half a second at 30');
+});
