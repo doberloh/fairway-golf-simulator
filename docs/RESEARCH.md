@@ -15975,6 +15975,34 @@ owner's cap of 30, lifted for the watch; probes sized to 512 math passes
   the loading screen on every tier (renderer.js `ready`), so the phone's
   few in play are to be named before any are built ahead.
 
+**The painted ground on the iPhone** (15 November 2026, 09:23 and 09:26,
+build 27aff2a3, Safari from the home screen, Cascade View Forest hole 7,
+painted ground on, cap 30; a Measure and then a Watch).
+
+- **The ground is now almost free.** Measure, slow state: at the tee no
+  ground saved 1 ms of 29 (it was about 15 before); from 250 m up no
+  ground -2%, plain paint +2%, and **the ground without the bake +27%** --
+  the picture costs what plain paint does. Its first round in the hold
+  read 29 ms as drawn against 28 with no ground.
+- **Slow-state frames hold 30, uncapped.** The watch's probed phase and
+  the stretches after the 1 and 3 s rests read 29-30 frames a second with
+  the cap lifted, where the first watch (04:43) read 25-27 and 21-22. (On
+  a 60 Hz display a frame of 17 to 33 ms shows as 30.) Fast after the 6 s
+  rest: 60 for about 15 s, as before; the processor probe never moved.
+- **Play before the tap**, at the cap of 30: 22 to 30 a second, mostly 24
+  to 28 (the first watch: 28-30 for 40 s, then 17-25); slowest gaps 49 to
+  268 ms in each ten seconds.
+- **What is left:** the trees and plants (-49% from 250 m up, slow; -24% at
+  the tee) and, in play, hitches. The flyover's last 20 s fell to 17-20 as
+  before. The recorder named programs built in play: the ground's squares
+  ("ground, coarse / fine / mid") at a new hole and once mid-play -- the
+  painted ground's program, which is not in the scene when the loading
+  screen's warm-ups run (renderer.js `ready`), so any change of lighting
+  state builds its version on the spot; "Living rough" once in the
+  flyover; two unnamed ones that are the benchmark's own (plain paint, the
+  probes).
+- The owner thinks the PC's graphics card trouble is fixed (15 November).
+
 Already right on Phone: no bloom,
 god rays, clouds, mist, cascades or tree mirror; tone mapping in the
 materials, no extra pass; no logarithmic depth; highp kept (no evidence
