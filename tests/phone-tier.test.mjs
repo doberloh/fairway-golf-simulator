@@ -36,6 +36,11 @@ test('the Phone tier spends on geometry: the hole\'s trees, shadows from the twi
  // Trees kept whatever the view only close by (instance-cull.js `near`).
  assert.ok(p.cullNear > 0 && p.cullNear < 60, `phone keeps a ${p.cullNear} m ring`);
  for (const q of QUALITY) assert.equal(TIERS[q].cullNear, undefined, `${q} keeps the 60 m ring`);
+ // The fifth run's two levers: half the grass round the camera, the far
+ // versions from twice Medium's lines.
+ assert.ok(p.nearGrass > 0 && p.nearGrass < 1);
+ for (const q of QUALITY) assert.equal(TIERS[q].nearGrass, undefined, `${q} keeps all its grass`);
+ assert.ok(p.farPainted > m.farPainted && p.farTrees > m.farTrees);
  for (const q of QUALITY) assert.ok(!TIERS[q].groundSquares, `${q} keeps its ground as it was`);
  assert.equal(p.pixelRatio, m.pixelRatio, 'Medium\'s pixels: the owner finds fewer a blurry mess');
  assert.equal(p.cascades, 0);

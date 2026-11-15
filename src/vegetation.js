@@ -1150,7 +1150,9 @@ function addNearbyGrass(view){
   // afterwards: that was two throwaway objects per surviving blade, about 2500 a
   // tile. The mesh is allocated for every candidate and its count pulled back to
   // what survived, which is the only way round needing the total up front.
-  const rng=random(w.seed+':grass:'+key),count=biomeOf(w.settings.biome).scatter.tufts;
+  // `nearGrass` (graphics.js; the Phone tier): a share of the candidates, the
+  // first of the same seeded draw, so what is left stands where it stood.
+  const rng=random(w.seed+':grass:'+key),count=Math.round(biomeOf(w.settings.biome).scatter.tufts*(view.quality?.nearGrass??1));
   const mesh=new T.InstancedMesh(geometry,material,count);
   let kept=0;
   // ROUGH ONLY. The semi-rough used to carry blades too, at 3.5 cm -- stubble

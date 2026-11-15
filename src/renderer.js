@@ -1012,6 +1012,10 @@ export class GolfView{
  // tree's sway then step at a quarter of the frame rate. Other tiers: every frame.
  // Low and Phone leave out the animals and the course's markings, and step the light ones at 30 a second.
  lightTier(){return this.quality===tierOf('low')||this.quality===tierOf('phone');}
+ // THE PLAINEST PAINT, for Measure this device's what-ifs (main.js benchHide):
+ // no light, no shadow, no wind, a vertex's own colour or one green. Two
+ // materials for the view's life, compiled the first time a run asks.
+ plainPaint(vertexColors){const k=vertexColors?'v':'g';this.plainMats??={};return this.plainMats[k]??=new T.MeshBasicMaterial(vertexColors?{vertexColors:true}:{color:'#5b8a3c'});}
  scheduleSunShadow(){
   const s=this.sun?.shadow,every=this.quality.shadowEvery??1;
   if(!s||this.csm||!this.sun.castShadow)return;

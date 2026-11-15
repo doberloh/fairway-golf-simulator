@@ -4010,18 +4010,24 @@ function benchHide(part){
  if(part==='shadows'){const s=view.renderer.shadowMap,was=s.autoUpdate;s.autoUpdate=false;s.needsUpdate=false;return()=>{s.autoUpdate=was;s.needsUpdate=true;};}
  if(part==='pixels'){const was=view.resolutionScale??1;view.setResolutionScale(was*Math.SQRT1_2);return()=>view.setResolutionScale(was);}
  if(part==='bare'){const a=benchHide('planting'),b=benchHide('ground');return()=>{b();a();};}
- // The what-ifs (device-bench.js): the cull's live tuning, put back after.
- if(part==='nearAll'||part==='twins'){
+ const planting=o=>o.isInstancedMesh&&(o.userData.cullTotal!==undefined||['shadow twin','far trees','fading trees'].includes(o.name));
+ // The what-ifs (device-bench.js), put back after. Every tree past the near
+ // ring as its far version: the cull's live tuning (instance-cull.js `tune`).
+ if(part==='twinsAll'){
   const c=view.cull;if(!c)return()=>{};
-  const was=c.tune();
-  // Twice the tier's own lines; `was` holds the lab's override, if any.
-  const q=view.quality,fp=was.farPainted??q.farPainted??0,ft=was.farTrees??q.farTrees??0;
-  c.tune(part==='nearAll'?{near:60}:{farPainted:Math.max(.05,2*fp),farTrees:Math.max(.05,2*ft)});
-  return()=>c.tune({near:was.near,farPainted:was.farPainted,farTrees:was.farTrees});
+  const was=c.tune();c.tune({farPainted:100,farTrees:100});
+  return()=>c.tune({farPainted:was.farPainted,farTrees:was.farTrees});
  }
- if(part==='grass'){const g=view.group.getObjectByName('Living rough');if(!g?.visible)return()=>{};g.visible=false;return()=>{g.visible=true;};}
- const test={planting:o=>o.isInstancedMesh&&(o.userData.cullTotal!==undefined||['shadow twin','far trees','fading trees'].includes(o.name)),
-  ground:o=>o.name==='Continuous ground',farGround:o=>o.name==='Far ground',farTrees:o=>o.name==='Far trees'}[part];
+ // The plainest paint (renderer.js `plainPaint`): the shapes drawn as they
+ // are, their shading gone. The shadow maps keep their own materials.
+ if(part==='plainTrees'||part==='plainGround'){
+  const swapped=[];
+  const paint=o=>{const one=m=>view.plainPaint(!!o.geometry.attributes.color);swapped.push([o,o.material]);o.material=Array.isArray(o.material)?o.material.map(one):one();};
+  if(part==='plainTrees')view.group.traverse(o=>{if(planting(o))paint(o);});
+  else view.group.traverse(o=>{if(o.isMesh&&(o.name==='Continuous ground'||o.parent?.name==='Continuous ground'))paint(o);});
+  return()=>{for(const [o,m] of swapped)o.material=m;};
+ }
+ const test={planting,ground:o=>o.name==='Continuous ground',farGround:o=>o.name==='Far ground',farTrees:o=>o.name==='Far trees'}[part];
  const off=[];
  if(test)view.group.traverse(o=>{if(o.visible&&test(o)){o.visible=false;off.push(o);}});
  return()=>{for(const o of off)o.visible=true;};

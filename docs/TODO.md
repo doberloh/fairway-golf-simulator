@@ -91,10 +91,16 @@ wrong, unfinished, or owed a check.
   but both began slow; the trees and plants 52 to 58% at the tee, the ground
   19%, the floor under both 13 ms. **Step four, built and not seen on the
   phone:** trees kept whatever the view only within 15 m (`cullNear`), and
-  three what-if rows in the benchmark (no grass, the old 60 m ring, far
-  versions twice as near). **To check:** its "as drawn" against 48 ms, and
-  which what-if pays. Hiding the options waits until its figures are good.
-  No Android to test on.
+  three what-if rows in the benchmark. **Seen** (01:52): the tee 45 ms, the
+  ring worth about 13%; no grass round the camera -8%, far versions twice
+  as near -6%; the trees and the ground cost more than their triangles.
+  **Step five, built and not seen on the phone:** half the grass round the
+  camera (`nearGrass`) and the far versions from twice as near, and three
+  new what-ifs (far versions past the ring, the trees and the ground in
+  plain paint). **To check:** its "as drawn" against 45 ms; whether plain
+  paint pays enough to build a cheaper phone shading for trees or ground.
+  Hiding the options waits until its figures are good. No Android to test
+  on.
 
 - [ ] **A friend's challenge can throw as its round starts, now and then**
   (12 November 2026, the 0.9.14 smoke run: `friend-challenge` failed once in

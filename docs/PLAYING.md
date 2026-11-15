@@ -1025,8 +1025,9 @@ opens (an iPhone, or an Android phone; not an iPad or a tablet). It draws every
 tree of the hole you are playing and round your ball, and fewer the further off
 they are; its shadows are cast by the trees' lighter far versions and redrawn
 a few times a second rather than every frame, so a shadow can lag a moving ball
-a little; the ground away from you is coarser; there are no animals or course
-markings. Automatic resolution starts off. Settings, Graphics still offers the
+a little; trees switch to their lighter far versions sooner; the ground away
+from you is coarser; the grass round you is half as thick; there are no
+animals or course markings. Automatic resolution starts off. Settings, Graphics still offers the
 other four for the rest of that session.
 
 **Measure this device**, under the same heading, is for a game that runs
@@ -1035,10 +1036,10 @@ stands the camera at four places on the hole you are on -- the tee, the
 fairway, the green and 250 m up -- for about a minute, however slow the
 game is running. At the tee
 and from above it switches parts of the picture off one at a time: the trees
-and plants, the course's ground, both of those together, the grass round the
-camera, the far ground, the shadows' redraw, and half the pixels -- and tries
-two other ways of drawing the trees (all of them kept for 60 m round the
-camera, and their far versions from twice as near). Then it puts the camera
+and plants, the course's ground, both of those together, and half the
+pixels -- and tries three other ways of drawing (every tree past the few
+metres round the camera as its far version, and the trees, then the
+ground, in plain unlit colours). Then it puts the camera
 back. Nothing about the round changes: no hole is skipped and no shot is
 played. Copy diagnostic then carries a table of what it found: frames a
 second, the slowest frame, how long each frame's work took and how much of

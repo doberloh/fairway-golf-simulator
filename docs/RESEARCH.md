@@ -15521,6 +15521,49 @@ row puts the old ring back for a direct comparison. The same run tries no
 grass round the camera, and the far versions from twice as near (the tier's
 0.25 and 0.15 of the screen's height to 0.5 and 0.3).
 
+**The 15 m ring on the iPhone** (15 November 2026, 01:52, build acf3470c,
+Safari from the home screen, Cascade View Forest hole 1; play before it 20
+frames a second). Work ms at the tee, with the whole either side about 42:
+
+| reading | tee work | vs whole | triangles | 250 m up | vs whole |
+|---|---|---|---|---|---|
+| as drawn | 45 | | 2.7 M | 35 | |
+| no trees or plants | 22 | -50% | 0.5 M | 22 | -37% |
+| no course ground | 32 | -25% | 2.6 M | 27 | -23% |
+| no trees, plants or ground | 12 | -71% | 0.2 M | 13 | -63% |
+| no grass round the camera | 39 | -8% | 2.6 M | 36 | +3% |
+| trees kept all round to 60 m | 49 | +15% | 4.8 M | 38 | +10% |
+| far versions twice as near | 40 | -6% | 2.4 M | 34 | -1% |
+| no far ground | 47 | +9% | 2.8 M | 33 | -4% |
+| shadows not redrawn | 42 | -1% | 2.7 M | 32 | -9% |
+| half the pixels | 36 | -14% | 2.8 M | 27 | -23% |
+
+The tee re-read at 78 s: 42 ms. Fairway 44, green 51.
+
+- **The ring paid about 13% at the tee** (49 against 42.5 with the 60 m
+  ring put back), and dropped 2.1 M triangles of 4.8. The heaviest things
+  at the tee are now the grass round the camera (36,536 clumps, 0.8 M), the
+  4,024 far versions (0.7 M) and the ground's squares (0.6 M); the near
+  Douglas firs 24 held, from 49.
+- **The trees cost far more than their triangles.** The 2.1 M triangles the
+  ring dropped were mostly behind the camera, where a triangle costs only
+  its corners, never its pixels: about 3 ms a million. The trees and plants
+  in view, 2.2 M triangles, cost 22 ms. Likewise the ground, 11 ms on about
+  0.3 M triangles drawn. So most of what the trees and the ground cost is
+  probably their shading, how each pixel of them is lit and coloured -- not
+  shown yet, since half the pixels saved only 14% at the tee (23% from
+  above), less than shading alone would predict.
+- **Taken into the Phone tier:** half the grass round the camera
+  (`nearGrass: .5`, -8% for all of it) and the far versions from twice
+  Medium's lines (`farPainted .5`, `farTrees .3`, -6%). **Next run's
+  what-ifs:** every tree past the ring as its far version (the most the far
+  versions can give), and the trees, then the ground, in the plainest paint
+  (renderer.js `plainPaint`: no light, no shadow, no wind; the far versions'
+  cut-out cards drawn solid) -- what their shading costs against their
+  shapes. Not measured: whether the dissolve between a tree and its far
+  version costs on this chip; it draws only on trees crossing the line
+  (instance-cull.js *THE DISSOLVE ONLY WHERE SOMETHING DISSOLVES*).
+
 **Measure this device on the PC, for comparison** (14 November 2026; the
 capture build, Classic Parkland seed "overhaul", hole 1, Medium, 1,600 by
 900 at density 1, frames capped by the display at 60; tools/variants/

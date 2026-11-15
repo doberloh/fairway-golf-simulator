@@ -211,8 +211,9 @@ export const TIERS = {
   shadowBias: {normal: .4, constant: -.0002, flood: .15},
   cascades: 0, shadowFar: 0, overviewShadowFar: 0,
   thinShadowsFrom: 0,
-  farTrees: .15,
-  farPainted: .25,
+  // Twice Medium's lines, which it had (the fifth run, below at `nearGrass`).
+  farTrees: .3,
+  farPainted: .5,
   groundTolerance: 6,
   groundSquares: true,
   // Trees kept whatever the view only within 15 m of the camera, not 60
@@ -222,6 +223,11 @@ export const TIERS = {
   // triangles a crown -- many in the 60 m ring kept behind the camera, which
   // an upright phone's 28-degree view never shows. PLACED: 15 m.
   cullNear: 15,
+  // The fifth run (15 November, the 15 m ring): no grass round the camera
+  // saved 8% of the tee's work (the heaviest thing held there: 36,536 clumps,
+  // 0.8 M triangles), the far versions from twice as near 6%. Both taken, at
+  // half the grass and the doubled lines. PLACED: to be read on the phone.
+  nearGrass: .5,
   thinTrees: true,
   understory: .25,
   longGrassReach: 90,

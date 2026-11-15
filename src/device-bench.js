@@ -62,18 +62,19 @@ export const BENCH_PARTS = Object.freeze([
  // Both at once: the floor under everything else, what no thinning of the
  // trees or the ground can go below (the second iPhone run, 15 November).
  {id: 'bare', label: 'no trees, plants or ground'},
- // WHAT-IFS (the fourth run, 15 November): not a part taken away but the next
- // levers tried, so one run prices them. The grass round the camera (it is
- // not in the planting above); the trees kept whatever the view within 60 m
- // as every other tier does (the Phone tier keeps 15: a cheaper "as drawn"
- // here is what that bought); the trees' far versions from twice as near.
- {id: 'grass', label: 'no grass round the camera'},
- {id: 'nearAll', label: 'trees kept all round to 60 m'},
- {id: 'twins', label: 'far versions twice as near'},
- {id: 'farGround', label: 'no far ground'},
- // (The far trees, which read 0 to 9% either way on the iPhone, are no
- // longer taken apart: a shorter run.)
- {id: 'shadows', label: 'shadows not redrawn'},
+ // WHAT-IFS: not a part taken away but a lever tried, so one run prices it.
+ // The fifth run (15 November) priced the grass round the camera (-8% at the
+ // tee), the old 60 m ring (+15%) and the far versions from twice as near
+ // (-6%), the far ground (0 to -9%) and the shadows' redraw (0 to -9%); those
+ // rows are gone, the Phone tier took what paid. It also found the trees and
+ // the ground dearer than their triangles: 2 M more triangles behind the
+ // camera cost about 6 ms, the trees in view 22. So now: every tree past the
+ // near ring as its far version, and the trees, then the ground, drawn in the
+ // plainest paint there is (no light, no wind, one colour a vertex) -- what
+ // their shading costs, against what their shapes do.
+ {id: 'twinsAll', label: 'far versions past the ring'},
+ {id: 'plainTrees', label: 'trees in plain paint'},
+ {id: 'plainGround', label: 'ground in plain paint'},
  {id: 'pixels', label: 'half the pixels'},
 ]);
 
