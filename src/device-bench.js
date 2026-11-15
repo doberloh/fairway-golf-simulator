@@ -86,10 +86,12 @@ export const BENCH_PARTS = Object.freeze([
  // loop skipped, the mowing (stripes, diamonds, laps, divots) skipped, the
  // ground types' and far ring's painting skipped. Only the first is exact;
  // the others change what the ground looks like and are prices, not plans.
- {id: 'groundFull', label: 'ground without the bunker skip'},
- {id: 'groundNoHazards', label: 'ground without hazards'},
- {id: 'groundNoMowing', label: 'ground without mowing'},
- {id: 'groundNoLayers', label: 'ground without ground types'},
+ // The eighth run (03:25, 250 m up, slow): the skip +2%, no hazards -4%, no
+ // mowing -2%, no ground types -2%, plain paint -35% -- no one part is the
+ // cost; those rows are gone. The ninth reads the Phone tier's painted ground
+ // (ground-bake.js) against the painter it replaces, and plain paint stays as
+ // the most there is to gain.
+ {id: 'groundUnbaked', label: 'ground without the bake'},
  {id: 'plainGround', label: 'ground in plain paint'},
  {id: 'pixels', label: 'half the pixels'},
 ]);

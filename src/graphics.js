@@ -20,6 +20,10 @@ export const FRAME_CAPS = [0, 30, 60, 120, 144];
 // starts on it every time the game opens (main.js, `isPhoneDevice`), its
 // picker offers it first, and no other machine is offered it.
 export const PHONE = 'phone';
+// A phone's frame cap every time the game opens (main.js `phoneDevice`): 30,
+// one of FRAME_CAPS. Apple: "stay at 30 frames per second if you cannot
+// sustain 60 for ten minutes or more" (WWDC18 612; RESEARCH).
+export const PHONE_FRAME_CAP = 30;
 // A phone, from what the browser says it is: an iPhone or iPod, or Android
 // with "Mobile" (an Android tablet leaves it out). An iPad is not a phone: it
 // says it is a Mac and keeps the four tiers (PLACED). Read once at boot, never
@@ -222,6 +226,12 @@ export const TIERS = {
   // First, savings that change no pixel: a bunker too far off to touch a
   // pixel is skipped.
   phoneGround: true,
+  // And the ground painted into pictures round the camera and drawn from them
+  // by a small program (ground-bake.js; the owner, 15 November 2026): the
+  // eighth run found no one part of the painter its cost, the whole program
+  // was; plain paint saved 33 to 39% of the sustained frame. A Graphics switch
+  // on a phone turns it off (`groundBake` in the saved settings).
+  groundBake: true,
   // Trees kept whatever the view only within 15 m of the camera, not 60
   // (instance-cull.js `near`). The third and fourth iPhone runs (15 November):
   // the chip's wait was 43 to 50 of a 48 to 55 ms frame, the trees and plants
@@ -542,6 +552,9 @@ const clean = g => ({
  stripes: cueValue(g, 'stripes'),
  sheen: cueValue(g, 'sheen'),
  terrainShadows: bool(g?.terrainShadows, true),
+ // The Phone tier's painted ground (ground-bake.js), on unless turned off; no
+ // other tier reads it.
+ groundBake: bool(g?.groundBake, true),
  reflections: bool(g?.reflections, true),
  // AUTOMATIC RESOLUTION (F4, auto-resolution.js): on by default, because the
  // player who needs it most -- on a phone, or a laptop with no graphics card --

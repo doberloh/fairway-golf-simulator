@@ -139,10 +139,19 @@ wrong, unfinished, or owed a check.
   at the cap of 30: 28-30 for 40 s, then 17-25. The flip is the graphics
   chip alone (the processor probe never moved), fast after a rest (6 s of
   nothing drawn gave 60 for 15 s; 1 and 3 s did not) and slow under steady
-  load: a power budget, by its shape. **Next, the owner's call:** the baked
-  ground on Phone (the sustained frame's largest piece), a 30 cap as the
-  Phone default, programs built ahead of play. Holding 45 sustained needs
-  about half the sustained frame cut.
+  load: a power budget, by its shape. **Step ten, built and not seen on the
+  phone or in a browser:** a 30 cap every time a phone opens; the ground
+  painted into pictures round the camera (`groundBake`, with a Graphics
+  switch on a phone); programs built in play named in the recorder.
+  **To check on the phone:** the ground draws, and looks right close up
+  (edges by the ball, greens, bunkers, the cup) and from above, with the
+  switch on and off; Measure this device's "ground without the bake"; a
+  Watch this device with three minutes' play first -- the recorder's lines
+  holding 29-30 past the first minute; which programs it names. Holding 45
+  sustained needs about half the sustained frame cut.
+- [ ] **A smoke run before the phone-performance branch merges** (the
+  recorder in main.js runs every frame on every tier: the first change on
+  the branch that does). Ask the owner; it uses the graphics card.
   Hiding the options waits until its figures are good. No Android to test
   on.
 

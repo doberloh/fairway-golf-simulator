@@ -1,6 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {TIERS, QUALITY, PHONE, isPhoneDevice, saveGraphics, tierOf, needsRebuild} from '../src/graphics.js';
+import {TIERS, QUALITY, PHONE, PHONE_FRAME_CAP, FRAME_CAPS, isPhoneDevice, saveGraphics, tierOf, needsRebuild} from '../src/graphics.js';
+
+// A phone opens at 30 frames a second, a cap the settings offer (the owner,
+// 15 November 2026: the iPhone holds its full speed only for a burst).
+test('a phone\'s frame cap is 30, one the settings offer, and a save keeps it', () => {
+ assert.equal(PHONE_FRAME_CAP, 30);
+ assert.ok(FRAME_CAPS.includes(PHONE_FRAME_CAP));
+ assert.equal(saveGraphics({quality: PHONE, frameCap: PHONE_FRAME_CAP}).frameCap, 30);
+});
 
 // THE PHONE TIER (branch phone-performance, 14 November 2026): a phone starts
 // on it every time the game opens; no other machine is offered it.
@@ -44,6 +52,12 @@ test('the Phone tier spends on geometry: the hole\'s trees, shadows from the twi
  // Its ground's own program (ground.js `phoneGround`), on no other tier.
  assert.equal(p.phoneGround, true);
  for (const q of QUALITY) assert.ok(!TIERS[q].phoneGround, `${q} keeps the ground's program as it was`);
+ // The ground painted into pictures (ground-bake.js): Phone only, on unless
+ // the player turns it off.
+ assert.equal(p.groundBake, true);
+ for (const q of QUALITY) assert.ok(!TIERS[q].groundBake, `${q} draws its ground as it was`);
+ assert.equal(saveGraphics({}).groundBake, true);
+ assert.equal(saveGraphics({groundBake: false}).groundBake, false);
  for (const q of QUALITY) assert.ok(!TIERS[q].groundSquares, `${q} keeps its ground as it was`);
  assert.equal(p.pixelRatio, m.pixelRatio, 'Medium\'s pixels: the owner finds fewer a blurry mess');
  assert.equal(p.cascades, 0);

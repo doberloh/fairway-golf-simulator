@@ -15928,7 +15928,42 @@ owner's cap of 30, lifted for the watch; probes sized to 512 math passes
   45 by about half: the baked ground (the slow state's ground was 33 to 39%)
   is the largest single piece; less work a second (a 30 cap) spends the
   allowance slower; programs built during play (seen in the recorder) are
-  hitches of their own, worth building ahead.
+  hitches of their own, worth building ahead. (A correction to what the
+  owner was told before this watch: "play in the 40s even when slow" from
+  the bake was too high. In the sustained state play runs about 25 uncapped
+  in the owner's view; a third off that holds the cap of 30 with a little
+  room. Success is the recorder's lines staying at 29-30 past the first
+  minute.)
+
+**The three Phone changes after the first watch** (the owner, 15 November
+2026: "Ok let's do all three phone only now"). Built, not run:
+
+- *A 30 cap every time a phone opens* (`PHONE_FRAME_CAP`), like the Phone
+  tier itself; Settings changes it for the session.
+- *The ground painted into pictures* (`groundBake`; ground-bake.js; PLACED
+  throughout). The sizes from the phone's own geometry: 1,564 lines over 53
+  degrees is about 0.6 mrad a pixel, so 3 m ahead a pixel covers a few
+  millimetres along the line of sight and less across, and at 10 m about
+  3.5 cm along and 0.6 cm across. A picture over a hole (10-15 cm a texel)
+  would smear an edge by the ball over tens of pixels; nested squares round
+  the camera put about 3 cm a texel (32 m square) where the view is, 12.5
+  cm (128 m) and 50 cm (512 m) beyond, and 1.3 m over the course. Each
+  near square sits 35% of its side ahead of the camera, is repainted once
+  its centre is a quarter of its side off -- one square a frame at most,
+  one every 200 ms while the camera moves, the finest not while it moves
+  faster than 10 m/s -- and all are repainted when the sun turns 2 degrees
+  or a cue changes. A repaint draws the painter over 1,024 by 1,024 texels,
+  roughly a frame's worth of ground on the phone: the "moment's pause" the
+  owner may see when the camera settles. Expected, not measured: the slow
+  state's ground cost (33 to 39%) mostly gone, the baked program's own
+  cost to be read by Measure this device's "ground without the bake".
+  The painting leaves out the sheen (it looks at the camera) and freezes
+  the raking light until the sun turns.
+- *Programs built in play, named*: the recorder now says what draws with a
+  program built mid-play (a mesh's name, or its model and part), not just
+  "program built" -- the game already builds nearly every program behind
+  the loading screen on every tier (renderer.js `ready`), so the phone's
+  few in play are to be named before any are built ahead.
 
 Already right on Phone: no bloom,
 god rays, clouds, mist, cascades or tree mirror; tone mapping in the

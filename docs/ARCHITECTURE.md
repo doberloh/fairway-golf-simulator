@@ -116,6 +116,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `src/low-trees.js` -- Low's rule for drawing fewer trees, never the hole's (pure; tests/low-trees.test.mjs)
 - `src/built-field.js`, `src/bake-pool.js`, `src/bake-worker.js` -- a built course's field of distances to its outlines, baked in bands of rows on other cores (tests/built-field.test.mjs)
 - `src/ground-lod.js` -- the ground drawn as squares, coarser with distance, within a pixel or two of the ground the ball meets (pure; tests/ground-lod.test.mjs)
+- `src/ground-bake.js` -- the Phone tier's ground painted into nested pictures round the camera and drawn from them by a small program (renderer.js `buildGroundBake`; pure; tests/ground-bake.test.mjs) -- PROJECT_HANDOFF *THE PHONE TIER*
 - `src/clouds.js`, `src/cloud-shadows.js`, `src/mist.js`, `src/godrays.js`, `src/bloom.js`, `src/daylight.js`, `src/floodlights.js` -- sky, light and atmosphere
 - `src/map-relief.js` -- the maps' relief shading, lit from the top left of the screen (pure; tests/map-relief.test.mjs) [Relief on the maps]
 - `src/green-reading.js`, `src/green-map.js`, `src/course-map.js` -- reading a green, the maps

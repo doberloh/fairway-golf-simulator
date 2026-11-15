@@ -220,6 +220,7 @@ export function diagnosticReport(facts = {}) {
   ' GRAPHICS',
   required('tier', app.tier),
   required('frame cap', app.frameCap ? `${app.frameCap} fps` : 'follow display'),
+  optional('painted ground', app.groundBake ?? null),
   optional('auto resolution', app.autoResolution == null ? null : app.autoResolution ? `on, drawing at ${app.resolution ?? 100}%` : 'off'),
   // THE LAST FRAMES BEFORE COPY, and only those (frameMeter's 240): after
   // Measure this device it was the benchmark's own end, and nine reports were

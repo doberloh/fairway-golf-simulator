@@ -1027,7 +1027,13 @@ they are; its shadows are cast by the trees' lighter far versions and redrawn
 a few times a second rather than every frame, so a shadow can lag a moving ball
 a little; trees switch to their lighter far versions sooner; the ground away
 from you is coarser; the grass round you is half as thick; there are no
-animals or course markings. Automatic resolution starts off. Settings, Graphics still offers the
+animals or course markings. Automatic resolution starts off, and the frame
+rate is capped at 30 (a phone's graphics chip holds its full speed only for
+a short burst; Settings, Graphics changes it for the session). The ground is
+painted into pictures round the camera now and then and drawn from them,
+which is much quicker on a phone and a little softer close up; a moment's
+pause can come as the camera settles somewhere new. **Paint the ground
+once**, in Settings, Graphics on a phone, turns it off to compare. Settings, Graphics still offers the
 other four for the rest of that session.
 
 **Watch this device**, under the same heading, is for a game whose speed
@@ -1050,10 +1056,8 @@ fairway, the green and 250 m up -- for about another minute, however slow
 the game is running. At the tee and from above it switches parts of the
 picture off one at a time: the trees and plants, the course's ground, both
 of those together, and half the pixels -- and draws the ground for a moment
-in other ways: without the Phone setting's saving, without its hazards,
-without its mowing patterns, without its ground types, and in plain unlit
-colours (each but the first a brief odd look, and the game may pause a
-moment as it prepares each). A row read while the phone changed speed is marked
+in other ways: without the Phone setting's painted ground, and in plain
+unlit colours (a brief odd look). A row read while the phone changed speed is marked
 with a ~. Then it puts the camera back. The screen is
 kept on while it runs, where the browser allows. Nothing about the round changes: no hole is skipped and no shot is
 played. Copy diagnostic then carries a table of what it found: frames a

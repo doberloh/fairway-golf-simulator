@@ -67,6 +67,7 @@ import {random,greenRadius,greenPoint,fairwayWidth,ovalRadius,hazardProfile,TEE_
 import {addVegetation,farWoodGeometry,snowTopped} from './vegetation.js';
 import {makeWaterMirror} from './water-mirror.js';
 import {buildGroundLod, select as selectGround, nodeBox as groundNodeBox, GROUND_LOD} from './ground-lod.js';
+import {BAKE, levelCenter, courseSquare, pickRepaint, bakeFragment} from './ground-bake.js';
 import {holePath} from './low-trees.js';
 import {cullInstances} from './instance-cull.js';
 import {playerCameraPose,flightCameraPose,followPose,framedForBall,puttAimPose,stepOrbit,orbitEye} from './camera.js';
@@ -953,6 +954,8 @@ export class GolfView{
   const g=greenCues(this.groundCues);
   for(const k of ['greenLift','greenBend','greenBandSoft'])
    if(u[k])u[k].value=g[k];
+  // The Phone tier's painted ground carries the cues: repainted, a square at a time.
+  if(this.groundBake)for(const s of this.groundBake.squares)if(s.painted)s.dirty=true;
   return this.groundCues;
  }
  // THE GROUND'S OWN SHADOW. A mesh flag, not a material one, so it changes the
@@ -1133,7 +1136,11 @@ export class GolfView{
   const c=this.canvas,w=c?.clientWidth||0,h=c?.clientHeight||0,lift=this.liftForPhone&&!this.screenAspect&&liftsView(this.config?.mode)?phoneLift(w,h):0;
   this.liftMode=this.config?.mode;
   if(lift)this.camera.setViewOffset(w,h,0,lift,w,h);else if(this.camera.view?.enabled)this.camera.clearViewOffset();}
- disposeCourse(){this.pendingFurniture=[];if(!this.group)return;this.mirror?.dispose();this.mirror=null;if(this.mirrorUniforms){this.mirrorUniforms.mirrorMap.value=null;this.mirrorUniforms.mirrorOn.value=0;}const geometries=new Set(),materials=new Set(),textures=new Set();this.group.traverse(o=>{if(o.isInstancedMesh)o.dispose();o.shadow?.dispose();if(o.geometry)geometries.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])materials.add(m);});for(const m of materials){for(const v of Object.values(m))if(v?.isTexture)textures.add(v);for(const u of Object.values(m.uniforms||{}))if(u?.value?.isTexture)textures.add(u.value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();for(const r of this.resources)r.dispose();this.resources=[];this.csm?.dispose();this.csm=null;this.cloudUniforms=null;this.clouds?.dispose();this.clouds=null;this.mistUniforms=null;this.godRays?.dispose();this.godRays=null;this.bloom?.dispose();this.bloom=null;this.sky=null;this.skyMaterial=null;this.propRamp=null;this.envScene=null;this.environment?.dispose();this.environment=null;this.scene.environment=null;this.cull=null;this.groundLod=null;this.scene.remove(this.group);}
+ disposeCourse(){this.pendingFurniture=[];if(!this.group)return;
+  // The Phone tier's painted ground (buildGroundBake): its pictures, the
+  // meshes it paints with and its own material, none of them in the group.
+  if(this.groundBake){const B=this.groundBake;for(const s of B.squares)s.rt.dispose();for(const m of B.meshes.values())m.geometry.dispose();B.full?.geometry.dispose();B.material.dispose();this.groundBake=null;}
+  this.mirror?.dispose();this.mirror=null;if(this.mirrorUniforms){this.mirrorUniforms.mirrorMap.value=null;this.mirrorUniforms.mirrorOn.value=0;}const geometries=new Set(),materials=new Set(),textures=new Set();this.group.traverse(o=>{if(o.isInstancedMesh)o.dispose();o.shadow?.dispose();if(o.geometry)geometries.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])materials.add(m);});for(const m of materials){for(const v of Object.values(m))if(v?.isTexture)textures.add(v);for(const u of Object.values(m.uniforms||{}))if(u?.value?.isTexture)textures.add(u.value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();for(const r of this.resources)r.dispose();this.resources=[];this.csm?.dispose();this.csm=null;this.cloudUniforms=null;this.clouds?.dispose();this.clouds=null;this.mistUniforms=null;this.godRays?.dispose();this.godRays=null;this.bloom?.dispose();this.bloom=null;this.sky=null;this.skyMaterial=null;this.propRamp=null;this.envScene=null;this.environment?.dispose();this.environment=null;this.scene.environment=null;this.cull=null;this.groundLod=null;this.scene.remove(this.group);}
  build(world,style='cartoon',holeIndex=0){
   style='cartoon';
   this.disposeCourse();this.updateGrass=null;this.life=null;this.pathTextures=null;this.waterTime=null;this.seaDepth=null;this.probeDue=null;this.floodWarming=null;this.world=world;this.style=style;this.course=world.holes[holeIndex];this.group=new T.Group();this.scene.add(this.group);this.targets=[];this.puttingRings=null;this.greenGrid=null;this.reading=null;this.readingHeading=null;this.gridBeads=[];this.flags=[];this.inks=null;this.flagsticks=[];this.greenProps=[];this.rangeProps=null;this.makeHazardAtlas();this.waterBodies=[];
@@ -1221,6 +1228,8 @@ export class GolfView{
   // 2.4 million triangles were a third of an iPhone's frame (RESEARCH.md *The
   // first figures from a real phone*).
   if(this.quality.groundSquares||(terrain.index?terrain.index.count:terrain.attributes.position.count)/3>=GROUND_LOD.minTriangles)this.buildGroundLodMeshes(world.groundGrid,terrain);
+  // The Phone tier's ground, painted into pictures (ground-bake.js).
+  this.buildGroundBake();
   for(const h of world.holes){for(const p of h.ponds){const points=[];for(let j=0;j<512;j++){const q=ovalRadius(p,j/512*TAU),w=h.toWorld({x:p.x+q.x,z:p.z+q.z});points.push(new T.Vector2(w.x,-w.z));}this.addWaterBody(new T.ShapeGeometry(new T.Shape(points)),p.level,p.depth,h.toWorld(p));this.addShoreFoam(points,p.level,!!p.large);}this.addHoleDetails(h);}
   // A BUILT course's ponds and lakes (built-world.js): any outline, holes for
   // its islands, at its stored level -- the same water body a pond is.
@@ -3518,6 +3527,9 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   this.groundLod={lod,grid,attrs,group,meshes:new Map(),shown:new Set(),key:''};
   // Kept for its material, shadow switch and box; its triangles are the
   // squares' now, so its own index goes.
+  // The whole ground's own triangles, kept for the Phone tier's painting of the
+  // course's square (ground-bake.js) before the mesh's index goes.
+  this.groundLod.fullIndex=terrain.index;
   this.terrain.name='Ground (undrawn)';this.terrain.visible=false;terrain.computeBoundingBox();terrain.setIndex(null);
  }
  groundLodMesh(node,which){
@@ -3528,8 +3540,98 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   const b=groundNodeBox(G.grid,node),skirt=Math.max(2,node.error*2+2);
   geometry.boundingBox=new T.Box3(new T.Vector3(b.x0,b.y0-skirt,b.z0),new T.Vector3(b.x1,b.y1,b.z1));
   geometry.boundingSphere=geometry.boundingBox.getBoundingSphere(new T.Sphere());
-  const mesh=new T.Mesh(geometry,this.terrain.material);mesh.receiveShadow=true;mesh.renderOrder=1;mesh.visible=false;mesh.matrixAutoUpdate=false;mesh.name='ground, '+which;
+  const mesh=new T.Mesh(geometry,this.groundBake?.on?this.groundBake.material:this.terrain.material);mesh.receiveShadow=true;mesh.renderOrder=1;mesh.visible=false;mesh.matrixAutoUpdate=false;mesh.name='ground, '+which;
   G.group.add(mesh);pair[which]=mesh;return mesh;
+ }
+ // THE GROUND PAINTED ONCE, FOR A PHONE (ground-bake.js; graphics.js
+ // `groundBake`, the Phone tier only). Four pictures -- three square ones
+ // round the camera and one of the course -- painted by the ground's own
+ // program (ground.js GROUND_BAKE: the turf before light) from straight
+ // overhead, and the ground's squares drawn from them by a small lit program.
+ // Not on the range, whose greens move.
+ buildGroundBake(){
+  this.groundBake=null;
+  const G=this.groundLod;
+  if(!G||!this.quality?.groundBake)return;
+  const target=texels=>{const rt=new T.WebGLRenderTarget(texels,texels,{depthBuffer:false,generateMipmaps:true,minFilter:T.LinearMipmapLinearFilter,magFilter:T.LinearFilter,wrapS:T.ClampToEdgeWrapping,wrapT:T.ClampToEdgeWrapping});rt.texture.anisotropy=this.quality.anisotropy??1;return rt;};
+  const course=courseSquare(G.grid.halfX,G.grid.halfZ);
+  const squares=[...BAKE.levels.map(size=>({size,rt:target(BAKE.texels),painted:null,want:null,dirty:false})),
+   {size:course.size,rt:target(BAKE.courseTexels),painted:null,want:{x:course.x,z:course.z},dirty:false,course:true}];
+  const rects=squares.map(()=>new T.Vector4(0,0,1,0));
+  const uniforms={bake0:{value:squares[0].rt.texture},bake1:{value:squares[1].rt.texture},bake2:{value:squares[2].rt.texture},bake3:{value:squares[3].rt.texture},bakeRect:{value:rects},bakePin:{value:new T.Vector2(1e9,1e9)}};
+  const material=new T.MeshToonMaterial({color:'#ffffff',gradientMap:toonRamp(this)});
+  material.onBeforeCompile=shader=>{
+   Object.assign(shader.uniforms,uniforms);
+   shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 groundPoint;').replace('#include <begin_vertex>','#include <begin_vertex>\ngroundPoint=position;');
+   shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\nvarying vec3 groundPoint;uniform sampler2D bake0,bake1,bake2,bake3;uniform vec4 bakeRect[4];uniform vec2 bakePin;')
+    .replace('#include <color_fragment>','#include <color_fragment>\n'+bakeFragment(CUP_RADIUS));
+  };
+  material.customProgramCacheKey=()=>'phone-baked-ground-v1';
+  const camera=new T.OrthographicCamera(-1,1,1,-1,1,20000);camera.up.set(0,0,-1);
+  this.groundBake={squares,rects,uniforms,material,camera,scene:new T.Scene(),meshes:new Map(),full:null,on:this.groundBakeOn!==false,last:-Infinity,sun:this.sunDir?.clone()??null,prev:null};
+ }
+ // On or off (the Phone tier's Graphics switch, and Measure this device's
+ // "ground without the bake"): the squares change program, nothing rebuilds.
+ setGroundBake(on,remember=true){
+  // Kept for courses built after it, as the other graphics switches are --
+  // unless it is the range turning it off for itself (updateGroundBake).
+  if(remember)this.groundBakeOn=on!==false;
+  const B=this.groundBake,G=this.groundLod;if(!B||!G)return false;
+  B.on=on!==false;
+  const m=B.on?B.material:this.terrain.material;
+  for(const pair of G.meshes.values())for(const mesh of Object.values(pair))mesh.material=m;
+  return B.on;
+ }
+ // The meshes a square is painted with: the course's whole ground for the
+ // course's square; for a near one, the grid's own squares that reach it.
+ groundBakeMeshes(s,at){
+  const B=this.groundBake,G=this.groundLod;
+  const mesh=index=>{const g=new T.BufferGeometry();for(const [name,a] of Object.entries(G.attrs))g.setAttribute(name,a);g.setIndex(index);const m=new T.Mesh(g,this.terrain.material);m.frustumCulled=false;m.matrixAutoUpdate=false;return m;};
+  if(s.course)return [B.full??=mesh(G.fullIndex)];
+  const out=[],h=s.size/2;
+  for(const node of G.lod.nodes){
+   if(node.level!==0)continue;
+   const b=groundNodeBox(G.grid,node);
+   if(b.x1<at.x-h||b.x0>at.x+h||b.z1<at.z-h||b.z0>at.z+h)continue;
+   let m=B.meshes.get(node);if(!m){m=mesh(new T.BufferAttribute(node.fine,1));B.meshes.set(node,m);}
+   out.push(m);
+  }
+  return out;
+ }
+ paintGroundSquare(i){
+  const B=this.groundBake,s=B.squares[i],at=s.want,r=this.renderer,m=this.terrain.material,cues=m.userData.cues;
+  B.scene.clear();for(const mesh of this.groundBakeMeshes(s,at))B.scene.add(mesh);
+  const cam=B.camera,h=s.size/2;cam.left=-h;cam.right=h;cam.top=h;cam.bottom=-h;cam.position.set(at.x,5000,at.z);cam.lookAt(at.x,0,at.z);cam.updateProjectionMatrix();cam.updateMatrixWorld();
+  // The sheen looks at the camera, which here is straight overhead: left out.
+  const sheen=cues?.cueSheen?.value;if(cues?.cueSheen)cues.cueSheen.value=0;
+  m.defines={...m.defines,GROUND_BAKE:1};m.needsUpdate=true;
+  const was=r.getRenderTarget(),clear=r.getClearColor(new T.Color()),alpha=r.getClearAlpha();
+  try{r.setClearColor(0x000000,1);r.setRenderTarget(s.rt);r.render(B.scene,cam);}
+  finally{
+   r.setRenderTarget(was);r.setClearColor(clear,alpha);
+   const d={...m.defines};delete d.GROUND_BAKE;m.defines=d;m.needsUpdate=true;
+   if(cues?.cueSheen)cues.cueSheen.value=sheen;
+  }
+  s.painted={x:at.x,z:at.z};s.dirty=false;B.rects[i].set(at.x,at.z,s.size,1);
+ }
+ // Every frame, before the shadow is scheduled: where the near squares want
+ // to be, which one (if any) to repaint, and the cup.
+ updateGroundBake(){
+  const B=this.groundBake;if(!B||!B.on)return;
+  if(this.rangeProps){this.setGroundBake(false,false);return;}
+  const now=performance.now(),c=this.camera.position,f=this.camera.getWorldDirection(new T.Vector3());
+  const speed=B.prev?c.distanceTo(B.prev.p)/Math.max(.001,(now-B.prev.t)/1000):0;B.prev={p:c.clone(),t:now};
+  // The sun turned: the raking light is painted in, so all of it is stale.
+  if(this.sunDir&&B.sun&&B.sun.angleTo(this.sunDir)*180/Math.PI>BAKE.sunTurn){for(const s of B.squares)s.dirty=true;B.sun.copy(this.sunDir);}
+  for(let i=0;i<BAKE.levels.length;i++)B.squares[i].want=levelCenter(c,f,B.squares[i].size);
+  for(let n=0;n<B.squares.length;n++){
+   const i=pickRepaint(B.squares,{now,last:B.last,speed});
+   if(i<0)break;
+   const first=!B.squares[i].painted;
+   this.paintGroundSquare(i);B.last=now;
+   if(!first)break;
+  }
+  const pin=this.course?.worldPin;if(pin)B.uniforms.bakePin.value.set(pin.x,pin.z);
  }
  // Every frame: the squares for this camera, each drawn no coarser than
  // the tier's tolerance in pixels allows (graphics.js `groundTolerance`).
@@ -3790,6 +3892,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   // After the cascades have moved, so each shadow map gets the trees it can
   // reach this frame (instance-cull.js). Their shadow cameras are placed here
   // exactly as three places them when it draws the map.
+  this.updateGroundBake();
   this.scheduleSunShadow();
   this.updateGroundLod();
   if(this.cull){

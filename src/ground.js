@@ -1642,6 +1642,12 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  }
  // The ring's baked hollows and ribs (landscape-edge.js; nothing inside the course's ground).
  diffuseColor.rgb=turf*(1.+clamp(vFarShade,-1.,1.)*.2);
+#ifdef GROUND_BAKE
+ // PAINTING THE PHONE'S GROUND (ground-bake.js): the turf, before light, into
+ // a picture -- stored as sqrt(c / 2), read back as 2 s^2 -- and nothing after.
+ gl_FragColor=vec4(sqrt(clamp(diffuseColor.rgb*.5,0.,1.)),1.);
+ return;
+#endif
  `);
  };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v86';return m;
 }

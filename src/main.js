@@ -106,7 +106,7 @@ import {simulateShot,parseLaunchMessage,MPH,YARD,clamp,rollPreview,R as BALL_R,o
 import {reliefOptions,crossingPoint,OB_RULES,pathRelief,OBSTRUCTIONS} from './relief.js';
 import {SCHEMA_VERSION,GENERATOR_VERSION,SETTINGS,FIELD,CATEGORIES,bound,validateSettings,migrateSettings,generationKeys,playScope,generatorFor} from './settings-schema.js';
 import {listCourses,findCourse,saveCourse,deleteCourse,renameCourse,exportCourse,importCourse,courseSettings,MAX_NAME} from './course-library.js';
-import {loadGraphics,saveGraphics,needsRebuild,greenCues,QUALITY,QUALITY_LABELS,FRAME_CAPS,READINGS,READING_LABELS,readingCues,isSoftwareRenderer,hasSavedGraphics,isPhoneDevice,PHONE} from './graphics.js';
+import {loadGraphics,saveGraphics,needsRebuild,greenCues,QUALITY,QUALITY_LABELS,FRAME_CAPS,READINGS,READING_LABELS,readingCues,isSoftwareRenderer,hasSavedGraphics,isPhoneDevice,PHONE,PHONE_FRAME_CAP} from './graphics.js';
 import {createAutoResolution} from './auto-resolution.js';
 import {createGameAudio,canopyContacts,nearestWater} from './audio.js';
 import {surpriseSettings} from './settings-schema.js';
@@ -298,22 +298,46 @@ const playRecorder=secondRecorder();
 let watchPhase=null,watchProbe=null,lastWatch=null,recHole=null,recPrograms=null,recCamFlight=false;
 addEventListener('pointerdown',()=>playRecorder.event('touch'),{capture:true,passive:true});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)playRecorder.event('page hidden');});
+// WHICH PROGRAMS WERE BUILT, by what draws with them: a program's own name is
+// its material's type, so nearly every one read "MeshToonMaterial". Only when
+// the count has grown, which in play is rare: the scene is walked for the
+// meshes whose material's current program is new, and named by the mesh (or
+// its model and part), else its parent's name. Every program seen is kept.
+const seenPrograms=new WeakSet();
+function programsBuilt(){
+ const r=view?.renderer,fresh=new Set();
+ for(const p of r?.info?.programs??[])if(!seenPrograms.has(p)){seenPrograms.add(p);fresh.add(p);}
+ if(!fresh.size)return 'a program';
+ const names=new Set();
+ view.scene?.traverse(o=>{
+  if(!o.material)return;
+  for(const m of Array.isArray(o.material)?o.material:[o.material]){
+   if(!fresh.has(r.properties.get(m).currentProgram))continue;
+   names.add(o.userData?.model?`${o.userData.model} ${o.userData.role??''}`.trim():o.name||o.parent?.name||m.type);
+  }
+ });
+ return names.size?[...names].slice(0,3).join(' / '):`${fresh.size} program${fresh.size>1?'s':''} (${[...fresh].map(p=>p.name).join(', ')})`;
+}
 // What the recorder notes each frame besides the frame itself: a new hole, a
 // program built (a new material, or a define changed), a camera flight begun.
 function recordFrame(now){
  playRecorder.frame(now,{view:view?.config?.mode??null,phase:watchPhase});
  const h=round?.hole;if(h!==recHole){if(recHole!=null)playRecorder.event('new hole');recHole=h;}
- const pr=view?.renderer?.info?.programs?.length;if(pr!==recPrograms){if(recPrograms!=null&&pr>recPrograms)playRecorder.event('program built');recPrograms=pr;}
+ const pr=view?.renderer?.info?.programs?.length;if(pr!==recPrograms){if(recPrograms==null)for(const p of view?.renderer?.info?.programs??[])seenPrograms.add(p);else if(pr>recPrograms)playRecorder.event(`built ${programsBuilt()}`);recPrograms=pr;}
  const cf=!!view?.camFlight;if(cf&&!recCamFlight)playRecorder.event('camera flight');recCamFlight=cf;
 }
 let appMode='menu',studioDirty=false,studioBiome=null,graphics=loadGraphics();
 // A PHONE STARTS ON THE PHONE TIER, every time the game opens (graphics.js
-// `isPhoneDevice`; branch phone-performance): whatever was saved, and with
-// automatic resolution off -- fewer pixels bought nothing measurable on the
-// owner's iPhone, and the owner found it "a blurry mess". The picker still
-// offers the others for the session, for comparing with Measure this device.
+// `isPhoneDevice`; branch phone-performance): whatever was saved, with
+// automatic resolution off -- the owner found it "a blurry mess" -- and the
+// frame rate capped at PHONE_FRAME_CAP: the iPhone's graphics chip runs at
+// full speed only for a short burst and then at about two fifths of it
+// (RESEARCH, *The first watch, on the iPhone*), so frames spaced evenly at a
+// rate it can hold beat a rate it reaches for a minute (the owner, 15
+// November 2026: phones only). The picker and the cap still offer the
+// others for the session, for comparing with Measure this device.
 const phoneDevice=isPhoneDevice(globalThis.navigator);
-if(phoneDevice)graphics={...graphics,quality:PHONE,autoResolution:false};
+if(phoneDevice)graphics={...graphics,quality:PHONE,autoResolution:false,frameCap:PHONE_FRAME_CAP};
 // TEXT SIZE (ui-scale.js). Applied before anything is laid out, again whenever the
 // setting or the bay changes, and on a resize: automatic in a bay depends on how
 // many CSS pixels wide the browser is.
@@ -3933,6 +3957,7 @@ function collectDiagnostic(){
    biome:settings.biome,
    tier:graphics.quality,
    frameCap:graphics.frameCap,
+   groundBake:view?.groundBake?(view.groundBake.on?'on':'off'):null,
    autoResolution:graphics.autoResolution,
    resolution:Math.round((view?.resolutionScale??1)*100),
   },
@@ -4048,6 +4073,8 @@ function benchHide(part){
   const set=v=>{const d={...m.defines};if(v)d[name]=1;else delete d[name];m.defines=d;m.needsUpdate=true;};
   set(on);return()=>set(had);
  };
+ // The Phone tier's painted ground off for the part, and back as it was.
+ if(part==='groundUnbaked'){const was=view.groundBake?.on;if(!was)return()=>{};view.setGroundBake(false);return()=>view.setGroundBake(true);}
  if(part==='groundFull')return groundDefine('GROUND_HAZARD_REACH',false);
  if(part==='groundNoHazards')return groundDefine('GROUND_NO_HAZARDS',true);
  if(part==='groundNoMowing')return groundDefine('GROUND_NO_MOWING',true);
@@ -6655,6 +6682,7 @@ function renderPanel(name,content){
   <h3>Costs a frame</h3>
   <p>Unlike everything above, these are real work. If the picture is uneven or pauses, start here.</p>
   <label class="check"><input id="gfxTerrainShadows" type="checkbox" ${graphics.terrainShadows?'checked':''}> Terrain casts shadows</label>
+  ${phoneDevice?`<label class="check"><input id="gfxGroundBake" type="checkbox" ${graphics.groundBake!==false?'checked':''}> Paint the ground once (Phone setting: faster, a little softer close up)</label>`:''}
   <p class="note">Ridges shade the hollows behind them. Only says anything when the sun is low — at midday a two metre roll casts almost nothing. One draw call per shadow cascade, over ground that is already built.</p>
   <label class="check"><input id="gfxReflections" type="checkbox" ${graphics.reflections?'checked':''}> Water reflections</label>
   <p class="note">Ponds, lakes and creeks reflect the course around them rather than only the sky. Nothing extra per frame: each body's reflection is photographed when the course is built and again whenever the sun moves about six degrees, a pause of around 40–65 ms each time. Switched off, none of that happens, and water still moves and still reflects the sky.</p>
@@ -6697,6 +6725,7 @@ function renderPanel(name,content){
     view.setGroundCues(graphics);
    };
   $('gfxDistantFlags').onchange=()=>{graphics=saveGraphics({...graphics,distantFlags:$('gfxDistantFlags').checked});view.setDistantFlags(graphics.distantFlags);};
+  if($('gfxGroundBake'))$('gfxGroundBake').onchange=()=>{graphics=saveGraphics({...graphics,groundBake:$('gfxGroundBake').checked});view.setGroundBake(graphics.groundBake);};
   $('gfxTerrainShadows').onchange=()=>{graphics=saveGraphics({...graphics,terrainShadows:$('gfxTerrainShadows').checked});view.setTerrainShadows(graphics.terrainShadows);};
   $('gfxReflections').onchange=()=>{graphics=saveGraphics({...graphics,reflections:$('gfxReflections').checked});view.setReflections(graphics.reflections);};
   // The first switch on a course builds every floodlit shader again with the new
@@ -8513,7 +8542,7 @@ try{
  gameAudio=createGameAudio();
  // The saved cue switches, before the first course is built. `build` re-applies
  // them per course, because the ground material is rebuilt with the world.
- view.setGroundCues(graphics);view.setTerrainShadows(graphics.terrainShadows);view.setReflections(graphics.reflections);view.setFloodShadows(graphics.floodlightShadows);view.setDistantFlags(graphics.distantFlags);
+ view.setGroundCues(graphics);view.setTerrainShadows(graphics.terrainShadows);view.setGroundBake(graphics.groundBake);view.setReflections(graphics.reflections);view.setFloodShadows(graphics.floodlightShadows);view.setDistantFlags(graphics.distantFlags);
  // A saved round is parsed but not loaded: it waits until the player asks to
  // continue it, so opening Fairway shows the menu rather than someone else's
  // half-finished hole.
