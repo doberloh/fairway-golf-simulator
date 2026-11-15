@@ -216,6 +216,12 @@ export const TIERS = {
   farPainted: .5,
   groundTolerance: 6,
   groundSquares: true,
+  // Its ground's own program (ground.js `phoneGround`): the seventh run found
+  // the slow state's ground cost in the painting itself (plain paint -33% from
+  // 250 m up, no shadow +1%, cues off -3%, the cover and detail textures 0%).
+  // First, savings that change no pixel: a bunker too far off to touch a
+  // pixel is skipped.
+  phoneGround: true,
   // Trees kept whatever the view only within 15 m of the camera, not 60
   // (instance-cull.js `near`). The third and fourth iPhone runs (15 November):
   // the chip's wait was 43 to 50 of a 48 to 55 ms frame, the trees and plants

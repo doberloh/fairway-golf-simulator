@@ -1039,9 +1039,10 @@ fairway, the green and 250 m up -- for about another minute, however slow
 the game is running. At the tee and from above it switches parts of the
 picture off one at a time: the trees and plants, the course's ground, both
 of those together, and half the pixels -- and draws the ground for a moment
-without its shadows, without its shading touches (sheen, colour variation,
-shade under trees, relief, mowing stripes), without its fine detail, and in
-plain unlit colours. A row read while the phone changed speed is marked
+in other ways: without the Phone setting's saving, without its hazards,
+without its mowing patterns, without its ground types, and in plain unlit
+colours (each but the first a brief odd look, and the game may pause a
+moment as it prepares each). A row read while the phone changed speed is marked
 with a ~. Then it puts the camera back. The screen is
 kept on while it runs, where the browser allows. Nothing about the round changes: no hole is skipped and no shot is
 played. Copy diagnostic then carries a table of what it found: frames a

@@ -77,10 +77,19 @@ export const BENCH_PARTS = Object.freeze([
  // shadow not read; its painted cues off (the sheen, the turf colour
  // variation, the shade under trees, the relief, the slope's drying, the mow
  // stripes); its two byte textures (the cover and the turf detail) as one
- // texel each. Plain paint stays, as the most there is to gain.
- {id: 'groundNoShadow', label: 'ground reads no shadow'},
- {id: 'groundNoCues', label: 'ground cues off'},
- {id: 'groundNoTextures', label: 'ground without cover, detail'},
+ // texel each. Plain paint stays, as the most there is to gain. The seventh
+ // run (03:06, from 250 m up, slow): no shadow +1%, cues off -3%, no cover or
+ // detail 0%, plain paint -33% -- the cost is the painting itself; those three
+ // rows are gone. The eighth prices the painting's parts, each a define on
+ // the ground's program (a new program, built during the part's settling):
+ // the Phone tier's bunker skip taken away (what it saved), the hazards'
+ // loop skipped, the mowing (stripes, diamonds, laps, divots) skipped, the
+ // ground types' and far ring's painting skipped. Only the first is exact;
+ // the others change what the ground looks like and are prices, not plans.
+ {id: 'groundFull', label: 'ground without the bunker skip'},
+ {id: 'groundNoHazards', label: 'ground without hazards'},
+ {id: 'groundNoMowing', label: 'ground without mowing'},
+ {id: 'groundNoLayers', label: 'ground without ground types'},
  {id: 'plainGround', label: 'ground in plain paint'},
  {id: 'pixels', label: 'half the pixels'},
 ]);

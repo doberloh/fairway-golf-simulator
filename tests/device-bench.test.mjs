@@ -101,7 +101,7 @@ test('the report says what each part costs, and rides in the diagnostic', async 
  assert.match(text, /tee +hold 1: as drawn +30/);
  assert.match(text, new RegExp(`tee +hold ${BENCH_HOLD.cycles}: nothing drawn +30`));
  // The seventh run's ground what-ifs, each a uniform written.
- for (const what of ['ground reads no shadow', 'ground cues off', 'ground without cover, detail']) assert.match(text, new RegExp(`tee +${what} `));
+ for (const what of ['ground without the bunker skip', 'ground without hazards', 'ground without mowing', 'ground without ground types']) assert.match(text, new RegExp(`tee +${what} `));
  // The game's light, once and wherever it changed.
  assert.match(text, /state at 2 s: hour 10\.0[^\n]*\n +changed at 10 s: hour 10\.1/);
  assert.equal(text.match(/changed at/g).length, 1);

@@ -41,6 +41,9 @@ test('the Phone tier spends on geometry: the hole\'s trees, shadows from the twi
  assert.ok(p.nearGrass > 0 && p.nearGrass < 1);
  for (const q of QUALITY) assert.equal(TIERS[q].nearGrass, undefined, `${q} keeps all its grass`);
  assert.ok(p.farPainted > m.farPainted && p.farTrees > m.farTrees);
+ // Its ground's own program (ground.js `phoneGround`), on no other tier.
+ assert.equal(p.phoneGround, true);
+ for (const q of QUALITY) assert.ok(!TIERS[q].phoneGround, `${q} keeps the ground's program as it was`);
  for (const q of QUALITY) assert.ok(!TIERS[q].groundSquares, `${q} keeps its ground as it was`);
  assert.equal(p.pixelRatio, m.pixelRatio, 'Medium\'s pixels: the owner finds fewer a blurry mess');
  assert.equal(p.cascades, 0);
@@ -49,4 +52,27 @@ test('the Phone tier spends on geometry: the hole\'s trees, shadows from the twi
  assert.ok(p.shadowBias.normal >= texel, `offset ${p.shadowBias.normal} m against a ${texel.toFixed(2)} m texel`);
  // Nothing the tier list's other checks read is missing.
  for (const key of Object.keys(m)) assert.ok(key in p, `phone has ${key}`);
+});
+
+// THE BUNKER SKIP IS EXACT (ground.js GROUND_HAZARD_REACH): the shader's own
+// arithmetic for a bunker's signed distance, over random bunkers and pixels.
+// Wherever the skip fires, the bunker could not have painted the pixel: its
+// sand only to 0.35 m outside its edge, a collection area only inside.
+test('a bunker the Phone ground skips could not have touched the pixel', () => {
+ let seed = 7;
+ const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+ let fired = 0;
+ for (let k = 0; k < 200000; k++) {
+  const c = [rnd() * 200 - 100, rnd() * 200 - 100], z = 2 + rnd() * 30, w = 2 + rnd() * 30;
+  const meta = [rnd() * 6.3, 0, rnd() * .8 - .4, rnd() * .8 - .4];
+  const p = [c[0] + (rnd() * 2 - 1) * 120, c[1] + (rnd() * 2 - 1) * 120];
+  const D = Math.hypot(p[0] - c[0], p[1] - c[1]);
+  if (!(D > Math.max(z, w) * (1 + Math.abs(meta[2]) + Math.abs(meta[3])) + 1)) continue;
+  fired++;
+  const q = [(p[0] - c[0]) / z, (p[1] - c[1]) / w], a = Math.atan2(q[1], q[0]);
+  const edge = 1 + meta[2] * Math.sin(a * 2 + meta[0]) + meta[3] * Math.sin(a * 3 + meta[0]);
+  const hd = (Math.hypot(...q) - edge) * D / Math.max(Math.hypot(...q), 1e-4);
+  assert.ok(hd >= .35, `skipped a bunker ${hd.toFixed(3)} m from the pixel`);
+ }
+ assert.ok(fired > 50000, `the skip fired ${fired} times`);
 });

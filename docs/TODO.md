@@ -115,8 +115,16 @@ wrong, unfinished, or owed a check.
   the phone:** the benchmark takes the ground's shading apart without a new
   program (no shadow read, cues off, cover and detail textures as one
   texel), marks a part read across a speed change, and the diagnostic says
-  whether float textures filter. **To check:** which of them carries the
-  ground's 28 to 39%, then build the Phone ground from that.
+  whether float textures filter. **Seen** (03:06): the cost is the painting
+  itself (plain paint -33% from 250 m up; no shadow, cues off, no cover or
+  detail 0 to 3%); float filtering yes. **Step eight, built and not seen on
+  the phone:** the Phone ground's own program (`phoneGround`), first with
+  an exact saving -- a bunker too far off to touch a pixel skipped -- and the
+  benchmark pricing the painting's parts (the skip taken away, no hazards,
+  no mowing, no ground types). **To check:** the ground draws as before on
+  the phone (the new shader lines have been compiled nowhere else; a broken
+  or missing ground, or an error in the diagnostic, would be them); then
+  which part pays, for the cuts after.
   Hiding the options waits until its figures are good. No Android to test
   on.
 

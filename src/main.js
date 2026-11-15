@@ -4020,27 +4020,22 @@ function benchHide(part){
  // Nothing drawn: every top-level thing in the scene hidden, so the frame is
  // the clear and the read back (device-bench.js BENCH_HOLD).
  if(part==='empty'){const off=view.scene.children.filter(o=>o.visible);for(const o of off)o.visible=false;return()=>{for(const o of off)o.visible=true;};}
- // The ground taken apart without a new program (device-bench.js, the
- // seventh run): every write below is a uniform. `receiveShadow` is one in
- // three r186 (lights_pars_begin: `uniform bool receiveShadow`).
- const groundMeshes=()=>{const out=[];view.group.traverse(o=>{if(o.isMesh&&(o.name==='Continuous ground'||o.parent?.name==='Continuous ground'))out.push(o);});return out;};
- if(part==='groundNoShadow'){const ms=groundMeshes().filter(o=>o.receiveShadow);for(const o of ms)o.receiveShadow=false;return()=>{for(const o of ms)o.receiveShadow=true;};}
- if(part==='groundNoCues'){
-  // The cues the shader reads (ground.js `cues`): the branches on sheen,
-  // colour variation and shade skip their work at 0; the others multiply.
-  const c=view.terrain?.material?.userData?.cues;if(!c)return()=>{};
-  const keys=['cueRelief','cueSlope','cueStripes','cuePatches','cueShade','cueSheen'],was=keys.map(k=>c[k].value);
-  for(const k of keys)c[k].value=0;
-  return()=>keys.forEach((k,i)=>{c[k].value=was[i];});
- }
- if(part==='groundNoTextures'){
-  const u=view.terrain?.material?.userData?.uniforms;if(!u?.cover||!u?.detail)return()=>{};
-  // The cover as nothing (no shade, no ground types, no blowouts: what it
-  // drives goes with it), the detail as an even grey.
-  const was=[u.cover.value,u.detail.value];
-  u.cover.value=view.plainTexel(0);u.detail.value=view.plainTexel(128);
-  return()=>{[u.cover.value,u.detail.value]=was;};
- }
+ // (The seventh run's what-ifs -- the ground reading no shadow, its cues off,
+ // its cover and detail textures as one texel -- each a uniform written, read
+ // +1%, -3% and 0% and are gone: device-bench.js.)
+ // The painting's parts, each a define on the ground's program (ground.js):
+ // three builds the new program on the next frame and keeps the old one, so
+ // putting the define back costs nothing.
+ const groundDefine=(name,on)=>{
+  const m=view.terrain?.material;if(!m)return()=>{};
+  const had=!!m.defines?.[name];if(had===on)return()=>{};
+  const set=v=>{const d={...m.defines};if(v)d[name]=1;else delete d[name];m.defines=d;m.needsUpdate=true;};
+  set(on);return()=>set(had);
+ };
+ if(part==='groundFull')return groundDefine('GROUND_HAZARD_REACH',false);
+ if(part==='groundNoHazards')return groundDefine('GROUND_NO_HAZARDS',true);
+ if(part==='groundNoMowing')return groundDefine('GROUND_NO_MOWING',true);
+ if(part==='groundNoLayers')return groundDefine('GROUND_NO_LAYERS',true);
  // The what-ifs (device-bench.js), put back after. The plainest paint (renderer.js `plainPaint`): the shapes drawn as they
  // are, their shading gone. The shadow maps keep their own materials.
  if(part==='plainTrees'||part==='plainGround'){

@@ -361,14 +361,18 @@ export function groundMaterial(view,palette){
  // call of groundPaint it holds (see groundPaint IS CALLED TWICE) cost every
  // generated course a second on every program.
  if(built)m.defines={...m.defines,BUILT_COURSE:1};
+ // THE PHONE TIER'S GROUND (graphics.js `phoneGround`; the owner, 15 November
+ // 2026: phones only): savings that change no pixel, fixed when the material
+ // is made, so no other tier's program is touched (tests/phone-tier.test.mjs).
+ if(view.quality?.phoneGround)m.defines={...m.defines,GROUND_HAZARD_REACH:1};
+ // The ownership atlas's texture made once, not in onBeforeCompile: a program
+ // built again (a define changed by Measure this device) made another copy of
+ // it each time -- 16 bytes a texel, tens of megabytes on a phone.
+ const ownersTex=texture(owners,Sx,Sz);
  m.onBeforeCompile=shader=>{
- // The program's own uniforms, kept for Measure this device (main.js
- // benchHide): a texture swapped through them is a uniform write, not a new
- // program -- this one is the slowest in the game to build.
- m.userData.uniforms=shader.uniforms;
  // The record with the round's season laid over it (renderer.js build).
  const bio={...biomeOf(w.settings.biome),...(w.bio||{})};
-  Object.assign(shader.uniforms,colors,cues,{bankTint:{value:new T.Color(bio.bank)},streamCount:{value:streamCount},owners:{value:texture(owners,Sx,Sz)},cover:{value:coverTex},detail:{value:detailTex},tables:{value:tables.texture},tableRows:{value:tables.rows},curveSpan:{value:span},extent:{value:extent},rows:{value:N},rock:{value:new T.Color(w.bio.rock)},// NAMED, NOT NUMBERED. This was an index into a four-element array, so a
+  Object.assign(shader.uniforms,colors,cues,{bankTint:{value:new T.Color(bio.bank)},streamCount:{value:streamCount},owners:{value:ownersTex},cover:{value:coverTex},detail:{value:detailTex},tables:{value:tables.texture},tableRows:{value:tables.rows},curveSpan:{value:span},extent:{value:extent},rows:{value:N},rock:{value:new T.Color(w.bio.rock)},// NAMED, NOT NUMBERED. This was an index into a four-element array, so a
    // biome not in the list landed on -1 and took whichever branch that turned
    // out to be -- silently, and only visible by looking at the ground.
    speckleRock:{value:bio.speckleRock?1:0},altitudeRock:{value:bio.altitudeRock?1:0},litterAmount:{value:bio.litter?1:0},litterVary:{value:bio.litterVary??1},seaBeach:{value:bio.sea?1:0},seaAt:{value:bio.sea?w.waterLevel??0:0},beachOwn:{value:bio.beachTint?1:0},beachTint:{value:new T.Color(bio.beachTint||"#000000")},blowoutOn:{value:blow?1:0},
@@ -814,7 +818,22 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  float mownEdge=min(max(lateralCut,alongCut),greenRing);
  float mownTaper=smin(smax(lateralCut,alongCut,12.),greenRing,12.);
  float fairD=max(fw,max(mowStart-p.y,p.y-(info.x+8.)));
- for(int i=0;i<12;i++){if(offCourse)break;vec4 hz=holeTexel(11.+float(i)*2.,row);vec4 meta=holeTexel(12.+float(i)*2.,row);if(hz==vec4(0.)&&meta==vec4(0.))break;/* the hazards are written from slot 0 on (renderer.js makeHazardAtlas): the first empty slot ends them -- 24 table reads a pixel saved on a hole with none (the frame-rate goal) */if(hz.z>0.){vec2 q=(p-hz.xy)/hz.zw;if(meta.y>.5){float bj=floor(owner.r+.5)*4.+meta.y-1.,br=floor(bj*.5);vec2 bank=texture2D(tables,vec2((bj-br*2.)*.5+(clamp(q.y*.5+.5,0.,1.)*511.+.5)/1024.,(rows*2.+br+.5)/tableRows)).xy;q.x=(p.x-bank.x)/bank.y;}float edge=1.+meta.z*sin(atan(q.y,q.x)*2.+meta.x)+meta.w*sin(atan(q.y,q.x)*3.+meta.x);if(meta.y>.5)edge=1.;float hd=(length(q)-edge)*length(p-hz.xy)/max(length(q),.0001);
+ for(int i=0;i<12;i++){if(offCourse)break;vec4 hz=holeTexel(11.+float(i)*2.,row);vec4 meta=holeTexel(12.+float(i)*2.,row);if(hz==vec4(0.)&&meta==vec4(0.))break;/* the hazards are written from slot 0 on (renderer.js makeHazardAtlas): the first empty slot ends them -- 24 table reads a pixel saved on a hole with none (the frame-rate goal) */
+#ifdef GROUND_HAZARD_REACH
+ // A BUNKER OR COLLECTION AREA TOO FAR OFF TO TOUCH THIS PIXEL (the Phone
+ // tier, 15 November 2026: the painter was the slow state's largest piece on
+ // an iPhone). Its edge lies within R = max(z, w) * (1 + |meta.z| + |meta.w|)
+ // of its centre, and hd below is then at least D - R for a pixel D away; a
+ // bunker paints only to 0.35 m outside, a collection area only inside. So
+ // past R + 1 m nothing it does can reach the pixel, and its trigonometry is
+ // skipped. Water (meta.y > .5) follows its banks and is never skipped.
+ // tests/phone-tier.test.mjs holds the bound. Exact: not a pixel changes.
+ if(meta.y<=.5&&hz.z>0.&&length(p-hz.xy)>max(hz.z,hz.w)*(1.+abs(meta.z)+abs(meta.w))+1.)continue;
+#endif
+#ifdef GROUND_NO_HAZARDS
+ continue;
+#endif
+ if(hz.z>0.){vec2 q=(p-hz.xy)/hz.zw;if(meta.y>.5){float bj=floor(owner.r+.5)*4.+meta.y-1.,br=floor(bj*.5);vec2 bank=texture2D(tables,vec2((bj-br*2.)*.5+(clamp(q.y*.5+.5,0.,1.)*511.+.5)/1024.,(rows*2.+br+.5)/tableRows)).xy;q.x=(p.x-bank.x)/bank.y;}float edge=1.+meta.z*sin(atan(q.y,q.x)*2.+meta.x)+meta.w*sin(atan(q.y,q.x)*3.+meta.x);if(meta.y>.5)edge=1.;float hd=(length(q)-edge)*length(p-hz.xy)/max(length(q),.0001);
  // Ponds and lakes take the same shoreline as a channel instead of a sand bed
  // and sand collar. Their band is capped tighter than a channel's because the
  // owner atlas stops carrying this hole's hazards a short way outside them.
@@ -1017,6 +1036,11 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   float face=ringFace>.5?1.-smoothstep(ringFaceFrom,ringFaceFrom+(strataOn>.5?.07:.16),normalize(groundNormal).y):0.;
   paintCode=vec4(ringFloor,ringFace,0.,0.);paintShare=vec4(ringFloor>.5?1.:0.,face,0.,0.);
  }
+#ifdef GROUND_NO_LAYERS
+ // (Measure this device's what-if: the ground types' and the far ring's
+ // painting skipped -- what groundPaint's two calls cost.)
+ paintShare=vec4(0.);
+#endif
  if(dot(paintShare,vec4(1.))>0.){
   vec3 gn=normalize(groundNormal);float beds=fwidth(groundPoint.y)/max(strataSpacing,.001);
   int top=paintShare.w>0.?3:paintShare.z>0.?2:paintShare.y>0.?1:0;
@@ -1082,6 +1106,9 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  // contrast comes from the component of the surface normal along the mowing
  // direction -- rotated into hole-local space, because that is the space the
  // stripes are laid out in.
+#ifndef GROUND_NO_MOWING
+ // (GROUND_NO_MOWING: Measure this device's what-if, through to the tee's
+ // divots below; the stripes, the diamonds, the laps -- what they cost.)
  if(kind==2.||kind==4.){
   float period=kind==4.?3.2:12.;
   vec2 mow=normalize(vec2(.48,.88));
@@ -1260,6 +1287,7 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   float divot=step(.82,hashGround(dcell+vec2(7.3,1.1)))*dshape*zone*(1.-smoothstep(.3,.8,fwidth(teeF.x*4.)));
   turf=mix(turf,turf*vec3(1.16,1.02,.7),divot*.6);
  }
+#endif
  // UNDULATION, EVERYWHERE, AT EVERY HOUR.
  //
  // A cast shadow only reads when the sun is low. At midday a two metre roll

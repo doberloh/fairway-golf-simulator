@@ -1015,9 +1015,6 @@ export class GolfView{
  // THE PLAINEST PAINT, for Measure this device's what-ifs (main.js benchHide):
  // no light, no shadow, no wind, a vertex's own colour or one green. Two
  // materials for the view's life, compiled the first time a run asks.
- // One texel of one value (0-255 in every channel), for the benchmark's
- // ground without its byte textures.
- plainTexel(v=128){this.benchTexels??={};let t=this.benchTexels[v];if(!t){t=new T.DataTexture(new Uint8Array([v,v,v,v]),1,1);t.needsUpdate=true;this.benchTexels[v]=t;}return t;}
  plainPaint(vertexColors){const k=vertexColors?'v':'g';this.plainMats??={};return this.plainMats[k]??=new T.MeshBasicMaterial(vertexColors?{vertexColors:true}:{color:'#5b8a3c'});}
  scheduleSunShadow(){
   const s=this.sun?.shadow,every=this.quality.shadowEvery??1;

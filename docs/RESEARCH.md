@@ -15770,6 +15770,51 @@ whatever is built: no new `groundPaint` call (each costs a second at first
 start), every classification edge where course.js puts the lie, and the
 ground has one sampler spare.
 
+**The ground taken apart, on the iPhone** (15 November 2026, 03:06, build
+720acbd7, Cascade View Forest hole 4, the 30 cap; play before it 17 frames
+a second; **float filtering: yes** -- the ground's tables filter smoothly
+on this phone, which settles the two sources above for iOS 26.5 Safari).
+The tee's parts fell in the fast state (the ground 0 to 3% there, every
+row) and say nothing; from 250 m up, all slow (whole 46-48 ms):
+
+| reading, 250 m up | work ms | vs whole |
+|---|---|---|
+| as drawn | 47 | |
+| no course ground | 29 | -39% |
+| ground reads no shadow | 48 | +1% |
+| ground cues off | 45 | -3% |
+| ground without cover, detail | 46 | 0% |
+| ground in plain paint | 31 | -33% |
+| half the pixels | 34 | -27% |
+
+**The cost is the painting itself**: not the shadow it reads, not the cues
+(sheen, colour variation, shade, relief, slope, stripes' strength), not
+the byte textures. What is left is the classification and the painters --
+the hole tables, the tees, the hazards' loop with its trigonometry, the
+mowing patterns, the ground types' `groundPaint`. The hold agreed with the
+last run: slow to fast at 11 s (again straight after the first frames with
+nothing drawn), fast to slow at about 53 s (the tee's pixels row, marked).
+
+**The Phone ground, first: savings that change no pixel** (`phoneGround`,
+ground.js `GROUND_HAZARD_REACH`, Phone only). The hazards' loop worked out
+every bunker of the hole for every pixel -- two `atan`s and two `sin`s each
+-- however far off. A bunker's edge lies within R = max(z, w) x (1 + |a| +
+|b|) of its centre (its two wobble terms), so a pixel more than R + 1 m
+away is at least 1 m outside its edge, and a bunker paints only to 0.35 m
+outside (a collection area only inside): skipped, exactly. Water follows
+its banks and is never skipped. tests/phone-tier.test.mjs checks the bound
+against the shader's own arithmetic over 200,000 random bunkers and pixels.
+What it saves is not measured: the eighth run reads it ("ground without
+the bunker skip" puts the full loop back) and prices the painting's parts
+for the cuts after it, each a define on the ground's program: the hazards'
+loop skipped, the mowing (stripes, diamonds, laps, divots) skipped, the
+ground types' and far ring's painting skipped. Those three change the
+look and are prices, not plans. (The ground's ownership texture is now made
+once, not in each program build: a define changed by the benchmark would
+have copied its tens of megabytes again each time.) The new shader lines
+have not been compiled anywhere but the phone (no GLSL compiler offline;
+the PC's card needs the owner's word).
+
 Already right on Phone: no bloom,
 god rays, clouds, mist, cascades or tree mirror; tone mapping in the
 materials, no extra pass; no logarithmic depth; highp kept (no evidence
