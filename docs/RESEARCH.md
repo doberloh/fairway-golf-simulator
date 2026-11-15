@@ -15958,7 +15958,17 @@ owner's cap of 30, lifted for the watch; probes sized to 512 math passes
   state's ground cost (33 to 39%) mostly gone, the baked program's own
   cost to be read by Measure this device's "ground without the bake".
   The painting leaves out the sheen (it looks at the camera) and freezes
-  the raking light until the sun turns.
+  the raking light until the sun turns. **The mowing looks at the camera
+  too**: its bands' light and dark swap with the direction they are seen
+  from (`groundPoint.xz - cameraPosition.xz`, five places in ground.js),
+  so painted from over a picture's centre they would have come out as a
+  pattern round it; under `GROUND_BAKE` the painter is told the player's
+  camera instead (`bakeEye`), as it stood when the square was painted. The
+  cup is not painted (the baked program cuts it), and a picture is cleared
+  to the rough's colour so the course's edge fades into rough, not black.
+  Seen from 250 m up the two finest squares lie under the camera and the
+  view draws from the 50 cm one: softer there, to be judged before the
+  squares are scaled with the camera's height.
 - *Programs built in play, named*: the recorder now says what draws with a
   program built mid-play (a mesh's name, or its model and part), not just
   "program built" -- the game already builds nearly every program behind

@@ -67,7 +67,7 @@ import {random,greenRadius,greenPoint,fairwayWidth,ovalRadius,hazardProfile,TEE_
 import {addVegetation,farWoodGeometry,snowTopped} from './vegetation.js';
 import {makeWaterMirror} from './water-mirror.js';
 import {buildGroundLod, select as selectGround, nodeBox as groundNodeBox, GROUND_LOD} from './ground-lod.js';
-import {BAKE, levelCenter, courseSquare, pickRepaint, bakeFragment} from './ground-bake.js';
+import {BAKE, levelCenter, courseSquare, pickRepaint, bakeFragment, encodeTurf} from './ground-bake.js';
 import {holePath} from './low-trees.js';
 import {cullInstances} from './instance-cull.js';
 import {playerCameraPose,flightCameraPose,followPose,framedForBall,puttAimPose,stepOrbit,orbitEye} from './camera.js';
@@ -3605,8 +3605,13 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   // The sheen looks at the camera, which here is straight overhead: left out.
   const sheen=cues?.cueSheen?.value;if(cues?.cueSheen)cues.cueSheen.value=0;
   m.defines={...m.defines,GROUND_BAKE:1};m.needsUpdate=true;
+  // The painter is told it is looked at from the player's camera (ground.js
+  // bakeEye: the mowing's light and dark), and the picture is cleared to the
+  // rough's colour, stored as the paint is, so its edges fade into rough.
+  const bake=m.userData.bake;bake?.eye.value.copy(this.camera.position);
+  const rough=bake?.rough,enc=v=>encodeTurf(v),fill=rough?new T.Color().setRGB(enc(rough.r),enc(rough.g),enc(rough.b),T.LinearSRGBColorSpace):new T.Color(0,0,0);
   const was=r.getRenderTarget(),clear=r.getClearColor(new T.Color()),alpha=r.getClearAlpha();
-  try{r.setClearColor(0x000000,1);r.setRenderTarget(s.rt);r.render(B.scene,cam);}
+  try{r.setClearColor(fill,1);r.setRenderTarget(s.rt);r.clear(true,false,false);r.render(B.scene,cam);}
   finally{
    r.setRenderTarget(was);r.setClearColor(clear,alpha);
    const d={...m.defines};delete d.GROUND_BAKE;m.defines=d;m.needsUpdate=true;
@@ -3622,7 +3627,8 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   const now=performance.now(),c=this.camera.position,f=this.camera.getWorldDirection(new T.Vector3());
   const speed=B.prev?c.distanceTo(B.prev.p)/Math.max(.001,(now-B.prev.t)/1000):0;B.prev={p:c.clone(),t:now};
   // The sun turned: the raking light is painted in, so all of it is stale.
-  if(this.sunDir&&B.sun&&B.sun.angleTo(this.sunDir)*180/Math.PI>BAKE.sunTurn){for(const s of B.squares)s.dirty=true;B.sun.copy(this.sunDir);}
+  if(this.sunDir&&!B.sun)B.sun=this.sunDir.clone();
+  if(this.sunDir&&B.sun.angleTo(this.sunDir)*180/Math.PI>BAKE.sunTurn){for(const s of B.squares)s.dirty=true;B.sun.copy(this.sunDir);}
   for(let i=0;i<BAKE.levels.length;i++)B.squares[i].want=levelCenter(c,f,B.squares[i].size);
   for(let n=0;n<B.squares.length;n++){
    const i=pickRepaint(B.squares,{now,last:B.last,speed});

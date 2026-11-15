@@ -319,6 +319,11 @@ export function groundMaterial(view,palette){
   greenLift:{value:0},greenBend:{value:1},greenBandSoft:{value:1},
   sunDir:{value:new T.Vector3(-.6,.7,-.5).normalize()}};
  m.userData.cues=cues;
+ // For the Phone tier's painting (ground-bake.js; renderer.js
+ // paintGroundSquare): the player's camera the painter is told it is looked at
+ // from, and the rough's colour, which the pictures are cleared to so their
+ // edges fade into rough rather than black.
+ m.userData.bake={eye:{value:new T.Vector3()},rough:colors.tint_rough.value};
  // THE COVER TEXTURE: soft occlusion under trees and round boulders in red
  // (U1; occlusion.js, which says why it is not a texture of its own) and the
  // straw in green, linearly filtered. Bytes, not floats: a quarter of the
@@ -372,7 +377,7 @@ export function groundMaterial(view,palette){
  m.onBeforeCompile=shader=>{
  // The record with the round's season laid over it (renderer.js build).
  const bio={...biomeOf(w.settings.biome),...(w.bio||{})};
-  Object.assign(shader.uniforms,colors,cues,{bankTint:{value:new T.Color(bio.bank)},streamCount:{value:streamCount},owners:{value:ownersTex},cover:{value:coverTex},detail:{value:detailTex},tables:{value:tables.texture},tableRows:{value:tables.rows},curveSpan:{value:span},extent:{value:extent},rows:{value:N},rock:{value:new T.Color(w.bio.rock)},// NAMED, NOT NUMBERED. This was an index into a four-element array, so a
+  Object.assign(shader.uniforms,colors,cues,{bakeEye:m.userData.bake.eye,bankTint:{value:new T.Color(bio.bank)},streamCount:{value:streamCount},owners:{value:ownersTex},cover:{value:coverTex},detail:{value:detailTex},tables:{value:tables.texture},tableRows:{value:tables.rows},curveSpan:{value:span},extent:{value:extent},rows:{value:N},rock:{value:new T.Color(w.bio.rock)},// NAMED, NOT NUMBERED. This was an index into a four-element array, so a
    // biome not in the list landed on -1 and took whichever branch that turned
    // out to be -- silently, and only visible by looking at the ground.
    speckleRock:{value:bio.speckleRock?1:0},altitudeRock:{value:bio.altitudeRock?1:0},litterAmount:{value:bio.litter?1:0},litterVary:{value:bio.litterVary??1},seaBeach:{value:bio.sea?1:0},seaAt:{value:bio.sea?w.waterLevel??0:0},beachOwn:{value:bio.beachTint?1:0},beachTint:{value:new T.Color(bio.beachTint||"#000000")},blowoutOn:{value:blow?1:0},
@@ -383,6 +388,9 @@ export function groundMaterial(view,palette){
  shader.fragmentShader=shader.fragmentShader.replace('#include <common>',`#include <common>
  varying float vRelief;varying float vFarShade;uniform vec4 cragShape,cragGreen;uniform float farSnow;uniform float cueRelief,cueSlope,cueContours,cueStripes,cuePatches,cueShade,cueSheen,greenLift,greenBend,greenBandSoft;
  uniform vec3 sunDir;
+#ifdef GROUND_BAKE
+ uniform vec3 bakeEye;
+#endif
  uniform float farOn,farPaint,farCover,farLine,farSize,farSea,farReach,farOpen;uniform vec3 farC0,farC1,farC2,farC3;uniform vec2 farProp;
  // The same rounded box course.js uses, so paint and lie cannot disagree
 // about where a tee is.
@@ -666,6 +674,14 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   return shore;
  }
  `).replace('#include <color_fragment>',`#include <color_fragment>
+#ifdef GROUND_BAKE
+ // PAINTED FROM STRAIGHT OVERHEAD (ground-bake.js), but the mowing's light
+ // and dark look at where the PLAYER's camera is (the bands swap as you look
+ // back along them): painted from over the picture's centre they came out as
+ // a pattern round it. So the painter is told the player's camera
+ // (renderer.js sets bakeEye before each paint) wherever it asks for one.
+#define cameraPosition bakeEye
+#endif
  vec2 wp=groundPoint.xz;vec2 ownerUv=(wp/extent+1.)*.5;vec4 owner=texture2D(owners,ownerUv);
  // PAST THE COURSE'S GROUND (the frame-rate pass, 13 November 2026). Every
  // pixel of the far ring ran the whole of what follows for the hole whose
@@ -1090,7 +1106,9 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  // The CUP, not the green's centre. cupInfo.xy above is the GREEN and drives
  // the boundary; using it here punched the hole through the middle of every
  // green instead of at the pin.
+#ifndef GROUND_BAKE
  if(distance(p,cupAt)<${CUP_RADIUS.toFixed(6)})discard;
+#endif
  // MOWING STRIPES THAT FOLLOW THE GROUND.
  //
  // These have always been here, and they were computed entirely in the PLAN --
