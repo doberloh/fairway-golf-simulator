@@ -3562,12 +3562,18 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   this.groundBake=null;
   const G=this.groundLod;
   if(!G||!this.quality?.groundBake)return;
-  const target=texels=>{const rt=new T.WebGLRenderTarget(texels,texels,{depthBuffer:false,generateMipmaps:true,minFilter:T.LinearMipmapLinearFilter,magFilter:T.LinearFilter,wrapS:T.ClampToEdgeWrapping,wrapT:T.ClampToEdgeWrapping});rt.texture.anisotropy=this.quality.anisotropy??1;return rt;};
+  // MIPMAPS ONLY FROM THE 512 M SQUARE OUT (BAKE.mipsFrom; the iPhone watch,
+  // 15 November 2026: of a repaint's eight bands only the first and the last
+  // cost anything, 80-194 ms each, the six between 0-1 ms -- so the painting
+  // was never the cost; the mipmaps made after the last band are the first
+  // suspect). The two near squares are seen close, where a mipmap matters
+  // least; without one they read whether the stall goes with it.
+  const target=(texels,mips=true)=>{const rt=new T.WebGLRenderTarget(texels,texels,{depthBuffer:false,generateMipmaps:mips,minFilter:mips?T.LinearMipmapLinearFilter:T.LinearFilter,magFilter:T.LinearFilter,wrapS:T.ClampToEdgeWrapping,wrapT:T.ClampToEdgeWrapping});rt.texture.anisotropy=this.quality.anisotropy??1;return rt;};
   const course=courseSquare(G.grid.halfX,G.grid.halfZ);
   // A near square has a spare picture, painted a band a frame and swapped in
   // when done (paintGroundStrip); the course's square paints in place.
-  const squares=[...BAKE.levels.map(size=>({size,rt:target(BAKE.texels),spare:target(BAKE.texels),painted:null,want:null,dirty:false})),
-   {size:course.size,rt:target(BAKE.courseTexels),painted:null,want:{x:course.x,z:course.z},dirty:false,course:true}];
+  const squares=[...BAKE.levels.map((size,i)=>{const mips=i>=BAKE.mipsFrom;return {size,mips,rt:target(BAKE.texels,mips),spare:target(BAKE.texels,mips),painted:null,want:null,dirty:false};}),
+   {size:course.size,mips:true,rt:target(BAKE.courseTexels),painted:null,want:{x:course.x,z:course.z},dirty:false,course:true}];
   // Every picture set up now, its mipmaps' storage with it: a spare first set
   // up by a band painted with its mipmaps off (paintGroundStrip) would be
   // stored with one level and drawn black once swapped in.
@@ -3678,10 +3684,10 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   const was=r.getRenderTarget(),clear=r.getClearColor(new T.Color()),alpha=r.getClearAlpha();
   // Only the band: the target's viewport and scissor (three takes both from
   // a render target), and its mipmaps made once, after the last band.
-  rt.viewport.set(0,y0,T0,band);rt.scissor.set(0,y0,T0,band);rt.scissorTest=true;rt.texture.generateMipmaps=last;
+  rt.viewport.set(0,y0,T0,band);rt.scissor.set(0,y0,T0,band);rt.scissorTest=true;rt.texture.generateMipmaps=last&&s.mips;
   try{r.setClearColor(fill,1);r.setRenderTarget(rt);r.clear(true,false,false);r.render(B.scene,cam);}
   finally{
-   rt.viewport.set(0,0,T0,T0);rt.scissor.set(0,0,T0,T0);rt.scissorTest=false;rt.texture.generateMipmaps=true;
+   rt.viewport.set(0,0,T0,T0);rt.scissor.set(0,0,T0,T0);rt.scissorTest=false;rt.texture.generateMipmaps=s.mips;
    r.setRenderTarget(was);r.setClearColor(clear,alpha);
    const d={...m.defines};delete d.GROUND_BAKE;m.defines=d;m.needsUpdate=true;
    if(cues?.cueSheen)cues.cueSheen.value=sheen;

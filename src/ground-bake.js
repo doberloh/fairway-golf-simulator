@@ -38,6 +38,7 @@ export const BAKE = Object.freeze({
  fast: 10,                  // m/s: past it the finest square is not repainted
  sunTurn: 2,                // degrees of sun before everything is repainted
  edge: .06,                 // the share of a square's half-width blended into the next
+ mipsFrom: 2,               // the first square with mipmaps: the 512 m one (renderer.js `target`)
  strips: 8,                 // bands a near square is repainted in, one a frame
  courseStrips: 16,          // and the course's square
 });

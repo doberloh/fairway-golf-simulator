@@ -193,10 +193,13 @@ wrong, unfinished, or owed a check.
   part of a hitch the milliseconds name. **Seen** (10:32): the owner, the
   trees from above "look good"; the hitch is the painting's own call (512
   m 79-269 ms, 128 m 86-133), the main draw 1-4 ms; the flyover 28-46.
-  **Step fifteen, built and not seen:** a picture repainted a band a frame
-  into a spare and swapped in. **To check:** a Watch after three minutes'
-  play -- the slowest frames under 100 ms; the ground looks right after
-  repaints (no black or half-painted squares). Holding 45 sustained needs
+  **Step fifteen:** a picture repainted a band a frame into a spare and
+  swapped in. **Seen** (10:41): only a repaint's first and last bands cost
+  (80-194 ms), the six between 0-1 ms -- the cost is not the painting.
+  **Step sixteen, built and not seen:** the two near pictures without
+  mipmaps, to see whether the last band's stall goes with them. **To
+  check:** a Watch after three minutes' play -- the 128 m square's bands
+  against the 512 m's; the near ground not shimmering. Holding 45 sustained needs
   about half the sustained frame cut.
 - [ ] **A smoke run before the phone-performance branch merges** (the
   recorder in main.js runs every frame on every tier: the first change on

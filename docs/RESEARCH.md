@@ -16119,6 +16119,19 @@ more on the phone), so no half-painted picture is drawn; the course's
 square, repainted only when the sun turns or a cue changes, paints in
 place. Expected: the 100-270 ms spread over eight frames as 15-35 ms each.
 
+**Seen** (10:41, build cbf0a07f, hole 10): **not spread -- the cost is not
+the painting.** Of a repaint's eight bands only the first and the last
+cost anything ("painted 512 m 1/8 (194 ms)", "8/8 (166 ms)", "128 m 1/8 (83
+ms)", "8/8 (136 ms)", another 512 m 1/8 84 ms); the six between, the same
+number of texels each, 0 to 1 ms. So something done once at a repaint's
+start and once at its end makes the phone wait: at the end, an inference,
+the mipmaps made from the finished picture; at the start, rendering into a
+picture again. Play at the cap 29-30 with 186-218 ms gaps from those bands.
+The test built after it: the 32 and 128 m squares without mipmaps
+(`BAKE.mipsFrom` 2; they are seen close), the 512 m and the course's with
+them -- if the near squares' first and last bands go quiet while the 512
+m's do not, the mipmaps were the end's cost.
+
 Already right on Phone: no bloom,
 god rays, clouds, mist, cascades or tree mirror; tone mapping in the
 materials, no extra pass; no logarithmic depth; highp kept (no evidence
