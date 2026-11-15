@@ -203,9 +203,15 @@ wrong, unfinished, or owed a check.
 Hardware, browsers and hands the development machine does not have. Nothing
 here is a claim of support until it is done.
 
-- [ ] **Play the current build by hand** (0.9.15, 14 November 2026). What has
+- [ ] **Play the current build by hand** (0.9.16, 15 November 2026). What has
   been built and seen only in captures, measurements or smoke runs, and still
   exists in the game. The archive has each item's full list.
+  - **The phone** (0.9.16; played on the owner's iPhone, Pacific Northwest
+    and Redwood Coast only, and the owner signed off the painted ground, the
+    trees from above and the green lines): the Phone setting on the other
+    thirteen landscapes; the green reading on by default on the PC, and the
+    downhill markers' new speeds there; Measure and Watch this device on a
+    PC; any Android phone.
   - **The surroundings and the faster trees** (0.9.15; the owner signed off
     the look on 13 November and found every landscape faster on the branch
     the same night; the released build has two changes after that, neither
