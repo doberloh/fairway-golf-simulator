@@ -152,6 +152,10 @@ function modelRise(name) {
 export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinity, farTrees = 0, farPainted = 0, thinTrees = false, midShare = 0, farPaintedPx = 0, screenPx = null, near = CULL_NEAR, lowTrees = null} = {}) {
  tune.near = near;
  tune.lowTrees = lowTrees;
+ // And no far-version lines carried over from the last course's cull (the
+ // Phone tier's flight rule sets them live, renderer.js `cullFlying`): a
+ // tier switched to while flying would have kept them.
+ tune.farPainted = null; tune.farTrees = null;
  const meshes = [];
  root.traverse(o => {
   if (o.isInstancedMesh && o.count >= minInstances && !o.userData.noCull) meshes.push(o);

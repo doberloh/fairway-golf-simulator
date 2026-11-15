@@ -326,12 +326,12 @@ let lastRenderMs=0,lastFrameTris=0;
 function frameCause(){
  const w=view?.takeFrameWork?.();if(!w)return null;
  const out=[];
- if(w.paints.length)out.push(`painted ${w.paints.join(', ')}`);
- if(w.rebuilds)out.push('trees re-sorted');
+ if(w.paints.length)out.push(`painted ${w.paints.join(', ')} (${Math.round(w.paintMs)} ms)`);
+ if(w.rebuilds)out.push(`trees re-sorted (${Math.round(w.cullMs)} ms)`);
  if(w.squares)out.push(`${w.squares} ground square${w.squares>1?'s':''} made`);
  if(w.tiles)out.push(`${w.tiles} grass tile${w.tiles>1?'s':''} made`);
  // (The draw call's own script is 4 to 6 ms on the iPhone; only a long one is news.)
- if(lastRenderMs>=12)out.push(`draw call ${Math.round(lastRenderMs)} ms`);
+ if(lastRenderMs>=12)out.push(`draw call ${Math.round(lastRenderMs)} ms, of it the main draw ${Math.round(w.mainMs)} ms`);
  return out.join(', ')||null;
 }
 // What the recorder notes each frame besides the frame itself: a new hole, a
@@ -8443,7 +8443,10 @@ function tick(now){
  // the page until it has -- the loading screen froze during a wait that is
  // meant to leave it moving. The overlay is up; the frame it would cover is
  // drawn by `ready` itself as soon as the programs are done.
- if(!view.readying){if(benchProbe)benchFrame(now,dt);else{const r0=performance.now();view.render(dt);lastRenderMs=performance.now()-r0;lastFrameTris=view.renderer.info.render.triangles;if(watchProbe){const done=watchProbe;watchProbe=null;done(view.probeDevice());}}}
+ // The Phone tier's flight rule (renderer.js `cullFlying`): the flyover, or
+// the player's own free flight -- never the benchmark's placed camera.
+view.flyingView=!!tour||view.config.mode==='free'&&!benchProbe&&watchPhase!=='above';
+if(!view.readying){if(benchProbe)benchFrame(now,dt);else{const r0=performance.now();view.render(dt);lastRenderMs=performance.now()-r0;lastFrameTris=view.renderer.info.render.triangles;if(watchProbe){const done=watchProbe;watchProbe=null;done(view.probeDevice());}}}
  setWindArrow();
  // Not over a finished hole: "0.0 FEET TO HOLE" read on after the ball dropped.
  const worldLabels=!flight&&view.config.mode!=='free'&&!round?.holeComplete;

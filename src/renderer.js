@@ -1283,6 +1283,7 @@ export class GolfView{
   // later, move with the camera, and opt out.
   // The floodlit programs are built behind the loading screen, in `ready`.
   this.nightWarmDue=true;
+  this.cullFlying=false;
   this.cull=cullInstances(this.group,{thinShadowsFrom:this.quality.thinShadowsFrom??Infinity,farTrees:this.quality.farTrees??0,farPainted:Math.max(this.quality.farPainted??0,biomeOf(this.world?.settings?.biome)?.farPaintedFrom??0),thinTrees:!!this.quality.thinTrees,
    // A tree's middle version and its line in the picture's own pixels (graphics.js midTrees; High and Ultra).
    midShare:this.quality.midTrees?.share??0,farPaintedPx:this.quality.midTrees?.px??0,screenPx:()=>this.renderer.domElement.height,
@@ -3549,8 +3550,8 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
  // ground's pictures repainted, the cull's re-sorts, the ground's squares and
  // the grass tiles made for the first time. main.js takes and clears it each
  // frame, and the recorder keeps it beside the second's slowest gap.
- frameWork={paints:[],rebuilds:0,squares:0,tiles:0};
- takeFrameWork(){const w=this.frameWork;this.frameWork={paints:[],rebuilds:0,squares:0,tiles:0};return w;}
+ frameWork={paints:[],rebuilds:0,squares:0,tiles:0,paintMs:0,cullMs:0,mainMs:0};
+ takeFrameWork(){const w=this.frameWork;this.frameWork={paints:[],rebuilds:0,squares:0,tiles:0,paintMs:0,cullMs:0,mainMs:0};return w;}
  // THE GROUND PAINTED ONCE, FOR A PHONE (ground-bake.js; graphics.js
  // `groundBake`, the Phone tier only). Four pictures -- three square ones
  // round the camera and one of the course -- painted by the ground's own
@@ -3636,6 +3637,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   return out;
  }
  paintGroundSquare(i){
+  const p0=performance.now();
   const B=this.groundBake,s=B.squares[i],at=s.want,r=this.renderer,m=this.terrain.material,cues=m.userData.cues;
   B.scene.clear();for(const mesh of this.groundBakeMeshes(s,at))B.scene.add(mesh);
   const cam=B.camera,h=s.size/2;cam.left=-h;cam.right=h;cam.top=h;cam.bottom=-h;cam.position.set(at.x,5000,at.z);cam.lookAt(at.x,0,at.z);cam.updateProjectionMatrix();cam.updateMatrixWorld();
@@ -3655,7 +3657,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
    if(cues?.cueSheen)cues.cueSheen.value=sheen;
   }
   s.painted={x:at.x,z:at.z};s.dirty=false;B.rects[i].set(at.x,at.z,s.size,1);
-  this.frameWork.paints.push(s.course?'course':`${s.size} m`);
+  this.frameWork.paints.push(s.course?'course':`${s.size} m`);this.frameWork.paintMs+=performance.now()-p0;
  }
  // Every frame, before the shadow is scheduled: where the near squares want
  // to be, which one (if any) to repaint, and the cup.
@@ -3944,8 +3946,16 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
    for(const l of lights){if(l.shadow.autoUpdate===false)continue;l.updateMatrixWorld();l.target.updateMatrixWorld();l.shadow.updateMatrices(l);}
    // A re-sort changes which trees each map draws, the floodlights' included
    // (they draw what the view does): their shadows are redrawn to match.
+   // THE PHONE TIER IN FLIGHT (graphics.js `flyFarPainted`): the flyover skims
+   // 34 m over the canopy, so the crowns under it fill the screen and were
+   // drawn whole -- 150 of them, 2 M triangles, at the iPhone watch's busiest
+   // frame. While flying (main.js `flyingView`) the far versions take over
+   // from a larger share of the screen. A change re-sorts once.
+   const flying=!!this.flyingView&&!!this.quality.flyFarPainted;
+   if(flying!==!!this.cullFlying){this.cullFlying=flying;this.cull.tune(flying?{farPainted:this.quality.flyFarPainted,farTrees:this.quality.flyFarTrees??null}:{farPainted:null,farTrees:null});}
+   const c0=performance.now();
    const resorted=this.cull.update(this.camera,this.timed?this.sunDir:null,lights,this.quality.thinTrees?this.lowTreeRegion():null);
-   if(resorted)this.frameWork.rebuilds++;
+   if(resorted){this.frameWork.rebuilds++;this.frameWork.cullMs+=performance.now()-c0;}
    if(resorted&&this.floodlit)this.floodShadowDirty=true;
   }
   if(this.floodShadowDirty&&this.floodlit){
@@ -3958,7 +3968,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   if(this.cloudUniforms)this.packClouds();
   if(this.mirror){const s=this.renderer.getDrawingBufferSize(this.mirrorUniforms.mirrorScreen.value);this.mirror.render(this.renderer,this.camera,s);}
   this.bloom?.begin(this.renderer);
-  this.renderer.render(this.scene,this.camera);
+  {const m0=performance.now();this.renderer.render(this.scene,this.camera);this.frameWork.mainMs=performance.now()-m0;}
   this.godRays?.render(this.renderer,this.scene,this.camera,this.sunDir,this.sun.color,this.readying);
   if(this.bloom)this.bloom.finish(this.renderer);else this.renderer.setRenderTarget(null);}
  project(p){const w=this.course.toWorld(p),v=new T.Vector3(w.x,p.y,w.z).project(this.camera);const c=this.cssSize();return{x:(v.x*.5+.5)*c.w,y:(-.5*v.y+.5)*c.h,visible:v.z<1&&v.z>-1};}

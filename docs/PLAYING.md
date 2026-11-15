@@ -1024,7 +1024,8 @@ play.
 opens (an iPhone, or an Android phone; not an iPad or a tablet). It draws every
 tree of the hole you are playing and round your ball, and away from them only
 the trees near the camera -- beyond 60 m they thin quickly, to one in twenty
-by 300 m; its shadows are cast by the trees' lighter far versions and redrawn
+by 300 m, and in the hole's flyover and free flight the trees below switch
+to their simpler far versions sooner; its shadows are cast by the trees' lighter far versions and redrawn
 a few times a second rather than every frame, so a shadow can lag a moving ball
 a little; trees switch to their lighter far versions sooner; the ground away
 from you is coarser; the grass round you is half as thick; there are no

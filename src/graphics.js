@@ -258,6 +258,14 @@ export const TIERS = {
   // flyover's last 20 s fell to 20-23 frames a second in every iPhone watch.
   // The Phone tier keeps 100 m. PLACED, for the owner's eye.
   lowTrees: {nearAll: 60, thinTo: 300, minKeep: .05, fade: .05, flyReach: 100},
+  // IN FLIGHT -- the hole's flyover, free flight (renderer.js `cullFlying`):
+  // the far versions from a crown a full screen tall, not half (and the
+  // other trees from 0.6, not 0.3). The 100 m reach above did not touch the
+  // flyover's dip: it skims 34 m over the canopy, and at the iPhone watch's
+  // busiest frame 150 crowns under it were drawn whole, 2 M of 4.6 M
+  // triangles. PLACED, for the owner's eye.
+  flyFarPainted: 1,
+  flyFarTrees: .6,
   understory: .25,
   longGrassReach: 90,
   godRays: 0,

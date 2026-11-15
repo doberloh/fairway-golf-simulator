@@ -453,3 +453,13 @@ test('a cull built with its own thinning figures sets them, and the next cull cl
  assert.deepEqual(phone.tune().lowTrees, {minKeep: .05});
  assert.equal(cullInstances(field().group).tune().lowTrees, null);
 });
+
+// A far-version line set live (the Phone tier's flight rule) is not carried
+// into the next course's cull.
+test('a new cull starts with no far-version lines left over', () => {
+ const a = cullInstances(field().group);
+ a.tune({farPainted: 1, farTrees: .6});
+ const b = cullInstances(field().group);
+ assert.equal(b.tune().farPainted, null);
+ assert.equal(b.tune().farTrees, null);
+});

@@ -184,9 +184,14 @@ wrong, unfinished, or owed a check.
   M triangles at its end. **Step thirteen, built and not seen:** the far
   pictures painted from coarser ground (its tiny triangles were the likely
   cost), and the watch lists the heaviest things at its busiest frame.
-  **To check:** a Watch after three minutes' play -- no "painted 512 m"
-  hitches near 160 ms; what the busiest frame holds. Holding 45 sustained
-  needs about half the sustained frame cut.
+  **Seen** (10:22): it did not cure them (512 m 187-235 ms); the flyover's
+  busiest frame was about 150 whole crowns under the camera. **Step
+  fourteen, built and not seen:** in flight the far versions take over from
+  a crown a full screen tall; the recorder times the paint, the re-sort and
+  the main draw apart. **To check:** a Watch after three minutes' play --
+  the flyover's last 20 s, how the trees look from the flyover, and which
+  part of a hitch the milliseconds name. Holding 45 sustained needs about
+  half the sustained frame cut.
 - [ ] **A smoke run before the phone-performance branch merges** (the
   recorder in main.js runs every frame on every tier: the first change on
   the branch that does). Ask the owner; it uses the graphics card.

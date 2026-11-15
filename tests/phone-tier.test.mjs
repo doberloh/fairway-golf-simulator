@@ -78,6 +78,10 @@ test('the Phone tier thins the trees outside the hole harder, never one of the h
  // In free flight and the flyover, a smaller ring round the camera (the
  // flyover flies its circle over the next holes' woods).
  assert.ok(rules.flyReach > 0 && rules.flyReach < LOW_TREES.flyReach);
+ // And in flight the far versions from a larger crown than on the ground
+ // (renderer.js `cullFlying`); no other tier has a flight rule.
+ assert.ok(TIERS.phone.flyFarPainted > TIERS.phone.farPainted && TIERS.phone.flyFarTrees > TIERS.phone.farTrees);
+ for (const q of QUALITY) assert.equal(TIERS[q].flyFarPainted, undefined, `${q} has no flight rule`);
  const region = {path: new Float32Array([0, 0, 0, 400]), ball: {x: 200, z: 100}, camera: {x: 0, z: -50}, flying: false};
  for (const [x, z] of [[70, 200], [-79, 10], [260, 100]]) assert.equal(protectedAt(region, x, z, rules), protectedAt(region, x, z, LOW_TREES), `(${x}, ${z})`);
  for (const d of [100, 200, 300, 600]) assert.ok(shareAt(d, rules) < shareAt(d, LOW_TREES), `fewer kept ${d} m off`);

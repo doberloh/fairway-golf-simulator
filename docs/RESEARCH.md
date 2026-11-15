@@ -16079,6 +16079,27 @@ m grid, the course's from a 6 m one (renderer.js `groundBakeMeshes`).
 from 2.0 to 4.7 M -- the 100 m `flyReach` did not reach whatever that is.
 The watch now lists the heaviest things in view at its busiest frame.
 
+**Seen** (10:22, build 78935925, hole 8). Play at the cap: 29-30 in every
+ten-second line after the first. **The coarser painting did not cure the
+hitches**: "painted 512 m" still 187-235 ms (497 beside programs built at a
+new hole), "painted 128 m" 113-141 -- so tiny triangles were not the cause,
+or not all of it; the inference above is withdrawn. The watch's uncapped
+player view read 42-43 (59 unprobed). **The flyover's busiest frame** (4.6 M
+triangles): Douglas fir crowns x48 (0.6 M), x39 (0.5 M), red cedar x37 (0.5
+M), hemlock x28 (0.3 M) -- about 150 whole crowns -- the ground's squares
+(0.6 M) and 2,623 far versions (0.5 M). The flyover skims 34 m over the
+canopy, so the crowns under it are large on screen and drawn whole.
+
+Built after it, not run: *in flight* (the flyover and the player's free
+flight, not the benchmark's or the watch's placed views: main.js
+`flyingView`) the Phone tier's far versions take over from a crown a full
+screen tall (`flyFarPainted` 1, `flyFarTrees` 0.6; on the ground 0.5 and
+0.3; PLACED); every cull starts with no far-version line left from the
+last. *The hitches timed in parts*: the recorder now gives each paint's
+own milliseconds, the trees' re-sort's, and the main draw's within the
+frame's draw call -- whether the 200 ms is the painting's own script, or
+the next draw waiting on the chip.
+
 Already right on Phone: no bloom,
 god rays, clouds, mist, cascades or tree mirror; tone mapping in the
 materials, no extra pass; no logarithmic depth; highp kept (no evidence
