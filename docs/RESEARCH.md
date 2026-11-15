@@ -16132,6 +16132,12 @@ The test built after it: the 32 and 128 m squares without mipmaps
 them -- if the near squares' first and last bands go quiet while the 512
 m's do not, the mipmaps were the end's cost.
 
+**Seen** (10:49, build 34eeeb2b): **not the mipmaps** -- the 128 m square,
+without them, still stalled at a repaint's first, sixth and last bands (84,
+85, 137 ms), the others 1 ms; the 512 m one 240 ms at its last. Mipmaps put
+back on every square (`BAKE.mipsFrom` 0). What a stalling band does that
+the others do not is not known; play at the cap held 29-30 between them.
+
 Already right on Phone: no bloom,
 god rays, clouds, mist, cascades or tree mirror; tone mapping in the
 materials, no extra pass; no logarithmic depth; highp kept (no evidence

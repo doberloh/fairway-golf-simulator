@@ -3125,7 +3125,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
    if(!this.readingHeading){this.camera.getWorldDirection(this.headingScratch??=new T.Vector3());this.readingHeading={x:this.headingScratch.x,z:this.headingScratch.z};}
    heading=this.readingHeading;
   }
-  this.reading.update(this.elapsed-this.readingEpoch,heading);
+  this.reading.update(this.elapsed-this.readingEpoch,heading,this.renderer.getPixelRatio());
  }
  setBall(p){this.localBall={...p};const v=this.course.toWorld(p),h=this.course.height(p.x,p.z),surface=this.course.surface(p.x,p.z),lift=0;this.ball.position.set(v.x,(p.y!==undefined?p.y:h+R)+lift,v.z);this.ballRing.position.set(v.x,h+lift+.01,v.z);const near=Math.hypot(p.x-this.course.pin.x,p.z-this.course.pin.z)<5;this.ballRing.scale.setScalar(near?.22:1);this.ballRing.visible=!near&&!(p.y!==undefined&&p.y<h);this.placeBallShadow(v.x,v.z,h,this.ball.position.y);}
  // WHAT PUTS THE BALL ON THE GROUND.
