@@ -179,6 +179,11 @@ export function formatWatch(w) {
   const f = play.map(l => l.frames).sort((a, b) => a - b);
   out.push(`  your view without probes: ${f[Math.floor(f.length / 2)]} fps median, ${f[0]} slowest second, over ${play.length} s`);
  }
+ // What was heaviest in view at the watch's busiest frame (main.js `peak`).
+ if (w.peak?.heavy?.length) {
+  out.push(`  heaviest at the busiest frame (${(w.peak.tris / 1e6).toFixed(1)}M tris, ${w.peak.at} s, ${w.peak.phase ?? '-'}):`);
+  for (const m of w.peak.heavy) out.push(`    ${pad(m.name, 40)}${lpad((m.triangles / 1e6).toFixed(1) + ' M', 9)}${lpad(m.held != null ? `x${m.held}` : '', 8)}`);
+ }
  const speed = speedOf(w.probes ?? []);
  if (speed) {
   const flips = [];

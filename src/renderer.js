@@ -3601,18 +3601,36 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   for(const pair of G.meshes.values())for(const mesh of Object.values(pair))mesh.material=m;
   return B.on;
  }
- // The meshes a square is painted with: the course's whole ground for the
- // course's square; for a near one, the grid's own squares that reach it.
+ // The meshes a square is painted with: the ground's squares (ground-lod.js)
+ // that reach it, AS COARSE AS ITS TEXELS ALLOW. Painted from the grid's own
+ // half-metre triangles, the 512 m square (50 cm texels) and the course's
+ // (1.3 m) drew triangles of a texel or less -- a chip shades a pixel quad
+ // at a time, so the ground's whole painter ran several times over for each
+ // texel -- and every repaint of the 512 m square was the second's slowest
+ // frame on the iPhone, its draw call 150-170 ms (the watch, 15 November
+ // 2026). So a square takes the coarsest level of squares whose grid is at
+ // least three of its texels: the 32 and 128 m squares the grid's own
+ // triangles, the 512 m one the plain 3 m grid, the course's a 6 m one. A
+ // coarse grid can stand a metre or two off the ground at worst (the
+ // squares' `error`); what is painted by height alone (the beach line,
+ // banding, contours) can shift that much in the far pictures.
  groundBakeMeshes(s,at){
-  const B=this.groundBake,G=this.groundLod;
+  const B=this.groundBake,G=this.groundLod,texel=s.size/(s.course?BAKE.courseTexels:BAKE.texels);
   const mesh=index=>{const g=new T.BufferGeometry();for(const [name,a] of Object.entries(G.attrs))g.setAttribute(name,a);g.setIndex(index);const m=new T.Mesh(g,this.terrain.material);m.frustumCulled=false;m.matrixAutoUpdate=false;return m;};
-  if(s.course)return [B.full??=mesh(G.fullIndex)];
+  // (Strictly under: the 512 m square's 50 cm texels make 1.5 m, which is
+  // where the plain grid begins.)
+  const fine=texel*3<G.grid.dx*.5;
+  // The level: the grid's own triangles where the texels are fine enough for
+  // them, else the lowest level whose coarse grid is three texels or more.
+  let level=0;
+  if(!fine)while(G.lod.nodes.some(n=>n.level===level+1)&&G.grid.dx*Math.max(1,(GROUND_LOD.leafCells<<level)/GROUND_LOD.gridCells)<texel*3)level++;
   const out=[],h=s.size/2;
   for(const node of G.lod.nodes){
-   if(node.level!==0)continue;
+   if(node.level!==level)continue;
    const b=groundNodeBox(G.grid,node);
    if(b.x1<at.x-h||b.x0>at.x+h||b.z1<at.z-h||b.z0>at.z+h)continue;
-   let m=B.meshes.get(node);if(!m){m=mesh(new T.BufferAttribute(node.fine,1));B.meshes.set(node,m);}
+   const key=fine?node:node.coarse;
+   let m=B.meshes.get(key);if(!m){m=mesh(new T.BufferAttribute(fine?node.fine:node.coarse,1));B.meshes.set(key,m);}
    out.push(m);
   }
   return out;

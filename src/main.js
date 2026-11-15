@@ -322,7 +322,7 @@ function programsBuilt(){
 // words, for the recorder to keep beside the second's slowest gap: the
 // ground's pictures repainted, the trees re-sorted, ground squares and grass
 // tiles made for the first time, and how long the draw call itself took.
-let lastRenderMs=0;
+let lastRenderMs=0,lastFrameTris=0;
 function frameCause(){
  const w=view?.takeFrameWork?.();if(!w)return null;
  const out=[];
@@ -337,7 +337,7 @@ function frameCause(){
 // What the recorder notes each frame besides the frame itself: a new hole, a
 // program built (a new material, or a define changed), a camera flight begun.
 function recordFrame(now){
- playRecorder.frame(now,{view:view?.config?.mode??null,phase:watchPhase,cause:frameCause(),tris:view?.renderer?.info?.render?.triangles??0});
+ playRecorder.frame(now,{view:view?.config?.mode??null,phase:watchPhase,cause:frameCause(),tris:lastFrameTris});
  const h=round?.hole;if(h!==recHole){if(recHole!=null)playRecorder.event('new hole');recHole=h;}
  const pr=view?.renderer?.info?.programs?.length;if(pr!==recPrograms){if(recPrograms==null)for(const p of view?.renderer?.info?.programs??[])seenPrograms.add(p);else if(pr>recPrograms)playRecorder.event(`built ${programsBuilt()}`);recPrograms=pr;}
  const cf=!!view?.camFlight;if(cf&&!recCamFlight)playRecorder.event('camera flight');recCamFlight=cf;
@@ -4168,7 +4168,7 @@ async function runDeviceWatch(){
  let lock=null;
  try{navigator.wakeLock?.request('screen').then(l=>{lock=l;},()=>{});}catch{}
  const cap=graphics.frameCap,mode=view.config.mode,started=performance.now(),from=Math.floor(started/1000),notes=new Set();
- let hidden=null,reps=null;
+ let hidden=null,reps=null,peak=null;
  const show=()=>{if(hidden){for(const o of hidden)o.visible=true;hidden=null;}};
  const wait=s=>new Promise(done=>setTimeout(done,s*1000));
  watching=true;
@@ -4187,7 +4187,9 @@ async function runDeviceWatch(){
   seconds:s=>wait(s),
   // Its second by the clock, as the recorder's lines are (the script's own
   // count runs a little behind it: the probes and the rests take time).
-  probe:()=>new Promise(done=>{watchProbe=r=>done({...r,at:Math.round(performance.now()/1000)-from});}),
+  // The busiest frame of the watch so far keeps what was heaviest in view
+  // (the flyover's last 20 s climbed to 4.7 M triangles on the iPhone).
+  probe:()=>new Promise(done=>{watchProbe=r=>{const at=Math.round(performance.now()/1000)-from;if(lastFrameTris>(peak?.tris??0))peak={tris:lastFrameTris,at,phase:watchPhase,heavy:heaviestHeld(6)};done({...r,at});};}),
   // NOTHING DRAWN for n seconds (as Measure this device's "nothing drawn"):
   // the clear and the frame still happen, the scene does not.
   rest:async s=>{hidden=view.scene.children.filter(o=>o.visible);for(const o of hidden)o.visible=false;await wait(s);show();},
@@ -4205,7 +4207,7 @@ async function runDeviceWatch(){
  const during=playRecorder.read(from,Infinity).map(l=>({...l,at:l.t-from}));
  if(during.some(l=>l.events.includes('page hidden')))notes.add('the page was put away during the watch');
  if(reps?.failed)notes.add(`probes could not be sized: ${reps.failed}`);
- lastWatch={seconds:result.seconds,cap,reps:reps?.failed?null:reps,course:`${playingCourseName()}, hole ${round.hole+1}`,before,during,probes:result.probes,notes:[...notes]};
+ lastWatch={seconds:result.seconds,cap,peak,reps:reps?.failed?null:reps,course:`${playingCourseName()}, hole ${round.hole+1}`,before,during,probes:result.probes,notes:[...notes]};
  toast('Watched. Help → Report a problem → Copy diagnostic carries it.');
  return lastWatch;
 }
@@ -8441,7 +8443,7 @@ function tick(now){
  // the page until it has -- the loading screen froze during a wait that is
  // meant to leave it moving. The overlay is up; the frame it would cover is
  // drawn by `ready` itself as soon as the programs are done.
- if(!view.readying){if(benchProbe)benchFrame(now,dt);else{const r0=performance.now();view.render(dt);lastRenderMs=performance.now()-r0;if(watchProbe){const done=watchProbe;watchProbe=null;done(view.probeDevice());}}}
+ if(!view.readying){if(benchProbe)benchFrame(now,dt);else{const r0=performance.now();view.render(dt);lastRenderMs=performance.now()-r0;lastFrameTris=view.renderer.info.render.triangles;if(watchProbe){const done=watchProbe;watchProbe=null;done(view.probeDevice());}}}
  setWindArrow();
  // Not over a finished hole: "0.0 FEET TO HOLE" read on after the ball dropped.
  const worldLabels=!flight&&view.config.mode!=='free'&&!round?.holeComplete;

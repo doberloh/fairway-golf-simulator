@@ -16062,6 +16062,23 @@ November 2026). Built, not run:
   the most triangles drawn, and Watch this device prints them -- so the
   next watch names what the 160-270 ms hitches were.
 
+**What the hitches were** (15 November 2026, 10:10, build 06386f9c, the same
+hole). Play at the cap: 29-30 in most ten-second lines, 24-28 at the end
+(touches and panels). **Every slowest frame of play named the same thing:
+"painted 512 m", its draw call 154-173 ms** (with a grass tile and a trees'
+re-sort beside it, each small). The 32 and 128 m squares never appeared.
+An inference, not a measurement, for why the 512 m one: it was painted from
+the grid's own half-metre triangles, a texel or less each at 50 cm a texel,
+and a chip shades a 2-by-2 quad of pixels at a time, so the painter ran
+several times over per texel; the 32 and 128 m squares' texels are smaller
+than those triangles. Each square is now painted from the coarsest level of
+the ground's squares whose grid is at least three of its texels: the 32 and
+128 m squares from the grid's own triangles, the 512 m one from the plain 3
+m grid, the course's from a 6 m one (renderer.js `groundBakeMeshes`).
+**The flyover**: its last 20 s still fell to 20-25, the triangles climbing
+from 2.0 to 4.7 M -- the 100 m `flyReach` did not reach whatever that is.
+The watch now lists the heaviest things in view at its busiest frame.
+
 Already right on Phone: no bloom,
 god rays, clouds, mist, cascades or tree mirror; tone mapping in the
 materials, no extra pass; no logarithmic depth; highp kept (no evidence

@@ -37,6 +37,9 @@ test('the second\'s slowest gap keeps what that frame did, and the most triangle
  assert.equal(line.tris, 1.4e6);
  const text = formatWatch({seconds: 1, before: [{...line, events: []}], during: [], probes: []});
  assert.match(text, /267 +1\.4M +; slowest: painted 32 m, 2 grass tiles made|267 +1\.4M +[^\n]*slowest: painted 32 m/);
+ // And what was heaviest in view at the watch's busiest frame.
+ const peak = formatWatch({seconds: 1, before: [], during: [], probes: [], peak: {tris: 4.7e6, at: 98, phase: 'flyover', heavy: [{name: 'far trees', triangles: 1.2e6, held: 6000}]}});
+ assert.match(peak, /heaviest at the busiest frame \(4\.7M tris, 98 s, flyover\):\n +far trees +1\.2 M +x6000/);
 });
 
 test('the watch runs its script in order, probes every two seconds where asked, and always puts things back', async () => {

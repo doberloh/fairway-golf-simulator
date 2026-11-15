@@ -179,7 +179,14 @@ wrong, unfinished, or owed a check.
   the camera (Low: 250), and the recorder says what each second's slowest
   frame did and the triangles drawn. **To check:** a Watch after three
   minutes' play -- the flyover's last 20 s, and what the slowest frames
-  name. Holding 45 sustained needs about half the sustained frame cut.
+  name. **Seen** (10:10): every slowest frame of play was the 512 m
+  picture's repaint (draw call 150-170 ms); the flyover still climbs to 4.7
+  M triangles at its end. **Step thirteen, built and not seen:** the far
+  pictures painted from coarser ground (its tiny triangles were the likely
+  cost), and the watch lists the heaviest things at its busiest frame.
+  **To check:** a Watch after three minutes' play -- no "painted 512 m"
+  hitches near 160 ms; what the busiest frame holds. Holding 45 sustained
+  needs about half the sustained frame cut.
 - [ ] **A smoke run before the phone-performance branch merges** (the
   recorder in main.js runs every frame on every tier: the first change on
   the branch that does). Ask the owner; it uses the graphics card.
