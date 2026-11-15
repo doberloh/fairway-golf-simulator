@@ -169,8 +169,12 @@ wrong, unfinished, or owed a check.
   tree rule much harder outside the hole on Phone (`lowTrees`). **To
   check:** how the course away from the hole looks with so few trees; a
   Watch after three minutes' play (no "built ground" in play; the lines
-  holding 29-30); Measure's "trees thinned as on Low". Holding 45
-  sustained needs about half the sustained frame cut.
+  holding 29-30); Measure's "trees thinned as on Low". **Seen** (09:53, the
+  owner: "This did help"): play at 29-30 for two minutes, then 25-27; the
+  slow state uncapped 31-36, above the cap; no ground program built in
+  play. Left: the flyover's last 20 s at 20-23; hitches of 160-270 ms by
+  camera flights and panels; the look of the thinned course not yet
+  reported. Holding 45 sustained needs about half the sustained frame cut.
 - [ ] **A smoke run before the phone-performance branch merges** (the
   recorder in main.js runs every frame on every tier: the first change on
   the branch that does). Ask the owner; it uses the graphics card.

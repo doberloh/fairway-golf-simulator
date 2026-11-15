@@ -16025,6 +16025,27 @@ rid of outside gameplay landscape trees?"). Built, not run:
   Measure this device's "trees thinned as on Low" puts Low's figures back
   for its reading: what this saved.
 
+**Seen on the iPhone** (15 November 2026, 09:53, build 29200a29, the same
+hole; the owner: "This did help").
+
+- **Play holds the cap.** The recorder before the tap: 29-30 a second in
+  every ten seconds for two minutes, then 25-27 in the last 30 s (the
+  player's view, touches and panels). The first watch: 17-25.
+- **The watch, uncapped, slow state throughout:** the player's view 31
+  (unprobed and probed), after the rests 31-33, from 250 m up 34-36 -- all
+  above 30, so the cap of 30 has room. The flyover's last 20 s still fall
+  to 20-23, in every watch so far.
+- **The harder thinning**: the tee's triangles 1.4 M against 1.8 M with
+  Low's figures put back (+41% work, read across a speed change, so
+  marked); from 250 m up no measurable difference. The painted ground:
+  without it +37% from 250 m up.
+- **Programs built in play: none of the ground's.** The "built ground"
+  lines and the two unnamed programs fell inside the Measure this device
+  run that preceded the watch (its own what-ifs switch the ground's
+  material and build plain paint), not in play. Left: "Living rough" once
+  in the flyover; the slowest gaps, 160-267 ms, beside camera flights and
+  panels.
+
 Already right on Phone: no bloom,
 god rays, clouds, mist, cascades or tree mirror; tone mapping in the
 materials, no extra pass; no logarithmic depth; highp kept (no evidence
