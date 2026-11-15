@@ -106,7 +106,10 @@ import {farParts, midParts, modelParts, hasShippedTwin} from './mesh-assets.js';
 const CELL = 64;          // metres on a side
 // Live-tunable from the lab (`view.cull.tune`), which is how these were chosen.
 // `shadowMaps: false` gives every shadow map every held tree, as before 28 September.
-const tune = {near: 60, margin: 7, shadows: true, shadowCap: 1000, shadowMaps: true, thinShadowsFrom: null, farTrees: null, farPainted: null, farPaintedPx: null};  // metres, degrees, metres
+// `near`: the distance within which a square is kept whatever the view, and
+// drawn whole. Set by each cull from its tier (`near`, graphics.js `cullNear`).
+export const CULL_NEAR = 60;
+const tune = {near: CULL_NEAR, margin: 7, shadows: true, shadowCap: 1000, shadowMaps: true, thinShadowsFrom: null, farTrees: null, farPainted: null, farPaintedPx: null};  // metres, degrees, metres
 const MOVE = 4;           // metres of camera travel before a rebuild
 // The fewest leaf triangles a crown needs before it gets a thinned twin. The
 // grown trees have 13-53 thousand; the Kenney cartoon crowns 40-170.
@@ -139,7 +142,12 @@ function modelRise(name) {
  RISES.set(name, top - foot);
  return top - foot;
 }
-export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinity, farTrees = 0, farPainted = 0, thinTrees = false, midShare = 0, farPaintedPx = 0, screenPx = null} = {}) {
+// `near` (the Phone tier, 15 November 2026): `tune.near` for this course.
+// The 60 m ring is kept all round the camera, behind it too; on a phone held
+// upright the view is about 28 degrees wide, so most of that ring is off the
+// screen. A tier that does not say gets 60 m back on every build.
+export function cullInstances(root, {minInstances = 2, thinShadowsFrom = Infinity, farTrees = 0, farPainted = 0, thinTrees = false, midShare = 0, farPaintedPx = 0, screenPx = null, near = CULL_NEAR} = {}) {
+ tune.near = near;
  const meshes = [];
  root.traverse(o => {
   if (o.isInstancedMesh && o.count >= minInstances && !o.userData.noCull) meshes.push(o);

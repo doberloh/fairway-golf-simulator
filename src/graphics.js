@@ -215,6 +215,13 @@ export const TIERS = {
   farPainted: .25,
   groundTolerance: 6,
   groundSquares: true,
+  // Trees kept whatever the view only within 15 m of the camera, not 60
+  // (instance-cull.js `near`). The third and fourth iPhone runs (15 November):
+  // the chip's wait was 43 to 50 of a 48 to 55 ms frame, the trees and plants
+  // over half of it, about 180 whole trees held at the tee at some 12,000
+  // triangles a crown -- many in the 60 m ring kept behind the camera, which
+  // an upright phone's 28-degree view never shows. PLACED: 15 m.
+  cullNear: 15,
   thinTrees: true,
   understory: .25,
   longGrassReach: 90,

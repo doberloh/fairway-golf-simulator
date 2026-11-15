@@ -85,10 +85,16 @@ wrong, unfinished, or owed a check.
   kept for grounds of 4 million triangles or more, so the "coarser ground"
   of step two did nothing), and the benchmark split into the game's own code
   and the wait for the chip, its counts averaged, a floor row, the time of
-  each reading and the heaviest things in view. **To check:** run it on the
-  iPhone with the phone cool, and once more after a few minutes' play; read
-  whether the slowdown is in the script column or the wait. Hiding the
-  options waits until its figures are good. No Android to test on.
+  each reading and the heaviest things in view. **Seen on the iPhone** (two
+  runs, 15 November, RESEARCH): the game's own code 4 to 5 ms of a 48 to 55
+  ms frame -- the chip, not the processor; no slowdown within either run,
+  but both began slow; the trees and plants 52 to 58% at the tee, the ground
+  19%, the floor under both 13 ms. **Step four, built and not seen on the
+  phone:** trees kept whatever the view only within 15 m (`cullNear`), and
+  three what-if rows in the benchmark (no grass, the old 60 m ring, far
+  versions twice as near). **To check:** its "as drawn" against 48 ms, and
+  which what-if pays. Hiding the options waits until its figures are good.
+  No Android to test on.
 
 - [ ] **A friend's challenge can throw as its round starts, now and then**
   (12 November 2026, the 0.9.14 smoke run: `friend-challenge` failed once in

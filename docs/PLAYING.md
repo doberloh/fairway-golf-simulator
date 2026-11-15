@@ -1035,8 +1035,10 @@ stands the camera at four places on the hole you are on -- the tee, the
 fairway, the green and 250 m up -- for about a minute, however slow the
 game is running. At the tee
 and from above it switches parts of the picture off one at a time: the trees
-and plants, the course's ground, both of those together, the far ground, the
-far trees, the shadows' redraw, and half the pixels. Then it puts the camera
+and plants, the course's ground, both of those together, the grass round the
+camera, the far ground, the shadows' redraw, and half the pixels -- and tries
+two other ways of drawing the trees (all of them kept for 60 m round the
+camera, and their far versions from twice as near). Then it puts the camera
 back. Nothing about the round changes: no hole is skipped and no shot is
 played. Copy diagnostic then carries a table of what it found: frames a
 second, the slowest frame, how long each frame's work took and how much of

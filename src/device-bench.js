@@ -62,8 +62,17 @@ export const BENCH_PARTS = Object.freeze([
  // Both at once: the floor under everything else, what no thinning of the
  // trees or the ground can go below (the second iPhone run, 15 November).
  {id: 'bare', label: 'no trees, plants or ground'},
+ // WHAT-IFS (the fourth run, 15 November): not a part taken away but the next
+ // levers tried, so one run prices them. The grass round the camera (it is
+ // not in the planting above); the trees kept whatever the view within 60 m
+ // as every other tier does (the Phone tier keeps 15: a cheaper "as drawn"
+ // here is what that bought); the trees' far versions from twice as near.
+ {id: 'grass', label: 'no grass round the camera'},
+ {id: 'nearAll', label: 'trees kept all round to 60 m'},
+ {id: 'twins', label: 'far versions twice as near'},
  {id: 'farGround', label: 'no far ground'},
- {id: 'farTrees', label: 'no far trees'},
+ // (The far trees, which read 0 to 9% either way on the iPhone, are no
+ // longer taken apart: a shorter run.)
  {id: 'shadows', label: 'shadows not redrawn'},
  {id: 'pixels', label: 'half the pixels'},
 ]);

@@ -261,7 +261,7 @@ the courses several suites share, and builds many at once on worker threads
   `ground-shader-structure` (also: how many times the ground painter is called), `green-cue-wiring` (also: the ground-reading
   choice writes every cue, and an old record adopts it once), `glsl-reserved`,
   `three-namespace`, `flood-shadows` (five samplers since the tables were packed), `instance-cull` (also: a mesh with a reach drops
-  whole squares past it and only those; a near-shadow plant casts into the nearest map alone), `occlusion`, `clouds`,
+  whole squares past it and only those; a near-shadow plant casts into the nearest map alone; the Phone tier's shorter near ring drops the squares behind the camera, and the next cull has 60 m again), `occlusion`, `clouds`,
   `mist`, `daylight`, `floodlights` (also, since 8 November 2026, no more live lamps than a card's
   shaders hold: `lampBudget`), `distant-flags`,
   `auto-resolution`, `ui-scale`, `roll-hop`, `toon-ramp` (the overhaul's coloured
@@ -402,7 +402,8 @@ the courses several suites share, and builds many at once on worker threads
   (Report a problem), `phone-tier` (a phone is told by what the browser says it is, an iPad is not one; the Phone tier survives a save, is not offered on a desktop, rebuilds the scene, and spends on geometry with a shadow offset of at least a texel, its ground in squares on every course while no other tier's moves), `device-bench` (Measure this device: the tour's order --
   one part off at a time, a whole frame between every two, the camera put back
   whatever goes wrong -- and its section of the diagnostic: the script column,
-  the floor row with trees and ground both off, when each reading was taken,
+  the floor row with trees and ground both off, the what-if rows (no grass,
+  the 60 m ring, far versions twice as near), when each reading was taken,
   and the heaviest things held at each place read as drawn; what the numbers
   are is the device's), `sound`.
 

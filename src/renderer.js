@@ -1219,7 +1219,9 @@ export class GolfView{
   this.nightWarmDue=true;
   this.cull=cullInstances(this.group,{thinShadowsFrom:this.quality.thinShadowsFrom??Infinity,farTrees:this.quality.farTrees??0,farPainted:Math.max(this.quality.farPainted??0,biomeOf(this.world?.settings?.biome)?.farPaintedFrom??0),thinTrees:!!this.quality.thinTrees,
    // A tree's middle version and its line in the picture's own pixels (graphics.js midTrees; High and Ultra).
-   midShare:this.quality.midTrees?.share??0,farPaintedPx:this.quality.midTrees?.px??0,screenPx:()=>this.renderer.domElement.height});
+   midShare:this.quality.midTrees?.share??0,farPaintedPx:this.quality.midTrees?.px??0,screenPx:()=>this.renderer.domElement.height,
+   // How near a tree is kept whatever the view (graphics.js `cullNear`; the Phone tier).
+   ...(this.quality.cullNear!=null?{near:this.quality.cullNear}:{})});
   // The saved preference applies to every course built after it, not only to
   // the one that was on screen when the box was ticked.
   this.setFloodlights(this.daylight?.floodlights);

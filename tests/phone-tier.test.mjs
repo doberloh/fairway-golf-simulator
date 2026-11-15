@@ -33,6 +33,9 @@ test('the Phone tier spends on geometry: the hole\'s trees, shadows from the twi
  // is under the size the squares were kept for, so it was drawn whole and the
  // tolerance above did nothing (the second iPhone run). No other tier moves.
  assert.equal(p.groundSquares, true);
+ // Trees kept whatever the view only close by (instance-cull.js `near`).
+ assert.ok(p.cullNear > 0 && p.cullNear < 60, `phone keeps a ${p.cullNear} m ring`);
+ for (const q of QUALITY) assert.equal(TIERS[q].cullNear, undefined, `${q} keeps the 60 m ring`);
  for (const q of QUALITY) assert.ok(!TIERS[q].groundSquares, `${q} keeps its ground as it was`);
  assert.equal(p.pixelRatio, m.pixelRatio, 'Medium\'s pixels: the owner finds fewer a blurry mess');
  assert.equal(p.cascades, 0);

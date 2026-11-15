@@ -3997,7 +3997,9 @@ function heaviestHeld(n=8){
   if(!o.isMesh)return;
   const g=o.geometry,per=(g.index?g.index.count:g.attributes.position?.count??0)/3,held=o.isInstancedMesh?o.count:1;
   if(!held)return;
-  const name=o.userData.model?`${o.userData.model} ${o.userData.role}`:(o.name||o.material?.type||'mesh');
+  // An unnamed mesh by the nearest named thing it belongs to ('Living rough').
+  let up=o.parent;while(up&&!up.name&&up!==view.group)up=up.parent;
+  const name=o.userData.model?`${o.userData.model} ${o.userData.role}`:(o.name||(up&&up!==view.group&&up.name)||o.material?.type||'mesh');
   const e=by.get(name)??{name,triangles:0,held:0};
   e.triangles+=per*held;e.held+=held;by.set(name,e);
  });
@@ -4008,6 +4010,16 @@ function benchHide(part){
  if(part==='shadows'){const s=view.renderer.shadowMap,was=s.autoUpdate;s.autoUpdate=false;s.needsUpdate=false;return()=>{s.autoUpdate=was;s.needsUpdate=true;};}
  if(part==='pixels'){const was=view.resolutionScale??1;view.setResolutionScale(was*Math.SQRT1_2);return()=>view.setResolutionScale(was);}
  if(part==='bare'){const a=benchHide('planting'),b=benchHide('ground');return()=>{b();a();};}
+ // The what-ifs (device-bench.js): the cull's live tuning, put back after.
+ if(part==='nearAll'||part==='twins'){
+  const c=view.cull;if(!c)return()=>{};
+  const was=c.tune();
+  // Twice the tier's own lines; `was` holds the lab's override, if any.
+  const q=view.quality,fp=was.farPainted??q.farPainted??0,ft=was.farTrees??q.farTrees??0;
+  c.tune(part==='nearAll'?{near:60}:{farPainted:Math.max(.05,2*fp),farTrees:Math.max(.05,2*ft)});
+  return()=>c.tune({near:was.near,farPainted:was.farPainted,farTrees:was.farTrees});
+ }
+ if(part==='grass'){const g=view.group.getObjectByName('Living rough');if(!g?.visible)return()=>{};g.visible=false;return()=>{g.visible=true;};}
  const test={planting:o=>o.isInstancedMesh&&(o.userData.cullTotal!==undefined||['shadow twin','far trees','fading trees'].includes(o.name)),
   ground:o=>o.name==='Continuous ground',farGround:o=>o.name==='Far ground',farTrees:o=>o.name==='Far trees'}[part];
  const off=[];

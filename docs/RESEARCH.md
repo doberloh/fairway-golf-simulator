@@ -15468,6 +15468,59 @@ done -- the error is meant in drawn pixels.) The phone's own "no course
 ground" rows agree with the whole mesh: 2.5 M at the tee, 2.6 M from above.
 The Phone tier now builds the squares on every course (`groundSquares`).
 
+**The Phone tier with its ground in squares, two runs** (15 November 2026,
+build f7832fd1, Safari from the home screen, Cascade View Forest hole 1,
+770 by 1,564; the first after the phone had rested, the second after a few
+minutes' play; counts now a frame's average). Work ms, script ms of it:
+
+| place | reading | run 1 work | script | vs whole | run 2 work | vs whole | triangles |
+|---|---|---|---|---|---|---|---|
+| tee | as drawn | 48 | 4 | | 55 | | 4.7 M |
+| tee | no trees or plants | 23 | 3 | -52% | 22 | -58% | 0.5 M |
+| tee | no course ground | 39 | 4 | -19% | 40 | -19% | 4.5 M |
+| tee | no trees, plants or ground | 13 | 2 | -73% | 13 | -74% | 0.2 M |
+| tee | half the pixels | 41 | 4 | -15% | 45 | -11% | 4.8 M |
+| tee | shadows not redrawn | 47 | 4 | -2% | 50 | 0% | 4.6 M |
+| fairway | as drawn | 44 | 5 | | 50 | | 3.3 M |
+| green | as drawn | 60 | 5 | | 65 | | 5.9 M |
+| 250 m up | as drawn | 32 | 4 | | 37 | | 1.7 M |
+| 250 m up | no trees, plants or ground | 14 | 3 | -58% | 12 | -65% | 0.1 M |
+| tee | again, at 63 s | 49 | 5 | | 51 | | 4.7 M |
+
+What they say:
+
+- **It is the chip.** The game's own code is 4 to 5 ms of the frame (13 once,
+  at the green); the rest is the wait for the graphics chip.
+- **No drift within either run** (48 then 49, 55 then 51 at the tee), but
+  both sat where the earlier run ended (69 ms at 7.0 M triangles), not where
+  it began (21 ms). The fast first half-minute of the 00:41 run has not come
+  back; the phone's sustained state is what to design for.
+- **The trees and plants are over half the frame** (25 to 33 ms of 48 to 55
+  at the tee). The heaviest things held at the tee: the grass round the
+  camera (0.9 M triangles, 38,553 clumps), the ground's squares (0.6 M),
+  3,509 far versions (0.6 M), then the near firs, cedars and hemlocks whole
+  -- about 180 at the tee, 12,000 triangles a crown (Douglas fir: 49 held,
+  0.6 M). At the green 82 and 71 firs, 1.9 M triangles: the slowest place.
+- **The ground is now a fifth** (9 ms) on about 0.3 M triangles drawn: what
+  is left of it is its shading over the screen, not its triangles.
+- **The floor under trees, plants and ground is 13 ms** (59 frames a
+  second as shown): sky, water, far land, the course's things and the
+  picture's finish. The target of 45 frames a second (22 ms) leaves the
+  trees, the plants and the ground about 9 ms between them.
+
+**Why the near trees: the 60 m ring.** The cull keeps every square within
+`tune.near` (60 m, from the desktop) of the camera whatever the view, and
+whole -- behind the camera too. Squares are 64 m, so the ring holds trees up
+to 150 m off, all round. A phone held upright sees about 28 degrees across
+(53 degrees tall at an aspect of 0.49), so most of the ring is never on the
+screen. The Phone tier now keeps 15 m (`cullNear`, PLACED); the rest is
+judged by the view, with the cull's 7-degree margin and its rebuild every 4
+m or 4 degrees as before. Not measured yet: the next run's "as drawn"
+against 48 ms says what it bought, and its "trees kept all round to 60 m"
+row puts the old ring back for a direct comparison. The same run tries no
+grass round the camera, and the far versions from twice as near (the tier's
+0.25 and 0.15 of the screen's height to 0.5 and 0.3).
+
 **Measure this device on the PC, for comparison** (14 November 2026; the
 capture build, Classic Parkland seed "overhaul", hole 1, Medium, 1,600 by
 900 at density 1, frames capped by the display at 60; tools/variants/

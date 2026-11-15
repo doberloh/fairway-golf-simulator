@@ -72,6 +72,8 @@ test('the report says what each part costs, and rides in the diagnostic', async 
  // What the triangles are, once a place read as drawn, and never for a part or the re-read.
  assert.match(text, /heaviest held at the tee:\n +redwood leaf +4\.2 M +x120\n +ground, fine +0\.3 M +x9/);
  assert.equal(text.match(/heaviest held/g).length, BENCH_SPOTS.length);
+ // The what-ifs price the next levers in the same run.
+ for (const what of ['no grass round the camera', 'trees kept all round to 60 m', 'far versions twice as near']) assert.match(text, new RegExp(`tee +${what} `));
  // When each reading was taken: a slowdown by time is the device, by place the scene.
  assert.match(text, /draws +tris +at s\n +tee +as drawn +30 +50 +40 +5 +300 +10\.0 M +2\n/);
  assert.match(text, /tee +as drawn, at the end/);
