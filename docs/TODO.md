@@ -106,10 +106,15 @@ wrong, unfinished, or owed a check.
   minute first (as drawn, no ground, bare, nothing drawn), prints the
   game's light and view as they change, keeps the screen on. **To check:**
   whether "as drawn" steps while the floor holds (the game) or everything
-  steps (the device). The ground's shading cost as much as the ground in
-  the slow state (plain paint -37 to -39%): a cheaper phone ground is a
-  candidate, held until the flip is understood. Hiding the options waits
-  until its figures are good. No Android to test on.
+  steps (the device). **Seen** (02:36, hole 4, the owner's 30 cap): the
+  phone went slow to fast at 11 s and back at 67 s with nothing changed in
+  the game -- the phone's own state; real work at the tee about 7 ms fast,
+  35 slow (the read back is 10 of every figure). The ground slows about ten
+  times in the slow state, the trees about four. **Next, the owner's
+  call:** a cheaper ground shading on Phone (the slow state's largest
+  piece; ground.js is about 1,300 lines of shader), fewer pixels, or both.
+  Hiding the options waits until its figures are good. No Android to test
+  on.
 
 - [ ] **A friend's challenge can throw as its round starts, now and then**
   (12 November 2026, the 0.9.14 smoke run: `friend-challenge` failed once in

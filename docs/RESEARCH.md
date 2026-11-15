@@ -15699,7 +15699,57 @@ cadence); `antialias: false` and `powerPreference: 'default'` on a phone
 (cheap tests, small expected gains); the ground's cup `discard` off on
 Phone (small). Its note that the shadow redraw every fourth frame draws
 8 of 17.7 M triangles is the Medium figure: on Phone the map is cast by the
-far versions and read 0 to -9% (above). Already right on Phone: no bloom,
+far versions and read 0 to -9% (above). (Already right on Phone: see the
+end of this entry.)
+
+**The hold, on the iPhone** (15 November 2026, 02:36, build de7feb6b,
+Safari from the home screen, Cascade View Forest **hole 4**, the owner's
+frame cap at **30**; play before it 19 frames a second). Work ms at the
+tee, five rounds, nothing switched but what each row hides:
+
+| at s | as drawn | no ground | no trees, plants or ground | nothing drawn |
+|---|---|---|---|---|
+| 2-10 (round 1) | 46 | 30 | 13 | 10 |
+| 11-17 (round 2) | 17 | 17 | 11 | 10 |
+| 19-24 | 17 | 15 | 12 | 10 |
+| 26-31 | 17 | 17 | 13 | 10 |
+| 33-39 | 17 | 17 | 13 | 10 |
+
+Then fast through the tee's parts, the fairway (16), the green (16) and
+250 m up as drawn (17, at 65 s); slow from about 67 s (250 m up: no ground
+29, plain ground 34, half the pixels 37, whole 46.5); the tee at the end 45.
+
+- **The floor is the read back**: nothing drawn at all is 10 ms in every
+  state. So the work of a frame is its work ms less about 10, and play,
+  which reads nothing back, never pays it: the tee's real work is about 7
+  ms fast and 35 ms slow -- **five times**.
+- **It went the other way this time**: slow at the start, fast from 11 s,
+  straight after the first frames with nothing drawn, and stayed fast for
+  about 55 s through the hold and three moves of the camera, then slow
+  again. Nothing in the game changed at either step (the state line read
+  once: hour 12.2, sun 51 degrees, no floodlights, free view). Both
+  directions without the game's doing: **the phone's own state**, not
+  something the game draws. (Earlier runs without the cap stayed fast about
+  15 and 30 s; this one, at 30 frames a second, about 55 -- one run each,
+  so no more than a hint that a lighter load keeps it fast longer.)
+- **The slow state is not the same frame slower**: fast, the ground costs
+  0 to 2 ms and the trees and plants about 4; slow, the ground about 15
+  (no ground -38%, plain paint -28% from above; -37 to -39% at 02:10) and
+  the trees and plants about 17. The ground, the shader with the most
+  texture reads, slows about ten times, the trees about four. An inference,
+  not a measurement: whatever the phone lowers in the slow state hurts
+  texture reads most -- its memory, or the chip's clock with the ground's
+  reads waiting on it.
+- **The 30 cap did not keep play fast**: 19 frames a second in play before
+  the run.
+
+What follows for the Phone tier, as the owner's choice: the fast state
+already meets 60 at the tee; the slow state is the phone's and cannot be
+switched off from a web page, so what the game can do is make the slow
+state's frame cheaper -- the ground's shading first (worth 28 to 39% of a
+slow frame), then the pixels (half: -21%) -- and keep the load low.
+
+Already right on Phone: no bloom,
 god rays, clouds, mist, cascades or tree mirror; tone mapping in the
 materials, no extra pass; no logarithmic depth; highp kept (no evidence
 mediump is faster through Safari's WebGL on Metal).
