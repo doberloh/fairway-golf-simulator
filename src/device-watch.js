@@ -62,7 +62,11 @@ export function secondRecorder(size = RECORD_SECONDS) {
    if (open && open.t !== s) close();
    if (!open) { open = {t: s, frames: 0, worstMs: 0, view: info.view ?? null, events: pending}; pending = []; }
    open.frames++;
-   if (last != null) { const gap = now - last; if (gap <= 1000 && gap > open.worstMs) open.worstMs = Math.round(gap); }
+   // `cause`: what the frame before this one did besides drawing (main.js
+   // `frameCause`) -- the frame whose length this gap is -- kept beside the
+   // second's slowest gap. `tris`: the most triangles a frame drew.
+   if (last != null) { const gap = now - last; if (gap <= 1000 && gap > open.worstMs) { open.worstMs = Math.round(gap); open.cause = info.cause || null; } }
+   if (info.tris > (open.tris ?? 0)) open.tris = info.tris;
    last = now;
    if (info.view) open.view = info.view;
    if (info.phase) open.phase = info.phase;
@@ -140,13 +144,15 @@ export function formatWatch(w) {
  out.push(`  play before the tap (${before.length} s recorded):`);
  if (!before.length) out.push('    nothing recorded (the game had just opened?)');
  else {
-  out.push(`    ${pad('from s', 8)}${lpad('fps', 5)}${lpad('worst s', 9)}${lpad('gap ms', 8)}  view, what happened`);
+  out.push(`    ${pad('from s', 8)}${lpad('fps', 5)}${lpad('worst s', 9)}${lpad('gap ms', 8)}${lpad('tris', 7)}  view, what happened; the slowest frame did`);
   const t0 = before[before.length - 1].t;
   for (let i = 0; i < before.length; i += 10) {
    const chunk = before.slice(i, i + 10), fps = chunk.map(l => l.frames).sort((a, b) => a - b);
    const views = [...new Set(chunk.map(l => l.view).filter(Boolean))].join('/');
    const events = [...new Set(chunk.flatMap(l => l.events))].join(', ');
-   out.push(`    ${pad(chunk[0].t - t0, 8)}${lpad(fps[Math.floor(fps.length / 2)], 5)}${lpad(fps[0], 9)}${lpad(Math.max(...chunk.map(l => l.worstMs)), 8)}  ${views}${events ? '; ' + events : ''}`);
+   const worst = chunk.reduce((a, l) => l.worstMs > a.worstMs ? l : a, chunk[0]);
+   const tris = Math.max(0, ...chunk.map(l => l.tris ?? 0));
+   out.push(`    ${pad(chunk[0].t - t0, 8)}${lpad(fps[Math.floor(fps.length / 2)], 5)}${lpad(fps[0], 9)}${lpad(worst.worstMs, 8)}${lpad(tris ? (tris / 1e6).toFixed(1) + 'M' : '-', 7)}  ${views}${events ? '; ' + events : ''}${worst.cause ? '; slowest: ' + worst.cause : ''}`);
   }
  }
  // THE WATCH: frames in the seconds since the last probe, then the probes.
@@ -160,7 +166,10 @@ export function formatWatch(w) {
   const lines = during.filter(l => l.at > from && l.at <= p.at), fps = lines.map(l => l.frames).sort((a, b) => a - b);
   const events = [...new Set(lines.flatMap(l => l.events))].join(', ');
   const step = (w.script ?? WATCH_SCRIPT).find(s => s.id === p.phase);
-  const tail = p.failed ? `probe failed: ${p.failed}` : events;
+  const worst = lines.length ? lines.reduce((a, l) => (l.worstMs ?? 0) > (a.worstMs ?? 0) ? l : a, lines[0]) : null;
+  const tris = Math.max(0, ...lines.map(l => l.tris ?? 0));
+  const slowest = worst?.worstMs ? `slowest ${worst.worstMs} ms${worst.cause ? ': ' + worst.cause : ''}` : '';
+  const tail = [p.failed ? `probe failed: ${p.failed}` : events, tris ? `${(tris / 1e6).toFixed(1)}M tris` : '', slowest].filter(Boolean).join('; ');
   out.push(`    ${pad(p.at, 6)}${pad(step?.label ?? p.phase, 20)}${lpad(fps.length ? fps[Math.floor(fps.length / 2)] : '-', 5)}${lpad(ms(p.trip), 7)}${lpad(ms(p.math), 7)}${lpad(ms(p.memory), 8)}${lpad(ms(p.cpu), 7)}  ${tail}`);
   from = p.at;
  }

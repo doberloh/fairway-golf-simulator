@@ -174,7 +174,12 @@ wrong, unfinished, or owed a check.
   slow state uncapped 31-36, above the cap; no ground program built in
   play. Left: the flyover's last 20 s at 20-23; hitches of 160-270 ms by
   camera flights and panels; the look of the thinned course not yet
-  reported. Holding 45 sustained needs about half the sustained frame cut.
+  reported. **Step twelve, built and not seen on the phone:** in free
+  flight and the flyover the Phone tier keeps whole trees only 100 m round
+  the camera (Low: 250), and the recorder says what each second's slowest
+  frame did and the triangles drawn. **To check:** a Watch after three
+  minutes' play -- the flyover's last 20 s, and what the slowest frames
+  name. Holding 45 sustained needs about half the sustained frame cut.
 - [ ] **A smoke run before the phone-performance branch merges** (the
   recorder in main.js runs every frame on every tier: the first change on
   the branch that does). Ask the owner; it uses the graphics card.

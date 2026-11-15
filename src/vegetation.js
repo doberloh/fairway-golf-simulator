@@ -1239,6 +1239,8 @@ function addNearbyGrass(view){
   if(held){parked.delete(next.key);tiles.set(next.key,held);group.add(held);return true;}
   const mesh=buildTile(next.tx,next.tz);
   tiles.set(next.key,mesh);group.add(mesh);
+  // Counted for Watch this device (renderer.js `frameWork`): what a slow frame did.
+  if(view.frameWork)view.frameWork.tiles++;
   return true;
  };
  // Parked tiles are out of the group, so the scene walk in disposeCourse cannot

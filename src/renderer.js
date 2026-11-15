@@ -3543,8 +3543,14 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   geometry.boundingBox=new T.Box3(new T.Vector3(b.x0,b.y0-skirt,b.z0),new T.Vector3(b.x1,b.y1,b.z1));
   geometry.boundingSphere=geometry.boundingBox.getBoundingSphere(new T.Sphere());
   const mesh=new T.Mesh(geometry,this.groundBake?.on?this.groundBake.material:this.terrain.material);mesh.receiveShadow=true;mesh.renderOrder=1;mesh.visible=false;mesh.matrixAutoUpdate=false;mesh.name='ground, '+which;
-  G.group.add(mesh);pair[which]=mesh;return mesh;
+  G.group.add(mesh);pair[which]=mesh;this.frameWork.squares++;return mesh;
  }
+ // WHAT A FRAME DID BESIDES DRAWING (Watch this device, device-watch.js): the
+ // ground's pictures repainted, the cull's re-sorts, the ground's squares and
+ // the grass tiles made for the first time. main.js takes and clears it each
+ // frame, and the recorder keeps it beside the second's slowest gap.
+ frameWork={paints:[],rebuilds:0,squares:0,tiles:0};
+ takeFrameWork(){const w=this.frameWork;this.frameWork={paints:[],rebuilds:0,squares:0,tiles:0};return w;}
  // THE GROUND PAINTED ONCE, FOR A PHONE (ground-bake.js; graphics.js
  // `groundBake`, the Phone tier only). Four pictures -- three square ones
  // round the camera and one of the course -- painted by the ground's own
@@ -3631,6 +3637,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
    if(cues?.cueSheen)cues.cueSheen.value=sheen;
   }
   s.painted={x:at.x,z:at.z};s.dirty=false;B.rects[i].set(at.x,at.z,s.size,1);
+  this.frameWork.paints.push(s.course?'course':`${s.size} m`);
  }
  // Every frame, before the shadow is scheduled: where the near squares want
  // to be, which one (if any) to repaint, and the cup.
@@ -3919,7 +3926,9 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
    for(const l of lights){if(l.shadow.autoUpdate===false)continue;l.updateMatrixWorld();l.target.updateMatrixWorld();l.shadow.updateMatrices(l);}
    // A re-sort changes which trees each map draws, the floodlights' included
    // (they draw what the view does): their shadows are redrawn to match.
-   if(this.cull.update(this.camera,this.timed?this.sunDir:null,lights,this.quality.thinTrees?this.lowTreeRegion():null)&&this.floodlit)this.floodShadowDirty=true;
+   const resorted=this.cull.update(this.camera,this.timed?this.sunDir:null,lights,this.quality.thinTrees?this.lowTreeRegion():null);
+   if(resorted)this.frameWork.rebuilds++;
+   if(resorted&&this.floodlit)this.floodShadowDirty=true;
   }
   if(this.floodShadowDirty&&this.floodlit){
    const now=performance.now();

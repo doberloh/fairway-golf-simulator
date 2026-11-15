@@ -1045,7 +1045,8 @@ jobs on the device's graphics and processor every two seconds, with the
 frame cap lifted while it runs and put back after. Leave the screen on and
 the phone alone. Copy diagnostic then carries that, and how your last
 three minutes of play ran, ten seconds a line (frames a second, the
-slowest moment, and what happened: a touch, a shot, a new hole). No shot
+slowest moment and what the game was doing in it, and what happened: a
+touch, a shot, a new hole). No shot
 is played and the round is left as it was.
 
 **Measure this device**, under the same heading, is for a game that runs

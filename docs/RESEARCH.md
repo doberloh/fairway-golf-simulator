@@ -16046,6 +16046,22 @@ hole; the owner: "This did help").
   in the flyover; the slowest gaps, 160-267 ms, beside camera flights and
   panels.
 
+**The flyover's dip and the hitches, next** (the owner chose them, 15
+November 2026). Built, not run:
+
+- *The flyover*: the hole's flyover is a circle round the hole, 150 to 350 m
+  out (camera-tours.js `makeHoleTour`), flown in free mode, and Low's rule
+  keeps every tree within `flyReach` (250 m) of a free camera -- the next
+  holes' woods, whole, under the circle. An inference, not measured: that is
+  the flyover's last 20 s at 20-23. The Phone tier keeps 100 m
+  (`lowTrees.flyReach`, PLACED); free flight over the course thins the same.
+- *What a slow frame did*: the renderer counts, each frame, the ground's
+  pictures repainted, the trees re-sorted, ground squares and grass tiles
+  made for the first time (renderer.js `frameWork`), and main.js times the
+  draw call; the recorder keeps them beside each second's slowest gap and
+  the most triangles drawn, and Watch this device prints them -- so the
+  next watch names what the 160-270 ms hitches were.
+
 Already right on Phone: no bloom,
 god rays, clouds, mist, cascades or tree mirror; tone mapping in the
 materials, no extra pass; no logarithmic depth; highp kept (no evidence

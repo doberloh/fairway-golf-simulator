@@ -74,7 +74,10 @@ test('the Phone tier spends on geometry: the hole\'s trees, shadows from the twi
 test('the Phone tier thins the trees outside the hole harder, never one of the hole\'s or the ball\'s', async () => {
  const {LOW_TREES, protectedAt, shareAt} = await import('../src/low-trees.js');
  const rules = {...LOW_TREES, ...TIERS.phone.lowTrees};
- for (const k of ['holeReach', 'ballReach', 'flyReach', 'behind', 'past', 'step']) assert.equal(rules[k], LOW_TREES[k], `${k} as Low's`);
+ for (const k of ['holeReach', 'ballReach', 'behind', 'past', 'step']) assert.equal(rules[k], LOW_TREES[k], `${k} as Low's`);
+ // In free flight and the flyover, a smaller ring round the camera (the
+ // flyover flies its circle over the next holes' woods).
+ assert.ok(rules.flyReach > 0 && rules.flyReach < LOW_TREES.flyReach);
  const region = {path: new Float32Array([0, 0, 0, 400]), ball: {x: 200, z: 100}, camera: {x: 0, z: -50}, flying: false};
  for (const [x, z] of [[70, 200], [-79, 10], [260, 100]]) assert.equal(protectedAt(region, x, z, rules), protectedAt(region, x, z, LOW_TREES), `(${x}, ${z})`);
  for (const d of [100, 200, 300, 600]) assert.ok(shareAt(d, rules) < shareAt(d, LOW_TREES), `fewer kept ${d} m off`);

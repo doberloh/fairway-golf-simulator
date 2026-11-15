@@ -318,10 +318,26 @@ function programsBuilt(){
  });
  return names.size?[...names].slice(0,3).join(' / '):`${fresh.size} program${fresh.size>1?'s':''} (${[...fresh].map(p=>p.name).join(', ')})`;
 }
+// WHAT THE LAST FRAME DID BESIDES DRAWING (renderer.js `takeFrameWork`), in
+// words, for the recorder to keep beside the second's slowest gap: the
+// ground's pictures repainted, the trees re-sorted, ground squares and grass
+// tiles made for the first time, and how long the draw call itself took.
+let lastRenderMs=0;
+function frameCause(){
+ const w=view?.takeFrameWork?.();if(!w)return null;
+ const out=[];
+ if(w.paints.length)out.push(`painted ${w.paints.join(', ')}`);
+ if(w.rebuilds)out.push('trees re-sorted');
+ if(w.squares)out.push(`${w.squares} ground square${w.squares>1?'s':''} made`);
+ if(w.tiles)out.push(`${w.tiles} grass tile${w.tiles>1?'s':''} made`);
+ // (The draw call's own script is 4 to 6 ms on the iPhone; only a long one is news.)
+ if(lastRenderMs>=12)out.push(`draw call ${Math.round(lastRenderMs)} ms`);
+ return out.join(', ')||null;
+}
 // What the recorder notes each frame besides the frame itself: a new hole, a
 // program built (a new material, or a define changed), a camera flight begun.
 function recordFrame(now){
- playRecorder.frame(now,{view:view?.config?.mode??null,phase:watchPhase});
+ playRecorder.frame(now,{view:view?.config?.mode??null,phase:watchPhase,cause:frameCause(),tris:view?.renderer?.info?.render?.triangles??0});
  const h=round?.hole;if(h!==recHole){if(recHole!=null)playRecorder.event('new hole');recHole=h;}
  const pr=view?.renderer?.info?.programs?.length;if(pr!==recPrograms){if(recPrograms==null)for(const p of view?.renderer?.info?.programs??[])seenPrograms.add(p);else if(pr>recPrograms)playRecorder.event(`built ${programsBuilt()}`);recPrograms=pr;}
  const cf=!!view?.camFlight;if(cf&&!recCamFlight)playRecorder.event('camera flight');recCamFlight=cf;
@@ -8425,7 +8441,7 @@ function tick(now){
  // the page until it has -- the loading screen froze during a wait that is
  // meant to leave it moving. The overlay is up; the frame it would cover is
  // drawn by `ready` itself as soon as the programs are done.
- if(!view.readying){if(benchProbe)benchFrame(now,dt);else{view.render(dt);if(watchProbe){const done=watchProbe;watchProbe=null;done(view.probeDevice());}}}
+ if(!view.readying){if(benchProbe)benchFrame(now,dt);else{const r0=performance.now();view.render(dt);lastRenderMs=performance.now()-r0;if(watchProbe){const done=watchProbe;watchProbe=null;done(view.probeDevice());}}}
  setWindArrow();
  // Not over a finished hole: "0.0 FEET TO HOLE" read on after the ball dropped.
  const worldLabels=!flight&&view.config.mode!=='free'&&!round?.holeComplete;

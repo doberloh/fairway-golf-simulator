@@ -24,6 +24,21 @@ test('the recorder keeps one line a second: frames, the slowest gap, the view an
  assert.ok(r.read().every(l => l.worstMs <= 1000));
 });
 
+test('the second\'s slowest gap keeps what that frame did, and the most triangles drawn', () => {
+ const r = secondRecorder();
+ r.frame(1000, {tris: 1.2e6});
+ r.frame(1033, {cause: null, tris: 1.4e6});
+ r.frame(1300, {cause: 'painted 32 m, 2 grass tiles made', tris: 1.3e6});  // the 267 ms gap: the frame before it painted
+ r.frame(1333, {cause: 'trees re-sorted'});
+ r.frame(2000);
+ const [line] = r.read();
+ assert.equal(line.worstMs, 267);
+ assert.equal(line.cause, 'painted 32 m, 2 grass tiles made');
+ assert.equal(line.tris, 1.4e6);
+ const text = formatWatch({seconds: 1, before: [{...line, events: []}], during: [], probes: []});
+ assert.match(text, /267 +1\.4M +; slowest: painted 32 m, 2 grass tiles made|267 +1\.4M +[^\n]*slowest: painted 32 m/);
+});
+
 test('the watch runs its script in order, probes every two seconds where asked, and always puts things back', async () => {
  const log = [];
  const io = {
@@ -73,8 +88,8 @@ test('the report shows play before the tap, the watch a probe a line, and the ch
  assert.match(text, /SPEED WATCH/);
  assert.match(text, /frame cap +30 fps, lifted for the watch/);
  assert.match(text, /play before the tap \(25 s recorded\):/);
- assert.match(text, /\n +-24 +30 +30 +40 +player\n/, 'ten seconds a line, timed back from the tap');
- assert.match(text, /\n +-14 +18 +18 +140 +player; shot\n/);
+ assert.match(text, /\n +-24 +30 +30 +40 +- +player\n/, 'ten seconds a line, timed back from the tap');
+ assert.match(text, /\n +-14 +18 +18 +140 +- +player; shot\n/);
  assert.match(text, /32 +your view, probed +30 +9\.2 +1\.1 +2\.4 +1\.3 +touch/);
  assert.match(text, /34 +your view, probed +15 +9\.4 +5\.6 +14 +1\.4/);
  assert.match(text, /probe failed: no float targets/);
