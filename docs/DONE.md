@@ -8486,3 +8486,9 @@ version, a cheaper far ground from above (IDEAS.md).
   across fifteen times. Result on the owner's iPhone: play at the cap of 30
   (from 14-20). What it left is the open entry *The phone: what the
   phone-performance branch left*.
+
+- [x] **A smoke run before the phone-performance branch merges** (the
+  recorder in main.js runs every frame on every tier: the first change on
+  the branch that does). Ask the owner; it uses the graphics card.
+  **Run** (15 November 2026, the owner's word, through tools/gpu-run.mjs
+  with the card watched): all 41 journeys passed in 914 s on build e35c6cc1.

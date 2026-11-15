@@ -90,10 +90,6 @@ wrong, unfinished, or owed a check.
     (unchanged at one pixel a point), Measure and Watch this device on the
     PC, the Phone tier on any landscape but the Pacific Northwest and the
     Redwood Coast.
-- [ ] **A smoke run before the phone-performance branch merges** (the
-  recorder in main.js runs every frame on every tier: the first change on
-  the branch that does). Ask the owner; it uses the graphics card.
-
 - [ ] **A friend's challenge can throw as its round starts, now and then**
   (12 November 2026, the 0.9.14 smoke run: `friend-challenge` failed once in
   four runs and passed the other three). The journey's first swing found no
