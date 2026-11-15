@@ -399,9 +399,11 @@ the courses several suites share, and builds many at once on worker threads
   real GPU (17 October 2026, overnight; again on 18 October 2026, in 13 small
   batches, after the hidden old interface was removed).
 - **Outside the game** -- `bridge` (the launch-monitor bridge), `diagnostic`
-  (Report a problem), `phone-tier` (a phone is told by what the browser says it is, an iPad is not one; the Phone tier survives a save, is not offered on a desktop, rebuilds the scene, and spends on geometry with a shadow offset of at least a texel), `device-bench` (Measure this device: the tour's order --
+  (Report a problem), `phone-tier` (a phone is told by what the browser says it is, an iPad is not one; the Phone tier survives a save, is not offered on a desktop, rebuilds the scene, and spends on geometry with a shadow offset of at least a texel, its ground in squares on every course while no other tier's moves), `device-bench` (Measure this device: the tour's order --
   one part off at a time, a whole frame between every two, the camera put back
-  whatever goes wrong -- and its section of the diagnostic; what the numbers
+  whatever goes wrong -- and its section of the diagnostic: the script column,
+  the floor row with trees and ground both off, when each reading was taken,
+  and the heaviest things held at each place read as drawn; what the numbers
   are is the device's), `sound`.
 
 `tests/meshy-run.test.mjs` runs tools/meshy-run.mjs against a small stand-in for

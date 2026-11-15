@@ -183,11 +183,18 @@ export const TIERS = {
  //     crowns shading themselves from another shape, does not reach it;
  //   - the shadow map redrawn every fourth frame, or at once when the camera
  //     has moved two metres (renderer.js, `shadowEvery`);
- //   - the ground coarser: six pixels off the ball's ground at most;
+ //   - the ground drawn coarser with distance (`groundSquares`, ground-lod.js),
+ //     six drawn pixels off the ball's ground at most. The second run (the
+ //     same course on this tier, 15 November) found it had never happened: the
+ //     squares were only built for a ground of 4 million triangles or more, so
+ //     a generated course's 2.4 million were drawn whole every frame and the
+ //     tolerance read nothing. On the iPhone's course the squares draw about
+ //     0.55 million at the tee and 0.33 million from 250 m up;
  //   - Low's far land, grass and planting under the trees.
- // Medium's pixel ratio, kept: fewer pixels bought nothing, and the owner
- // found automatic resolution "a blurry mess". Every number here PLACED, to be
- // measured on the phone and moved.
+ // Medium's pixel ratio, kept: the owner found automatic resolution "a blurry
+ // mess". Half the pixels saved 15 to 18% of the work on the second run (the
+ // first, already at a quarter of them, could not show it). Every number here
+ // PLACED, to be measured on the phone and moved.
  phone: {
   pixelRatio: 1.75,
   farGround: {grow: 1.06},
@@ -207,6 +214,7 @@ export const TIERS = {
   farTrees: .15,
   farPainted: .25,
   groundTolerance: 6,
+  groundSquares: true,
   thinTrees: true,
   understory: .25,
   longGrassReach: 90,

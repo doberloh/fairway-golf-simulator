@@ -3939,19 +3939,20 @@ const benchPixel=new Uint8Array(4);
 // One frame, timed: the frame's gap, and -- when `sync` -- the draw plus a
 // one-pixel read back, which waits for the graphics chip to finish, so the
 // time is the frame's whole work (Safari has no timer for the chip alone).
-// Draws and triangles are counted over every pass of the frame, shadow maps
-// included, with three's counter held open across them.
+// The work is split where the game's own code hands over: `script` is up to
+// the last draw call returning, the rest is waiting for the chip.
+// Draws and triangles are counted over every pass of every frame shown
+// (benchMeasure holds three's counter open across them).
 function benchFrame(now,dt){
- const p=benchProbe,r=view.renderer,info=r.info,keep=info.autoReset;
- if(p.count){info.autoReset=false;info.reset();}
+ const p=benchProbe,r=view.renderer;
  const t0=performance.now();
  view.render(dt);
- if(p.sync){const gl=r.getContext();gl.readPixels(0,0,1,1,gl.RGBA,gl.UNSIGNED_BYTE,benchPixel);p.work.push(performance.now()-t0);}
+ if(p.sync){const t1=performance.now(),gl=r.getContext();gl.readPixels(0,0,1,1,gl.RGBA,gl.UNSIGNED_BYTE,benchPixel);p.work.push(performance.now()-t0);p.script.push(t1-t0);}
  // A gap over a second is the page put away, not a slow frame (as frameMeter).
  else if(p.last!=null){const g=now-p.last;if(g<=1000)p.gaps.push(g);else p.notes.add('the page was put away during the run');}
  p.last=now;
  if(flight)p.notes.add('a shot was in the air during the run');
- if(p.count){p.counts={draws:info.render.calls,triangles:info.render.triangles};p.count=false;info.autoReset=keep;}
+ if(p.count)p.counted++;
  const w=p.wait;
  if(w&&(--w.n<=0||--w.min<=0&&now>=w.until)){p.wait=null;w.done();}
 }
@@ -3963,20 +3964,50 @@ const benchFrames=n=>new Promise(done=>{if(!benchProbe||n<=0)return done();bench
 // same number timed with it. PLACED: 45 of each, or three quarters of a second.
 const BENCH_READ=45;
 async function benchMeasure(){
- const p=benchProbe;
- p.sync=false;p.gaps=[];p.last=null;p.count=true;
- await benchFrames(BENCH_READ);
- p.sync=true;p.work=[];
+ const p=benchProbe,info=view.renderer.info,keep=info.autoReset;
+ // A frame's average over the frames shown: the Phone tier redraws its
+ // shadow map every fourth frame, so one frame's count jumped with it.
+ info.autoReset=false;info.reset();
+ p.sync=false;p.gaps=[];p.last=null;p.count=true;p.counted=0;
+ try{await benchFrames(BENCH_READ);}
+ finally{
+  const n=Math.max(1,p.counted);
+  p.counts={draws:Math.round(info.render.calls/n),triangles:Math.round(info.render.triangles/n)};
+  p.count=false;info.autoReset=keep;info.reset();
+ }
+ p.sync=true;p.work=[];p.script=[];
  await benchFrames(BENCH_READ);
  p.sync=false;
  // The size actually drawn, which is what proves the half-the-pixels reading.
  const c=view.renderer.domElement;
- return {...readingOf(p.gaps,p.work,p.counts),canvas:[c.width,c.height]};
+ // `at`: seconds into the run, so a slowdown can be told by time (the phone
+ // warming) or by place (the second iPhone run: 21 ms at the tee at the start,
+ // 69 at the same tee at the end).
+ return {...readingOf(p.gaps,p.work,p.counts,p.script),canvas:[c.width,c.height],heavy:heaviestHeld(),at:Math.round((performance.now()-p.started)/1000)};
+}
+// THE HEAVIEST THINGS HELD IN VIEW NOW, by triangles: everything drawn (an
+// invisible parent hides its children), the same thing's pieces added
+// together -- a model's part, the ground's squares by detail. `held`: the
+// instances held, or the meshes. A mesh outside the view is still counted
+// here, though three will not draw it; the cull's own meshes hold only what
+// is in view.
+function heaviestHeld(n=8){
+ const by=new Map();
+ view.group?.traverseVisible(o=>{
+  if(!o.isMesh)return;
+  const g=o.geometry,per=(g.index?g.index.count:g.attributes.position?.count??0)/3,held=o.isInstancedMesh?o.count:1;
+  if(!held)return;
+  const name=o.userData.model?`${o.userData.model} ${o.userData.role}`:(o.name||o.material?.type||'mesh');
+  const e=by.get(name)??{name,triangles:0,held:0};
+  e.triangles+=per*held;e.held+=held;by.set(name,e);
+ });
+ return [...by.values()].sort((a,b)=>b.triangles-a.triangles).slice(0,n);
 }
 // Each part of the scene switched off, and back on by what this returns.
 function benchHide(part){
  if(part==='shadows'){const s=view.renderer.shadowMap,was=s.autoUpdate;s.autoUpdate=false;s.needsUpdate=false;return()=>{s.autoUpdate=was;s.needsUpdate=true;};}
  if(part==='pixels'){const was=view.resolutionScale??1;view.setResolutionScale(was*Math.SQRT1_2);return()=>view.setResolutionScale(was);}
+ if(part==='bare'){const a=benchHide('planting'),b=benchHide('ground');return()=>{b();a();};}
  const test={planting:o=>o.isInstancedMesh&&(o.userData.cullTotal!==undefined||['shadow twin','far trees','fading trees'].includes(o.name)),
   ground:o=>o.name==='Continuous ground',farGround:o=>o.name==='Far ground',farTrees:o=>o.name==='Far trees'}[part];
  const off=[];
@@ -3992,7 +4023,7 @@ async function runDeviceBench(){
  if(appMode!=='play'||rangeMode||flight||!world?.holes?.[at]){toast('Start a round first: the benchmark measures the hole you are on.');return null;}
  const mode=view.config.mode,started=performance.now(),h=world.holes[at];
  closePanel();
- benchProbe={gaps:[],work:[],counts:{},sync:false,count:false,last:null,wait:null,notes:new Set()};
+ benchProbe={gaps:[],work:[],script:[],counts:{},sync:false,count:false,counted:0,last:null,wait:null,notes:new Set(),started};
  const notes=benchProbe.notes;
  // AT THE TIER'S OWN RESOLUTION: automatic resolution may have stepped it
  // down (the owner's first run read at 50%), which measured a quarter of the

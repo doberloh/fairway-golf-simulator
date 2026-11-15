@@ -29,7 +29,12 @@ test('the Phone tier spends on geometry: the hole\'s trees, shadows from the twi
  assert.equal(p.thinShadowsFrom, 0, 'its one shadow map is cast by the far twins');
  assert.ok(p.shadowEvery > 1, 'and redrawn less often');
  assert.ok(p.groundTolerance > m.groundTolerance, 'the ground coarser than Medium\'s');
- assert.equal(p.pixelRatio, m.pixelRatio, 'Medium\'s pixels: fewer bought nothing measurable on the iPhone');
+ // In squares on every course: a generated course's ground (2.4 M triangles)
+ // is under the size the squares were kept for, so it was drawn whole and the
+ // tolerance above did nothing (the second iPhone run). No other tier moves.
+ assert.equal(p.groundSquares, true);
+ for (const q of QUALITY) assert.ok(!TIERS[q].groundSquares, `${q} keeps its ground as it was`);
+ assert.equal(p.pixelRatio, m.pixelRatio, 'Medium\'s pixels: the owner finds fewer a blurry mess');
  assert.equal(p.cascades, 0);
  // A shadow's normal offset goes with its texel (PROJECT_HANDOFF).
  const texel = (2 * p.shadowSpan.half) / p.shadow.size;

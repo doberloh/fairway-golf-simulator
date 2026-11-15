@@ -13,7 +13,7 @@ const fakeIo = ({throwOn = null} = {}) => {
   log,
   place: pose => log.push(['place', pose]),
   frames: async k => log.push(['frames', k]),
-  measure: async () => { n++; log.push(['measure', [...hidden]]); return {fps: 30, worstMs: 50, workMs: hidden.size ? 20 : 40, draws: 300 - hidden.size * 100, triangles: 1e7}; },
+  measure: async () => { n++; log.push(['measure', [...hidden]]); return {fps: 30, worstMs: 50, workMs: hidden.size ? 20 : 40, scriptMs: 5, draws: 300 - hidden.size * 100, triangles: 1e7, heavy: [{name: 'redwood leaf', triangles: 4.2e6, held: 120}, {name: 'ground, fine', triangles: 3e5, held: 9}], at: 2 * n}; },
   hide: id => { if (id === throwOn) throw Error('cannot hide ' + id); hidden.add(id); log.push(['hide', id]); return () => { hidden.delete(id); log.push(['show', id]); }; },
   restore: () => log.push(['restore']),
   get readings() { return n; },
@@ -51,13 +51,14 @@ test('whatever goes wrong, the part is switched back on and the camera put back'
  assert.equal(open, 0, 'nothing left switched off');
 });
 
-test('a reading is the median frame, the slowest frame and the median work', () => {
- const r = readingOf([16, 17, 33, 16, 100], [8, 9, 10, 40], {draws: 412, triangles: 13.5e6});
+test('a reading is the median frame, the slowest frame, the median work and the median script', () => {
+ const r = readingOf([16, 17, 33, 16, 100], [8, 9, 10, 40], {draws: 412, triangles: 13.5e6}, [2, 3, 4]);
  assert.equal(r.fps, 59, '1000 / the median gap of 17 ms');
  assert.equal(r.worstMs, 100);
  assert.equal(r.workMs, 10);
+ assert.equal(r.scriptMs, 3, 'the game\'s own code: the rest of the work is the wait for the chip');
  assert.equal(r.draws, 412);
- assert.deepEqual(readingOf([], [], {}), {fps: null, worstMs: null, workMs: null, draws: null, triangles: null});
+ assert.deepEqual(readingOf([], [], {}), {fps: null, worstMs: null, workMs: null, scriptMs: null, draws: null, triangles: null});
 });
 
 test('the report says what each part costs, and rides in the diagnostic', async () => {
@@ -66,7 +67,13 @@ test('the report says what each part costs, and rides in the diagnostic', async 
  assert.match(text, /DEVICE BENCHMARK/);
  assert.match(text, /tier +medium/);
  assert.match(text, /1\.75 pixel ratio, 770x1565/);
- assert.match(text, /tee +no trees or plants +30 +50 +20 +40\.0 +-50%/);
+ assert.match(text, /tee +no trees or plants +30 +50 +20 +5 +40\.0 +-50%/);
+ assert.match(text, /tee +no trees, plants or ground +30 +50 +20 +5 +40\.0 +-50%/, 'the floor under the trees and the ground');
+ // What the triangles are, once a place read as drawn, and never for a part or the re-read.
+ assert.match(text, /heaviest held at the tee:\n +redwood leaf +4\.2 M +x120\n +ground, fine +0\.3 M +x9/);
+ assert.equal(text.match(/heaviest held/g).length, BENCH_SPOTS.length);
+ // When each reading was taken: a slowdown by time is the device, by place the scene.
+ assert.match(text, /draws +tris +at s\n +tee +as drawn +30 +50 +40 +5 +300 +10\.0 M +2\n/);
  assert.match(text, /tee +as drawn, at the end/);
  assert.match(text, /250 m up +as drawn/);
  assert.equal(formatBench(null), '');

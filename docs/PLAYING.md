@@ -1035,11 +1035,14 @@ stands the camera at four places on the hole you are on -- the tee, the
 fairway, the green and 250 m up -- for about a minute, however slow the
 game is running. At the tee
 and from above it switches parts of the picture off one at a time: the trees
-and plants, the course's ground, the far ground, the far trees, the shadows'
-redraw, and half the pixels. Then it puts the camera back. Nothing about the
-round changes: no hole is skipped and no shot is played. Copy diagnostic
-then carries a table of what it found: frames a second, the slowest frame,
-how long each frame's work took, and how much of that each part was. Leave
+and plants, the course's ground, both of those together, the far ground, the
+far trees, the shadows' redraw, and half the pixels. Then it puts the camera
+back. Nothing about the round changes: no hole is skipped and no shot is
+played. Copy diagnostic then carries a table of what it found: frames a
+second, the slowest frame, how long each frame's work took and how much of
+it was the game's own code (the rest is waiting for the graphics chip), how
+much each part was, and how many seconds into the run each reading came;
+under it, the heaviest things in view at each place. Leave
 the phone alone while it runs; a phone that dims its screen or warms up
 reads slower, and Low Power Mode holds an iPhone's browser to about 30
 frames a second. If the page was put away or a shot flew during the run,

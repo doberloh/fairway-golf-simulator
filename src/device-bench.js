@@ -23,8 +23,15 @@
 // waits for the graphics chip to finish -- because Safari shows at most 60
 // frames a second and a frame rate hides how far under that a frame is. Safari
 // has no timer for the graphics chip alone (EXT_disjoint_timer_query), which is
-// why the read back. Draws and triangles are counted over one frame, shadow
-// maps included: they are exact and the same on any device.
+// why the read back. The work is split in two: SCRIPT, the game's own code up
+// to the last draw call returning (placing, culling, choosing the ground,
+// handing the draws over), and the WAIT after it for the chip to finish. A
+// large wait is the chip; a large script is the phone's processor. (A browser
+// may block a draw call when its queue is full, which moves chip time into
+// the script column; a script time near the whole is worth a second look.)
+// Draws and triangles are a frame's average over the reading, shadow maps
+// included: they are exact and the same on any device. (Counted on one frame,
+// as at first, they jumped with the Phone tier's every-fourth-frame shadow.)
 //
 // Pure: no DOM, no three.js. main.js hands `runBench` an `io` that does the
 // work (`place`, `frames`, `measure`, `hide`, `restore`); tests/device-bench
@@ -52,6 +59,9 @@ export const BENCH_SPOTS = Object.freeze([
 export const BENCH_PARTS = Object.freeze([
  {id: 'planting', label: 'no trees or plants'},
  {id: 'ground', label: 'no course ground'},
+ // Both at once: the floor under everything else, what no thinning of the
+ // trees or the ground can go below (the second iPhone run, 15 November).
+ {id: 'bare', label: 'no trees, plants or ground'},
  {id: 'farGround', label: 'no far ground'},
  {id: 'farTrees', label: 'no far trees'},
  {id: 'shadows', label: 'shadows not redrawn'},
@@ -105,15 +115,17 @@ export async function runBench(io, {hole = 0, length = 300, spots = BENCH_SPOTS,
  return rows;
 }
 
-// One reading from frame gaps and work times (milliseconds): the median frame
-// rate, the slowest frame, the median work. Null where nothing was sampled.
-export function readingOf(gaps = [], work = [], counts = {}) {
+// One reading from frame gaps, work times and script times (milliseconds):
+// the median frame rate, the slowest frame, the median work and the median
+// script. Null where nothing was sampled.
+export function readingOf(gaps = [], work = [], counts = {}, script = []) {
  const med = xs => { const s = xs.filter(x => x > 0).sort((a, b) => a - b); return s.length ? s[Math.floor(s.length / 2)] : null; };
- const gap = med(gaps), w = med(work);
+ const gap = med(gaps), w = med(work), sc = med(script);
  return {
   fps: gap ? Math.round(1000 / gap) : null,
   worstMs: gaps.length ? Math.round(Math.max(...gaps)) : null,
   workMs: w == null ? null : Math.round(w * 10) / 10,
+  scriptMs: sc == null ? null : Math.round(sc * 10) / 10,
   draws: counts.draws ?? null,
   triangles: counts.triangles ?? null,
  };
@@ -139,12 +151,21 @@ export function formatBench(bench) {
  for (const n of bench.notes ?? []) out.push(`  note            ${n}`);
  // `whole ms`: the whole frame's work either side of a part's reading, so a
  // device slowing over the run shows in the column itself.
- out.push(`  ${pad('place', 9)}${pad('reading', 29)}${lpad('fps', 4)}${lpad('worst', 7)}${lpad('work ms', 9)}${lpad('whole ms', 10)}${lpad('vs whole', 10)}${lpad('draws', 7)}${lpad('tris', 9)}`);
+ // `script`: the part of the work that was the game's own code (see the top).
+ out.push(`  ${pad('place', 9)}${pad('reading', 29)}${lpad('fps', 4)}${lpad('worst', 7)}${lpad('work ms', 9)}${lpad('script', 8)}${lpad('whole ms', 10)}${lpad('vs whole', 10)}${lpad('draws', 7)}${lpad('tris', 9)}${lpad('at s', 6)}`);
  for (const r of rows) {
   const vs = r.part && r.workMs != null && r.baseWork ? `${r.workMs <= r.baseWork ? '-' : '+'}${Math.round(Math.abs(r.workMs - r.baseWork) / r.baseWork * 100)}%` : '';
   // The pixels row says the size it drew at, so it proves itself.
   const what = r.part === 'again' ? 'as drawn, at the end' : r.part ? label(BENCH_PARTS, r.part) + (r.part === 'pixels' && r.canvas ? ` ${r.canvas[0]}x${r.canvas[1]}` : '') : 'as drawn';
-  out.push(`  ${pad(label(BENCH_SPOTS, r.spot), 9)}${pad(what, 29)}${lpad(r.fps ?? '-', 4)}${lpad(r.worstMs ?? '-', 7)}${lpad(r.workMs ?? '-', 9)}${lpad(r.baseWork != null ? r.baseWork.toFixed(1) : '', 10)}${lpad(vs, 10)}${lpad(r.draws ?? '-', 7)}${lpad(millions(r.triangles), 9)}`);
+  out.push(`  ${pad(label(BENCH_SPOTS, r.spot), 9)}${pad(what, 29)}${lpad(r.fps ?? '-', 4)}${lpad(r.worstMs ?? '-', 7)}${lpad(r.workMs ?? '-', 9)}${lpad(r.scriptMs ?? '-', 8)}${lpad(r.baseWork != null ? r.baseWork.toFixed(1) : '', 10)}${lpad(vs, 10)}${lpad(r.draws ?? '-', 7)}${lpad(millions(r.triangles), 9)}${lpad(r.at ?? '-', 6)}`);
+ }
+ // WHAT THE TRIANGLES ARE, where a place was read as drawn: the heaviest
+ // things held in view (main.js `heaviestHeld`), so a heavy row names its
+ // cause without a second run.
+ for (const r of rows) {
+  if (r.part || !r.heavy?.length) continue;
+  out.push(`  heaviest held at the ${label(BENCH_SPOTS, r.spot)}:`);
+  for (const m of r.heavy) out.push(`    ${pad(m.name, 40)}${lpad(millions(m.triangles), 9)}${lpad(m.held != null ? `x${m.held}` : '', 8)}`);
  }
  return out.join('\n');
 }

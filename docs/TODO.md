@@ -70,12 +70,25 @@ wrong, unfinished, or owed a check.
   **not yet run on a phone**.
   **Its first run on the iPhone** (Redwood Coast, Medium): trees and plants
   57% of the work at the tee, the shadow map's redraw up to half, the course
-  ground 23 to 38%, the far land nothing, fewer pixels nothing; the phone ran
-  about twice as fast for its first 20 seconds as after (cause not known).
-  **Step two, built and not seen on a phone or in a browser:** the Phone tier
-  (graphics.js `TIERS.phone`), a phone's default every time it opens, the
-  picker still offering the others for comparing. Hiding the options waits
-  until its figures are good. No Android to test on.
+  ground 23 to 38%, the far land nothing; the phone ran about twice as fast
+  for its first 20 seconds as after (cause not known).
+  **Step two, seen running on the iPhone** (15 November, two runs, RESEARCH):
+  the Phone tier (graphics.js `TIERS.phone`), a phone's default every time it
+  opens, the picker still offering the others for comparing. Safari from the
+  home screen, Pacific Northwest: **21 ms of work at the tee at the start
+  (about 45 frames a second), 69 ms at the same tee 50 seconds later**; in
+  play 16 frames a second. Its shadows now cost nothing; the ground and the
+  trees are still a third each at the tee. **The slowdown is the problem
+  now**: what it is (the phone's heat, its processor, the game) is not known.
+  **Step three, built and not seen on the phone:** its ground drawn in
+  squares on every course (`groundSquares` -- it never was: the squares were
+  kept for grounds of 4 million triangles or more, so the "coarser ground"
+  of step two did nothing), and the benchmark split into the game's own code
+  and the wait for the chip, its counts averaged, a floor row, the time of
+  each reading and the heaviest things in view. **To check:** run it on the
+  iPhone with the phone cool, and once more after a few minutes' play; read
+  whether the slowdown is in the script column or the wait. Hiding the
+  options waits until its figures are good. No Android to test on.
 
 - [ ] **A friend's challenge can throw as its round starts, now and then**
   (12 November 2026, the 0.9.14 smoke run: `friend-challenge` failed once in

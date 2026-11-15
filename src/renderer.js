@@ -1160,7 +1160,10 @@ export class GolfView{
   // 9 November 2026). The mesh above is kept, undrawn, for its material, its
   // shadow switch and its box; what is drawn is the quadtree's squares, each
   // its own mesh over the same vertices, chosen every frame (updateGroundLod).
-  if((terrain.index?terrain.index.count:terrain.attributes.position.count)/3>=GROUND_LOD.minTriangles)this.buildGroundLodMeshes(world.groundGrid,terrain);
+  // On every course on the Phone tier (`groundSquares`): a generated course's
+  // 2.4 million triangles were a third of an iPhone's frame (RESEARCH.md *The
+  // first figures from a real phone*).
+  if(this.quality.groundSquares||(terrain.index?terrain.index.count:terrain.attributes.position.count)/3>=GROUND_LOD.minTriangles)this.buildGroundLodMeshes(world.groundGrid,terrain);
   for(const h of world.holes){for(const p of h.ponds){const points=[];for(let j=0;j<512;j++){const q=ovalRadius(p,j/512*TAU),w=h.toWorld({x:p.x+q.x,z:p.z+q.z});points.push(new T.Vector2(w.x,-w.z));}this.addWaterBody(new T.ShapeGeometry(new T.Shape(points)),p.level,p.depth,h.toWorld(p));this.addShoreFoam(points,p.level,!!p.large);}this.addHoleDetails(h);}
   // A BUILT course's ponds and lakes (built-world.js): any outline, holes for
   // its islands, at its stored level -- the same water body a pond is.

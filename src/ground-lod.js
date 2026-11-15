@@ -28,6 +28,8 @@ export const GROUND_LOD = Object.freeze({
  // Only a ground this big is drawn in squares (PLACED): a generated course's is
  // 1.6-2.3 M triangles, one draw, and its squares cost Ultra 7-9% in draws
  // (Redwood Coast, Pacific Northwest) for nothing; Dinosaur Mountain's is 20.5 M.
+ // The Phone tier builds them on every course (graphics.js `groundSquares`):
+ // on an iPhone the generated ground drawn whole was a third of the frame.
  minTriangles: 4e6,
 });
 

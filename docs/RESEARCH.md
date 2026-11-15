@@ -15420,6 +15420,54 @@ drawn a second time into the one shadow map, since Medium casts every tree
 whole), then the course's ground; the far land costs nothing. Fewer pixels
 was not shown to be free: it was a quarter of Medium's pixels already.
 
+**The Phone tier on the iPhone, two runs** (15 November 2026, build
+309fa4f3, both at the tier's 1.75 ratio with automatic resolution off).
+Counts in these runs are of one frame, so a row that landed on the tier's
+every-fourth-frame shadow redraw reads more draws and triangles than its
+neighbours (hence a "no trees" row above its whole); the times are not
+affected.
+
+- *Chrome, Redwood Coast, the same course as above* (00:33; 770 by 1,335):
+  68 ms of work at the tee from the first reading to the last (67 at the
+  end) -- the phone in its slow state throughout, after play. Trees and
+  plants off -42%, course ground off -33% (-41% from 250 m up), half the
+  pixels -15% and -18%, shadows not redrawn +1% and 0%, far land 0 to -7%.
+  Not comparable with the Medium run above, which was at a quarter of the
+  pixels and began in the fast state.
+- *Safari from the home screen, Pacific Northwest, "Cascade View Forest"*
+  (00:41; 770 by 1,564; play before the run 16 frames a second): **the tee
+  21 ms of work (42 frames a second as shown), the fairway 20, the green 22;
+  the same tee re-read at the end, about 50 seconds later, 69 ms.** The step
+  came between the tee's parts (whole about 21 ms) and the 250 m view's
+  (whole 44 to 55 ms). At the tee, fast: trees and plants off -40% (13 ms),
+  course ground off -35% (14 ms), half the pixels -10%, shadows not redrawn
+  +2%, far ground and far trees 0%.
+
+What the two say: the tier's shadow changes worked (the redraw costs
+nothing now); in the fast state the tier is near the target (21 ms is 48
+frames a second of work), with trees and ground each a third of it and the
+floor under both perhaps 6 to 8 ms; **the phone's slowdown, threefold within
+a minute, is now the larger problem** and its cause is unknown -- heat, the
+processor, or something in the game that grows. Pixels do cost something at
+this ratio (10 to 18% for half), which the first run, already at a quarter
+of them, could not show.
+
+**The course's ground was never drawn coarser on a generated course.**
+The squares (ground-lod.js) are built only for a ground of 4 million
+triangles or more (`GROUND_LOD.minTriangles`, PLACED for the desktop, where
+squares on a small ground cost Ultra draws for nothing); a generated course's
+ground is 2.4 to 2.6 million, so it was one mesh drawn whole, and the Phone
+tier's `groundTolerance` of 6 read nothing. Measured in Node from the two
+course codes (scratch, ground-lod.js `select` at the benchmark's tee,
+fairway and 250 m places, field of view 50 degrees, 1,335 drawn lines):
+Mosswood Canopy (Redwood Coast) 2.44 M whole against 0.55 M at the tee,
+0.56 M on the fairway, 0.33 M from 250 m up; Cascade View Forest (Pacific
+Northwest) 2.61 M against 0.62, 0.74 and 0.44 M. (The tolerance counted in
+CSS lines, 763, instead of drawn ones would take the tee to 0.37 M; not
+done -- the error is meant in drawn pixels.) The phone's own "no course
+ground" rows agree with the whole mesh: 2.5 M at the tee, 2.6 M from above.
+The Phone tier now builds the squares on every course (`groundSquares`).
+
 **Measure this device on the PC, for comparison** (14 November 2026; the
 capture build, Classic Parkland seed "overhaul", hole 1, Medium, 1,600 by
 900 at density 1, frames capped by the display at 60; tools/variants/
