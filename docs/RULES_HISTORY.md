@@ -454,6 +454,27 @@ shader that used a varying it declared only on one side (every river and
 creek failed to compile for one build) -- caught because the capture tool
 logs shader errors; a module that loads in Node says nothing about its GLSL.
 
+On 15 November 2026 (the godot-experiment branch) the old wording -- "write
+the script with an editor tool ... when it holds backticks or backslashes" --
+was broken again and again for convenience. Many edits went into one
+`node -e "..."` inside double quotes, often chained with a render in the
+same command. The shell got to the text first:
+
+- **Twice, backticks in a doc's text ran as commands.** One of them was the
+  course exporter, with nonsense arguments. It failed partway, and the
+  export had to be rebuilt.
+- **`godot\fly.cmd` became `godot<form feed>ly.cmd`** in the commands
+  document. Found by reading the diff before the commit.
+- **A `sed` meant to move a path did nothing**, because its backslashes were
+  eaten.
+
+The owner saw "The shell edit didn't take (backslashes again)" once too
+often and asked for a rule that stops it. **So the rule is now absolute:**
+files change only through the Edit and Write tools. A one-liner never writes
+a file. A real transformation is a script file, written with Write and run
+with node. Commit messages go in a file. AGENTS.md, *Files are edited with
+the editor tools, never with shell one-liners*.
+
 ## The bench
 
 One session spent most of an hour answering generator questions with throwaway
