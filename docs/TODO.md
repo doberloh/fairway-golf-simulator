@@ -124,7 +124,12 @@ wrong, unfinished, or owed a check.
   no mowing, no ground types). **To check:** the ground draws as before on
   the phone (the new shader lines have been compiled nowhere else; a broken
   or missing ground, or an error in the diagnostic, would be them); then
-  which part pays, for the cuts after.
+  which part pays, for the cuts after. **Seen** (03:25): it compiled and
+  drew, no errors; the skip about 2%, no hazards, no mowing, no ground
+  types 2 to 4% each against plain paint's 35% -- no one part is the cost;
+  the program's size probably is (RESEARCH). **Next, the owner's call:** a
+  baked ground for Phone (the course painted once into a picture, drawn
+  with light and shadow), large, softer up close.
   Hiding the options waits until its figures are good. No Android to test
   on.
 

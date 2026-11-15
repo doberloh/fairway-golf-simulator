@@ -15815,6 +15815,38 @@ have copied its tens of megabytes again each time.) The new shader lines
 have not been compiled anywhere but the phone (no GLSL compiler offline;
 the PC's card needs the owner's word).
 
+**The painting's parts, on the iPhone** (15 November 2026, 03:25, build
+dbdf83ac, the same hole and cap; no errors -- the Phone ground's program
+compiled and drew). The tee's rows fast and silent again; from 250 m up,
+slow (whole 46 ms):
+
+| reading, 250 m up | work ms | vs whole |
+|---|---|---|
+| ground without the bunker skip | 47 | +2% |
+| ground without hazards | 44 | -4% |
+| ground without mowing | 45 | -2% |
+| ground without ground types | 45 | -2% |
+| ground in plain paint | 30 | -35% |
+| no course ground | 28 | -39% |
+| half the pixels | 36 | -22% |
+
+**No one part is the cost.** The bunker skip bought about 2%, within the
+noise; the hazards, the mowing and the ground types 2 to 4% each; the
+shadow, the cues and the byte textures (the run before) 0 to 3%. Plain
+paint, the same squares in a tiny unlit program, 35%. An inference, not a
+measurement: the ground's program is so large that it is slow as a whole
+-- on a GPU a long shader holds many values at once, so fewer pixels run
+side by side and each waits longer on its texture reads -- and that is
+the cost the slow state magnifies (the ground about ten times, the trees
+about four). Taking one section out barely changes the program's size or
+its pixels in flight. If so, what would pay is a small program for the
+ground on Phone: the course painted once into a picture, and the ground
+drawn from it with its light and shadow (a bake), which removes the
+painter from every frame. Its costs: memory, softer edges where the
+picture's texels are larger than the screen's pixels (near the camera),
+and the painter's view- and sun-dependent touches frozen when it was
+painted. Not built; the owner's call.
+
 Already right on Phone: no bloom,
 god rays, clouds, mist, cascades or tree mirror; tone mapping in the
 materials, no extra pass; no logarithmic depth; highp kept (no evidence
