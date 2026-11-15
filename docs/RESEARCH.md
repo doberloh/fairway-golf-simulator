@@ -15617,6 +15617,93 @@ wherever they change, keeps the screen on, and drops the far-versions and
 plain-trees rows. If "as drawn" steps while the floor holds, the step is in
 what the game draws; if all of it steps together, it is the device.
 
+**What is known outside about an iPhone's WebGL speed flip** (desk research,
+15 November 2026, at the owner's request; nothing run). Nothing found
+settles it. The nearest reports describe the same thing and are open:
+
+- https://forum.babylonjs.com/t/webgpu-ios-framerate-drop/56952 -- an
+  iPhone 16 running WebGL (Babylon) slows after about 15-20 s; not seen on
+  an iPhone 16 Pro Max or SE; unresolved.
+- https://www.soft8soft.com/?p=84978 -- an iPhone 16 holds about 60 frames
+  a second for about 30 s, then 20-25 and stays; the vendor's staff guessed
+  battery saving; unresolved.
+- https://developer.apple.com/forums/thread/768160 -- a developer's own
+  measurement (macOS, Metal compute, not iPhone or WebGL): work 2x slower at
+  the GPU state the system chose than locked at Maximum in Instruments, and
+  work alternating processor and GPU phases kept at low clocks. His
+  inference, not Apple's statement. Relevant here because the benchmark's
+  one-pixel read back every frame makes exactly that alternation; so the
+  floor's 12-13 ms proves nothing about the chip's state (the read back's
+  own wait, and a light frame may run at a low clock in either state).
+- https://developer.apple.com/documentation/xcode/optimizing-gpu-performance
+  -- the GPU's performance state depends on "thermals and system settings"
+  (seen in a search summary only).
+- https://developer.apple.com/videos/play/wwdc2018/612 -- thermal states;
+  "stay at 30 frames per second if you cannot sustain 60 for ten minutes or
+  more"; reduce shadow maps under heat. No clock figures.
+- https://www.notebookcheck.net/A18-Pro-crushes-Snapdragon-8-Gen-3-in-CPU-performance-and-efficiency-trades-blows-in-GPU-performance.891454.0.html
+  -- A18 Pro about 10 W at peak, about 4 W sustained (search summary). Its
+  stress tests run 20 minutes: nothing about a 15-second step, nor a rested
+  phone beginning slow.
+- https://bugs.webkit.org/show_bug.cgi?id=215745,
+  https://motion.dev/blog/when-browsers-throttle-requestanimationframe --
+  Low Power Mode holds Safari to 30 frames a second;
+  https://www.techlicious.com/blog/iphone-low-power-mode-slows-your-phone/
+  one Geekbench test of it slowing an iPhone 14 Pro (indicative only).
+- https://www.tomsguide.com/phones/iphones/ios-26s-new-adaptive-power-mode-is-enabled-by-default-on-iphone-17-heres-what-that-means,
+  https://www.macrumors.com/how-to/ios-extend-iphone-battery-life-adaptive-power-mode/
+  -- iOS 26's Adaptive Power "can make performance adjustments" when the
+  battery is drawn harder than usual; on by default only on the iPhone 17
+  series and Air (search summaries). The owner's screen, 440 by 956, is a
+  Pro Max; which year is not known.
+- https://www.macrumors.com/how-to/enable-smoother-120hz-browsing-in-safari/
+  -- Safari draws at about 60 frames a second by default; one user's note
+  that a home-screen app stayed at 60. Changes the cadence, not a frame's
+  cost.
+- Rejected as present causes: https://bugs.webkit.org/show_bug.cgi?id=276959
+  (`powerPreference: 'high-performance'` at 20 frames a second on an
+  iPhone 12; fixed August 2024, https://github.com/WebKit/WebKit/pull/31715);
+  https://www2.webkit.org/show_bug.cgi?id=252876 (slow read back in the GPU
+  process; fixed about iOS 17).
+- Read for the checklist: https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_best_practices
+  (`readPixels` is "finish + round-trip"; texture bandwidth "precious on
+  mobile"; float samplers need highp on iOS);
+  https://developer.apple.com/tutorials/data/documentation/metal/tailor-your-apps-for-apple-gpus-and-tile-based-deferred-rendering.md
+  (antialiasing is cheap on Apple GPUs; A11 and later "improve fragment
+  discard performance"); https://bugs.webkit.org/show_bug.cgi?id=255987
+  (iPhone 13 at 39 against 60 frames a second, many shader globals costly;
+  open). Float filtering on iOS: https://caniuse.com/wf-oes-texture-float-linear
+  says yes to 26.5, https://lists.webkit.org/pipermail/webkit-unassigned/2024-October/1192081.html
+  (WebKit bug 282111) says not on iOS Safari -- they disagree; the ground's
+  `tables` texture is 32-bit float with smooth filtering (ground.js), so
+  check the phone's console for three's "Unable to use linear filtering
+  with floating point textures"; half floats filter in WebGL 2 regardless.
+- WebGPU: Safari 26 ships it on iOS 26, but three's WebGPURenderer measured
+  slower for scenes of many meshes on desktop (60 against 15 frames a
+  second on an M1 Pro, https://discourse.threejs.org/t/why-webgpurenderer-performance-significantly-lower-than-webglrenderer/77629;
+  three issue #30560), and Fairway's materials are `onBeforeCompile`
+  patches throughout: not a switch, a rewrite. Not pursued.
+- Rejected, nothing usable: Tom's Guide and GSMArena stress-test pages (did
+  not fetch; their 54.7 / 65 / 77% figures dropped as unverified),
+  HotHardware's 3DMark article (403), three.js forum thread 76329 (no
+  replies), patents on Apple's performance controller.
+
+What it suggests for Fairway, as candidates, none built: the ground's
+per-pixel work (about 25 texture reads, loops over the tees and hazards,
+green shapes, two 3-by-3 cell searches -- ground.js) baked once into a
+colour texture on Phone, leaving the shader only light and shadow -- the
+largest, matching the slow state's plain-paint figure; its 32-bit float
+tables as half floats; a 30 frames a second cap on Phone (Apple's own
+advice; the cap list has no 45, and 45 cannot pace evenly on a 60 Hz
+cadence); `antialias: false` and `powerPreference: 'default'` on a phone
+(cheap tests, small expected gains); the ground's cup `discard` off on
+Phone (small). Its note that the shadow redraw every fourth frame draws
+8 of 17.7 M triangles is the Medium figure: on Phone the map is cast by the
+far versions and read 0 to -9% (above). Already right on Phone: no bloom,
+god rays, clouds, mist, cascades or tree mirror; tone mapping in the
+materials, no extra pass; no logarithmic depth; highp kept (no evidence
+mediump is faster through Safari's WebGL on Metal).
+
 **Measure this device on the PC, for comparison** (14 November 2026; the
 capture build, Classic Parkland seed "overhaul", hole 1, Medium, 1,600 by
 900 at density 1, frames capped by the display at 60; tools/variants/
