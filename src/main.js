@@ -89,6 +89,7 @@ import {nextFocus,dirOfKey,dirOfPad} from './ui-focus.js';
 import {framedForBall} from './camera.js';
 import {buildLabel,buildStamp,deviceFacts,webglFacts,frameMeter,errorLog,diagnosticReport} from './diagnostic.js';
 import {runBench,readingOf} from './device-bench.js';
+import {secondRecorder,runWatch,BEFORE_SECONDS} from './device-watch.js';
 import {gridShot,recordShot,takeBackShot,normaliseShots,shotFrom,rulesOf,describeRules,rulesDiff,makeRivalCode,isRivalCode,saveRival,listRivals,findRival,rivalProblem,compareCards,compareText,holesText} from './rival.js';
 import {relativeToPar,parText,parSide,parTint,holeScoreName,holeOutLabel} from './scoring.js';
 import {endlessHole,newRunSeed,endlessSettings,landscapeSeed} from './endless.js';
@@ -291,6 +292,20 @@ diagnosticErrors.install();
 // past the frame cap, so a capped run reports the rate it is capped to rather
 // than the rate the display offered.
 const diagnosticFrames=frameMeter();
+// PLAY, A LINE A SECOND (device-watch.js `secondRecorder`): always on, read
+// only by Watch this device. No read back and nothing that slows a frame.
+const playRecorder=secondRecorder();
+let watchPhase=null,watchProbe=null,lastWatch=null,recHole=null,recPrograms=null,recCamFlight=false;
+addEventListener('pointerdown',()=>playRecorder.event('touch'),{capture:true,passive:true});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)playRecorder.event('page hidden');});
+// What the recorder notes each frame besides the frame itself: a new hole, a
+// program built (a new material, or a define changed), a camera flight begun.
+function recordFrame(now){
+ playRecorder.frame(now,{view:view?.config?.mode??null,phase:watchPhase});
+ const h=round?.hole;if(h!==recHole){if(recHole!=null)playRecorder.event('new hole');recHole=h;}
+ const pr=view?.renderer?.info?.programs?.length;if(pr!==recPrograms){if(recPrograms!=null&&pr>recPrograms)playRecorder.event('program built');recPrograms=pr;}
+ const cf=!!view?.camFlight;if(cf&&!recCamFlight)playRecorder.event('camera flight');recCamFlight=cf;
+}
 let appMode='menu',studioDirty=false,studioBiome=null,graphics=loadGraphics();
 // A PHONE STARTS ON THE PHONE TIER, every time the game opens (graphics.js
 // `isPhoneDevice`; branch phone-performance): whatever was saved, and with
@@ -3928,6 +3943,7 @@ function collectDiagnostic(){
   courseCode,
   takenAt:new Date().toISOString(),
   bench:lastBench,
+  watch:lastWatch,
  });
 }
 // MEASURE THIS DEVICE (device-bench.js; branch phone-performance): the game
@@ -4053,7 +4069,7 @@ function benchHide(part){
 // The tour itself. Only in a round on a course or an endless hole, with no
 // ball in the air; the round is left exactly as it was.
 async function runDeviceBench(){
- if(benchProbe)return null;
+ if(benchProbe||watching)return null;
  // (An endless run's world is one hole, `worldHole`.)
  const at=world?.holes?worldHole(round.hole):-1;
  if(appMode!=='play'||rangeMode||flight||!world?.holes?.[at]){toast('Start a round first: the benchmark measures the hole you are on.');return null;}
@@ -4092,6 +4108,53 @@ async function runDeviceBench(){
   seconds:Math.round((performance.now()-started)/1000),course:`${playingCourseName()}, hole ${round.hole+1}`,notes:[...notes]};
  toast('Measured. Help → Report a problem → Copy diagnostic carries the figures.');
  return lastBench;
+}
+// WATCH THIS DEVICE (device-watch.js): play before the tap from the
+// recorder, then the scripted watch with the phone's own probes. The round is
+// left as it was: no shot is played, and the camera, the flyover, the frame
+// cap and the screen lock are put back whatever happens.
+let watching=false;
+async function runDeviceWatch(){
+ if(watching||benchProbe)return null;
+ const at=world?.holes?worldHole(round.hole):-1;
+ if(appMode!=='play'||rangeMode||flight||dropState||!world?.holes?.[at]){toast('Start a round first: the watch runs on the hole you are on.');return null;}
+ const tap=Math.floor(performance.now()/1000),before=playRecorder.read(tap-BEFORE_SECONDS,tap);
+ closePanel();
+ let lock=null;
+ try{navigator.wakeLock?.request('screen').then(l=>{lock=l;},()=>{});}catch{}
+ const cap=graphics.frameCap,mode=view.config.mode,started=performance.now(),from=Math.floor(started/1000),notes=new Set();
+ let hidden=null;
+ const show=()=>{if(hidden){for(const o of hidden)o.visible=true;hidden=null;}};
+ const wait=s=>new Promise(done=>setTimeout(done,s*1000));
+ watching=true;
+ const io={
+  // THE FRAME CAP LIFTED, so every run is the same whatever the player set;
+  // not saved, and put back below. A first probe builds the probes' programs.
+  start:async()=>{graphics.frameCap=0;await new Promise(done=>{watchProbe=done;});},
+  phase:async step=>{
+   watchPhase=step.id;playRecorder.event(step.label);
+   if(step.id==='flyover'){if(!tour)startTour();}
+   else if(tour)stopTour();
+   if(step.id==='above')placePose({hole:at,along:-150,height:250,look:'pin'});
+  },
+  seconds:s=>wait(s),
+  // Its second by the clock, as the recorder's lines are (the script's own
+  // count runs a little behind it: the probes and the rests take time).
+  probe:()=>new Promise(done=>{watchProbe=r=>done({...r,at:Math.round(performance.now()/1000)-from});}),
+  // NOTHING DRAWN for n seconds (as Measure this device's "nothing drawn"):
+  // the clear and the frame still happen, the scene does not.
+  rest:async s=>{hidden=view.scene.children.filter(o=>o.visible);for(const o of hidden)o.visible=false;await wait(s);show();},
+  restore:async()=>{show();watchProbe=null;watchPhase=null;if(tour)stopTour();graphics.frameCap=cap;cameraMode(mode==='free'?'player':mode);try{lock?.release();}catch{}watching=false;},
+ };
+ let result=null;
+ try{result=await runWatch(io,{onStep:(i,n,s)=>toast(`Watching this device: ${i} of ${n}, ${s.label}. Keep the screen on and leave it be.`)});}
+ catch(e){toast(`The watch stopped: ${e?.message??e}`);return null;}
+ if(document.hidden)notes.add('the page was put away during the watch');
+ const during=playRecorder.read(from,Infinity).map(l=>({...l,at:l.t-from}));
+ if(during.some(l=>l.events.includes('page hidden')))notes.add('the page was put away during the watch');
+ lastWatch={seconds:result.seconds,cap,course:`${playingCourseName()}, hole ${round.hole+1}`,before,during,probes:result.probes,notes:[...notes]};
+ toast('Watched. Help → Report a problem → Copy diagnostic carries it.');
+ return lastWatch;
 }
 function savableCourse(){
  if(appMode==='studio')return {label:'Save this landscape'};
@@ -5421,6 +5484,7 @@ function wireSliders(root){root.querySelectorAll('input[type=range]').forEach(el
 // disconnect) open 'monitor' again and keep it.
 let monitorReturn=null;
 function openPanel(name){
+ playRecorder.event('panel');
  if(name!=='monitor')monitorReturn=null;
  if(appMode==='play'&&TOOL_PANELS.has(name)&&popups){openTool(name);return;}
  openSheet(name);
@@ -6859,7 +6923,7 @@ function renderPanel(name,content){
   // The report is shown in the box as well as copied, so a browser that
   // refuses the clipboard is an inconvenience rather than a dead end, and so
   // that nobody has to take on trust what they are about to paste.
-  content.insertAdjacentHTML('beforeend',`<h3>Report a problem</h3><p>Something looking wrong? This copies a short summary of your build, your machine and anything that has gone wrong, ready to paste into a bug report.</p><p class="note"><strong>Nothing is sent anywhere.</strong> Fairway makes no network requests at all. The text is put on your clipboard and shown below, and what happens to it after that is up to you.</p><button class="secondary" id="copyDiagnostic"><i data-lucide="clipboard-list"></i> Copy diagnostic</button><p class="note"><strong>Slow on this device?</strong> In a round, Measure this device stands the camera at four places on the hole you are on for about a minute, switching parts of the picture off one at a time, then puts it back. Leave the screen on while it runs. The diagnostic then carries what each part costs here.</p><button class="secondary" id="benchDevice"><i data-lucide="gauge"></i> Measure this device</button><label class="field" id="diagnosticField" hidden>Diagnostic<textarea id="diagnosticText" rows="12" readonly></textarea></label>`);
+  content.insertAdjacentHTML('beforeend',`<h3>Report a problem</h3><p>Something looking wrong? This copies a short summary of your build, your machine and anything that has gone wrong, ready to paste into a bug report.</p><p class="note"><strong>Nothing is sent anywhere.</strong> Fairway makes no network requests at all. The text is put on your clipboard and shown below, and what happens to it after that is up to you.</p><button class="secondary" id="copyDiagnostic"><i data-lucide="clipboard-list"></i> Copy diagnostic</button><p class="note"><strong>Slow on this device?</strong> In a round, Measure this device stands the camera at four places on the hole you are on for about a minute, switching parts of the picture off one at a time, then puts it back. Leave the screen on while it runs. The diagnostic then carries what each part costs here.</p><button class="secondary" id="benchDevice"><i data-lucide="gauge"></i> Measure this device</button><p class="note"><strong>Speed going up and down?</strong> Watch this device keeps your view for a minute, flies the hole, rests the picture a few times and looks from above, about two and a half minutes, timing the device itself as it goes. The diagnostic then carries that, and how your last few minutes of play ran.</p><button class="secondary" id="watchDevice"><i data-lucide="activity"></i> Watch this device</button><label class="field" id="diagnosticField" hidden>Diagnostic<textarea id="diagnosticText" rows="12" readonly></textarea></label>`);
   $('copyDiagnostic').onclick=async()=>{
    let text;
    // Belt and braces: this is the button somebody presses when the app is
@@ -6872,6 +6936,7 @@ function renderPanel(name,content){
    toast(await copyText(text)?'Diagnostic copied.':'Diagnostic ready \u2014 copy it from the box.');
   };
   $('benchDevice').onclick=()=>{runDeviceBench();};
+  $('watchDevice').onclick=()=>{runDeviceWatch();};
   content.insertAdjacentHTML('beforeend',`<h3>Open source & credits</h3><p>Fairway is MIT licensed. Optional donations support development and are not required to play. Third-party components retain their own licenses.</p><details><summary>Project license</summary><pre class="license-text">${escape(projectLicense)}</pre></details><details><summary>Third-party licenses & credits</summary><pre class="license-text">${escape(thirdPartyNotices)}</pre></details>`);
  }
  // EVERY variant of the round panel is tabbed. Endless and the range both have
@@ -7413,6 +7478,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   // Measure this device (device-bench.js), as Report a problem's button runs
   // it; resolves with the figures, or null where it cannot run.
   bench:()=>runDeviceBench(),
+  watch:()=>runDeviceWatch(),
   // The diagnostic's text, as Copy diagnostic makes it.
   diagnostic:()=>collectDiagnostic(),
   // A BUILT course's file handed in as bytes, kept as an import keeps it; the
@@ -7461,7 +7527,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
     hazard:kind==='water'?'Water':'Out of bounds',treeHits:0,homeHits:0,onGreen:false};
    const shot={origin:from,aim,speed:30,vla:12,hla:0,spin:3000,spinAxis:0};
    latest={shot,result,player:round.player.name,typed:true};priorShot=lastShot;lastShot={...latest,hole:round.hole,putting:false,aim,club:'Lab'};
-   flight={result,elapsed:0,index:0,origin:from,record:lastShot};
+   flight={result,elapsed:0,index:0,origin:from,record:lastShot};playRecorder.event('shot');
    finishShot();
    return round.relief?{...round.relief,options:reliefList.map(o=>({id:o.id,penalty:o.penalty,spot:o.spot}))}:null;
   },
@@ -8245,6 +8311,7 @@ function tick(now){
  // the display will not show. Zero means follow the display.
  if(graphics.frameCap&&now-lastTick<1000/graphics.frameCap-.5)return;
  diagnosticFrames.sample(now-lastTick);
+ recordFrame(now);
  if(gameAudio&&view?.world&&now-lastSoundScene>1000){lastSoundScene=now;updateSoundScene();}
  autoResolutionFrame(now,now-lastTick);
  const dt=Math.min((now-lastTick)/1000,.05);lastTick=now;
@@ -8319,7 +8386,7 @@ function tick(now){
  // the page until it has -- the loading screen froze during a wait that is
  // meant to leave it moving. The overlay is up; the frame it would cover is
  // drawn by `ready` itself as soon as the programs are done.
- if(!view.readying){if(benchProbe)benchFrame(now,dt);else view.render(dt);}
+ if(!view.readying){if(benchProbe)benchFrame(now,dt);else{view.render(dt);if(watchProbe){const done=watchProbe;watchProbe=null;done(view.probeDevice());}}}
  setWindArrow();
  // Not over a finished hole: "0.0 FEET TO HOLE" read on after the ball dropped.
  const worldLabels=!flight&&view.config.mode!=='free'&&!round?.holeComplete;

@@ -1015,6 +1015,42 @@ export class GolfView{
  // THE PLAINEST PAINT, for Measure this device's what-ifs (main.js benchHide):
  // no light, no shadow, no wind, a vertex's own colour or one green. Two
  // materials for the view's life, compiled the first time a run asks.
+ // THE PHONE'S OWN SPEED (Watch this device, device-watch.js): the same small
+ // jobs every time, timed. `trip`: a one-pixel read back with nothing queued,
+ // the round trip every graphics figure carries; `math`: 256 by 256 pixels of
+ // fixed arithmetic; `memory`: the same pixels each reading a 4 MB texture
+ // sixteen times in a scattered order (the ground's slow state hurt texture
+ // reads most); both less the trip. `cpu`: a fixed loop on the processor.
+ // Called just after a frame is drawn, so the read back first waits that
+ // frame out. Any failure is reported, never thrown: a probe that cannot run
+ // on a phone must not stop the watch.
+ probeDevice(){
+  try{
+   const r=this.renderer,gl=r.getContext(),px=new Uint8Array(4),now=()=>performance.now();
+   if(!this.probeKit){
+    const geo=new T.PlaneGeometry(2,2),vert='varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.,1.);}';
+    const make=frag=>{const s=new T.Scene(),m=new T.Mesh(geo,new T.ShaderMaterial({vertexShader:vert,fragmentShader:frag.f,uniforms:frag.u,depthTest:false,depthWrite:false}));m.frustumCulled=false;s.add(m);return s;};
+    const n=1024,bytes=new Uint8Array(n*n*4);let x=12345;for(let i=0;i<bytes.length;i++){x=(x*1103515245+12345)>>>0;bytes[i]=x>>>24;}
+    const noise=new T.DataTexture(bytes,n,n);noise.wrapS=noise.wrapT=T.RepeatWrapping;noise.minFilter=noise.magFilter=T.NearestFilter;noise.generateMipmaps=false;noise.needsUpdate=true;
+    this.probeKit={
+     camera:new T.OrthographicCamera(-1,1,1,-1,0,1),
+     target:new T.WebGLRenderTarget(256,256,{depthBuffer:false}),
+     math:make({u:{},f:'varying vec2 vUv;void main(){float v=vUv.x*3.1+vUv.y;for(int i=0;i<96;i++){v=sin(v*1.37+float(i))*cos(v*.73)+v*.5;}gl_FragColor=vec4(fract(v),0.,0.,1.);}'}),
+     memory:make({u:{noise:{value:noise}},f:'uniform sampler2D noise;varying vec2 vUv;void main(){vec2 uv=vUv;vec4 acc=vec4(0.);for(int i=0;i<16;i++){vec4 s=texture2D(noise,uv);acc+=s;uv=fract(uv*1.7+s.xy*.37+.013*float(i));}gl_FragColor=acc/16.;}'}),
+    };
+   }
+   const k=this.probeKit,was=r.getRenderTarget();
+   gl.readPixels(0,0,1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);
+   const t1=now();gl.readPixels(0,0,1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);const t2=now();
+   const run=scene=>{const a=now();r.setRenderTarget(k.target);r.render(scene,k.camera);r.readRenderTargetPixels(k.target,0,0,1,1,px);return now()-a;};
+   const math=run(k.math),memory=run(k.memory);
+   r.setRenderTarget(was);
+   const c0=now();let v=0;for(let i=0;i<400000;i++)v=(v*31+i)%1000003;const cpu=now()-c0;
+   if(v<0)return {failed:'unreachable'};
+   const trip=t2-t1;
+   return {trip,math:Math.max(0,math-trip),memory:Math.max(0,memory-trip),cpu};
+  }catch(e){return {failed:String(e?.message??e).slice(0,80)};}
+ }
  plainPaint(vertexColors){const k=vertexColors?'v':'g';this.plainMats??={};return this.plainMats[k]??=new T.MeshBasicMaterial(vertexColors?{vertexColors:true}:{color:'#5b8a3c'});}
  scheduleSunShadow(){
   const s=this.sun?.shadow,every=this.quality.shadowEvery??1;

@@ -1030,6 +1030,17 @@ from you is coarser; the grass round you is half as thick; there are no
 animals or course markings. Automatic resolution starts off. Settings, Graphics still offers the
 other four for the rest of that session.
 
+**Watch this device**, under the same heading, is for a game whose speed
+goes up and down. In a round, it keeps your own view for a minute, flies
+the hole, rests the picture (draws nothing) for 1, 3 and 6 seconds, and
+looks from 250 m up -- about two and a half minutes -- timing small fixed
+jobs on the device's graphics and processor every two seconds, with the
+frame cap lifted while it runs and put back after. Leave the screen on and
+the phone alone. Copy diagnostic then carries that, and how your last
+three minutes of play ran, ten seconds a line (frames a second, the
+slowest moment, and what happened: a touch, a shot, a new hole). No shot
+is played and the round is left as it was.
+
 **Measure this device**, under the same heading, is for a game that runs
 slowly. In a round (a course or an endless hole), it closes the help and
 first watches the tee for about a minute, reading it over and over as

@@ -22,6 +22,7 @@
 // tested without a browser. `diagnosticReport` takes plain facts and returns a
 // string; everything above it is the part that has to touch a real window.
 import {formatBench} from './device-bench.js';
+import {formatWatch} from './device-watch.js';
 
 // The build stamp is injected at build time by vite.config.js. It is NOT
 // defined when these modules are imported directly by the test runner, so the
@@ -186,7 +187,7 @@ const optional = (k, v) => blank(v) ? null : `  ${k.padEnd(16)}${v}`;
 // with formatting in it survives exactly one of those.
 export function diagnosticReport(facts = {}) {
  const {build = {}, app = {}, device = {}, webgl = {}, frames = null, errors = [], courseCode = null,
-        takenAt = null, bench = null} = facts;
+        takenAt = null, bench = null, watch = null} = facts;
  const out = [
   'Fairway diagnostic',
   // When it was taken, so two reports from one session can be put in order.
@@ -220,12 +221,20 @@ export function diagnosticReport(facts = {}) {
   required('tier', app.tier),
   required('frame cap', app.frameCap ? `${app.frameCap} fps` : 'follow display'),
   optional('auto resolution', app.autoResolution == null ? null : app.autoResolution ? `on, drawing at ${app.resolution ?? 100}%` : 'off'),
-  required('fps', frames ? `${frames.median} median, ${frames.low} low, worst frame ${frames.worstMs} ms` : 'not measured yet'),
+  // THE LAST FRAMES BEFORE COPY, and only those (frameMeter's 240): after
+  // Measure this device it was the benchmark's own end, and nine reports were
+  // read as play before it was noticed (15 November 2026). Play is the speed
+  // watch's recorder, below.
+  required('fps', frames ? `${frames.median} median, ${frames.low} low, worst frame ${frames.worstMs} ms, over the last ${frames.frames} frames` : 'not measured yet'),
  ].filter(l => l !== null);
  // Measure this device (device-bench.js), when it has been run this session:
  // what each part of a frame costs on this machine.
  const benchText = formatBench(bench);
  if (benchText) out.push('', benchText);
+ // Watch this device (device-watch.js): play before the tap, and the phone's
+ // own speed over a scripted two and a half minutes.
+ const watchText = formatWatch(watch);
+ if (watchText) out.push('', watchText);
  if (errors.length) {
   out.push('', ' ERRORS', ...errors.map(e => `  ${e}`));
  }

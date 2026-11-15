@@ -15435,7 +15435,9 @@ affected.
   Not comparable with the Medium run above, which was at a quarter of the
   pixels and began in the fast state.
 - *Safari from the home screen, Pacific Northwest, "Cascade View Forest"*
-  (00:41; 770 by 1,564; play before the run 16 frames a second): **the tee
+  (00:41; 770 by 1,564; the diagnostic's fps line 16 -- the last frames before
+  Copy, so the run's own end, not play: see *The fps line was never play*):
+  **the tee
   21 ms of work (42 frames a second as shown), the fairway 20, the green 22;
   the same tee re-read at the end, about 50 seconds later, 69 ms.** The step
   came between the tee's parts (whole about 21 ms) and the 250 m view's
@@ -15523,8 +15525,8 @@ grass round the camera, and the far versions from twice as near (the tier's
 0.25 and 0.15 of the screen's height to 0.5 and 0.3).
 
 **The 15 m ring on the iPhone** (15 November 2026, 01:52, build acf3470c,
-Safari from the home screen, Cascade View Forest hole 1; play before it 20
-frames a second). Work ms at the tee, with the whole either side about 42:
+Safari from the home screen, Cascade View Forest hole 1; the fps line 20,
+the run's own end, not play). Work ms at the tee, with the whole either side about 42:
 
 | reading | tee work | vs whole | triangles | 250 m up | vs whole |
 |---|---|---|---|---|---|
@@ -15567,7 +15569,7 @@ The tee re-read at 78 s: 42 ms. Fairway 44, green 51.
 
 **Half the grass and the far versions sooner, on the iPhone** (15 November
 2026, 02:10, build 6db37da9, Safari from the home screen, Cascade View
-Forest **hole 2**; play before it 19 frames a second; the owner: the look
+Forest **hole 2**; the fps line 19, the run's end, not play; the owner: the look
 "ok", and "the game framerate fluctuates quite a bit during play. Things
 seem to speed up and then slow down for no reason").
 
@@ -15704,7 +15706,7 @@ end of this entry.)
 
 **The hold, on the iPhone** (15 November 2026, 02:36, build de7feb6b,
 Safari from the home screen, Cascade View Forest **hole 4**, the owner's
-frame cap at **30**; play before it 19 frames a second). Work ms at the
+frame cap at **30**; the fps line 19, the run's end, not play). Work ms at the
 tee, five rounds, nothing switched but what each row hides:
 
 | at s | as drawn | no ground | no trees, plants or ground | nothing drawn |
@@ -15740,8 +15742,8 @@ Then fast through the tee's parts, the fairway (16), the green (16) and
   not a measurement: whatever the phone lowers in the slow state hurts
   texture reads most -- its memory, or the chip's clock with the ground's
   reads waiting on it.
-- **The 30 cap did not keep play fast**: 19 frames a second in play before
-  the run.
+- (Written at first: "the 30 cap did not keep play fast", from the fps line
+  -- which was the run's end, not play. Withdrawn: not known.)
 
 What follows for the Phone tier, as the owner's choice: the fast state
 already meets 60 at the tee; the slow state is the phone's and cannot be
@@ -15771,8 +15773,8 @@ start), every classification edge where course.js puts the lie, and the
 ground has one sampler spare.
 
 **The ground taken apart, on the iPhone** (15 November 2026, 03:06, build
-720acbd7, Cascade View Forest hole 4, the 30 cap; play before it 17 frames
-a second; **float filtering: yes** -- the ground's tables filter smoothly
+720acbd7, Cascade View Forest hole 4, the 30 cap; the fps line 17, the
+run's end, not play; **float filtering: yes** -- the ground's tables filter smoothly
 on this phone, which settles the two sources above for iOS 26.5 Safari).
 The tee's parts fell in the fast state (the ground 0 to 3% there, every
 row) and say nothing; from 250 m up, all slow (whole 46-48 ms):
@@ -15792,8 +15794,10 @@ row) and say nothing; from 250 m up, all slow (whole 46-48 ms):
 the byte textures. What is left is the classification and the painters --
 the hole tables, the tees, the hazards' loop with its trigonometry, the
 mowing patterns, the ground types' `groundPaint`. The hold agreed with the
-last run: slow to fast at 11 s (again straight after the first frames with
-nothing drawn), fast to slow at about 53 s (the tee's pixels row, marked).
+last run on its second step only: this one began fast (17 ms at 2 s) and
+stayed fast to about 53 s (the tee's pixels row, marked), then slow. (First
+written as "slow to fast at 11 s, again" -- wrong: only the 02:36 run showed
+a step to fast, so the rest idea rests on one observation.)
 
 **The Phone ground, first: savings that change no pixel** (`phoneGround`,
 ground.js `GROUND_HAZARD_REACH`, Phone only). The hazards' loop worked out
@@ -15846,6 +15850,42 @@ painter from every frame. Its costs: memory, softer edges where the
 picture's texels are larger than the screen's pixels (near the camera),
 and the painter's view- and sun-dependent touches frozen when it was
 painted. Not built; the owner's call.
+
+**The fps line was never play** (found 15 November 2026, building the
+speed watch). The diagnostic's fps line is `frameMeter`'s ring of the last
+240 frames, read when Copy is pressed -- after Measure this device, the
+run's own end: across the nine iPhone reports it tracks the "as drawn, at
+the end" row (20 against 19, 17 against 19, 19 against 19, 16 against 14,
+14 against 14), not the play before the tap. Every entry above that called
+it "play before it" is corrected in place; the owner's own words ("speed up
+and then slow down") are the only record of play, and "the game does not
+cause the flip" rests on the benchmark's free camera alone. The line now
+says how many frames it covers.
+
+**Watch this device** (device-watch.js; the owner: "give me a button that
+plays the game or does whatever you need to pull that data", one touch,
+repeatable). Built, not run:
+
+- *A recorder, always on*: a line a second for the last five minutes --
+  frames, the slowest gap, the view, and a touch, a shot, a new hole, a
+  program built, a camera flight, a panel, the page put away. No read back.
+  The watch's report shows the three minutes before the tap, ten seconds a
+  line. This is the first measure of play.
+- *Probes of the phone* (renderer.js `probeDevice`), every 2 s of the watch:
+  a read back with nothing queued (`trip`); 256 by 256 pixels of fixed
+  arithmetic (`math`) and of sixteen scattered reads of a 4 MB texture each
+  (`memory`), both less the trip; a fixed loop on the processor (`cpu`). All
+  three slow with the game: the whole phone (heat or power); the graphics
+  only: its own speed control; memory most: what the ground suggested;
+  none: the game. A probe that fails says so and the watch goes on.
+- *The script*, about 155 s on the hole being played, the frame cap lifted
+  and put back: 30 s of the player's own view with no probes (what play is,
+  and what the probes cost against the next phase), 30 s the same with
+  probes, 40 s of the hole's flyover, then -- after the minute in which
+  every run so far stayed fast -- rests of 1, 3 and 6 s with nothing drawn,
+  each with 10 s after, and 15 s from 250 m up. Fast or slow is told by the
+  arithmetic probe against the run's best: more than twice is slow (PLACED).
+  No shot is played; the camera, flyover, cap and screen lock are put back.
 
 Already right on Phone: no bloom,
 god rays, clouds, mist, cascades or tree mirror; tone mapping in the

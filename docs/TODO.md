@@ -127,9 +127,16 @@ wrong, unfinished, or owed a check.
   which part pays, for the cuts after. **Seen** (03:25): it compiled and
   drew, no errors; the skip about 2%, no hazards, no mowing, no ground
   types 2 to 4% each against plain paint's 35% -- no one part is the cost;
-  the program's size probably is (RESEARCH). **Next, the owner's call:** a
-  baked ground for Phone (the course painted once into a picture, drawn
-  with light and shadow), large, softer up close.
+  the program's size probably is (RESEARCH). A baked ground for Phone is
+  the owner's call, held while the flip is looked into. **Found:** the
+  diagnostic's fps line was the benchmark's end, never play (RESEARCH, *The
+  fps line was never play*). **Step nine, built and not seen on the
+  phone:** Watch this device (device-watch.js): a recorder of play always
+  on, probes of the phone's graphics arithmetic, graphics memory and
+  processor, and a scripted 155 s (the player's view, the flyover, rests,
+  from above). **To check:** it runs to the end on the phone and its probes
+  do not fail; then what slows with the flip, and whether play flips as the
+  watch does.
   Hiding the options waits until its figures are good. No Android to test
   on.
 
