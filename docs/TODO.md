@@ -110,9 +110,13 @@ wrong, unfinished, or owed a check.
   phone went slow to fast at 11 s and back at 67 s with nothing changed in
   the game -- the phone's own state; real work at the tee about 7 ms fast,
   35 slow (the read back is 10 of every figure). The ground slows about ten
-  times in the slow state, the trees about four. **Next, the owner's
-  call:** a cheaper ground shading on Phone (the slow state's largest
-  piece; ground.js is about 1,300 lines of shader), fewer pixels, or both.
+  times in the slow state, the trees about four. **The owner chose the
+  ground** (15 November; Phone only). **Step seven, built and not seen on
+  the phone:** the benchmark takes the ground's shading apart without a new
+  program (no shadow read, cues off, cover and detail textures as one
+  texel), marks a part read across a speed change, and the diagnostic says
+  whether float textures filter. **To check:** which of them carries the
+  ground's 28 to 39%, then build the Phone ground from that.
   Hiding the options waits until its figures are good. No Android to test
   on.
 

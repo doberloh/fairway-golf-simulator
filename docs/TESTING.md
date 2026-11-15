@@ -399,12 +399,14 @@ the courses several suites share, and builds many at once on worker threads
   real GPU (17 October 2026, overnight; again on 18 October 2026, in 13 small
   batches, after the hidden old interface was removed).
 - **Outside the game** -- `bridge` (the launch-monitor bridge), `diagnostic`
-  (Report a problem), `phone-tier` (a phone is told by what the browser says it is, an iPad is not one; the Phone tier survives a save, is not offered on a desktop, rebuilds the scene, and spends on geometry with a shadow offset of at least a texel, its ground in squares on every course while no other tier's moves), `device-bench` (Measure this device: the tour's order --
+  (Report a problem; also whether float textures filter smoothly), `phone-tier` (a phone is told by what the browser says it is, an iPad is not one; the Phone tier survives a save, is not offered on a desktop, rebuilds the scene, and spends on geometry with a shadow offset of at least a texel, its ground in squares on every course while no other tier's moves), `device-bench` (Measure this device: the tour's order --
   one part off at a time, a whole frame between every two, the camera put back
   whatever goes wrong -- and its section of the diagnostic: the script column,
-  the hold at the tee before anything is switched (five rounds of as drawn,
+  the hold at the tee before anything is switched (rounds of as drawn,
   no ground, bare and nothing drawn), the floor row with trees and ground
-  both off, the ground in plain paint, the game's light where it changed,
+  both off, the ground's what-ifs (no shadow read, cues off, no cover or
+  detail, plain paint), a part read across a speed change marked, the
+  game's light where it changed,
   when each reading was taken,
   and the heaviest things held at each place read as drawn; what the numbers
   are is the device's), `sound`.

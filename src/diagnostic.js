@@ -81,10 +81,17 @@ export function webglFacts(gl) {
  try {
   const dbg = gl.getExtension('WEBGL_debug_renderer_info');
   const get = p => { try { const v = gl.getParameter(p); return typeof v === 'string' && v ? v : null; } catch { return null; } };
+  // SMOOTH FILTERING OF FLOAT TEXTURES (the iPhone, 15 November 2026): the
+  // ground's tables are 32-bit floats read with linear filtering, which needs
+  // OES_texture_float_linear; without it three draws them nearest and warns.
+  // Two sources disagree on whether iOS Safari has it (RESEARCH); asked here.
+  let floatLinear = null;
+  try { floatLinear = !!gl.getExtension('OES_texture_float_linear'); } catch { floatLinear = null; }
   return {
    renderer: dbg ? get(dbg.UNMASKED_RENDERER_WEBGL) : get(gl.VERSION ?? 0x1f02),
    vendor: dbg ? get(dbg.UNMASKED_VENDOR_WEBGL) : null,
    version: get(0x1f02),
+   floatLinear,
   };
  } catch { return {renderer: null, vendor: null, version: null}; }
 }
@@ -201,6 +208,7 @@ export function diagnosticReport(facts = {}) {
   required('platform', device.platform),
   required('gpu', webgl.renderer),
   required('gpu vendor', webgl.vendor),
+  optional('float filtering', webgl.floatLinear == null ? null : webgl.floatLinear ? 'yes' : 'no (the ground\'s tables drawn nearest)'),
   required('screen', device.screen),
   required('viewport', device.viewport),
   required('pixel ratio', device.pixelRatio),

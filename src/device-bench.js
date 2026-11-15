@@ -70,8 +70,17 @@ export const BENCH_PARTS = Object.freeze([
  // past the ring as its far version and the trees in the plainest paint, but
  // the phone changed speed under them (below, BENCH_HOLD) and they read as
  // noise; gone too. The ground in plain paint (no light, no shadow, one
- // colour) read -37% and -39% in the slow state, as much as no ground at all:
- // kept, to see whether that holds.
+ // colour) read -37% and -39% in the slow state, as much as no ground at all
+ // -- but plain paint takes away the ground's light and its shadow as well as
+ // its painting, so the seventh run takes them apart, each a uniform written
+ // and no new program built (the ground's is the slowest to build): its
+ // shadow not read; its painted cues off (the sheen, the turf colour
+ // variation, the shade under trees, the relief, the slope's drying, the mow
+ // stripes); its two byte textures (the cover and the turf detail) as one
+ // texel each. Plain paint stays, as the most there is to gain.
+ {id: 'groundNoShadow', label: 'ground reads no shadow'},
+ {id: 'groundNoCues', label: 'ground cues off'},
+ {id: 'groundNoTextures', label: 'ground without cover, detail'},
  {id: 'plainGround', label: 'ground in plain paint'},
  {id: 'pixels', label: 'half the pixels'},
 ]);
@@ -87,8 +96,10 @@ export const BENCH_PARTS = Object.freeze([
 // read back) -- each reading's second and the game's light beside it. If
 // "as drawn" steps while the floor holds, the step is in what the game
 // draws; if everything steps together, it is the device.
+// Three rounds since the seventh run: five showed the flip and a run of two
+// minutes is long to sit through.
 export const BENCH_HOLD = Object.freeze({
- cycles: 5,
+ cycles: 3,
  parts: Object.freeze([
   {id: 'ground', label: 'no course ground'},
   {id: 'bare', label: 'no trees, plants or ground'},
@@ -97,6 +108,9 @@ export const BENCH_HOLD = Object.freeze({
 });
 
 const mean2 = (a, b) => a == null ? b : b == null ? a : (a + b) / 2;
+// PLACED: the wholes either side of a part a fifth apart (1.2) -- within one
+// state the hold read them within about a tenth.
+export const STRADDLE = 1.2;
 
 // The tour. Resolves with the rows; `io.restore()` runs whatever happens.
 // `onStep(i, n)` is told how far along it is, for the player's progress line.
@@ -140,8 +154,11 @@ export async function runBench(io, {hole = 0, length = 300, spots = BENCH_SPOTS,
     } finally { undo?.(); }
     await io.frames(BENCH.settlePart);
     const after = await io.measure();
-    // Against the mean of the whole frame either side of it.
-    rows.push({spot: spot.id, part: part.id, ...reading, baseWork: mean2(base.workMs, after.workMs), baseFps: mean2(base.fps, after.fps)});
+    // Against the mean of the whole frame either side of it -- unless the two
+    // differ by more than a fifth: the phone changed speed during the part
+    // (BENCH_HOLD), and the row is marked, not trusted.
+    const straddle = base.workMs > 0 && after.workMs > 0 && Math.max(base.workMs, after.workMs) / Math.min(base.workMs, after.workMs) > STRADDLE;
+    rows.push({spot: spot.id, part: part.id, ...reading, baseWork: mean2(base.workMs, after.workMs), baseFps: mean2(base.fps, after.fps), ...(straddle ? {straddle: true} : {})});
     base = after;
     step();
    }
@@ -200,11 +217,12 @@ export function formatBench(bench) {
  // `script`: the part of the work that was the game's own code (see the top).
  out.push(`  ${pad('place', 9)}${pad('reading', 34)}${lpad('fps', 4)}${lpad('worst', 7)}${lpad('work ms', 9)}${lpad('script', 8)}${lpad('whole ms', 10)}${lpad('vs whole', 10)}${lpad('draws', 7)}${lpad('tris', 9)}${lpad('at s', 6)}`);
  for (const r of rows) {
-  const vs = r.part && r.workMs != null && r.baseWork ? `${r.workMs <= r.baseWork ? '-' : '+'}${Math.round(Math.abs(r.workMs - r.baseWork) / r.baseWork * 100)}%` : '';
+  const vs = r.part && r.workMs != null && r.baseWork ? `${r.straddle ? '~' : ''}${r.workMs <= r.baseWork ? '-' : '+'}${Math.round(Math.abs(r.workMs - r.baseWork) / r.baseWork * 100)}%` : '';
   // The pixels row says the size it drew at, so it proves itself.
   const what = r.part === 'again' ? 'as drawn, at the end' : r.part === 'hold' ? `hold ${r.cycle}: ${r.hold ? label(BENCH_HOLD.parts, r.hold) : 'as drawn'}` : r.part ? label(BENCH_PARTS, r.part) + (r.part === 'pixels' && r.canvas ? ` ${r.canvas[0]}x${r.canvas[1]}` : '') : 'as drawn';
   out.push(`  ${pad(label(BENCH_SPOTS, r.spot), 9)}${pad(what, 34)}${lpad(r.fps ?? '-', 4)}${lpad(r.worstMs ?? '-', 7)}${lpad(r.workMs ?? '-', 9)}${lpad(r.scriptMs ?? '-', 8)}${lpad(r.baseWork != null ? r.baseWork.toFixed(1) : '', 10)}${lpad(vs, 10)}${lpad(r.draws ?? '-', 7)}${lpad(millions(r.triangles), 9)}${lpad(r.at ?? '-', 6)}`);
  }
+ if (rows.some(r => r.straddle)) out.push(`  ~ the phone changed speed during that part: its whole frame either side differs by more than ${Math.round((STRADDLE - 1) * 100)}%`);
  // THE GAME'S LIGHT AND VIEW (main.js `benchState`): once, and again
  // wherever it changed, so a step in the table can be laid beside it.
  let was = null;

@@ -362,6 +362,10 @@ export function groundMaterial(view,palette){
  // generated course a second on every program.
  if(built)m.defines={...m.defines,BUILT_COURSE:1};
  m.onBeforeCompile=shader=>{
+ // The program's own uniforms, kept for Measure this device (main.js
+ // benchHide): a texture swapped through them is a uniform write, not a new
+ // program -- this one is the slowest in the game to build.
+ m.userData.uniforms=shader.uniforms;
  // The record with the round's season laid over it (renderer.js build).
  const bio={...biomeOf(w.settings.biome),...(w.bio||{})};
   Object.assign(shader.uniforms,colors,cues,{bankTint:{value:new T.Color(bio.bank)},streamCount:{value:streamCount},owners:{value:texture(owners,Sx,Sz)},cover:{value:coverTex},detail:{value:detailTex},tables:{value:tables.texture},tableRows:{value:tables.rows},curveSpan:{value:span},extent:{value:extent},rows:{value:N},rock:{value:new T.Color(w.bio.rock)},// NAMED, NOT NUMBERED. This was an index into a four-element array, so a

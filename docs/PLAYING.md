@@ -1038,8 +1038,11 @@ drawn, then stands the camera at four places on the hole you are on -- the tee, 
 fairway, the green and 250 m up -- for about another minute, however slow
 the game is running. At the tee and from above it switches parts of the
 picture off one at a time: the trees and plants, the course's ground, both
-of those together, and half the pixels -- and draws the ground in plain
-unlit colours for a moment. Then it puts the camera back. The screen is
+of those together, and half the pixels -- and draws the ground for a moment
+without its shadows, without its shading touches (sheen, colour variation,
+shade under trees, relief, mowing stripes), without its fine detail, and in
+plain unlit colours. A row read while the phone changed speed is marked
+with a ~. Then it puts the camera back. The screen is
 kept on while it runs, where the browser allows. Nothing about the round changes: no hole is skipped and no shot is
 played. Copy diagnostic then carries a table of what it found: frames a
 second, the slowest frame, how long each frame's work took and how much of

@@ -56,6 +56,22 @@ test('whatever goes wrong, the part is switched back on and the camera put back'
  assert.equal(open, 0, 'nothing left switched off');
 });
 
+test('a part read while the phone changed speed is marked, not trusted', async () => {
+ // The whole frame reads 40 ms until the third part, then 20: the phone
+ // went fast in the middle of it (the hold, 15 November).
+ const io = fakeIo(), base = io.measure;
+ let hides = 0;
+ io.hide = (h => id => { hides++; return h(id); })(io.hide);
+ io.measure = async () => { const r = await base(); return hides >= 3 ? {...r, workMs: r.workMs / 2} : r; };
+ const rows = await runBench(io, {hole: 0, hold: {cycles: 0, parts: []}});
+ const tee = rows.filter(r => r.spot === 'tee' && r.part && r.part !== 'again');
+ assert.ok(!tee[0].straddle && !tee[1].straddle, 'the wholes either side agree');
+ assert.ok(tee[2].straddle, 'the whole fell from 40 to 20 round the third');
+ const text = formatBench({rows, tier: 'phone'});
+ assert.match(text, /~[-+][0-9]+%/);
+ assert.match(text, /~ the phone changed speed during that part/);
+});
+
 test('a reading is the median frame, the slowest frame, the median work and the median script', () => {
  const r = readingOf([16, 17, 33, 16, 100], [8, 9, 10, 40], {draws: 412, triangles: 13.5e6}, [2, 3, 4]);
  assert.equal(r.fps, 59, '1000 / the median gap of 17 ms');
@@ -83,7 +99,9 @@ test('the report says what each part costs, and rides in the diagnostic', async 
  assert.match(text, /draws +tris +at s\n +tee +as drawn +30 +50 +40 +5 +300 +10\.0 M +2\n/);
  assert.match(text, /tee +as drawn, at the end/);
  assert.match(text, /tee +hold 1: as drawn +30/);
- assert.match(text, /tee +hold 5: nothing drawn +30/);
+ assert.match(text, new RegExp(`tee +hold ${BENCH_HOLD.cycles}: nothing drawn +30`));
+ // The seventh run's ground what-ifs, each a uniform written.
+ for (const what of ['ground reads no shadow', 'ground cues off', 'ground without cover, detail']) assert.match(text, new RegExp(`tee +${what} `));
  // The game's light, once and wherever it changed.
  assert.match(text, /state at 2 s: hour 10\.0[^\n]*\n +changed at 10 s: hour 10\.1/);
  assert.equal(text.match(/changed at/g).length, 1);

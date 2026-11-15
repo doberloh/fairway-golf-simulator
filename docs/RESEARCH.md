@@ -15749,6 +15749,27 @@ switched off from a web page, so what the game can do is make the slow
 state's frame cheaper -- the ground's shading first (worth 28 to 39% of a
 slow frame), then the pixels (half: -21%) -- and keep the load low.
 
+**Not yet known: which of the ground's shading.** Plain paint swaps the
+whole material, so its 28 to 39% took the ground's shadow reading and toon
+light with its painting; a cheaper painter (a bake, or layers cut on Phone)
+would remove only the painting, before `diffuseColor.rgb=turf`. The owner
+chose the ground (15 November); before building, one more run takes it
+apart, each a uniform written so no new program is built (the ground's is
+the slowest to build, and the 02:10 flip came with the first compiles):
+the ground reading no shadow (`receiveShadow`, a uniform in three r186),
+its cues off (`cues`: sheen, colour variation and shade branch on them; the
+relief, slope drying and stripes multiply), and its cover and turf detail
+textures as one texel each. A part whose whole either side differs by more
+than a fifth is marked as straddling a speed change (`STRADDLE`, PLACED),
+and the diagnostic says whether the phone filters float textures smoothly
+(`OES_texture_float_linear`). What each answer buys: shadow, the Phone
+tier's shadow filter or size; texture reads, the ground's data in smaller
+formats on Phone (exact, no look to sign off); neither, decorative layers
+cut behind a Phone-only define fixed at material creation. Constraints on
+whatever is built: no new `groundPaint` call (each costs a second at first
+start), every classification edge where course.js puts the lie, and the
+ground has one sampler spare.
+
 Already right on Phone: no bloom,
 god rays, clouds, mist, cascades or tree mirror; tone mapping in the
 materials, no extra pass; no logarithmic depth; highp kept (no evidence

@@ -168,6 +168,10 @@ test('device and webgl facts never throw on a hostile or absent host', () => {
              getParameter: p => ({1: 'Apple M2', 2: 'Apple'}[p] ?? 'WebGL 2.0')};
  assert.equal(webglFacts(gl).renderer, 'Apple M2');
  assert.equal(webglFacts(gl).vendor, 'Apple');
+ // Whether float textures filter smoothly (the ground's tables need it).
+ assert.equal(webglFacts(gl).floatLinear, true);
+ assert.equal(webglFacts({...gl, getExtension: n => n === 'OES_texture_float_linear' ? null : gl.getExtension(n)}).floatLinear, false);
+ assert.match(diagnosticReport({build: {label: 'x'}, app: {}, device: {}, webgl: {floatLinear: false}, frames: null, errors: []}), /float filtering +no/);
 });
 
 test('a report assembled from real-shaped facts holds together', () => {
