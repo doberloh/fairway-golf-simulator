@@ -34,6 +34,17 @@ export function slopeColor(slope){return new T.Color(slope<.01?'#39afd2':slope<.
 // turn to noise within a minute.
 const GRID_SPACING = 1.5, GRID_STEP = .5, GRID_LIFT = .065, GRID_REACH = 36;
 const BAND_HEX = ['#39afd2', '#5fb879', '#e6d150', '#f49542', '#e75b64'];
+// THE FLOW'S SPEED, metres a second, for the slope bands under 1%, 1-2%, 2-3%,
+// 3-5% and over 5% (slopeColor's). Was .3, .45, .7, 1, 1.4 -- under five times
+// from the gentlest to the steepest, and the owner, 15 November 2026: "the
+// indicators are not moving in a way that indicates how much break is in a
+// given area. A gentle break needs to have the indicator move slower than a
+// fast break." Now fifteen times: a crawl on the gentlest, a run on the
+// steepest. Still one speed a band (THE GRID AND THE FLOW, above). PLACED.
+export const FLOW_SPEED = Object.freeze([.12, .3, .6, 1.1, 1.8]);
+export const SLOPE_BANDS = Object.freeze([.01, .02, .03, .05]);
+export const slopeBand = s => { const i = SLOPE_BANDS.findIndex(b => s < b); return i < 0 ? SLOPE_BANDS.length : i; };
+export const flowSpeed = s => FLOW_SPEED[slopeBand(s)];
 function readingSurface(h) {
  const n = Math.round(2 * GRID_REACH / GRID_STEP) + 1, count = n * n;
  const pos = new Float32Array(count * 3), slope = new Float32Array(count), fall = new Float32Array(count * 2), inside = new Float32Array(count);
@@ -69,10 +80,10 @@ const READING_VERTEX = `attribute float slope;attribute vec2 fall;attribute floa
 varying vec2 vXZ;varying float vSlope;varying vec2 vFall;varying float vInside;
 void main(){vXZ=position.xz;vSlope=slope;vFall=fall;vInside=inside;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`;
 const READING_FRAGMENT = `varying vec2 vXZ;varying float vSlope;varying vec2 vFall;varying float vInside;
-uniform vec2 axis,origin;uniform float time,showLines,showFlow;uniform vec3 band0,band1,band2,band3,band4;
+uniform vec2 axis,origin;uniform float time,showLines,showFlow,lineScale;uniform vec3 band0,band1,band2,band3,band4;
 const float SP=${GRID_SPACING.toFixed(2)};
 vec3 band(float s){return s<.01?band0:s<.02?band1:s<.03?band2:s<.05?band3:band4;}
-float speed(float s){return s<.01?.3:s<.02?.45:s<.03?.7:s<.05?1.:1.4;}
+float speed(float s){return s<.01?${FLOW_SPEED[0].toFixed(2)}:s<.02?${FLOW_SPEED[1].toFixed(2)}:s<.03?${FLOW_SPEED[2].toFixed(2)}:s<.05?${FLOW_SPEED[3].toFixed(2)}:${FLOW_SPEED[4].toFixed(2)};}
 // A dash with a bright head and a fading tail, the head leading.
 float dash(float p){return smoothstep(.5,.93,p)*(1.-smoothstep(.93,1.,p));}
 void main(){
@@ -80,8 +91,11 @@ void main(){
  vec2 d=vXZ-origin,across=vec2(-axis.y,axis.x);
  float u=dot(d,axis),v=dot(d,across);
  // How near each family of lines, against its width on screen: about 1.4 px
- // whatever the distance, as the line segments were.
- float wu=fwidth(u),wv=fwidth(v);
+ // whatever the distance, as the line segments were -- in the screen's own
+ // points, not its pixels (lineScale: the pixels a point is drawn with). On
+ // the owner's iPhone, at 1.75 pixels a point, 1.4 pixels was under a point
+ // and the lines "are not visible" (15 November 2026).
+ float wu=fwidth(u)*lineScale,wv=fwidth(v)*lineScale;
  float nearU=1.-smoothstep(.55*wu,1.35*wu,abs(fract(u/SP+.5)-.5)*SP);
  float nearV=1.-smoothstep(.55*wv,1.35*wv,abs(fract(v/SP+.5)-.5)*SP);
  vec2 f=vFall/max(length(vFall),1e-5);
@@ -119,7 +133,7 @@ export function createGreenReading(h){
  // The grid and the flow (see readingSurface). One mesh; the two buttons are
  // two switches in its shader, so either can show without the other.
  const w0=h.toWorld({x:0,z:0}),wz=h.toWorld({x:0,z:1}),holeAxis=new T.Vector2(wz.x-w0.x,wz.z-w0.z).normalize();
- const uniforms={axis:{value:holeAxis.clone()},origin:{value:new T.Vector2(h.worldPin.x,h.worldPin.z)},time:{value:0},showLines:{value:0},showFlow:{value:0},
+ const uniforms={axis:{value:holeAxis.clone()},origin:{value:new T.Vector2(h.worldPin.x,h.worldPin.z)},time:{value:0},showLines:{value:0},showFlow:{value:0},lineScale:{value:1},
   ...Object.fromEntries(BAND_HEX.map((hex,i)=>['band'+i,{value:new T.Color(hex)}]))};
  const surface=new T.Mesh(readingSurface(h),new T.ShaderMaterial({uniforms,vertexShader:READING_VERTEX,fragmentShader:READING_FRAGMENT,transparent:true,depthWrite:false}));
  surface.renderOrder=2;surface.frustumCulled=false;group.add(surface);
@@ -132,8 +146,10 @@ export function createGreenReading(h){
  // Every frame: the time, and the frame the lines are drawn in -- a heading on
  // the ground (`heading`, world x and z; the renderer passes the shot's), or
  // the hole's axes when there is none.
- const update=(time,heading)=>{
-  uniforms.time.value=time;
+ // `pixelsPerPoint`: the pixels the picture is drawn with for each of the
+ // screen's points (the renderer's pixel ratio), at least 1.
+ const update=(time,heading,pixelsPerPoint=1)=>{
+  uniforms.time.value=time;uniforms.lineScale.value=Math.max(1,pixelsPerPoint||1);
   const l=heading?Math.hypot(heading.x,heading.z):0;
   if(l>.05)uniforms.axis.value.set(heading.x/l,heading.z/l);else uniforms.axis.value.copy(holeAxis);
  };

@@ -67,6 +67,7 @@ import {random,greenRadius,greenPoint,fairwayWidth,ovalRadius,hazardProfile,TEE_
 import {addVegetation,farWoodGeometry,snowTopped} from './vegetation.js';
 import {makeWaterMirror} from './water-mirror.js';
 import {buildGroundLod, select as selectGround, nodeBox as groundNodeBox, GROUND_LOD} from './ground-lod.js';
+import {BAKE, levelCenter, courseSquare, pickRepaint, bakeFragment, encodeTurf} from './ground-bake.js';
 import {holePath} from './low-trees.js';
 import {cullInstances} from './instance-cull.js';
 import {playerCameraPose,flightCameraPose,followPose,framedForBall,puttAimPose,stepOrbit,orbitEye} from './camera.js';
@@ -953,6 +954,8 @@ export class GolfView{
   const g=greenCues(this.groundCues);
   for(const k of ['greenLift','greenBend','greenBandSoft'])
    if(u[k])u[k].value=g[k];
+  // The Phone tier's painted ground carries the cues: repainted, a square at a time.
+  if(this.groundBake)for(const s of this.groundBake.squares)if(s.painted)s.dirty=true;
   return this.groundCues;
  }
  // THE GROUND'S OWN SHADOW. A mesh flag, not a material one, so it changes the
@@ -1000,6 +1003,85 @@ export class GolfView{
   // Bloom and the god-ray mask size their targets from the canvas every frame,
   // so they follow on the next frame without being told.
   if(Math.abs(this.renderer.getPixelRatio()-ratio)>1e-6)this.renderer.setPixelRatio(ratio);
+ }
+ // THE ONE SHADOW MAP, REDRAWN LESS OFTEN (graphics.js `shadowEvery`, the Phone
+ // tier). Without cascades the sun's map is a box that follows the camera's
+ // position (not its heading); redrawing it every frame was half of an iPhone's
+ // frame from a tee. With `shadowEvery` it is drawn every that many frames, and
+ // at once when the camera has moved two metres since it was last drawn, so a
+ // camera flight never leaves ground under an old box. A map not redrawn keeps
+ // the matrices it was drawn with (three reads `shadow.matrix`, set only when
+ // it draws), so what it shows stays where it was cast. The ball's shadow and a
+ // tree's sway then step at a quarter of the frame rate. Other tiers: every frame.
+ // Low and Phone leave out the animals and the course's markings, and step the light ones at 30 a second.
+ lightTier(){return this.quality===tierOf('low')||this.quality===tierOf('phone');}
+ // THE PLAINEST PAINT, for Measure this device's what-ifs (main.js benchHide):
+ // no light, no shadow, no wind, a vertex's own colour or one green. Two
+ // materials for the view's life, compiled the first time a run asks.
+ // THE PHONE'S OWN SPEED (Watch this device, device-watch.js): the same small
+ // jobs every time, timed. `trip`: a one-pixel read back with nothing queued,
+ // the round trip every graphics figure carries; `math`: 256 by 256 pixels of
+ // fixed arithmetic; `memory`: the same pixels each reading a 4 MB texture
+ // sixteen times in a scattered order (the ground's slow state hurt texture
+ // reads most); both less the trip. `cpu`: a fixed loop on the processor.
+ // Called just after a frame is drawn, so the read back first waits that
+ // frame out. Any failure is reported, never thrown: a probe that cannot run
+ // on a phone must not stop the watch.
+ // SAFARI'S CLOCK COUNTS WHOLE MILLISECONDS (every iPhone figure has been a
+ // whole number), and one pass of each graphics probe is well under one: so
+ // each is drawn `reps` times before its one read back, `reps` found once at
+ // the start (`calibrateProbes`) so the pass takes about 10 ms, then fixed for
+ // the run and printed; the processor probe counts the steps it gets through
+ // in a fixed 15 ms and gives the time a million would take.
+ calibrateProbes(target=10){
+  this.probeReps={math:1,memory:1};
+  for(const key of ['math','memory']){
+   for(let reps=1;reps<=512;reps*=2){this.probeReps[key]=reps;const r=this.probeDevice();if(r.failed)return r;if(r[key]>=target)break;}
+  }
+  return {...this.probeReps};
+ }
+ probeDevice(){
+  try{
+   const r=this.renderer,gl=r.getContext(),px=new Uint8Array(4),now=()=>performance.now();
+   if(!this.probeKit){
+    const geo=new T.PlaneGeometry(2,2),vert='varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.,1.);}';
+    const make=frag=>{const s=new T.Scene(),m=new T.Mesh(geo,new T.ShaderMaterial({vertexShader:vert,fragmentShader:frag.f,uniforms:frag.u,depthTest:false,depthWrite:false}));m.frustumCulled=false;s.add(m);return s;};
+    const n=1024,bytes=new Uint8Array(n*n*4);let x=12345;for(let i=0;i<bytes.length;i++){x=(x*1103515245+12345)>>>0;bytes[i]=x>>>24;}
+    const noise=new T.DataTexture(bytes,n,n);noise.wrapS=noise.wrapT=T.RepeatWrapping;noise.minFilter=noise.magFilter=T.NearestFilter;noise.generateMipmaps=false;noise.needsUpdate=true;
+    this.probeKit={
+     camera:new T.OrthographicCamera(-1,1,1,-1,0,1),
+     target:new T.WebGLRenderTarget(256,256,{depthBuffer:false}),
+     math:make({u:{},f:'varying vec2 vUv;void main(){float v=vUv.x*3.1+vUv.y;for(int i=0;i<96;i++){v=sin(v*1.37+float(i))*cos(v*.73)+v*.5;}gl_FragColor=vec4(fract(v),0.,0.,1.);}'}),
+     memory:make({u:{noise:{value:noise}},f:'uniform sampler2D noise;varying vec2 vUv;void main(){vec2 uv=vUv;vec4 acc=vec4(0.);for(int i=0;i<16;i++){vec4 s=texture2D(noise,uv);acc+=s;uv=fract(uv*1.7+s.xy*.37+.013*float(i));}gl_FragColor=acc/16.;}'}),
+    };
+   }
+   const k=this.probeKit,was=r.getRenderTarget();
+   gl.readPixels(0,0,1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);
+   const t1=now();gl.readPixels(0,0,1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);const t2=now();
+   const reps=this.probeReps??{math:1,memory:1};
+   const run=(scene,n)=>{const a=now();r.setRenderTarget(k.target);for(let i=0;i<n;i++)r.render(scene,k.camera);r.readRenderTargetPixels(k.target,0,0,1,1,px);return now()-a;};
+   const math=run(k.math,reps.math),memory=run(k.memory,reps.memory);
+   r.setRenderTarget(was);
+   // Steps of a fixed loop in 15 ms, as the time a million would take.
+   const c0=now(),end=c0+15;let v=0,steps=0;
+   while(now()<end){for(let i=0;i<1000;i++)v=(v*31+i)%1000003;steps+=1000;}
+   const cpu=(now()-c0)/steps*1e6;
+   if(v<0)return {failed:'unreachable'};
+   const trip=t2-t1;
+   return {trip,math:Math.max(0,math-trip),memory:Math.max(0,memory-trip),cpu};
+  }catch(e){return {failed:String(e?.message??e).slice(0,80)};}
+ }
+ plainPaint(vertexColors){const k=vertexColors?'v':'g';this.plainMats??={};return this.plainMats[k]??=new T.MeshBasicMaterial(vertexColors?{vertexColors:true}:{color:'#5b8a3c'});}
+ scheduleSunShadow(){
+  const s=this.sun?.shadow,every=this.quality.shadowEvery??1;
+  if(!s||this.csm||!this.sun.castShadow)return;
+  if(every<=1){if(s.autoUpdate===false){s.autoUpdate=true;this.sunShadowAt=null;}return;}
+  const f=this.sunShadowFrame=(this.sunShadowFrame??0)+1,cam=this.camera.position,last=this.sunShadowAt;
+  // (The sun as the cascades judge it: a quarter of a degree, CASCADE_SUN_TURN;
+  // a timed day moves it every frame by far less.)
+  const draw=!s.map||!last||f%every===0||last.distanceToSquared(cam)>4||!this.sunShadowDir||!this.sunDir||this.sunShadowDir.dot(this.sunDir)<CASCADE_SUN_TURN;
+  s.autoUpdate=draw;s.needsUpdate=false;
+  if(draw){(this.sunShadowAt??=new T.Vector3()).copy(cam);(this.sunShadowDir??=new T.Vector3()).copy(this.sunDir);}
  }
  applyQuality(name){
   this.quality=tierOf(name);
@@ -1054,7 +1136,11 @@ export class GolfView{
   const c=this.canvas,w=c?.clientWidth||0,h=c?.clientHeight||0,lift=this.liftForPhone&&!this.screenAspect&&liftsView(this.config?.mode)?phoneLift(w,h):0;
   this.liftMode=this.config?.mode;
   if(lift)this.camera.setViewOffset(w,h,0,lift,w,h);else if(this.camera.view?.enabled)this.camera.clearViewOffset();}
- disposeCourse(){this.pendingFurniture=[];if(!this.group)return;this.mirror?.dispose();this.mirror=null;if(this.mirrorUniforms){this.mirrorUniforms.mirrorMap.value=null;this.mirrorUniforms.mirrorOn.value=0;}const geometries=new Set(),materials=new Set(),textures=new Set();this.group.traverse(o=>{if(o.isInstancedMesh)o.dispose();o.shadow?.dispose();if(o.geometry)geometries.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])materials.add(m);});for(const m of materials){for(const v of Object.values(m))if(v?.isTexture)textures.add(v);for(const u of Object.values(m.uniforms||{}))if(u?.value?.isTexture)textures.add(u.value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();for(const r of this.resources)r.dispose();this.resources=[];this.csm?.dispose();this.csm=null;this.cloudUniforms=null;this.clouds?.dispose();this.clouds=null;this.mistUniforms=null;this.godRays?.dispose();this.godRays=null;this.bloom?.dispose();this.bloom=null;this.sky=null;this.skyMaterial=null;this.propRamp=null;this.envScene=null;this.environment?.dispose();this.environment=null;this.scene.environment=null;this.cull=null;this.groundLod=null;this.scene.remove(this.group);}
+ disposeCourse(){this.pendingFurniture=[];if(!this.group)return;
+  // The Phone tier's painted ground (buildGroundBake): its pictures, the
+  // meshes it paints with and its own material, none of them in the group.
+  if(this.groundBake){const B=this.groundBake;for(const s of B.squares){s.rt.dispose();s.spare?.dispose();}for(const m of B.meshes.values())m.geometry.dispose();B.full?.geometry.dispose();B.material.dispose();this.groundBake=null;}
+  this.mirror?.dispose();this.mirror=null;if(this.mirrorUniforms){this.mirrorUniforms.mirrorMap.value=null;this.mirrorUniforms.mirrorOn.value=0;}const geometries=new Set(),materials=new Set(),textures=new Set();this.group.traverse(o=>{if(o.isInstancedMesh)o.dispose();o.shadow?.dispose();if(o.geometry)geometries.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])materials.add(m);});for(const m of materials){for(const v of Object.values(m))if(v?.isTexture)textures.add(v);for(const u of Object.values(m.uniforms||{}))if(u?.value?.isTexture)textures.add(u.value);m.dispose();}for(const g of geometries)g.dispose();for(const t of textures)t.dispose();for(const r of this.resources)r.dispose();this.resources=[];this.csm?.dispose();this.csm=null;this.cloudUniforms=null;this.clouds?.dispose();this.clouds=null;this.mistUniforms=null;this.godRays?.dispose();this.godRays=null;this.bloom?.dispose();this.bloom=null;this.sky=null;this.skyMaterial=null;this.propRamp=null;this.envScene=null;this.environment?.dispose();this.environment=null;this.scene.environment=null;this.cull=null;this.groundLod=null;this.scene.remove(this.group);}
  build(world,style='cartoon',holeIndex=0){
   style='cartoon';
   this.disposeCourse();this.updateGrass=null;this.life=null;this.pathTextures=null;this.waterTime=null;this.seaDepth=null;this.probeDue=null;this.floodWarming=null;this.world=world;this.style=style;this.course=world.holes[holeIndex];this.group=new T.Group();this.scene.add(this.group);this.targets=[];this.puttingRings=null;this.greenGrid=null;this.reading=null;this.readingHeading=null;this.gridBeads=[];this.flags=[];this.inks=null;this.flagsticks=[];this.greenProps=[];this.rangeProps=null;this.makeHazardAtlas();this.waterBodies=[];
@@ -1138,7 +1224,12 @@ export class GolfView{
   // 9 November 2026). The mesh above is kept, undrawn, for its material, its
   // shadow switch and its box; what is drawn is the quadtree's squares, each
   // its own mesh over the same vertices, chosen every frame (updateGroundLod).
-  if((terrain.index?terrain.index.count:terrain.attributes.position.count)/3>=GROUND_LOD.minTriangles)this.buildGroundLodMeshes(world.groundGrid,terrain);
+  // On every course on the Phone tier (`groundSquares`): a generated course's
+  // 2.4 million triangles were a third of an iPhone's frame (RESEARCH.md *The
+  // first figures from a real phone*).
+  if(this.quality.groundSquares||(terrain.index?terrain.index.count:terrain.attributes.position.count)/3>=GROUND_LOD.minTriangles)this.buildGroundLodMeshes(world.groundGrid,terrain);
+  // The Phone tier's ground, painted into pictures (ground-bake.js).
+  this.buildGroundBake();
   for(const h of world.holes){for(const p of h.ponds){const points=[];for(let j=0;j<512;j++){const q=ovalRadius(p,j/512*TAU),w=h.toWorld({x:p.x+q.x,z:p.z+q.z});points.push(new T.Vector2(w.x,-w.z));}this.addWaterBody(new T.ShapeGeometry(new T.Shape(points)),p.level,p.depth,h.toWorld(p));this.addShoreFoam(points,p.level,!!p.large);}this.addHoleDetails(h);}
   // A BUILT course's ponds and lakes (built-world.js): any outline, holes for
   // its islands, at its stored level -- the same water body a pond is.
@@ -1192,9 +1283,14 @@ export class GolfView{
   // later, move with the camera, and opt out.
   // The floodlit programs are built behind the loading screen, in `ready`.
   this.nightWarmDue=true;
+  this.cullFlying=false;
   this.cull=cullInstances(this.group,{thinShadowsFrom:this.quality.thinShadowsFrom??Infinity,farTrees:this.quality.farTrees??0,farPainted:Math.max(this.quality.farPainted??0,biomeOf(this.world?.settings?.biome)?.farPaintedFrom??0),thinTrees:!!this.quality.thinTrees,
    // A tree's middle version and its line in the picture's own pixels (graphics.js midTrees; High and Ultra).
-   midShare:this.quality.midTrees?.share??0,farPaintedPx:this.quality.midTrees?.px??0,screenPx:()=>this.renderer.domElement.height});
+   midShare:this.quality.midTrees?.share??0,farPaintedPx:this.quality.midTrees?.px??0,screenPx:()=>this.renderer.domElement.height,
+   // How near a tree is kept whatever the view (graphics.js `cullNear`; the Phone tier).
+   ...(this.quality.cullNear!=null?{near:this.quality.cullNear}:{}),
+   // The Phone tier's harder thinning outside the hole (graphics.js `lowTrees`).
+   ...(this.quality.lowTrees?{lowTrees:this.quality.lowTrees}:{})});
   // The saved preference applies to every course built after it, not only to
   // the one that was on screen when the box was ticked.
   this.setFloodlights(this.daylight?.floodlights);
@@ -2244,7 +2340,7 @@ export class GolfView{
   place(0);
   this.group.add(group);
   let since=0;
-  return {group,update:(dt,t)=>{since+=dt;if(this.quality===tierOf('low')&&since<1/30)return;since=0;place(t);}};
+  return {group,update:(dt,t)=>{since+=dt;if(this.lightTier()&&since<1/30)return;since=0;place(t);}};
  }
  // AN ARCHITECT COURSE'S MARKINGS (architect-courses, phase 2; markings.js,
  // tools/blender/architect_people.py): stakes, yardage posts and rakes, a few
@@ -3029,7 +3125,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
    if(!this.readingHeading){this.camera.getWorldDirection(this.headingScratch??=new T.Vector3());this.readingHeading={x:this.headingScratch.x,z:this.headingScratch.z};}
    heading=this.readingHeading;
   }
-  this.reading.update(this.elapsed-this.readingEpoch,heading);
+  this.reading.update(this.elapsed-this.readingEpoch,heading,this.renderer.getPixelRatio());
  }
  setBall(p){this.localBall={...p};const v=this.course.toWorld(p),h=this.course.height(p.x,p.z),surface=this.course.surface(p.x,p.z),lift=0;this.ball.position.set(v.x,(p.y!==undefined?p.y:h+R)+lift,v.z);this.ballRing.position.set(v.x,h+lift+.01,v.z);const near=Math.hypot(p.x-this.course.pin.x,p.z-this.course.pin.z)<5;this.ballRing.scale.setScalar(near?.22:1);this.ballRing.visible=!near&&!(p.y!==undefined&&p.y<h);this.placeBallShadow(v.x,v.z,h,this.ball.position.y);}
  // WHAT PUTS THE BALL ON THE GROUND.
@@ -3434,6 +3530,9 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   this.groundLod={lod,grid,attrs,group,meshes:new Map(),shown:new Set(),key:''};
   // Kept for its material, shadow switch and box; its triangles are the
   // squares' now, so its own index goes.
+  // The whole ground's own triangles, kept for the Phone tier's painting of the
+  // course's square (ground-bake.js) before the mesh's index goes.
+  this.groundLod.fullIndex=terrain.index;
   this.terrain.name='Ground (undrawn)';this.terrain.visible=false;terrain.computeBoundingBox();terrain.setIndex(null);
  }
  groundLodMesh(node,which){
@@ -3444,8 +3543,186 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   const b=groundNodeBox(G.grid,node),skirt=Math.max(2,node.error*2+2);
   geometry.boundingBox=new T.Box3(new T.Vector3(b.x0,b.y0-skirt,b.z0),new T.Vector3(b.x1,b.y1,b.z1));
   geometry.boundingSphere=geometry.boundingBox.getBoundingSphere(new T.Sphere());
-  const mesh=new T.Mesh(geometry,this.terrain.material);mesh.receiveShadow=true;mesh.renderOrder=1;mesh.visible=false;mesh.matrixAutoUpdate=false;mesh.name='ground, '+which;
-  G.group.add(mesh);pair[which]=mesh;return mesh;
+  const mesh=new T.Mesh(geometry,this.groundBake?.on?this.groundBake.material:this.terrain.material);mesh.receiveShadow=true;mesh.renderOrder=1;mesh.visible=false;mesh.matrixAutoUpdate=false;mesh.name='ground, '+which;
+  G.group.add(mesh);pair[which]=mesh;this.frameWork.squares++;return mesh;
+ }
+ // WHAT A FRAME DID BESIDES DRAWING (Watch this device, device-watch.js): the
+ // ground's pictures repainted, the cull's re-sorts, the ground's squares and
+ // the grass tiles made for the first time. main.js takes and clears it each
+ // frame, and the recorder keeps it beside the second's slowest gap.
+ frameWork={paints:[],rebuilds:0,squares:0,tiles:0,paintMs:0,cullMs:0,mainMs:0};
+ takeFrameWork(){const w=this.frameWork;this.frameWork={paints:[],rebuilds:0,squares:0,tiles:0,paintMs:0,cullMs:0,mainMs:0};return w;}
+ // THE GROUND PAINTED ONCE, FOR A PHONE (ground-bake.js; graphics.js
+ // `groundBake`, the Phone tier only). Four pictures -- three square ones
+ // round the camera and one of the course -- painted by the ground's own
+ // program (ground.js GROUND_BAKE: the turf before light) from straight
+ // overhead, and the ground's squares drawn from them by a small lit program.
+ // Not on the range, whose greens move.
+ buildGroundBake(){
+  this.groundBake=null;
+  const G=this.groundLod;
+  if(!G||!this.quality?.groundBake)return;
+  // MIPMAPS ONLY FROM THE 512 M SQUARE OUT (BAKE.mipsFrom; the iPhone watch,
+  // 15 November 2026: of a repaint's eight bands only the first and the last
+  // cost anything, 80-194 ms each, the six between 0-1 ms -- so the painting
+  // was never the cost; the mipmaps made after the last band are the first
+  // suspect). The two near squares are seen close, where a mipmap matters
+  // least; without one they read whether the stall goes with it.
+  const target=(texels,mips=true)=>{const rt=new T.WebGLRenderTarget(texels,texels,{depthBuffer:false,generateMipmaps:mips,minFilter:mips?T.LinearMipmapLinearFilter:T.LinearFilter,magFilter:T.LinearFilter,wrapS:T.ClampToEdgeWrapping,wrapT:T.ClampToEdgeWrapping});rt.texture.anisotropy=this.quality.anisotropy??1;return rt;};
+  const course=courseSquare(G.grid.halfX,G.grid.halfZ);
+  // A near square has a spare picture, painted a band a frame and swapped in
+  // when done (paintGroundStrip); the course's square paints in place.
+  const squares=[...BAKE.levels.map((size,i)=>{const mips=i>=BAKE.mipsFrom;return {size,mips,rt:target(BAKE.texels,mips),spare:target(BAKE.texels,mips),painted:null,want:null,dirty:false};}),
+   {size:course.size,mips:true,rt:target(BAKE.courseTexels),painted:null,want:{x:course.x,z:course.z},dirty:false,course:true}];
+  // Every picture set up now, its mipmaps' storage with it: a spare first set
+  // up by a band painted with its mipmaps off (paintGroundStrip) would be
+  // stored with one level and drawn black once swapped in.
+  for(const sq of squares)for(const t of [sq.rt,sq.spare])if(t)this.renderer.initRenderTarget?.(t);
+  const rects=squares.map(()=>new T.Vector4(0,0,1,0));
+  const uniforms={bake0:{value:squares[0].rt.texture},bake1:{value:squares[1].rt.texture},bake2:{value:squares[2].rt.texture},bake3:{value:squares[3].rt.texture},bakeRect:{value:rects},bakePin:{value:new T.Vector2(1e9,1e9)}};
+  const material=new T.MeshToonMaterial({color:'#ffffff',gradientMap:toonRamp(this)});
+  material.onBeforeCompile=shader=>{
+   Object.assign(shader.uniforms,uniforms);
+   shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 groundPoint;').replace('#include <begin_vertex>','#include <begin_vertex>\ngroundPoint=position;');
+   shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\nvarying vec3 groundPoint;uniform sampler2D bake0,bake1,bake2,bake3;uniform vec4 bakeRect[4];uniform vec2 bakePin;')
+    .replace('#include <color_fragment>','#include <color_fragment>\n'+bakeFragment(CUP_RADIUS));
+  };
+  material.customProgramCacheKey=()=>'phone-baked-ground-v1';
+  const camera=new T.OrthographicCamera(-1,1,1,-1,1,20000);camera.up.set(0,0,-1);
+  // ITS PROGRAMS BUILT BEHIND THE LOADING SCREEN (the iPhone watch, 15
+  // November 2026: "built ground, coarse / ground, fine / ground, mid" in
+  // play, at a new hole). The ground's squares are made on the first frame,
+  // after the warm-ups have walked the scene, so the painted ground's program
+  // was never among them: each state it had not been drawn in -- a water
+  // probe's render target, the floodlights -- built its version mid-play. A
+  // stand-in (THE STAND-INS, above): one degenerate triangle with the
+  // painted ground's material, shown only through the warm-ups.
+  const standGeo=new T.BufferGeometry();standGeo.setAttribute('position',new T.BufferAttribute(new Float32Array(9),3));standGeo.setAttribute('normal',new T.BufferAttribute(new Float32Array([0,1,0,0,1,0,0,1,0]),3));
+  const standIn=new T.Mesh(standGeo,material);standIn.frustumCulled=false;standIn.visible=false;standIn.receiveShadow=true;standIn.name='painted ground stand-in';
+  this.group.add(standIn);this.standIns.push(standIn);
+  this.groundBake={squares,rects,uniforms,material,camera,scene:new T.Scene(),meshes:new Map(),full:null,job:null,on:this.groundBakeOn!==false,last:-Infinity,sun:this.sunDir?.clone()??null,prev:null};
+ }
+ // On or off (the Phone tier's Graphics switch, and Measure this device's
+ // "ground without the bake"): the squares change program, nothing rebuilds.
+ setGroundBake(on,remember=true){
+  // Kept for courses built after it, as the other graphics switches are --
+  // unless it is the range turning it off for itself (updateGroundBake).
+  if(remember)this.groundBakeOn=on!==false;
+  const B=this.groundBake,G=this.groundLod;if(!B||!G)return false;
+  B.on=on!==false;
+  const m=B.on?B.material:this.terrain.material;
+  for(const pair of G.meshes.values())for(const mesh of Object.values(pair))mesh.material=m;
+  return B.on;
+ }
+ // The meshes a square is painted with: the ground's squares (ground-lod.js)
+ // that reach it, AS COARSE AS ITS TEXELS ALLOW. Painted from the grid's own
+ // half-metre triangles, the 512 m square (50 cm texels) and the course's
+ // (1.3 m) drew triangles of a texel or less -- a chip shades a pixel quad
+ // at a time, so the ground's whole painter ran several times over for each
+ // texel -- and every repaint of the 512 m square was the second's slowest
+ // frame on the iPhone, its draw call 150-170 ms (the watch, 15 November
+ // 2026). So a square takes the coarsest level of squares whose grid is at
+ // least three of its texels: the 32 and 128 m squares the grid's own
+ // triangles, the 512 m one the plain 3 m grid, the course's a 6 m one. A
+ // coarse grid can stand a metre or two off the ground at worst (the
+ // squares' `error`); what is painted by height alone (the beach line,
+ // banding, contours) can shift that much in the far pictures.
+ groundBakeMeshes(s,at,band=null){
+  const B=this.groundBake,G=this.groundLod,texel=s.size/(s.course?BAKE.courseTexels:BAKE.texels);
+  const mesh=index=>{const g=new T.BufferGeometry();for(const [name,a] of Object.entries(G.attrs))g.setAttribute(name,a);g.setIndex(index);const m=new T.Mesh(g,this.terrain.material);m.frustumCulled=false;m.matrixAutoUpdate=false;return m;};
+  // (Strictly under: the 512 m square's 50 cm texels make 1.5 m, which is
+  // where the plain grid begins.)
+  const fine=texel*3<G.grid.dx*.5;
+  // The level: the grid's own triangles where the texels are fine enough for
+  // them, else the lowest level whose coarse grid is three texels or more.
+  let level=0;
+  if(!fine)while(G.lod.nodes.some(n=>n.level===level+1)&&G.grid.dx*Math.max(1,(GROUND_LOD.leafCells<<level)/GROUND_LOD.gridCells)<texel*3)level++;
+  const out=[],h=s.size/2;
+  for(const node of G.lod.nodes){
+   if(node.level!==level)continue;
+   const b=groundNodeBox(G.grid,node);
+   if(b.x1<at.x-h||b.x0>at.x+h||b.z1<at.z-h||b.z0>at.z+h)continue;
+   // A band of the square (paintGroundStrip): only the squares that reach it.
+   if(band&&(b.z1<band.z0||b.z0>band.z1))continue;
+   const key=fine?node:node.coarse;
+   let m=B.meshes.get(key);if(!m){m=mesh(new T.BufferAttribute(fine?node.fine:node.coarse,1));B.meshes.set(key,m);}
+   out.push(m);
+  }
+  return out;
+ }
+ // A SQUARE PAINTED A STRIP A FRAME (the iPhone watch, 15 November 2026:
+ // "painted 512 m (269 ms) ... of it the main draw 1 ms"; the 128 m square
+ // 86-133 ms: both 1,024 texels square, so the cost is the texels). A job
+ // paints its square in BAKE.strips bands, one a frame, each drawing only the
+ // ground squares that reach its band; a near square paints into its spare
+ // picture and the two swap when the last band is done, so a half-painted
+ // picture is never drawn. The course's square, repainted only when the sun
+ // turns or a cue changes, paints in place: the change between two of its
+ // bands is the sun's two degrees. A square never painted (the first frame,
+ // behind the loading screen) is painted whole at once.
+ startGroundPaint(i){
+  const B=this.groundBake,s=B.squares[i];
+  B.job={i,at:{...s.want},k:0,n:s.painted?(s.course?BAKE.courseStrips:BAKE.strips):1,target:s.painted&&s.spare?s.spare:s.rt};
+ }
+ paintGroundStrip(){
+  const p0=performance.now();
+  const B=this.groundBake,job=B.job,s=B.squares[job.i],at=job.at,r=this.renderer,m=this.terrain.material,cues=m.userData.cues;
+  const rt=job.target,T0=rt.width,rows=Math.ceil(T0/job.n),y0=job.k*rows,band=Math.min(rows,T0-y0),last=job.k+1>=job.n;
+  // The band's own slice of the square, in metres (v runs along -z: ground-bake.js bakeUV).
+  const h=s.size/2,b0=-h+s.size*y0/T0,b1=-h+s.size*(y0+band)/T0;
+  B.scene.clear();
+  for(const mesh of this.groundBakeMeshes(s,at,{z0:at.z-b1,z1:at.z-b0}))B.scene.add(mesh);
+  const cam=B.camera;cam.left=-h;cam.right=h;cam.bottom=b0;cam.top=b1;cam.position.set(at.x,5000,at.z);cam.lookAt(at.x,0,at.z);cam.updateProjectionMatrix();cam.updateMatrixWorld();
+  // The sheen looks at the camera, which here is straight overhead: left out.
+  const sheen=cues?.cueSheen?.value;if(cues?.cueSheen)cues.cueSheen.value=0;
+  m.defines={...m.defines,GROUND_BAKE:1};m.needsUpdate=true;
+  // The painter is told it is looked at from the player's camera (ground.js
+  // bakeEye: the mowing's light and dark), and the picture is cleared to the
+  // rough's colour, stored as the paint is, so its edges fade into rough.
+  const bake=m.userData.bake;bake?.eye.value.copy(this.camera.position);
+  const rough=bake?.rough,enc=v=>encodeTurf(v),fill=rough?new T.Color().setRGB(enc(rough.r),enc(rough.g),enc(rough.b),T.LinearSRGBColorSpace):new T.Color(0,0,0);
+  const was=r.getRenderTarget(),clear=r.getClearColor(new T.Color()),alpha=r.getClearAlpha();
+  // Only the band: the target's viewport and scissor (three takes both from
+  // a render target), and its mipmaps made once, after the last band.
+  rt.viewport.set(0,y0,T0,band);rt.scissor.set(0,y0,T0,band);rt.scissorTest=true;rt.texture.generateMipmaps=last&&s.mips;
+  try{r.setClearColor(fill,1);r.setRenderTarget(rt);r.clear(true,false,false);r.render(B.scene,cam);}
+  finally{
+   rt.viewport.set(0,0,T0,T0);rt.scissor.set(0,0,T0,T0);rt.scissorTest=false;rt.texture.generateMipmaps=s.mips;
+   r.setRenderTarget(was);r.setClearColor(clear,alpha);
+   const d={...m.defines};delete d.GROUND_BAKE;m.defines=d;m.needsUpdate=true;
+   if(cues?.cueSheen)cues.cueSheen.value=sheen;
+  }
+  job.k++;
+  if(job.k>=job.n){
+   // Done: a near square's spare becomes its picture.
+   if(job.target===s.spare){const shown=s.rt;s.rt=s.spare;s.spare=shown;B.uniforms['bake'+job.i].value=s.rt.texture;}
+   s.painted={x:at.x,z:at.z};s.dirty=false;B.rects[job.i].set(at.x,at.z,s.size,1);B.job=null;
+  }
+  this.frameWork.paints.push((s.course?'course':s.size+' m')+(job.n>1?' '+job.k+'/'+job.n:''));this.frameWork.paintMs+=performance.now()-p0;
+ }
+ // Every frame, before the shadow is scheduled: where the near squares want
+ // to be, the band of a job under way or the next square to repaint, and the cup.
+ updateGroundBake(){
+  const B=this.groundBake;if(!B||!B.on)return;
+  if(this.rangeProps){this.setGroundBake(false,false);return;}
+  const now=performance.now(),c=this.camera.position,f=this.camera.getWorldDirection(new T.Vector3());
+  const speed=B.prev?c.distanceTo(B.prev.p)/Math.max(.001,(now-B.prev.t)/1000):0;B.prev={p:c.clone(),t:now};
+  // The sun turned: the raking light is painted in, so all of it is stale.
+  if(this.sunDir&&!B.sun)B.sun=this.sunDir.clone();
+  if(this.sunDir&&B.sun.angleTo(this.sunDir)*180/Math.PI>BAKE.sunTurn){for(const s of B.squares)s.dirty=true;B.sun.copy(this.sunDir);}
+  for(let i=0;i<BAKE.levels.length;i++)B.squares[i].want=levelCenter(c,f,B.squares[i].size);
+  // A job under way: its next band. Otherwise squares never painted, all at
+  // once (the first frame); then a new job, its first band now.
+  if(B.job)this.paintGroundStrip();
+  else for(let n=0;n<B.squares.length;n++){
+   const i=pickRepaint(B.squares,{now,last:B.last,speed});
+   if(i<0)break;
+   const first=!B.squares[i].painted;
+   this.startGroundPaint(i);B.last=now;
+   this.paintGroundStrip();
+   if(!first)break;
+  }
+  const pin=this.course?.worldPin;if(pin)B.uniforms.bakePin.value.set(pin.x,pin.z);
  }
  // Every frame: the squares for this camera, each drawn no coarser than
  // the tier's tolerance in pixels allows (graphics.js `groundTolerance`).
@@ -3668,9 +3945,9 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   // update further down puts back what the photograph had to show.
   this.stepWaterProbes();
   // Life on an Architect course (phase 6): never on Low.
-  if(this.life){const on=this.quality!==tierOf('low');this.life.group.visible=on;if(on)this.life.update(dt,this.elapsed);}
+  if(this.life){const on=!this.lightTier();this.life.group.visible=on;if(on)this.life.update(dt,this.elapsed);}
   this.fountains?.update(dt,this.elapsed);
-  if(this.markings)this.markings.visible=this.quality!==tierOf('low');
+  if(this.markings)this.markings.visible=!this.lightTier();
   const fog=this.quality.fog,over=this.config.mode==='overview';this.scene.fog.near=over?fog.overviewNear:fog.near;this.scene.fog.far=over?fog.overviewFar:fog.far;
   // THE FOG IS THE DRAW DISTANCE (F5a in TODO). The far plane was a fixed 20 km
   // while fog only faded what was drawn, so Low's short fog hid the distance and
@@ -3706,13 +3983,25 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   // After the cascades have moved, so each shadow map gets the trees it can
   // reach this frame (instance-cull.js). Their shadow cameras are placed here
   // exactly as three places them when it draws the map.
+  this.updateGroundBake();
+  this.scheduleSunShadow();
   this.updateGroundLod();
   if(this.cull){
    const lights=this.csm?this.csm.lights:this.sun?.castShadow?[this.sun]:[];
    for(const l of lights){if(l.shadow.autoUpdate===false)continue;l.updateMatrixWorld();l.target.updateMatrixWorld();l.shadow.updateMatrices(l);}
    // A re-sort changes which trees each map draws, the floodlights' included
    // (they draw what the view does): their shadows are redrawn to match.
-   if(this.cull.update(this.camera,this.timed?this.sunDir:null,lights,this.quality.thinTrees?this.lowTreeRegion():null)&&this.floodlit)this.floodShadowDirty=true;
+   // THE PHONE TIER IN FLIGHT (graphics.js `flyFarPainted`): the flyover skims
+   // 34 m over the canopy, so the crowns under it fill the screen and were
+   // drawn whole -- 150 of them, 2 M triangles, at the iPhone watch's busiest
+   // frame. While flying (main.js `flyingView`) the far versions take over
+   // from a larger share of the screen. A change re-sorts once.
+   const flying=!!this.flyingView&&!!this.quality.flyFarPainted;
+   if(flying!==!!this.cullFlying){this.cullFlying=flying;this.cull.tune(flying?{farPainted:this.quality.flyFarPainted,farTrees:this.quality.flyFarTrees??null}:{farPainted:null,farTrees:null});}
+   const c0=performance.now();
+   const resorted=this.cull.update(this.camera,this.timed?this.sunDir:null,lights,this.quality.thinTrees?this.lowTreeRegion():null);
+   if(resorted){this.frameWork.rebuilds++;this.frameWork.cullMs+=performance.now()-c0;}
+   if(resorted&&this.floodlit)this.floodShadowDirty=true;
   }
   if(this.floodShadowDirty&&this.floodlit){
    const now=performance.now();
@@ -3724,7 +4013,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   if(this.cloudUniforms)this.packClouds();
   if(this.mirror){const s=this.renderer.getDrawingBufferSize(this.mirrorUniforms.mirrorScreen.value);this.mirror.render(this.renderer,this.camera,s);}
   this.bloom?.begin(this.renderer);
-  this.renderer.render(this.scene,this.camera);
+  {const m0=performance.now();this.renderer.render(this.scene,this.camera);this.frameWork.mainMs=performance.now()-m0;}
   this.godRays?.render(this.renderer,this.scene,this.camera,this.sunDir,this.sun.color,this.readying);
   if(this.bloom)this.bloom.finish(this.renderer);else this.renderer.setRenderTarget(null);}
  project(p){const w=this.course.toWorld(p),v=new T.Vector3(w.x,p.y,w.z).project(this.camera);const c=this.cssSize();return{x:(v.x*.5+.5)*c.w,y:(-.5*v.y+.5)*c.h,visible:v.z<1&&v.z>-1};}

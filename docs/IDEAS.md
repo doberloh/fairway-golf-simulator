@@ -157,6 +157,33 @@ open list before the 11 November 2026 prune*.
 
 ## Under the hood
 
+- **A native Godot version, tried on one hole first -- not a full move.**
+  The owner asked (15 November 2026) whether converting to Godot would do
+  better in the long run, with higher fidelity on every tier including
+  Ultra. Godot 4's desktop renderer talks to the card directly and has what
+  WebGL in a browser lacks (softer shadows, bounce light, volumetric fog,
+  screen-space reflections, modern anti-aliasing and upscaling, automatic
+  level of detail and occlusion, grass on the graphics card), and a native
+  iPhone app skips the browser's layers (the benchmark's 10 ms read back,
+  WebGL translated to Metal) and can read the phone's heat state to ease
+  off before it throttles. It would not stop the iPhone changing speed by
+  itself (RESEARCH, *The hold, on the iPhone*), and the cartoon look gains
+  from those features only once re-tuned for them. **Against a full move:**
+  it would lose the offline single file, the browser demo and opening a
+  link on a phone (Godot's web export is a large download on its weakest
+  renderer), put the iPhone behind the App Store, and make every seed and
+  course code produce different ground unless the generator were ported to
+  the last decimal; the ground shader, materials, menus, Course Builder,
+  sounds, launch-monitor bridge and 1,632 tests would all be rewritten, and
+  checking the look needs the card. **The test instead:** keep the
+  JavaScript game (generation, physics, rules, tests) as the one source of
+  truth, let Godot only draw a course it is handed, build one hole of one
+  landscape, and measure it on the owner's PC and iPhone against the current
+  game. A middle path for Ultra alone: three.js's WebGPU renderer (compute
+  in the browser), but materials rewritten in its node language and found
+  slower for scenes of many meshes. Large for the test, very large for a
+  move. (Claude's opinion, asked by the owner, 15 November 2026; not built)
+
 - **Near shadows cast by a tree's middle version.** In the nearest shadow
   map a tree drawn whole is cast whole; its middle version would cast for a
   third of the triangles (7.5 of 34 million at a large-screen tee). The

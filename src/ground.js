@@ -319,6 +319,11 @@ export function groundMaterial(view,palette){
   greenLift:{value:0},greenBend:{value:1},greenBandSoft:{value:1},
   sunDir:{value:new T.Vector3(-.6,.7,-.5).normalize()}};
  m.userData.cues=cues;
+ // For the Phone tier's painting (ground-bake.js; renderer.js
+ // paintGroundSquare): the player's camera the painter is told it is looked at
+ // from, and the rough's colour, which the pictures are cleared to so their
+ // edges fade into rough rather than black.
+ m.userData.bake={eye:{value:new T.Vector3()},rough:colors.tint_rough.value};
  // THE COVER TEXTURE: soft occlusion under trees and round boulders in red
  // (U1; occlusion.js, which says why it is not a texture of its own) and the
  // straw in green, linearly filtered. Bytes, not floats: a quarter of the
@@ -361,10 +366,18 @@ export function groundMaterial(view,palette){
  // call of groundPaint it holds (see groundPaint IS CALLED TWICE) cost every
  // generated course a second on every program.
  if(built)m.defines={...m.defines,BUILT_COURSE:1};
+ // THE PHONE TIER'S GROUND (graphics.js `phoneGround`; the owner, 15 November
+ // 2026: phones only): savings that change no pixel, fixed when the material
+ // is made, so no other tier's program is touched (tests/phone-tier.test.mjs).
+ if(view.quality?.phoneGround)m.defines={...m.defines,GROUND_HAZARD_REACH:1};
+ // The ownership atlas's texture made once, not in onBeforeCompile: a program
+ // built again (a define changed by Measure this device) made another copy of
+ // it each time -- 16 bytes a texel, tens of megabytes on a phone.
+ const ownersTex=texture(owners,Sx,Sz);
  m.onBeforeCompile=shader=>{
  // The record with the round's season laid over it (renderer.js build).
  const bio={...biomeOf(w.settings.biome),...(w.bio||{})};
-  Object.assign(shader.uniforms,colors,cues,{bankTint:{value:new T.Color(bio.bank)},streamCount:{value:streamCount},owners:{value:texture(owners,Sx,Sz)},cover:{value:coverTex},detail:{value:detailTex},tables:{value:tables.texture},tableRows:{value:tables.rows},curveSpan:{value:span},extent:{value:extent},rows:{value:N},rock:{value:new T.Color(w.bio.rock)},// NAMED, NOT NUMBERED. This was an index into a four-element array, so a
+  Object.assign(shader.uniforms,colors,cues,{bakeEye:m.userData.bake.eye,bankTint:{value:new T.Color(bio.bank)},streamCount:{value:streamCount},owners:{value:ownersTex},cover:{value:coverTex},detail:{value:detailTex},tables:{value:tables.texture},tableRows:{value:tables.rows},curveSpan:{value:span},extent:{value:extent},rows:{value:N},rock:{value:new T.Color(w.bio.rock)},// NAMED, NOT NUMBERED. This was an index into a four-element array, so a
    // biome not in the list landed on -1 and took whichever branch that turned
    // out to be -- silently, and only visible by looking at the ground.
    speckleRock:{value:bio.speckleRock?1:0},altitudeRock:{value:bio.altitudeRock?1:0},litterAmount:{value:bio.litter?1:0},litterVary:{value:bio.litterVary??1},seaBeach:{value:bio.sea?1:0},seaAt:{value:bio.sea?w.waterLevel??0:0},beachOwn:{value:bio.beachTint?1:0},beachTint:{value:new T.Color(bio.beachTint||"#000000")},blowoutOn:{value:blow?1:0},
@@ -375,6 +388,9 @@ export function groundMaterial(view,palette){
  shader.fragmentShader=shader.fragmentShader.replace('#include <common>',`#include <common>
  varying float vRelief;varying float vFarShade;uniform vec4 cragShape,cragGreen;uniform float farSnow;uniform float cueRelief,cueSlope,cueContours,cueStripes,cuePatches,cueShade,cueSheen,greenLift,greenBend,greenBandSoft;
  uniform vec3 sunDir;
+#ifdef GROUND_BAKE
+ uniform vec3 bakeEye;
+#endif
  uniform float farOn,farPaint,farCover,farLine,farSize,farSea,farReach,farOpen;uniform vec3 farC0,farC1,farC2,farC3;uniform vec2 farProp;
  // The same rounded box course.js uses, so paint and lie cannot disagree
 // about where a tee is.
@@ -658,6 +674,14 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   return shore;
  }
  `).replace('#include <color_fragment>',`#include <color_fragment>
+#ifdef GROUND_BAKE
+ // PAINTED FROM STRAIGHT OVERHEAD (ground-bake.js), but the mowing's light
+ // and dark look at where the PLAYER's camera is (the bands swap as you look
+ // back along them): painted from over the picture's centre they came out as
+ // a pattern round it. So the painter is told the player's camera
+ // (renderer.js sets bakeEye before each paint) wherever it asks for one.
+#define cameraPosition bakeEye
+#endif
  vec2 wp=groundPoint.xz;vec2 ownerUv=(wp/extent+1.)*.5;vec4 owner=texture2D(owners,ownerUv);
  // PAST THE COURSE'S GROUND (the frame-rate pass, 13 November 2026). Every
  // pixel of the far ring ran the whole of what follows for the hole whose
@@ -810,7 +834,22 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  float mownEdge=min(max(lateralCut,alongCut),greenRing);
  float mownTaper=smin(smax(lateralCut,alongCut,12.),greenRing,12.);
  float fairD=max(fw,max(mowStart-p.y,p.y-(info.x+8.)));
- for(int i=0;i<12;i++){if(offCourse)break;vec4 hz=holeTexel(11.+float(i)*2.,row);vec4 meta=holeTexel(12.+float(i)*2.,row);if(hz==vec4(0.)&&meta==vec4(0.))break;/* the hazards are written from slot 0 on (renderer.js makeHazardAtlas): the first empty slot ends them -- 24 table reads a pixel saved on a hole with none (the frame-rate goal) */if(hz.z>0.){vec2 q=(p-hz.xy)/hz.zw;if(meta.y>.5){float bj=floor(owner.r+.5)*4.+meta.y-1.,br=floor(bj*.5);vec2 bank=texture2D(tables,vec2((bj-br*2.)*.5+(clamp(q.y*.5+.5,0.,1.)*511.+.5)/1024.,(rows*2.+br+.5)/tableRows)).xy;q.x=(p.x-bank.x)/bank.y;}float edge=1.+meta.z*sin(atan(q.y,q.x)*2.+meta.x)+meta.w*sin(atan(q.y,q.x)*3.+meta.x);if(meta.y>.5)edge=1.;float hd=(length(q)-edge)*length(p-hz.xy)/max(length(q),.0001);
+ for(int i=0;i<12;i++){if(offCourse)break;vec4 hz=holeTexel(11.+float(i)*2.,row);vec4 meta=holeTexel(12.+float(i)*2.,row);if(hz==vec4(0.)&&meta==vec4(0.))break;/* the hazards are written from slot 0 on (renderer.js makeHazardAtlas): the first empty slot ends them -- 24 table reads a pixel saved on a hole with none (the frame-rate goal) */
+#ifdef GROUND_HAZARD_REACH
+ // A BUNKER OR COLLECTION AREA TOO FAR OFF TO TOUCH THIS PIXEL (the Phone
+ // tier, 15 November 2026: the painter was the slow state's largest piece on
+ // an iPhone). Its edge lies within R = max(z, w) * (1 + |meta.z| + |meta.w|)
+ // of its centre, and hd below is then at least D - R for a pixel D away; a
+ // bunker paints only to 0.35 m outside, a collection area only inside. So
+ // past R + 1 m nothing it does can reach the pixel, and its trigonometry is
+ // skipped. Water (meta.y > .5) follows its banks and is never skipped.
+ // tests/phone-tier.test.mjs holds the bound. Exact: not a pixel changes.
+ if(meta.y<=.5&&hz.z>0.&&length(p-hz.xy)>max(hz.z,hz.w)*(1.+abs(meta.z)+abs(meta.w))+1.)continue;
+#endif
+#ifdef GROUND_NO_HAZARDS
+ continue;
+#endif
+ if(hz.z>0.){vec2 q=(p-hz.xy)/hz.zw;if(meta.y>.5){float bj=floor(owner.r+.5)*4.+meta.y-1.,br=floor(bj*.5);vec2 bank=texture2D(tables,vec2((bj-br*2.)*.5+(clamp(q.y*.5+.5,0.,1.)*511.+.5)/1024.,(rows*2.+br+.5)/tableRows)).xy;q.x=(p.x-bank.x)/bank.y;}float edge=1.+meta.z*sin(atan(q.y,q.x)*2.+meta.x)+meta.w*sin(atan(q.y,q.x)*3.+meta.x);if(meta.y>.5)edge=1.;float hd=(length(q)-edge)*length(p-hz.xy)/max(length(q),.0001);
  // Ponds and lakes take the same shoreline as a channel instead of a sand bed
  // and sand collar. Their band is capped tighter than a channel's because the
  // owner atlas stops carrying this hole's hazards a short way outside them.
@@ -1013,6 +1052,11 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   float face=ringFace>.5?1.-smoothstep(ringFaceFrom,ringFaceFrom+(strataOn>.5?.07:.16),normalize(groundNormal).y):0.;
   paintCode=vec4(ringFloor,ringFace,0.,0.);paintShare=vec4(ringFloor>.5?1.:0.,face,0.,0.);
  }
+#ifdef GROUND_NO_LAYERS
+ // (Measure this device's what-if: the ground types' and the far ring's
+ // painting skipped -- what groundPaint's two calls cost.)
+ paintShare=vec4(0.);
+#endif
  if(dot(paintShare,vec4(1.))>0.){
   vec3 gn=normalize(groundNormal);float beds=fwidth(groundPoint.y)/max(strataSpacing,.001);
   int top=paintShare.w>0.?3:paintShare.z>0.?2:paintShare.y>0.?1:0;
@@ -1062,7 +1106,9 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  // The CUP, not the green's centre. cupInfo.xy above is the GREEN and drives
  // the boundary; using it here punched the hole through the middle of every
  // green instead of at the pin.
+#ifndef GROUND_BAKE
  if(distance(p,cupAt)<${CUP_RADIUS.toFixed(6)})discard;
+#endif
  // MOWING STRIPES THAT FOLLOW THE GROUND.
  //
  // These have always been here, and they were computed entirely in the PLAN --
@@ -1078,6 +1124,9 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  // contrast comes from the component of the surface normal along the mowing
  // direction -- rotated into hole-local space, because that is the space the
  // stripes are laid out in.
+#ifndef GROUND_NO_MOWING
+ // (GROUND_NO_MOWING: Measure this device's what-if, through to the tee's
+ // divots below; the stripes, the diamonds, the laps -- what they cost.)
  if(kind==2.||kind==4.){
   float period=kind==4.?3.2:12.;
   vec2 mow=normalize(vec2(.48,.88));
@@ -1256,6 +1305,7 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   float divot=step(.82,hashGround(dcell+vec2(7.3,1.1)))*dshape*zone*(1.-smoothstep(.3,.8,fwidth(teeF.x*4.)));
   turf=mix(turf,turf*vec3(1.16,1.02,.7),divot*.6);
  }
+#endif
  // UNDULATION, EVERYWHERE, AT EVERY HOUR.
  //
  // A cast shadow only reads when the sun is low. At midday a two metre roll
@@ -1610,6 +1660,12 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  }
  // The ring's baked hollows and ribs (landscape-edge.js; nothing inside the course's ground).
  diffuseColor.rgb=turf*(1.+clamp(vFarShade,-1.,1.)*.2);
+#ifdef GROUND_BAKE
+ // PAINTING THE PHONE'S GROUND (ground-bake.js): the turf, before light, into
+ // a picture -- stored as sqrt(c / 2), read back as 2 s^2 -- and nothing after.
+ gl_FragColor=vec4(sqrt(clamp(diffuseColor.rgb*.5,0.,1.)),1.);
+ return;
+#endif
  `);
  };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v86';return m;
 }

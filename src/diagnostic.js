@@ -21,6 +21,8 @@
 // The formatting is kept apart from the gathering so the formatting can be
 // tested without a browser. `diagnosticReport` takes plain facts and returns a
 // string; everything above it is the part that has to touch a real window.
+import {formatBench} from './device-bench.js';
+import {formatWatch} from './device-watch.js';
 
 // The build stamp is injected at build time by vite.config.js. It is NOT
 // defined when these modules are imported directly by the test runner, so the
@@ -80,10 +82,17 @@ export function webglFacts(gl) {
  try {
   const dbg = gl.getExtension('WEBGL_debug_renderer_info');
   const get = p => { try { const v = gl.getParameter(p); return typeof v === 'string' && v ? v : null; } catch { return null; } };
+  // SMOOTH FILTERING OF FLOAT TEXTURES (the iPhone, 15 November 2026): the
+  // ground's tables are 32-bit floats read with linear filtering, which needs
+  // OES_texture_float_linear; without it three draws them nearest and warns.
+  // Two sources disagree on whether iOS Safari has it (RESEARCH); asked here.
+  let floatLinear = null;
+  try { floatLinear = !!gl.getExtension('OES_texture_float_linear'); } catch { floatLinear = null; }
   return {
    renderer: dbg ? get(dbg.UNMASKED_RENDERER_WEBGL) : get(gl.VERSION ?? 0x1f02),
    vendor: dbg ? get(dbg.UNMASKED_VENDOR_WEBGL) : null,
    version: get(0x1f02),
+   floatLinear,
   };
  } catch { return {renderer: null, vendor: null, version: null}; }
 }
@@ -178,7 +187,7 @@ const optional = (k, v) => blank(v) ? null : `  ${k.padEnd(16)}${v}`;
 // with formatting in it survives exactly one of those.
 export function diagnosticReport(facts = {}) {
  const {build = {}, app = {}, device = {}, webgl = {}, frames = null, errors = [], courseCode = null,
-        takenAt = null} = facts;
+        takenAt = null, bench = null, watch = null} = facts;
  const out = [
   'Fairway diagnostic',
   // When it was taken, so two reports from one session can be put in order.
@@ -200,6 +209,7 @@ export function diagnosticReport(facts = {}) {
   required('platform', device.platform),
   required('gpu', webgl.renderer),
   required('gpu vendor', webgl.vendor),
+  optional('float filtering', webgl.floatLinear == null ? null : webgl.floatLinear ? 'yes' : 'no (the ground\'s tables drawn nearest)'),
   required('screen', device.screen),
   required('viewport', device.viewport),
   required('pixel ratio', device.pixelRatio),
@@ -210,9 +220,22 @@ export function diagnosticReport(facts = {}) {
   ' GRAPHICS',
   required('tier', app.tier),
   required('frame cap', app.frameCap ? `${app.frameCap} fps` : 'follow display'),
+  optional('painted ground', app.groundBake ?? null),
   optional('auto resolution', app.autoResolution == null ? null : app.autoResolution ? `on, drawing at ${app.resolution ?? 100}%` : 'off'),
-  required('fps', frames ? `${frames.median} median, ${frames.low} low, worst frame ${frames.worstMs} ms` : 'not measured yet'),
+  // THE LAST FRAMES BEFORE COPY, and only those (frameMeter's 240): after
+  // Measure this device it was the benchmark's own end, and nine reports were
+  // read as play before it was noticed (15 November 2026). Play is the speed
+  // watch's recorder, below.
+  required('fps', frames ? `${frames.median} median, ${frames.low} low, worst frame ${frames.worstMs} ms, over the last ${frames.frames} frames` : 'not measured yet'),
  ].filter(l => l !== null);
+ // Measure this device (device-bench.js), when it has been run this session:
+ // what each part of a frame costs on this machine.
+ const benchText = formatBench(bench);
+ if (benchText) out.push('', benchText);
+ // Watch this device (device-watch.js): play before the tap, and the phone's
+ // own speed over a scripted two and a half minutes.
+ const watchText = formatWatch(watch);
+ if (watchText) out.push('', watchText);
  if (errors.length) {
   out.push('', ' ERRORS', ...errors.map(e => `  ${e}`));
  }

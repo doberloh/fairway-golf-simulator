@@ -425,3 +425,41 @@ test('a move that changes no square writes nothing', () => {
  cull.dirty();
  assert.equal(cull.update(cam, null), true, 'a forced rebuild writes');
 });
+
+// THE PHONE TIER'S RING (graphics.js `cullNear`, 15 November 2026): standing
+// in the middle of the field, facing north, the 60 m ring keeps the squares
+// behind the camera; a 15 m ring keeps only the view's, and a course built
+// after it, with nothing said, has the 60 m back.
+test('a shorter near ring drops the trees behind the camera, and the next cull has 60 m again', () => {
+ const look = () => { const cam = new T.PerspectiveCamera(53, .49, .5, 20000); cam.position.set(10, 2, 10); cam.lookAt(10, 2, 600); cam.updateMatrixWorld(); return cam; };
+ // (Squares are 64 m from 0: the camera's own runs from z 0 to 64.)
+ const behind = mesh => held(mesh).filter(t => t.z < 0).length;
+ const a = field(), wide = cullInstances(a.group);
+ wide.update(look(), null);
+ const b = field(), tight = cullInstances(b.group, {near: 15});
+ assert.equal(tight.tune().near, 15);
+ tight.update(look(), null);
+ assert.ok(behind(a.mesh) > 0, 'the 60 m ring holds squares behind the camera');
+ assert.equal(behind(b.mesh), 0, 'a 15 m ring holds none of them');
+ assert.ok(b.mesh.count < a.mesh.count, `${b.mesh.count} held against ${a.mesh.count}`);
+ assert.ok(held(b.mesh).some(t => Math.hypot(t.x - 10, t.z - 10) < 15), 'what stands beside the camera is still held');
+ assert.equal(cullInstances(field().group).tune().near, 60, 'a tier that says nothing gets 60 m back');
+});
+
+// The Phone tier's own thinning figures (graphics.js `lowTrees`) are set by
+// its cull and gone with the next: a tier that says nothing has Low's own.
+test('a cull built with its own thinning figures sets them, and the next cull clears them', () => {
+ const phone = cullInstances(field().group, {thinTrees: true, lowTrees: {minKeep: .05}});
+ assert.deepEqual(phone.tune().lowTrees, {minKeep: .05});
+ assert.equal(cullInstances(field().group).tune().lowTrees, null);
+});
+
+// A far-version line set live (the Phone tier's flight rule) is not carried
+// into the next course's cull.
+test('a new cull starts with no far-version lines left over', () => {
+ const a = cullInstances(field().group);
+ a.tune({farPainted: 1, farTrees: .6});
+ const b = cullInstances(field().group);
+ assert.equal(b.tune().farPainted, null);
+ assert.equal(b.tune().farTrees, null);
+});

@@ -52,7 +52,7 @@ Every biome now mixes several plant forms: conifers/alder/ferns; desert trees/ca
 
 **Course length** sets target blue-tee yardage, with a live total par and par-3/4/5 breakdown. Total par stays at 68–72 for 18 holes and 34–36 for nine; at the extremes, distance continues changing while par stays within those limits. The seed randomizes the par mix and hole order. The target supports 990–4,230 yards for nine holes and 1,980–8,460 for eighteen. Individual rounded hole yardages can make the total differ by a few yards. All courses include **Blue, White and Red tees**, with actual pads, markers set six inches in from each edge, a hole sign standing to the right of the blue tee, independently varied forward positions, and lateral offsets chosen so that no tee sits directly in front of another one -- a tee you have to look over is a tee in the wrong place. Choose **Playing tee** in the bottom controls or round setup; tee selection is separate from generation. Changing it before the first stroke moves you to that tee; after a stroke, the preference applies on the next hole. White tees average roughly 9% shorter and red roughly 18%. Scorecards and CSV exports include all three yardage rows.
 
-**Green slope & difficulty** ranges from level greens at 0% to genuinely severe ones at 100%. Each green has a character of its own — broad rolls, a tier, a ridge or swale, a crowned turtleback, or a bowl — so no two play alike. The scale is deliberately uneven: the default of 35% gives gentle greens with about a foot of relief, 70% about 3.7 ft, and 100% about 7 ft with faces well past twenty per cent, beyond most championship greens. Even at the top, part of every green stays flat enough to cut a hole on. Past 75% the slider turns red as you drag, and when you let go a bubble pops out beside it warning that these greens are harder than almost any real course (it goes when you click anywhere, after a few seconds, or when you bring the slider back under 75%; the red stays); 90% is as severe as the old 100%, and 100% is extreme. **Raised greens**, **Punchbowl greens** and **False fronts** (in the course studio under *Fairways, greens & bunkers*) set the share of greens built each way: raised greens stand on a pedestal with banks falling away, so a miss runs off and the chip back climbs; punchbowls sit in a hollow that feeds misses back toward the green; a false front's first few metres fall back toward the fairway, so an approach landing just short of the shelf rolls off. None of the three changes the putting surface where cups are cut. **Pin difficulty** cuts the cups for a day of a tournament: Thursday takes the flattest ground with the most room, and Friday through Sunday move to progressively more slope. No day will cut a cup where a ball cannot come to rest, or nearer than about three paces to an edge. Hole locations work front, middle, back and around again as the round goes on, and the hole card shows which you are playing. Rendering and ball contact use the same ground heights. **Green reading** is three independent tools, each a small button along the top of the course map: a slope-colored 1.5 m grid, which in the play view is squared to the direction you face at the start of each shot (one set of lines runs that way, the other straight across) and then stays put while you aim, and in the other views follows the hole; **flow**, light running along those same grid lines downhill — brighter the more of the slope runs along a line, quicker on steeper ground, gentle on the gentlest slopes and still only where the green is dead level — which works with the grid on or off; and an elevation heat map with 10 cm contour lines. Both fade out where the green is far enough away that 1.5 m squares would be a few pixels. Blue/green/yellow/orange/red grid colors indicate increasing slope. Heat map blue is lower elevation and red is higher on that green. Use any combination. They sit on the map because that is what they describe, and they can be switched at any time — you no longer open a panel to reach them. These display controls need no regeneration and remain separate from Stimp. They are off and disabled on the driving range, where the practice green is deliberately flat and every overlay would paint one featureless colour.
+**Green slope & difficulty** ranges from level greens at 0% to genuinely severe ones at 100%. Each green has a character of its own — broad rolls, a tier, a ridge or swale, a crowned turtleback, or a bowl — so no two play alike. The scale is deliberately uneven: the default of 35% gives gentle greens with about a foot of relief, 70% about 3.7 ft, and 100% about 7 ft with faces well past twenty per cent, beyond most championship greens. Even at the top, part of every green stays flat enough to cut a hole on. Past 75% the slider turns red as you drag, and when you let go a bubble pops out beside it warning that these greens are harder than almost any real course (it goes when you click anywhere, after a few seconds, or when you bring the slider back under 75%; the red stays); 90% is as severe as the old 100%, and 100% is extreme. **Raised greens**, **Punchbowl greens** and **False fronts** (in the course studio under *Fairways, greens & bunkers*) set the share of greens built each way: raised greens stand on a pedestal with banks falling away, so a miss runs off and the chip back climbs; punchbowls sit in a hollow that feeds misses back toward the green; a false front's first few metres fall back toward the fairway, so an approach landing just short of the shelf rolls off. None of the three changes the putting surface where cups are cut. **Pin difficulty** cuts the cups for a day of a tournament: Thursday takes the flattest ground with the most room, and Friday through Sunday move to progressively more slope. No day will cut a cup where a ball cannot come to rest, or nearer than about three paces to an edge. Hole locations work front, middle, back and around again as the round goes on, and the hole card shows which you are playing. Rendering and ball contact use the same ground heights. **Green reading** is three independent tools, each a small button along the top of the course map: a slope-colored 1.5 m grid, which in the play view is squared to the direction you face at the start of each shot (one set of lines runs that way, the other straight across) and then stays put while you aim, and in the other views follows the hole; **flow**, light running along those same grid lines downhill — brighter the more of the slope runs along a line, and its speed telling the break: a slow crawl on the gentlest ground (under 1%), quicker on each steeper band, about fifteen times as fast on the steepest (over 5%), gentle on the gentlest slopes and still only where the green is dead level — which works with the grid on or off; and an elevation heat map with 10 cm contour lines. Both fade out where the green is far enough away that 1.5 m squares would be a few pixels. Blue/green/yellow/orange/red grid colors indicate increasing slope. Heat map blue is lower elevation and red is higher on that green. Use any combination. They sit on the map because that is what they describe, and they can be switched at any time — you no longer open a panel to reach them. These display controls need no regeneration and remain separate from Stimp. They are off and disabled on the driving range, where the practice green is deliberately flat and every overlay would paint one featureless colour. The grid's lines are about a point and a half wide on any screen, a phone's dense one included. **The grid and the flow are on from the start** on every device (the heat map is off) -- a phone's screen has no room for the buttons -- and come back on after the range; once you press one of the buttons, your choice is the one a saved round keeps.
 
 **The map follows the ball onto the green.** Once the ball is on the putting surface the map stops showing four hundred yards of fairway you have finished with, frames the green alone and paints the same contour field from straight above — blue low, red high, lines every 10 cm. Read from the ball, the far half of a green is a few pixels tall, which is exactly the half you are trying to judge; from overhead it is legible. It is the same height field the 3D overlay draws and the same field the putt rolls on. Step off the green and the hole map comes back.
 
@@ -1019,6 +1019,61 @@ The frame rate is reported as a median and a worst frame rather than an
 average, because an average hides the thing worth reporting: a run that mostly
 holds 60 and stalls twice a second averages out respectable and is horrible to
 play.
+
+**On a phone the game starts on the Phone graphics setting** every time it
+opens (an iPhone, or an Android phone; not an iPad or a tablet). It draws every
+tree of the hole you are playing and round your ball, and away from them only
+the trees near the camera -- beyond 60 m they thin quickly, to one in twenty
+by 300 m, and in the hole's flyover and free flight the trees below switch
+to their simpler far versions sooner; its shadows are cast by the trees' lighter far versions and redrawn
+a few times a second rather than every frame, so a shadow can lag a moving ball
+a little; trees switch to their lighter far versions sooner; the ground away
+from you is coarser; the grass round you is half as thick; there are no
+animals or course markings. Automatic resolution starts off, and the frame
+rate is capped at 30 (a phone's graphics chip holds its full speed only for
+a short burst; Settings, Graphics changes it for the session). The ground is
+painted into pictures round the camera now and then and drawn from them,
+which is much quicker on a phone and a little softer close up; a moment's
+pause can come as the camera settles somewhere new. **Paint the ground
+once**, in Settings, Graphics on a phone, turns it off to compare. Settings, Graphics still offers the
+other four for the rest of that session.
+
+**Watch this device**, under the same heading, is for a game whose speed
+goes up and down. In a round, it keeps your own view for a minute, flies
+the hole, rests the picture (draws nothing) for 1, 3 and 6 seconds, and
+looks from 250 m up -- about two and a half minutes -- timing small fixed
+jobs on the device's graphics and processor every two seconds, with the
+frame cap lifted while it runs and put back after. Leave the screen on and
+the phone alone. Copy diagnostic then carries that, and how your last
+three minutes of play ran, ten seconds a line (frames a second, the
+slowest moment and what the game was doing in it, and what happened: a
+touch, a shot, a new hole). No shot
+is played and the round is left as it was.
+
+**Measure this device**, under the same heading, is for a game that runs
+slowly. In a round (a course or an endless hole), it closes the help and
+first watches the tee for about a minute, reading it over and over as
+drawn, without its ground, without its trees and ground, and with nothing
+drawn, then stands the camera at four places on the hole you are on -- the tee, the
+fairway, the green and 250 m up -- for about another minute, however slow
+the game is running. At the tee and from above it switches parts of the
+picture off one at a time: the trees and plants, the course's ground, both
+of those together, and half the pixels -- and draws the ground for a moment
+in other ways: without the Phone setting's painted ground, and in plain
+unlit colours (a brief odd look) -- and draws the trees away from the hole
+as Low thins them rather than as the Phone setting does. A row read while the phone changed speed is marked
+with a ~. Then it puts the camera back. The screen is
+kept on while it runs, where the browser allows. Nothing about the round changes: no hole is skipped and no shot is
+played. Copy diagnostic then carries a table of what it found: frames a
+second, the slowest frame, how long each frame's work took and how much of
+it was the game's own code (the rest is waiting for the graphics chip), how
+much each part was, and how many seconds into the run each reading came;
+under it, the game's time of day and view wherever they changed, and the
+heaviest things in view at each place. Leave
+the phone alone while it runs; a phone that dims its screen or warms up
+reads slower, and Low Power Mode holds an iPhone's browser to about 30
+frames a second. If the page was put away or a shot flew during the run,
+the table says so.
 
 ## Launch monitor setup
 

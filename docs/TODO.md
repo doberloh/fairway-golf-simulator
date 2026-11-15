@@ -56,6 +56,40 @@ wrong, unfinished, or owed a check.
 
 ## Known wrong
 
+- [ ] **The grass should be darker on every landscape** (the owner, 15
+  November 2026, looking at the painted ground on the iPhone: "overall
+  across all biomes i want the grass to be darker. Lets make it a todo").
+  Every tier, not only the phone. Where: the landscapes' turf colours
+  (biomes.js palettes, the ground's tints in ground.js) and the near grass
+  (vegetation.js), kept in step so the blades still match the ground under
+  them. A palette is a record change (`node tools/biome-fingerprint.mjs
+  --check` should stay silent; no `GENERATOR_VERSION`). Needs pictures of
+  several landscapes before and after for the owner, which use the graphics
+  card. Not started.
+
+- [ ] **The phone: what the phone-performance branch left** (15 November
+  2026; the whole journey is in DONE.md, *The game is too slow on an iPhone*,
+  and RESEARCH, *The first figures from a real phone* onward). The owner's
+  iPhone now holds the 30 fps cap in play (it was 14-20); the phone's chip
+  runs fast for a burst and then at about two fifths of it, which a web page
+  cannot change. Left:
+  - **Hitches of 80-240 ms, a few a minute**: a ground picture's repaint
+    (ground-bake.js) stalls on its first and last band, or another, while
+    the bands between cost 0-1 ms; not the painting, not the mipmaps. Not
+    known why. The cheap way round without the cause: repaint less often,
+    and when the player will not notice (the ball at rest, a hole's change).
+  - **Half a second at a new hole** (programs built then: the recorder names
+    ShaderMaterial, MeshToonMaterial, Far ground).
+  - **Hiding the graphics options on a phone** (the owner's idea of 14
+    November, held "until its figures are good"; they are now).
+  - **45 a second sustained** (the owner's first target) needs about half
+    the sustained frame cut.
+  - **No Android has been tried.** One Watch this device run would say much.
+  - **Not seen by the owner:** the slope grid and flow on by default on the
+    PC (main.js `READING_DEFAULT`), the green lines' new width on a desktop
+    (unchanged at one pixel a point), Measure and Watch this device on the
+    PC, the Phone tier on any landscape but the Pacific Northwest and the
+    Redwood Coast.
 - [ ] **A friend's challenge can throw as its round starts, now and then**
   (12 November 2026, the 0.9.14 smoke run: `friend-challenge` failed once in
   four runs and passed the other three). The journey's first swing found no
@@ -169,9 +203,15 @@ wrong, unfinished, or owed a check.
 Hardware, browsers and hands the development machine does not have. Nothing
 here is a claim of support until it is done.
 
-- [ ] **Play the current build by hand** (0.9.15, 14 November 2026). What has
+- [ ] **Play the current build by hand** (0.9.16, 15 November 2026). What has
   been built and seen only in captures, measurements or smoke runs, and still
   exists in the game. The archive has each item's full list.
+  - **The phone** (0.9.16; played on the owner's iPhone, Pacific Northwest
+    and Redwood Coast only, and the owner signed off the painted ground, the
+    trees from above and the green lines): the Phone setting on the other
+    thirteen landscapes; the green reading on by default on the PC, and the
+    downhill markers' new speeds there; Measure and Watch this device on a
+    PC; any Android phone.
   - **The surroundings and the faster trees** (0.9.15; the owner signed off
     the look on 13 November and found every landscape faster on the branch
     the same night; the released build has two changes after that, neither

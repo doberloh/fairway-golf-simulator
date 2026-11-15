@@ -88,6 +88,8 @@ import {settingsChanges,studioHud,paintStudioHud,buildStudioSheet} from './ui-st
 import {nextFocus,dirOfKey,dirOfPad} from './ui-focus.js';
 import {framedForBall} from './camera.js';
 import {buildLabel,buildStamp,deviceFacts,webglFacts,frameMeter,errorLog,diagnosticReport} from './diagnostic.js';
+import {runBench,readingOf} from './device-bench.js';
+import {secondRecorder,runWatch,BEFORE_SECONDS} from './device-watch.js';
 import {gridShot,recordShot,takeBackShot,normaliseShots,shotFrom,rulesOf,describeRules,rulesDiff,makeRivalCode,isRivalCode,saveRival,listRivals,findRival,rivalProblem,compareCards,compareText,holesText} from './rival.js';
 import {relativeToPar,parText,parSide,parTint,holeScoreName,holeOutLabel} from './scoring.js';
 import {endlessHole,newRunSeed,endlessSettings,landscapeSeed} from './endless.js';
@@ -104,7 +106,7 @@ import {simulateShot,parseLaunchMessage,MPH,YARD,clamp,rollPreview,R as BALL_R,o
 import {reliefOptions,crossingPoint,OB_RULES,pathRelief,OBSTRUCTIONS} from './relief.js';
 import {SCHEMA_VERSION,GENERATOR_VERSION,SETTINGS,FIELD,CATEGORIES,bound,validateSettings,migrateSettings,generationKeys,playScope,generatorFor} from './settings-schema.js';
 import {listCourses,findCourse,saveCourse,deleteCourse,renameCourse,exportCourse,importCourse,courseSettings,MAX_NAME} from './course-library.js';
-import {loadGraphics,saveGraphics,needsRebuild,greenCues,QUALITY,QUALITY_LABELS,FRAME_CAPS,READINGS,READING_LABELS,readingCues,isSoftwareRenderer,hasSavedGraphics} from './graphics.js';
+import {loadGraphics,saveGraphics,needsRebuild,greenCues,QUALITY,QUALITY_LABELS,FRAME_CAPS,READINGS,READING_LABELS,readingCues,isSoftwareRenderer,hasSavedGraphics,isPhoneDevice,PHONE,PHONE_FRAME_CAP} from './graphics.js';
 import {createAutoResolution} from './auto-resolution.js';
 import {createGameAudio,canopyContacts,nearestWater} from './audio.js';
 import {surpriseSettings} from './settings-schema.js';
@@ -290,7 +292,68 @@ diagnosticErrors.install();
 // past the frame cap, so a capped run reports the rate it is capped to rather
 // than the rate the display offered.
 const diagnosticFrames=frameMeter();
+// PLAY, A LINE A SECOND (device-watch.js `secondRecorder`): always on, read
+// only by Watch this device. No read back and nothing that slows a frame.
+const playRecorder=secondRecorder();
+let watchPhase=null,watchProbe=null,lastWatch=null,recHole=null,recPrograms=null,recCamFlight=false;
+addEventListener('pointerdown',()=>playRecorder.event('touch'),{capture:true,passive:true});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)playRecorder.event('page hidden');});
+// WHICH PROGRAMS WERE BUILT, by what draws with them: a program's own name is
+// its material's type, so nearly every one read "MeshToonMaterial". Only when
+// the count has grown, which in play is rare: the scene is walked for the
+// meshes whose material's current program is new, and named by the mesh (or
+// its model and part), else its parent's name. Every program seen is kept.
+const seenPrograms=new WeakSet();
+function programsBuilt(){
+ const r=view?.renderer,fresh=new Set();
+ for(const p of r?.info?.programs??[])if(!seenPrograms.has(p)){seenPrograms.add(p);fresh.add(p);}
+ if(!fresh.size)return 'a program';
+ const names=new Set();
+ view.scene?.traverse(o=>{
+  if(!o.material)return;
+  for(const m of Array.isArray(o.material)?o.material:[o.material]){
+   if(!fresh.has(r.properties.get(m).currentProgram))continue;
+   names.add(o.userData?.model?`${o.userData.model} ${o.userData.role??''}`.trim():o.name||o.parent?.name||m.type);
+  }
+ });
+ return names.size?[...names].slice(0,3).join(' / '):`${fresh.size} program${fresh.size>1?'s':''} (${[...fresh].map(p=>p.name).join(', ')})`;
+}
+// WHAT THE LAST FRAME DID BESIDES DRAWING (renderer.js `takeFrameWork`), in
+// words, for the recorder to keep beside the second's slowest gap: the
+// ground's pictures repainted, the trees re-sorted, ground squares and grass
+// tiles made for the first time, and how long the draw call itself took.
+let lastRenderMs=0,lastFrameTris=0;
+function frameCause(){
+ const w=view?.takeFrameWork?.();if(!w)return null;
+ const out=[];
+ if(w.paints.length)out.push(`painted ${w.paints.join(', ')} (${Math.round(w.paintMs)} ms)`);
+ if(w.rebuilds)out.push(`trees re-sorted (${Math.round(w.cullMs)} ms)`);
+ if(w.squares)out.push(`${w.squares} ground square${w.squares>1?'s':''} made`);
+ if(w.tiles)out.push(`${w.tiles} grass tile${w.tiles>1?'s':''} made`);
+ // (The draw call's own script is 4 to 6 ms on the iPhone; only a long one is news.)
+ if(lastRenderMs>=12)out.push(`draw call ${Math.round(lastRenderMs)} ms, of it the main draw ${Math.round(w.mainMs)} ms`);
+ return out.join(', ')||null;
+}
+// What the recorder notes each frame besides the frame itself: a new hole, a
+// program built (a new material, or a define changed), a camera flight begun.
+function recordFrame(now){
+ playRecorder.frame(now,{view:view?.config?.mode??null,phase:watchPhase,cause:frameCause(),tris:lastFrameTris});
+ const h=round?.hole;if(h!==recHole){if(recHole!=null)playRecorder.event('new hole');recHole=h;}
+ const pr=view?.renderer?.info?.programs?.length;if(pr!==recPrograms){if(recPrograms==null)for(const p of view?.renderer?.info?.programs??[])seenPrograms.add(p);else if(pr>recPrograms)playRecorder.event(`built ${programsBuilt()}`);recPrograms=pr;}
+ const cf=!!view?.camFlight;if(cf&&!recCamFlight)playRecorder.event('camera flight');recCamFlight=cf;
+}
 let appMode='menu',studioDirty=false,studioBiome=null,graphics=loadGraphics();
+// A PHONE STARTS ON THE PHONE TIER, every time the game opens (graphics.js
+// `isPhoneDevice`; branch phone-performance): whatever was saved, with
+// automatic resolution off -- the owner found it "a blurry mess" -- and the
+// frame rate capped at PHONE_FRAME_CAP: the iPhone's graphics chip runs at
+// full speed only for a short burst and then at about two fifths of it
+// (RESEARCH, *The first watch, on the iPhone*), so frames spaced evenly at a
+// rate it can hold beat a rate it reaches for a minute (the owner, 15
+// November 2026: phones only). The picker and the cap still offer the
+// others for the session, for comparing with Measure this device.
+const phoneDevice=isPhoneDevice(globalThis.navigator);
+if(phoneDevice)graphics={...graphics,quality:PHONE,autoResolution:false,frameCap:PHONE_FRAME_CAP};
 // TEXT SIZE (ui-scale.js). Applied before anything is laid out, again whenever the
 // setting or the bay changes, and on a resize: automatic in a bay depends on how
 // many CSS pixels wide the browser is.
@@ -366,6 +429,9 @@ const courseOnly=s=>{
 };
 const restoreCourse=()=>{
  round.putting=restorePutting();
+ // Out of the range, the green reading the range switched off comes back to
+ // its default, unless the player has chosen their own (READING_DEFAULT).
+ if(view&&!view.config.readingChosen){Object.assign(view.config,READING_DEFAULT);view.setGreenReading?.();}
  if(savedCourse){settings={...savedCourse};savedCourse=null;}
  else if(settings.range)settings=courseFallback(settings);
 };
@@ -1102,10 +1168,19 @@ function clearSave(){try{localStorage.removeItem('fairway-round-v1');}catch{}}
 // a round somebody shares. What a round legitimately carries is which green
 // reading overlays were switched on, because that is a property of the putt you
 // were in the middle of.
-const ROUND_CAMERA_KEYS=['greenGrid','greenFlow','greenHeat'];
+// THE SLOPE GRID AND THE DOWNHILL MARKERS ON BY DEFAULT, every device (the
+// owner, 15 November 2026: "there is no buttons to turn on green reading.
+// But lets not add buttons. Just turn on the grid and indicators by default
+// for all devices" -- a phone's screen has no room for the reading buttons).
+// The heat map stays off. A round saved before this carried them as false
+// whether or not anyone chose that, so a saved value is kept only once the
+// player has pressed one of the reading buttons (`readingChosen`).
+const READING_DEFAULT={greenGrid:true,greenFlow:true,greenHeat:false};
+const ROUND_CAMERA_KEYS=['greenGrid','greenFlow','greenHeat','readingChosen'];
 const roundCamera=()=>Object.fromEntries(ROUND_CAMERA_KEYS.map(k=>[k,!!view.config[k]]));
 function applyRoundCamera(saved){
  if(!saved||typeof saved!=='object')return;
+ if(saved.readingChosen!==true)return;
  for(const k of ROUND_CAMERA_KEYS)if(typeof saved[k]==='boolean')view.config[k]=saved[k];
 }
 // PLAY-SCOPE SETTINGS: what belongs to the GOLFER rather than to the ground.
@@ -3910,6 +3985,7 @@ function collectDiagnostic(){
    biome:settings.biome,
    tier:graphics.quality,
    frameCap:graphics.frameCap,
+   groundBake:view?.groundBake?(view.groundBake.on?'on':'off'):null,
    autoResolution:graphics.autoResolution,
    resolution:Math.round((view?.resolutionScale??1)*100),
   },
@@ -3919,7 +3995,233 @@ function collectDiagnostic(){
   errors:diagnosticErrors.read(),
   courseCode,
   takenAt:new Date().toISOString(),
+  bench:lastBench,
+  watch:lastWatch,
  });
+}
+// MEASURE THIS DEVICE (device-bench.js; branch phone-performance): the game
+// times itself on the hole being played and adds what each part of a frame
+// costs to the diagnostic. `benchProbe` is set only while it runs: the frame
+// loop then times its own draw (benchFrame) instead of drawing as usual.
+let benchProbe=null,lastBench=null;
+const benchPixel=new Uint8Array(4);
+// One frame, timed: the frame's gap, and -- when `sync` -- the draw plus a
+// one-pixel read back, which waits for the graphics chip to finish, so the
+// time is the frame's whole work (Safari has no timer for the chip alone).
+// The work is split where the game's own code hands over: `script` is up to
+// the last draw call returning, the rest is waiting for the chip.
+// Draws and triangles are counted over every pass of every frame shown
+// (benchMeasure holds three's counter open across them).
+function benchFrame(now,dt){
+ const p=benchProbe,r=view.renderer;
+ const t0=performance.now();
+ view.render(dt);
+ if(p.sync){const t1=performance.now(),gl=r.getContext();gl.readPixels(0,0,1,1,gl.RGBA,gl.UNSIGNED_BYTE,benchPixel);p.work.push(performance.now()-t0);p.script.push(t1-t0);}
+ // A gap over a second is the page put away, not a slow frame (as frameMeter).
+ else if(p.last!=null){const g=now-p.last;if(g<=1000)p.gaps.push(g);else p.notes.add('the page was put away during the run');}
+ p.last=now;
+ if(flight)p.notes.add('a shot was in the air during the run');
+ if(p.count)p.counted++;
+ const w=p.wait;
+ if(w&&(--w.n<=0||--w.min<=0&&now>=w.until)){p.wait=null;w.done();}
+}
+// N FRAMES OR THEIR TIME AT 60, WHICHEVER COMES FIRST (at least three): a
+// tour counted in frames alone ran about four minutes at 14 frames a second,
+// past a phone's auto-lock. Counted this way it is about a minute at any rate.
+const benchFrames=n=>new Promise(done=>{if(!benchProbe||n<=0)return done();benchProbe.wait={n,min:3,until:performance.now()+n*1000/60,done};});
+// A reading: frames as shown (no read back: it would slow them), then the
+// same number timed with it. PLACED: 45 of each, or three quarters of a second.
+const BENCH_READ=45;
+async function benchMeasure(){
+ const p=benchProbe,info=view.renderer.info,keep=info.autoReset;
+ // A frame's average over the frames shown: the Phone tier redraws its
+ // shadow map every fourth frame, so one frame's count jumped with it.
+ info.autoReset=false;info.reset();
+ p.sync=false;p.gaps=[];p.last=null;p.count=true;p.counted=0;
+ try{await benchFrames(BENCH_READ);}
+ finally{
+  const n=Math.max(1,p.counted);
+  p.counts={draws:Math.round(info.render.calls/n),triangles:Math.round(info.render.triangles/n)};
+  p.count=false;info.autoReset=keep;info.reset();
+ }
+ p.sync=true;p.work=[];p.script=[];
+ await benchFrames(BENCH_READ);
+ p.sync=false;
+ // The size actually drawn, which is what proves the half-the-pixels reading.
+ const c=view.renderer.domElement;
+ // `at`: seconds into the run, so a slowdown can be told by time (the phone
+ // warming) or by place (the second iPhone run: 21 ms at the tee at the start,
+ // 69 at the same tee at the end).
+ return {...readingOf(p.gaps,p.work,p.counts,p.script),canvas:[c.width,c.height],heavy:heaviestHeld(),at:Math.round((performance.now()-p.started)/1000),state:benchState()};
+}
+// What the ground's and the trees' shading reads that can change during a
+// round: the hour (to a tenth), the sun's height, the floodlights, the view.
+function benchState(){
+ const d=view.daylight,s=view.solar;
+ return `hour ${d?.hour!=null?d.hour.toFixed(1):'-'}, sun ${s?Math.round(s.elevation):'-'} deg, ${view.floodlit?'floodlit':'no floodlights'}, view ${view.config.mode}`;
+}
+// THE HEAVIEST THINGS HELD IN VIEW NOW, by triangles: everything drawn (an
+// invisible parent hides its children), the same thing's pieces added
+// together -- a model's part, the ground's squares by detail. `held`: the
+// instances held, or the meshes. A mesh outside the view is still counted
+// here, though three will not draw it; the cull's own meshes hold only what
+// is in view.
+function heaviestHeld(n=8){
+ const by=new Map();
+ view.group?.traverseVisible(o=>{
+  if(!o.isMesh)return;
+  const g=o.geometry,per=(g.index?g.index.count:g.attributes.position?.count??0)/3,held=o.isInstancedMesh?o.count:1;
+  if(!held)return;
+  // An unnamed mesh by the nearest named thing it belongs to ('Living rough').
+  let up=o.parent;while(up&&!up.name&&up!==view.group)up=up.parent;
+  const name=o.userData.model?`${o.userData.model} ${o.userData.role}`:(o.name||(up&&up!==view.group&&up.name)||o.material?.type||'mesh');
+  const e=by.get(name)??{name,triangles:0,held:0};
+  e.triangles+=per*held;e.held+=held;by.set(name,e);
+ });
+ return [...by.values()].sort((a,b)=>b.triangles-a.triangles).slice(0,n);
+}
+// Each part of the scene switched off, and back on by what this returns.
+function benchHide(part){
+ if(part==='shadows'){const s=view.renderer.shadowMap,was=s.autoUpdate;s.autoUpdate=false;s.needsUpdate=false;return()=>{s.autoUpdate=was;s.needsUpdate=true;};}
+ if(part==='pixels'){const was=view.resolutionScale??1;view.setResolutionScale(was*Math.SQRT1_2);return()=>view.setResolutionScale(was);}
+ if(part==='bare'){const a=benchHide('planting'),b=benchHide('ground');return()=>{b();a();};}
+ const planting=o=>o.isInstancedMesh&&(o.userData.cullTotal!==undefined||['shadow twin','far trees','fading trees'].includes(o.name));
+ // Nothing drawn: every top-level thing in the scene hidden, so the frame is
+ // the clear and the read back (device-bench.js BENCH_HOLD).
+ if(part==='empty'){const off=view.scene.children.filter(o=>o.visible);for(const o of off)o.visible=false;return()=>{for(const o of off)o.visible=true;};}
+ // (The seventh run's what-ifs -- the ground reading no shadow, its cues off,
+ // its cover and detail textures as one texel -- each a uniform written, read
+ // +1%, -3% and 0% and are gone: device-bench.js.)
+ // The painting's parts, each a define on the ground's program (ground.js):
+ // three builds the new program on the next frame and keeps the old one, so
+ // putting the define back costs nothing.
+ const groundDefine=(name,on)=>{
+  const m=view.terrain?.material;if(!m)return()=>{};
+  const had=!!m.defines?.[name];if(had===on)return()=>{};
+  const set=v=>{const d={...m.defines};if(v)d[name]=1;else delete d[name];m.defines=d;m.needsUpdate=true;};
+  set(on);return()=>set(had);
+ };
+ // The Phone tier's painted ground off for the part, and back as it was.
+ if(part==='groundUnbaked'){const was=view.groundBake?.on;if(!was)return()=>{};view.setGroundBake(false);return()=>view.setGroundBake(true);}
+ if(part==='groundFull')return groundDefine('GROUND_HAZARD_REACH',false);
+ // Low's own thinning for the part (instance-cull.js `tune.lowTrees`).
+ if(part==='treesAsLow'){const c=view.cull;if(!c)return()=>{};const was=c.tune().lowTrees??null;if(!was)return()=>{};c.tune({lowTrees:null});return()=>c.tune({lowTrees:was});}
+ if(part==='groundNoHazards')return groundDefine('GROUND_NO_HAZARDS',true);
+ if(part==='groundNoMowing')return groundDefine('GROUND_NO_MOWING',true);
+ if(part==='groundNoLayers')return groundDefine('GROUND_NO_LAYERS',true);
+ // The what-ifs (device-bench.js), put back after. The plainest paint (renderer.js `plainPaint`): the shapes drawn as they
+ // are, their shading gone. The shadow maps keep their own materials.
+ if(part==='plainTrees'||part==='plainGround'){
+  const swapped=[];
+  const paint=o=>{const one=m=>view.plainPaint(!!o.geometry.attributes.color);swapped.push([o,o.material]);o.material=Array.isArray(o.material)?o.material.map(one):one();};
+  if(part==='plainTrees')view.group.traverse(o=>{if(planting(o))paint(o);});
+  else view.group.traverse(o=>{if(o.isMesh&&(o.name==='Continuous ground'||o.parent?.name==='Continuous ground'))paint(o);});
+  return()=>{for(const [o,m] of swapped)o.material=m;};
+ }
+ const test={planting,ground:o=>o.name==='Continuous ground',farGround:o=>o.name==='Far ground',farTrees:o=>o.name==='Far trees'}[part];
+ const off=[];
+ if(test)view.group.traverse(o=>{if(o.visible&&test(o)){o.visible=false;off.push(o);}});
+ return()=>{for(const o of off)o.visible=true;};
+}
+// The tour itself. Only in a round on a course or an endless hole, with no
+// ball in the air; the round is left exactly as it was.
+async function runDeviceBench(){
+ if(benchProbe||watching)return null;
+ // (An endless run's world is one hole, `worldHole`.)
+ const at=world?.holes?worldHole(round.hole):-1;
+ if(appMode!=='play'||rangeMode||flight||!world?.holes?.[at]){toast('Start a round first: the benchmark measures the hole you are on.');return null;}
+ const mode=view.config.mode,started=performance.now(),h=world.holes[at];
+ closePanel();
+ // THE SCREEN KEPT ON for the two minutes it takes now (the hold): asked for
+ // inside the tap, which Safari wants; a browser that refuses is told
+ // nothing, and the player's own auto-lock decides as before.
+ let lock=null;
+ try{navigator.wakeLock?.request('screen').then(l=>{lock=l;},()=>{});}catch{}
+ const unlock=()=>{try{lock?.release();}catch{}lock=null;};
+ benchProbe={gaps:[],work:[],script:[],counts:{},sync:false,count:false,counted:0,last:null,wait:null,notes:new Set(),started};
+ const notes=benchProbe.notes;
+ // AT THE TIER'S OWN RESOLUTION: automatic resolution may have stepped it
+ // down (the owner's first run read at 50%), which measured a quarter of the
+ // tier's pixels. Put back as it was after.
+ const scaleWas=view.resolutionScale??1;
+ view.setResolutionScale(1);
+ const note=(i,n)=>toast(`Measuring this device: ${i} of ${n}. Keep the screen on and leave it be.`);
+ note(0,1);
+ let rows=null;
+ try{
+  rows=await runBench({
+   place:pose=>placePose(pose),
+   frames:benchFrames,
+   measure:benchMeasure,
+   hide:benchHide,
+   restore:()=>{benchProbe=null;view.setResolutionScale(scaleWas);cameraMode(mode==='free'?'player':mode);},
+  },{hole:at,length:h.length??300,onStep:note});
+ }catch(e){benchProbe=null;unlock();toast(`The benchmark stopped: ${e?.message??e}`);return null;}
+ unlock();
+ const c=view.renderer.domElement;
+ // What it measured at: the tier's own ratio and the size of the first reading
+ // (the resolution has been put back by now).
+ lastBench={rows,tier:graphics.quality,ratio:Math.round(view.pixelCeiling()*100)/100,canvas:rows[0]?.canvas??[c.width,c.height],
+  seconds:Math.round((performance.now()-started)/1000),course:`${playingCourseName()}, hole ${round.hole+1}`,notes:[...notes]};
+ toast('Measured. Help → Report a problem → Copy diagnostic carries the figures.');
+ return lastBench;
+}
+// WATCH THIS DEVICE (device-watch.js): play before the tap from the
+// recorder, then the scripted watch with the phone's own probes. The round is
+// left as it was: no shot is played, and the camera, the flyover, the frame
+// cap and the screen lock are put back whatever happens.
+let watching=false;
+async function runDeviceWatch(){
+ if(watching||benchProbe)return null;
+ const at=world?.holes?worldHole(round.hole):-1;
+ if(appMode!=='play'||rangeMode||flight||dropState||!world?.holes?.[at]){toast('Start a round first: the watch runs on the hole you are on.');return null;}
+ const tap=Math.floor(performance.now()/1000),before=playRecorder.read(tap-BEFORE_SECONDS,tap);
+ closePanel();
+ let lock=null;
+ try{navigator.wakeLock?.request('screen').then(l=>{lock=l;},()=>{});}catch{}
+ const cap=graphics.frameCap,mode=view.config.mode,started=performance.now(),from=Math.floor(started/1000),notes=new Set();
+ let hidden=null,reps=null,peak=null;
+ const show=()=>{if(hidden){for(const o of hidden)o.visible=true;hidden=null;}};
+ const wait=s=>new Promise(done=>setTimeout(done,s*1000));
+ watching=true;
+ const io={
+  // THE FRAME CAP LIFTED, so every run is the same whatever the player set;
+  // not saved, and put back below. A first probe builds the probes' programs.
+  // A new object, never the saved one changed in place; not saved. Then
+  // the probes' first frame (their programs built) and their sizing.
+  start:async()=>{graphics={...graphics,frameCap:0};await new Promise(done=>{watchProbe=()=>{reps=view.calibrateProbes();done();};});},
+  phase:async step=>{
+   watchPhase=step.id;playRecorder.event(step.label);
+   if(step.id==='flyover'){if(!tour)startTour();}
+   else if(tour)stopTour();
+   if(step.id==='above')placePose({hole:at,along:-150,height:250,look:'pin'});
+  },
+  seconds:s=>wait(s),
+  // Its second by the clock, as the recorder's lines are (the script's own
+  // count runs a little behind it: the probes and the rests take time).
+  // The busiest frame of the watch so far keeps what was heaviest in view
+  // (the flyover's last 20 s climbed to 4.7 M triangles on the iPhone).
+  probe:()=>new Promise(done=>{watchProbe=r=>{const at=Math.round(performance.now()/1000)-from;if(lastFrameTris>(peak?.tris??0))peak={tris:lastFrameTris,at,phase:watchPhase,heavy:heaviestHeld(6)};done({...r,at});};}),
+  // NOTHING DRAWN for n seconds (as Measure this device's "nothing drawn"):
+  // the clear and the frame still happen, the scene does not.
+  rest:async s=>{hidden=view.scene.children.filter(o=>o.visible);for(const o of hidden)o.visible=false;await wait(s);show();},
+  // Every step its own guard, the buttons freed first: one failure here must
+  // not leave the watch or the benchmark refusing to start until a reload.
+  restore:async()=>{
+   watching=false;watchProbe=null;watchPhase=null;
+   for(const step of [show,()=>{if(tour)stopTour();},()=>{graphics={...graphics,frameCap:cap};},()=>cameraMode(mode==='free'?'player':mode),()=>lock?.release()])try{step();}catch(e){notes.add(`putting back: ${e?.message??e}`);}
+  },
+ };
+ let result=null;
+ try{result=await runWatch(io,{onStep:(i,n,s)=>toast(`Watching this device: ${i} of ${n}, ${s.label}. Keep the screen on and leave it be.`)});}
+ catch(e){toast(`The watch stopped: ${e?.message??e}`);return null;}
+ if(document.hidden)notes.add('the page was put away during the watch');
+ const during=playRecorder.read(from,Infinity).map(l=>({...l,at:l.t-from}));
+ if(during.some(l=>l.events.includes('page hidden')))notes.add('the page was put away during the watch');
+ if(reps?.failed)notes.add(`probes could not be sized: ${reps.failed}`);
+ lastWatch={seconds:result.seconds,cap,peak,reps:reps?.failed?null:reps,course:`${playingCourseName()}, hole ${round.hole+1}`,before,during,probes:result.probes,notes:[...notes]};
+ toast('Watched. Help → Report a problem → Copy diagnostic carries it.');
+ return lastWatch;
 }
 function savableCourse(){
  if(appMode==='studio')return {label:'Save this landscape'};
@@ -5249,6 +5551,7 @@ function wireSliders(root){root.querySelectorAll('input[type=range]').forEach(el
 // disconnect) open 'monitor' again and keep it.
 let monitorReturn=null;
 function openPanel(name){
+ playRecorder.event('panel');
  if(name!=='monitor')monitorReturn=null;
  if(appMode==='play'&&TOOL_PANELS.has(name)&&popups){openTool(name);return;}
  openSheet(name);
@@ -6388,7 +6691,7 @@ function renderPanel(name,content){
    $(id).addEventListener('input',()=>gameAudio?.setPrefs({[key]:Number($(id).value)}));
  }else if(name==='graphics'){
   content.innerHTML=`<p>These stay on this device and never travel with a course, so the same course looks the way each machine can afford on every screen it is opened on.</p>
-  <label class="field">Quality${QUALITY.map(q=>'').join('')}<select id="gfxQuality">${QUALITY.map(q=>`<option value="${q}">${QUALITY_LABELS[q]}</option>`).join('')}</select></label>
+  <label class="field">Quality${QUALITY.map(q=>'').join('')}<select id="gfxQuality">${(phoneDevice?[PHONE,...QUALITY]:QUALITY).map(q=>`<option value="${q}">${QUALITY_LABELS[q]}</option>`).join('')}</select></label>
   <p class="note" id="gfxNote"></p>
   <label class="field">Frame rate cap<select id="gfxFrameCap">${FRAME_CAPS.map(f=>`<option value="${f}">${f?f+' fps':'Follow the display'}</option>`).join('')}</select></label>
   <p class="note">A cap trades refresh rate for headroom. Leave it following the display unless the fans are loud or the picture is uneven.</p>
@@ -6411,6 +6714,7 @@ function renderPanel(name,content){
   <h3>Costs a frame</h3>
   <p>Unlike everything above, these are real work. If the picture is uneven or pauses, start here.</p>
   <label class="check"><input id="gfxTerrainShadows" type="checkbox" ${graphics.terrainShadows?'checked':''}> Terrain casts shadows</label>
+  ${phoneDevice?`<label class="check"><input id="gfxGroundBake" type="checkbox" ${graphics.groundBake!==false?'checked':''}> Paint the ground once (Phone setting: faster, a little softer close up)</label>`:''}
   <p class="note">Ridges shade the hollows behind them. Only says anything when the sun is low — at midday a two metre roll casts almost nothing. One draw call per shadow cascade, over ground that is already built.</p>
   <label class="check"><input id="gfxReflections" type="checkbox" ${graphics.reflections?'checked':''}> Water reflections</label>
   <p class="note">Ponds, lakes and creeks reflect the course around them rather than only the sky. Nothing extra per frame: each body's reflection is photographed when the course is built and again whenever the sun moves about six degrees, a pause of around 40–65 ms each time. Switched off, none of that happens, and water still moves and still reflects the sky.</p>
@@ -6418,6 +6722,7 @@ function renderPanel(name,content){
   <p class="note">With the course floodlit, the lamps nearest your shot throw shadows — five of them, or three on High and Ultra, whose own sun shadows take the room. Redrawn only when the lamps or the view move, so they cost nothing frame to frame. The first switch on a course takes a few seconds to prepare, longer on Ultra, while you play on; after that it is instant.</p>
 `;
   const note=()=>$('gfxNote').textContent={
+   phone:'Made for a phone: the hole you are playing is drawn in full and the rest of the course more lightly, shadows are redrawn less often, and the ground away from you is coarser. Picked every time the game opens on a phone.',
    low:'Trims shadows, draw distance and planting so older laptops and integrated graphics keep up.',
    medium:'Renders exactly as Fairway always has.',
    high:'Soft shadows everywhere, drifting cloud shade, light shafts, a far horizon and thicker planting. Wants a discrete GPU.',
@@ -6452,6 +6757,7 @@ function renderPanel(name,content){
     view.setGroundCues(graphics);
    };
   $('gfxDistantFlags').onchange=()=>{graphics=saveGraphics({...graphics,distantFlags:$('gfxDistantFlags').checked});view.setDistantFlags(graphics.distantFlags);};
+  if($('gfxGroundBake'))$('gfxGroundBake').onchange=()=>{graphics=saveGraphics({...graphics,groundBake:$('gfxGroundBake').checked});view.setGroundBake(graphics.groundBake);};
   $('gfxTerrainShadows').onchange=()=>{graphics=saveGraphics({...graphics,terrainShadows:$('gfxTerrainShadows').checked});view.setTerrainShadows(graphics.terrainShadows);};
   $('gfxReflections').onchange=()=>{graphics=saveGraphics({...graphics,reflections:$('gfxReflections').checked});view.setReflections(graphics.reflections);};
   // The first switch on a course builds every floodlit shader again with the new
@@ -6686,7 +6992,7 @@ function renderPanel(name,content){
   // The report is shown in the box as well as copied, so a browser that
   // refuses the clipboard is an inconvenience rather than a dead end, and so
   // that nobody has to take on trust what they are about to paste.
-  content.insertAdjacentHTML('beforeend',`<h3>Report a problem</h3><p>Something looking wrong? This copies a short summary of your build, your machine and anything that has gone wrong, ready to paste into a bug report.</p><p class="note"><strong>Nothing is sent anywhere.</strong> Fairway makes no network requests at all. The text is put on your clipboard and shown below, and what happens to it after that is up to you.</p><button class="secondary" id="copyDiagnostic"><i data-lucide="clipboard-list"></i> Copy diagnostic</button><label class="field" id="diagnosticField" hidden>Diagnostic<textarea id="diagnosticText" rows="12" readonly></textarea></label>`);
+  content.insertAdjacentHTML('beforeend',`<h3>Report a problem</h3><p>Something looking wrong? This copies a short summary of your build, your machine and anything that has gone wrong, ready to paste into a bug report.</p><p class="note"><strong>Nothing is sent anywhere.</strong> Fairway makes no network requests at all. The text is put on your clipboard and shown below, and what happens to it after that is up to you.</p><button class="secondary" id="copyDiagnostic"><i data-lucide="clipboard-list"></i> Copy diagnostic</button><p class="note"><strong>Slow on this device?</strong> In a round, Measure this device stands the camera at four places on the hole you are on for about a minute, switching parts of the picture off one at a time, then puts it back. Leave the screen on while it runs. The diagnostic then carries what each part costs here.</p><button class="secondary" id="benchDevice"><i data-lucide="gauge"></i> Measure this device</button><p class="note"><strong>Speed going up and down?</strong> Watch this device keeps your view for a minute, flies the hole, rests the picture a few times and looks from above, about two and a half minutes, timing the device itself as it goes. The diagnostic then carries that, and how your last few minutes of play ran.</p><button class="secondary" id="watchDevice"><i data-lucide="activity"></i> Watch this device</button><label class="field" id="diagnosticField" hidden>Diagnostic<textarea id="diagnosticText" rows="12" readonly></textarea></label>`);
   $('copyDiagnostic').onclick=async()=>{
    let text;
    // Belt and braces: this is the button somebody presses when the app is
@@ -6698,6 +7004,8 @@ function renderPanel(name,content){
    $('diagnosticText').focus();$('diagnosticText').select();
    toast(await copyText(text)?'Diagnostic copied.':'Diagnostic ready \u2014 copy it from the box.');
   };
+  $('benchDevice').onclick=()=>{runDeviceBench();};
+  $('watchDevice').onclick=()=>{runDeviceWatch();};
   content.insertAdjacentHTML('beforeend',`<h3>Open source & credits</h3><p>Fairway is MIT licensed. Optional donations support development and are not required to play. Third-party components retain their own licenses.</p><details><summary>Project license</summary><pre class="license-text">${escape(projectLicense)}</pre></details><details><summary>Third-party licenses & credits</summary><pre class="license-text">${escape(thirdPartyNotices)}</pre></details>`);
  }
  // EVERY variant of the round panel is tabbed. Endless and the range both have
@@ -7190,7 +7498,7 @@ function bind(){
  $('replayShot').onclick=()=>replayShot();
  $('nextHoleBar').onclick=()=>{if(!round.holeComplete||flight)return;if(round.finished)openPanel('score');else advanceHole();};
  for(const [id,key] of [['readSlope','greenGrid'],['readFlow','greenFlow'],['readHeat','greenHeat']])
-  $(id).onclick=()=>{gameAudio?.ui?.('toggle');view.config[key]=!view.config[key];view.setGreenReading();updateHUD();save();};
+  $(id).onclick=()=>{gameAudio?.ui?.('toggle');view.config[key]=!view.config[key];view.config.readingChosen=true;view.setGreenReading();updateHUD();save();};
 $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;const pristine=round.strokes.every(n=>n===0)&&Object.values(round.scrambleShots).every(n=>n===0)&&!round.candidates.length;round.tee=$('activeTee').value;if(pristine){round.teePlaced=false;round.placeTee(course.tees);setUpTurn();}else{updateHUD();toast('Tee preference saved for the next hole.');}save();};$('pickPrev').onclick=()=>stepPick(-1);$('pickNext').onclick=()=>stepPick(1);
  $('reliefTake').onclick=()=>{const o=reliefList[reliefChoice];if(o)takeReliefOption(o);};
  $('reliefCloser').onclick=()=>moveReliefBack(-10*YARD);$('reliefFurther').onclick=()=>moveReliefBack(10*YARD);
@@ -7236,6 +7544,12 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   // The seed the next fresh Endless run takes (the smoke run's
   // --endless-seed): pin, then press Start an endless run as a player does.
   pinRun:seed=>{pinnedRun=String(seed);},
+  // Measure this device (device-bench.js), as Report a problem's button runs
+  // it; resolves with the figures, or null where it cannot run.
+  bench:()=>runDeviceBench(),
+  watch:()=>runDeviceWatch(),
+  // The diagnostic's text, as Copy diagnostic makes it.
+  diagnostic:()=>collectDiagnostic(),
   // A BUILT course's file handed in as bytes, kept as an import keeps it; the
   // hash it answers is what lab.course({built}) plays (tools/freeze-capture.mjs).
   built:async bytes=>(await builtStore.put(new Uint8Array(bytes))).hash,
@@ -7282,7 +7596,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
     hazard:kind==='water'?'Water':'Out of bounds',treeHits:0,homeHits:0,onGreen:false};
    const shot={origin:from,aim,speed:30,vla:12,hla:0,spin:3000,spinAxis:0};
    latest={shot,result,player:round.player.name,typed:true};priorShot=lastShot;lastShot={...latest,hole:round.hole,putting:false,aim,club:'Lab'};
-   flight={result,elapsed:0,index:0,origin:from,record:lastShot};
+   flight={result,elapsed:0,index:0,origin:from,record:lastShot};playRecorder.event('shot');
    finishShot();
    return round.relief?{...round.relief,options:reliefList.map(o=>({id:o.id,penalty:o.penalty,spot:o.spot}))}:null;
   },
@@ -8044,6 +8358,9 @@ function autoResolutionNote(){
 }
 function autoResolutionFrame(now,interval){
  if(!view)return;
+ // Measure this device sets the resolution itself (its "half the pixels"
+ // reading) and must not have it put back under it, whichever way the switch is.
+ if(benchProbe){autoRes.hold(now);return;}
  if(!graphics.autoResolution){if(view.resolutionScale!==1){autoRes.stop(now);view.setResolutionScale(1);autoResolutionNote();}autoResKey='';return;}
  const key=graphics.quality+':'+view.pixelCeiling();
  if(key!==autoResKey){autoResKey=key;autoRes.setCeiling(view.pixelCeiling(),now);if(view.resolutionScale!==1){view.setResolutionScale(1);autoResolutionNote();}}
@@ -8063,6 +8380,7 @@ function tick(now){
  // the display will not show. Zero means follow the display.
  if(graphics.frameCap&&now-lastTick<1000/graphics.frameCap-.5)return;
  diagnosticFrames.sample(now-lastTick);
+ recordFrame(now);
  if(gameAudio&&view?.world&&now-lastSoundScene>1000){lastSoundScene=now;updateSoundScene();}
  autoResolutionFrame(now,now-lastTick);
  const dt=Math.min((now-lastTick)/1000,.05);lastTick=now;
@@ -8137,7 +8455,10 @@ function tick(now){
  // the page until it has -- the loading screen froze during a wait that is
  // meant to leave it moving. The overlay is up; the frame it would cover is
  // drawn by `ready` itself as soon as the programs are done.
- if(!view.readying)view.render(dt);
+ // The Phone tier's flight rule (renderer.js `cullFlying`): the flyover, or
+// the player's own free flight -- never the benchmark's placed camera.
+view.flyingView=!!tour||view.config.mode==='free'&&!benchProbe&&watchPhase!=='above';
+if(!view.readying){if(benchProbe)benchFrame(now,dt);else{const r0=performance.now();view.render(dt);lastRenderMs=performance.now()-r0;lastFrameTris=view.renderer.info.render.triangles;if(watchProbe){const done=watchProbe;watchProbe=null;done(view.probeDevice());}}}
  setWindArrow();
  // Not over a finished hole: "0.0 FEET TO HOLE" read on after the ball dropped.
  const worldLabels=!flight&&view.config.mode!=='free'&&!round?.holeComplete;
@@ -8249,6 +8570,8 @@ try{
  applyUiScale();addEventListener('resize',applyUiScale);
  globalThis.__splashStep?.('Starting the renderer',.12);
  view=new GolfView($('scene'),graphics.quality);
+ // The green reading's defaults (READING_DEFAULT): on from the first round.
+ for(const [k,v] of Object.entries(READING_DEFAULT))view.config[k]??=v;
  // No graphics card, no tier chosen: start on Low (graphics.js isSoftwareRenderer).
  if(!hasSavedGraphics()&&graphics.quality!=='low'){try{const gl=view.renderer.getContext(),dbg=gl.getExtension('WEBGL_debug_renderer_info'),name=dbg?gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER);if(isSoftwareRenderer(name)){graphics={...graphics,quality:'low'};view.applyQuality('low');}}catch{}}
  globalThis.__splashStep?.('Growing the first hole',.3);
@@ -8256,7 +8579,7 @@ try{
  gameAudio=createGameAudio();
  // The saved cue switches, before the first course is built. `build` re-applies
  // them per course, because the ground material is rebuilt with the world.
- view.setGroundCues(graphics);view.setTerrainShadows(graphics.terrainShadows);view.setReflections(graphics.reflections);view.setFloodShadows(graphics.floodlightShadows);view.setDistantFlags(graphics.distantFlags);
+ view.setGroundCues(graphics);view.setTerrainShadows(graphics.terrainShadows);view.setGroundBake(graphics.groundBake);view.setReflections(graphics.reflections);view.setFloodShadows(graphics.floodlightShadows);view.setDistantFlags(graphics.distantFlags);
  // A saved round is parsed but not loaded: it waits until the player asks to
  // continue it, so opening Fairway shows the menu rather than someone else's
  // half-finished hole.

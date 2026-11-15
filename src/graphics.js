@@ -14,7 +14,27 @@ export const QUALITY = ['low', 'medium', 'high', 'ultra'];
 // 0 means uncapped, which in practice means the display's own refresh rate.
 export const FRAME_CAPS = [0, 30, 60, 120, 144];
 
+// THE PHONE TIER (branch phone-performance, 14 November 2026; the owner: "I
+// would still like to target 45-60fps on an iPhone. We might need to hide
+// graphics options entirely from phone users"). Not one of QUALITY: a phone
+// starts on it every time the game opens (main.js, `isPhoneDevice`), its
+// picker offers it first, and no other machine is offered it.
+export const PHONE = 'phone';
+// A phone's frame cap every time the game opens (main.js `phoneDevice`): 30,
+// one of FRAME_CAPS. Apple: "stay at 30 frames per second if you cannot
+// sustain 60 for ten minutes or more" (WWDC18 612; RESEARCH).
+export const PHONE_FRAME_CAP = 30;
+// A phone, from what the browser says it is: an iPhone or iPod, or Android
+// with "Mobile" (an Android tablet leaves it out). An iPad is not a phone: it
+// says it is a Mac and keeps the four tiers (PLACED). Read once at boot, never
+// from the screen's size, so turning the phone over never changes the tier.
+export function isPhoneDevice(nav = globalThis.navigator) {
+ const ua = String(nav?.userAgent ?? '');
+ return /iPhone|iPod/.test(ua) || /Android/.test(ua) && /Mobile/.test(ua);
+}
+
 export const QUALITY_LABELS = {
+ phone: 'Phone · made for this phone',
  low: 'Low · older laptops and integrated graphics',
  medium: 'Medium · the balanced default',
  high: 'High · discrete GPU',
@@ -41,7 +61,9 @@ export const TIERS = {
  // November: "Medium should still show all trees. Low can draw less trees but
  // only if we can ensure that we draw all of the trees for the hole we are on
  // at a minimum." Medium and up draw every tree; Low may skip far ones, never
- // one of the hole being played. Every tier collides with all of them.
+ // one of the hole being played. So may Phone (the owner, 14 November 2026,
+ // of phones: "maybe we only render things in the hole we are on?"; PHONE,
+ // above). Every tier collides with all of them.
  low: {
   pixelRatio: .75,
   // (Until the surroundings rework Low and Medium drew the far woods as grove
@@ -107,7 +129,7 @@ export const TIERS = {
   groundTolerance: 4,
   // LOW DRAWS FEWER TREES, NEVER THE HOLE'S (the owner, 9 November 2026;
   // low-trees.js has the rule and its PLACED distances; instance-cull.js
-  // draws it). Medium and up draw every tree.
+  // draws it). Medium and up draw every tree; Phone draws as Low does.
   thinTrees: true,
   // A quarter of a stand's understory, for a laptop with no graphics card. PLACED.
   understory: .25,
@@ -146,6 +168,112 @@ export const TIERS = {
   // size is the only part of it a tier can currently reach. See TODO.
   reflection: 256,
   // Trees in still water (water-mirror.js): an extra small render a frame.
+  mirrorTwins: false,
+ },
+ // PHONE (branch phone-performance; docs/RESEARCH.md *The first figures from a
+ // real phone*). Measure this device on the owner's iPhone, Redwood Coast on
+ // Medium, 14 November 2026: from the tee every tree and plant off saved 57% of
+ // a frame's work and 309 of 356 draws; not redrawing the shadow map 51% (the
+ // map draws every tree whole a second time: 8 of the frame's 17.7 million
+ // triangles); the course's ground 23% (38% from 250 m up); the far ground and
+ // far trees nothing; fewer pixels nothing measurable. So the first Phone tier
+ // spends on geometry, not pixels:
+ //   - Low's rule for trees: every tree of the hole being played and round the
+ //     ball, fewer and fewer further off (low-trees.js) -- the owner's "only
+ //     render things in the hole we are on", which an endless hole already is;
+ //   - the shadow map cast by the trees' far twins (`thinShadowsFrom: 0`): a
+ //     painted crown never receives the shadow map (PROJECT_HANDOFF *A PAINTED
+ //     CROWN*), so the reason Low and Medium keep twins out of their one map,
+ //     crowns shading themselves from another shape, does not reach it;
+ //   - the shadow map redrawn every fourth frame, or at once when the camera
+ //     has moved two metres (renderer.js, `shadowEvery`);
+ //   - the ground drawn coarser with distance (`groundSquares`, ground-lod.js),
+ //     six drawn pixels off the ball's ground at most. The second run (the
+ //     same course on this tier, 15 November) found it had never happened: the
+ //     squares were only built for a ground of 4 million triangles or more, so
+ //     a generated course's 2.4 million were drawn whole every frame and the
+ //     tolerance read nothing. On the iPhone's course the squares draw about
+ //     0.55 million at the tee and 0.33 million from 250 m up;
+ //   - Low's far land, grass and planting under the trees.
+ // Medium's pixel ratio, kept: the owner found automatic resolution "a blurry
+ // mess". Half the pixels saved 15 to 18% of the work on the second run (the
+ // first, already at a quarter of them, could not show it). Every number here
+ // PLACED, to be measured on the phone and moved.
+ phone: {
+  pixelRatio: 1.75,
+  farGround: {grow: 1.06},
+  surround: {near: 60, reach: 1500, fall: 1200, cell: 128, nearMax: 0, most: 30000},
+  shadow: {size: 1024, radius: 1},
+  shadowEvery: 4,
+  fog: {near: 1300, far: 5500, overviewNear: 4500, overviewFar: 14000},
+  grass: .35,
+  foliage: .55,
+  anisotropy: 4,
+  // A 1,024 map over 280 m is about 0.27 m a texel; the offset goes with it
+  // (*A SHADOW'S NORMAL OFFSET GOES WITH ITS TEXEL*).
+  shadowSpan: {half: 140, top: 190, bottom: -120, far: 700},
+  shadowBias: {normal: .4, constant: -.0002, flood: .15},
+  cascades: 0, shadowFar: 0, overviewShadowFar: 0,
+  thinShadowsFrom: 0,
+  // Twice Medium's lines, which it had (the fifth run, below at `nearGrass`).
+  farTrees: .3,
+  farPainted: .5,
+  groundTolerance: 6,
+  groundSquares: true,
+  // Its ground's own program (ground.js `phoneGround`): the seventh run found
+  // the slow state's ground cost in the painting itself (plain paint -33% from
+  // 250 m up, no shadow +1%, cues off -3%, the cover and detail textures 0%).
+  // First, savings that change no pixel: a bunker too far off to touch a
+  // pixel is skipped.
+  phoneGround: true,
+  // And the ground painted into pictures round the camera and drawn from them
+  // by a small program (ground-bake.js; the owner, 15 November 2026): the
+  // eighth run found no one part of the painter its cost, the whole program
+  // was; plain paint saved 33 to 39% of the sustained frame. A Graphics switch
+  // on a phone turns it off (`groundBake` in the saved settings).
+  groundBake: true,
+  // Trees kept whatever the view only within 15 m of the camera, not 60
+  // (instance-cull.js `near`). The third and fourth iPhone runs (15 November):
+  // the chip's wait was 43 to 50 of a 48 to 55 ms frame, the trees and plants
+  // over half of it, about 180 whole trees held at the tee at some 12,000
+  // triangles a crown -- many in the 60 m ring kept behind the camera, which
+  // an upright phone's 28-degree view never shows. PLACED: 15 m.
+  cullNear: 15,
+  // The fifth run (15 November, the 15 m ring): no grass round the camera
+  // saved 8% of the tee's work (the heaviest thing held there: 36,536 clumps,
+  // 0.8 M triangles), the far versions from twice as near 6%. Both taken, at
+  // half the grass and the doubled lines. PLACED: to be read on the phone.
+  nearGrass: .5,
+  thinTrees: true,
+  // LOW'S RULE, HARDER (the owner, 15 November 2026: "on phone we can
+  // massively thin or even get rid of outside gameplay landscape trees"; the
+  // painted ground's watch left the trees the largest piece of the slow
+  // frame, -49% from 250 m up). The hole's trees and the ball's are kept as
+  // Low keeps them (low-trees.js `holeReach`, `ballReach`, untouched);
+  // outside them every tree only to 60 m from the camera, thinning to one in
+  // twenty by 300 m, with a narrow fade band (a fading tree is drawn, so the
+  // band is kept too). In free flight and the hole's flyover Low keeps every
+  // tree within 250 m of the camera (`flyReach`): from the flyover's circle,
+  // 150 to 350 m out over the next holes' woods, thousands of them -- the
+  // flyover's last 20 s fell to 20-23 frames a second in every iPhone watch.
+  // The Phone tier keeps 100 m. PLACED, for the owner's eye.
+  lowTrees: {nearAll: 60, thinTo: 300, minKeep: .05, fade: .05, flyReach: 100},
+  // IN FLIGHT -- the hole's flyover, free flight (renderer.js `cullFlying`):
+  // the far versions from a crown a full screen tall, not half (and the
+  // other trees from 0.6, not 0.3). The 100 m reach above did not touch the
+  // flyover's dip: it skims 34 m over the canopy, and at the iPhone watch's
+  // busiest frame 150 crowns under it were drawn whole, 2 M of 4.6 M
+  // triangles. PLACED, for the owner's eye.
+  flyFarPainted: 1,
+  flyFarTrees: .6,
+  understory: .25,
+  longGrassReach: 90,
+  godRays: 0,
+  clouds: 0,
+  mist: 0,
+  floodShadows: 3,
+  bloom: 0,
+  reflection: 256,
   mirrorTwins: false,
  },
  medium: {
@@ -437,7 +565,7 @@ const cueValue = (g, key) => current(g) ? bool(g?.[key], readingCues(readingOf(g
 const clean = g => ({
  greenReadGen: GREEN_READ_GEN,
  groundReading: readingOf(g),
- quality: QUALITY.includes(g?.quality) ? g.quality : 'medium',
+ quality: QUALITY.includes(g?.quality) || g?.quality === PHONE ? g.quality : 'medium',
  frameCap: FRAME_CAPS.includes(g?.frameCap) ? g.frameCap : 0,
  relief: cueValue(g, 'relief'),
  slopeTint: cueValue(g, 'slopeTint'),
@@ -445,6 +573,9 @@ const clean = g => ({
  stripes: cueValue(g, 'stripes'),
  sheen: cueValue(g, 'sheen'),
  terrainShadows: bool(g?.terrainShadows, true),
+ // The Phone tier's painted ground (ground-bake.js), on unless turned off; no
+ // other tier reads it.
+ groundBake: bool(g?.groundBake, true),
  reflections: bool(g?.reflections, true),
  // AUTOMATIC RESOLUTION (F4, auto-resolution.js): on by default, because the
  // player who needs it most -- on a phone, or a laptop with no graphics card --
