@@ -8334,3 +8334,155 @@ version, a cheaper far ground from above (IDEAS.md).
   check since round F4.** Run those three after a restart, before any merge.
   What each round did, measured, and what is still owed is in SURROUNDINGS,
   *The frame-rate pass*; this entry is rewritten as it goes.
+
+## The game is too slow on an iPhone (14-15 November 2026; branch phone-performance)
+
+- [x] **The game is too slow on an iPhone: 14 frames a second on a full
+  course** (the owner, 14 November 2026; branch `phone-performance`). "I was
+  running on both medium and low on an iPhone and both were pretty bad ... I
+  would still like to target 45-60fps on an iPhone ... We might need to hide
+  graphics options entirely from phone users." High and Ultra are not to
+  change ("those should be discrete GPU only"). An endless hole runs well on
+  the same phone. Two diagnostics are in RESEARCH, *The first figures from a
+  real phone*. **Step one, built:** Measure this device (Help, Report a
+  problem), so the phone times itself part by part. Seen working on the PC
+  (14 November, Classic Parkland, Medium: 50 s, every part's switch moved its
+  draws, triangles or drawn size, the camera back in the player's view);
+  **not yet run on a phone**.
+  **Its first run on the iPhone** (Redwood Coast, Medium): trees and plants
+  57% of the work at the tee, the shadow map's redraw up to half, the course
+  ground 23 to 38%, the far land nothing; the phone ran about twice as fast
+  for its first 20 seconds as after (cause not known).
+  **Step two, seen running on the iPhone** (15 November, two runs, RESEARCH):
+  the Phone tier (graphics.js `TIERS.phone`), a phone's default every time it
+  opens, the picker still offering the others for comparing. Safari from the
+  home screen, Pacific Northwest: **21 ms of work at the tee at the start
+  (about 45 frames a second), 69 ms at the same tee 50 seconds later** (the
+  diagnostic's fps line, 16, was the run's end, not play: RESEARCH, *The fps
+  line was never play*). Its shadows now cost nothing; the ground and the
+  trees are still a third each at the tee. The slowdown: what it is is not
+  known (the processor was later ruled out).
+  **Step three, built and not seen on the phone:** its ground drawn in
+  squares on every course (`groundSquares` -- it never was: the squares were
+  kept for grounds of 4 million triangles or more, so the "coarser ground"
+  of step two did nothing), and the benchmark split into the game's own code
+  and the wait for the chip, its counts averaged, a floor row, the time of
+  each reading and the heaviest things in view. **Seen on the iPhone** (two
+  runs, 15 November, RESEARCH): the game's own code 4 to 5 ms of a 48 to 55
+  ms frame -- the chip, not the processor; no slowdown within either run,
+  but both began slow; the trees and plants 52 to 58% at the tee, the ground
+  19%, the floor under both 13 ms. **Step four, built and not seen on the
+  phone:** trees kept whatever the view only within 15 m (`cullNear`), and
+  three what-if rows in the benchmark. **Seen** (01:52): the tee 45 ms, the
+  ring worth about 13%; no grass round the camera -8%, far versions twice
+  as near -6%; the trees and the ground cost more than their triangles.
+  **Step five, built and not seen on the phone:** half the grass round the
+  camera (`nearGrass`) and the far versions from twice as near, and three
+  new what-ifs (far versions past the ring, the trees and the ground in
+  plain paint). **Seen** (02:10, hole 2): the look "ok"; **the same tee 14
+  ms of work at 2 s (59 frames a second, the target met) and 31 ms at 62
+  s**, nothing in the frame changed -- the phone flips between two speeds,
+  which is the owner's "speed up and then slow down for no reason" in play.
+  Cause unknown; it began as the what-ifs switched materials. **Step six,
+  built and not seen on the phone:** the benchmark holds the tee for a
+  minute first (as drawn, no ground, bare, nothing drawn), prints the
+  game's light and view as they change, keeps the screen on. **To check:**
+  whether "as drawn" steps while the floor holds (the game) or everything
+  steps (the device). **Seen** (02:36, hole 4, the owner's 30 cap): the
+  phone went slow to fast at 11 s and back at 67 s with nothing changed in
+  the game -- the phone's own state; real work at the tee about 7 ms fast,
+  35 slow (the read back is 10 of every figure). The ground slows about ten
+  times in the slow state, the trees about four. **The owner chose the
+  ground** (15 November; Phone only). **Step seven, built and not seen on
+  the phone:** the benchmark takes the ground's shading apart without a new
+  program (no shadow read, cues off, cover and detail textures as one
+  texel), marks a part read across a speed change, and the diagnostic says
+  whether float textures filter. **Seen** (03:06): the cost is the painting
+  itself (plain paint -33% from 250 m up; no shadow, cues off, no cover or
+  detail 0 to 3%); float filtering yes. **Step eight, built and not seen on
+  the phone:** the Phone ground's own program (`phoneGround`), first with
+  an exact saving -- a bunker too far off to touch a pixel skipped -- and the
+  benchmark pricing the painting's parts (the skip taken away, no hazards,
+  no mowing, no ground types). **To check:** the ground draws as before on
+  the phone (the new shader lines have been compiled nowhere else; a broken
+  or missing ground, or an error in the diagnostic, would be them); then
+  which part pays, for the cuts after. **Seen** (03:25): it compiled and
+  drew, no errors; the skip about 2%, no hazards, no mowing, no ground
+  types 2 to 4% each against plain paint's 35% -- no one part is the cost;
+  the program's size probably is (RESEARCH). A baked ground for Phone is
+  the owner's call, held while the flip is looked into. **Found:** the
+  diagnostic's fps line was the benchmark's end, never play (RESEARCH, *The
+  fps line was never play*). **Step nine, built and not seen on the
+  phone:** Watch this device (device-watch.js): a recorder of play always
+  on, probes of the phone's graphics arithmetic, graphics memory and
+  processor, and a scripted 155 s (the player's view, the flyover, rests,
+  from above). **Seen** (04:43): it ran to the end, no probe failed. Play
+  at the cap of 30: 28-30 for 40 s, then 17-25. The flip is the graphics
+  chip alone (the processor probe never moved), fast after a rest (6 s of
+  nothing drawn gave 60 for 15 s; 1 and 3 s did not) and slow under steady
+  load: a power budget, by its shape. **Step ten, built and not seen on the
+  phone or in a browser:** a 30 cap every time a phone opens; the ground
+  painted into pictures round the camera (`groundBake`, with a Graphics
+  switch on a phone); programs built in play named in the recorder.
+  **To check on the phone:** the ground draws, and looks right close up
+  (edges by the ball, greens, bunkers, the cup) and from above, with the
+  switch on and off; Measure this device's "ground without the bake"; a
+  Watch this device with three minutes' play first -- the recorder's lines
+  holding 29-30 past the first minute; which programs it names. **Seen**
+  (09:23, 09:26): the ground now costs what plain paint does (without the
+  bake +27% from 250 m up); slow-state frames 29-30 uncapped (were 21-27);
+  play at the cap 22-30, mostly 24-28. Left: the trees (-49% slow from
+  above) and hitches -- the painted ground's program is built in play at a
+  new hole (not in the loading screen's warm-ups). The owner: the painted
+  ground "looks good". **Step eleven, built and not seen on the phone:**
+  the painted ground's program built at loading (a stand-in), and Low's
+  tree rule much harder outside the hole on Phone (`lowTrees`). **To
+  check:** how the course away from the hole looks with so few trees; a
+  Watch after three minutes' play (no "built ground" in play; the lines
+  holding 29-30); Measure's "trees thinned as on Low". **Seen** (09:53, the
+  owner: "This did help"): play at 29-30 for two minutes, then 25-27; the
+  slow state uncapped 31-36, above the cap; no ground program built in
+  play. Left: the flyover's last 20 s at 20-23; hitches of 160-270 ms by
+  camera flights and panels; the look of the thinned course not yet
+  reported. **Step twelve, built and not seen on the phone:** in free
+  flight and the flyover the Phone tier keeps whole trees only 100 m round
+  the camera (Low: 250), and the recorder says what each second's slowest
+  frame did and the triangles drawn. **To check:** a Watch after three
+  minutes' play -- the flyover's last 20 s, and what the slowest frames
+  name. **Seen** (10:10): every slowest frame of play was the 512 m
+  picture's repaint (draw call 150-170 ms); the flyover still climbs to 4.7
+  M triangles at its end. **Step thirteen, built and not seen:** the far
+  pictures painted from coarser ground (its tiny triangles were the likely
+  cost), and the watch lists the heaviest things at its busiest frame.
+  **Seen** (10:22): it did not cure them (512 m 187-235 ms); the flyover's
+  busiest frame was about 150 whole crowns under the camera. **Step
+  fourteen, built and not seen:** in flight the far versions take over from
+  a crown a full screen tall; the recorder times the paint, the re-sort and
+  the main draw apart. **To check:** a Watch after three minutes' play --
+  the flyover's last 20 s, how the trees look from the flyover, and which
+  part of a hitch the milliseconds name. **Seen** (10:32): the owner, the
+  trees from above "look good"; the hitch is the painting's own call (512
+  m 79-269 ms, 128 m 86-133), the main draw 1-4 ms; the flyover 28-46.
+  **Step fifteen:** a picture repainted a band a frame into a spare and
+  swapped in. **Seen** (10:41): only a repaint's first and last bands cost
+  (80-194 ms), the six between 0-1 ms -- the cost is not the painting.
+  **Step sixteen, built and not seen:** the two near pictures without
+  mipmaps, to see whether the last band's stall goes with them. **To
+  check:** a Watch after three minutes' play -- the 128 m square's bands
+  against the 512 m's; the near ground not shimmering. Holding 45 sustained needs
+  about half the sustained frame cut.
+  **What was built, at the merge** (branch `phone-performance`, 14-15
+  November 2026): Measure this device and Watch this device (device-bench.js,
+  device-watch.js: the phone times itself, records play, probes its own
+  chip); the Phone tier, a phone's default every time it opens with a 30 fps
+  cap (graphics.js `TIERS.phone`, `PHONE_FRAME_CAP`): shadows from the far
+  versions redrawn every fourth frame, the ground in squares on every
+  course, trees kept whatever the view only 15 m round the camera, Low's
+  tree rule much harder outside the hole and in flight, half the near grass,
+  far versions sooner, a bunker skip in the ground's painter, and the
+  ground painted into pictures round the camera a band a frame
+  (ground-bake.js) with a Graphics switch; the slope grid and flow on by
+  default on every device, the grid's lines in points, the flow's speed
+  across fifteen times. Result on the owner's iPhone: play at the cap of 30
+  (from 14-20). What it left is the open entry *The phone: what the
+  phone-performance branch left*.

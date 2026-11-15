@@ -29,7 +29,7 @@ monitor. Without one, double-click `Fairway.html`. The download's own README
 [docs/INSTALLATION.md](docs/INSTALLATION.md) covers building it yourself,
 device support and serving it other ways.
 
-It lays itself out for the screen it is on, from a desktop down to a phone held either way up. On a phone, host the `dist` folder anywhere static and add the page to your home screen: it opens full screen like an app, aims with an on-screen pad or on a big map you pinch to zoom, and sizes every control for a thumb.
+It lays itself out for the screen it is on, from a desktop down to a phone held either way up. On a phone, host the `dist` folder anywhere static and add the page to your home screen: it opens full screen like an app, aims with an on-screen pad or on a big map you pinch to zoom, and sizes every control for a thumb. A phone starts on its own graphics setting, made on an iPhone to hold 30 frames a second (no Android phone has been tried).
 
 Once you are in, [docs/PLAYING.md](docs/PLAYING.md) is the manual: every
 control, every course-studio setting, and the launch-monitor walkthrough.
