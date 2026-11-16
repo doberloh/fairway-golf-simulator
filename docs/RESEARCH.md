@@ -16156,3 +16156,71 @@ ground and far trees within the noise (12 to 16 draws); the shadows' redraw
 -12% and -13% (95 and 69 draws, 2.7 and 2.0 M triangles); a quarter fewer
 pixels on each side (1,131 by 636) -3% and -8%. On this card the frame is
 draws more than pixels; a phone's own table decides what it is there.
+
+### The course's woods carried past its line (15 November 2026)
+
+edge-woods.js; the owner, looking down on the line (first in the Godot
+experiment's pictures, then the game's): "We dont blend the trees out into
+the surrounding landscape". Seed FAIRWAY, nine holes, tall trees (4 m and
+over) in the 40 m strip inside the line against the 40 m outside it:
+
+| Landscape | Inside | Outside before | Outside after |
+| --- | ---: | ---: | ---: |
+| Pacific Northwest | 1,522 | 643 (0.42) | 1,540 (1.01) |
+| Classic Parkland | 640 | 528 (0.82) | 649 (1.01) |
+| Links | 594 | 15 (0.03) | 162 (0.27) |
+
+(Links' far plants are mostly under 4 m, the landscape's own `farPlants`,
+so its count outside stays low by design.) The course's edge, eighteen
+holes, measured first against 0.75 of a grid at the stand's spacing: the
+Pacific Northwest's 32 pieces 0.72 to 0.92, Classic Parkland's 0.46 to 0.75,
+Links' 0.05 to 0.43, the Desert Resort's 0.31 to 0.54. Planted at that, the
+outside came to 1.22 and 1.20 of the inside, so the full mark became `keep`
+(0.9 of the grid), which is what a share planted past the line comes to:
+every share above is five sixths of what it now reads. Far sites on
+eighteen holes, Ultra's settings: the Pacific Northwest 142,440 to 146,691
+(+3%), Classic Parkland 128,602 to 129,250, Links 7,276 to 9,733, the Desert
+Resort 6,163 to 7,663; the wait to build them unchanged within the noise
+(0.58 s and 0.59 s). **PLACED**: the 45 m strip, eight pieces a side, the
+180 m band (its fade starting 27 m out), the 90 m wander on 90 m cells, the
+corner blended over 60 m.
+
+**On the card** (tools/frame-ab.mjs, the build before against the build
+after, alternately, Pacific Northwest, 4090; bench/ab/, not committed):
+Ultra, two rounds, tees 1, 5 and 9 and 250 m up: the frame 5.09 ms before
+and 5.07 after, every spot within 3% either way, triangles +0.1% at most,
+the course's load 16.58 s and 16.53 s. Low, three rounds, tees 1 and 9 and
+250 m up: 1.20 ms and 1.17 ms; at full clock 0.75/0.74, 0.68/0.69 and
+0.61/0.60 ms. (A first Low run of two rounds read the new build's card
+time 27% higher at two tees, but each of those spots had one run equal to
+the old build's to the hundredth: the card's clock, gone in the three-round
+repeat.) No cost to measure on either tier.
+
+## The Godot experiment, stopped (15 November 2026)
+
+One hole of the Pacific Northwest drawn by Godot 4.7.2 (Forward+, Vulkan,
+the owner's RTX 4090) from a course the game exported, on the branch
+`godot-experiment`, which is kept and not merged. The owner stopped it
+after six rounds. Its journal is docs/history/GODOT_EXPERIMENT.md; the
+figures a later attempt needs:
+
+- **Not faster on the PC.** On the same spots and frame rules (vsync off,
+  the median frame; 1920x1080): the game's Ultra 2.6 to 7.8 ms at five
+  midday spots (1.5 to 8.3 over fifteen spot-and-hour shots); Godot with
+  everything on 6.4 to 10.2 ms over the fifteen; Godot stripped to about
+  the game's own features 4.0 to 6.2 ms at the five -- faster at three
+  spots, slower at two, while still drawing grass and full-detail trees the
+  game does not. The owner had expected "massive" gains; none were found.
+  The phone was never measured (a native iPhone build needs a Mac).
+- **Better light where it matters to the owner**: bounce light, soft
+  shadows and light through mist at dawn and dusk, which WebGL cannot do
+  (the owner: "The lighting is clearly more capable in godot"). Level or
+  behind at midday and from above, where the art carries the picture.
+- **Only on a PC.** Godot's web export and its phone renderer lack most of
+  what made the difference (bounce light, volumetric fog, SSR); an iPhone
+  build needs the App Store and a Mac.
+- **The cost of a move**, estimated for the owner on 15 November 2026: about
+  3 to 6 months for a PC edition keeping the JavaScript game as its brain,
+  9 to 15 for a full rewrite, and two front ends to keep alike from then on.
+- **What came back to the game**: the course's woods carried past its line
+  (above), found by looking at the Godot pictures.

@@ -412,14 +412,35 @@ order, how a hole and the round are won, which groups are refused) rather than
 loosening the check. The owner cannot play four-golfer rounds quickly; this is
 what stands in for it.
 
-## Check what an edit script wrote
+## Files are edited with the editor tools, never with shell one-liners
 
-Scripts that edit files here (heredocs, `node -e`, Python strings, `String.raw`)
-mangle backslashes and backticks, sometimes silently. **After an edit made by a
-script, search the touched files** for a backslash beside a backtick and for
-regex classes that lost their backslash (`d{`, `s+`, `w+` inside `/.../`). In
-regexes a script writes, prefer `[0-9]` to `\d`. Write the script with an editor
-tool, never through a heredoc, when it holds backticks or backslashes.
+**Every change to a file goes through the Edit or Write tool.** No `sed -i`,
+`node -e`, `python -c`, PowerShell `-replace`, or heredoc that writes a file.
+A shell reads the text before the script does: inside double quotes, a
+backtick runs whatever it encloses as a command, `\f` becomes an invisible
+character, and backslashes vanish or double. The edit then fails, or
+silently writes something else.
+
+This was broken over and over by packing several edits into one
+`node -e "..."` to save a step. On 15 November 2026 alone, a `node -e`
+holding a doc's backticks ran stray commands twice, one of them a stray
+course export. The same kind of command wrote an invisible character where
+`godot\fly.cmd` should have been, and a `sed` silently did nothing.
+RULES_HISTORY.md, *Edit scripts*, has the earlier incidents.
+
+- **Many edits to one file:** one Edit call each, sent together in one
+  message. No more round trips than a script, and nothing mangled.
+- **A real transformation** (hundreds of lines, generated data): write the
+  script to a file with Write, run it with `node <file>`, then read back what
+  it wrote.
+- **Shell commands stay for running things:** builds, tests, renders, git,
+  reading. Never for writing a file, even "just one quick sed".
+- **Commit messages** go in a file written with Write (`git commit -F
+  <file>`). A `-m` string with backticks or backslashes is the same trap.
+- **After any scripted write**, search the touched files for a backslash
+  beside a backtick, control characters, and regex classes that lost their
+  backslash (`d{`, `s+`, `w+` inside `/.../`). In regexes a script writes,
+  prefer `[0-9]` to `\d`.
 
 ## Measure with `tools/bench.mjs`, not a throwaway script
 

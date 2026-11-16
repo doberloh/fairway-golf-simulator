@@ -157,33 +157,6 @@ open list before the 11 November 2026 prune*.
 
 ## Under the hood
 
-- **A native Godot version, tried on one hole first -- not a full move.**
-  The owner asked (15 November 2026) whether converting to Godot would do
-  better in the long run, with higher fidelity on every tier including
-  Ultra. Godot 4's desktop renderer talks to the card directly and has what
-  WebGL in a browser lacks (softer shadows, bounce light, volumetric fog,
-  screen-space reflections, modern anti-aliasing and upscaling, automatic
-  level of detail and occlusion, grass on the graphics card), and a native
-  iPhone app skips the browser's layers (the benchmark's 10 ms read back,
-  WebGL translated to Metal) and can read the phone's heat state to ease
-  off before it throttles. It would not stop the iPhone changing speed by
-  itself (RESEARCH, *The hold, on the iPhone*), and the cartoon look gains
-  from those features only once re-tuned for them. **Against a full move:**
-  it would lose the offline single file, the browser demo and opening a
-  link on a phone (Godot's web export is a large download on its weakest
-  renderer), put the iPhone behind the App Store, and make every seed and
-  course code produce different ground unless the generator were ported to
-  the last decimal; the ground shader, materials, menus, Course Builder,
-  sounds, launch-monitor bridge and 1,632 tests would all be rewritten, and
-  checking the look needs the card. **The test instead:** keep the
-  JavaScript game (generation, physics, rules, tests) as the one source of
-  truth, let Godot only draw a course it is handed, build one hole of one
-  landscape, and measure it on the owner's PC and iPhone against the current
-  game. A middle path for Ultra alone: three.js's WebGPU renderer (compute
-  in the browser), but materials rewritten in its node language and found
-  slower for scenes of many meshes. Large for the test, very large for a
-  move. (Claude's opinion, asked by the owner, 15 November 2026; not built)
-
 - **Near shadows cast by a tree's middle version.** In the nearest shadow
   map a tree drawn whole is cast whole; its middle version would cast for a
   third of the triangles (7.5 of 34 million at a large-screen tee). The
@@ -407,4 +380,5 @@ One line each: the idea, when, and the owner's reason.
 
 - **Leaderboards for the course of the week** (20 October 2026). Scrapped by the owner after seeing the three ways to do it: friends' scores swapped as codes, a public board on the website (a service to run and moderate), or the game posting scores itself (breaks "nothing ever sent anywhere").
 - **Networked multiplayer** (20 October 2026). The owner wanted it with no servers of their own; across the internet that still needs an address-check service, or a relay for about one connection in ten, and Netlify cannot be the relay (no lasting connections; a free site over its limit is suspended for the month). The owner picked *Challenge a friend by code* instead (now built, TODO *Challenge a friend*) and does not expect to ask again. The study is `docs/reports/MULTIPLAYER_FEASIBILITY.md` (local); RESEARCH *Challenge a friend* has the Netlify sources.
+- **A native Godot version** (15 November 2026). Tried on one hole of the Pacific Northwest over six rounds (branch `godot-experiment`, kept, not merged; docs/history/GODOT_EXPERIMENT.md). The light was "clearly more capable", but it was not faster on the PC, most of its gains vanish in a browser and on a phone, and the estimate for a PC edition was 3 to 6 months plus two front ends to keep alike forever. The owner stopped it: "Lets abort the godot experiment entirely". What it found for the game came back alone (the course's woods carried past its line; RESEARCH, *The Godot experiment, stopped*).
 - **A rock-built waterfall for Desert Resort** (5 November 2026). Offered after the landscape was built, for the waterfalls at Wynn, Southern Highlands and Canyon Gate. The owner declined: "No rock waterfalls please." No reason given.

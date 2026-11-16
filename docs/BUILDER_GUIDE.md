@@ -197,7 +197,10 @@ horizon.
   of their usual height to twice it.
 - **Trees**: how wooded the land round the course is -- As the landscape, No
   trees, A few, Half wooded or Thick woods. The trees are the landscape's own
-  kinds.
+  kinds. Just past your property line the woods follow your own course's
+  edge -- thick where your trees reach the line, open where they do not --
+  and blend into the setting you chose over the next couple of hundred
+  metres. No trees means none at all, your edge included.
 
 It is scenery. Nothing on your course changes, and water on a side stands
 below the lowest of your land, so it never floods a hole. Press **Game view** (G) to see it. It is saved with the

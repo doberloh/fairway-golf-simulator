@@ -138,7 +138,7 @@ to"; surround-sides.js, docs/SURROUNDINGS.md). An optional field of the course:
 | --- | --- | --- |
 | `sides.n`, `sides.e`, `sides.s`, `sides.w` | `auto`, `flat`, `hills`, `range`, `mountain`, `mesas`, `sea`, `islands`, `lake` | What stands past the property line on that side. North is -z and east +x, as the plan is drawn. `auto` is whatever the landscape raises there. An unknown kind reads as `auto` |
 | `height` | 0.3 to 2, default 1 | Scales the hills (160 m), a range (850 m), the one mountain (900 m) and mesas (240 m). Out of range is held to the range |
-| `cover` | 0 to 1, optional | How wooded the land round the course is, over the landscape's own. 0 is no trees. Absent: the landscape's |
+| `cover` | 0 to 1, optional | How wooded the land round the course is, over the landscape's own. 0 is no trees. Absent: the landscape's. Within 180 m of the line the course's own edge holds first and gives way to this (edge-woods.js; since 15 November 2026); at 0 the edge carries nothing |
 
 - **Absent when it changes nothing.** Every side `auto`, height 1 and no
   cover is no record (`normaliseSurround` returns null), so the field is left

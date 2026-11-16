@@ -56,6 +56,7 @@ wrong, unfinished, or owed a check.
 
 ## Known wrong
 
+
 - [ ] **The grass should be darker on every landscape** (the owner, 15
   November 2026, looking at the painted ground on the iPhone: "overall
   across all biomes i want the grass to be darker. Lets make it a todo").
@@ -203,9 +204,14 @@ wrong, unfinished, or owed a check.
 Hardware, browsers and hands the development machine does not have. Nothing
 here is a claim of support until it is done.
 
-- [ ] **Play the current build by hand** (0.9.16, 15 November 2026). What has
+- [ ] **Play the current build by hand** (0.9.17, 15 November 2026). What has
   been built and seen only in captures, measurements or smoke runs, and still
   exists in the game. The archive has each item's full list.
+  - **The woods past the property line** (0.9.17; seen in captures of all
+    fifteen landscapes and one built course, DONE *The course's woods
+    carried past its line*): a round played near the boundary on a wooded
+    landscape, on the PC and the Phone setting; a built course with Trees
+    set to No trees.
   - **The phone** (0.9.16; played on the owner's iPhone, Pacific Northwest
     and Redwood Coast only, and the owner signed off the painted ground, the
     trees from above and the green lines): the Phone setting on the other

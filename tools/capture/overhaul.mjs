@@ -465,6 +465,12 @@ export const VIEWS = [
  {name: 'far-out', hole: 0, when: 'afternoon', caption: 'Past the property line, 45 m up, looking out (south)', cam: `w => ({x: -w.halfX * .2, z: -(w.halfZ + 40), yaw: 180, height: 45, pitch: -4})`},
  {name: 'far-side', hole: 0, when: 'afternoon', caption: 'Past the property line, 45 m up, looking out (west)', cam: `w => ({x: -(w.halfX + 40), z: w.halfZ * .2, yaw: 270, height: 45, pitch: -4})`},
  {name: 'far-high', hole: 0, when: 'afternoon', caption: 'High over the course\'s edge, the land receding', cam: `w => ({x: -w.halfX * .3, z: -w.halfZ * .6, yaw: 200, height: 160, pitch: -9})`},
+ // THE COURSE'S WOODS PAST ITS LINE (edge-woods.js, 15 November 2026): the
+ // owner saw the course's woods stop dead at the line from high outside it.
+ // One view from there, looking back across the line, and one from just
+ // inside it, looking out.
+ {name: 'line-back', hole: 0, when: 'afternoon', caption: 'High past the property line, looking back across it', cam: `w => ({x: w.halfX + 260, z: w.halfZ * .1, yaw: 270, height: 140, pitch: -18})`},
+ {name: 'line-across', hole: 0, when: 'afternoon', caption: '75 m up just inside the property line, looking out across it', cam: `w => ({x: w.halfX - 90, z: -w.halfZ * .2, yaw: 90, height: 75, pitch: -14})`},
  {name: 'overview', hole: 0, when: 'noon', caption: 'The whole course, noon', cam: `w => ({x: -w.halfX * .2, z: -w.halfZ * 1.05, yaw: 15, height: 240, pitch: -26})`},
  {name: 'overview-golden', hole: 0, when: 'golden', caption: 'The whole course, golden hour', cam: `w => ({x: -w.halfX * .2, z: -w.halfZ * 1.05, yaw: 15, height: 240, pitch: -26})`},
 ];

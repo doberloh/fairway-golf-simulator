@@ -38,6 +38,7 @@ import {standsOf, choose} from './stands.js';
 import {GROUND_PLANTS, TREE_SIZE, tallHeight} from './species.js';
 import {fbm, hash, saltOf} from './landforms.js';
 import {allows} from './grounds.js';
+import {edgeWoods, edgeFade, edgeShares, EDGE_WOODS} from './edge-woods.js';
 
 const smooth = (a, b, t) => { const u = Math.max(0, Math.min(1, (t - a) / (b - a))); return u * u * (3 - 2 * u); };
 const boxOut = (x, z, hx, hz) => Math.hypot(Math.max(0, Math.abs(x) - hx), Math.max(0, Math.abs(z) - hz));
@@ -129,6 +130,20 @@ export function coverField(bio, seed, own) {
  };
 }
 
+// THE COURSE'S EDGE (edge-woods.js), measured once a course against its
+// stand's spacing: what the surroundings plant by, and what the ground's
+// paint is handed (ground.js farEdge) to lay the forest floor by.
+const EDGES = new WeakMap();
+// (A built course that asks for no trees round it -- its surround's cover 0 --
+// gets none carried out either: its edge reads open.)
+export function courseEdge(w) {
+ if (!EDGES.has(w)) {
+  const st = w.settings.range ? null : standsOf(biomeOf(w.settings.biome), w.seed), none = (w.surround?.cover ?? 1) <= 0;
+  EDGES.set(w, none ? new Float32Array(4 * EDGE_WOODS.segs) : edgeShares(w, st?.spacing ?? 12, EDGE_WOODS, SURROUND_TREES.keep));
+ }
+ return EDGES.get(w);
+}
+
 const CACHE = new WeakMap();
 // {near: [tree records], far: [{x, z, y, h, r, kind, pick, grow}]}
 export function surroundTrees(w, options = {}) {
@@ -155,6 +170,26 @@ export function surroundTrees(w, options = {}) {
  const salt = saltOf(w.seed, 'surround-site');
  // The spacing wanted `d` metres past the line, in stand spacings.
  const rel = d => 1 + Math.max(0, d - o.near) / o.fall;
+ // THE COURSE'S WOODS CARRY ON PAST ITS LINE (edge-woods.js): near the line
+ // the cover is the course's own edge, giving way to the country's.
+ const sp = Math.min(s0, stands?.spacing ?? s0), woods = edgeWoods(w, courseEdge(w), cover);
+ // One site, `d` metres past the line, its numbers `u`: planted unless the
+ // ground, the water, the treeline or the cover says not.
+ const plant = (x, z, d, want, u) => {
+  if (u(7) >= woods(x, z)) return;
+  const inside = Math.abs(x) < gx && Math.abs(z) < gz, y = inside ? w.height(x, z) : at(x, z);
+  if (y < level + (sea ? .8 : .5)) return;
+  if (y - base > line - 60 && u(8) > (line + 20 - (y - base)) / 80) return;   // thinning up to the treeline
+  if (inside) { const lie = w.surface(x, z); if (lie === 'water' || !allows(lie, 'trees')) return; }
+  // A steep face (FAR_STEEP says what changed and why): the first way
+  // that is too steep ends it, so most steep sites cost one or two asks.
+  const hAt = inside ? w.height : at;
+  for (const [ax, az] of WAYS) if (Math.abs(hAt(x + ax * STEEP_STEP, z + az * STEEP_STEP) - y) > FAR_STEEP * STEEP_STEP) return;
+  const kind = choose(mix, u(2)), small = GROUND_PLANTS.has(kind), size = sizeOf(kind, u(3), u(4)), k = small ? 1 : grow, h = size.h * k, r = size.r * k;
+  if (d < o.near && inside) { out.near.push({x, z, y, h, r, shade: u(5), kind, surround: true, d}); return; }
+  if (h < 3 && d > SMALL_REACH) return;
+  out.far.push({x, z, y, h, r, kind, pick: u(5), grow: farGrowth(want), d});
+ };
  // BANDS, each with a grid of its own: twice as coarse each time the wanted
  // spacing doubles, so the walk visits about as many cells as it keeps.
  for (let band = 0, d0 = 0; d0 < o.reach; band++) {
@@ -165,25 +200,30 @@ export function surroundTrees(w, options = {}) {
    const x = -ex + (i + .1 + .8 * u(0)) * cell, z = -ez + (j + .1 + .8 * u(1)) * cell, d = boxOut(x, z, px, pz);
    if (d <= 1 || d < d0 || d >= d1) continue;
    // Thinned to the spacing wanted here (this band's cells are `2 ** band` spacings).
-   const want = rel(d), share = o.keep * (2 ** band / want) ** 2;
-   if (u(6) >= share) continue;
-   if (u(7) >= cover(x, z)) continue;
-   const inside = Math.abs(x) < gx && Math.abs(z) < gz, y = inside ? w.height(x, z) : at(x, z);
-   if (y < level + (sea ? .8 : .5)) continue;
-   if (y - base > line - 60 && u(8) > (line + 20 - (y - base)) / 80) continue;   // thinning up to the treeline
-   if (inside) { const lie = w.surface(x, z); if (lie === 'water' || !allows(lie, 'trees')) continue; }
-   // A steep face (FAR_STEEP says what changed and why): the first way
-   // that is too steep ends it, so most steep sites cost one or two asks.
-   const hAt = inside ? w.height : at;
-   let steep = false;
-   for (const [ax, az] of WAYS) if (Math.abs(hAt(x + ax * STEEP_STEP, z + az * STEEP_STEP) - y) > FAR_STEEP * STEEP_STEP) { steep = true; break; }
-   if (steep) continue;
-   const kind = choose(mix, u(2)), small = GROUND_PLANTS.has(kind), size = sizeOf(kind, u(3), u(4)), k = small ? 1 : grow, h = size.h * k, r = size.r * k;
-   if (d < o.near && inside) { out.near.push({x, z, y, h, r, shade: u(5), kind, surround: true, d}); continue; }
-   if (h < 3 && d > SMALL_REACH) continue;
-   out.far.push({x, z, y, h, r, kind, pick: u(5), grow: farGrowth(want), d});
+   const want = rel(d);
+   if (u(6) >= o.keep * (2 ** band / want) ** 2) continue;
+   plant(x, z, d, want, u);
   }
   d0 = d1;
+ }
+ // AT THE STAND'S OWN SPACING NEAR THE LINE. The bands start at 12 m apart; a
+ // stand inside is laid closer (a Pacific Northwest one 7 m), and the woods
+ // thinned to a third at the line. A grid of the stand's spacing over the
+ // band makes up the difference, fading out as the course's hold on the cover
+ // does (edge-woods.js edgeFade), so the density eases from the stand's to the
+ // country's. (A Pacific Northwest 18-hole course: about 10,000 more sites,
+ // pictures all.)
+ if (sp < s0) {
+  const B = EDGE_WOODS.band * 1.6, ex = px + B, ez = pz + B, nx = Math.ceil(2 * ex / sp), nz = Math.ceil(2 * ez / sp), esalt = salt + 7 * 104729, extra = 1 - (sp / s0) ** 2;
+  for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) {
+   const x = -ex + (i + .5) * sp, z = -ez + (j + .5) * sp, d0 = boxOut(x, z, px, pz);
+   if (d0 <= 0 || d0 >= B) continue;
+   const u = k => hash(i, j, esalt + k * 7919);
+   const jx = x + (u(0) - .5) * .8 * sp, jz = z + (u(1) - .5) * .8 * sp, d = boxOut(jx, jz, px, pz);
+   if (d <= 1 || d >= B) continue;
+   if (u(6) >= o.keep * extra * (1 - edgeFade(jx, jz, d))) continue;
+   plant(jx, jz, d, rel(d), u);
+  }
  }
  // Only the nearest `nearMax` of the band as real models; the others as pictures.
  if (out.near.length > o.nearMax) {

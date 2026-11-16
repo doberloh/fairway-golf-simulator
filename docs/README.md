@@ -79,7 +79,10 @@ the change that made it stale, not a follow-up.
   the owner's lists after playing), and, from 14 November 2026,
   [history/SURROUNDINGS.md](history/SURROUNDINGS.md) (every round of the
   surroundings and of the frame-rate pass, the sweeps, the lost graphics
-  card). Searched when asking why something was
+  card), and, from 15 November 2026,
+  [history/GODOT_EXPERIMENT.md](history/GODOT_EXPERIMENT.md) (one hole drawn
+  by Godot 4, six rounds, the timings and the look inventory; stopped by the
+  owner, never merged). Searched when asking why something was
   done; not kept up with the game.
 - **[TESTING.md](TESTING.md)** — the four layers of testing (Node suites,
   generator checks, the smoke test, the frame profile), what each can and

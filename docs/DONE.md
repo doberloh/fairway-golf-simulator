@@ -8492,3 +8492,26 @@ version, a cheaper far ground from above (IDEAS.md).
   the branch that does). Ask the owner; it uses the graphics card.
   **Run** (15 November 2026, the owner's word, through tools/gpu-run.mjs
   with the card watched): all 41 journeys passed in 914 s on build e35c6cc1.
+
+## The course's woods carried past its line (15 November 2026; released in 0.9.17)
+
+- [x] **The course's woods carried past its line: not yet seen in play**
+  (15 November 2026; src/edge-woods.js). Built on the Godot experiment's
+  branch and brought to `course-edge-woods` alone when the experiment
+  stopped. **Looked at** (15 November 2026, the owner's word: "run the checks
+  for the other landscapes"): `tools/capture/overhaul.mjs` with two new
+  views, `line-back` (high past the line, looking back) and `line-across`
+  (75 m up just inside it), and `edge-eye`, on all fifteen landscapes, seed
+  `overhaul`, against main's 0.9.16 build. Redwood Coast, Pacific Northwest,
+  Northern Woods, Classic Parkland, Southern Pines and the Gulf Coast carry
+  their woods past the line where a ruled edge of trees against meadow
+  stood; Mountain gains trees at the foot of its cliffs; the Desert Resort
+  and the Prairie a light scatter on open ground, as their own edges are;
+  Hawaii, the California Coast, Seaside and Florida look out over the sea
+  on that side, the Badlands and Desert Mountain over bare rock -- unchanged,
+  as they should be. A built course (Ekwanok, bench/courses) carries its
+  woods past its line the same way. No page error in any. A built course
+  asking for no trees round it was not photographed: its open edge is held
+  by tests/surround-built.test.mjs (cover 0 is no trees at all). The
+  builder guide shows no 3D view of the line, so none of its pictures was
+  retaken. What is left, playing it, is in *Play the current build by hand*.
