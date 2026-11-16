@@ -12,6 +12,8 @@ import {TURF_DETAIL} from './turf-detail.js';
 import {FIELD_RANGE} from './surface-field.js';
 import {BUILT_FIELD} from './built-world.js';
 import {GROUNDS,GROUND_TINT} from './grounds.js';
+import {courseEdge} from './surround.js';
+import {edgeUniform,EDGE_WOODS} from './edge-woods.js';
 
 // The turf detail atlas (tools/turf-detail.mjs) as a texture: tiling, mip-
 // mapped and sharp at a glancing angle. Data, not colour, so no sRGB step.
@@ -383,7 +385,10 @@ export function groundMaterial(view,palette){
    speckleRock:{value:bio.speckleRock?1:0},altitudeRock:{value:bio.altitudeRock?1:0},litterAmount:{value:bio.litter?1:0},litterVary:{value:bio.litterVary??1},seaBeach:{value:bio.sea?1:0},seaAt:{value:bio.sea?w.waterLevel??0:0},beachOwn:{value:bio.beachTint?1:0},beachTint:{value:new T.Color(bio.beachTint||"#000000")},blowoutOn:{value:blow?1:0},
    // The overhaul's ground types: which type each channel holds (GROUND_CODE),
    // the gate each starts at, and the colours they paint with.
-   ...wildUniforms(w,!!wild,!!fallen),field:{value:fieldTex},fieldOn:{value:sandField&&!built?1:0},builtB:{value:builtBTex},builtFringe:{value:w.settings.fringe??2},gt_path:{value:new T.Color(w.bio.mapTurf?.path??GROUNDS.path.map)},gt_road:{value:new T.Color(GROUNDS.road.map)},...farForestUniforms(bio,view.quality?.surround?.reach??5000,w.surround?.cover),farProp:{value:new T.Vector2(w.halfX,w.halfZ)}});
+   ...wildUniforms(w,!!wild,!!fallen),field:{value:fieldTex},fieldOn:{value:sandField&&!built?1:0},builtB:{value:builtBTex},builtFringe:{value:w.settings.fringe??2},gt_path:{value:new T.Color(w.bio.mapTurf?.path??GROUNDS.path.map)},gt_road:{value:new T.Color(GROUNDS.road.map)},...farForestUniforms(bio,view.quality?.surround?.reach??5000,w.surround?.cover),farProp:{value:new T.Vector2(w.halfX,w.halfZ)},
+   // How wooded the course is along each side of its line (edge-woods.js): the
+   // floor past the line carries the course's woods out as surround.js plants them.
+   farEdge:{value:edgeUniform(courseEdge(w)).map(v=>new T.Vector4(...v))}});
  shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 groundPoint;varying vec3 groundNormal;\nattribute float localRelief;varying float vRelief;attribute float farShade;varying float vFarShade;').replace('#include <begin_vertex>','#include <begin_vertex>\ngroundPoint=position;groundNormal=normal;vRelief=localRelief;vFarShade=farShade;');
  shader.fragmentShader=shader.fragmentShader.replace('#include <common>',`#include <common>
  varying float vRelief;varying float vFarShade;uniform vec4 cragShape,cragGreen;uniform float farSnow;uniform float cueRelief,cueSlope,cueContours,cueStripes,cuePatches,cueShade,cueSheen,greenLift,greenBend,greenBandSoft;
@@ -391,7 +396,7 @@ export function groundMaterial(view,palette){
 #ifdef GROUND_BAKE
  uniform vec3 bakeEye;
 #endif
- uniform float farOn,farPaint,farCover,farLine,farSize,farSea,farReach,farOpen;uniform vec3 farC0,farC1,farC2,farC3;uniform vec2 farProp;
+ uniform float farOn,farPaint,farCover,farLine,farSize,farSea,farReach,farOpen;uniform vec3 farC0,farC1,farC2,farC3;uniform vec2 farProp;uniform vec4 farEdge[8];
  // The same rounded box course.js uses, so paint and lie cannot disagree
 // about where a tee is.
 float teeBox(vec2 d,vec2 h,float r){vec2 q=abs(d)-h+r;return length(max(q,vec2(0.)))+min(max(q.x,q.y),0.)-r;}
@@ -426,6 +431,12 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  // a few away from the middle -- the first round's trees stood beside the
  // floor painted for them. Integer arithmetic is the same everywhere.
  float coverHash(vec2 c){ivec2 q=ivec2(c);uint h=uint(q.x)*374761393u+uint(q.y)*668265263u;h=(h^(h>>13u))*1274126177u;h^=h>>16u;return float(h&65535u)/65536.;}
+ // THE COURSE'S WOODS PAST ITS LINE (edge-woods.js, written out the same):
+ // the course's share wooded at the nearest point of its line, and how far the
+ // country's own pattern has taken over, along a wandering edge.
+ float edgeAlong(int s,float t){float u=clamp(t*${EDGE_WOODS.segs}.-.5,0.,${EDGE_WOODS.segs - 1}.);int i=int(floor(u)),j=min(${EDGE_WOODS.segs - 1},i+1);return mix(farEdge[s*2+(i>>2)][i&3],farEdge[s*2+(j>>2)][j&3],u-float(i));}
+ float edgeShare(vec2 p){vec2 q=abs(p)-farProp;float sx=edgeAlong(p.x>0.?0:1,clamp((p.y+farProp.y)/(2.*farProp.y),0.,1.)),sz=edgeAlong(p.y>0.?2:3,clamp((p.x+farProp.x)/(2.*farProp.x),0.,1.));return mix(sz,sx,smoothstep(-30.,30.,q.x-q.y));}
+ float edgeFade(vec2 p,float d){vec2 c=floor(p/${EDGE_WOODS.cell}.),f=fract(p/${EDGE_WOODS.cell}.);f=f*f*(3.-2.*f);float a=coverHash(c+vec2(17.,5.)),b=coverHash(c+vec2(18.,5.)),e=coverHash(c+vec2(17.,6.)),g=coverHash(c+vec2(18.,6.));float n=mix(mix(a,b,f.x),mix(e,g,f.x),f.y);return smoothstep(0.,1.,(d-${(EDGE_WOODS.band * .15).toFixed(2)}+${EDGE_WOODS.ragged * 2}.*(n-.5))/${EDGE_WOODS.band}.);}
  float patchNoise(vec2 x){vec2 i=floor(x),f=fract(x);f=f*f*(3.-2.*f);return mix(mix(hashGround(i),hashGround(i+vec2(1.,0.)),f.x),mix(hashGround(i+vec2(0.,1.)),hashGround(i+vec2(1.,1.)),f.x),f.y);}
  // The bed a height lies in (strataUniforms): level, a little warped so a
  // bed is not ruled, its colour by a hash of its number.
@@ -1601,7 +1612,12 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
    float broad=mix(mix(n00,n10,pf.x),mix(n01,n11,pf.x),pf.y);
    vec2 oq=ww/900.+31.7,oi=floor(oq),ofr=fract(oq);ofr=ofr*ofr*(3.-2.*ofr);
    float openN=mix(mix(coverHash(oi),coverHash(oi+vec2(1.,0.)),ofr.x),mix(coverHash(oi+vec2(0.,1.)),coverHash(oi+vec2(1.,1.)),ofr.x),ofr.y);
-   float mask=smoothstep(0.,40.,outside)*smoothstep(farOpen-.06,farOpen+.06,openN)*smoothstep(1.-farCover-.12,1.-farCover+.12,broad)*(1.-smoothstep(farLine-60.,farLine+40.,groundPoint.y-heightBase));
+   float woods=smoothstep(farOpen-.06,farOpen+.06,openN)*smoothstep(1.-farCover-.12,1.-farCover+.12,broad);
+   // (15 November 2026: near the line the course's own woods carry on, giving
+   // way to the country's pattern -- edge-woods.js. Until then they stopped
+   // dead at the line, the owner: "We dont blend the trees out".)
+   if(outside<${(EDGE_WOODS.band * 1.6).toFixed(1)})woods=mix(edgeShare(wp),woods,edgeFade(wp,outside));
+   float mask=smoothstep(0.,40.,outside)*woods*(1.-smoothstep(farLine-60.,farLine+40.,groundPoint.y-heightBase));
    // No forest on a cliff: the pattern is laid from above and stretches into
    // scales on steep ground, and real woods stop at the rock anyway.
    // Round 6 of the far landscape: on the far ring the facets are hundreds of
@@ -1667,5 +1683,5 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  return;
 #endif
  `);
- };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v86';return m;
+ };m.customProgramCacheKey=()=> 'continuous-cartoon-ground-v87';return m;
 }

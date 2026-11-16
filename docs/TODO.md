@@ -56,6 +56,19 @@ wrong, unfinished, or owed a check.
 
 ## Known wrong
 
+- [ ] **The course's woods carried past its line: not yet seen in play**
+  (15 November 2026; src/edge-woods.js). Built, held by
+  tests/edge-woods.test.mjs, measured on the card (no cost on Ultra or Low;
+  RESEARCH, *The course's woods carried past its line*), and the smoke
+  journeys run on the Godot branch's build of it: 39 of 40 on the first run,
+  `no-late-shaders` failing while a Godot window held 90% of the card,
+  passed alone right after. Seen only in two captures of the Pacific
+  Northwest at noon, taken on that branch from high past the line and from
+  75 m up just inside it. Owed: a look at the line on the other landscapes,
+  a built course with cover 0 among them, and the builder guide's Game view
+  pictures retaken if the line shows in them
+  (`tools/capture/builder-guide.mjs`).
+
 - [ ] **The grass should be darker on every landscape** (the owner, 15
   November 2026, looking at the painted ground on the iPhone: "overall
   across all biomes i want the grass to be darker. Lets make it a todo").

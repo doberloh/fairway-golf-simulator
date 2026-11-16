@@ -397,12 +397,18 @@ order:
    above the treeline (the far forest's `line`, or the landscape's own
    `farLine`: Desert Mountain is bare from 250 m over the course, the
    Desert Resort's range from 320); a desert's or a links' scrub in thin
-   clumps. Each is
+   clumps. **Near the line they carry on the course's own woods** (15
+   November 2026, edge-woods.js): how wooded a strip 45 m inside the line is,
+   eight pieces a side, holds for the first 180 m past it and gives way to
+   the country's pattern along an edge that wanders 90 m either way; there the
+   trees stand at the stand's own spacing, fading to the 12 m grid, so the
+   woods are as thick just outside the line as just inside it. Each is
    drawn as an upright picture of the course's own model (far-trees.js). On
    seed FAIRWAY, Ultra: 129,000 on Classic Parkland.
 5. **The paint** (ground.js): the far ground toned by three broad noises
    (610, 173 and 47 m) so no hillside is one colour; under the trees a plain
-   forest floor, by the same patches the trees were placed by; past the
+   forest floor, by the same patches the trees were placed by (and the same
+   carried edge, handed to the shader as `farEdge`); past the
    trees' reach, the canopy's own colour.
 
 Until the rework the trees past the line were the far woods (clusters,
