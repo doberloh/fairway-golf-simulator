@@ -7530,14 +7530,22 @@ overswing) and Space as a swing key are gone.
   its spot after its moved"). The **Swing** button in the swing box opens and
   closes a panel with a fixed strike line, aim line, ruler and shot cells; a
   press anywhere in it starts a stroke. It is dragged by its header and kept
-  where it was left in `localStorage` (`fairway-swing-pad-v1`), once per way
+  where it was left in `localStorage` (`fairway-swing-pad-v2`; v1's places
+  were let go when a phone's pad moved to the foot), once per way
   of holding the screen (wider than tall, or not), and whether it was open.
   Its size is the screen's: **40% of its height, 220 to 420 px, a full pull
   of (height - 36) / 1.82 -- about a fifth of the screen -- and 1.5 full
   pulls wide (PLACED)**; at half the height and 1.75 pulls wide it took the
   whole width of an upright phone in the first smoke pictures and covered
-  its stroke report. It opens at the left, 14% of the way down: on the right
-  it sat over the tool column and the map. It sits above all of `#app`, so
+  its stroke report. On a big screen it opens at the left, 14% of the way
+  down: on the right it sat over the tool column and the map. **On a phone it
+  opens at the foot, 16 px clear of the edge (PLACED), and has the foot to
+  itself** (the owner, 16 November 2026: "when the push pull UI is up, close
+  all the UI elements on the bottom of the screen and only have the shot UI
+  on the screen ... When the shot ui dissappears, bring everything back"):
+  the swing box, the club box, the aim pad and the upright Menu bar hide
+  while it shows and come back when it shuts. So the club and spin are set
+  before the pad is opened; the pad's ✕ closes it to change them. It sits above all of `#app`, so
   it steps aside while the tools tray, a sheet, the big map, the keys, the
   shot list or a notice is open (the first phone run had it over Sim drop). It sits in `<body>`, outside `#app`, so the Text
   size zoom does not bend its pixels.
@@ -7714,7 +7722,15 @@ about 8 degrees each side of the aim line and its perfect band about 2; Easy
   (the push's ratio to the ideal on a log scale, the zone's edges at the
   ends of its gold band, the perfect band green, the push's time beside the
   ideal's, and the backswing's time with its ratio to the push). Kept until
-  the next stroke. **The path is kept too** (the owner: "allow the user to
+  the next stroke. **Where it sits** (the owner, 16 November 2026: "we now
+  have sort of two sets of data ... remove [carry, total, apex] and move the
+  tempo box and the pull, line, start, height, spin boxes down to fill that
+  gap"): the chips are a row just above the Spin and Swing buttons and the
+  tempo box is the first cell of their row, where carry, total and apex were;
+  those three are no longer on screen on the Swing Meter (the shot list
+  keeps them). Rejected: the chips and the tempo together beside the
+  buttons -- on a phone the chips then wrapped to three rows in a cell about
+  220 px wide and the box grew taller than before. **The path is kept too** (the owner: "allow the user to
   see the pull and push path after the shot somehow"): the pad goes on
   drawing the last stroke's trail -- marks where it turned at the top,
   crossed the line and passed the shape point, a ring at the finish, its

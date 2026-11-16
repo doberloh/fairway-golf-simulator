@@ -210,7 +210,9 @@ here is a claim of support until it is done.
   harness with a mouse and with synthetic touches. The owner swung the first
   version on 16 November and sent back eight points, and the second the same
   day (the pad no longer sticks; the pad's place is fine); the third version
-  answers that and **has not been swung by a person**. The three-tap bar and
+  answers that, and a fourth the same day moves what was hit down into the
+  swing box's last row (carry, total and apex gone) and gives a phone's pad
+  the foot of the screen to itself. **Neither has been swung by a person.** The three-tap bar and
   Space are gone on the branch: the **Swing** button opens a swing pad that
   can be dragged anywhere and keeps its place, **shuts a second after each
   shot**, and a controller's right stick swings in it (built, never tried
@@ -226,7 +228,12 @@ here is a claim of support until it is done.
   the way they look, and a push with a full draw comes back to the aim; the
   big spin ball's labels and numbers on a small screen; that the pad shutting
   after a second suits; the tracer on a full shot and none on a putt, and
-  every line in the hole's summary after holing out; on Hard, whether the
+  every line in the hole's summary after holing out; the swing box with the
+  chips over Spin and Swing and the tempo beside them, on the phone both
+  ways up and on the PC (not yet seen at all -- no picture has been taken
+  since); the pad opening at the foot with nothing else there, and
+  everything coming back when it shuts; whether carry and total are missed
+  after a shot; on Hard, whether the
   3 : 1 band (2.5 to 3.6 : 1 free) is fair for a thumb; the feel of every
   PLACED number -- the full pull (about a fifth of the screen), the shape
   point 0.3 of a pull below the line, column widths (a thumb's own arc may

@@ -749,10 +749,12 @@ async function flightScreenOnce(t, phone) {
   return {
    flag: document.getElementById('world').classList.contains('in-flight'),
    panel: gone('#shapeControl'),
-   // On the Swing Meter the meter stays up through the flight with carry,
-   // total and apex, and the floating tiles are gone (14 October 2026).
+   // On the Swing Meter the meter stays up through the flight and the
+   // floating tiles are gone (14 October 2026); since 16 November it shows
+   // what was hit -- the chips and the tempo -- where carry, total and apex
+   // were. (On a phone the swing pad has the foot for its first second.)
    meterMode: document.getElementById('world').classList.contains('meter-mode'),
-   meterNumbers: !gone('#smResult') && /CARRY/.test(document.getElementById('smResult')?.textContent || ''),
+   meterNumbers: !gone('#strokeReport') && /PULL/.test(document.getElementById('strokeReport')?.textContent || '') && /TEMPO/.test(document.getElementById('strokeTempo')?.textContent || '') && !/CARRY/.test(document.getElementById('smResult')?.textContent || ''),
    tiles: !gone('#shotTiles .shot-tile'), club: gone('#club'), pad: gone('#aimPad'),
    // The round screen's wind is in the conditions under the hole.
    numbers: gone('#shotPanel'), map: gone('#map'), wind: gone('#rhSubs [data-sub=wind]'),
@@ -785,7 +787,7 @@ async function flightScreenOnce(t, phone) {
  if (state.wind) bad.push('the wind went');
  if (!state.roundScreen && !state.phone && !/BALL (IN FLIGHT|ROLLING)/.test(state.head)) bad.push(`the shot panel's header reads "${state.head}"`);
  if (state.live) bad.push('an old live readout is back');
- if (state.meterMode && !state.meterNumbers) bad.push('the Swing Meter is not showing carry, total and apex in flight');
+ if (state.meterMode && !state.meterNumbers) bad.push('the Swing Meter is not showing what was hit (and only that) in flight');
  if (state.meterMode && state.tiles) bad.push('the number tiles show on the Swing Meter');
  if (bad.length) throw new Error(bad.join('; '));
  // Skip is in the meter's number row whenever the Swing Meter is in use, on a
@@ -970,16 +972,16 @@ const JOURNEYS = [
     // A seed whose tee shot finds water asks for relief first (2 November
     // 2026: a pond beside a Puget Sound fairway); the meter comes back after.
     await reliefFirst(t);
-    // The swing box is what comes back, with the shot's three numbers (14
-    // October 2026). The swing pad shut a second after the shot (16 November
-    // 2026); Swing opens it again, ready for the next stroke and keeping the
-    // last one's path.
+    // The swing box is what comes back, with what was hit (carry, total and
+    // apex until 16 November 2026). The swing pad shut a second after the
+    // shot (16 November 2026); Swing opens it again, ready for the next stroke
+    // and keeping the last one's path.
     if (!await t.page.evaluate(() => !!document.getElementById('swingMeter').offsetParent)) throw new Error('the swing box did not come back');
     await t.until(() => t.page.evaluate(() => document.getElementById('swingPad').hidden), 'the swing pad to shut after the shot', 4 * SLOW);
     await openPad(t);
     if (await t.page.evaluate(() => document.getElementById('swingPad').classList.contains('stroking'))) throw new Error('the swing pad is still mid-stroke after the ball stopped');
     if (!await t.page.evaluate(() => !!document.querySelector('#strokePad .sp-ghost'))) throw new Error('the swing pad did not keep the stroke\'s path');
-    if (!/d/.test(await t.page.textContent('#smResult'))) throw new Error('the swing box lost the last shot numbers');
+    if (!/PULL/.test(await t.page.textContent('#strokeReport')) || !/TEMPO/.test(await t.page.textContent('#strokeTempo'))) throw new Error('the swing box lost what was hit');
    });
    await t.step('drop beside the pin', async () => {
     // The sim drop lives in the tools tray; "Drop at the green" puts the ball
@@ -1683,7 +1685,8 @@ const JOURNEYS = [
     await t.until(() => t.inFlight(), 'the pull and push to start a shot', 5 * SLOW);
     const said = await t.page.textContent('#smHint');
     if (!/strike|Straight|Push|Pull|High/i.test(said)) throw new Error(`the words said "${said}" after the stroke`);
-    const report = await t.page.evaluate(() => { const r = document.getElementById('strokeReport'); return r && !r.hidden && r.offsetParent ? r.textContent : null; });
+    // The chips over the Spin and Swing buttons, and the tempo in their row.
+    const report = await t.page.evaluate(() => { const r = document.getElementById('strokeReport'), tp = document.getElementById('strokeTempo'); return r && !r.hidden && r.offsetParent && tp?.offsetParent && !tp.classList.contains('empty') ? r.textContent + ' ' + tp.textContent : null; });
     if (!report) throw new Error('no report of what was hit');
     for (const want of ['PULL', 'LINE', 'START', 'HEIGHT', 'SPIN', 'TEMPO', 'ideal', 'back']) if (!report.includes(want)) throw new Error(`the report has no ${want}: "${report}"`);
     const last = await t.page.evaluate(() => window.lab.state().lastStroke);
@@ -2417,7 +2420,15 @@ const JOURNEYS = [
     // the first one leaves a picture of the pad mid-pull and of the report after.
     await strokeOnPad(t, .8, {touch: true, ...(checkedFlight ? {} : {shot: `phone-${way}-pad.png`})});
     await t.until(() => t.inFlight(), 'a pull and push on the swing pad to start a shot', 5 * SLOW);
-    if (!checkedFlight) { await t.page.screenshot({path: path.join(SHOTS, `phone-${way}-report.png`)}); }
+    // While the pad shows, the foot of the screen is its alone (the owner, 16
+    // November 2026); it shuts a second after the shot and the rest comes back.
+    if (!checkedFlight) {
+     const foot = await t.page.evaluate(() => ({padUp: document.getElementById('world').classList.contains('pad-up'), pad: !document.getElementById('swingPad').hidden, meter: !!document.getElementById('swingMeter').offsetParent, club: !!document.querySelector('.club-control')?.offsetParent, gap: Math.round(innerHeight - document.getElementById('swingPad').getBoundingClientRect().bottom)}));
+     if (foot.pad && (!foot.padUp || foot.meter || foot.club)) throw new Error(`the swing pad is up but the foot of the screen was not cleared: ${JSON.stringify(foot)}`);
+     if (foot.pad && foot.gap > 40) throw new Error(`the swing pad did not open at the foot of the screen: ${JSON.stringify(foot)}`);
+     await t.until(() => t.page.evaluate(() => document.getElementById('swingPad').hidden && !document.getElementById('world').classList.contains('pad-up')), 'the swing pad to shut after the shot', 4 * SLOW);
+     await t.page.screenshot({path: path.join(SHOTS, `phone-${way}-report.png`)});
+    }
     if (!checkedFlight) { checkedFlight = true; await flightClearsTheScreen(t, true); }
     await t.page.locator('#smSkip:visible, #skipFlight:visible').first().tap({timeout: 10000 * SLOW});
     await t.until(async () => !(await t.inFlight()), 'Skip to finish the shot', 30 * SLOW);

@@ -1198,13 +1198,11 @@ html,body{overscroll-behavior:none}
 #world.meter-mode .shot-tiles,#world.meter-mode #shotToggle,#world.meter-mode .sp-summary{display:none}
 /* In flight the bar stays, still, under its three numbers; nothing on it takes a tap. */
 #world.in-flight .swing-meter{pointer-events:none}
-.sm-result{display:flex;justify-content:space-around;gap:10px;margin-top:10px;padding-top:8px;border-top:1px solid var(--glass-line)}
+/* The meter's row: the stroke's tempo (main.js drawStrokeReport), then the
+   spin ball and Swing, or Skip in flight. Carry, total and apex were its cells
+   until 16 November 2026. */
+.sm-result{display:flex;align-items:stretch;gap:6px;margin-top:6px}
 .sm-result[hidden]{display:none}
-.sm-result>span{display:flex;flex-direction:column;align-items:center;min-width:0}
-.sm-result strong{font-family:var(--font-display,inherit);font-size:22px;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums;color:var(--ink)}
-.sm-result strong small{font-size:11px;font-weight:500;color:var(--ink-dim);margin-left:2px}
-.sm-result>span>span{font-size:9px;letter-spacing:.8px;color:var(--ink-faint)}
-.sm-result .tile-note{display:block;font-size:9.5px;font-weight:600;font-style:normal;color:#ff8f80;text-align:center}
 .sm-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:20px;font-size:11px}
 .sm-title{font-size:9.5px;letter-spacing:.8px;color:var(--ink-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sm-hint{color:var(--ink-dim);white-space:nowrap}
@@ -1304,16 +1302,20 @@ html,body{overscroll-behavior:none}
 /* The Swing button, beside the spin ball: lit while the pad is open. */
 #world .shot-open.on strong{color:#f0c674}
 #world .shot-open.on::before{box-shadow:inset 0 0 0 2px #f0c674}
-/* WHAT YOU HIT: the row in the swing box after a stroke (main.js
-   drawStrokeReport). Small chips that wrap, so a phone's narrow box takes it. */
-.stroke-report{display:flex;flex-wrap:wrap;align-items:stretch;gap:4px;margin:0 0 6px;font:600 12px/1.15 "Saira Condensed",var(--font-ui,system-ui),sans-serif;color:#fff}
+/* WHAT YOU HIT: the chips in the swing box after a stroke, just above the
+   Spin and Swing buttons, and the tempo box in their row, where carry, total
+   and apex were (main.js drawStrokeReport; the owner, 16 November 2026).
+   Chips that wrap, so a phone's narrow box takes them; the tempo's lines wrap
+   in its narrow cell. Empty, the tempo cell keeps its place. */
+.stroke-report{display:flex;flex-wrap:wrap;align-items:stretch;gap:4px;margin:0;font:600 12px/1.15 "Saira Condensed",var(--font-ui,system-ui),sans-serif;color:#fff}
 .stroke-report[hidden]{display:none}
 .srp-chip,.srp-tempo{display:flex;flex-direction:column;justify-content:center;gap:1px;padding:3px 7px;background:var(--panel,rgba(10,22,16,.85));min-width:0}
 .srp-chip small,.srp-tempo small{font-size:9.5px;letter-spacing:.12em;color:var(--soft,#b9c7bf);font-weight:700}
 .srp-chip b{font-size:14px;font-weight:800;font-style:italic;white-space:nowrap}
 .srp-chip.bad b,.srp-tempo.bad b,.srp-tempo b.srp-back.bad{color:#ffb38a}
-.srp-tempo{flex:1 1 150px;position:relative}
-.srp-tempo b{font-size:12px;font-weight:700;white-space:nowrap}
+.srp-tempo{flex:1 1 150px;position:relative;font:600 12px/1.15 "Saira Condensed",var(--font-ui,system-ui),sans-serif;color:#fff}
+.srp-tempo.empty{visibility:hidden}
+.srp-tempo b{font-size:12px;font-weight:700}
 .srp-tempo b em,.srp-ends em{font-style:normal;color:var(--soft,#b9c7bf);font-weight:600}
 .srp-gauge{position:relative;display:block;height:8px;margin:2px 0;background:rgba(255,255,255,.12)}
 .srp-gauge .srp-zone{position:absolute;inset:0 14.3%;background:rgba(240,198,116,.35)}

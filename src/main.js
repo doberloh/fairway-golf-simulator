@@ -1722,7 +1722,7 @@ function beginStroke(t,x,y,{pointer=null,pointerType='',pad=false}={}){
  const ctx=swingContext(),putt=ctx.club.code==='PT',g=padGeo;
  swing={kind:'stroke',start:t,ctx,putt,power:null,done:false,pointer,pointerType,pad,seenAt:t,
   lean:padLean(ctx),fullPx:g.fullPx,scale:strokeScale(ctx)};
- meterFlash=null;drawMeterResult();strokeReport=null;lastPath=null;drawStrokeReport();
+ meterFlash=null;strokeReport=null;lastPath=null;drawStrokeReport();
  $('world').classList.add('swinging');$('swingPad').classList.add('stroking');
  const r=$('swingArea').getBoundingClientRect();
  swing.box={left:r.left,top:r.top};
@@ -2017,7 +2017,6 @@ function drawMeterScale(){
   $('smTitle').textContent=`${c.label} · ${difficultyOf(ctx.difficulty).label}${zoomed}`;
  }
  drawTarget();
- drawMeterResult();
  drawStrokeReport();
  drawMeter(performance.now());
  drawSwingPad();
@@ -2031,13 +2030,21 @@ function drawMeterScale(){
 // time beside the ideal (on Easy, shown but not judged), and the backswing's
 // ratio to it (judged on Hard). Kept until the next stroke starts, for the
 // golfer who hit it and this hole only.
+// WHERE IT SITS (the owner, 16 November 2026: "we now have sort of two sets of
+// data ... remove [carry, total, apex] and move the tempo box and the pull,
+// line, start, height, spin boxes down to fill that gap"): the chips are a row
+// just above the Spin and Swing buttons (`#strokeReport`), and the tempo box
+// (`#strokeTempo`) is the first cell of their row, where carry, total and apex
+// were. With nothing to show the tempo cell keeps its place, empty, so the
+// buttons never move.
 function drawStrokeReport(){
- const box=$('swingMeter');if(!box)return;
- let el=$('strokeReport');
- if(!el){el=document.createElement('div');el.id='strokeReport';el.className='stroke-report';el.setAttribute('aria-live','polite');box.prepend(el);}
+ const box=$('swingMeter'),row=$('smResult');if(!box||!row)return;
+ let el=$('strokeReport'),tp=$('strokeTempo');
+ if(!el){el=document.createElement('div');el.id='strokeReport';el.className='stroke-report';el.setAttribute('aria-live','polite');box.insertBefore(el,row);}
+ if(!tp){tp=document.createElement('div');tp.id='strokeTempo';tp.className='srp-tempo empty';tp.setAttribute('aria-live','polite');row.prepend(tp);}
  const r=strokeReport,mine=!!r&&!swing&&r.player===round.player?.name&&r.hole===round.hole;
  if(el.hidden===mine)el.hidden=!mine;
- if(!mine){if(el.innerHTML){el.innerHTML='';el.dataset.shown='';}return;}
+ if(!mine){if(el.innerHTML){el.innerHTML='';el.dataset.shown='';}if(tp.innerHTML){tp.innerHTML='';tp.dataset.shown='';tp.className='srp-tempo empty';tp.removeAttribute('title');}return;}
  const {line,start,tempo,back}=r.fx.parts,chip=(k,v,bad=false)=>`<span class="srp-chip${bad?' bad':''}"><small>${k}</small><b>${v}</b></span>`;
  let h=chip('PULL',`${r.pull} ${r.unit}`);
  h+=chip('LINE',line.miss>0?`${Math.abs(line.deg).toFixed(1)}° ${line.side>0?'R':'L'}`:'✓',line.miss>0);
@@ -2047,30 +2054,24 @@ function drawStrokeReport(){
   h+=chip('SPIN',on?`${pct>=0?'+':''}${pct}%${side?` · ${side<0?'DRAW':'FADE'} ${Math.abs(side)}°`:''}`:'CLUB');}
  // The tempo: the push judged on the gauge; the backswing beside it against
  // its 3:1, judged on Hard only (swing-stroke.js `backRatio`).
+ let th='';
  if(tempo){const g=tempoGauge(tempo.ratio,r.difficulty),at=50+g.at/1.4*50,pw=g.perfect/1.4*50,s=ms=>(ms/1000).toFixed(2),bj=!!back?.judged,bad=bj&&back.miss>0;
-  h+=`<span class="srp-tempo${tempo.judged&&tempo.miss>0?' bad':''}" title="Your push against the ideal pace, and your backswing against three times it${bj?'':' (the backswing is judged on Hard)'}"><small>TEMPO${tempo.judged?'':' (not judged)'}</small><i class="srp-gauge"><i class="srp-zone"></i><i class="srp-ok" style="left:${(50-pw).toFixed(1)}%;width:${(2*pw).toFixed(1)}%"></i><i class="srp-mark" style="left:${at.toFixed(1)}%"></i></i><b>push ${s(tempo.ms)} s <em>· ideal ${s(tempo.ideal)}</em></b>${r.back>0?`<b class="srp-back${bad?' bad':''}">back ${s(r.back)} s <em>· ${(r.back/Math.max(1,tempo.ms)).toFixed(1)} : 1, ideal ${STROKE.backRatio} : 1${bj?'':' (judged on Hard)'}</em></b>`:''}<span class="srp-ends"><em>QUICK</em><em>SLOW</em></span></span>`;}
+  th=`<small>TEMPO${tempo.judged?'':' (not judged)'}</small><i class="srp-gauge"><i class="srp-zone"></i><i class="srp-ok" style="left:${(50-pw).toFixed(1)}%;width:${(2*pw).toFixed(1)}%"></i><i class="srp-mark" style="left:${at.toFixed(1)}%"></i></i><b>push ${s(tempo.ms)} s <em>· ideal ${s(tempo.ideal)}</em></b>${r.back>0?`<b class="srp-back${bad?' bad':''}">back ${s(r.back)} s <em>· ${(r.back/Math.max(1,tempo.ms)).toFixed(1)} : 1, ideal ${STROKE.backRatio} : 1${bj?'':' (judged on Hard)'}</em></b>`:''}<span class="srp-ends"><em>QUICK</em><em>SLOW</em></span>`;
+  tp.title=`Your push against the ideal pace, and your backswing against three times it${bj?'':' (the backswing is judged on Hard)'}`;}
+ else tp.removeAttribute('title');
+ tp.className=`srp-tempo${!tempo?' empty':tempo.judged&&tempo.miss>0?' bad':''}`;
  if(el.dataset.shown!==h){el.dataset.shown=h;el.innerHTML=h;}
+ if(tp.dataset.shown!==th){tp.dataset.shown=th;tp.innerHTML=th;}
 }
-// THE SWING METER CARRIES ITS OWN THREE NUMBERS (the owner's call, 14 October
-// 2026): on the Swing Meter the floating number tiles are gone, and once the
-// strike is made the meter stays up through the flight with carry, total and
-// apex counting up as the ball goes, then keeps them until the next swing
-// starts. Only for the golfer who hit it: the next golfer up, or a new hole,
-// starts on a clean meter. With a launch monitor armed -- or for a typed or lab shot -- the tiles
-// do the job as before (`meterMode`).
+// ON THE SWING METER THE FLOATING NUMBER TILES ARE GONE (the owner's call, 14
+// October 2026), and the meter stays up through the flight. Until 16 November
+// 2026 its row carried carry, total and apex, counting up as the ball went;
+// the owner then took them out ("we now have sort of two sets of data"), and
+// the row holds the stroke's tempo beside the Spin and Swing buttons
+// (`drawStrokeReport`). With a launch monitor armed -- or for a typed or lab
+// shot -- the tiles do the job as before (`meterMode`).
 const meterFlight=()=>!!flight&&!flight.replay&&!!flight.record&&!flight.record.typed;
 const meterMode=()=>!armed&&!cardRecord()?.typed;
-function drawMeterResult(record=cardRecord()){
- const box=$('smResult');if(!box)return;
- const mine=!!record&&!record.typed&&!swing&&(flight?meterFlight():record.player===round.player?.name&&record.hole===round.hole);
- // THE ROW NEVER GOES (the owner, 14 October 2026: numbers vanishing on the
- // first tap made lining up the next shot jarring). With nothing of this
- // golfer's to show -- a swing under way, a new golfer, a new hole -- it shows
- // dashes in the same place.
- box.hidden=false;
- const cells=shotGrid(mine?record:null,{fields:['carry','total','apex'],columns:0}).cells;
- for(const c of cells){const el=box.querySelector(`[data-field=${c.id}]`);if(!el)continue;const html=tileInner(c);if(el.dataset.shown!==html){el.dataset.shown=html;el.innerHTML=html;}}
-}
 // THE BLUE STOP (Phase 2 of the meter): the pull that lands the ball in the
 // aim circle (swing-meter.js `targetShare`; for a putt, the length on a flat
 // green), drawn on the stroke pad (`lastTarget`) and, as a share of a full
@@ -2207,7 +2208,9 @@ function drawLie(){
 // wired*). `padOpen` is the golfer's choice, kept on this device; whether the
 // pad SHOWS also asks the swing box (`drawSwingPad`): it goes with the box --
 // a launch monitor armed, a hole finished, a menu up -- and comes back with it.
-const PAD_KEY='fairway-swing-pad-v1';
+// v2 (16 November 2026): a phone's pad opens at the foot now, so the places
+// kept by v1 -- under the old swing box -- are let go once.
+const PAD_KEY='fairway-swing-pad-v2';
 // How long the pad stays after a shot, ms. PLACED.
 const PAD_LINGER=1000;
 let padOpen=false,padGeo=null,padCloseTimer=0;
@@ -2222,7 +2225,9 @@ function setPadOpen(on){
 // Where the pad goes: where it was left for this way of holding the screen,
 // else at the left, high (the right holds the tool column and the map, and
 // the swing box's report is below; the first smoke pictures had the pad over
-// each); always wholly on screen.
+// each); always wholly on screen. On a phone the foot of the screen is cleared
+// for it (`pad-up`), so there it opens at the foot, by the thumb (the owner,
+// 16 November 2026). PLACED: 16 px clear of the edge.
 function placeSwingPad(){
  const el=$('swingPad');if(!el)return;
  const g=padSize(innerWidth,innerHeight);
@@ -2234,7 +2239,7 @@ function placeSwingPad(){
   cueKey='';
  }
  const saved=padPrefs()[padWay()],w=el.offsetWidth||g.width,h=el.offsetHeight||g.height+34;
- const x=saved?.x??16,y=saved?.y??Math.max(8,Math.round(innerHeight*.14));
+ const x=saved?.x??16,y=saved?.y??(phoneScreen()?innerHeight-h-16:Math.max(8,Math.round(innerHeight*.14)));
  movePad(x,y);
 }
 function movePad(x,y){
@@ -2254,7 +2259,9 @@ let padKey='';
 function drawSwingPad(){
  const el=$('swingPad');if(!el)return;
  const show=padShows();
- if(el.hidden===show){el.hidden=!show;if(show)placeSwingPad();}
+ // On a phone the foot of the screen is the pad's alone while it shows
+ // (round-phone.css *THE SWING PAD ALONE AT THE FOOT*).
+ if(el.hidden===show){el.hidden=!show;$('world').classList.toggle('pad-up',show);if(show)placeSwingPad();}
  // Not able to swing just now (a ball in the air, another golfer's monitor
  // shot): the pad stays, dimmed, showing the last path.
  const waiting=show&&!swing&&!canSwing();
@@ -3321,7 +3328,6 @@ function drawLiveTiles(){
   el.dataset.shown=html;el.innerHTML=html;el.classList.toggle('blank',c.blank);
  }
  drawShotSummary(record);
- drawMeterResult(record);
 }
 // The end-of-flight countdown -- "Final lie · playing on in 3s" -- goes in the
 // panel's header, which is on screen while the ball is up.
@@ -8473,9 +8479,9 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  // of the club selection box ... combine the swing options into the meter").
  // Until then Skip floated at the bottom centre (round 14), the lie was a strip
  // of its own above the club and curve, height and spin a row of their own.
- // Now the lie is the club box's top band, and the meter's number row
- // (drawMeterResult only writes its [data-field] cells) holds carry, total
- // and apex beside curve, height and spin at rest, or beside Skip in flight --
+ // Now the lie is the club box's top band, and the meter's row holds the
+ // stroke's tempo (drawStrokeReport; carry, total and apex until 16 November
+ // 2026) beside the spin ball and Swing at rest, or beside Skip in flight --
  // the title row above the bar is the launch strip's then. round-hud.css /
  // round-phone.css place them.
  document.querySelector('.club-control')?.append($('lieReadout'));
