@@ -208,17 +208,20 @@ here is a claim of support until it is done.
   `pull-push-swing`, experimental, 15 November 2026; RESEARCH *The
   pull-and-push swing*). Built, covered by Node tests and swung by the smoke
   harness with a mouse and with synthetic touches; **no person has swung it
-  yet**, on any screen. A finger or mouse swings only this way on the branch:
-  tap the bar to arm it. Owed a decision: what replaces the three taps for
-  Space and a controller. To check: that the pad reads a real thumb
+  yet**, on any screen. The three-tap bar and Space are gone on the branch: a
+  drag down on the course swings, and a controller's right stick (built, never
+  tried with a real pad -- check it on the PC). Open: what the Swing Meter
+  skins (rewards) colour now that the bar is gone; the group panel's "Plays
+  with: Swing Meter" and the monitor strip still say Swing Meter. To check:
+  that a downward drag never fights the camera in the green views, that a tap
+  still aims everywhere it did, that the pad reads a real thumb
   (lastStroke in main.js holds the last reading, with its sample count); the
   feel of every PLACED number -- the full pull a third of the screen, the
   line's allowance (8 degrees each side on Normal), the ideal push of a
   quarter of a second, Hard's curve layer against a thumb's natural arc, the
   aim line's lean on side slopes; that the iPhone sends moves often enough at
   30 frames a second (the frame-rate test plays 30 samples a second, not
-  fewer); and the pad on a PC with a mouse. The controller's right stick was
-  offered and is not built.
+  fewer); and the pad on a PC with a mouse.
 
 - [ ] **Play the current build by hand** (0.9.17, 15 November 2026). What has
   been built and seen only in captures, measurements or smoke runs, and still

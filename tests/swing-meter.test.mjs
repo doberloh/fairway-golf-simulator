@@ -1,28 +1,27 @@
-// The Swing Meter (swing-meter.js): three taps into the numbers the ball leaves
-// with. RESEARCH.md *The Swing Meter* says which numbers are placed.
+// The swing's rules (swing-meter.js): a struck swing -- how far it was pulled
+// (`power`, a share of the club's full swing) and how far off the strike was
+// (`error`) -- into the numbers the ball leaves with. The three-tap bar that
+// used to make those went on 16 November 2026 (pull-push-swing); the pull and
+// push makes them now (tests/swing-stroke.test.mjs). RESEARCH.md *The Swing
+// Meter* says which numbers are placed.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {simulateShot, YARD, MPH} from '../src/physics.js';
 import {turfConfig} from '../src/turf.js';
 import {GROUNDS} from '../src/grounds.js';
 import {bagClubs, CLUB_KINDS, stockBag, spinForPower} from '../src/clubs.js';
-import {startSwing, tap, advance, markerAt, swingLaunch, shapedLaunch, strikeZone, strikeEffect, fullCarry,
- speedForCarry, carryShare, lieFactor, LIE_SPEED, DIFFICULTIES, OVERSWING, OVERSWING_CARRY, MISS_AT, RUN_UP,
+import {swingLaunch, shapedLaunch, strikeZone, strikeEffect, fullCarry,
+ speedForCarry, carryShare, lieFactor, LIE_SPEED, DIFFICULTIES, OVERSWING, OVERSWING_CARRY,
  swingZoom, SWING_RANGES, longestReach,
  validShape, shortGame, heightName, puttFullRoll, SPIN_STEPS} from '../src/swing-meter.js';
 
 const clubs = bagClubs(stockBag());
 const turf = turfConfig({});
 const ctx = (club, extra = {}) => ({club: clubs[club], shape: {}, short: false, lie: 'fairway', difficulty: 'normal', turf, ...extra});
-// A swing with taps at given shares of the rise time after the start.
-function swingAt(club, powerShare, strikeAfter, {difficulty = 'normal', putt = false, accuracy = !putt} = {}) {
- // Starting the swing IS the first tap.
- const sw = startSwing(0, {difficulty, club: clubs[club], putt, accuracy});
- // The marker starts at the far left: the distance is RUN_UP + share rises in.
- tap(sw, sw.rise * (RUN_UP + powerShare));
- if (strikeAfter != null) tap(sw, sw.rise * (RUN_UP + powerShare) + sw.rise * strikeAfter);
- return sw;
-}
+// A struck swing pulled to `powerShare`, struck `powerShare - strikeAt` off the
+// line (positive early: right). The old meter's terms: a marker stopped at the
+// distance and coming back to the line, struck when it had come `strikeAt` back.
+const swingAt = (club, powerShare, strikeAt = powerShare) => ({power: powerShare, error: powerShare - strikeAt, done: true});
 const flat = {height: () => 0, surface: () => 'fairway', bounds: {x: 5000, minZ: -5000, maxZ: 5000}, trees: [], homes: []};
 const fly = shot => simulateShot({origin: {x: 0, z: 0}, aim: 0, ...shot}, flat);
 
@@ -56,23 +55,6 @@ test('grass takes spin from a lofted shot and none from a long iron', async () =
  assert.ok(kept('iron7') >= kept('iron9') && kept('iron9') >= kept('wedge') && kept('wedge') >= kept('sand') - 1e-9);
 });
 
-test('a tap is judged on its time: the marker is a function of the clock alone', () => {
- const sw = startSwing(1000, {difficulty: 'normal', club: clubs.iron7});
- // Asking where the marker is at a frame rate of 20, 60 or 144 changes nothing.
- for (const fps of [20, 60, 144]) {
-  const s2 = startSwing(1000, {difficulty: 'normal', club: clubs.iron7});
-  for (let t = 1000; t < 1000 + s2.rise * (RUN_UP + .6); t += 1000 / fps) advance(s2, t);
-  assert.ok(Math.abs(markerAt(s2, 1000 + sw.rise * (RUN_UP + .6)) - .6) < 1e-9);
- }
- // Same three tap times, same shot, whatever happened in between.
- const a = swingAt('iron7', .8, .8), b = startSwing(0, {difficulty: 'normal', club: clubs.iron7});
- const p = b.rise * (RUN_UP + .8);
- for (let t = 0; t < p; t += 7) advance(b, t);
- tap(b, p);for (let t = p; t < p + b.rise * .8; t += 33) advance(b, t);
- tap(b, p + b.rise * .8);
- assert.deepEqual(swingLaunch(a, ctx('iron7')).shot, swingLaunch(b, ctx('iron7')).shot);
-});
-
 test('the bar is in yards: a full clean swing carries the bag, half the bar half of it', () => {
  for (const id of ['driver', 'iron7', 'wedge']) {
   const c = clubs[id];
@@ -94,36 +76,7 @@ test('overswing is worth up to 5% more carry, and nothing further', () => {
  assert.ok(over.carry / YARD > c.carry * 1.03 && over.carry / YARD < c.carry * 1.07);
 });
 
-// The owner's call (14 October 2026): past the full line the marker slows to a
-// quarter speed, and at the end of overswing it holds, flashing, for the tap.
-test('overswing: a quarter of the speed, then it holds at the end until the second tap', async () => {
- const {OVERSWING_SLOW, inOverswing} = await import('../src/swing-meter.js');
- assert.equal(OVERSWING_SLOW, 4);
- const sw = startSwing(0, {difficulty: 'normal', club: clubs.iron7});
- assert.ok(!inOverswing(sw, sw.rise * (RUN_UP + .99)));
- assert.ok(Math.abs(markerAt(sw, sw.rise * (RUN_UP + 1.2)) - (1 + .2 / OVERSWING_SLOW)) < 1e-9, 'slow past the full line');
- assert.ok(inOverswing(sw, sw.rise * (RUN_UP + 1.2)));
- // Long after the zone would have run out at full speed, it is still holding.
- const later = sw.rise * (RUN_UP + 1 + OVERSWING * OVERSWING_SLOW) + 5000;
- advance(sw, later);
- assert.equal(sw.power, null, 'no tap, no distance: it waits');
- assert.equal(markerAt(sw, later), 1 + OVERSWING, 'held at the end of overswing');
- tap(sw, later);
- assert.equal(sw.power, 1 + OVERSWING);
- assert.equal(sw.done, false, 'still waiting for the strike');
- // And it comes back at the normal speed.
- assert.ok(Math.abs(markerAt(sw, later + sw.rise * .5) - (1 + OVERSWING - .5)) < 1e-9);
-});
-
-test('no third tap: the marker runs out and it is the worst miss there is', () => {
- const sw = swingAt('iron7', .9, null);
- advance(sw, sw.rise * (RUN_UP + .9) + sw.rise * (.9 - MISS_AT) + 1);
- assert.ok(sw.done && sw.duff);
- const out = swingLaunch(sw, ctx('iron7'));
- assert.ok(out.strike.miss >= 5 && out.shot.hla < 0, 'a smothered hook, left');
-});
-
-test('early goes right and late goes left, for everyone', () => {
+test('a strike off the line: right of it goes right, left goes left, for everyone', () => {
  const early = swingLaunch(swingAt('iron7', 1, .9), ctx('iron7'));   // stopped short of the line
  const late = swingLaunch(swingAt('iron7', 1, 1.1), ctx('iron7'));   // past it
  assert.ok(early.shot.hla > 0 && early.shot.spinAxis > 0, 'early: starts right and fades');
@@ -185,19 +138,14 @@ test('the spin dial: -1 to +3, each added step more spin than the last', () => {
  for (const spin of SPIN_STEPS) { const s = shapedLaunch(clubs.wedge, {spin}).spin; assert.ok(s > last);last = s; }
 });
 
-test('a putt: two taps on every difficulty, the bar in roll on a flat green at today\'s Stimp', async () => {
+test('a putt: the pull in roll on a flat green at today\'s Stimp', () => {
  const p = clubs.putter;
  const full = puttFullRoll(p, turf);
  assert.ok(Math.abs(full / YARD - p.carry) < .5, 'full is the putter\'s own roll at Stimp 10');
- const sw = startSwing(0, {difficulty: 'normal', club: p, putt: true, accuracy: false});
- tap(sw, sw.rise * (RUN_UP + .5));
- assert.ok(sw.done, 'two taps');
- const out = swingLaunch(sw, ctx('putter'));
+ const out = swingLaunch(swingAt('putter', .5), ctx('putter'));
  assert.equal(out.shot.hla, 0);
  const roll = simulateShot({origin: {x: 0, z: 0}, aim: 0, vla: 0, spin: 0, spinAxis: 0, ...out.shot}, {...flat, surface: () => 'green'}, {turf});
- assert.ok(Math.abs(roll.total - full / 2) < .4, `half the bar rolled ${roll.total.toFixed(2)} m, not ${(full / 2).toFixed(2)}`);
- const {puttAccuracy} = await import('../src/swing-meter.js');
- for (const d of Object.keys(DIFFICULTIES)) assert.equal(puttAccuracy(d), false, `${d} has no accuracy tap on a putt`);
+ assert.ok(Math.abs(roll.total - full / 2) < .4, `half a pull rolled ${roll.total.toFixed(2)} m, not ${(full / 2).toFixed(2)}`);
 });
 
 // MONITOR SHOTS: the lie costs a monitor shot the same ball speed and spin it
@@ -247,15 +195,11 @@ test('the putting bar zooms to the putt, and the putter is unchanged', async () 
  const slow = turfConfig({stimp: 6}), across = 80 * YARD;
  const range80 = puttRange(p, slow, across);
  assert.ok(range80 >= across * 1.25, 'an 80 yd putt at Stimp 6 fits on the bar');
- const sw80 = startSwing(0, {difficulty: 'normal', club: p, putt: true, accuracy: false});
- tap(sw80, sw80.rise * (RUN_UP + across / range80));
- const out80 = swingLaunch(sw80, {...ctx('putter'), turf: slow, puttRange: range80});
+ const out80 = swingLaunch(swingAt('putter', across / range80), {...ctx('putter'), turf: slow, puttRange: range80});
  const r80 = simulateShot({origin: {x: 0, z: 0}, aim: 0, vla: 0, spin: 0, spinAxis: 0, ...out80.shot}, {...flat, surface: () => 'green'}, {turf: slow});
  assert.ok(Math.abs(r80.total - across) < 2, `the 80 yd putt rolled ${(r80.total / YARD).toFixed(1)} yd`);
  // Half of a quarter bar rolls an eighth of the putter's full roll.
- const sw = startSwing(0, {difficulty: 'normal', club: p, putt: true, accuracy: false});
- tap(sw, sw.rise * (RUN_UP + .5));
- const out = swingLaunch(sw, ctx('putter', {puttRange: full / 4}));
+ const out = swingLaunch(swingAt('putter', .5), ctx('putter', {puttRange: full / 4}));
  const roll = simulateShot({origin: {x: 0, z: 0}, aim: 0, vla: 0, spin: 0, spinAxis: 0, ...out.shot}, {...flat, surface: () => 'green'}, {turf});
  assert.ok(Math.abs(roll.total - full / 8) < .25, `rolled ${roll.total.toFixed(2)} m, not ${(full / 8).toFixed(2)}`);
 });
@@ -268,9 +212,8 @@ test('the target marker: level ground and still air is the circle\'s share of th
  for (const yards of [60, 100, 140]) {
   const t = targetShare({club: c, shape: {}, lie: 'fairway', difficulty: 'normal', metres: yards * YARD});
   assert.ok(!t.out && Math.abs(t.share - yards / c.carry) < .02, `${yards} yd: ${t.share.toFixed(3)} not ${(yards / c.carry).toFixed(3)}`);
-  // And stopping the meter there carries about that far.
-  const sw = startSwing(0, {difficulty: 'normal', club: c});tap(sw, sw.rise * (RUN_UP + t.share));tap(sw, sw.rise * (RUN_UP + t.share * 2));
-  const r = fly(swingLaunch(sw, ctx('iron7')).shot);
+  // And a clean swing pulled there carries about that far.
+  const r = fly(swingLaunch(swingAt('iron7', t.share), ctx('iron7')).shot);
   assert.ok(Math.abs(r.carry / YARD - yards) < 2, `${yards} yd target carried ${(r.carry / YARD).toFixed(1)}`);
  }
 });
@@ -292,20 +235,9 @@ test('the target marker allows for slope and lie always, and wind only on Easy',
  assert.equal(targetShare({...base, club: clubs.putter}), null, 'a putt is worked out from its read line instead');
 });
 
-// SHORT SHOTS (the owner's call, 14 October 2026): the sweep starts from the far
-// left, the bar zooms to a half or quarter swing, and a zoomed bar runs slower.
-test('the sweep starts from the far left, and a tap in the run-up is ignored', () => {
- assert.equal(RUN_UP, -MISS_AT);
- const sw = startSwing(0, {difficulty: 'normal', club: clubs.iron7});
- assert.equal(markerAt(sw, 0), MISS_AT, 'it starts at the left edge of the bar');
- assert.ok(Math.abs(markerAt(sw, sw.rise * RUN_UP)) < 1e-9, 'and reaches the strike line after the run-up');
- assert.equal(tap(sw, sw.rise * RUN_UP * .5), null, 'a tap before the strike line is not a swing');
- assert.equal(sw.power, null);
- assert.equal(tap(sw, sw.rise * (RUN_UP + .4)), 'power');
- assert.ok(Math.abs(sw.power - .4) < 1e-9);
-});
-
-test('a short full shot zooms the bar to a half or quarter swing, and carries what the bar says', () => {
+// SHORT SHOTS (the owner's call, 14 October 2026): a full pull is a half or a
+// quarter swing for a short shot.
+test('a short full shot zooms the pull to a half or quarter swing, and carries what it says', () => {
  assert.deepEqual(SWING_RANGES, [.25, .5, 1]);
  const c = clubs.wedge, full = fullCarry(c, shapedLaunch(c, {}));
  assert.equal(swingZoom(full, full * .9), 1);
@@ -315,13 +247,8 @@ test('a short full shot zooms the bar to a half or quarter swing, and carries wh
  const yards = 18, zoom = swingZoom(full, yards * YARD), share = yards * YARD / (full * zoom);
  assert.equal(zoom, .25);
  assert.ok(share > .6 && share < .8, 'an 18 yd chip is most of a quarter-swing bar, not a sliver of a full one');
- const sw = startSwing(0, {difficulty: 'normal', club: c, zoom});
- tap(sw, sw.rise * (RUN_UP + share));tap(sw, sw.rise * (RUN_UP + share * 2));
- const r = fly(swingLaunch(sw, {...ctx('wedge'), zoom}).shot);
+ const r = fly(swingLaunch(swingAt('wedge', share), {...ctx('wedge'), zoom}).shot);
  assert.ok(Math.abs(r.carry / YARD - yards) < 1.5, `carried ${(r.carry / YARD).toFixed(1)} yd, not ${yards}`);
- // Slower on a zoomed bar.
- const fullBar = startSwing(0, {difficulty: 'normal', club: c}), half = startSwing(0, {difficulty: 'normal', club: c, zoom: .5}), quarter = startSwing(0, {difficulty: 'normal', club: c, zoom: .25});
- assert.ok(quarter.rise > half.rise && half.rise > fullBar.rise);
  // The chip's wider strike zone follows the share of the club, not of the bar.
  assert.ok(strikeZone({difficulty: 'normal', power: .9, share: .9 * .25}).zone > strikeZone({difficulty: 'normal', power: .9}).zone);
 });

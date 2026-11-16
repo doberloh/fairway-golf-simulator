@@ -10,7 +10,7 @@ import {challengePay, CHALLENGE_PAY, normaliseChallengeDay} from '../src/progres
 import {simulateShot} from '../src/physics.js';
 import {turfConfig} from '../src/turf.js';
 import {bagClubs, stockBag} from '../src/clubs.js';
-import {startSwing, tap, swingLaunch, RUN_UP} from '../src/swing-meter.js';
+import {swingLaunch} from '../src/swing-meter.js';
 
 const FOOT = .3048, YARD = .9144;
 const pin = {x: 0, z: 150};
@@ -132,9 +132,8 @@ test('a play with no spots that needs them, or a group of five, is refused', () 
 const clubs = bagClubs(stockBag()), turf = turfConfig({});
 const flat = {height: () => 0, surface: () => 'fairway', bounds: {x: 5000, minZ: -5000, maxZ: 5000}, trees: [], homes: []};
 function fly(club, shape) {
- const sw = startSwing(0, {difficulty: 'normal', club: clubs[club]});
- tap(sw, sw.rise * (RUN_UP + 1));tap(sw, sw.rise * (RUN_UP + 1) + sw.rise);
- const out = swingLaunch(sw, {club: clubs[club], shape, short: false, lie: 'fairway', difficulty: 'normal', turf});
+ // A full, clean swing.
+ const out = swingLaunch({power: 1, error: 0, done: true}, {club: clubs[club], shape, short: false, lie: 'fairway', difficulty: 'normal', turf});
  const origin = {x: 0, z: 0};
  return ballFacts({origin, result: simulateShot({origin, aim: 0, ...out.shot}, flat, {turf}), rest: 'fairway', club});
 }

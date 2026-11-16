@@ -7517,11 +7517,32 @@ the pull and push from three offered (hold-and-release kept the timing problem;
 pick-and-swing had no skill in the strike), then chose which layers make it
 hard to master, and asked for an indicator of the aim. It was first built as a
 choice per golfer beside the bar; the owner then said "im imagining the
-original swing meter gone" (16 November 2026), so on this branch a finger or
-a mouse swings ONLY this way and the choice was taken out. Space and a
-controller keep the three taps until the owner decides what replaces them --
-offered: the controller's right stick pulled and pushed like a thumb, and for
-the keyboard either dropping it for the mouse or a hold-to-pull key.
+original swing meter gone", and then (16 November 2026): "remove the bar
+entirely. users can use the new push pull with the mouse, controller, or
+swipe on a touch screen". So on this branch the three-tap bar, its timing
+code (swing-meter.js `startSwing`, `tap`, `markerAt`, the run-up and the slow
+overswing) and Space as a swing key are gone.
+
+**How a swing starts now.**
+- **On the course** (finger or mouse): a press that moves down -- 8 px, at
+  least one and a half times as far down as sideways (PLACED) -- is a swing
+  begun where it landed. A press that never moves is a click and aims, as it
+  always did; one that moves another way is left to the camera (the green and
+  aim-point views turn on a drag, so a downward drag there is now the swing's
+  and the camera keeps the rest). The press is held back from the camera
+  until it is clear which it is. Rejected: an arming tap on the bar first
+  (the first build) -- the owner's "swipe" is the swipe itself, and the bar
+  is gone.
+- **The controller's right stick** is the thumb, read once a frame: pulled
+  down past 0.25 it starts a stroke; down is the pull, a full deflection
+  (0.95) the end of overswing; the strike line is 0.3 UP from the middle, so a
+  stick let go springs back to the middle without striking -- the stretch
+  between is squeezed into the first 3% of a pull, under a swing's least --
+  and resting in the middle for 300 ms is no stroke. Its ideal push is 150 ms,
+  not 250: a stick travels a short way fast. All PLACED, and not tried with a
+  real pad: the smoke harness has none. A pad is read per frame, so unlike a
+  finger the stick's tempo does depend on the frame rate.
+- **Space** does nothing now; A on a controller neither. Escape still cancels.
 
 **How it is read** (`src/swing-stroke.js`, tests/swing-stroke.test.mjs). The
 thumb lands: that is the strike line. The pull's depth is the distance on the
@@ -7572,13 +7593,18 @@ line and 5 of spin axis at the zone's edge, to four times that).
   the branch was handed over for testing; theirs to overrule.
 - **The rough's shaking guide** (offered as part of the lie layer) is not built:
   the lie already narrows the allowance through `strikeZone`.
-- **Starting the pull on the bar itself**: the bar sits at the foot of the
-  screen, where there is no room to pull down. A tap on the bar arms the pad
-  instead, and the thumb goes down anywhere above.
-- **A drag on the course to swing**: rejected for the same reason as
-  swipe-to-aim (DONE, *Aiming by touch*) -- a drag on the course moves the
-  camera. The pad covers the screen only once armed.
-- **The controller's right stick**, offered, is not built.
+- **Starting the pull on the bar itself**: the bar sat at the foot of the
+  screen, where there is no room to pull down. The first build armed the pad
+  with a tap on the bar instead; the bar has since gone and the swing starts
+  on the course.
+- **A drag on the course to swing** was first rejected for the reason
+  swipe-to-aim was (DONE, *Aiming by touch*: a drag on the course moves the
+  camera). It is what the owner asked for once the bar went, and the clash is
+  settled by direction: only a drag that starts DOWN is a swing; a tap still
+  aims and any other drag is still the camera's.
+- **The Swing Meter's skins** (rewards that coloured the bar,
+  rewards.js `METER_SKINS`) have nothing to colour now; what they become is
+  open (TODO).
 
 ## The smoke test on GitHub: three harness faults (16 October 2026)
 

@@ -128,42 +128,44 @@ landing angle and time in the air, not only carry.
 
 ## The Swing Meter — `src/swing-meter.js`
 
-How a keyboard, mouse, touch or controller golfer strikes the ball (since 14
-October 2026; it replaced the power slider, the per-shot shape sliders and the
-ball-flight profile). It decides only the five launch numbers; nothing after
-impact. Every number here is **placed**, chosen by feel, and RESEARCH.md *The
-Swing Meter* says so.
+What a golfer's swing does to the ball (since 14 October 2026; it replaced the
+power slider, the per-shot shape sliders and the ball-flight profile; on the
+pull-push-swing branch its three-tap bar went for the pull and push, below).
+It decides only the five launch numbers; nothing after impact. Every number
+here is **placed**, chosen by feel, and RESEARCH.md *The Swing Meter* says so.
 
 | Knob | What it changes |
 |---|---|
-| `DIFFICULTIES` | per golfer: how fast the marker runs (`rise`, seconds from start to full), the strike zone and perfect band half-widths, and whether the target allows for the wind (`wind`, Easy only) |
-| `OVERSWING`, `OVERSWING_CARRY`, `OVERSWING_SLOW` | how far past full the bar runs, what that is worth (+5% carry, the only way past the bag), and how slowly the marker crawls through it (a quarter speed) before holding at its end for the tap |
-| `strikeZone` | what narrows the zone: rough (×0.8), sand (×0.7), each step of added spin (×0.85), Flop (×0.8), overswing (down to half); under 40% of the bar it widens (×1.5) |
-| `strikeEffect` | what a miss does: at the zone's edge 1.25° off line and 5° of spin axis, growing to four times that. **Early is right, late is left**, for everyone |
+| `DIFFICULTIES` | per golfer: the strike zone and perfect band half-widths (in lengths of a full swing; the pull and push turns them into degrees), and whether the blue stop allows for the wind (`wind`, Easy only) |
+| `OVERSWING`, `OVERSWING_CARRY` | how far past full a pull runs and what that is worth (+5% carry, the only way past the bag) |
+| `strikeZone` | what narrows the zone: rough (×0.8), sand (×0.7), each step of added spin (×0.85), Flop (×0.8), overswing (down to half); under 40% of a full swing it widens (×1.5) |
+| `strikeEffect` | what a miss does: at the zone's edge 1.25° off line and 5° of spin axis, growing to four times that. **Right of the line is right, left is left**, for everyone |
 | `CURVE_AXIS` | Draw and Fade: ±8° of spin axis, with the start line turned the other way by as much as it bends (`curveCompensation`) so it lands on the aim line |
 | `shapedLaunch` heights | Low −4°, High +4° launch; near the green a wedge's Bump & run is 55% of its launch on half its spin, Flop +10° |
 | `SPIN_SCALE` | the spin setting (X, the Spin box): −1 is 75% of the club's spin, +1 to +3 add a tenth each |
 | `HEIGHT_SPIN` | what a height does to the club's spin, from the geometry of the strike: Low 0.92, High 1.08, Bump & run 0.5, Flop 0.85. Nothing here is tuned to what the ball does on the green; `node tools/meter-landings.mjs` prints that |
 | `LIE_SPEED` | **the lie, for every golfer**: semi-rough keeps 96% of ball speed, rough 90%, sand 85% (PLACED). A launch monitor's measured speed takes the same share unless the round switches it off (`monitorLie`) |
 | `LIE_SPIN` (`lieSpin`) | **the flyer**: grass takes spin from a lofted shot. `from` (16 degrees of launch) is where it starts, `full` (28) where the whole `loss` is reached: rough 0.45, semi-rough 0.20. Raise `loss.rough` and wedges out of the rough run further; raise `from` and fewer clubs are touched. Sand has no loss |
-| `RUN_UP` | the marker starts at the bar's left edge and runs this far (the miss area, 0.3 bar lengths) to the strike line; taps before it are ignored |
-| `SWING_RANGES`, `swingZoom` | a short full shot's bar: half or quarter of the club's full carry, the shortest that holds the circle with a quarter to spare; `startSwing`'s `zoom` runs a half bar 12% and a quarter bar 25% slower (putts too) |
-| `PUTT_RANGES` | how far the putting bar reaches: a quarter of the putter's roll up to six times it, so a putt can cross any green at any Stimp; `puttSpeedFor`'s cap (3x the putter's speed) has to allow the longest |
-| `targetShare` | the blue target marker: the circle's distance through `playsLike` (slope and air always, wind only where the difficulty's `wind` is true -- Easy), then the bar share for that carry with the lie's lost speed made up |
+| `SWING_RANGES`, `swingZoom` | a short full shot's pull: half or quarter of the club's full carry, the shortest that holds the circle with a quarter to spare |
+| `PUTT_RANGES` | how far a putt's pull reaches: a quarter of the putter's roll up to six times it, so a putt can cross any green at any Stimp; `puttSpeedFor`'s cap (3x the putter's speed) has to allow the longest |
+| `targetShare` | the blue stop: the circle's distance through `playsLike` (slope and air always, wind only where the difficulty's `wind` is true -- Easy), then the share of a pull for that carry with the lie's lost speed made up |
 
 ## The pull-and-push swing — `src/swing-stroke.js`
 
-The second way to swing with a finger or mouse (experimental branch
-`pull-push-swing`, 15 November 2026): pull back for the distance, push up
-through the line to strike. It hands `swingLaunch` the same strike terms the
-meter's `strikeEffect` does, so everything above still applies. All PLACED;
-RESEARCH.md *The pull-and-push swing*.
+How a golfer swings on the experimental branch `pull-push-swing` (15-16
+November 2026; the three-tap bar is gone): pull back for the distance, push up
+through the line to strike, by a drag on the course or a controller's right
+stick. It hands `swingLaunch` the same strike terms `strikeEffect` does, so
+everything above still applies. All PLACED; RESEARCH.md *The pull-and-push
+swing*.
 
 | Knob | What it changes |
 |---|---|
 | `STROKE.degPerBar` | how many degrees of push drift equal one bar length of the meter's strike zone (120: Normal's zone about 8° each side) |
 | `STROKE.curveWiden` | how much wider Hard's curve allowance is than its line allowance (1.5) |
-| `STROKE.tempo`, `tempoShort` | the ideal push: 250 ms for a full pull, 60% of that for a tiny one |
+| `STROKE.tempo`, `tempoShort`, `tempoPad` | the ideal push: 250 ms for a full pull, 60% of that for a tiny one; 150 ms for a controller's stick |
+| main.js `STICK_*` | the right stick as a thumb: starts past 0.25 down, a full deflection (0.95) is the end of overswing, the strike line 0.3 up from the middle, back in the middle 300 ms is no stroke |
+| main.js `STROKE_SLOP` | how far (8 px) a press on the course moves before it is a swing (mostly downward) or the camera's |
 | `STROKE_LAYERS` | per difficulty: whether tempo and curve are judged, the tempo window (`tempoZone`, `tempoPerfect`), how much the aim line leans (`lean`), whether yards and the blue stop show while pulling |
 | `strokeEffect` tempo | rushed: left, 1.2° lower launch and up to 2% hotter per zone width; lazy: right and 3% less ball speed per zone width |
 | `STROKE.leanPerDegree`, `leanMax` | the aim line's lean per degree of side slope (1.5) and its most (15°) |

@@ -224,7 +224,9 @@ the courses several suites share, and builds many at once on worker threads
   capture curve, lip-outs, the flagstick, and the same hole inside a whole
   shot), `core` (flight), `landing`,
   `refinement`, `green-refinement`, `pins`,
-  `obstacle-collision`, `solid-colliders`, `homes`, `swing-meter` (the lie's
+  `obstacle-collision`, `solid-colliders`, `homes`, `swing-meter` (since the
+  bar went on the pull-push-swing branch, a struck swing is given as its pull
+  and strike error, and the bar's tap-timing tests went with the bar; the lie's
   speed table, the flyer -- grass takes a lofted shot's spin and almost none of a
   long iron's -- from meter and monitor shots alike; nothing in it holds a ball to
   stopping or staying), `swing-stroke` (the pull-and-push swing: scripted thumb
@@ -443,7 +445,7 @@ putt now waits 30 s for the card, and the journey logs how long it took.
 | `endless-round` | one golfer: clubs, aim, cameras, the Swing Meter, a tee shot, a drop, putting out, the scorecard, the next hole. Logs the course and seed, and the hole's par and its hole-out banner ("BIRDIE! 3 strokes") on every run |
 | `surprise-round` | a nine-hole course, every in-round tool opens |
 | `mixed-group` | two golfers, one on the monitor and one on the Swing Meter |
-| `pull-push` (branch pull-push-swing, 15 November 2026) | the pull-and-push swing with the mouse: a click on the bar arms the pad, the pad's aim line drawn and nothing of the round's over its strike line, a lift before the push is no stroke, a pull and push strikes the ball and the bar says how, Escape cancels; a picture of the pad mid-pull (bench/shots/smoke/pull-push-pad.png). The phone journeys swing and putt by touch with it (`touchStroke`, pulling to the blue stop for a putt) |
+| `pull-push` (branch pull-push-swing, 15-16 November 2026) | the pull-and-push swing with the mouse on the course: a click still aims and is no swing, a sideways drag is no swing, a drag down starts the pad with its aim line and nothing of the round's over its strike line, a lift before the push is no stroke (and says so), a pull and push strikes the ball and the words say how, Escape cancels mid-pull; a picture of the pad mid-pull (bench/shots/smoke/pull-push-pad.png). With the bar gone, EVERY journey swings this way: `t.shot()` and `t.putt()` pull and push with the mouse (`strokeOnCourse`, on a point of the course clear of the round's cards; a putt pulls to the blue stop), the phone journeys by touch. The controller's stick is not driven: the harness has no pad |
 | `skins` | a two-golfer skins round starts; chips and the Skins row |
 | `relief` | water and out of bounds, through a reload, both rules |
 | `profile`, `bag`, `look`, `level-up` | players, bags, looks, levels |

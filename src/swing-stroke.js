@@ -64,6 +64,8 @@ export const STROKE = {
  curveWiden: 1.5,
  // The ideal push for a full pull, ms; a pull of nothing would be `short` of it.
  tempo: 250, tempoShort: .6,
+ // The same for a controller's right stick, which travels a short way fast.
+ tempoPad: 150,
  // Side slope to aim-line lean: degrees of lean per degree of ground, and the most.
  leanPerDegree: 1.5, leanMax: 15,
 };
@@ -93,8 +95,10 @@ export function leanFor(fallRight, difficulty, {putt = false} = {}) {
 }
 
 // A STROKE IN PROGRESS. Times in ms on the input's clock, positions in CSS px.
-export function startStroke(t, x, y, {fullPx, difficulty, putt = false, lean = 0}) {
- return {t0: t, x0: x, y0: y, fullPx, difficulty, putt, lean, pts: [{t, x, y}], deep: 0, done: false, result: null};
+// `tempo` is the ideal full push for this input, ms (a controller's stick is
+// flicked faster than a thumb is swiped: STROKE.tempoPad).
+export function startStroke(t, x, y, {fullPx, difficulty, putt = false, lean = 0, tempo = STROKE.tempo}) {
+ return {t0: t, x0: x, y0: y, fullPx, difficulty, putt, lean, tempo, pts: [{t, x, y}], deep: 0, done: false, result: null};
 }
 // How far the thumb is pulled now, as a share of a full swing (overswing past 1).
 export const pullShare = (st, y) => clamp((y - st.y0) / st.fullPx, 0, 1 + OVERSWING);
@@ -162,7 +166,7 @@ export function readStroke(st) {
  const line = angleUp(from, strike), start = angleUp(from, mid), finish = angleUp(mid, strike);
  // The pace: the time over the measured leg, against the ideal for this pull
  // scaled to the same leg.
- const ideal = STROKE.tempo * (STROKE.tempoShort + (1 - STROKE.tempoShort) * Math.min(1, share));
+ const ideal = (st.tempo ?? STROKE.tempo) * (STROKE.tempoShort + (1 - STROKE.tempoShort) * Math.min(1, share));
  const leg = Math.max(1, edge - st.y0) / Math.max(1, pullPx);
  const time = Math.max(1, strike.t - from.t);
  return {share, pullPx, line, start, curve: finish - start, time, ideal: ideal * leg, tempo: time / (ideal * leg), from, strike, top, samples: p.length};
