@@ -207,13 +207,16 @@ const resetTrails=()=>{holeTrails=[];practiceShots=0;viewShot=null;};
 // A trail carries WHO HIT IT. Recorded at the moment the ball settles, which is
 // before `round.takeShot` advances the turn, so `round.active` is still the
 // golfer who struck it rather than whoever is up next.
-function pushTrail(points,player=round.active){
- holeTrails.push({points,player,colour:playerTracer(player),style:seatLooks(player).tracer});practiceShots++;
+function pushTrail(points,player=round.active,putt=false){
+ holeTrails.push({points,player,colour:playerTracer(player),style:seatLooks(player).tracer,putt});practiceShots++;
  if(rangeMode&&holeTrails.length>SHOT_LINE_MAX)holeTrails.splice(0,holeTrails.length-SHOT_LINE_MAX);
 }
 // The tail the setting asks for. Zero is a real answer -- a clear field -- and
 // `setShotHistory` hides every line before it draws, so passing [] clears them.
-const visibleTrails=()=>[...rivalTrails(),...(shotLinePref?holeTrails.slice(-shotLinePref):[])];
+// A putt's line is not left on the field while the hole is played (the owner,
+// 16 November 2026: "During putting don't show the tracer"); the hole's
+// summary, once it is holed, draws every line, putts too.
+const visibleTrails=()=>[...rivalTrails(),...(shotLinePref?holeTrails.filter(t=>!t.putt).slice(-shotLinePref):[])];
 // A FRIEND'S SHOTS ON THIS HOLE (rival.js), flown again here exactly as they
 // were flown there: the same version of Fairway, the same course, their turf,
 // their flagstick and floodlights. Drawn as a white dashed line under the
@@ -1646,6 +1649,10 @@ function releaseSwing(){
  meterFlash={text:strokeWords(sw.fx,{putt:sw.putt,height:sw.ctx.shape.height,heightWord:strokeReport?.height}),perfect:out.strike.perfect,until:performance.now()+2600};
  drawMeter(performance.now());drawStrokeReport();
  takeShot(null,out);
+ // The pad shuts a moment after the shot, its path still on it until then
+ // (the owner, 16 November 2026: "it should only stay for just a second
+ // before closing after the shot"); Swing brings it back, path and all.
+ if(padOpen){clearTimeout(padCloseTimer);padCloseTimer=setTimeout(()=>{if(padOpen&&!swing)setPadOpen(false);},PAD_LINGER);}
 }
 // The stroke is over, struck or not. The pad stays open, showing its path.
 function endPadStroke(){
@@ -1799,15 +1806,16 @@ function padStroke(pad,t){
  drawStroke(t);drawMeter(t);
 }
 // THE STROKE FINISHED: the follow-through has ended, so the height is known.
-// The shape is put together here -- the curve the bend picked, the height the
-// follow-through picked, the spin dot as it was set -- the stroke judged
-// against the allowance for that shape, and the shot sent.
+// The shot is put together here -- the start the bend picked (Push, Pull or
+// Straight: `fx.start`, which swingLaunch turns into the club's angle), the
+// height the follow-through picked, the spin dot (the draw or fade) as it was
+// set -- the stroke judged against the allowance for that shape, and the shot
+// sent. The old Curve box's curve stays Straight: the dot curves the ball.
 function strikeStroke(){
  const sw=swing,st=sw.st,r=st.result;endStroke(st);
  const putt=sw.putt,height=putt?'normal':heightOf(st);
- let shape={...sw.ctx.shape,height};
+ const shape={...sw.ctx.shape,height,curve:'straight'};
  const fx=strokeEffect(r,zonesFor({...sw.ctx,shape},r.share),{difficulty:sw.ctx.difficulty,putt,lean:sw.lean});
- shape={...shape,curve:fx.curve};
  sw.ctx={...sw.ctx,shape};sw.power=r.share;sw.fx=fx;sw.done=true;
  const {full,unit,per}=sw.scale;
  strokeReport={player:round.player?.name,hole:round.hole,putt,difficulty:sw.ctx.difficulty,fx,back:r.back,idealBack:r.idealBack,
@@ -1816,12 +1824,13 @@ function strikeStroke(){
  // THE PATH, KEPT (the owner, 16 November 2026: "allow the user to see the
  // pull and push path after the shot somehow"): the pad goes on showing what
  // the thumb did -- the trail, the top, the strike, the shape point, the
- // finish and the cell it picked -- until the next stroke starts.
+ // finish and the cell it picked -- for the second before it shuts
+ // (`PAD_LINGER`), and whenever Swing opens it again before the next stroke.
  lastPath={player:round.player?.name,hole:round.hole,putt,difficulty:sw.ctx.difficulty,short:sw.ctx.short,lean:sw.lean,fullPx:st.fullPx,
   pts:st.pts.map(p=>({x:p.x,y:p.y})),top:{x:r.from.x,y:r.top},strike:r.strike,apex:r.apex,end:r.end||r.strike,
-  cell:putt?null:cellOf(r.curve,followShare(st),sw.ctx.difficulty)};
+  cell:putt?null:cellOf(r.bend,followShare(st),sw.ctx.difficulty)};
  // Kept for a look from the console while it is tuned: what the thumb did.
- lastStroke={share:+r.share.toFixed(3),line:+r.line.toFixed(2),start:+r.start.toFixed(2),curve:+r.curve.toFixed(2),tempo:+r.tempo.toFixed(3),ms:Math.round(r.time),idealMs:Math.round(r.ideal),backMs:Math.round(r.back),follow:+followShare(st).toFixed(3),height,shape:fx.curve,samples:r.samples,lean:+sw.lean.toFixed(2),parts:fx.parts};
+ lastStroke={share:+r.share.toFixed(3),line:+r.line.toFixed(2),start:+r.start.toFixed(2),bend:+r.bend.toFixed(2),tempo:+r.tempo.toFixed(3),ms:Math.round(r.time),idealMs:Math.round(r.ideal),backMs:Math.round(r.back),follow:+followShare(st).toFixed(3),height,shape:fx.start,samples:r.samples,lean:+sw.lean.toFixed(2),parts:fx.parts};
  releaseSwing();
 }
 // THE PAD, DRAWN: everything in it is fixed to the pad, not to the pull (the
@@ -1834,10 +1843,12 @@ function strikeStroke(){
 //   - THE RULER down the left below the line: quarter marks with their yards,
 //     overswing in orange, the blue stop (not on Hard) with a dotted line
 //     across the pad at its depth, and the pull so far filled in.
-//   - THE SHAPE CELLS above the line (not for a putt): three columns -- FADE
-//     on the left, STRAIGHT, DRAW on the right -- fanned from the SHAPE POINT
-//     below the line, crossed by the three heights. Where the follow-through
-//     finishes is the shot; the cell lights as the thumb gets there.
+//   - THE SHOT CELLS above the line (not for a putt): three columns -- PULL
+//     on the left, STRAIGHT, PUSH on the right, where the ball starts -- fanned
+//     from the SHAPE POINT below the line, crossed by the three heights. Where
+//     the follow-through finishes is the shot; the cell lights as the thumb
+//     gets there. (Draw and Fade columns until the owner's third try: the
+//     curve is the spin ball's now.)
 //   - While pulling: the line's allowance fanned up from the thumb.
 //   - After a stroke: its path, kept (`lastPath`).
 const SVGNS='http://www.w3.org/2000/svg';
@@ -1860,9 +1871,9 @@ function drawStroke(now=performance.now()){
   // Where a way `a` degrees right of the aim, from the shape point, is at height Y.
   const at=(a,Y)=>[ap[0]+Math.tan((lean+a)*Math.PI/180)*(ap[1]-Y),Y];
   const lo=STROKE.laneAt-L.lane,hi=STROKE.laneAt+L.lane;
-  const cols=[['fade',-hi,-lo],['straight',-L.straight,L.straight],['draw',lo,hi]];
+  const cols=[['pull',-hi,-lo],['straight',-L.straight,L.straight],['push',lo,hi]];
   const rows=[['low',0,STROKE.lowBelow],['normal',STROKE.lowBelow,STROKE.highFrom],['high',STROKE.highFrom,STROKE.throughCap]];
-  const live=struck?shapeNow(st):null,cell=live?cellOf(live.curve,live.follow,ctx.difficulty):past?.cell||null;
+  const live=struck?shapeNow(st):null,cell=live?cellOf(live.bend,live.follow,ctx.difficulty):past?.cell||null;
   const poly=(a1,a2,Yb,Yt)=>[at(a1,Yb),at(a1,Yt),at(a2,Yt),at(a2,Yb)].map(p=>`${f(p[0])},${f(p[1])}`).join(' ');
   for(const [col,a1,a2] of cols){
    // The throat: from the shape point to the strike line, where the curve begins.
@@ -1960,7 +1971,7 @@ function drawMeter(t){
  const hint=$('smHint'),flashing=!swing&&meterFlash&&t<meterFlash.until;
  const over=stroking&&pullShare(swing.st,swing.lastY)>1;
  box.classList.toggle('over',over);
- if(stroking&&swing.st.result)hint.innerHTML=swing.putt?'Struck':'Finish in the cell you want: the way it goes is the curve, how far the height';
+ if(stroking&&swing.st.result)hint.innerHTML=swing.putt?'Struck':'Finish in the cell you want: the way it goes is where the ball starts, how far the height';
  else if(stroking)hint.innerHTML=over?'Overswing: push when ready':'Push up through the line <span class="sm-esc"><kbd>Esc</kbd> cancels</span>';
  else if(flashing||(flight&&meterFlash))hint.textContent=meterFlash.text;
  else if(box.classList.contains('out-of-reach'))hint.innerHTML='<span class="sm-out">Out of reach: take more club</span>';
@@ -2013,11 +2024,13 @@ function drawMeterScale(){
 }
 // WHAT YOU HIT (the owner, 16 November 2026: "for all of the following, show
 // on the screen via some sort of feedback what the user hit"). A row in the
-// swing box after each stroke: the pull in yards, the line, the curve, the
-// height, the spin dot, and the TEMPO GAUGE -- quick on the left, the ideal in
-// the middle with its perfect band, slow on the right, the push marked on it
-// with its time beside the ideal (on Easy, shown but not judged). Kept until
-// the next stroke starts, for the golfer who hit it and this hole only.
+// swing box after each stroke: the pull in yards, the line, where it started
+// (Push, Pull, Straight), the height, the spin -- backspin and the draw or
+// fade -- and the TEMPO GAUGE -- quick on the left, the ideal in the middle
+// with its perfect band, slow on the right, the push marked on it with its
+// time beside the ideal (on Easy, shown but not judged), and the backswing's
+// ratio to it (judged on Hard). Kept until the next stroke starts, for the
+// golfer who hit it and this hole only.
 function drawStrokeReport(){
  const box=$('swingMeter');if(!box)return;
  let el=$('strokeReport');
@@ -2025,17 +2038,17 @@ function drawStrokeReport(){
  const r=strokeReport,mine=!!r&&!swing&&r.player===round.player?.name&&r.hole===round.hole;
  if(el.hidden===mine)el.hidden=!mine;
  if(!mine){if(el.innerHTML){el.innerHTML='';el.dataset.shown='';}return;}
- const {line,curve,tempo}=r.fx.parts,chip=(k,v,bad=false)=>`<span class="srp-chip${bad?' bad':''}"><small>${k}</small><b>${v}</b></span>`;
+ const {line,start,tempo,back}=r.fx.parts,chip=(k,v,bad=false)=>`<span class="srp-chip${bad?' bad':''}"><small>${k}</small><b>${v}</b></span>`;
  let h=chip('PULL',`${r.pull} ${r.unit}`);
  h+=chip('LINE',line.miss>0?`${Math.abs(line.deg).toFixed(1)}° ${line.side>0?'R':'L'}`:'✓',line.miss>0);
- if(curve)h+=chip('CURVE',{draw:'DRAW',fade:'FADE',straight:'STRAIGHT'}[curve.shape]+(curve.miss>0?(curve.shape==='straight'?' ~':curve.extra===(curve.shape==='draw'?-1:1)?' +':' −'):''),curve.miss>0);
+ if(start)h+=chip('START',{push:'PUSH',pull:'PULL',straight:'STRAIGHT'}[start.shape]+(start.miss>0?(start.shape==='straight'?' ~':start.extra===(start.shape==='push'?1:-1)?' +':' −'):''),start.miss>0);
  if(r.height)h+=chip('HEIGHT',escape(r.height.toUpperCase()));
  if(r.dot){const d=r.dot,on=Math.hypot(d.x,d.y)>.05,pct=Math.round((dotSpin(d)-1)*100),side=Math.round(d.x*SPIN_DOT.axis);
-  h+=chip('SPIN',on?`${pct>=0?'+':''}${pct}%${side?` · ${Math.abs(side)}° ${side>0?'R':'L'}`:''}`:'CLUB');}
- // The tempo: the push judged on the gauge; the backswing beside it, shown
- // against its 3:1 ideal but not judged (swing-stroke.js `backRatio`).
- if(tempo){const g=tempoGauge(tempo.ratio,r.difficulty),at=50+g.at/1.4*50,pw=g.perfect/1.4*50,s=ms=>(ms/1000).toFixed(2);
-  h+=`<span class="srp-tempo${tempo.judged&&tempo.miss>0?' bad':''}" title="Your push against the ideal pace; the backswing is shown, not judged"><small>TEMPO${tempo.judged?'':' (not judged)'}</small><i class="srp-gauge"><i class="srp-zone"></i><i class="srp-ok" style="left:${(50-pw).toFixed(1)}%;width:${(2*pw).toFixed(1)}%"></i><i class="srp-mark" style="left:${at.toFixed(1)}%"></i></i><b>push ${s(tempo.ms)} s <em>· ideal ${s(tempo.ideal)}</em></b>${r.back>0?`<b class="srp-back">back ${s(r.back)} s <em>· ${(r.back/Math.max(1,tempo.ms)).toFixed(1)} : 1, ideal ${STROKE.backRatio} : 1</em></b>`:''}<span class="srp-ends"><em>QUICK</em><em>SLOW</em></span></span>`;}
+  h+=chip('SPIN',on?`${pct>=0?'+':''}${pct}%${side?` · ${side<0?'DRAW':'FADE'} ${Math.abs(side)}°`:''}`:'CLUB');}
+ // The tempo: the push judged on the gauge; the backswing beside it against
+ // its 3:1, judged on Hard only (swing-stroke.js `backRatio`).
+ if(tempo){const g=tempoGauge(tempo.ratio,r.difficulty),at=50+g.at/1.4*50,pw=g.perfect/1.4*50,s=ms=>(ms/1000).toFixed(2),bj=!!back?.judged,bad=bj&&back.miss>0;
+  h+=`<span class="srp-tempo${tempo.judged&&tempo.miss>0?' bad':''}" title="Your push against the ideal pace, and your backswing against three times it${bj?'':' (the backswing is judged on Hard)'}"><small>TEMPO${tempo.judged?'':' (not judged)'}</small><i class="srp-gauge"><i class="srp-zone"></i><i class="srp-ok" style="left:${(50-pw).toFixed(1)}%;width:${(2*pw).toFixed(1)}%"></i><i class="srp-mark" style="left:${at.toFixed(1)}%"></i></i><b>push ${s(tempo.ms)} s <em>· ideal ${s(tempo.ideal)}</em></b>${r.back>0?`<b class="srp-back${bad?' bad':''}">back ${s(r.back)} s <em>· ${(r.back/Math.max(1,tempo.ms)).toFixed(1)} : 1, ideal ${STROKE.backRatio} : 1${bj?'':' (judged on Hard)'}</em></b>`:''}<span class="srp-ends"><em>QUICK</em><em>SLOW</em></span></span>`;}
  if(el.dataset.shown!==h){el.dataset.shown=h;el.innerHTML=h;}
 }
 // THE SWING METER CARRIES ITS OWN THREE NUMBERS (the owner's call, 14 October
@@ -2106,18 +2119,32 @@ function drawTarget(force=false){
 // axis"), in place of the Curve, Height and Spin boxes -- curve and height now
 // come from the swing itself. Where the dot sits on the ball is where it is
 // struck (swing-meter.js `SPIN_DOT`): low for more backspin, high for less,
-// right or left for side spin that bends the ball that way. It resets every
-// turn and is fixed once a swing has started; a putt has none.
+// left for a DRAW and right for a FADE -- side spin tilts the ball's spin axis,
+// and that tilt is what curves it (the owner, 16 November 2026: "What impacts
+// draw and fade is the ball spin correct? So our spin meter should expose
+// that"). The words are a right-hander's; the ball bends the way the dot sits
+// for everyone. While it is dragged the big copy shows the numbers the ball
+// will leave with: its backspin in rpm and its spin axis. It resets every turn
+// and is fixed once a swing has started; a putt has none.
 const dotOf=()=>shotShape.dot||{x:0,y:0};
 function spinWords(d){
  if(Math.hypot(d.x,d.y)<=.05)return 'the club\'s own';
  const pct=Math.round((dotSpin(d)-1)*100),side=Math.round(d.x*SPIN_DOT.axis);
- return `${pct>=0?'+':''}${pct}% backspin${side?`, ${Math.abs(side)} degrees ${side>0?'right':'left'}`:''}`;
+ return `${pct>=0?'+':''}${pct}% backspin${side?`, ${Math.abs(side)} degrees of ${side<0?'draw':'fade'}`:''}`;
+}
+// The numbers the dot sets for this club, at a normal height: the backspin
+// and the spin axis, negative curving left. What the ball model flies.
+function spinNumbers(c,d){
+ const l=shapedLaunch(c,{...shotShape,dot:d,height:'normal',curve:'straight'},{short:isShortGame()});
+ return {rpm:Math.round(l.spin/10)*10,axis:Math.round(l.side)};
 }
 function drawShapeControls(){
  const c=clubs[$('club').value];if(!c||!$('shapeControl'))return;
  const putt=c.code==='PT',locked=putt||!!swing||!!flight,d=dotOf();
- for(const dot of [$('spinDot'),$('spinPad')?.querySelector('i')])if(dot){dot.style.left=(50+d.x*40)+'%';dot.style.top=(50+d.y*40)+'%';}
+ for(const dot of [$('spinDot'),$('spinPad')?.querySelector('.spin-pad-ball i')])if(dot){dot.style.left=(50+d.x*40)+'%';dot.style.top=(50+d.y*40)+'%';}
+ const read=$('spinPadRead');
+ if(read&&!putt&&!$('spinPad').hidden){const n=spinNumbers(c,d);
+  read.innerHTML=`<span><small>BACKSPIN</small><b>${n.rpm.toLocaleString('en-US')} rpm</b></span><span><small>SPIN AXIS</small><b>${n.axis?`${Math.abs(n.axis)}° ${n.axis<0?'L · DRAW':'R · FADE'}`:'0° · STRAIGHT'}</b></span>`;}
  $('pickSpin').disabled=locked;
  $('pickSpin').setAttribute('aria-label',`Spin: ${spinWords(d)}. Drag the dot to change it, tap to centre it`);
  $('shapeControl').classList.toggle('putt',putt);
@@ -2140,7 +2167,7 @@ function bindSpinBall(){
  const b=$('pickSpin');if(!b)return;
  let drag=null;
  const pad=document.createElement('div');pad.id='spinPad';pad.className='spin-pad';pad.hidden=true;pad.setAttribute('aria-hidden','true');
- pad.innerHTML='<span class="spin-pad-ball"><i></i></span><small>LOW: MORE BACKSPIN · SIDES: SIDE SPIN</small>';
+ pad.innerHTML='<span class="spin-pad-face"><em class="spin-edge top">LESS SPIN</em><em class="spin-edge left">DRAW</em><span class="spin-pad-ball"><i></i></span><em class="spin-edge right">FADE</em><em class="spin-edge bottom">MORE SPIN</em></span><div class="spin-pad-read" id="spinPadRead"></div>';
  $('world').append(pad);
  b.addEventListener('pointerdown',e=>{if(b.disabled||(e.pointerType==='mouse'&&e.button!==0))return;e.preventDefault();e.stopPropagation();
   drag={id:e.pointerId,type:e.pointerType,x:e.clientX,y:e.clientY,from:dotOf(),moved:false};try{b.setPointerCapture(e.pointerId);}catch{}
@@ -2181,11 +2208,14 @@ function drawLie(){
 // pad SHOWS also asks the swing box (`drawSwingPad`): it goes with the box --
 // a launch monitor armed, a hole finished, a menu up -- and comes back with it.
 const PAD_KEY='fairway-swing-pad-v1';
-let padOpen=false,padGeo=null;
+// How long the pad stays after a shot, ms. PLACED.
+const PAD_LINGER=1000;
+let padOpen=false,padGeo=null,padCloseTimer=0;
 function padPrefs(){try{const v=JSON.parse(localStorage.getItem(PAD_KEY)||'{}');return v&&typeof v==='object'?v:{};}catch{return {};}}
 function savePadPrefs(v){try{localStorage.setItem(PAD_KEY,JSON.stringify({...padPrefs(),...v}));}catch{}}
 const padWay=()=>innerWidth>innerHeight?'wide':'tall';
 function setPadOpen(on){
+ clearTimeout(padCloseTimer);
  if(!on&&swing?.kind==='stroke')cancelSwing();
  padOpen=!!on;savePadPrefs({open:padOpen});drawSwingPad();
 }
@@ -2452,7 +2482,7 @@ function finishShot(){
  const result=flight.result;flight=null;drawPanelState();
  // The tracer has had the whole flight and the settle hold to be looked at. It
  // goes now rather than hanging over the next shot, and is kept for the summary.
- pushTrail(result.points);view.setTrail([]);view.setBall(result.end);
+ pushTrail(result.points,round.active,!!result.puttStroke);view.setTrail([]);view.setBall(result.end);
  if(challenge){view.aimLine.visible=true;view.trackingBall=false;challengeShot(result);sendPlayer();return;}
  // THE LAB RECORDS TOO. It shares the range's player card, its Shot data chip
  // and its shot list, and a chip that offers a list and then shows an empty one
@@ -5445,12 +5475,17 @@ function returnMenuFocus(){
 // Only the trajectory clock carried it. Both hold timers count real seconds and
 // always did, so the camera hold and the settle pause are unaffected.
 const FLIGHT_PLAYBACK=1;
-// THE TRACER RUNS A MOMENT BEHIND THE BALL (the owner, 6 October), so the line
-// does not sit on top of the ball and the ball itself can be seen. A TIME lag
-// rather than a distance: it opens to about ten metres behind a driver at full
-// speed and closes to a few centimetres behind a slow putt, the way a broadcast
-// tracer trails, and it catches up once the ball stops, while the result holds.
-const TRACER_LAG=.15;
+// THE TRACER COMES OUT OF THE BACK OF THE BALL (the owner, 16 November 2026:
+// "The ball tracer should go back to coming out of the back of the ball").
+// From 6 October it ran 0.15 s behind -- about ten metres behind a driver --
+// so the line would not sit on the ball; the renderer already stops it a
+// ball's radius short (`trimToBall`), which keeps the ball clear without the
+// gap. Kept as a number in case a lag is wanted again.
+//
+// A PUTT DRAWS NONE as it rolls (the same day: "During putting don't show the
+// tracer, but make sure it still shows after holing out"): its line is still
+// kept for the hole's summary, which draws every shot once the hole is done.
+const TRACER_LAG=0;
 // The flight's path up to time `t`, ending on the exact point the ball was at
 // then; nothing before the first point. Walks back from the frame's current
 // sample rather than forward from the tee: a long flight has thousands.
@@ -7317,7 +7352,7 @@ function renderPanel(name,content){
   // PULL AND PUSH is how a finger or mouse swings (pull-push-swing; the owner,
   // 16 November 2026, the three taps gone for them). Space and a controller
   // keep the three taps until their replacement is decided.
-  content.innerHTML=`<h3>Pull and push</h3><p>Press <strong>Swing</strong> in the swing box to open the swing pad, and drag it by its top bar to wherever suits your hand -- it stays there. Put your thumb (or the mouse) down in the pad, pull back below the gold strike line for the distance (the ruler on the left, with the blue stop), and push up through the line to strike. On a controller, the right stick does the same, and opens the pad if it is closed. Nothing moves unless you move it. The dashed line is your aim: push along it, and on a side slope it leans uphill. Lift before the push, or let the stick go, and nothing is struck; Escape cancels. A tap on the course still aims.</p><h3>Difficulty${prof?` for ${escape(prof.name)}`:''}</h3><div class="meter-choices">${rows}</div>${prof?'':'<p class="note">This golfer has no profile, so the meter plays on Normal.</p>'}<h3>Curve, height and spin</h3><p class="note">They come from the swing: where your thumb finishes picks the shot from the cells above the strike line. <strong>Curve:</strong> the way the thumb goes from just below the line to where it stops -- straight on for a straight shot, out to the right for a draw (it starts right and turns back), out to the left for a fade. <strong>Height:</strong> how far past the line it carries -- stop just past it for low, on into the middle row for normal, up into the top row for high. Near the green with a wedge, Low becomes Bump &amp; run and High becomes Flop. After the shot the pad keeps your stroke's path until the next one. <strong>Spin:</strong> drag the dot on the spin ball -- low on the ball for more backspin, high for less, left or right to bend the ball that way; tap the ball to centre it (on a controller, the d-pad moves it and X centres it). Spin away from the middle narrows your allowance. After each stroke the swing box shows what you hit, with your tempo against the ideal.</p><h3>The lie</h3><p class="note">Semi-rough costs 4% of ball speed, rough 10% and sand 20%. The pull's allowance narrows in rough and sand. Launch-monitor shots lose the same ball speed, unless the round's <em>Format &amp; tees</em> switches that off.</p><button class="secondary" id="applyShot">Back to the fairway</button>`;
+  content.innerHTML=`<h3>Pull and push</h3><p>Press <strong>Swing</strong> in the swing box to open the swing pad, and drag it by its top bar to wherever suits your hand -- it stays there. Put your thumb (or the mouse) down in the pad, pull back below the gold strike line for the distance (the ruler on the left, with the blue stop), and push up through the line to strike. On a controller, the right stick does the same, and opens the pad if it is closed. Nothing moves unless you move it. The dashed line is your aim: push along it, and on a side slope it leans uphill. Lift before the push, or let the stick go, and nothing is struck; Escape cancels. A tap on the course still aims.</p><h3>Difficulty${prof?` for ${escape(prof.name)}`:''}</h3><div class="meter-choices">${rows}</div>${prof?'':'<p class="note">This golfer has no profile, so the meter plays on Normal.</p>'}<h3>Start, height and spin</h3><p class="note">Where the ball starts and how high it goes come from the swing: where your thumb finishes picks the shot from the cells above the strike line. <strong>Start:</strong> the way the thumb goes from just below the line to where it stops -- straight on for a straight shot, out to the right for a push (the ball starts right of the aim), out to the left for a pull. <strong>Height:</strong> how far past the line it carries -- stop just past it for low, on into the middle row for normal, up into the top row for high. Near the green with a wedge, Low becomes Bump &amp; run and High becomes Flop. The pad shuts a second after the shot; open it again before your next stroke to see that stroke's path. <strong>Spin, and the draw and fade:</strong> a ball curves because of its spin, so the curve is on the spin ball. Drag its dot -- low on the ball for more backspin, high for less, left for a draw and right for a fade (as a right-hander's); while you drag, the backspin and spin axis the ball will leave with are shown. A push with a full draw comes back to the aim; so does a pull with a full fade. Tap the ball to centre it (on a controller, the d-pad moves it and X centres it). Spin away from the middle narrows your allowance. After each stroke the swing box shows what you hit, with your tempo against the ideal; on Hard your backswing should take about three times as long as your push, or the ball loses a little speed.</p><h3>The lie</h3><p class="note">Semi-rough costs 4% of ball speed, rough 10% and sand 20%. The pull's allowance narrows in rough and sand. Launch-monitor shots lose the same ball speed, unless the round's <em>Format &amp; tees</em> switches that off.</p><button class="secondary" id="applyShot">Back to the fairway</button>`;
   content.querySelectorAll('input[name=meterDifficulty]').forEach(r=>r.onchange=()=>{try{setProfileMeter(profiles,prof.id,r.value);}catch(e){toast(e.message);return;}meterScaleKey='';updateAim();updateHUD();openPanel('shot');});
   $('applyShot').onclick=()=>closePanel();
  }else if(name==='score'){
@@ -8152,8 +8187,8 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
     hidden:course.greens.filter(g=>g.hidden).map(g=>g.id),ball:course.surface(round.position.x,round.position.z),
     last:(s=>s?{from:s.from,green:s.green,toPin:+s.toPin.toFixed(2),holed:s.holed,on:course.surface(s.end.x,s.end.z)}:null)(rangeShots.at(-1))}:null,
    // How far the tracer's end sits from the ball, a number worth being able to
-   // read rather than squint at. In flight it trails on purpose (TRACER_LAG);
-   // once the ball has stopped and the line caught up, it should be ~0.
+   // read rather than squint at. It stops a ball's radius short of the ball,
+   // in flight and once it has stopped (TRACER_LAG is 0 since 16 November 2026).
    // Line2 packs each segment as start and end triples into one interleaved
    // buffer of stride 6, so the end point's height is index*6+4. Reading it with
    // getZ returns the z of the segment instead, which is how this first reported
@@ -8843,7 +8878,7 @@ function tick(now){
   if(flight.reviewing){}
   else if(tvOn){if(!flight.tvStarted){flight.tvStarted=true;view.tvShot(flight.tv);}view.tvFollow(p,flight.elapsed);}
   else if(flight.hold>=CAMERA_HOLD||flight.result.puttStroke)view.follow(p,flight.replay?flight.aim:aim,!!flight.result.puttStroke);
-  if(flight.elapsed>=flight.result.time&&!flight.reviewing){flight.reviewing=true;if(hud1&&!flight.replay)showShotCard(cardRecord(),true,apexOf(flight.result.points));if(tvOn&&view.config.review!==false){const pose=planReview({points:flight.result.points,toWorld:q=>view.course.toWorld(q),groundAt:(x,z)=>view.world.height(x,z),trees:view.world.trees,fov:view.camera.fov,aspect:view.camera.aspect});if(pose){view.tvReview(pose);flight.reviewed=true;}}}view.setTrail(trailUpTo(pts,flight.elapsed-TRACER_LAG,flight.index+1));if(flight.elapsed>=flight.result.time){if(flight.replay){flight.endHold=(flight.endHold||0)+dt;liveLine(`Final lie · returning in ${Math.max(0,Math.ceil(REPLAY_HOLD_SECONDS-flight.endHold))}s`);if(replayFinished(flight.elapsed,flight.result.time,flight.endHold))finishShot();}else{flight.endHold=(flight.endHold||0)+dt;const need=flight.reviewed?REVIEW_HOLD_SECONDS:flight.result.holed?HOLED_HOLD_SECONDS:SHOT_HOLD_SECONDS;liveLine(`Final lie · playing on in ${Math.max(0,Math.ceil(need-flight.endHold))}s`);if(shotSettled(flight.elapsed,flight.result.time,flight.endHold,need)){finishShot();sendPlayer();}}}}
+  if(flight.elapsed>=flight.result.time&&!flight.reviewing){flight.reviewing=true;if(hud1&&!flight.replay)showShotCard(cardRecord(),true,apexOf(flight.result.points));if(tvOn&&view.config.review!==false){const pose=planReview({points:flight.result.points,toWorld:q=>view.course.toWorld(q),groundAt:(x,z)=>view.world.height(x,z),trees:view.world.trees,fov:view.camera.fov,aspect:view.camera.aspect});if(pose){view.tvReview(pose);flight.reviewed=true;}}}view.setTrail(flight.result.puttStroke?[]:trailUpTo(pts,flight.elapsed-TRACER_LAG,flight.index+1));if(flight.elapsed>=flight.result.time){if(flight.replay){flight.endHold=(flight.endHold||0)+dt;liveLine(`Final lie · returning in ${Math.max(0,Math.ceil(REPLAY_HOLD_SECONDS-flight.endHold))}s`);if(replayFinished(flight.elapsed,flight.result.time,flight.endHold))finishShot();}else{flight.endHold=(flight.endHold||0)+dt;const need=flight.reviewed?REVIEW_HOLD_SECONDS:flight.result.holed?HOLED_HOLD_SECONDS:SHOT_HOLD_SECONDS;liveLine(`Final lie · playing on in ${Math.max(0,Math.ceil(need-flight.endHold))}s`);if(shotSettled(flight.elapsed,flight.result.time,flight.endHold,need)){finishShot();sendPlayer();}}}}
  if(!flight&&!dropState&&view.config.mode!=='free'&&now-lastMapFrame>80){lastMapFrame=now;drawMap($('map'),course,round.position,round.candidates,view.config.mode==='overview',view.camera.position,aimPoint,view.elapsed);}
  // The reading tools come off while the ball is moving. Driven from the state
  // every frame rather than flipped at the two ends of a shot: a shot starts and

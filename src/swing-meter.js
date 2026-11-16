@@ -102,9 +102,13 @@ export const DEFAULT_SHAPE = Object.freeze({curve: 'straight', height: 'normal',
 // golfer strikes, x right and y DOWN, inside the unit circle. Below the middle
 // adds backspin (to `more` at the bottom), above takes it off (to `less` at
 // the top); right of the middle tilts the spin axis right, up to `axis`
-// degrees, curving the ball right, and left curves it left. That side spin is
-// NOT started the other way to land on the aim -- it is for bending a ball
-// round something. Every step away from the middle narrows the strike's
+// degrees, curving the ball right (a right-hander's fade), and left curves it
+// left (a draw). That tilt is what curves a ball, so since the owner's third
+// try at the swing (16 November 2026: "What impacts draw and fade is the ball
+// spin correct? So our spin meter should expose that") it is THE draw and
+// fade; the swing picks where the ball starts (swing-stroke.js, Push and
+// Pull; `pushStart`). The side spin is NOT started the other way to land on
+// the aim: a Push with a full draw does that. Every step away from the middle narrows the strike's
 // allowance as added spin did (`zone` per third of the way down, per half of
 // the way across). The dot replaces the spin steps for the game; a shape with
 // no dot still reads `spin` steps (tests, older records). All PLACED.
@@ -271,6 +275,14 @@ export function curveCompensation(club, launch, speed) {
  if (!cache.has(key)) { const l = landing(fly(club, launch, speed)); cache.set(key, Math.atan2(l.x, Math.max(1, l.z)) * 180 / Math.PI); }
  return cache.get(key);
 }
+// HOW FAR OFF THE AIM A PUSH OR PULL STARTS (swing-stroke.js), in degrees:
+// as far as the spin dot's full side spin bends this club at this speed, so a
+// Push with the dot all the way to the draw side comes down on the aim line,
+// and a Push with none finishes right of it. About 4.6 degrees for a driver,
+// 4.9 for a 7-iron and 2.5 for a sand wedge at full speed. PLACED.
+export function pushStart(club, launch, speed) {
+ return Math.abs(curveCompensation(club, {...launch, axis: SPIN_DOT.axis}, speed));
+}
 // The flight's ground track to where it lands, in the aim-0 frame, for drawing
 // the shape on the course before the swing.
 export function previewTrack(club, launch, speed) {
@@ -380,7 +392,9 @@ export function swingLaunch(sw, {club, shape, short = false, lie, difficulty, tu
   return {shot: {speed: speed * fx.speed * factor, vla: 0, hla: fx.hla, spin: 0, spinAxis: 0}, before: speed * fx.speed, factor, power, share, strike: fx, zones};
  }
  const speed = speedForCarry(club, launch, share * fullCarry(club, launch)) * fx.speed;
- const comp = curveCompensation(club, launch, speed);
+ // A chosen Push or Pull starts the ball off the aim by the club's own angle.
+ const side = fx.start === 'push' ? 1 : fx.start === 'pull' ? -1 : 0;
+ const comp = curveCompensation(club, launch, speed) + (side ? side * pushStart(club, launch, speed) : 0);
  const spin = launch.spin * lieSpin(lie, launch.vla) * spinForPower(clamp(speed / club.speed, 0, 1.2));
  return {shot: {speed: speed * factor, vla: clamp(launch.vla + (fx.vla ?? 0), 3, 60), hla: comp + fx.hla, spin, spinAxis: launch.axis + (launch.side ?? 0) + fx.axis}, before: speed, factor, power, share, strike: fx, zones};
 }

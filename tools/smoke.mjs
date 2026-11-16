@@ -935,8 +935,11 @@ const JOURNEYS = [
     await t.page.mouse.move(cx, cy);await t.page.mouse.down();
     for (let i = 1; i <= 6; i++) { await t.page.mouse.move(cx + 6 * i, cy + 8 * i); await t.page.waitForTimeout(15); }
     if (!await t.page.evaluate(() => document.getElementById('spinPad')?.hidden === false)) throw new Error('the big spin ball did not show while dragging');
+    // Dragged right: a fade, and the numbers the ball will leave with.
+    const read = await t.page.textContent('#spinPadRead');
+    if (!/rpm/.test(read) || !/FADE/.test(read)) throw new Error(`the big spin ball reads "${read}" for a dot dragged right`);
     await t.page.mouse.up();
-    if (!/backspin/.test(await label())) throw new Error(`dragging the dot did not change the spin: "${await label()}"`);
+    if (!/backspin/.test(await label()) || !/fade/.test(await label())) throw new Error(`dragging the dot did not change the spin: "${await label()}"`);
     if (!await t.page.evaluate(() => document.getElementById('shapeControl').classList.contains('spun'))) throw new Error('the spin ball does not show it is set');
     await t.page.mouse.click(cx, cy);
     await t.until(async () => /club's own/.test(await label()), 'a tap on the spin ball to centre the dot', 5 * SLOW);
@@ -968,9 +971,12 @@ const JOURNEYS = [
     // 2026: a pond beside a Puget Sound fairway); the meter comes back after.
     await reliefFirst(t);
     // The swing box is what comes back, with the shot's three numbers (14
-    // October 2026), and the swing pad is ready for the next stroke, keeping
-    // the last one's path.
+    // October 2026). The swing pad shut a second after the shot (16 November
+    // 2026); Swing opens it again, ready for the next stroke and keeping the
+    // last one's path.
     if (!await t.page.evaluate(() => !!document.getElementById('swingMeter').offsetParent)) throw new Error('the swing box did not come back');
+    await t.until(() => t.page.evaluate(() => document.getElementById('swingPad').hidden), 'the swing pad to shut after the shot', 4 * SLOW);
+    await openPad(t);
     if (await t.page.evaluate(() => document.getElementById('swingPad').classList.contains('stroking'))) throw new Error('the swing pad is still mid-stroke after the ball stopped');
     if (!await t.page.evaluate(() => !!document.querySelector('#strokePad .sp-ghost'))) throw new Error('the swing pad did not keep the stroke\'s path');
     if (!/d/.test(await t.page.textContent('#smResult'))) throw new Error('the swing box lost the last shot numbers');
@@ -1643,7 +1649,7 @@ const JOURNEYS = [
      // The blue stop's line only when the aim is in reach (the first hole of
      // one run was 251 yd with a 250 yd driver).
      const reach = await t.page.evaluate(() => !!document.getElementById('swingMeter').dataset.target);
-     for (const sel of ['.sp-cell.draw', '.sp-cell.fade', '.sp-ruler, .sp-rule', ...(reach ? ['.sp-stopline'] : [])]) if (!await t.page.evaluate(s => !!document.querySelector(`#strokePad :is(${s})`), sel)) throw new Error(`the pad drew no ${sel}`);
+     for (const sel of ['.sp-cell.push', '.sp-cell.pull', '.sp-ruler, .sp-rule', ...(reach ? ['.sp-stopline'] : [])]) if (!await t.page.evaluate(s => !!document.querySelector(`#strokePad :is(${s})`), sel)) throw new Error(`the pad drew no ${sel}`);
      // Drawn at the pad's size, not shrunk into a corner.
      const box = await t.page.evaluate(() => { const r = document.getElementById('strokePad').getBoundingClientRect(), a = document.getElementById('swingArea').getBoundingClientRect(); return [r.width, a.width, r.height, a.height]; });
      if (Math.abs(box[0] - box[1]) > 1 || Math.abs(box[2] - box[3]) > 1) throw new Error(`the pad's drawing is ${box[0]}x${box[2]} in a ${box[1]}x${box[3]} pad`);
@@ -1672,19 +1678,22 @@ const JOURNEYS = [
     await t.page.mouse.up();
     if (await t.inFlight()) throw new Error('a lost lift hit the ball');
    });
-   await t.step('a pull and push finished out to the right and high is a High Draw, and the report says what was hit', async () => {
+   await t.step('a pull and push finished out to the right and high is a High Push, and the report says what was hit', async () => {
     await strokeOnPad(t, .6, {follow: .6, bend: .36});
     await t.until(() => t.inFlight(), 'the pull and push to start a shot', 5 * SLOW);
     const said = await t.page.textContent('#smHint');
-    if (!/strike|Straight|Draw|Fade|High/i.test(said)) throw new Error(`the words said "${said}" after the stroke`);
+    if (!/strike|Straight|Push|Pull|High/i.test(said)) throw new Error(`the words said "${said}" after the stroke`);
     const report = await t.page.evaluate(() => { const r = document.getElementById('strokeReport'); return r && !r.hidden && r.offsetParent ? r.textContent : null; });
     if (!report) throw new Error('no report of what was hit');
-    for (const want of ['PULL', 'LINE', 'CURVE', 'HEIGHT', 'SPIN', 'TEMPO', 'ideal', 'back']) if (!report.includes(want)) throw new Error(`the report has no ${want}: "${report}"`);
+    for (const want of ['PULL', 'LINE', 'START', 'HEIGHT', 'SPIN', 'TEMPO', 'ideal', 'back']) if (!report.includes(want)) throw new Error(`the report has no ${want}: "${report}"`);
     const last = await t.page.evaluate(() => window.lab.state().lastStroke);
     if (last?.height !== 'high') throw new Error(`a long follow-through was not High: ${JSON.stringify(last)}`);
-    if (last?.shape !== 'draw') throw new Error(`a finish out to the right was not a Draw: ${JSON.stringify(last)}`);
-    // The path stays on the pad, with its finish in the High Draw cell.
-    if (!await t.page.evaluate(() => !!document.querySelector('#strokePad .sp-ghost') && !!document.querySelector('#strokePad .sp-cell.draw.high.lit'))) throw new Error('the pad did not keep the path and its cell');
+    if (last?.shape !== 'push') throw new Error(`a finish out to the right was not a Push: ${JSON.stringify(last)}`);
+    // The pad shuts a second after the shot (the owner, 16 November 2026);
+    // opened again, it still has the path, its finish in the High Push cell.
+    await t.until(() => t.page.evaluate(() => document.getElementById('swingPad').hidden), 'the pad to shut after the shot', 4 * SLOW);
+    await openPad(t);
+    if (!await t.page.evaluate(() => !!document.querySelector('#strokePad .sp-ghost') && !!document.querySelector('#strokePad .sp-cell.push.high.lit'))) throw new Error('the pad did not keep the path and its cell');
     await t.page.screenshot({path: path.join(SHOTS, 'pull-push-path.png')});
     await t.key('Enter');
     await t.until(async () => !(await t.inFlight()), 'Enter to finish the shot', 30 * SLOW);

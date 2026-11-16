@@ -58,5 +58,6 @@ export function swingStrip({monitor = false, touch = false, putting = false} = {
 }
 
 // The first-swing coach: shown once per device, before a golfer's first swing.
-// Curve and height come from the push since 16 November 2026 (the boxes went).
-export const COACH_STEPS = ['Press SWING to open the pad; PULL DOWN below the gold line for the distance', 'PUSH UP through the line along the dashed aim line', 'FINISH in a cell: out right to draw, left to fade; short for low, far for high'];
+// Where the ball starts and its height come from the push since 16 November
+// 2026 (the boxes went); the draw and fade are the spin ball's.
+export const COACH_STEPS = ['Press SWING to open the pad; PULL DOWN below the gold line for the distance', 'PUSH UP through the line along the dashed aim line', 'FINISH in a cell: out right to push it, left to pull it; short for low, far for high. The spin ball draws or fades it'];

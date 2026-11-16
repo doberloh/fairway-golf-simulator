@@ -163,17 +163,19 @@ All PLACED; RESEARCH.md *The pull-and-push swing*.
 |---|---|
 | `STROKE.degPerBar` | how many degrees of push drift equal one length of the strike zone (120: Normal's zone about 8° each side) |
 | `STROKE.lineHla` | what a start off the line costs: 2.5° of launch direction per zone width, to four times that |
-| `STROKE.shapeFrom`, `shortStart` | the shape point the curve is read from: 0.3 of a full pull below the strike line (or half the pull); a stretch to the finish under 24 px reads against the aim line instead |
-| `STROKE.laneAt`, `STROKE_LAYERS` `straight` / `lane` | the curve the finish picks: the Draw column centred 22° to the RIGHT, the Fade 22° to the left; half-widths straight 8 / 6 / 4°, lanes 12 / 9 / 6° (Easy / Normal / Hard). Widen them and shaping gets easier |
-| `STROKE.laneMissAxis` | a finish that misses a column: 3° of spin axis per lane width off |
+| `STROKE.shapeFrom`, `shortStart` | the shape point the push or pull is read from: 0.3 of a full pull below the strike line (or half the pull); a stretch to the finish under 24 px reads against the aim line instead |
+| `STROKE.laneAt`, `STROKE_LAYERS` `straight` / `lane` | where the ball starts, picked by the finish: the Push column centred 22° to the RIGHT, the Pull 22° to the left; half-widths straight 8 / 6 / 4°, lanes 12 / 9 / 6° (Easy / Normal / Hard). Widen them and picking a start gets easier. (Draw and Fade columns until 16 November 2026: the curve is the spin dot's now) |
+| swing-meter.js `pushStart` | how far off the aim a Push or Pull starts: as far as the spin dot's full side spin bends that club back (about 4.6° driver, 4.9° 7 iron, 2.5° sand wedge at full speed), so push plus full draw lands on the aim. Raise `SPIN_DOT.axis` and both widen together |
+| `STROKE.laneMissHla` | a finish that misses a column: 1.5° more (or less) start off the aim per lane width |
 | `STROKE.lowBelow`, `highFrom` | the shot cells' rows: a finish under 0.2 of a full pull past the line is Low, from 0.5 High |
 | `STROKE.settle`, `throughMax`, `throughCap` | when the follow-through ends and the ball leaves: still for 90 ms, 600 ms after the strike, or 0.7 of a full pull past the line (also the top of the pad) |
-| `STROKE.backRatio` | the backswing the pace cue plays and the report compares against: 3 times the ideal push (shown, not judged) |
+| `STROKE.backRatio`, `backPerfect`, `backZone`, `backSpeed` | the backswing: the pace cue plays it at 3 times the ideal push, and on Hard (`STROKE_LAYERS` `back`) the backswing's time over the push's own is judged against 3 : 1 for a pull of at least 0.4 -- within 1.2 times either way (2.5 to 3.6 : 1) free, 2% of ball speed lost at 1.6 times (1.9 or 4.8 : 1), 4% at most |
+| main.js `PAD_LINGER` | how long the swing pad stays after a shot before it shuts: 1000 ms |
 | `PAD`, `padSize` | the swing pad's size: 40% of the screen's height (220 to 420 px), a full pull of (height - 36) / 1.82, 1.5 full pulls wide |
-| swing-meter.js `SPIN_DOT` | the spin ball: `more` (+30% spin at the bottom), `less` (−25% at the top), `axis` (10° of side spin at the edge), `zone` (0.85 narrowing per third down / half across) |
+| swing-meter.js `SPIN_DOT` | the spin ball, and so the draw and fade: `more` (+30% spin at the bottom), `less` (−25% at the top), `axis` (10° of spin axis at the edge: left a draw, right a fade), `zone` (0.85 narrowing per third down / half across) |
 | `STROKE.tempo`, `tempoShort`, `tempoPad` | the ideal push: 250 ms for a full pull, 60% of that for a tiny one; 150 ms for a controller's stick |
 | main.js `STICK_*` | the right stick as a thumb: starts past 0.25 down, a full deflection (0.95) is the end of overswing, the strike line 0.3 up from the middle, full deflection up is 0.65 of a full pull of follow-through, back in the middle 300 ms is no stroke |
-| `STROKE_LAYERS` | per difficulty: whether tempo and curve are judged, the tempo window (`tempoZone`, `tempoPerfect`), how much the aim line leans (`lean`), whether yards and the blue stop show while pulling |
+| `STROKE_LAYERS` | per difficulty: whether tempo and the backswing's 3 : 1 are judged, the tempo window (`tempoZone`, `tempoPerfect`), how much the aim line leans (`lean`), whether yards and the blue stop show while pulling |
 | `strokeEffect` tempo | rushed: left, 1.2° lower launch and up to 2% hotter per zone width; lazy: right and 3% less ball speed per zone width; overswing narrows the window to half at its end |
 | `STROKE.leanPerDegree`, `leanMax` | the aim line's lean per degree of side slope (1.5) and its most (15°) |
 

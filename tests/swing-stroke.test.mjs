@@ -1,15 +1,15 @@
 // The pull-and-push swing (swing-stroke.js): a thumb's path into the strike the
 // swing's launch takes -- the pull, the line, the tempo, the backswing, and the
-// shape the finish picks (curve and height together, read from the shape
-// point below the strike line to where the follow-through ends); the pad's
-// size; and the spin dot (swing-meter.js SPIN_DOT). RESEARCH.md *The
-// pull-and-push swing*.
+// shot the finish picks (where the ball starts and its height together, read
+// from the shape point below the strike line to where the follow-through
+// ends); the pad's size; and the spin dot, which is the draw and fade
+// (swing-meter.js SPIN_DOT). RESEARCH.md *The pull-and-push swing*.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {turfConfig} from '../src/turf.js';
 import {bagClubs, stockBag} from '../src/clubs.js';
-import {swingLaunch, strikeZone, shapedLaunch, OVERSWING, SPIN_DOT} from '../src/swing-meter.js';
-import {STROKE, PAD, startStroke, strokeMove, strokeEffect, strokeWords, leanFor, padSize, pullShare, curveOf, cellOf,
+import {swingLaunch, strikeZone, shapedLaunch, pushStart, OVERSWING, SPIN_DOT} from '../src/swing-meter.js';
+import {STROKE, PAD, startStroke, strokeMove, strokeEffect, strokeWords, leanFor, padSize, pullShare, sideOf, cellOf,
  heightOf, followShare, throughDone, endStroke, idealPush, tempoGauge, shapeNow} from '../src/swing-stroke.js';
 
 const clubs = bagClubs(stockBag());
@@ -24,12 +24,12 @@ const idealFor = share => idealPush(share);
 // stops. `drift` px of sideways per pull length runs through the whole push (a
 // line off the aim, carried straight on); `bend` px more is added from the
 // shape point to the finish, growing in as a curve. Sampled `hz` times a second from `phase`; the
-// follow-through ends by the thumb stopping.
-function play({pull = 120, settle = null, hold = 200, cross = null, drift = 0, bend = 0, over = 40, hz = 120, phase = 0, difficulty = 'normal', putt = false, lean = 0, release = true} = {}) {
+// follow-through ends by the thumb stopping. The pull takes `pullMs`.
+function play({pull = 120, settle = null, hold = 200, cross = null, drift = 0, bend = 0, over = 40, hz = 120, phase = 0, difficulty = 'normal', putt = false, lean = 0, release = true, pullMs = 400} = {}) {
  const x0 = 200, y0 = 300, top = settle ?? pull, share = top / FULL;
  const crossMs = cross ?? idealFor(share), v = top / crossMs;
  const ay = y0 + Math.min(STROKE.shapeFrom * FULL, top / 2), endY = y0 - over;
- const tPull = 400, tAdj = settle == null ? 0 : 500, tTop = tPull + tAdj + hold, tEnd = tTop + (top + over) / v;
+ const tPull = pullMs, tAdj = settle == null ? 0 : 500, tTop = tPull + tAdj + hold, tEnd = tTop + (top + over) / v;
  const at = t => {
   if (t <= tPull) { const u = t / tPull; return {x: x0, y: y0 + pull * (1 - (1 - u) * (1 - u))}; }
   if (t <= tPull + tAdj) { const u = (t - tPull) / tAdj; return {x: x0, y: y0 + pull + (top - pull) * u}; }
@@ -58,7 +58,7 @@ test('a straight push at the ideal pace is a perfect strike, and the pull is the
   assert.ok(Math.abs(st.result.share - .6) < .01, `share ${st.result.share} at ${hz} Hz`);
   const fx = judge(st);
   assert.equal(fx.perfect, true, `perfect at ${hz} Hz: ${JSON.stringify(fx.parts)}`);
-  assert.equal(fx.curve, 'straight');
+  assert.equal(fx.start, 'straight');
   assert.match(strokeWords(fx), /^Perfect strike/);
  }
 });
@@ -91,58 +91,66 @@ test('the start of the push is the line: drift right starts it right, left start
  const right = judge(play({drift: 30})), left = judge(play({drift: -30}));
  assert.ok(right.hla > 0, JSON.stringify(right));
  assert.ok(left.hla < 0, JSON.stringify(left));
- assert.equal(right.curve, 'straight', 'a line off the aim carried straight on is no curve');
+ assert.equal(right.start, 'straight', 'a line off the aim carried straight on is no Push');
  assert.match(strokeWords(right), /right/);
  assert.match(strokeWords(left), /left/);
 });
 
-test('the finish picks the curve: out to the RIGHT is a draw, out to the left a fade, on every difficulty', () => {
+test('the finish picks the start: out to the RIGHT is a Push, out to the left a Pull, on every difficulty', () => {
  for (const difficulty of ['easy', 'normal', 'hard']) {
   // 40 px over the 100 px from the shape point to the finish is about 22 degrees: the lane.
-  const draw = judge(play({bend: 40, difficulty})), fade = judge(play({bend: -40, difficulty}));
-  assert.equal(draw.curve, 'draw', difficulty);assert.equal(fade.curve, 'fade', difficulty);
-  assert.equal(draw.parts.curve.miss, 0, `${difficulty}: a lane is clean`);
-  assert.ok(Math.abs(draw.hla) < .01, 'the start held the line');
-  assert.match(strokeWords(draw), /Draw/);
+  const push = judge(play({bend: 40, difficulty})), pull = judge(play({bend: -40, difficulty}));
+  assert.equal(push.start, 'push', difficulty);assert.equal(pull.start, 'pull', difficulty);
+  assert.equal(push.parts.start.miss, 0, `${difficulty}: a lane is clean`);
+  assert.ok(Math.abs(push.hla) < .01, 'the miss adds nothing; the Push\'s own angle is the club\'s, in the launch');
+  assert.equal(push.axis, 0, 'and no curve: that is the spin ball\'s');
+  assert.match(strokeWords(push), /Push/);assert.match(strokeWords(pull), /Pull/);
  }
 });
 
-test('the draw the thumb picked starts the ball the way the thumb went, and turns it back', () => {
- // The owner, 16 November 2026: "I think draw and fade are producing reversed
- // shots" -- the Draw lane was on the left, and a draw starts right.
+test('a Push starts the ball right by the club\'s angle and does not curve it; the spin dot\'s draw brings it back', () => {
+ // The owner, 16 November 2026: "change the draw and fade into push and pull.
+ // What impacts draw and fade is the ball spin correct?"
  const ctx = {club: clubs.iron7, short: false, lie: 'fairway', difficulty: 'normal', turf};
- for (const [bend, shape] of [[40, 'draw'], [-40, 'fade']]) {
+ const straight = swingLaunch({power: .8, fx: judge(play({})), done: true}, {...ctx, shape: {}});
+ for (const [bend, side] of [[40, 1], [-40, -1]]) {
   const fx = judge(play({bend}));
-  assert.equal(fx.curve, shape);
-  const out = swingLaunch({power: .8, fx, done: true}, {...ctx, shape: {curve: fx.curve}});
-  assert.equal(Math.sign(out.shot.hla), Math.sign(bend), `${shape} starts the way the thumb finished`);
-  assert.equal(Math.sign(out.shot.spinAxis), -Math.sign(bend), `${shape} turns back`);
+  const out = swingLaunch({power: .8, fx, done: true}, {...ctx, shape: {}});
+  const angle = pushStart(ctx.club, shapedLaunch(ctx.club, {}), out.before);
+  assert.ok(angle > 3 && angle < 7, `a 7-iron's push is ${angle} degrees`);
+  assert.ok(Math.abs(out.shot.hla - straight.shot.hla - side * angle) < 1e-9, `${fx.start} starts ${side > 0 ? 'right' : 'left'} by the club's angle`);
+  assert.equal(out.shot.spinAxis, 0, `${fx.start} does not curve on its own`);
  }
+ // A Push with the dot all the way to the draw side: starts right, curves left.
+ const pushDraw = swingLaunch({power: .8, fx: judge(play({bend: 40})), done: true}, {...ctx, shape: {dot: {x: -1, y: 0}}});
+ assert.ok(pushDraw.shot.hla > 0 && pushDraw.shot.spinAxis === -SPIN_DOT.axis, JSON.stringify(pushDraw.shot));
+ // A driver's push is wider than a sand wedge's: it bends further.
+ assert.ok(pushStart(clubs.driver, shapedLaunch(clubs.driver, {}), clubs.driver.speed) > pushStart(clubs.sand, shapedLaunch(clubs.sand, {}), clubs.sand.speed));
 });
 
-test('a finish between the lanes or past one is a miss toward the nearest shape', () => {
- // Hard: straight to 4 degrees, lanes 16 to 28. `extra` is the way the ball curves.
- assert.deepEqual(curveOf(2, 'hard'), {shape: 'straight', miss: 0, extra: 0});
- assert.deepEqual(curveOf(22, 'hard'), {shape: 'draw', miss: 0, extra: 0});
- assert.deepEqual(curveOf(-22, 'hard'), {shape: 'fade', miss: 0, extra: 0});
- const hooked = curveOf(7, 'hard');
- assert.equal(hooked.shape, 'straight');assert.ok(hooked.miss > 0);assert.equal(hooked.extra, -1, 'toward the draw side hooks a touch');
- const under = curveOf(14, 'hard');
- assert.equal(under.shape, 'draw');assert.ok(under.miss > 0);assert.equal(under.extra, 1, 'short of the lane turns back less');
- const over = curveOf(40, 'hard');
- assert.equal(over.shape, 'draw');assert.ok(over.miss > 0);assert.equal(over.extra, -1, 'past the lane turns further');
+test('a finish between the lanes or past one is a miss toward the nearest start', () => {
+ // Hard: straight to 4 degrees, lanes 16 to 28. `extra` is the way the ball starts off.
+ assert.deepEqual(sideOf(2, 'hard'), {shape: 'straight', miss: 0, extra: 0});
+ assert.deepEqual(sideOf(22, 'hard'), {shape: 'push', miss: 0, extra: 0});
+ assert.deepEqual(sideOf(-22, 'hard'), {shape: 'pull', miss: 0, extra: 0});
+ const leaked = sideOf(7, 'hard');
+ assert.equal(leaked.shape, 'straight');assert.ok(leaked.miss > 0);assert.equal(leaked.extra, 1, 'toward the push side starts a touch right');
+ const under = sideOf(14, 'hard');
+ assert.equal(under.shape, 'push');assert.ok(under.miss > 0);assert.equal(under.extra, -1, 'short of the lane starts less far right');
+ const over = sideOf(40, 'hard');
+ assert.equal(over.shape, 'push');assert.ok(over.miss > 0);assert.equal(over.extra, 1, 'past the lane starts further right');
  // Easier difficulties have wider lanes.
- assert.equal(curveOf(14, 'normal').miss, 0);
- assert.ok(curveOf(14, 'hard').miss > 0);
- // Too far out to the right: a draw that turns too much.
- const fx = judge(play({bend: 80, difficulty: 'hard'}));
- assert.equal(fx.curve, 'draw');assert.ok(fx.axis < 0);assert.match(strokeWords(fx), /too much/);
+ assert.equal(sideOf(14, 'normal').miss, 0);
+ assert.ok(sideOf(14, 'hard').miss > 0);
+ // Too far out to the right: a Push that goes too far.
+ const fx = judge(play({bend: 80, difficulty: 'hard', pullMs: 830}));
+ assert.equal(fx.start, 'push');assert.ok(fx.hla > 0);assert.equal(fx.axis, 0);assert.match(strokeWords(fx), /Push, too much/);
 });
 
 test('the cell a finish is in: the column by the way it went, the row by how far', () => {
  assert.deepEqual(cellOf(0, .1, 'normal'), {column: 'straight', row: 'low'});
- assert.deepEqual(cellOf(22, .3, 'normal'), {column: 'draw', row: 'normal'});
- assert.deepEqual(cellOf(-22, .6, 'normal'), {column: 'fade', row: 'high'});
+ assert.deepEqual(cellOf(22, .3, 'normal'), {column: 'push', row: 'normal'});
+ assert.deepEqual(cellOf(-22, .6, 'normal'), {column: 'pull', row: 'high'});
  assert.equal(cellOf(10, .3, 'normal').column, null, 'between the columns');
 });
 
@@ -155,7 +163,7 @@ test('the finish is where the thumb stopped at the top, not where it slid back t
  for (let y = 246; y <= 280; y += 6) strokeMove(st, t += 6, top.x, y);
  const s = shapeNow(st);
  assert.ok(s.end.y <= 246, `the finish stayed at the top (${s.end.y})`);
- assert.ok(s.curve > 15, `and kept its bend (${s.curve})`);
+ assert.ok(s.bend > 15, `and kept its bend (${s.bend})`);
 });
 
 test('tempo: rushed goes left and low, lazy comes up short; Easy does not judge it', () => {
@@ -174,12 +182,32 @@ test('tempo: rushed goes left and low, lazy comes up short; Easy does not judge 
  assert.ok(judge(play({cross: quick, difficulty: 'hard'})).parts.tempo.miss > judge(play({cross: quick})).parts.tempo.miss);
 });
 
-test('the backswing is timed, from the first pull to the top, and not judged', () => {
+test('the backswing is timed, from the first pull to the top, and judged against 3:1 on Hard only', () => {
  const r = play({pull: 120}).result;
  assert.ok(r.back > 250 && r.back < 450, `the 400 ms pull read as ${r.back} ms`);
  assert.equal(r.idealBack, r.idealFull * STROKE.backRatio);
- const slow = play({pull: 120}), fast = judge(slow);
- assert.equal(fast.perfect, true, 'a backswing far off 3:1 costs nothing');
+ // The owner, 16 November 2026: "for the 3:1 ratio lets only judge it on hard mode".
+ const ratio = st => st.result.back / st.result.time;
+ const even = play({pull: 120, pullMs: 830, difficulty: 'hard'});
+ assert.ok(ratio(even) > 2.5 && ratio(even) < 3.6, `an 830 ms pull is ${ratio(even)} : 1`);
+ assert.equal(judge(even).perfect, true, JSON.stringify(judge(even).parts));
+ const quick = play({pull: 120, pullMs: 250, difficulty: 'hard'}), slow = play({pull: 120, pullMs: 2400, difficulty: 'hard'});
+ for (const [st, word] of [[quick, /backswing quick/], [slow, /backswing slow/]]) {
+  const fx = judge(st);
+  assert.ok(fx.parts.back.judged && fx.parts.back.miss > 0, `${ratio(st)} : 1 is judged off`);
+  assert.ok(fx.speed < 1, 'and costs ball speed');
+  assert.equal(fx.hla, 0, 'not the line');
+  assert.match(strokeWords(fx), word);
+ }
+ // At most twice backSpeed.
+ assert.ok(judge(play({pull: 120, pullMs: 60, difficulty: 'hard'})).speed >= 1 - 2 * STROKE.backSpeed - 1e-9);
+ // Normal and Easy show it and do not judge it.
+ for (const difficulty of ['easy', 'normal']) {
+  const fx = judge(play({pull: 120, pullMs: 250, difficulty}));
+  assert.equal(fx.parts.back.judged, false, difficulty);assert.equal(fx.perfect, true, difficulty);
+ }
+ // Nor a chip on Hard: its rhythm is its own.
+ assert.equal(judge(play({pull: 40, pullMs: 100, difficulty: 'hard'})).parts.back.judged, false);
 });
 
 test('overswing narrows the tempo window too', () => {
@@ -224,7 +252,7 @@ test('the frame rate does not decide: the same stroke at 30 and 120 samples a se
   const r = play({pull: 140, drift: 12, bend: 20, cross: idealFor(.7) * 1.1, hz: 30, phase}).result;
   assert.ok(Math.abs(r.share - base.share) < .01, `share ${r.share} vs ${base.share}`);
   assert.ok(Math.abs(r.start - base.start) < .6, `start ${r.start} vs ${base.start}`);
-  assert.ok(Math.abs(r.curve - base.curve) < 2, `curve ${r.curve} vs ${base.curve}`);
+  assert.ok(Math.abs(r.bend - base.bend) < 2, `bend ${r.bend} vs ${base.bend}`);
   assert.ok(Math.abs(r.tempo / base.tempo - 1) < .04, `tempo ${r.tempo} vs ${base.tempo}`);
  }
 });
@@ -250,7 +278,7 @@ test('the follow-through picks the height: short is Low, on is Normal, far is Hi
 test('the follow-through ends when the thumb stops, lifts, runs long, or goes as far as it can', () => {
  const stopped = through(FULL * .3);
  assert.equal(stopped.done, true, 'stopped for longer than the settle');
- assert.ok(Number.isFinite(stopped.st.result.curve), 'and the curve is read at the finish');
+ assert.ok(Number.isFinite(stopped.st.result.bend), 'and the bend is read at the finish');
  const moving = through(FULL * .3, {stopFor: STROKE.settle / 2});
  assert.equal(moving.done, false, 'not yet: it might carry on');
  assert.equal(through(FULL * .3, {lift: true, stopFor: 0}).done, true, 'a lift ends it');
@@ -269,7 +297,7 @@ test('the aim line leans uphill on a side slope, and following it is straight', 
  const lean = leanFor(4, 'normal'), pull = 120;
  const along = play({pull, lean, drift: Math.tan(lean * Math.PI / 180) * pull});
  assert.equal(judge(along).perfect, true, JSON.stringify(judge(along).parts));
- assert.equal(judge(along).curve, 'straight');
+ assert.equal(judge(along).start, 'straight');
  // Pushing straight up on that slope sends the ball right, down the slope.
  assert.ok(judge(play({pull, lean})).hla > 0);
 });
@@ -278,8 +306,9 @@ test('putts judge the line only, on the putting zone', () => {
  const st = play({pull: 80, putt: true, bend: -25, cross: idealFor(.4) / 3});
  const fx = strokeEffect(st.result, strikeZone({difficulty: 'hard', shape: 1, putt: true, power: st.result.share}), {difficulty: 'hard', putt: true});
  assert.equal(fx.parts.tempo, null);
- assert.equal(fx.parts.curve, null);
- assert.equal(fx.curve, 'straight');
+ assert.equal(fx.parts.start, null);
+ assert.equal(fx.parts.back, null);
+ assert.equal(fx.start, 'straight');
  assert.equal(fx.axis, 0);
 });
 
@@ -295,7 +324,8 @@ test('the pad fits every screen: the follow-through above the line, overswing be
 });
 
 // THE SPIN DOT (swing-meter.js): low on the ball more backspin, high less, the
-// sides tilt the axis -- not started the other way to land on the aim.
+// sides tilt the axis -- the draw and fade -- not started the other way to
+// land on the aim (a Push or Pull does that).
 test('the spin dot: low adds backspin, high takes it off, the sides tilt the axis', () => {
  const c = clubs.wedge, base = shapedLaunch(c, {}), mid = shapedLaunch(c, {dot: {x: 0, y: 0}});
  assert.equal(mid.spin, base.spin);assert.equal(mid.zone, base.zone);assert.equal(mid.side, 0);
