@@ -7507,6 +7507,79 @@ Compared and not followed:
 
 Sources in REFERENCES.md *The Swing Meter*.
 
+## The pull-and-push swing (15 November 2026, branch pull-push-swing)
+
+**Why.** The owner: the bar's marker is hard to stop on the iPhone, whose
+frame rate is held to 30. The meter already judges a tap on its own time, never
+on a frame, but the golfer reacts to a marker drawn in jumps a thirtieth of a
+second apart. The owner asked for a swing with nothing moving on its own, chose
+the pull and push from three offered (hold-and-release kept the timing problem;
+pick-and-swing had no skill in the strike), then chose which layers make it
+hard to master, and asked for an indicator of the aim. It was first built as a
+choice per golfer beside the bar; the owner then said "im imagining the
+original swing meter gone" (16 November 2026), so on this branch a finger or
+a mouse swings ONLY this way and the choice was taken out. Space and a
+controller keep the three taps until the owner decides what replaces them --
+offered: the controller's right stick pulled and pushed like a thumb, and for
+the keyboard either dropping it for the mouse or a hold-to-pull key.
+
+**How it is read** (`src/swing-stroke.js`, tests/swing-stroke.test.mjs). The
+thumb lands: that is the strike line. The pull's depth is the distance on the
+meter's own scale. Crossing back over the line is the strike. The final push is
+found by walking back from the crossing to where the thumb turned, so slides
+and holds at the top before it do not count. Leaving the top and crossing the
+line are interpolated between pointer samples, and the coalesced moves are
+used where the browser has them, so the frame rate only spaces the samples:
+the same stroke sampled 30 and 120 times a second reads within a hundredth of
+the pull, half a degree of line and 4% of tempo. A perfect stroke launches
+exactly as a perfect meter swing of the same length (tested).
+
+**What is judged, and what it does.** Through the meter's own `strikeZone` --
+so the lie, added spin, a flop, overswing and a short shot narrow it the same
+way -- converted at **120 degrees per bar length (PLACED)**: Normal's zone is
+about 8 degrees each side of the aim line and its perfect band about 2; Easy
+12 and 3.6; Hard 4.8 and 1. Misses cost what the meter's do (1.25 degrees off
+line and 5 of spin axis at the zone's edge, to four times that).
+
+- **Line** (every difficulty). Easy and Normal judge the whole push as one line,
+  start and curve together, as the meter does. Putts judge the line only, on
+  the putting zone (twice as wide), half the meter's start-line cost per miss.
+- **Curve** (Hard). The line is read from the push's first half; the change of
+  direction in its second half is the curve, on a zone **1.5 times wider
+  (PLACED)** because a thumb's swipe bends a little by itself. A hook at the
+  finish adds draw (negative spin axis), a slice adds fade.
+- **Tempo** (Normal, Hard; not putts). The push's own pace against an ideal of
+  **250 ms for a full pull, 60% of that for none (PLACED)**, scaled to the leg
+  measured. Normal allows a ratio of 1.6 (perfect within 1.15), Hard 1.35
+  (1.08). Rushed: left (0.75 degrees and 3 of axis per zone width), 1.2 degrees
+  lower launch per zone width, and up to 2% hotter. Lazy: right by the same,
+  and 3% less ball speed per zone width. All PLACED.
+- **The aim line leans on a side slope**: 1.5 degrees per degree of slope
+  across the aim line, times 0.5 / 0.75 / 1 by difficulty, at most 15 (PLACED).
+  The ball follows the ground from either side of it -- below a right
+  hander's feet and above a left hander's both go right when the ground falls
+  right -- so no handedness is needed. Never on the green or the mat.
+- **Hard hides the help**: no blue stop, and the yards (on the pad and the
+  bar's marker) show only once the thumb has been still 150 ms.
+- **The full pull** is 30% of the screen's height, between 100 and 260 px
+  (PLACED), so a thumb learns one length per screen.
+
+**Decided and rejected.**
+- **The 3:1 back-to-through tempo ratio** (offered to the owner as "judged
+  against how long you took to pull back") was replaced by the push's own pace
+  in building: the thumb may hold and adjust at the top as long as it likes,
+  which leaves no backswing time to compare against. Told to the owner when
+  the branch was handed over for testing; theirs to overrule.
+- **The rough's shaking guide** (offered as part of the lie layer) is not built:
+  the lie already narrows the allowance through `strikeZone`.
+- **Starting the pull on the bar itself**: the bar sits at the foot of the
+  screen, where there is no room to pull down. A tap on the bar arms the pad
+  instead, and the thumb goes down anywhere above.
+- **A drag on the course to swing**: rejected for the same reason as
+  swipe-to-aim (DONE, *Aiming by touch*) -- a drag on the course moves the
+  camera. The pad covers the screen only once armed.
+- **The controller's right stick**, offered, is not built.
+
 ## The smoke test on GitHub: three harness faults (16 October 2026)
 
 The tests workflow's smoke step (`--software --only boot,range,endless-round`)

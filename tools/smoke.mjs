@@ -61,6 +61,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 import {MISS_AT, OVERSWING, RUN_UP, markerAt} from '../src/swing-meter.js';
+import {pullLength} from '../src/swing-stroke.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = path.join(ROOT, 'dist', 'index.html');
@@ -725,6 +726,30 @@ async function tapOnTarget(t) {
    await cdp.send('Input.dispatchMouseEvent', {type, x: now.x, y: now.y, button: 'left', buttons: type === 'mousePressed' ? 1 : 0, clickCount: 1, timestamp});
  }
 }
+// THE PULL AND PUSH BY TOUCH (branch pull-push-swing, 16 November 2026: a
+// finger swings only this way now). A tap on the bar arms the pad; a thumb
+// lands a third of the way down the screen, pulls back `share` of a full pull
+// (swing-stroke.js `pullLength`), rests, and pushes straight up through the
+// line. Straight, so the line is perfect; a putt's length is then exact.
+async function touchStroke(t, share, tapBar) {
+ await tapBar();
+ await t.until(() => t.page.evaluate(() => document.getElementById('swingMeter').dataset.stage === 'stroke'), 'a tap on the bar to arm the pad', 5 * SLOW);
+ const {x, y, h} = await t.page.evaluate(() => ({x: Math.round(innerWidth / 2), y: Math.round(innerHeight * .33), h: innerHeight}));
+ const pull = share * pullLength(h);
+ await fingers(t, 'touchStart', [[x, y]]);
+ for (let i = 1; i <= 8; i++) { await fingers(t, 'touchMove', [[x, y + pull * i / 8]]); await t.page.waitForTimeout(25); }
+ await t.page.waitForTimeout(200);
+ for (let i = 1; i <= 8; i++) { await fingers(t, 'touchMove', [[x, y + pull - (pull + 30) * i / 8]]); await t.page.waitForTimeout(22); }
+ await fingers(t, 'touchEnd', []);
+}
+// The blue stop's share of a full pull, read off the bar where it is drawn
+// (main.js `barX`, inverted).
+const targetPull = t => t.page.evaluate(([miss, over]) => {
+ const m = document.getElementById('smTarget');
+ const left = m && !m.hidden ? parseFloat(m.style.left) : 60;
+ return miss + left / 100 * (1 + over - miss);
+}, [MISS_AT, OVERSWING]);
+
 // The frame-watching tap, kept for builds whose lab does not report the swing.
 // Right on a GPU; late by up to a frame without one (above).
 async function tapOnTargetByFrame(t) {
@@ -1613,6 +1638,72 @@ const JOURNEYS = [
   },
  },
  {
+  // THE PULL AND PUSH (branch pull-push-swing, 15 November 2026): how a finger
+  // or mouse swings. Driven with the mouse, the way a PC player would; the
+  // phone journeys swing by touch (`touchStroke`), and a thumb's feel needs the
+  // owner's phone.
+  name: 'pull-push',
+  what: 'the pull-and-push swing with the mouse: armed from the bar, the pad clear of the round\'s cards, a lift before the push is no stroke, a pull and push strikes the ball, Escape cancels',
+  async run(t) {
+   const stage = () => t.page.evaluate(() => document.getElementById('swingMeter').dataset.stage);
+   const arm = async () => {
+    const bar = await t.page.locator('#smBar').boundingBox();
+    await t.page.mouse.click(bar.x + bar.width / 2, bar.y + bar.height / 2);
+    await t.until(async () => (await stage()) === 'stroke' && await t.page.evaluate(() => !document.getElementById('swingCatcher').hidden), 'a tap on the bar to arm the stroke pad', 5 * SLOW);
+   };
+   // A pull of `pull` px from a third of the way down the screen, a rest, and
+   // (unless `push` is false) a push back up through the line.
+   const stroke = async (pull, {push = true, shot = null, during = null} = {}) => {
+    const vp = t.page.viewportSize(), x = vp.width / 2, y = Math.round(vp.height * .3);
+    await t.page.mouse.move(x, y);
+    await t.page.mouse.down();
+    for (let i = 1; i <= 10; i++) { await t.page.mouse.move(x, y + pull * i / 10); await t.page.waitForTimeout(20); }
+    await t.page.waitForTimeout(200);
+    if (shot) await t.page.screenshot({path: path.join(SHOTS, shot)});
+    if (during) await during();
+    if (push) for (let i = 1; i <= 8; i++) { await t.page.mouse.move(x, y + pull - (pull + 40) * i / 8); await t.page.waitForTimeout(25); }
+    await t.page.mouse.up();
+   };
+   await menuReady(t);
+   await t.step('Endless → Start an endless run', async () => {
+    await fromMenu(t, 'Endless');
+    await t.pressToPlay('Start an endless run');
+   });
+   await t.step('a tap on the bar arms the pad; lifting before the push is no stroke', async () => {
+    await arm();
+    await stroke(120, {push: false, shot: 'pull-push-pad.png', during: async () => {
+     if (!await t.page.evaluate(() => document.querySelector('#strokePad .sp-aim'))) throw new Error('the pad drew no aim line while pulling');
+     // Nothing of the round's may sit over the pad's strike line.
+     const over = await t.page.evaluate(() => {
+      const line = document.querySelector('#strokePad .sp-strike')?.getBoundingClientRect();
+      if (!line) return 'no strike line';
+      const top = document.elementFromPoint(line.left + line.width / 2, line.top + line.height / 2);
+      return top && !top.closest('#swingCatcher') ? (top.id || top.className || top.tagName) : null;
+     });
+     if (over) throw new Error(`the pad's strike line is covered by ${over}`);
+    }});
+    await t.page.waitForTimeout(300);
+    if (await t.inFlight()) throw new Error('a lift before the push hit the ball');
+    if ((await stage()) !== 'stroke') throw new Error(`the pad did not wait for another stroke (stage ${await stage()})`);
+   });
+   await t.step('a pull and push strikes the ball, and the bar says how', async () => {
+    await stroke(140);
+    await t.until(() => t.inFlight(), 'the pull and push to start a shot', 5 * SLOW);
+    const said = await t.page.textContent('#smHint');
+    if (!/strike|right|left|quick|slow|rushed|lazy|hook|slice/i.test(said)) throw new Error(`the bar said "${said}" after the stroke`);
+    await t.key('Enter');
+    await t.until(async () => !(await t.inFlight()), 'Enter to finish the shot', 30 * SLOW);
+    await reliefFirst(t);
+   });
+   await t.step('Escape cancels an armed pad, with no stroke', async () => {
+    await arm();
+    await t.key('Escape');
+    await t.until(async () => (await stage()) === 'ready', 'Escape to cancel the pad', 5 * SLOW);
+    if (await t.inFlight()) throw new Error('a cancelled pad hit the ball');
+   });
+  },
+ },
+ {
   name: 'relief',
   what: 'water and out of bounds offer the relief the Rules allow, through a reload, under both out-of-bounds rules; a player backup saves and restores',
   async run(t) {
@@ -2302,17 +2393,10 @@ const JOURNEYS = [
    let checkedFlight = false;
    const swing = async () => {
     await t.until(async () => !(await t.inFlight()), 'the previous shot to finish', 30 * SLOW);
-    // A tap on the bar starts the meter; mid-swing the whole screen is the tap
-    // target, so the next two taps land anywhere.
-    // A putt is two taps, so the third is only made while a swing still waits.
-    // The marker starts from the far left (14 October 2026), so the distance tap
-    // waits for it to pass the strike line and the strike comes on its way back.
-    await tap('#smBar');
-    await t.page.waitForTimeout(800);
-    await tap('#swingCatcher');
-    await t.page.waitForTimeout(300);
-    if (await t.page.evaluate(() => !document.getElementById('swingCatcher').hidden)) await t.page.tap('#swingCatcher', {timeout: 2000}).catch(() => {});
-    await t.until(() => t.inFlight(), 'the Swing button and two taps to start a shot', 5 * SLOW);
+    // A finger swings by the pull and push (pull-push-swing): a tap on the bar
+    // arms the pad, then a pull and a push.
+    await touchStroke(t, .8, () => tap('#smBar'));
+    await t.until(() => t.inFlight(), 'a tap on the bar and a pull and push to start a shot', 5 * SLOW);
     if (!checkedFlight) { checkedFlight = true; await flightClearsTheScreen(t, true); }
     await t.page.locator('#smSkip:visible, #skipFlight:visible').first().tap({timeout: 10000 * SLOW});
     await t.until(async () => !(await t.inFlight()), 'Skip to finish the shot', 30 * SLOW);
@@ -2334,8 +2418,7 @@ const JOURNEYS = [
    await t.step('putt out with the shot button', async () => {
     for (let putt = 1; putt <= 6; putt++) {
      await t.until(async () => !(await t.inFlight()), 'the previous putt to finish', 30 * SLOW);
-     await tap('#smBar');
-     await tapOnTarget(t);
+     await touchStroke(t, await targetPull(t), () => tap('#smBar'));
      await t.until(() => t.inFlight(), 'the putt to start', 5 * SLOW);
      await t.page.locator('#smSkip:visible, #skipFlight:visible').first().tap({timeout: 10000 * SLOW}).catch(() => {});
      await t.until(async () => !(await t.inFlight()), 'the putt to finish', 30 * SLOW);

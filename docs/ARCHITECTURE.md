@@ -89,6 +89,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `src/cup.js` -- the hole as rigid contacts: green, rim, wall, floor, flagstick (`cupSim`, `captureSpeed`, `CUP`)
 - `src/clubs.js` -- every kind of club, a golfer's bag checked and made playable
 - `src/swing-meter.js` -- the Swing Meter: three taps into the launch numbers, the bar in yards, the target marker, curve / height / spin, and the lie table every golfer plays under
+- `src/swing-stroke.js` -- the pull-and-push swing (experimental branch): a thumb's path into the meter's strike terms -- pull for distance, push for line, tempo and (Hard) curve, the aim line's lean on a slope; armed swing shares main.js `swing` as kind 'stroke'
 - `src/shot-data.js`, `src/shot-views.js`, `src/dispersion.js` -- what a shot shows, its plots, grouping by club
 - `src/plays-like.js` -- what the shot to the hole plays like, from two flights of the ball model
 

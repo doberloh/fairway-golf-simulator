@@ -397,7 +397,9 @@ export function swingLaunch(sw, {club, shape, short = false, lie, difficulty, tu
  const launch = shapedLaunch(club, shape, {short});
  const power = sw.power ?? 0, share = (putt ? 1 : zoom) * carryShare(power);
  const zones = strikeZone({difficulty, shape: launch.zone, lie, putt, power, share: putt ? power : zoom * power});
- const fx = strikeEffect(sw.error ?? 0, zones, {putt, duff: !!sw.duff});
+ // A pull-and-push swing (swing-stroke.js) arrives already judged, in the same
+ // terms, with a launch change of its own (a rushed push flies lower).
+ const fx = sw.fx ?? strikeEffect(sw.error ?? 0, zones, {putt, duff: !!sw.duff});
  const factor = lieFactor(lie);
  if (putt) {
   const speed = puttSpeedFor(club, turf, share * (range ?? puttFullRoll(club, turf)));
@@ -406,5 +408,5 @@ export function swingLaunch(sw, {club, shape, short = false, lie, difficulty, tu
  const speed = speedForCarry(club, launch, share * fullCarry(club, launch)) * fx.speed;
  const comp = curveCompensation(club, launch, speed);
  const spin = launch.spin * lieSpin(lie, launch.vla) * spinForPower(clamp(speed / club.speed, 0, 1.2));
- return {shot: {speed: speed * factor, vla: launch.vla, hla: comp + fx.hla, spin, spinAxis: launch.axis + fx.axis}, before: speed, factor, power, share, strike: fx, zones};
+ return {shot: {speed: speed * factor, vla: clamp(launch.vla + (fx.vla ?? 0), 3, 60), hla: comp + fx.hla, spin, spinAxis: launch.axis + fx.axis}, before: speed, factor, power, share, strike: fx, zones};
 }

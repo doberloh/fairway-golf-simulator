@@ -227,7 +227,10 @@ the courses several suites share, and builds many at once on worker threads
   `obstacle-collision`, `solid-colliders`, `homes`, `swing-meter` (the lie's
   speed table, the flyer -- grass takes a lofted shot's spin and almost none of a
   long iron's -- from meter and monitor shots alike; nothing in it holds a ball to
-  stopping or staying),
+  stopping or staying), `swing-stroke` (the pull-and-push swing: scripted thumb
+  strokes for pull, line, Hard's curve, tempo, holds and slides at the top,
+  lifting before the push, the aim line's lean, the same stroke sampled 30 and
+  120 times a second, and a perfect stroke launching as a perfect meter swing),
   `dispersion`, `plays-like`, `aim-preview`, `range` (every green, the aim
   arc, slopes, cups, chip and putt spots), `lab`.
 - **Making a course** -- `world`, `landscape` (with `landscape-water` and
@@ -440,6 +443,7 @@ putt now waits 30 s for the card, and the journey logs how long it took.
 | `endless-round` | one golfer: clubs, aim, cameras, the Swing Meter, a tee shot, a drop, putting out, the scorecard, the next hole. Logs the course and seed, and the hole's par and its hole-out banner ("BIRDIE! 3 strokes") on every run |
 | `surprise-round` | a nine-hole course, every in-round tool opens |
 | `mixed-group` | two golfers, one on the monitor and one on the Swing Meter |
+| `pull-push` (branch pull-push-swing, 15 November 2026) | the pull-and-push swing with the mouse: a click on the bar arms the pad, the pad's aim line drawn and nothing of the round's over its strike line, a lift before the push is no stroke, a pull and push strikes the ball and the bar says how, Escape cancels; a picture of the pad mid-pull (bench/shots/smoke/pull-push-pad.png). The phone journeys swing and putt by touch with it (`touchStroke`, pulling to the blue stop for a putt) |
 | `skins` | a two-golfer skins round starts; chips and the Skins row |
 | `relief` | water and out of bounds, through a reload, both rules |
 | `profile`, `bag`, `look`, `level-up` | players, bags, looks, levels |

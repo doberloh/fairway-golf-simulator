@@ -274,6 +274,25 @@ Playing with the keyboard, the mouse, a touch screen or a controller, you swing 
 
 The Swing Meter replaced the power slider, the Shot shape sliders and the ball-flight profile in October 2026. Your bag decides how far each club goes; nothing else does.
 
+### Pull and push (experimental)
+
+On this experimental branch, **a finger or the mouse swings only this way**: nothing moves unless you move it. **Space** and a controller still swing with the three taps above, until what replaces them is decided. On a touch screen the bar shows no strike zone, since there is no Space to tap.
+
+1. **Tap the bar.** The screen dims and becomes the stroke pad.
+2. **Put your thumb down anywhere above the bar.** Where it lands is the strike line (gold). A dashed **aim line** runs up through it with an arrow: that is the push that sends the ball where your aim line on the course points.
+3. **Pull back down.** The guide fills along the aim line, marked in yards of carry for the club in your hands like the bar, and the bar's marker moves with you. The blue dot is where to stop for the aim circle. Past the full mark is the orange overswing. Hold as long as you like and slide to adjust; **lifting your thumb now is no stroke**, and the pad waits for another.
+4. **Push up through the strike line.** That is the strike. A faint fan from your thumb shows how far off the aim line the push may stray; the green fan inside it is a perfect strike. Push right of the line and the ball goes right; left, left.
+
+On a **side slope the aim line leans** uphill (the pad says *leans left* or *right*): the ball follows the ground, so follow the line. Tap the bar again, or press **Escape**, to cancel. After the stroke the line over the bar says what happened -- *Perfect strike*, *pushed right*, *rushed*, *hooked at the finish*.
+
+| | Judged | Help |
+| --- | --- | --- |
+| **Easy** | the line | yards and the blue dot while you pull |
+| **Normal** | the line and your **tempo**: a rushed push goes left, low and hot; a lazy one comes up short and drifts right | yards and the blue dot while you pull |
+| **Hard** | the line from the start of the push, the **curve** at its finish (a hook draws it left, a slice fades it right), and tempo | no blue dot; the yards show only when your thumb is still |
+
+A putt is the same pull and push, judged on the line only. Everything else -- the lie, the shape you picked, added spin, overswing -- works as it does on the bar.
+
 ## Water and out of bounds
 
 **A ball in water stops and asks where you want to play from.** Water is a

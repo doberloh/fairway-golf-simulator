@@ -151,6 +151,24 @@ Swing Meter* says so.
 | `PUTT_RANGES` | how far the putting bar reaches: a quarter of the putter's roll up to six times it, so a putt can cross any green at any Stimp; `puttSpeedFor`'s cap (3x the putter's speed) has to allow the longest |
 | `targetShare` | the blue target marker: the circle's distance through `playsLike` (slope and air always, wind only where the difficulty's `wind` is true -- Easy), then the bar share for that carry with the lie's lost speed made up |
 
+## The pull-and-push swing — `src/swing-stroke.js`
+
+The second way to swing with a finger or mouse (experimental branch
+`pull-push-swing`, 15 November 2026): pull back for the distance, push up
+through the line to strike. It hands `swingLaunch` the same strike terms the
+meter's `strikeEffect` does, so everything above still applies. All PLACED;
+RESEARCH.md *The pull-and-push swing*.
+
+| Knob | What it changes |
+|---|---|
+| `STROKE.degPerBar` | how many degrees of push drift equal one bar length of the meter's strike zone (120: Normal's zone about 8° each side) |
+| `STROKE.curveWiden` | how much wider Hard's curve allowance is than its line allowance (1.5) |
+| `STROKE.tempo`, `tempoShort` | the ideal push: 250 ms for a full pull, 60% of that for a tiny one |
+| `STROKE_LAYERS` | per difficulty: whether tempo and curve are judged, the tempo window (`tempoZone`, `tempoPerfect`), how much the aim line leans (`lean`), whether yards and the blue stop show while pulling |
+| `strokeEffect` tempo | rushed: left, 1.2° lower launch and up to 2% hotter per zone width; lazy: right and 3% less ball speed per zone width |
+| `STROKE.leanPerDegree`, `leanMax` | the aim line's lean per degree of side slope (1.5) and its most (15°) |
+| `pullLength` | the full pull: 30% of the screen's height, 100 to 260 px |
+
 ## How to ask for a change
 
 Naming the outcome is enough; the knob follows from it. Useful shapes:

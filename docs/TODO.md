@@ -204,6 +204,22 @@ wrong, unfinished, or owed a check.
 Hardware, browsers and hands the development machine does not have. Nothing
 here is a claim of support until it is done.
 
+- [ ] **The pull-and-push swing, on the owner's iPhone** (branch
+  `pull-push-swing`, experimental, 15 November 2026; RESEARCH *The
+  pull-and-push swing*). Built, covered by Node tests and swung by the smoke
+  harness with a mouse and with synthetic touches; **no person has swung it
+  yet**, on any screen. A finger or mouse swings only this way on the branch:
+  tap the bar to arm it. Owed a decision: what replaces the three taps for
+  Space and a controller. To check: that the pad reads a real thumb
+  (lastStroke in main.js holds the last reading, with its sample count); the
+  feel of every PLACED number -- the full pull a third of the screen, the
+  line's allowance (8 degrees each side on Normal), the ideal push of a
+  quarter of a second, Hard's curve layer against a thumb's natural arc, the
+  aim line's lean on side slopes; that the iPhone sends moves often enough at
+  30 frames a second (the frame-rate test plays 30 samples a second, not
+  fewer); and the pad on a PC with a mouse. The controller's right stick was
+  offered and is not built.
+
 - [ ] **Play the current build by hand** (0.9.17, 15 November 2026). What has
   been built and seen only in captures, measurements or smoke runs, and still
   exists in the game. The archive has each item's full list.
