@@ -2389,6 +2389,17 @@ const JOURNEYS = [
   async run(t) {
    await menuReady(t);
    const tap = sel => t.page.tap(sel);
+   // The owner's iPhone, 16 November 2026: the menu scrolled 11 px sideways,
+   // its column sized by the week's challenge line (PROJECT_HANDOFF *The main
+   // menu's one column is the screen's width*).
+   await t.step('the main menu fits the screen\'s width', async () => {
+    const wide = await t.page.evaluate(() => {
+     const m = document.getElementById('mainMenu'), W = document.documentElement.clientWidth;
+     return [...m.querySelectorAll('*')].filter(el => { const b = el.getBoundingClientRect(); return b.width && b.right > W + 1; })
+      .slice(0, 5).map(el => `${el.className} to ${Math.round(el.getBoundingClientRect().right)} of ${W}`).concat(m.scrollWidth > m.clientWidth + 1 ? [`the menu scrolls ${m.scrollWidth - m.clientWidth} px sideways`] : []);
+    });
+    if (wide.length) throw new Error(`the menu is wider than the screen: ${wide.join('; ')}`);
+   });
    await t.step('Endless → Start an endless run', async () => {
     await fromMenu(t, 'Endless', 'tap');
     // Endless is a kind of round in Play (21 October 2026): it starts from the last step, Rules.
