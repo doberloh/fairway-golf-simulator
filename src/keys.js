@@ -11,7 +11,6 @@
 // `keys` as printed on the keycaps; `words` what it does, in the list's voice;
 // `tool` the tool column entry it drives, if any.
 export const ROUND_KEYS = [
- {keys: ['S', 'W', 'X'], words: 'Curve, height, spin (Shift + X for less spin)'},
  {keys: ['Enter'], words: 'Skip the flight; the next hole once a hole is done'},
  {keys: ['←', '→'], words: 'Turn the aim'},
  {keys: ['↑', '↓'], words: 'Aim point further / shorter'},
@@ -58,4 +57,5 @@ export function swingStrip({monitor = false, touch = false, putting = false} = {
 }
 
 // The first-swing coach: shown once per device, before a golfer's first swing.
-export const COACH_STEPS = ['PRESS on the course and DRAG DOWN for the distance', 'PUSH back UP along the dashed aim line', 'LIFT before the push and nothing is struck'];
+// Curve and height come from the push since 16 November 2026 (the boxes went).
+export const COACH_STEPS = ['PRESS on the course and DRAG DOWN for the distance', 'PUSH UP along the aim line; bend the finish left to draw, right to fade', 'FOLLOW THROUGH: stop short for low, carry on for high'];

@@ -593,7 +593,7 @@
  #world[data-mode=play]:has(.swing-meter.out-of-reach) .shape-control{bottom:183px}
  #world[data-mode=play] .shape-control{left:calc(50% + 200px);bottom:151px;transform:translateX(-100%);display:flex;align-items:center;gap:0;height:28px;padding:0 14px;isolation:isolate}
  #world[data-mode=play] .shape-control::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
- #world[data-mode=play] .shape-control::after{content:"S W X";margin-left:10px;font:700 12px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em;color:var(--soft)}
+ #world[data-mode=play] .shape-control::after{content:none;margin-left:10px;font:700 12px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em;color:var(--soft)}
  #world[data-mode=play] .shape-control .shape-pick{height:28px;min-height:0;padding:0 4px;border:0;background:none;box-shadow:none;transform:none}
  #world[data-mode=play] .shape-control .shape-pick::before{display:none}
  #world[data-mode=play] .shape-control .shape-pick+.shape-pick{border-left:0}

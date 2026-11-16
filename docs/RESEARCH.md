@@ -7559,29 +7559,82 @@ exactly as a perfect meter swing of the same length (tested).
 so the lie, added spin, a flop, overswing and a short shot narrow it the same
 way -- converted at **120 degrees per bar length (PLACED)**: Normal's zone is
 about 8 degrees each side of the aim line and its perfect band about 2; Easy
-12 and 3.6; Hard 4.8 and 1. Misses cost what the meter's do (1.25 degrees off
-line and 5 of spin axis at the zone's edge, to four times that).
+12 and 3.6; Hard 4.8 and 1.
 
-- **Line** (every difficulty). Easy and Normal judge the whole push as one line,
-  start and curve together, as the meter does. Putts judge the line only, on
-  the putting zone (twice as wide), half the meter's start-line cost per miss.
-- **Curve** (Hard). The line is read from the push's first half; the change of
-  direction in its second half is the curve, on a zone **1.5 times wider
-  (PLACED)** because a thumb's swipe bends a little by itself. A hook at the
-  finish adds draw (negative spin axis), a slice adds fade.
+- **Line** (every difficulty). Read from the push's FIRST half against the
+  (leaning) aim line: a start off line is **2.5 degrees of launch direction per
+  zone width (PLACED)**, to four times that, and nothing on the spin axis --
+  the finish is the curve's (below). (Until 16 November Easy and Normal judged
+  the whole push as one line with the meter's coupled cost, 1.25 degrees and
+  5 of axis per zone width, and Hard alone split start from finish.) Putts
+  judge the line only, on the putting zone (twice as wide), at 0.5 degrees per
+  zone width.
+- **Curve** (every difficulty, since 16 November: the owner, "implement the
+  curve idea", with the Curve box removed). The change of direction in the
+  push's second half against its first is the bend; it PICKS the shape
+  (`curveOf`). Within the straight band it is Straight; within a lane centred
+  **22 degrees** either way it is a clean Draw (left) or Fade (right), which
+  `shapedLaunch` flies exactly as the Curve box's did (8 degrees of axis,
+  started the other way so it lands on the aim). Half-widths, degrees, Easy /
+  Normal / Hard: straight 8 / 6 / 4, lanes 12 / 9 / 6 (PLACED; a thumb's
+  swipe bends several degrees by itself, which is why straight is not
+  narrower). A bend between the straight band and a lane, or past a lane, is
+  a miss toward the nearest shape: **3 degrees of spin axis per lane width
+  off (PLACED)**, the way the error bends -- short of a lane bends back toward
+  straight, past it bends further. Not for putts.
 - **Tempo** (Normal, Hard; not putts). The push's own pace against an ideal of
   **250 ms for a full pull, 60% of that for none (PLACED)**, scaled to the leg
   measured. Normal allows a ratio of 1.6 (perfect within 1.15), Hard 1.35
-  (1.08). Rushed: left (0.75 degrees and 3 of axis per zone width), 1.2 degrees
-  lower launch per zone width, and up to 2% hotter. Lazy: right by the same,
-  and 3% less ball speed per zone width. All PLACED.
+  (1.08); **overswing narrows both, to half at the end of it** (as it narrows
+  the line's; added 16 November). Rushed: left (0.75 degrees and 3 of axis per
+  zone width), 1.2 degrees lower launch per zone width, and up to 2% hotter.
+  Lazy: right by the same, and 3% less ball speed per zone width. All PLACED.
+  Easy reports it (the gauge) without judging it.
+- **Height: the follow-through** (every difficulty, since 16 November: the
+  owner, "Implement the height follow through idea. its ok if the ball cant
+  leave right away", with the Height box removed). How far the push carries
+  on past the strike line, in full pulls: **under 0.2 Low, from 0.55 High,
+  Normal between (PLACED)**; near the green with a wedge Low and High are Bump
+  & run and Flop, as before. A choice, never a miss. The ball leaves when the
+  follow-through ends: the thumb still for **90 ms**, a lift, **600 ms** after
+  the strike, or 0.9 of a full pull past the line (all PLACED). So the ball
+  goes 0.1 to 0.6 s after the strike, not on it. The yardage guide and blue
+  stop are worked out for a Normal height before the swing; a Low or High shot
+  pulled to the same mark carries that height's share of its own full carry.
+- **Spin: the spin ball** (since 16 November: the owner, "a golf ball icon
+  with a dot they can drag around. The dot would change the backspin as well
+  as the spin axis", with the Spin box removed). The dot is where the ball is
+  struck, inside the unit circle (swing-meter.js `SPIN_DOT`): at the bottom
+  **30% more spin**, at the top **25% less** (the old dial's +3 and -1), in
+  between in proportion; across, up to **10 degrees of spin axis** that way,
+  NOT started the other way (it bends a ball round something). The allowance
+  narrows by 0.85 per third of the way down and per half of the way across.
+  Dragged relatively (70 px from the middle to the edge, wherever the finger
+  goes) with a 150 px copy of the ball shown meanwhile; a tap centres it; on a
+  controller the d-pad moves it a quarter at a time and X centres it. All
+  PLACED.
+- **What you hit** (the owner: "show on the screen via some sort of feedback
+  what the user hit"): a row in the swing box after each stroke -- pull in
+  yards, line, curve (and too much or not enough), height, spin, and the
+  tempo gauge (the push's ratio to the ideal on a log scale, the zone's edges
+  at the ends of its gold band, the perfect band green, the push's time beside
+  the ideal's). Kept until the next stroke.
+- **Tap-ins** (found by the full smoke run, 16 November: three journeys could
+  not hole out). A pull under 4% of a full pull is no swing, and a half-foot
+  putt on the shortest putting range then (a quarter of the putter's roll) was
+  2%. The putt's pull now also zooms to an eighth, a sixteenth and a
+  thirty-second of the roll (about 0.85 m at Stimp 10), so a half-foot putt is
+  18% of a pull. PLACED.
+- **The pace cue** (Easy, Normal; not putts): resting at the top, a dot runs
+  from the thumb to the strike line in the ideal time and repeats (every 3.5
+  ideal times, at least 0.9 s) -- the rhythm to push with, never a target.
 - **The aim line leans on a side slope**: 1.5 degrees per degree of slope
   across the aim line, times 0.5 / 0.75 / 1 by difficulty, at most 15 (PLACED).
   The ball follows the ground from either side of it -- below a right
   hander's feet and above a left hander's both go right when the ground falls
   right -- so no handedness is needed. Never on the green or the mat.
-- **Hard hides the help**: no blue stop, and the yards (on the pad and the
-  bar's marker) show only once the thumb has been still 150 ms.
+- **Hard hides the help**: no blue stop, no pace cue, and the yards show
+  only once the thumb has been still 150 ms.
 - **The full pull** is 30% of the screen's height, between 100 and 260 px
   (PLACED), so a thumb learns one length per screen.
 
@@ -7605,6 +7658,17 @@ line and 5 of spin axis at the zone's edge, to four times that).
 - **The Swing Meter's skins** (rewards that coloured the bar,
   rewards.js `METER_SKINS`) have nothing to colour now; what they become is
   open (TODO).
+- **Curve and height kept on buttons for Easy** (offered 16 November) went
+  when the owner asked for the boxes removed: every difficulty shapes with
+  the swing, Easy with wider lanes.
+- **Spin from the swing** was offered as not fitting (every part of the push
+  is already used) and the owner chose the spin ball instead.
+- **Lane and height labels on the pad, first draft**: the lanes ran past the
+  strike line into the height marks, and on a phone held sideways (a full
+  pull of about 120 px) DRAW and FADE sat on NORMAL and PACE on a yard mark.
+  The lanes now stop at the strike line with their names just under it, and
+  PACE sits under the yards by the thumb (the smoke pictures,
+  phone-landscape-pad.png).
 
 ## The smoke test on GitHub: three harness faults (16 October 2026)
 

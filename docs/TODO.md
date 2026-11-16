@@ -210,7 +210,13 @@ here is a claim of support until it is done.
   harness with a mouse and with synthetic touches; **no person has swung it
   yet**, on any screen. The three-tap bar and Space are gone on the branch: a
   drag down on the course swings, and a controller's right stick (built, never
-  tried with a real pad -- check it on the PC). Open: what the Swing Meter
+  tried with a real pad -- check it on the PC). Since 16 November curve comes
+  from the push's finish (lanes), height from the follow-through, spin from
+  the spin ball, a report of what was hit after each stroke, and a pace cue at
+  the top: all PLACED numbers to feel out on the phone -- lane widths (a
+  thumb's own arc may read as a bend), the follow-through marks, the wait
+  before the ball leaves (up to 0.6 s), the spin ball's drag on a small
+  screen, whether the report is too much to read. Open: what the Swing Meter
   skins (rewards) colour now that the bar is gone; the group panel's "Plays
   with: Swing Meter" and the monitor strip still say Swing Meter. To check:
   that a downward drag never fights the camera in the green views, that a tap

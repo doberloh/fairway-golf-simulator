@@ -121,7 +121,8 @@ export function golferCards(players, active) {
 export function keyHints({putting = false, monitor = false, range = false} = {}) {
  const keys = [['Q E', 'CLUB'], ['TAB', 'NUMBERS'], ['C', 'CAMERA'], ['ESC', 'MENU']];
  if (range) keys.splice(3, 0, ['R', 'RANGE']);
- if (!monitor && !putting) keys.splice(1, 0, ['S W X', 'SHAPE']);
+ // (S W X, the shot's shape, went on 16 November 2026: curve and height come
+ // from the swing, spin from the spin ball.)
  return keys.map(([key, text]) => ({key, text}));
 }
 

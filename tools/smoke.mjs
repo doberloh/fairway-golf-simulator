@@ -645,7 +645,7 @@ async function touchAiming(t) {
  await t.step('every control a round needs is a thumb wide', async () => {
   const coarse = await t.page.evaluate(() => matchMedia('(pointer:coarse)').matches);
   if (!coarse) throw new Error('the browser is not reporting a touch screen, so the touch sizes never applied');
-  const small = await t.page.evaluate(smallTargets, '.topbar button, #shotToggle, #aimPad button, .club-control, #pickCurve, #pickHeight, #pickSpin, #mapExpand, #rhBar button');
+  const small = await t.page.evaluate(smallTargets, '.topbar button, #shotToggle, #aimPad button, .club-control, #pickSpin, #mapExpand, #rhBar button');
   if (small.length) throw new Error(`under 44 px to a finger: ${small.join('; ')}`);
  });
 }
@@ -693,9 +693,11 @@ async function coursePoint(t, pullPx) {
   return null;
  }, Math.round(pullPx * 1.15) + 20);
 }
-async function strokeOnCourse(t, share, {touch = false, push = true, lift = true, shot = null, during = null} = {}) {
+// `follow` is the follow-through past the strike line, in full pulls (a
+// little, by default: a Low shot).
+async function strokeOnCourse(t, share, {touch = false, push = true, lift = true, shot = null, during = null, follow = .12} = {}) {
  const h = await t.page.evaluate(() => innerHeight);
- const pull = Math.max(12, share * pullLength(h));
+ const pull = Math.max(12, share * pullLength(h)), over = Math.max(20, follow * pullLength(h));
  const p = await coursePoint(t, pull);
  if (!p) throw new Error('no point of the course is clear of the round\'s cards to swing from');
  const {x, y} = p;
@@ -707,7 +709,10 @@ async function strokeOnCourse(t, share, {touch = false, push = true, lift = true
  await t.page.waitForTimeout(200);
  if (shot) await t.page.screenshot({path: path.join(SHOTS, shot)});
  if (during) await during(p);
- if (push) for (let i = 1; i <= 8; i++) { await move(x, y + pull - (pull + 30) * i / 8); await t.page.waitForTimeout(22); }
+ if (push) {
+  const steps = Math.max(8, Math.round(8 * (pull + over) / Math.max(1, pull)));
+  for (let i = 1; i <= steps; i++) { await move(x, y + pull - (pull + over) * i / steps); await t.page.waitForTimeout(22); }
+ }
  if (lift) await up();
 }
 // The blue stop's share of a full pull (main.js `drawTarget`), or most of a
@@ -897,22 +902,27 @@ const JOURNEYS = [
     await t.hold('ArrowDown', '#aimLabelDistance');
     await t.hold('ArrowUp', '#aimLabelDistance');
    });
-   await t.step('the swing box: how to swing, the lie, the blue stop, and S, W and X shape the shot', async () => {
+   await t.step('the swing box: how to swing, the lie, the blue stop, and the spin ball', async () => {
     if (!await t.page.evaluate(() => !!document.getElementById('swingMeter').offsetParent)) throw new Error('the swing box is not showing');
     if (!/DRAG/i.test(await t.page.textContent('#smHint'))) throw new Error(`the swing box does not say how to swing: "${await t.page.textContent('#smHint')}"`);
     if (!/LIE/.test(await t.page.textContent('#lieReadout'))) throw new Error('the lie readout is empty');
     // Phase 2: the blue stop is worked out (drawn on the pad once a stroke starts).
     await t.until(() => t.page.evaluate(() => +document.getElementById('swingMeter').dataset.target > 0), 'the blue stop to be worked out', 5 * SLOW);
-    for (const [code, label] of [['KeyS', '#curveLabel'], ['KeyW', '#heightLabel'], ['KeyX', '#spinCycleLabel']]) {
-     const before = await t.page.textContent(label);
-     await t.key(code);
-     await t.until(async () => (await t.page.textContent(label)) !== before, `${code} to change ${label}`, 5 * SLOW);
-    }
-    // Back to a plain shot: the curve and height round their lists, and Shift+X
-    // takes the step of spin off again.
-    await t.key('KeyS'); await t.key('KeyS'); await t.key('KeyW'); await t.key('KeyW');
-    await t.page.keyboard.press('Shift+KeyX');
-    if (await t.page.textContent('#spinCycleLabel') !== '0') throw new Error('Shift+X did not take the spin back off');
+    // THE SPIN BALL (16 November 2026, in place of the Curve, Height and Spin
+    // boxes): drag the dot down and right, and it moves and says so; a tap
+    // puts it back in the middle.
+    const ball = await t.page.locator('#pickSpin').boundingBox();
+    if (!ball) throw new Error('the spin ball is not showing');
+    const label = () => t.page.getAttribute('#pickSpin', 'aria-label');
+    const cx = ball.x + ball.width / 2, cy = ball.y + ball.height / 2;
+    await t.page.mouse.move(cx, cy);await t.page.mouse.down();
+    for (let i = 1; i <= 6; i++) { await t.page.mouse.move(cx + 6 * i, cy + 8 * i); await t.page.waitForTimeout(15); }
+    if (!await t.page.evaluate(() => document.getElementById('spinPad')?.hidden === false)) throw new Error('the big spin ball did not show while dragging');
+    await t.page.mouse.up();
+    if (!/backspin/.test(await label())) throw new Error(`dragging the dot did not change the spin: "${await label()}"`);
+    if (!await t.page.evaluate(() => document.getElementById('shapeControl').classList.contains('spun'))) throw new Error('the spin ball does not show it is set');
+    await t.page.mouse.click(cx, cy);
+    await t.until(async () => /club's own/.test(await label()), 'a tap on the spin ball to centre the dot', 5 * SLOW);
    });
    await t.step('Escape cancels a stroke mid-pull, with no stroke', async () => {
     await strokeOnCourse(t, .5, {push: false, lift: false});
@@ -1625,11 +1635,16 @@ const JOURNEYS = [
     if ((await stage()) !== 'ready') throw new Error(`the pad stayed up after the lift (stage ${await stage()})`);
     if (!/No stroke/.test(await t.page.textContent('#smHint'))) throw new Error('nothing said the lift was no stroke');
    });
-   await t.step('a pull and push strikes the ball, and the words say how', async () => {
-    await strokeOnCourse(t, .6);
+   await t.step('a pull and push with a long follow-through strikes a High shot, and the report says what was hit', async () => {
+    await strokeOnCourse(t, .6, {follow: .7});
     await t.until(() => t.inFlight(), 'the pull and push to start a shot', 5 * SLOW);
     const said = await t.page.textContent('#smHint');
-    if (!/strike|right|left|quick|slow|rushed|lazy|hook|slice/i.test(said)) throw new Error(`the words said "${said}" after the stroke`);
+    if (!/strike|Straight|Draw|Fade|High/i.test(said)) throw new Error(`the words said "${said}" after the stroke`);
+    const report = await t.page.evaluate(() => { const r = document.getElementById('strokeReport'); return r && !r.hidden && r.offsetParent ? r.textContent : null; });
+    if (!report) throw new Error('no report of what was hit');
+    for (const want of ['PULL', 'LINE', 'CURVE', 'HEIGHT', 'SPIN', 'TEMPO', 'ideal']) if (!report.includes(want)) throw new Error(`the report has no ${want}: "${report}"`);
+    if (!/HEIGHTHIGH/.test(report.replace(/\s+/g, ''))) throw new Error(`a long follow-through was not High: "${report}"`);
+    if (!/^HIGH$/.test(await t.page.evaluate(() => window.lab.state().lastStroke?.height?.toUpperCase() || ''))) throw new Error('the game did not read the follow-through as High');
     await t.key('Enter');
     await t.until(async () => !(await t.inFlight()), 'Enter to finish the shot', 30 * SLOW);
     await reliefFirst(t);
@@ -2333,9 +2348,11 @@ const JOURNEYS = [
    let checkedFlight = false;
    const swing = async () => {
     await t.until(async () => !(await t.inFlight()), 'the previous shot to finish', 30 * SLOW);
-    // A finger swings by the pull and push on the course (pull-push-swing).
-    await strokeOnCourse(t, .8, {touch: true});
+    // A finger swings by the pull and push on the course (pull-push-swing); the
+    // first one leaves a picture of the pad mid-pull and of the report after.
+    await strokeOnCourse(t, .8, {touch: true, ...(checkedFlight ? {} : {shot: `phone-${way}-pad.png`})});
     await t.until(() => t.inFlight(), 'a pull and push on the course to start a shot', 5 * SLOW);
+    if (!checkedFlight) { await t.page.screenshot({path: path.join(SHOTS, `phone-${way}-report.png`)}); }
     if (!checkedFlight) { checkedFlight = true; await flightClearsTheScreen(t, true); }
     await t.page.locator('#smSkip:visible, #skipFlight:visible').first().tap({timeout: 10000 * SLOW});
     await t.until(async () => !(await t.inFlight()), 'Skip to finish the shot', 30 * SLOW);

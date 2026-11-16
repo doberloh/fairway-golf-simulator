@@ -96,11 +96,30 @@ export const HEIGHTS = ['low', 'normal', 'high'];
 // The spin dial: one step off, the club's own, or up to three added.
 export const SPIN_STEPS = [-1, 0, 1, 2, 3];
 export const DEFAULT_SHAPE = Object.freeze({curve: 'straight', height: 'normal', spin: 0});
+// THE SPIN DOT (branch pull-push-swing, 16 November 2026; the owner: "give the
+// user a golf ball icon with a dot they can drag around. The dot would change
+// the backspin as well as the spin axis"). `dot` is where on the ball face the
+// golfer strikes, x right and y DOWN, inside the unit circle. Below the middle
+// adds backspin (to `more` at the bottom), above takes it off (to `less` at
+// the top); right of the middle tilts the spin axis right, up to `axis`
+// degrees, curving the ball right, and left curves it left. That side spin is
+// NOT started the other way to land on the aim -- it is for bending a ball
+// round something. Every step away from the middle narrows the strike's
+// allowance as added spin did (`zone` per third of the way down, per half of
+// the way across). The dot replaces the spin steps for the game; a shape with
+// no dot still reads `spin` steps (tests, older records). All PLACED.
+export const SPIN_DOT = {more: .3, less: .25, axis: 10, zone: .85};
+export function clampDot(d) {
+ const x = Number.isFinite(d?.x) ? d.x : 0, y = Number.isFinite(d?.y) ? d.y : 0, r = Math.hypot(x, y);
+ return r > 1 ? {x: x / r, y: y / r} : {x, y};
+}
+export const dotSpin = d => d.y >= 0 ? 1 + SPIN_DOT.more * d.y : 1 + SPIN_DOT.less * d.y;
 export function validShape(s = {}) {
  return {
   curve: CURVES.includes(s.curve) ? s.curve : 'straight',
   height: HEIGHTS.includes(s.height) ? s.height : 'normal',
   spin: SPIN_STEPS.includes(s.spin) ? s.spin : 0,
+  ...(s.dot ? {dot: clampDot(s.dot)} : {}),
  };
 }
 // Wedges get Bump & run and Flop near the green, in place of Low and High.
@@ -133,17 +152,22 @@ const SPIN_SCALE = {'-1': .75, 0: 1, 1: 1.1, 2: 1.2, 3: 1.3};
 const HEIGHT_SPIN = {low: .92, normal: 1, high: 1.08, bump: .5, flop: .85};
 export function shapedLaunch(club, shape, {short = false} = {}) {
  const s = validShape(shape);
- if (club.code === 'PT') return {vla: 0, spin: 0, axis: 0, zone: 1, flop: false};
+ if (club.code === 'PT') return {vla: 0, spin: 0, axis: 0, side: 0, zone: 1, flop: false};
  const kind = short && s.height === 'low' ? 'bump' : short && s.height === 'high' ? 'flop' : s.height;
  const vla = kind === 'bump' ? club.vla * .55 : kind === 'flop' ? club.vla + 10
   : kind === 'low' ? club.vla - 4 : kind === 'high' ? club.vla + 4 : club.vla;
+ const d = s.dot;
  return {
   vla: clamp(vla, 3, 60),
-  spin: club.spin * HEIGHT_SPIN[kind] * SPIN_SCALE[s.spin],
+  spin: club.spin * HEIGHT_SPIN[kind] * (d ? dotSpin(d) : SPIN_SCALE[s.spin]),
   axis: CURVE_AXIS[s.curve],
+  // The spin dot's side spin, kept apart from the curve's axis: the curve is
+  // started the other way to land on the aim (`curveCompensation`), this is not.
+  side: d ? d.x * SPIN_DOT.axis : 0,
   // The strike zone's width, as a share of the difficulty's: a flop is harder to
-  // hit cleanly, and every step of added spin narrows it.
-  zone: (kind === 'flop' ? .8 : 1) * Math.pow(.85, Math.max(0, s.spin)),
+  // hit cleanly, and every step of added spin -- or the dot away from the
+  // middle -- narrows it.
+  zone: (kind === 'flop' ? .8 : 1) * (d ? Math.pow(SPIN_DOT.zone, 3 * Math.max(0, d.y) + 2 * Math.abs(d.x)) : Math.pow(.85, Math.max(0, s.spin))),
   flop: kind === 'flop', bump: kind === 'bump',
  };
 }
@@ -270,7 +294,16 @@ export function puttFullRoll(putter, turf) { return struckDistance(putter.speed,
 // course grows is about 80 yd across, and on the slowest Stimp (6) the putter's
 // own roll is about 18 yd, so six times holds that with room to spare. On the
 // green, and only for a putt, the bar is not held to the bag.
-export const PUTT_RANGES = [.25, .5, 1, 1.5, 2, 3, 4, 6];
+//
+// AND IN TO A TAP-IN (pull-push-swing, 16 November 2026). A pull shorter than
+// 4% of a full pull is no swing (swing-stroke.js `minShare`), and a half-foot
+// putt on a quarter of the putter's roll was 2% -- it could not be struck (the
+// smoke run's tap-ins, "waited 5s for the putt to start"). So the pull also
+// zooms to an eighth, a sixteenth and a thirty-second of the putter's roll:
+// about 3.4 m, 1.7 m and 0.85 m at Stimp 10, which takes a putt down to a few
+// centimetres. The putt's length is the pull's share of the range either way,
+// so nothing else moves. PLACED.
+export const PUTT_RANGES = [1 / 32, 1 / 16, 1 / 8, .25, .5, 1, 1.5, 2, 3, 4, 6];
 export function puttRange(putter, turf, aimMetres) {
  const full = puttFullRoll(putter, turf);
  for (const k of PUTT_RANGES) if (aimMetres * 1.25 <= full * k) return full * k;
@@ -349,5 +382,5 @@ export function swingLaunch(sw, {club, shape, short = false, lie, difficulty, tu
  const speed = speedForCarry(club, launch, share * fullCarry(club, launch)) * fx.speed;
  const comp = curveCompensation(club, launch, speed);
  const spin = launch.spin * lieSpin(lie, launch.vla) * spinForPower(clamp(speed / club.speed, 0, 1.2));
- return {shot: {speed: speed * factor, vla: clamp(launch.vla + (fx.vla ?? 0), 3, 60), hla: comp + fx.hla, spin, spinAxis: launch.axis + fx.axis}, before: speed, factor, power, share, strike: fx, zones};
+ return {shot: {speed: speed * factor, vla: clamp(launch.vla + (fx.vla ?? 0), 3, 60), hla: comp + fx.hla, spin, spinAxis: launch.axis + (launch.side ?? 0) + fx.axis}, before: speed, factor, power, share, strike: fx, zones};
 }

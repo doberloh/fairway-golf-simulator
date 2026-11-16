@@ -1281,7 +1281,47 @@ html,body{overscroll-behavior:none}
 .stroke-pad .sp-thumb{fill:rgba(255,255,255,.18);stroke:#fff;stroke-width:2}
 .stroke-pad .sp-thumb.over{stroke:#ff9f43}
 .stroke-pad .sp-now{font-size:16px;font-weight:800}
-.sm-marker.sm-veiled{opacity:0}
+/* The follow-through's heights, the curve lanes and the pace cue on the pad. */
+.stroke-pad .sp-band{stroke:rgba(255,255,255,.4);stroke-width:5;stroke-linecap:butt}
+.stroke-pad .sp-band.lit{stroke:#8fd3ff}
+.stroke-pad .sp-hgt{font-size:11px;letter-spacing:.08em;fill:rgba(255,255,255,.75)}
+.stroke-pad .sp-hgt.lit{fill:#8fd3ff;font-size:13px}
+.stroke-pad .sp-lane{fill:rgba(143,211,255,.12);stroke:rgba(143,211,255,.45);stroke-width:1}
+.stroke-pad .sp-lane.straight{fill:rgba(255,255,255,.08);stroke:rgba(255,255,255,.3)}
+.stroke-pad .sp-lanetag{font-size:11px;letter-spacing:.1em;fill:#cfe9ff}
+.stroke-pad .sp-cue{fill:#f0c674;stroke:#fff;stroke-width:1.5}
+.stroke-pad .sp-cuetag{font-size:11px;letter-spacing:.1em;fill:#f0c674}
+/* WHAT YOU HIT: the row in the swing box after a stroke (main.js
+   drawStrokeReport). Small chips that wrap, so a phone's narrow box takes it. */
+.stroke-report{display:flex;flex-wrap:wrap;align-items:stretch;gap:4px;margin:0 0 6px;font:600 12px/1.15 "Saira Condensed",var(--font-ui,system-ui),sans-serif;color:#fff}
+.stroke-report[hidden]{display:none}
+.srp-chip,.srp-tempo{display:flex;flex-direction:column;justify-content:center;gap:1px;padding:3px 7px;background:var(--panel,rgba(10,22,16,.85));min-width:0}
+.srp-chip small,.srp-tempo small{font-size:9.5px;letter-spacing:.12em;color:var(--soft,#b9c7bf);font-weight:700}
+.srp-chip b{font-size:14px;font-weight:800;font-style:italic;white-space:nowrap}
+.srp-chip.bad b,.srp-tempo.bad b{color:#ffb38a}
+.srp-tempo{flex:1 1 150px;position:relative}
+.srp-tempo b{font-size:12px;font-weight:700;white-space:nowrap}
+.srp-tempo b em,.srp-ends em{font-style:normal;color:var(--soft,#b9c7bf);font-weight:600}
+.srp-gauge{position:relative;display:block;height:8px;margin:2px 0;background:rgba(255,255,255,.12)}
+.srp-gauge .srp-zone{position:absolute;inset:0 14.3%;background:rgba(240,198,116,.35)}
+.srp-gauge .srp-ok{position:absolute;top:0;bottom:0;background:rgba(110,214,135,.9)}
+.srp-gauge .srp-mark{position:absolute;top:-3px;bottom:-3px;width:3px;margin-left:-1.5px;background:#fff;box-shadow:0 0 6px rgba(0,0,0,.6)}
+.srp-gauge::after{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:#fff;opacity:.7}
+.srp-ends{display:flex;justify-content:space-between;font-size:8.5px;letter-spacing:.12em}
+/* THE SPIN BALL, where the Curve, Height and Spin boxes were, and the big copy
+   above the swing box while the dot is dragged. */
+#world .spin-ball{align-items:center}
+#world .spin-ball .sb-face{position:relative;display:block;flex:none;width:28px;height:28px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff 0,#eef1f4 45%,#c9ced6 100%);box-shadow:inset 0 0 0 1px rgba(0,0,0,.25);overflow:visible;padding:0!important;max-width:none!important}
+#world .spin-ball .sb-dot{position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;background:#e0342f;box-shadow:0 0 0 1.5px #fff}
+#world .shape-control.spun .sb-face{box-shadow:inset 0 0 0 1px rgba(0,0,0,.25),0 0 0 2px #f0c674}
+.spin-pad{position:absolute;left:50%;bottom:34%;z-index:70;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 14px;background:var(--panel,rgba(10,22,16,.9));pointer-events:none;color:#fff}
+.spin-pad[hidden]{display:none}
+.spin-pad-ball{position:relative;display:block;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff 0,#eef1f4 45%,#c9ced6 100%);box-shadow:inset 0 0 0 2px rgba(0,0,0,.2)}
+.spin-pad-ball::before,.spin-pad-ball::after{content:"";position:absolute;background:rgba(0,0,0,.18)}
+.spin-pad-ball::before{left:50%;top:8%;bottom:8%;width:1px}
+.spin-pad-ball::after{top:50%;left:8%;right:8%;height:1px}
+.spin-pad-ball i{position:absolute;left:50%;top:50%;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;background:#e0342f;box-shadow:0 0 0 2px #fff}
+.spin-pad small{font:700 10px/1.2 "Saira Condensed",var(--font-ui,system-ui),sans-serif;letter-spacing:.1em;color:var(--soft,#b9c7bf);text-align:center;max-width:180px}
 .meter-choices{display:grid;gap:8px;margin:10px 0 4px}
 .meter-choice{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:10px 12px;border-radius:0;border:1px solid var(--line);cursor:pointer}
 .meter-choice.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}

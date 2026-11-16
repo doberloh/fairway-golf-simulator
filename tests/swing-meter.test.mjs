@@ -186,8 +186,13 @@ test('a monitor shot from the rough flies at 90% of its measured ball speed, a l
 test('the putting bar zooms to the putt, and the putter is unchanged', async () => {
  const {puttRange, PUTT_RANGES} = await import('../src/swing-meter.js');
  const p = clubs.putter, full = puttFullRoll(p, turf);
- assert.deepEqual(PUTT_RANGES, [.25, .5, 1, 1.5, 2, 3, 4, 6]);
- assert.equal(puttRange(p, turf, 3 * YARD), full / 4, 'a nine-foot putt gets the shortest bar');
+ assert.deepEqual(PUTT_RANGES, [1 / 32, 1 / 16, 1 / 8, .25, .5, 1, 1.5, 2, 3, 4, 6]);
+ assert.equal(puttRange(p, turf, 4 * YARD), full / 4, 'a twelve-foot putt gets a quarter of the roll');
+ // A TAP-IN is a real pull (16 November 2026): half a foot is more than the
+ // stroke's least, 4% of a full pull, on the shortest range.
+ const tap = .5 * .3048, k = tap / puttRange(p, turf, tap);
+ assert.equal(puttRange(p, turf, tap), full / 32);
+ assert.ok(k > .04, `a half-foot putt is ${k.toFixed(3)} of a full pull`);
  assert.equal(puttRange(p, turf, full * .35), full / 2);
  assert.equal(puttRange(p, turf, full * .75), full, 'a long one gets the whole roll');
  assert.equal(puttRange(p, turf, full * .9), full * 1.5, 'and one past it reaches on beyond the putter roll');

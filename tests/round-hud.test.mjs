@@ -65,12 +65,14 @@ test('golfer cards: one big card for the golfer up, a plate for everyone else', 
  assert.equal(golferCards([{name: 'x', into: 5, need: 0}], 0)[0].xp, 0);
 });
 
-test('the keys: shape keys only while a Swing Meter shot can be shaped; Escape always', () => {
+// The shape keys (S W X) went on 16 November 2026 (pull-push-swing): curve and
+// height come from the swing, spin from the spin ball.
+test('the keys: no shape keys; Escape always', () => {
  const keys = o => keyHints(o).map(k => k.key);
- assert.deepEqual(keys({}), ['Q E', 'S W X', 'TAB', 'C', 'ESC']);
+ assert.deepEqual(keys({}), ['Q E', 'TAB', 'C', 'ESC']);
  assert.deepEqual(keys({putting: true}), ['Q E', 'TAB', 'C', 'ESC']);
  assert.deepEqual(keys({monitor: true}), ['Q E', 'TAB', 'C', 'ESC']);
- assert.deepEqual(keys({range: true}), ['Q E', 'S W X', 'TAB', 'C', 'R', 'ESC']);
+ assert.deepEqual(keys({range: true}), ['Q E', 'TAB', 'C', 'R', 'ESC']);
 });
 
 test('the ball light names the monitor\'s state in one word', () => {
