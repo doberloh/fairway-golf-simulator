@@ -2133,3 +2133,26 @@ copies. Checked on the released code: 1,649 Node tests (1,648 pass, one
 skipped, none failing), the game's 41 smoke journeys, every landscape's
 fingerprint. Played only on the owner's iPhone; no Android phone tried.
 
+## Addendum, 15 November 2026: v0.9.17
+
+**v0.9.17** is published at the owner's request ("merge back into main,
+generate a new patch version and push to github as well as the live website
+demo"; the next patch number after 0.9.16), as "Fairway 0.9.17 (beta)", tag
+`v0.9.17`, not a pre-release, the same six files, from the merge of
+`course-edge-woods` into `main`, notes in `docs/releases/v0.9.17.md`.
+Content: the course's woods carried past its property line (surround.js,
+ground.js, the new src/edge-woods.js). Generator 103, schema 47 and built 3
+are unchanged, and every landscape's fingerprint is as it was: no saved
+round, course or code moves; the trees past the line were never part of
+the course a ball meets. The built page is 60,513,068 bytes against
+0.9.16's 60,509,309 (4 KB more). Nothing new is fetched, no dependency or
+asset was added, and the page still opens from a file URL with no network.
+The Godot experiment that found the problem was stopped and never merged;
+nothing of Godot ships. Checked on the released code: the Node tests that
+see the change (651, 650 pass, one skipped, none failing; the whole suite,
+1,653, on the same game code on the Godot branch), every landscape's
+fingerprint, the game's smoke journeys (40 of 40 on the branch, the
+server program's journey skipped until the release built it), and captures
+of the line on all fifteen landscapes and one built course. Not played by
+hand.
+
