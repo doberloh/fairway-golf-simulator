@@ -1246,51 +1246,64 @@ html,body{overscroll-behavior:none}
 .sm-out{color:#ff8f80;font-weight:600}
 .sm-marker{width:4px;margin-left:-2px;top:-5px!important;bottom:-5px!important;border-radius:2px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.45),0 0 10px rgba(255,255,255,.6)}
 .swing-meter[data-stage=ready] .sm-marker{opacity:.55}
-.swing-catcher{position:absolute;inset:0;z-index:30;background:transparent;touch-action:none;cursor:pointer}
-.swing-catcher[hidden]{display:none}
-#world.swinging .swing-meter{z-index:31}
-/* THE PULL-AND-PUSH PAD (pull-push-swing, 15 November 2026): the whole screen
-   while armed, a light veil so the course still shows, the aim line and its
-   allowance drawn from where the thumb lands (main.js drawStroke). The bar
-   stays above it: a tap there cancels. */
-.swing-catcher.stroke{background:rgba(6,18,12,.28);cursor:crosshair;z-index:60}
-/* The swing starts as a drag on the course: the browser must not take that
-   drag for a scroll or a zoom (it would cancel the stroke mid-pull). */
-#scene{touch-action:none}
-/* Armed, the pad is above the round's cards and tips (the hole's intro card hid
-   the strike line in the first smoke run), and the bar above the pad. */
-#world.stroke-armed .swing-meter{z-index:61}
-.stroke-pad{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;font:600 13px/1 var(--ui-font,system-ui,sans-serif)}
-.stroke-pad text{fill:#fff;paint-order:stroke;stroke:rgba(0,0,0,.55);stroke-width:3px}
-.stroke-pad .sp-ask{font-size:22px;font-weight:800;letter-spacing:.02em;text-anchor:middle}
-.stroke-pad .sp-sub{font-size:14px;font-weight:600;text-anchor:middle;fill:#e6efe9}
-.stroke-pad .sp-aim{stroke:#fff;stroke-width:2.5;stroke-dasharray:7 6;opacity:.9}
-.stroke-pad .sp-arrow{fill:#fff}
-.stroke-pad .sp-tag{font-size:12px;letter-spacing:.08em;text-anchor:middle}
+/* THE SWING PAD (pull-push-swing, 16 November 2026; main.js bindSwingPad and
+   drawStroke): a panel the Swing button opens, in <body> so the Text size zoom
+   leaves its pixels alone, dragged by its header and kept where it was left.
+   Nothing in it may be selected, called out or scrolled by a long press: a
+   thumb rests in it. */
+.swing-pad{position:fixed;left:0;top:0;z-index:58;display:flex;flex-direction:column;background:rgba(6,14,10,.84);box-shadow:0 10px 30px rgba(0,0,0,.45);color:#fff;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;font-family:"Saira Condensed",var(--font-ui,system-ui),sans-serif}
+.swing-pad[hidden]{display:none}
+.swing-pad.waiting .spd-area{opacity:.6}
+.swing-pad.moving{box-shadow:0 0 0 2px #f0c674,0 10px 30px rgba(0,0,0,.45)}
+.spd-head{display:flex;align-items:center;gap:8px;height:34px;padding:0 0 0 10px;background:rgba(6,14,10,.9);cursor:grab;touch-action:none}
+.swing-pad.moving .spd-head{cursor:grabbing}
+.spd-grip{width:14px;height:12px;flex:none;background:radial-gradient(circle,#b9c7bf 1.2px,transparent 1.6px) 0 0/5px 4px;opacity:.8}
+.spd-head b{flex:1;min-width:0;font-size:16px;font-weight:800;font-style:italic;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+.spd-close{flex:none;width:40px;height:34px;padding:0;border:0;border-radius:0;background:none;color:#fff;font-size:16px;cursor:pointer}
+.spd-close:hover{background:rgba(255,255,255,.12)}
+.spd-area{position:relative;cursor:crosshair;touch-action:none;overflow:hidden}
+/* Sized here: the page's own `svg` rule makes every SVG 19 px square (the
+   first pad drew the whole thing in a corner that size). */
+.stroke-pad{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;stroke-width:0;font:600 13px/1 "Saira Condensed",var(--font-ui,system-ui),sans-serif}
+.stroke-pad text{fill:#fff;paint-order:stroke;stroke:rgba(0,0,0,.6);stroke-width:3px}
+.stroke-pad .sp-aim{stroke:#fff;stroke-width:2;stroke-dasharray:6 6;opacity:.75}
+.stroke-pad .sp-tag{font-size:11px;letter-spacing:.08em;text-anchor:middle}
 .stroke-pad .sp-strike{stroke:#f0c674;stroke-width:3}
-.stroke-pad .sp-over{stroke:#ff9f43;stroke-width:6;opacity:.75}
+.stroke-pad .sp-ball{fill:#fff;stroke:rgba(0,0,0,.4);stroke-width:1}
+.stroke-pad .sp-rule{stroke:rgba(255,255,255,.55);stroke-width:2}
+.stroke-pad .sp-over{stroke:#ff9f43;stroke-width:5;opacity:.8}
 .stroke-pad .sp-tick{stroke:#fff;stroke-width:2;opacity:.75}
 .stroke-pad .sp-tick.full{stroke-width:3;opacity:1}
-.stroke-pad .sp-yd{font-size:12px;text-anchor:end}
-.stroke-pad .sp-target{fill:#8fd3ff;stroke:#0b2533;stroke-width:1.5}
-.stroke-pad .sp-fill{stroke:#f0c674;stroke-width:6;stroke-linecap:round;opacity:.85}
+.stroke-pad .sp-yd{font-size:12px;text-anchor:start}
+.stroke-pad .sp-target{fill:#8fd3ff;stroke:#0b2533;stroke-width:1}
+.stroke-pad .sp-stopline{stroke:#8fd3ff;stroke-width:1.5;stroke-dasharray:2 5;opacity:.85}
+.stroke-pad .sp-fill{stroke:#f0c674;stroke-width:6;stroke-linecap:round;opacity:.9}
 .stroke-pad .sp-fill.over{stroke:#ff9f43}
-.stroke-pad .sp-zone{fill:rgba(240,198,116,.18);stroke:rgba(250,215,140,.55);stroke-width:1}
-.stroke-pad .sp-perfect{fill:rgba(110,214,135,.35)}
-.stroke-pad .sp-trail{fill:none;stroke:rgba(255,255,255,.55);stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
-.stroke-pad .sp-thumb{fill:rgba(255,255,255,.18);stroke:#fff;stroke-width:2}
+.stroke-pad .sp-zone{fill:rgba(240,198,116,.16);stroke:rgba(250,215,140,.5);stroke-width:1}
+.stroke-pad .sp-perfect{fill:rgba(110,214,135,.32)}
+.stroke-pad .sp-trail{fill:none;stroke:rgba(255,255,255,.6);stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
+.stroke-pad .sp-thumb{fill:rgba(255,255,255,.14);stroke:#fff;stroke-width:2}
 .stroke-pad .sp-thumb.over{stroke:#ff9f43}
-.stroke-pad .sp-now{font-size:16px;font-weight:800}
-/* The follow-through's heights, the curve lanes and the pace cue on the pad. */
-.stroke-pad .sp-band{stroke:rgba(255,255,255,.4);stroke-width:5;stroke-linecap:butt}
-.stroke-pad .sp-band.lit{stroke:#8fd3ff}
-.stroke-pad .sp-hgt{font-size:11px;letter-spacing:.08em;fill:rgba(255,255,255,.75)}
-.stroke-pad .sp-hgt.lit{fill:#8fd3ff;font-size:13px}
-.stroke-pad .sp-lane{fill:rgba(143,211,255,.12);stroke:rgba(143,211,255,.45);stroke-width:1}
-.stroke-pad .sp-lane.straight{fill:rgba(255,255,255,.08);stroke:rgba(255,255,255,.3)}
-.stroke-pad .sp-lanetag{font-size:11px;letter-spacing:.1em;fill:#cfe9ff}
+/* The shape cells: FADE left, STRAIGHT, DRAW right, by LOW, NORMAL, HIGH. */
+.stroke-pad .sp-cell{fill:rgba(143,211,255,.07);stroke:rgba(143,211,255,.38);stroke-width:1}
+.stroke-pad .sp-cell.straight{fill:rgba(255,255,255,.06);stroke:rgba(255,255,255,.3)}
+.stroke-pad .sp-cell.lit{fill:rgba(143,211,255,.45);stroke:#8fd3ff;stroke-width:2}
+.stroke-pad .sp-throat{fill:rgba(143,211,255,.05);stroke:rgba(143,211,255,.22);stroke-width:1;stroke-dasharray:3 3}
+.stroke-pad .sp-throat.straight{fill:rgba(255,255,255,.04);stroke:rgba(255,255,255,.18)}
+.stroke-pad .sp-col{font-size:10px;letter-spacing:.1em;text-anchor:middle;fill:#cfe9ff}
+.stroke-pad .sp-col.straight{fill:#fff}
+.stroke-pad .sp-row{font-size:10px;letter-spacing:.08em;fill:rgba(255,255,255,.8)}
+.stroke-pad :is(.sp-col,.sp-row).lit{fill:#8fd3ff;font-weight:800}
+/* The last stroke's path, kept until the next one. */
+.stroke-pad .sp-ghost{fill:none;stroke:#f0c674;stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round;opacity:.85}
+.stroke-pad .sp-mark{fill:#f0c674;stroke:rgba(0,0,0,.5);stroke-width:1}
+.stroke-pad .sp-mark.top{fill:#fff}
+.stroke-pad .sp-mark.end{fill:none;stroke:#8fd3ff;stroke-width:2.5}
 .stroke-pad .sp-cue{fill:#f0c674;stroke:#fff;stroke-width:1.5}
-.stroke-pad .sp-cuetag{font-size:11px;letter-spacing:.1em;fill:#f0c674}
+.stroke-pad .sp-cuetag{font-size:10px;letter-spacing:.1em;fill:#f0c674;text-anchor:end}
+/* The Swing button, beside the spin ball: lit while the pad is open. */
+#world .shot-open.on strong{color:#f0c674}
+#world .shot-open.on::before{box-shadow:inset 0 0 0 2px #f0c674}
 /* WHAT YOU HIT: the row in the swing box after a stroke (main.js
    drawStrokeReport). Small chips that wrap, so a phone's narrow box takes it. */
 .stroke-report{display:flex;flex-wrap:wrap;align-items:stretch;gap:4px;margin:0 0 6px;font:600 12px/1.15 "Saira Condensed",var(--font-ui,system-ui),sans-serif;color:#fff}
@@ -1310,7 +1323,7 @@ html,body{overscroll-behavior:none}
 .srp-ends{display:flex;justify-content:space-between;font-size:8.5px;letter-spacing:.12em}
 /* THE SPIN BALL, where the Curve, Height and Spin boxes were, and the big copy
    above the swing box while the dot is dragged. */
-#world .spin-ball{align-items:center}
+#world .spin-ball{align-items:center;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 #world .spin-ball .sb-face{position:relative;display:block;flex:none;width:28px;height:28px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff 0,#eef1f4 45%,#c9ced6 100%);box-shadow:inset 0 0 0 1px rgba(0,0,0,.25);overflow:visible;padding:0!important;max-width:none!important}
 #world .spin-ball .sb-dot{position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;background:#e0342f;box-shadow:0 0 0 1.5px #fff}
 #world .shape-control.spun .sb-face{box-shadow:inset 0 0 0 1px rgba(0,0,0,.25),0 0 0 2px #f0c674}

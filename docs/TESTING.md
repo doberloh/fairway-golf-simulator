@@ -230,12 +230,16 @@ the courses several suites share, and builds many at once on worker threads
   speed table, the flyer -- grass takes a lofted shot's spin and almost none of a
   long iron's -- from meter and monitor shots alike; nothing in it holds a ball to
   stopping or staying), `swing-stroke` (the pull-and-push swing: scripted thumb
-  strokes for pull, line, the curve lanes on every difficulty and their misses,
-  tempo and overswing's narrower window, the tempo gauge, holds and slides at
-  the top, lifting before the push, the follow-through's heights and when it
-  ends, the aim line's lean, the same stroke sampled 30 and 120 times a second,
-  a perfect stroke launching as a perfect clean swing, and the spin dot's
-  backspin, side spin and allowance),
+  strokes for pull (from the pad's fixed strike line, a press below it with no
+  backswing too), line, the curve read at the finish -- the Draw column on the
+  right, a draw launching right and turning back, the columns on every
+  difficulty and their misses, the cell a finish is in, a finish that slides
+  back down -- tempo and overswing's narrower window, the backswing timed but
+  not judged, the tempo gauge, holds and slides at the top, lifting before the
+  push, the follow-through's heights and when it ends, the aim line's lean,
+  the same stroke sampled 30 and 120 times a second, a perfect stroke
+  launching as a perfect clean swing, the pad fitting six screen sizes, and
+  the spin dot's backspin, side spin and allowance),
   `dispersion`, `plays-like`, `aim-preview`, `range` (every green, the aim
   arc, slopes, cups, chip and putt spots), `lab`.
 - **Making a course** -- `world`, `landscape` (with `landscape-water` and
@@ -448,7 +452,7 @@ putt now waits 30 s for the card, and the journey logs how long it took.
 | `endless-round` | one golfer: clubs, aim, cameras, the Swing Meter, a tee shot, a drop, putting out, the scorecard, the next hole. Logs the course and seed, and the hole's par and its hole-out banner ("BIRDIE! 3 strokes") on every run |
 | `surprise-round` | a nine-hole course, every in-round tool opens |
 | `mixed-group` | two golfers, one on the monitor and one on the Swing Meter |
-| `pull-push` (branch pull-push-swing, 15-16 November 2026) | the pull-and-push swing with the mouse on the course: a click still aims and is no swing, a sideways drag is no swing, a drag down starts the pad with its aim line and nothing of the round's over its strike line, a lift before the push is no stroke (and says so), a pull and push with a long follow-through strikes a High shot and the report shows pull, line, curve, height, spin and tempo, Escape cancels mid-pull; a picture of the pad mid-pull (bench/shots/smoke/pull-push-pad.png). `endless-round` drags the spin ball's dot and taps it back to the middle. The phone journeys leave phone-portrait-pad.png / -report.png and the landscape pair: the pad mid-pull and the report in flight, to look at. With the bar gone, EVERY journey swings this way: `t.shot()` and `t.putt()` pull and push with the mouse (`strokeOnCourse`, on a point of the course clear of the round's cards; a putt pulls to the blue stop), the phone journeys by touch. The controller's stick is not driven: the harness has no pad |
+| `pull-push` (branch pull-push-swing, 15-16 November 2026) | the pull-and-push swing on the swing pad with the mouse: a click on the course still aims and a drag down on it is no swing, the Swing button opens the pad with its aim line, shot cells and blue stop line and nothing of the round's over its strike line, a lift before the push is no stroke (and says so), a lift lost to the window's blur ends the stroke, a pull and push finished out to the right and high strikes a High Draw, the report shows pull, line, curve, height, spin, tempo and the backswing, the path and its lit cell stay on the pad, the pad follows its top bar and comes back where it was left after closing, Escape cancels mid-pull; pictures of the pad mid-pull and of the path after (bench/shots/smoke/pull-push-pad.png, pull-push-path.png). `endless-round` drags the spin ball's dot and taps it back to the middle, and checks the pad keeps the path after a shot. The phone journeys leave phone-portrait-pad.png / -report.png and the landscape pair: the pad mid-pull and the report in flight, to look at. With the bar gone, EVERY journey swings this way: `t.shot()` and `t.putt()` open the pad and pull and push in it with the mouse (`strokeOnPad`, reading the strike line from the pad's `data-` values; a putt pulls to the blue stop), the phone journeys by touch. The controller's stick is not driven: the harness has no pad |
 | `skins` | a two-golfer skins round starts; chips and the Skins row |
 | `relief` | water and out of bounds, through a reload, both rules |
 | `profile`, `bag`, `look`, `level-up` | players, bags, looks, levels |

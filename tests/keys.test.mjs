@@ -23,12 +23,13 @@ test('every tool has a key, and the keys it drives say the same', () => {
 });
 
 test('the swing strip says how to swing, by input', () => {
- // The pull and push (pull-push-swing): a drag, never Space.
- assert.match(swingStrip().flat().join(' '), /DRAG/);
+ // The pull and push (pull-push-swing): the Swing button opens the pad, and a
+ // drag in it swings -- never Space.
+ assert.match(swingStrip().flat().join(' '), /SWING.*DRAG/);
  assert.ok(!swingStrip().some(([k]) => k === 'SPACE'));
  assert.equal(swingStrip({putting: true})[2][1], 'LENGTH');
- assert.match(swingStrip({touch: true})[0].join(' '), /DRAG DOWN/);
- assert.ok(!swingStrip({monitor: true}).some(([k]) => k === 'DRAG'));
+ assert.match(swingStrip({touch: true})[0].join(' '), /SWING.*PULL DOWN/);
+ assert.ok(!swingStrip({monitor: true}).some(([k]) => k === 'SWING'));
  assert.ok(!ROUND_KEYS.some(k => k.keys.includes('Space')));
  assert.equal(COACH_STEPS.length, 3);
 });

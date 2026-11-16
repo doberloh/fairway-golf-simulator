@@ -47,15 +47,16 @@ export const toolsFor = ({range = false} = {}) => TOOLS.filter(t => !t.range || 
 export const helpKeys = () => ROUND_KEYS.map(k => [k.keys.join(' '), k.words]);
 
 // THE STRIP UNDER THE SWING'S WORDS, so a first-timer can see how to swing:
-// the pull and push (pull-push-swing, 16 November 2026: the three-tap bar and
-// Space are gone). A launch monitor swings for you; a putt has no shape.
+// the pull and push on the swing pad (pull-push-swing, 16 November 2026: the
+// three-tap bar and Space are gone, and the Swing button opens the pad). A
+// launch monitor swings for you; a putt has no shape.
 // `[[key, words]]`, or a single line for touch.
 export function swingStrip({monitor = false, touch = false, putting = false} = {}) {
  if (monitor) return [['←→', 'AIM'], ['?', 'KEYS']];
- if (touch) return [['DRAG DOWN', 'ON THE COURSE, PUSH UP TO SWING']];
- return [['DRAG', 'DOWN, PUSH UP: SWING'], ['← →', 'AIM'], ['↑ ↓', putting ? 'LENGTH' : 'DISTANCE'], ['?', 'ALL KEYS']];
+ if (touch) return [['SWING', 'OPENS THE PAD: PULL DOWN, PUSH UP']];
+ return [['SWING', 'OPENS THE PAD: DRAG DOWN, PUSH UP'], ['← →', 'AIM'], ['↑ ↓', putting ? 'LENGTH' : 'DISTANCE'], ['?', 'ALL KEYS']];
 }
 
 // The first-swing coach: shown once per device, before a golfer's first swing.
 // Curve and height come from the push since 16 November 2026 (the boxes went).
-export const COACH_STEPS = ['PRESS on the course and DRAG DOWN for the distance', 'PUSH UP along the aim line; bend the finish left to draw, right to fade', 'FOLLOW THROUGH: stop short for low, carry on for high'];
+export const COACH_STEPS = ['Press SWING to open the pad; PULL DOWN below the gold line for the distance', 'PUSH UP through the line along the dashed aim line', 'FINISH in a cell: out right to draw, left to fade; short for low, far for high'];

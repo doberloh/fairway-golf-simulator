@@ -207,27 +207,34 @@ here is a claim of support until it is done.
 - [ ] **The pull-and-push swing, on the owner's iPhone** (branch
   `pull-push-swing`, experimental, 15 November 2026; RESEARCH *The
   pull-and-push swing*). Built, covered by Node tests and swung by the smoke
-  harness with a mouse and with synthetic touches; **no person has swung it
-  yet**, on any screen. The three-tap bar and Space are gone on the branch: a
-  drag down on the course swings, and a controller's right stick (built, never
-  tried with a real pad -- check it on the PC). Since 16 November curve comes
-  from the push's finish (lanes), height from the follow-through, spin from
-  the spin ball, a report of what was hit after each stroke, and a pace cue at
-  the top: all PLACED numbers to feel out on the phone -- lane widths (a
-  thumb's own arc may read as a bend), the follow-through marks, the wait
-  before the ball leaves (up to 0.6 s), the spin ball's drag on a small
-  screen, whether the report is too much to read. Open: what the Swing Meter
-  skins (rewards) colour now that the bar is gone; the group panel's "Plays
-  with: Swing Meter" and the monitor strip still say Swing Meter. To check:
-  that a downward drag never fights the camera in the green views, that a tap
-  still aims everywhere it did, that the pad reads a real thumb
-  (lastStroke in main.js holds the last reading, with its sample count); the
-  feel of every PLACED number -- the full pull a third of the screen, the
-  line's allowance (8 degrees each side on Normal), the ideal push of a
-  quarter of a second, Hard's curve layer against a thumb's natural arc, the
-  aim line's lean on side slopes; that the iPhone sends moves often enough at
-  30 frames a second (the frame-rate test plays 30 samples a second, not
-  fewer); and the pad on a PC with a mouse.
+  harness with a mouse and with synthetic touches. The owner swung the first
+  version on 16 November and sent back eight points; the second version
+  answers them and **has not been swung by a person**. The three-tap bar and
+  Space are gone on the branch: the **Swing** button opens a swing pad that
+  can be dragged anywhere and keeps its place, and a controller's right stick
+  swings in it (built, never tried with a real pad -- check it on the PC).
+  Curve and height come from where the follow-through finishes (nine fixed
+  shot cells, the **Draw column now on the right** -- the owner found draw and
+  fade reversed), spin from the spin ball, a report of what was hit after each
+  stroke, the stroke's path kept on the pad until the next, and a pace cue
+  that now plays the backswing too. To check on the phone: **that the pad no
+  longer sticks on the screen after a pull and a lift, nor the big spin ball**
+  (the cause was not reproduced here; every way a lift can go missing now
+  ends it -- RESEARCH *A lift the page never hears about*); that nothing the
+  thumb needs is under it; whether a draw and a fade now go the way they
+  look; the pad's default place and size on the iPhone held both ways, and
+  whether it covers anything needed; the feel of every PLACED number -- the
+  full pull (about a fifth of the screen), the shape point 0.3 of a pull
+  below the line, column widths (a thumb's own arc may read as a bend), the
+  row marks, the wait before the ball leaves (up to 0.6 s), the spin ball's
+  drag on a small screen, whether the report is too much to read; that the
+  iPhone sends moves often enough at 30 frames a second; and the pad on a PC
+  with a mouse. **For the owner to decide**: whether the backswing's 3 : 1
+  ratio should be judged (it is shown, not judged); a left-handed pad (the
+  ruler is on the left). Open: what the Swing Meter skins (rewards) colour
+  now that the bar is gone; the group panel's "Plays with: Swing Meter" and
+  the monitor strip still say Swing Meter. (`lab.state().lastStroke` holds
+  the last reading, with its sample count.)
 
 - [ ] **Play the current build by hand** (0.9.17, 15 November 2026). What has
   been built and seen only in captures, measurements or smoke runs, and still

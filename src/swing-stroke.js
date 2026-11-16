@@ -4,40 +4,55 @@
 // line, because on the iPhone (held to 30 frames a second) the Swing Meter's
 // marker moved in jumps; then for the bar to go entirely, and for the shot's
 // curve and height to come from the swing itself. Nothing moves unless the
-// thumb moves it:
+// thumb moves it. It is played on the SWING PAD (main.js), which the Shot
+// button opens, and whose STRIKE LINE (`y0`) and AIM LINE (`x0`) are fixed:
 //
-//   1. Put the thumb down. Where it lands is the STRIKE LINE.
-//   2. Pull it down. How far sets the distance, on the old bar's own scale: a
-//      pull of `fullPx` is the club's full carry, deeper is overswing. Hold as
-//      long as you like, slide to adjust. Letting go here is no stroke.
+//   1. Put the thumb down in the pad, below the strike line.
+//   2. Pull it down. How far below the strike line sets the distance, on the
+//      old bar's own scale: `fullPx` below it is the club's full carry, deeper
+//      is overswing. Hold as long as you like, slide to adjust. Letting go here
+//      is no stroke.
 //   3. Push it back up across the strike line. That is the strike -- its
-//      line, tempo and curve are read there.
-//   4. Follow through. How far past the line the push carries on sets the
-//      HEIGHT: stopped short is Low (a punch), on to about the aim arrow is
-//      Normal, well past it is High. The ball leaves once the follow-through
-//      ends: the thumb stops or lifts, or `STROKE.throughMax` ms pass.
+//      line and tempo are read there.
+//   4. Follow through. Where the thumb FINISHES picks the shape: how far past
+//      the line sets the HEIGHT, and which way it went from the SHAPE POINT
+//      (`STROKE.shapeFrom` of a full pull below the line) sets the CURVE. The
+//      ball leaves once the follow-through ends: the thumb stops or lifts, or
+//      `STROKE.throughMax` ms pass.
 //
 // WHAT IS JUDGED, by difficulty:
-//   - LINE (every difficulty): the START of the push against the AIM LINE drawn
-//     under the thumb. Right of it starts the ball right, left starts it left.
-//     On a side slope the aim line leans (`leanFor`): the ball follows the
-//     ground, so the straight push leans uphill.
+//   - LINE (every difficulty): the START of the push, from the top to the
+//     shape point, against the AIM LINE. Right of it starts the ball right,
+//     left starts it left. On a side slope the aim line leans (`leanFor`): the
+//     ball follows the ground, so the straight push leans uphill.
 //   - CURVE (every difficulty; the owner, 16 November 2026, in place of the
-//     Curve box): the bend at the END of the push picks the shape. Kept
-//     straight, it is Straight; bent into the draw lane (a hook at the finish,
-//     left) it is a clean Draw, into the fade lane a clean Fade -- each started
-//     the other way so it lands on the aim, as the Curve box's did. A bend
-//     between the lanes, or past one, is a miss toward the nearest shape.
-//     Difficulty sets how wide the lanes are.
+//     Curve box; re-done the same day: "It needs to start some point before
+//     the follow through but also be a part of the follow through. Somehow we
+//     need to combine the shot height and the draw fade"): the way the thumb
+//     goes from the shape point to where it finishes, against the push's own
+//     start. Kept straight, it is Straight; into the lane on the RIGHT it is a
+//     clean Draw, into the lane on the LEFT a clean Fade. The sides are a
+//     golfer's: a draw is swung out to the right (an in-to-out path) and starts
+//     right before it turns back, so the finish goes the way the ball starts
+//     (until the owner's second try the Draw lane was on the left, and the ball
+//     set off the opposite way from the thumb: "I think draw and fade are
+//     producing reversed shots"). Each shape is started the other way from its
+//     bend so it lands on the aim, as the Curve box's did. A finish between
+//     the lanes, or past one, is a miss toward the nearest shape. Difficulty
+//     sets how wide the lanes are.
 //   - TEMPO (Normal, Hard): the push's pace. Rushed goes left, low and hot;
 //     lazy comes up short and drifts right. Overswing narrows its window.
-//   - HEIGHT (every difficulty; in place of the Height box): the follow-through,
-//     a choice not a judgement -- there is no miss in it.
+//   - HEIGHT (every difficulty; in place of the Height box): how far the
+//     follow-through carries, a choice not a judgement -- there is no miss in it.
 //
 // TEMPO IS THE PUSH'S OWN PACE, not the 3:1 back-to-through ratio first
-// proposed: the thumb may hold and adjust at the top for as long as it likes,
-// which leaves no backswing time to compare against. The ideal push takes
-// `STROKE.tempo` ms for a full pull and a little less for a short one.
+// proposed: the thumb may hold and adjust at the top for as long as it likes.
+// The ideal push takes `STROKE.tempo` ms for a full pull and a little less for
+// a short one. The BACKSWING is timed too (`back`, from the first pull to first
+// reaching the top) and reported beside the push against `STROKE.backRatio`
+// times the ideal push, and the pace cue plays both -- but only the push is
+// judged (the owner asked, 16 November 2026, "Shouldn't pull back also be
+// included?"; whether to judge the ratio is theirs to decide).
 //
 // FRAME RATE NEVER DECIDES: every judgement is made from the pointer's own
 // samples (`event.timeStamp`, with the coalesced moves where the browser has
@@ -80,6 +95,12 @@ export const STROKE = {
  laneAt: 22, laneMissAxis: 3,
  // The ideal push for a full pull, ms; a pull of nothing would be `short` of it.
  tempo: 250, tempoShort: .6,
+ // The backswing the pace cue plays, as a multiple of the ideal push: the 3:1
+ // of a golf swing's back and through. Shown, not judged.
+ backRatio: 3,
+ // THE SHAPE POINT: this share of a full pull below the strike line (or half
+ // the pull, if that is less). The curve is read from here to the finish.
+ shapeFrom: .3,
  // The same for a controller's right stick, which travels a short way fast.
  tempoPad: 150,
  // Side slope to aim-line lean: degrees of lean per degree of ground, and the most.
@@ -87,8 +108,12 @@ export const STROKE = {
  // THE FOLLOW-THROUGH, in shares of a full pull past the strike line: under
  // `lowBelow` is Low, from `highFrom` High, Normal between. It ends when the
  // thumb has not moved for `settle` ms, at `throughMax` ms after the strike,
- // at `throughCap` (nothing more to learn), or when the thumb lifts.
- lowBelow: .2, highFrom: .55, throughCap: .9, settle: 90, throughMax: 600,
+ // at `throughCap` (nothing more to learn), or when the thumb lifts. (Until
+ // the pad, .2, .55 and .9: the pad has to fit a phone held sideways.)
+ lowBelow: .2, highFrom: .5, throughCap: .7, settle: 90, throughMax: 600,
+ // A shape-point-to-finish stretch shorter than this (px) is too short to
+ // read a bend from the push's own start; the aim line is the reference.
+ shortStart: 24,
 };
 
 // What each difficulty judges and allows. `straight` and `lane` are half-widths
@@ -102,9 +127,22 @@ export const STROKE_LAYERS = {
 };
 export const strokeLayers = id => STROKE_LAYERS[id] || STROKE_LAYERS.normal;
 
-// A full pull in CSS pixels for a screen this tall: about a third of it, so
-// the distance a thumb learns is the same on every screen it plays on.
-export const pullLength = height => clamp(Math.round(height * .3), 100, 260);
+// THE PAD'S SIZE for a screen, in CSS px: `height` of the drawing area (40%
+// of the screen's height, within bounds; half was the whole width of an
+// upright phone and covered its swing box's report), `fullPx` the full pull that fits in it
+// with the follow-through above the strike line and overswing below, and
+// `width`. The strike line sits `y0` from the area's top, the aim line `x0`
+// from its left. The distance a thumb learns is the same on one screen
+// whatever the club. All PLACED.
+export const PAD = {share: .4, min: 220, max: 420, top: 24, bottom: 12, widthPer: 1.5, minWidth: 200, gutter: 24};
+export function padSize(innerWidth, innerHeight) {
+ const height = Math.round(clamp(innerHeight * PAD.share, PAD.min, PAD.max));
+ const fullPx = Math.round((height - PAD.top - PAD.bottom) / (STROKE.throughCap + 1 + OVERSWING));
+ const width = Math.round(Math.max(Math.min(PAD.minWidth, innerWidth - PAD.gutter), Math.min(innerWidth - PAD.gutter, fullPx * PAD.widthPer)));
+ return {width, height, fullPx, x0: Math.round(width / 2), y0: Math.round(PAD.top + fullPx * STROKE.throughCap)};
+}
+// A full pull for a screen this tall (the pad's), kept for the harness.
+export const pullLength = height => padSize(1e4, height).fullPx;
 
 // THE AIM LINE'S LEAN on a side slope, in degrees, positive leaning right.
 // `fallRight` is how many degrees the ground falls away to the right of the
@@ -121,10 +159,15 @@ export function leanFor(fallRight, difficulty, {putt = false} = {}) {
 export const idealPush = (share, full = STROKE.tempo) => full * (STROKE.tempoShort + (1 - STROKE.tempoShort) * Math.min(1, share));
 
 // A STROKE IN PROGRESS. Times in ms on the input's clock, positions in CSS px.
-// `tempo` is the ideal full push for this input (STROKE.tempoPad for a stick).
-export function startStroke(t, x, y, {fullPx, difficulty, putt = false, lean = 0, tempo = STROKE.tempo}) {
- return {t0: t, x0: x, y0: y, fullPx, difficulty, putt, lean, tempo, pts: [{t, x, y}], deep: 0, done: false, result: null, follow: 0, movedAt: t, crossT: null};
+// The thumb lands at (x, y); the strike line is `y0` and the aim line `x0`
+// (the pad's; by default where the thumb landed). `tempo` is the ideal full
+// push for this input (STROKE.tempoPad for a stick).
+export function startStroke(t, x, y, {fullPx, difficulty, putt = false, lean = 0, tempo = STROKE.tempo, x0 = x, y0 = y}) {
+ return {t0: t, x0, y0, fullPx, difficulty, putt, lean, tempo, pts: [{t, x, y}], deep: Math.max(0, y - y0), done: false, result: null, follow: 0, movedAt: t, crossT: null, pullAt: null};
 }
+// The shape point's height for a pull of `pullPx`: `shapeFrom` of a full pull
+// below the strike line, or half the pull if that is less.
+export const shapeY = (st, pullPx) => st.y0 + Math.min(STROKE.shapeFrom * st.fullPx, Math.max(0, pullPx) / 2);
 // How far the thumb is pulled now, as a share of a full swing (overswing past 1).
 export const pullShare = (st, y) => clamp((y - st.y0) / st.fullPx, 0, 1 + OVERSWING);
 // Is the thumb pulled far enough to count as a swing?
@@ -148,15 +191,17 @@ export function strokeMove(st, t, x, y) {
  if (Math.hypot(x - last.x, y - last.y) > STROKE.stillPx / 2) st.movedAt = tt;
  if (st.result) {
   st.follow = Math.max(st.follow, st.y0 - y);
-  if (followShare(st) >= STROKE.throughCap) { st.done = true; return 'done'; }
+  if (followShare(st) >= STROKE.throughCap) { finish(st); return 'done'; }
   return 'through';
  }
+ // The backswing starts with the first real move down.
+ if (st.pullAt == null && y - st.pts[0].y >= STROKE.start) st.pullAt = last.t;
  if (y - st.y0 > st.deep) st.deep = y - st.y0;
  if (y <= st.y0 && last.y > st.y0 && pulled(st)) {
   const r = readStroke(st);
   if (r.share >= STROKE.minShare) { st.result = r; st.crossT = r.strike.t; st.follow = st.y0 - y; st.movedAt = tt; return 'crossed'; }
   // Crossed back from a pull too small to be a swing: start again from here.
-  st.deep = 0; st.pts = [st.pts.at(-1)];
+  st.deep = 0; st.pullAt = null; st.pts = [st.pts.at(-1)];
  }
  return 'pull';
 }
@@ -164,14 +209,35 @@ export function strokeMove(st, t, x, y) {
 // has passed since the strike. (A lift ends it too: `endStroke`.)
 export function throughDone(st, t) {
  if (!st.result) return false;
- if (!st.done && (t - st.movedAt >= STROKE.settle || t - st.crossT >= STROKE.throughMax)) st.done = true;
+ if (!st.done && (t - st.movedAt >= STROKE.settle || t - st.crossT >= STROKE.throughMax)) finish(st);
  return st.done;
 }
 // The thumb lifted: a stroke that had struck is finished; one that had not is
 // no stroke (false).
 export function endStroke(st) {
- if (st.result) st.done = true;
+ if (st.result && !st.done) finish(st);
  return st.done;
+}
+// THE FINISH: where the follow-through ended, and the curve read to it.
+function finish(st) {
+ st.done = true;
+ Object.assign(st.result, shapeNow(st));
+}
+// THE SHAPE SO FAR (also drawn live while following through): the finish is
+// the last sample within a few px of the highest the thumb reached (so a
+// thumb sliding back down as it stops does not count, but a hook sideways at
+// the top does); the bend is the way from the shape point to it, against the
+// push's own start (a pushed or pulled line carried straight on is no curve),
+// or against the aim line when that stretch is too short to read.
+export function shapeNow(st) {
+ const r = st.result, p = st.pts;
+ if (!r) return null;
+ let top = p.length - 1;
+ for (let i = p.length - 1; i >= 0 && p[i].t >= r.strike.t; i--) if (p[i].y < p[top].y - STROKE.stillPx * 2) top = i;
+ const end = p[top].y <= r.strike.y ? p[top] : r.strike;
+ const along = Math.hypot(end.x - r.apex.x, end.y - r.apex.y);
+ const way = angleUp(r.apex, end), ref = along >= STROKE.shortStart ? r.start : st.lean;
+ return {end, curve: way - ref, follow: followShare(st)};
 }
 
 // Interpolate along the sample path where it first reaches height `y` at or
@@ -188,8 +254,9 @@ function upAt(p, from, y) {
 const angleUp = (a, b) => Math.atan2(b.x - a.x, Math.max(1e-6, a.y - b.y)) * 180 / Math.PI;
 
 // WHAT THE THUMB DID, read from the samples once it crossed the line: the
-// pull (the deepest point of the final push), the push's line, its bend, and
-// its pace against the ideal.
+// pull (the deepest point of the final push), the push's line (from the top to
+// the shape point, `apex`), its pace against the ideal, and the backswing's
+// time. The curve waits for the finish (`shapeNow`).
 export function readStroke(st) {
  const p = st.pts, n = p.length - 1;
  // The final push: walk back from the crossing to where it began -- where the
@@ -214,35 +281,52 @@ export function readStroke(st) {
  while (k > i && p[k].y < edge) k--;
  const from = upAt(p, k + 1, edge) || {t: p[k].t, x: p[k].x, y: p[k].y};
  const strike = upAt(p, k + 1, st.y0) || p[n];
- const mid = upAt(p, k + 1, (edge + st.y0) / 2) || strike;
- const line = angleUp(from, strike), start = angleUp(from, mid), finish = angleUp(mid, strike);
+ const ay = Math.min(shapeY(st, pullPx), edge - 1);
+ const apex = upAt(p, k + 1, ay) || strike;
+ const line = angleUp(from, strike), start = angleUp(from, apex);
  // The pace: the time over the measured leg, against the ideal for this pull
  // scaled to the same leg.
  const ideal = idealPush(share, st.tempo ?? STROKE.tempo);
  const leg = Math.max(1, edge - st.y0) / Math.max(1, pullPx);
  const time = Math.max(1, strike.t - from.t);
- return {share, pullPx, line, start, curve: finish - start, time, ideal: ideal * leg, idealFull: ideal, tempo: time / (ideal * leg), from, strike, top, samples: p.length};
+ // The backswing: from the first pull to the first time the thumb was in the
+ // top's band. Shown beside the push, not judged.
+ let reached = from.t;
+ for (let j = 0; j <= n; j++) if (p[j].y >= edge) { reached = p[j].t; break; }
+ const back = Math.max(0, reached - (st.pullAt ?? st.t0));
+ return {share, pullPx, line, start, curve: 0, time, ideal: ideal * leg, idealFull: ideal, tempo: time / (ideal * leg), back, idealBack: ideal * STROKE.backRatio,
+  from, strike, apex, top, samples: p.length};
 }
 
 // How far outside the perfect band, in zone widths, capped at 4 -- the meter's
 // own measure, so a miss here costs what the same miss cost on the bar.
 const missOf = (a, perfect, zone) => a <= perfect ? 0 : Math.min(4, (a - perfect) / Math.max(1e-6, zone - perfect));
 
-// THE SHAPE A BEND PICKS. `bend` is the push's finish against its start,
-// degrees, negative left (a hook: a draw). Inside the straight band: Straight.
-// Inside a lane: a clean Draw or Fade. Anywhere else: the nearest shape, with
-// `miss` lane widths of error (to 4) and `extra` the side the error bends
-// (+1 right, -1 left): short of a lane bends back toward straight, past it
-// bends further.
+// THE SHAPE A BEND PICKS. `bend` is the finish's way against the push's start,
+// degrees, positive RIGHT: the Draw lane is on the right (swung out to the
+// right, the ball starts right and turns left), the Fade lane on the left.
+// Inside the straight band: Straight. Inside a lane: a clean Draw or Fade.
+// Anywhere else: the nearest shape, with `miss` lane widths of error (to 4)
+// and `extra` the way the error curves the BALL (+1 right, -1 left, as the
+// spin axis does): short of a lane curves it less than the shape, past it
+// more, and a straight finish bent toward a lane curves it a little that way.
 export function curveOf(bend, difficulty) {
- const L = strokeLayers(difficulty), a = Math.abs(bend), side = bend < 0 ? -1 : 1;
- const lo = STROKE.laneAt - L.lane, hi = STROKE.laneAt + L.lane, laned = side < 0 ? 'draw' : 'fade';
+ const L = strokeLayers(difficulty), a = Math.abs(bend);
+ const lo = STROKE.laneAt - L.lane, hi = STROKE.laneAt + L.lane, laned = bend > 0 ? 'draw' : 'fade', turn = laned === 'draw' ? -1 : 1;
  if (a <= L.straight) return {shape: 'straight', miss: 0, extra: 0};
  if (a >= lo && a <= hi) return {shape: laned, miss: 0, extra: 0};
- if (a > hi) return {shape: laned, miss: Math.min(4, (a - hi) / L.lane), extra: side};
+ if (a > hi) return {shape: laned, miss: Math.min(4, (a - hi) / L.lane), extra: turn};
  const toStraight = a - L.straight, toLane = lo - a;
- return toStraight <= toLane ? {shape: 'straight', miss: Math.min(4, toStraight / L.lane), extra: side}
-  : {shape: laned, miss: Math.min(4, toLane / L.lane), extra: -side};
+ return toStraight <= toLane ? {shape: 'straight', miss: Math.min(4, toStraight / L.lane), extra: turn}
+  : {shape: laned, miss: Math.min(4, toLane / L.lane), extra: -turn};
+}
+// Which of the pad's cells a finish is in, for drawing: the column (fade,
+// straight, draw, or a gap between them) and the row (the height).
+export function cellOf(bend, follow, difficulty) {
+ const L = strokeLayers(difficulty), a = Math.abs(bend), lo = STROKE.laneAt - L.lane, hi = STROKE.laneAt + L.lane;
+ const column = a <= L.straight ? 'straight' : a >= lo && a <= hi ? (bend > 0 ? 'draw' : 'fade') : null;
+ const row = follow < STROKE.lowBelow ? 'low' : follow >= STROKE.highFrom ? 'high' : 'normal';
+ return {column, row};
 }
 
 // THE STRIKE. `zones` is the meter's strikeZone for this swing (in lengths of a
