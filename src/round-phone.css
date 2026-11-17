@@ -270,7 +270,12 @@
 @container app (max-width:560px) or (max-height:500px){
  .main-menu:not(.menu-behind){background:linear-gradient(180deg,rgba(4,8,12,.6),rgba(4,8,12,.82))}
  .main-menu .menu-brand{font-family:"Saira Condensed",var(--font-ui),sans-serif;font-weight:800;font-style:italic;font-synthesis:style}
- .main-menu .menu-modes{display:grid!important;grid-template-columns:1fr;gap:6px;width:100%;max-width:420px}
+ /* Columns are minmax(0,1fr), never 1fr: a bare 1fr is as wide as its
+    longest line, and the Challenges row's nowrap note (cut with "..." but
+    measured whole) spread the two sideways columns to 545 px on the owner's
+    440 px iPhone whenever the screen was under 500 tall -- the keyboard up,
+    say -- and the menu scrolled sideways (17 November 2026). */
+ .main-menu .menu-modes{display:grid!important;grid-template-columns:minmax(0,1fr);gap:6px;width:100%;max-width:420px}
  .main-menu .menu-tile{position:relative;isolation:isolate;display:flex!important;flex-direction:row;align-items:center;justify-content:flex-start;gap:12px;width:100%!important;max-width:none;height:48px;min-height:44px;padding:0 22px!important;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;backdrop-filter:none!important;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style;transform:none}
  /* A hidden row stays hidden: the !important above had brought back the old Endless and Course of the week rows, and Continue with no round, on every phone (audit 3). */
  .main-menu .menu-tile[hidden]{display:none!important}
@@ -289,7 +294,7 @@
  #world .xp-gain{left:16px!important;right:auto!important;top:130px!important;width:300px!important;transform:none!important;zoom:.78}
  /* ... and the folded shot panel it would cover steps out while it is up. */
  #world:has(.xp-gain:not([hidden])) .shot-controls>.shot-panel{visibility:hidden}
- .main-menu .menu-modes{grid-template-columns:1fr 1fr;max-width:640px}
+ .main-menu .menu-modes{grid-template-columns:repeat(2,minmax(0,1fr));max-width:640px}
  .main-menu .menu-tile{height:44px}
 }
 
