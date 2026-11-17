@@ -754,7 +754,7 @@ async function flightScreenOnce(t, phone) {
    // what was hit -- the chips and the tempo -- where carry, total and apex
    // were. (On a phone the swing pad has the foot for its first second.)
    meterMode: document.getElementById('world').classList.contains('meter-mode'),
-   meterNumbers: !gone('#strokeReport') && /PULL/.test(document.getElementById('strokeReport')?.textContent || '') && /TEMPO/.test(document.getElementById('strokeTempo')?.textContent || '') && !/CARRY/.test(document.getElementById('smResult')?.textContent || ''),
+   meterNumbers: !gone('#strokeReport') && /PULL[^]*CARRY[^]*TOTAL/.test(document.getElementById('strokeReport')?.textContent || '') && /TEMPO/.test(document.getElementById('strokeTempo')?.textContent || '') && !/CARRY/.test(document.getElementById('smResult')?.textContent || ''),
    tiles: !gone('#shotTiles .shot-tile'), club: gone('#club'), pad: gone('#aimPad'),
    // The round screen's wind is in the conditions under the hole.
    numbers: gone('#shotPanel'), map: gone('#map'), wind: gone('#rhSubs [data-sub=wind]'),
@@ -787,7 +787,7 @@ async function flightScreenOnce(t, phone) {
  if (state.wind) bad.push('the wind went');
  if (!state.roundScreen && !state.phone && !/BALL (IN FLIGHT|ROLLING)/.test(state.head)) bad.push(`the shot panel's header reads "${state.head}"`);
  if (state.live) bad.push('an old live readout is back');
- if (state.meterMode && !state.meterNumbers) bad.push('the Swing Meter is not showing what was hit (and only that) in flight');
+ if (state.meterMode && !state.meterNumbers) bad.push('the swing box is not showing what was hit, with carry and total, in flight (and nothing beside its buttons)');
  if (state.meterMode && state.tiles) bad.push('the number tiles show on the Swing Meter');
  if (bad.length) throw new Error(bad.join('; '));
  // Skip is in the meter's number row whenever the Swing Meter is in use, on a
@@ -982,6 +982,10 @@ const JOURNEYS = [
     if (await t.page.evaluate(() => document.getElementById('swingPad').classList.contains('stroking'))) throw new Error('the swing pad is still mid-stroke after the ball stopped');
     if (!await t.page.evaluate(() => !!document.querySelector('#strokePad .sp-ghost'))) throw new Error('the swing pad did not keep the stroke\'s path');
     if (!/PULL/.test(await t.page.textContent('#strokeReport')) || !/TEMPO/.test(await t.page.textContent('#strokeTempo'))) throw new Error('the swing box lost what was hit');
+    // Carry and total came back (the owner, 17 November 2026), written once
+    // the ball has landed and stopped.
+    const landed = await t.page.textContent('#strokeReport');
+    if (!/CARRY\s*\d/.test(landed) || !/TOTAL\s*\d/.test(landed)) throw new Error(`the swing box has no carry and total once the ball stopped: "${landed}"`);
    });
    await t.step('drop beside the pin', async () => {
     // The sim drop lives in the tools tray; "Drop at the green" puts the ball
@@ -1688,7 +1692,7 @@ const JOURNEYS = [
     // The chips over the Spin and Swing buttons, and the tempo in their row.
     const report = await t.page.evaluate(() => { const r = document.getElementById('strokeReport'), tp = document.getElementById('strokeTempo'); return r && !r.hidden && r.offsetParent && tp?.offsetParent && !tp.classList.contains('empty') ? r.textContent + ' ' + tp.textContent : null; });
     if (!report) throw new Error('no report of what was hit');
-    for (const want of ['PULL', 'LINE', 'START', 'HEIGHT', 'SPIN', 'TEMPO', 'ideal', 'back']) if (!report.includes(want)) throw new Error(`the report has no ${want}: "${report}"`);
+    for (const want of ['PULL', 'LINE', 'START', 'HEIGHT', 'SPIN', 'CARRY', 'TOTAL', 'TEMPO', 'ideal', 'back']) if (!report.includes(want)) throw new Error(`the report has no ${want}: "${report}"`);
     const last = await t.page.evaluate(() => window.lab.state().lastStroke);
     if (last?.height !== 'high') throw new Error(`a long follow-through was not High: ${JSON.stringify(last)}`);
     if (last?.shape !== 'push') throw new Error(`a finish out to the right was not a Push: ${JSON.stringify(last)}`);
@@ -2779,7 +2783,7 @@ const JOURNEYS = [
     if (await shown('#monitorPanel')) throw new Error('the launch monitor window is up on a Swing Meter turn');
     if (!await shown('#monState')) throw new Error('the monitor strip is missing');
     const text = await t.page.textContent('#monStateText');
-    if (!/Swing Meter/.test(text)) throw new Error(`the strip says "${text}"`);
+    if (!/swing pad/.test(text)) throw new Error(`the strip says "${text}"`);
     if (!await t.page.isChecked('#monArmHand')) throw new Error('Armed went off; it should stay on for the monitor golfer');
    });
    await t.step('a ball hit into the monitor then is refused', async () => {

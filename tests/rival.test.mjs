@@ -131,7 +131,7 @@ test('total strokes decide it, part of the way round and at the end', () => {
 test('the rules are shown, and only the ones that differed are named', () => {
  assert.deepEqual(R.rulesDiff(rules, rules, 'Sam'), []);
  const mine = {...rules, tee: 'blue', input: 'monitor', putting: {mode: 'dartboard', one: 3, two: 10, three: 20}, turf: {...rules.turf, stimp: 12}};
- assert.deepEqual(R.rulesDiff(rules, mine, 'Sam'), ['Tees: Sam White, you Blue.', 'Putting: Sam hole out, you dartboard putting (3/10/20 yd).', 'Played on: Sam the Swing Meter, you a launch monitor.', 'Green speed: Sam Stimp 11, you Stimp 12.']);
+ assert.deepEqual(R.rulesDiff(rules, mine, 'Sam'), ['Tees: Sam White, you Blue.', 'Putting: Sam hole out, you dartboard putting (3/10/20 yd).', 'Played on: Sam the swing pad, you a launch monitor.', 'Green speed: Sam Stimp 11, you Stimp 12.']);
  const round = new Round({players: [{name: 'Alex', team: 'A', hand: 'RH', tee: 'red'}], putting: {mode: 'decimal'}, outOfBounds: 'e5', monitorLie: false});
  const r = R.rulesOf(round, 0, {turf: {stimp: 12, greenFirmness: 'firm', courseFirmness: 'soft'}}, 'monitor');
  assert.deepEqual([r.tee, r.putting.mode, r.ob, r.lie, r.input, r.turf.stimp, r.turf.greenFirmness, r.turf.courseFirmness], ['red', 'decimal', 'e5', false, 'monitor', 12, 'firm', 'soft']);

@@ -7730,7 +7730,18 @@ about 8 degrees each side of the aim line and its perfect band about 2; Easy
   those three are no longer on screen on the Swing Meter (the shot list
   keeps them). Rejected: the chips and the tempo together beside the
   buttons -- on a phone the chips then wrapped to three rows in a cell about
-  220 px wide and the box grew taller than before. **The path is kept too** (the owner: "allow the user to
+  220 px wide and the box grew taller than before. **Carry and total came
+  back** the next day, as the chip row's last two (the owner, 17 November
+  2026: "I think i do miss carry and total but also, There is a distance
+  number now that didnt match carry or total. What is that?"). The number
+  was PULL: the carry the pull asked for, `fullCarry` of the club and shape
+  times the pull's share, in still air with a clean strike. Strike quality,
+  wind, slope and roll then move the real carry and total away from it.
+  The two chips are written once each, never counted up, so they do not read
+  as a second running PULL and the row (a polite live region) is not
+  announced every frame: CARRY when the ball lands, TOTAL when it stops, a
+  dash until then. A putt gets TOTAL only. PLACED: not counting up, and
+  apex left off. **The path is kept too** (the owner: "allow the user to
   see the pull and push path after the shot somehow"): the pad goes on
   drawing the last stroke's trail -- marks where it turned at the top,
   crossed the line and passed the shape point, a ring at the finish, its

@@ -8515,3 +8515,49 @@ version, a cheaper far ground from above (IDEAS.md).
   by tests/surround-built.test.mjs (cover 0 is no trees at all). The
   builder guide shows no 3D view of the line, so none of its pictures was
   retaken. What is left, playing it, is in *Play the current build by hand*.
+
+## The pull-and-push swing, on the owner's iPhone (15-17 November 2026; branch pull-push-swing)
+
+From TODO, *Only the owner can check*. The owner swung four versions on
+the iPhone between 15 and 17 November and sent back points after each. On
+17 November they signed off what was still open:
+
+- **A controller on the PC:** the right stick swings in the pad. Closed.
+- **The pad with a mouse on the PC:** closed.
+- **Hard's 3 : 1 backswing** (2.5 to 3.6 : 1 free): "hard mode is good".
+- **The phone list:**
+  - a Push and a Pull start the way they look;
+  - a push with a full draw comes back to the aim;
+  - the spin ball's labels on a small screen;
+  - the pad shutting after a second;
+  - the tracer on a full shot and none on a putt;
+  - the hole's summary;
+  - the swing box both ways up and on the PC;
+  - the pad alone at the foot.
+
+  "#5 all is good."
+- **A left-handed pad and spin ball: not wanted.** "no need for left handed.
+  we can assume keyboard players just see right handed numbers". The ruler
+  stays on the left, and DRAW and FADE stay a right-hander's words.
+- **The old way goes for every player.** "im happy for every player to lose
+  the old way": the three-tap bar and Space swing are not coming back.
+- **Carry and total were missed**, and the owner asked what the distance
+  number beside them was. It was PULL, the carry the pull asked for. Carry
+  and total came back as the report's last two chips, each written once
+  (RESEARCH, *The pull-and-push swing*, What you hit).
+- **"Swing Meter" was renamed** where a player reads it:
+  - the group editor's *plays with* (Swing pad);
+  - the monitor strip's two lines and the disconnect message;
+  - the rival card's *Played on*;
+  - the shot panel's button.
+
+  The Help page's paragraph on three taps of Space was rewritten for the
+  pad, and its controller lines say what the sticks, d-pad and X do now
+  (the old ones said A takes a shot, which it does not).
+- **Menu fixes along the way:**
+  - the iPhone menu's sideways scroll (two grids sizing to their longest
+    line; PROJECT_HANDOFF, *The main menu's one column is the screen's
+    width*), confirmed fixed on the phone;
+  - `tools/phone-probe.mjs` with its AGENTS.md rule.
+
+What stayed open is in TODO under the same heading.

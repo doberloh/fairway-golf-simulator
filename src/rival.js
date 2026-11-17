@@ -185,7 +185,7 @@ export function describeRules(r) {
   ['Putting', puttingText(r.putting)],
   ['Out of bounds', r.ob === 'e5' ? 'two-stroke drop (Local Rule E-5)' : 'stroke and distance'],
   ['Lie penalty on monitor shots', r.lie ? 'on' : 'off'],
-  ['Played on', r.input === 'meter' ? 'the Swing Meter' : 'a launch monitor'],
+  ['Played on', r.input === 'meter' ? 'the swing pad' : 'a launch monitor'],
   ...(Number.isFinite(t.stimp) ? [['Green speed', `Stimp ${t.stimp}`]] : []),
   ...(t.greenFirmness != null ? [['Greens', FIRMNESS_LABELS[firmnessName(t.greenFirmness)].toLowerCase()]] : []),
   ...(t.courseFirmness != null ? [['Fairways', FIRMNESS_LABELS[firmnessName(t.courseFirmness)].toLowerCase()]] : []),

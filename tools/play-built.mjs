@@ -3,7 +3,8 @@
 // a working version of every course"): each .fairway under bench/courses/
 // (tools/build-courses.mjs) loaded into the built game as Saved courses does
 // (lab.built), a round started on it, a picture from hole 1's tee, one tee
-// shot played the way a keyboard player takes one, and a picture after.
+// shot played on the swing pad with the mouse (door-generate.mjs `padShot`),
+// and a picture after.
 // Fails a course on any page error, console error or network request. Uses
 // the graphics card (on the course-builder branch, through tools/gpu-run.mjs).
 //
@@ -13,6 +14,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {pathToFileURL, fileURLToPath} from 'node:url';
 import {chromium} from 'playwright';
+import {padShot} from './builder-journeys/door-generate.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'), HOME = path.join(ROOT, 'bench', 'courses');
 const want = process.argv.slice(2);
@@ -40,8 +42,7 @@ try {
    await page.waitForTimeout(1500);
    await page.screenshot({path: path.join(HOME, key, 'game-tee.png')});
    const from = await page.evaluate(() => window.lab.state().ballAt);
-   await page.keyboard.press('Space'); await page.waitForTimeout(800); await page.keyboard.press('Space'); await page.waitForTimeout(300); await page.keyboard.press('Space');
-   await page.waitForFunction(() => window.lab.state().inFlight, null, {timeout: 10000});
+   await padShot(page);
    await page.keyboard.press('Enter');
    await page.waitForFunction(() => !window.lab.state().inFlight, null, {timeout: 60000});
    const to = await page.evaluate(() => window.lab.state().ballAt), went = Math.hypot(to.x - from.x, to.z - from.z);

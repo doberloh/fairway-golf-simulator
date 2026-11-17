@@ -485,7 +485,7 @@ const reduceMotion=()=>typeof matchMedia==='function'&&matchMedia('(prefers-redu
 const shotsFor=it=>{const b=it.settings?.biome;const shots=b==='*'?EVERY_LANDSCAPE:LANDSCAPE_SHOTS[b]||[];const own=it.id&&coursePics.get(it.id);return own?[own,...shots]:shots;};
 const pictureLoop=createPictureLoop({pictures:shotsFor,still:reduceMotion});
 // Each help page's keys (round 14, frame c-help); the essentials read their own list.
-const HELP_KEYS={'The essentials':helpKeys(),'Explore the course':[['V','Free flight, and back'],['W A S D','Fly'],['R F','Up · down'],['Shift','Faster'],['Drag','Look round'],['M','The big map']],'Controller':[['Stick','Aim and power'],['A ✕','Take a shot'],['LB RB','Change club'],['Y △','Change camera'],['B ○','Skip · close']]};
+const HELP_KEYS={'The essentials':helpKeys(),'Explore the course':[['V','Free flight, and back'],['W A S D','Fly'],['R F','Up · down'],['Shift','Faster'],['Drag','Look round'],['M','The big map']],'Controller':[['Left stick','Aim · aim point'],['Right stick','Swing: pull down, push up'],['D-pad','Spin ball'],['X □','Spin ball to the middle'],['LB RB','Change club'],['Y △','Change camera'],['B ○','Skip · close']]};
 const cardPictures=(items,w,h)=>{
  const shown=items.filter(it=>shotsFor(it).length);
  pictureLoop.queue(shown);
@@ -2037,6 +2037,14 @@ function drawMeterScale(){
 // (`#strokeTempo`) is the first cell of their row, where carry, total and apex
 // were. With nothing to show the tempo cell keeps its place, empty, so the
 // buttons never move.
+// CARRY AND TOTAL CAME BACK as the row's last two chips (the owner, 17
+// November 2026: "I think i do miss carry and total"). PULL is not either of
+// them: it is the carry the pull ASKED for, a clean strike of that length in
+// still air -- the strike, the wind, the slope and the roll move the real
+// ones. So they are written once each, never counting up (the row is a polite
+// live region, and a number running beside PULL reads as a second PULL):
+// CARRY when the ball lands, TOTAL when it stops, a dash until then. A putt
+// has only its total.
 function drawStrokeReport(){
  const box=$('swingMeter'),row=$('smResult');if(!box||!row)return;
  let el=$('strokeReport'),tp=$('strokeTempo');
@@ -2052,6 +2060,11 @@ function drawStrokeReport(){
  if(r.height)h+=chip('HEIGHT',escape(r.height.toUpperCase()));
  if(r.dot){const d=r.dot,on=Math.hypot(d.x,d.y)>.05,pct=Math.round((dotSpin(d)-1)*100),side=Math.round(d.x*SPIN_DOT.axis);
   h+=chip('SPIN',on?`${pct>=0?'+':''}${pct}%${side?` · ${side<0?'DRAW':'FADE'} ${Math.abs(side)}°`:''}`:'CLUB');}
+ {const rec=cardRecord(),ours=!!rec&&!rec.typed&&rec.player===r.player&&rec.hole===r.hole;
+  const landed=ours&&(!flight||!(flight.elapsed<(flight.record?.result?.hang??0))),stopped=ours&&!rec.live;
+  const cells=shotGrid(ours?rec:null,{fields:['carry','total'],columns:0}).cells,val=(c,shown)=>shown&&!c.blank?`${c.value}${c.unit?` ${c.unit}`:''}`:'—';
+  if(!r.putt)h+=chip('CARRY',val(cells[0],landed));
+  h+=chip('TOTAL',val(cells[1],stopped));}
  // The tempo: the push judged on the gauge; the backswing beside it against
  // its 3:1, judged on Hard only (swing-stroke.js `backRatio`).
  let th='';
@@ -2309,7 +2322,11 @@ function bindSwingPad(){
   setTimeout(()=>{if(swing===was)strokeUp(null);},80);},{capture:true});
  addEventListener('blur',()=>{if(swing?.kind==='stroke'&&!swing.pad)strokeUp(null);});
  // The Shot button.
- $('shotButton')?.addEventListener('click',()=>setPadOpen(!padOpen));
+ // Swing CLOSES the pad only when it is on screen. Open but hidden for a
+ // moment (a panel, the flight's hand-over), a press used to flip it shut,
+ // and nothing came up until a second press -- the smoke harness's
+ // surprise-round caught it after an out-of-bounds re-tee (17 November 2026).
+ $('shotButton')?.addEventListener('click',()=>setPadOpen(!(padOpen&&padShows())));
  padOpen=!!padPrefs().open;placeSwingPad();
  // A screen turned or resized: a stroke on a pad that changes size under it is
  // no stroke.
@@ -2486,7 +2503,7 @@ function finishShot(){
  // Leaving the whole-shot view, the camera FLIES on to the next shot rather than
  // cutting there: the owner asked for the review to come and go smoothly.
  const fromReview=flight.reviewed?{eye:view.camera.position.clone(),look:view.look.clone()}:null;
- const result=flight.result;flight=null;drawPanelState();
+ const result=flight.result;flight=null;drawPanelState();drawStrokeReport();
  // The tracer has had the whole flight and the settle hold to be looked at. It
  // goes now rather than hanging over the next shot, and is kept for the summary.
  pushTrail(result.points,round.active,!!result.puttStroke);view.setTrail([]);view.setBall(result.end);
@@ -3328,6 +3345,7 @@ function drawLiveTiles(){
   el.dataset.shown=html;el.innerHTML=html;el.classList.toggle('blank',c.blank);
  }
  drawShotSummary(record);
+ drawStrokeReport();
 }
 // The end-of-flight countdown -- "Final lie · playing on in 3s" -- goes in the
 // panel's header, which is on screen while the ball is up.
@@ -5101,7 +5119,7 @@ function groupEditor(hostId,start,onChange){
    // Round 14 (frame c-play2l): each picker a label line, then its value on a
    // full-width line with an arrow at each end; the select is still there,
    // see-through over the value, so a click (or a test) can open it.
-   +(bridgeSeen()?seatPick("Plays with",`input${i}`,`Player ${i+1} plays with`,[["monitor","Launch monitor"],["meter","Swing Meter"]],p.input==="meter"?"meter":"monitor")
+   +(bridgeSeen()?seatPick("Plays with",`input${i}`,`Player ${i+1} plays with`,[["monitor","Launch monitor"],["meter","Swing pad"]],p.input==="meter"?"meter":"monitor")
     +seatPick("Swings",`hand${i}`,`Player ${i+1} handedness`,[["RH","Right"],["LH","Left"]],p.hand==="LH"?"LH":"RH"):'')
    // EVERY GOLFER CAN BE REMOVED, not everyone except the first. The rule is
    // that a round needs one golfer, and this enforced a different one: row zero
@@ -7413,7 +7431,7 @@ function renderPanel(name,content){
   content.innerHTML=`<p>Play with a launch monitor, through any Open Connect v1 connector.</p><p class="note">Run <b>run_fairway_server</b> from the download and keep its window open: your connector sends shots to it on port 1921, and it passes them to this page (the address below, port 1922).</p>${location.protocol==='https:'?`<p class="note">This copy is loaded securely from the web, and a browser will not let a secure page reach the bridge on your network. To play with a monitor, open the game from the bridge itself: start it with <code>FAIRWAY_HTTP_HOST</code> set to the computer's network address, then open <code>http://&lt;that address&gt;:1922</code> on this device. INSTALLATION.md has the steps.</p>`:''}<label class="field">Bridge address<input id="bridgeUrl" value="${escape(lastBridgeUrl)}" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="url"></label><button class="primary" id="connectBridge">${ws?'Disconnect bridge':'Connect bridge'}</button><label class="check"><input id="armMonitor" type="checkbox" ${armSwitch?'checked':''} ${!monitorConnected?'disabled':''}> Arm monitor for live shots</label><p class="research-label" id="monitorStatus">${monitorConnected?'Bridge connected. Device readiness is reported separately.':'Disconnected. Manual controls are available.'}</p><p class="note lm-docs">Which launch monitors work, and how to set up rēlā: README.md in the download.</p><h3>Try a sample shot</h3><label class="field">Open Connect JSON<textarea id="shotJson">${escape(JSON.stringify({DeviceID:'Fairway test',Units:'Yards',ShotNumber:1,APIversion:'1',BallData:{Speed:147.5,VLA:14.3,HLA:2.3,TotalSpin:3250,SpinAxis:-13.2},ShotDataOptions:{ContainsBallData:true,ContainsClubData:false}},null,2))}</textarea></label><p class="field-error" id="jsonError"></p><button class="secondary" id="testJson">Try a sample shot</button>`;
   $('connectBridge').onclick=()=>{if(ws){ws.close();ws=null;armSwitch=false;setConnection(false);openPanel('monitor');}else connectBridge($('bridgeUrl').value.trim());};$('armMonitor').onchange=()=>{armSwitch=$('armMonitor').checked;updateHUD();sendPlayer();monitorSetup?.paint();};$('testJson').onclick=()=>{try{const d=parseLaunchMessage($('shotJson').value);if(!d)throw Error('This message contains no shot data.');if(!takeShot(d))throw Error('Complete the current shot or hole first.');}catch(e){$('jsonError').textContent=e.message;}};
  }else{
-  content.innerHTML=`<p>A world of golf, right in your browser. Every fairway is generated from a seed, so there is always somewhere new to play.</p><h3>The essentials</h3><p>Aim, choose a club, swing. Click anywhere on the course or the map to aim there, or turn the aim with the arrow keys; the floating marker says how far the spot is and what it leaves to the hole.</p><p>The Swing Meter is three taps of <kbd>Space</kbd> (or clicks on the bar): the first starts the swing, the second stops the marker at the distance you want, and the third, back on the strike line, decides how straight it goes. A putt is two taps.</p><p>Every key is listed with this page, and in a round <kbd>?</kbd> shows them over the course. <kbd>Esc</kbd> pauses.</p><h3>Explore the course</h3><p>Press V, or Fly in the tool column, for free flight. Drag to look; W/A/S/D moves, R/F changes altitude, Shift boosts speed. Arrow keys turn the camera. Jump to any green with the hole selector, or click the full course map. Return to your ball without changing your round.</p><h3>Controller</h3><p>Connect a standard gamepad and press a button to enable it. Left stick aims and adjusts power. A / Cross takes a shot; shoulders change clubs; Y / Triangle changes camera; B / Circle skips flight or closes a panel.</p><h3>Made to travel</h3><p><strong>Fairway.html</strong>, the file in the download, holds its scripts, styles and 3D renderer. Copy it anywhere and open it offline in a modern WebGL 2 browser. Your round saves automatically on this device; export it to move between browsers.</p><h3>The physics</h3><p>Real-time flight uses gravity, aerodynamic drag, spin-axis lift, spin decay, wind, altitude, surface-dependent bounce, and sloped roll. Flight is integrated at 240 Hz, independently of display refresh rate.</p><p class="note">This is a research-informed approximation, not a calibrated commercial ball-flight model. Ball-specific coefficients, turf response, and low-speed spin remain approximations. Trees collide at their trunks; foliage is visual.</p><p><a href="https://gsprogolf.com/GSProConnectV1.html" target="_blank" rel="noopener">Open Connect protocol</a> · <a href="https://github.com/digitalhand/openfairway" target="_blank" rel="noopener">OpenFairway research</a> · <a href="https://arxiv.org/abs/2302.02758" target="_blank" rel="noopener">Golf-ball bounce research</a></p>`;
+  content.innerHTML=`<p>A world of golf, right in your browser. Every fairway is generated from a seed, so there is always somewhere new to play.</p><h3>The essentials</h3><p>Aim, choose a club, swing. Click anywhere on the course or the map to aim there, or turn the aim with the arrow keys; the floating marker says how far the spot is and what it leaves to the hole.</p><p>Press <strong>Swing</strong> to open the swing pad. Pull down from the gold line for the distance, then push up through it along the dashed aim line: where you finish says whether it starts left, straight or right, and how high. The spin ball beside it draws or fades the shot.</p><p>Every key is listed with this page, and in a round <kbd>?</kbd> shows them over the course. <kbd>Esc</kbd> pauses.</p><h3>Explore the course</h3><p>Press V, or Fly in the tool column, for free flight. Drag to look; W/A/S/D moves, R/F changes altitude, Shift boosts speed. Arrow keys turn the camera. Jump to any green with the hole selector, or click the full course map. Return to your ball without changing your round.</p><h3>Controller</h3><p>Connect a standard gamepad and press a button to enable it. Left stick aims and moves the aim point. The right stick swings: pull it down for the distance and push it up through the middle. The d-pad moves the spin ball and X / Square centres it; shoulders change clubs; Y / Triangle changes camera; B / Circle skips flight or closes a panel.</p><h3>Made to travel</h3><p><strong>Fairway.html</strong>, the file in the download, holds its scripts, styles and 3D renderer. Copy it anywhere and open it offline in a modern WebGL 2 browser. Your round saves automatically on this device; export it to move between browsers.</p><h3>The physics</h3><p>Real-time flight uses gravity, aerodynamic drag, spin-axis lift, spin decay, wind, altitude, surface-dependent bounce, and sloped roll. Flight is integrated at 240 Hz, independently of display refresh rate.</p><p class="note">This is a research-informed approximation, not a calibrated commercial ball-flight model. Ball-specific coefficients, turf response, and low-speed spin remain approximations. Trees collide at their trunks; foliage is visual.</p><p><a href="https://gsprogolf.com/GSProConnectV1.html" target="_blank" rel="noopener">Open Connect protocol</a> · <a href="https://github.com/digitalhand/openfairway" target="_blank" rel="noopener">OpenFairway research</a> · <a href="https://arxiv.org/abs/2302.02758" target="_blank" rel="noopener">Golf-ball bounce research</a></p>`;
   // REPORTING A PROBLEM, FOR SOMEBODY WHO WILL NEVER OPEN A CONSOLE.
   //
   // It sits in Help because that is where a person goes when something is
@@ -7747,8 +7765,8 @@ function drawMonitorState(state){
   $('monTitle').textContent=title;$('monText').textContent=who+text;
   $('monStateTitle').textContent=title;
   $('monStateText').textContent=armSwitch&&playsWith(round.player)==='meter'
-   ?`${round.player.name} is on the Swing Meter: the monitor waits for the next monitor golfer`
-   :'Armed is off: the Swing Meter is yours';
+   ?`${round.player.name} is on the swing pad: the monitor waits for the next monitor golfer`
+   :'Armed is off: the swing pad is yours';
  }
  for(const el of document.querySelectorAll('.mon-arm-input')){el.checked=armSwitch;el.disabled=!monitorConnected;}
 }
@@ -7768,7 +7786,7 @@ function setConnection(connected){monitorConnected=connected;if(!connected)monit
  // THE BRIDGE DROPPED with a monitor golfer up: the switch goes off, the Swing
  // Meter comes up, and they are told so rather than left waiting for a ball the
  // game can no longer hear (spec 5).
- if(!connected){if(armed&&appMode==='play')toast('The launch monitor disconnected. Play this shot on the Swing Meter, or reconnect.');armSwitch=false;}
+ if(!connected){if(armed&&appMode==='play')toast('The launch monitor disconnected. Play this shot on the swing pad, or reconnect.');armSwitch=false;}
  updateHUD();}
 function sendPlayer(){if(ws?.readyState===1)ws.send(JSON.stringify({type:'player',Player:{Handed:round.player.hand,Club:clubs[$('club').value].code},ready:armed&&!flight&&!round.holeComplete&&!round.scrambleSelection}));}
 const seenShots=new Set();

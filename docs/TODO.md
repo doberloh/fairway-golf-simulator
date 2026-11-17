@@ -57,6 +57,20 @@ wrong, unfinished, or owed a check.
 ## Known wrong
 
 
+- [ ] **One shader is still built after an Ultra course appears** (found
+  17 November 2026 by `npm run smoke`'s `no-late-shaders`). Turning a full
+  circle builds one more, about 10 s in: a `MeshBasicMaterial` with fog and
+  shadow maps (`USE_FOG USE_SHADOWMAP OPAQUE`). A player sees it as a hitch
+  on the first turn. **It is in main and in 0.9.17 too**: main's own build,
+  run on its own, fails the same way, so it came before the pull-push-swing
+  branch and not from it. Which material it is was not looked for. A
+  suspect is anything built since 0.9.14, the last release whose every
+  journey passed: the surroundings rework (0.9.15), phone performance
+  (0.9.16) or the woods past the line (0.9.17). Where: the journey's report
+  names the material's defines. Find the one material with those defines
+  that is made or first drawn late, and warm it in the loading screen's
+  compile pass.
+
 - [ ] **The grass should be darker on every landscape** (the owner, 15
   November 2026, looking at the painted ground on the iPhone: "overall
   across all biomes i want the grass to be darker. Lets make it a todo").
@@ -205,48 +219,26 @@ Hardware, browsers and hands the development machine does not have. Nothing
 here is a claim of support until it is done.
 
 - [ ] **The pull-and-push swing, on the owner's iPhone** (branch
-  `pull-push-swing`, experimental, 15 November 2026; RESEARCH *The
-  pull-and-push swing*). Built, covered by Node tests and swung by the smoke
-  harness with a mouse and with synthetic touches. The owner swung the first
-  version on 16 November and sent back eight points, and the second the same
-  day (the pad no longer sticks; the pad's place is fine); the third version
-  answers that, and a fourth the same day moves what was hit down into the
-  swing box's last row (carry, total and apex gone) and gives a phone's pad
-  the foot of the screen to itself. **Neither has been swung by a person.** The three-tap bar and
-  Space are gone on the branch: the **Swing** button opens a swing pad that
-  can be dragged anywhere and keeps its place, **shuts a second after each
-  shot**, and a controller's right stick swings in it (built, never tried
-  with a real pad -- the owner will check it on the PC). Where the ball
-  starts and its height come from where the follow-through finishes (nine
-  fixed shot cells: **Pull, Straight, Push**, by Low, Normal, High); **the
-  draw and fade are the spin ball's**, which shows the backspin and spin
-  axis it sets; a report of what was hit after each stroke; the stroke's
-  path on the pad until the next (reopen it to see it); a pace cue that
-  plays the backswing too, and **the backswing's 3 : 1 judged on Hard**
-  (costing ball speed). The tracer comes out of the back of the ball again,
-  and a putt draws none. To check on the phone: that a Push and a Pull start
-  the way they look, and a push with a full draw comes back to the aim; the
-  big spin ball's labels and numbers on a small screen; that the pad shutting
-  after a second suits; the tracer on a full shot and none on a putt, and
-  every line in the hole's summary after holing out; the swing box with the
-  chips over Spin and Swing and the tempo beside them, on the phone both
-  ways up and on the PC (not yet seen at all -- no picture has been taken
-  since); the pad opening at the foot with nothing else there, and
-  everything coming back when it shuts; whether carry and total are missed
-  after a shot; on Hard, whether the
-  3 : 1 band (2.5 to 3.6 : 1 free) is fair for a thumb; the feel of every
-  PLACED number -- the full pull (about a fifth of the screen), the shape
-  point 0.3 of a pull below the line, column widths (a thumb's own arc may
-  read as a bend), the row marks, the wait before the ball leaves (up to
-  0.6 s), whether the report is too much to read; that the iPhone sends
-  moves often enough at 30 frames a second; and the pad on a PC with a
-  mouse. **For the owner to decide**: a left-handed pad and spin ball (the
-  ruler is on the left, and DRAW and FADE are a right-hander's words); whether
-  putts' lines should come back on the course between putts (they are kept
-  only for the hole's summary). Open: what the Swing Meter skins (rewards) colour
-  now that the bar is gone; the group panel's "Plays with: Swing Meter" and
-  the monitor strip still say Swing Meter. (`lab.state().lastStroke` holds
-  the last reading, with its sample count.)
+  `pull-push-swing`, 15-17 November 2026; RESEARCH *The pull-and-push
+  swing*). The owner swung it on the phone and the PC, with a controller,
+  and signed off the rest on 17 November (DONE, same heading). Still open:
+  - **The CARRY and TOTAL chips** (17 November): checked by the smoke
+    harness, not yet seen by a person. Each is written once, when the ball
+    lands and when it stops.
+  - **The meter skins colour nothing now.** They coloured the three-tap
+    bar, which is gone; the rewards still unlock them and the Look tab still
+    shows them as "The Swing Meter's look". For the owner to decide: the pad
+    wears them, or they are retired.
+  - **For the owner to decide:** whether putts' lines come back on the
+    course between putts (they are kept only for the hole's summary).
+  - **phone-landscape failed once in three runs** (17 November 2026). Its
+    first shot struck and stopped, with CARRY 172 and TOTAL 190 written and
+    the shot card up. Skip was then tapped, and the game still said the ball
+    was in flight 30 s later; nothing errored. It passed in the full run
+    before and in a run alone after. Not found: whether the tap missed
+    (the report row above the button changes as the numbers arrive) or the
+    flight's end waited on something.
+  - `lab.state().lastStroke` holds the last reading, with its sample count.
 
 - [ ] **Play the current build by hand** (0.9.17, 15 November 2026). What has
   been built and seen only in captures, measurements or smoke runs, and still
