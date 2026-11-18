@@ -15,7 +15,11 @@ export const playsWith=p=>p?.input==='meter'?'meter':p?.input==='cpu'&&p.cpu?'cp
 // EVERY ROUND FORMAT, in one list. A format added here is refused by nothing
 // else -- and tests/round-matrix.test.mjs fails until its scorer plays it with
 // every group the format allows (AGENTS.md, *Game rules live in pure modules*).
-export const FORMATS=['stroke','match','scramble','skins'];
+// Stableford (stableford.js, the fairway-tour goal, 17 November 2026) is played
+// as stroke play is -- each golfer holes out in turn -- and scored in points.
+export const FORMATS=['stroke','match','scramble','skins','stableford'];
+// Formats played as stroke play: each golfer for themselves, hole out in turn.
+export const ownBall=mode=>mode==='stroke'||mode==='skins'||mode==='stableford';
 // A SAVE FROM BEFORE SKINS WAS A FORMAT (16 October 2026): the Skins challenge
 // was a stroke round with `challenge: 'skins'`. It resumes as a skins round,
 // with the same card and so the same skins. Every way a round comes back goes
@@ -27,6 +31,15 @@ function upgradeSave(data){
  if(challenge!=='skins')return rest;
  if(rest.mode!=='stroke')throw Error('Invalid saved skins game.');
  return {...rest,mode:'skins'};
+}
+// A handicap round's strokes, as saved: per seat, per hole, small whole numbers
+// (a plus handicap gives one back: -1). Anything else is a gross round.
+function cleanNet(net,seats){
+ if(!net||typeof net!=='object'||!Array.isArray(net.strokes))return null;
+ const row=r=>Array.isArray(r)&&r.length<=9999&&r.every(v=>Number.isInteger(v)&&v>=-2&&v<=6)?r.slice():[];
+ const strokes=Array.from({length:seats},(_,i)=>row(net.strokes[i]));
+ const team=net.team&&typeof net.team==='object'?{A:row(net.team.A),B:row(net.team.B)}:null;
+ return {on:true,strokes,...(team?{team}:{})};
 }
 // A golfer's tee, when they carry one, is one of the six sets (tees.js).
 const validTee=p=>p.tee===undefined||p.tee===null||isTee(p.tee);
@@ -41,7 +54,7 @@ export class Round{
  // Meter one (main.js, *THE LIE*). On unless the group switches it off; main.js
  // keeps the choice as a preference, like the out-of-bounds rule.
  static defaultMonitorLie=true;
- constructor({players=[{...Round.defaultPlayer}],mode='stroke',holes=9,gimme=0,putting,tee='blue',endless=false,seed='',uid,outOfBounds=Round.defaultOutOfBounds,monitorLie=Round.defaultMonitorLie,weekly='',goal='',rival='',pinSeed=''}={}){
+ constructor({players=[{...Round.defaultPlayer}],mode='stroke',holes=9,gimme=0,putting,tee='blue',endless=false,seed='',uid,outOfBounds=Round.defaultOutOfBounds,monitorLie=Round.defaultMonitorLie,weekly='',goal='',rival='',pinSeed='',net=null,handicaps=false}={}){
   if(!Array.isArray(players)||players.length<1||players.length>4)throw Error('Choose 1–4 players.');
   if(!FORMATS.includes(mode)||![3,9,18].includes(holes)||!Number.isFinite(gimme)||gimme<0||gimme>3)throw Error('Invalid round settings.');
   if(!players.every(p=>p&&typeof p.name==='string'&&p.name.length<=24&&['A','B'].includes(p.team)&&validTee(p)))throw Error('Invalid player.');
@@ -77,6 +90,15 @@ export class Round{
   // (built-world.js placeBuiltPins); saved with the round, so a resumed round
   // finds the same cups, and carried by a friend's challenge, so theirs does.
   this.pinSeed=typeof pinSeed==='string'&&/^[a-z0-9-]{4,40}$/.test(pinSeed)?pinSeed:this.uid;
+  // A HANDICAP ROUND (net.js, the fairway-tour goal): each golfer's strokes,
+  // hole by hole, worked out by main.js once the course is known (setNet);
+  // null for a gross round, which is every round before.
+  this.net=cleanNet(net,players.length);
+  // Whether the round is played with handicaps at all: main.js works the
+  // strokes out (setNet) whenever this is on and `net` is not there yet.
+  // An endless run has no set of holes to give strokes on.
+  if(handicaps&&endless)throw Error('Handicaps need a set of holes, so an endless run is played without them.');
+  this.handicaps=!!handicaps;
   this.players=players.map((p,i)=>({...p,id:i}));this.mode=mode;this.holes=holes;this.gimme=gimme;this.hole=0;this.finished=false;this.endless=!!endless;this.seed=seed;this.pars=[];
   this.putting=puttingConfig(putting);this.history=[];this.puttCards=players.map(()=>[]);this.cards=players.map(()=>[]);this.teamCards={A:[],B:[]};this.match={A:0,B:0};this.beginHole();
  }
@@ -149,6 +171,9 @@ export class Round{
   this.strokes=take(this.strokes,()=>0);
   this.puttStrokes=take(this.puttStrokes,()=>0);
   this.done=take(this.done,()=>false);
+  // Handicap strokes follow their golfer; a golfer who joins gets none until
+  // main.js works the group's strokes out again (setNet).
+  if(this.net)this.net={...this.net,strokes:take(this.net.strokes,()=>[])};
   this.positions=from.map((seat,i)=>{if(seat>=0)return this.positions[seat];const own=tees&&next[i].tee&&tees[teeFor(next[i].tee,Object.keys(tees))]||tee;return own?{x:own.x,z:own.z}:{x:0,z:0};});
   // `seat` is an instruction to this method, not part of a golfer. Spreading it
   // through would persist it into every save and then be read back as a seat in
@@ -212,7 +237,7 @@ export class Round{
    if(complete){this.done[i]=true;this.cards[i][this.hole]=this.strokes[i];this.puttCards[i][this.hole]=this.puttStrokes[i];}
    // Simulator stroke play, and skins, which is played the same way: keep the
    // same golfer until their ball is holed.
-   if(this.mode==='stroke'||this.mode==='skins'){if(complete)this.active=this.nextInOrder();}
+   if(ownBall(this.mode)){if(complete)this.active=this.nextInOrder();}
    else this.active=this.farthestOut(pin);
    if(this.done.every(Boolean))this.completeHole();
   }
@@ -261,11 +286,20 @@ export class Round{
   this.candidates=[];this.scrambleSelection=false;this.active=this.teamMembers(team)[0];
  }
  finishTeam(team){for(const id of this.teamMembers(team)){this.done[id]=true;this.cards[id][this.hole]=this.scrambleShots[team];this.puttCards[id][this.hole]=this.teamPutts[team];}this.teamCards[team][this.hole]=this.scrambleShots[team];this.candidates=[];this.scrambleSelection=false;this.active=this.nextInOrder();if(this.active<0)this.completeHole();}
+ // The handicap strokes a golfer gets on a hole (0 in a gross round).
+ strokesOn(seat,hole=this.hole){return this.net?.strokes?.[seat]?.[hole]||0;}
+ // Set or clear the handicap strokes (net.js roundStrokes): {strokes, team}.
+ setNet(net){this.net=cleanNet(net,this.players.length);}
  completeHole(){
   this.holeComplete=true;this.active=this.order?.[0]??0;
   if(this.mode==='match'){
-   const a=Math.min(...this.teamMembers('A').map(i=>this.cards[i][this.hole])),b=Math.min(...this.teamMembers('B').map(i=>this.cards[i][this.hole]));
-   this.teamCards.A[this.hole]=a;this.teamCards.B[this.hole]=b;if(a<b)this.match.A++;if(b<a)this.match.B++;
+   // Net best ball when the round is played with handicaps: each golfer's
+   // score less their strokes on the hole; the team card keeps the net.
+   const sc=i=>this.cards[i][this.hole]-this.strokesOn(i);
+   const a=Math.min(...this.teamMembers('A').map(sc)),b=Math.min(...this.teamMembers('B').map(sc));
+   // A net score below nothing (an ace on a hole with two strokes) is decided
+   // as it is and written as 0, which a save can hold.
+   this.teamCards.A[this.hole]=Math.max(0,a);this.teamCards.B[this.hole]=Math.max(0,b);if(a<b)this.match.A++;if(b<a)this.match.B++;
   }
   const lead=Math.abs(this.match.A-this.match.B),remaining=this.holes-this.hole-1;
   if(!this.endless&&(this.hole+1>=this.holes||(this.mode==='match'&&lead>remaining)))this.finished=true;

@@ -145,6 +145,9 @@ export function normaliseProfile(d) {
  if (['RH', 'LH'].includes(d.hand)) play.hand = d.hand;
  if (['monitor', 'meter'].includes(d.input)) play.input = d.input;
  if (isTee(d.tee)) play.tee = d.tee;
+ // A handicap the golfer typed (the fairway-tour goal, Q8): used for net
+ // rounds until the sim handicap has one of its own.
+ if (Number.isFinite(d.typedIndex) && d.typedIndex >= -6 && d.typedIndex <= 54) play.typedIndex = Math.round(d.typedIndex * 10) / 10;
  // XP (Phase 4): the total, the ledger of recent awards a mulligan can take
  // back (progression.js `award`), the last day the daily bonus was given, the
  // range's daily trickle, and whether the 'XP is new' note is still to show.
@@ -272,10 +275,15 @@ export function setProfileMeter(store, id, difficulty) {
  return p;
 }
 // A golfer's hand and way of playing, saved when a group is started or changed.
-export function setProfilePlay(store, id, {hand, input, tee} = {}) {
+// The index a golfer plays a net round off: the sim handicap's, else the one
+// they typed, else none (scratch).
+export const playingIndex = (p, simIndex) => Number.isFinite(simIndex) ? simIndex : Number.isFinite(p?.typedIndex) ? p.typedIndex : null;
+export function setProfilePlay(store, id, {hand, input, tee, typedIndex} = {}) {
  const p = findProfile(store, id);
  if (!p) return null;
  if (['RH', 'LH'].includes(hand)) p.hand = hand;
+ if (typedIndex === null) delete p.typedIndex;
+ else if (Number.isFinite(typedIndex) && typedIndex >= -6 && typedIndex <= 54) p.typedIndex = Math.round(typedIndex * 10) / 10;
  if (['monitor', 'meter'].includes(input)) p.input = input;
  // The golfer's own tee (round 13), remembered for the next group they join.
  if (isTee(tee)) p.tee = tee;

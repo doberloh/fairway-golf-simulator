@@ -41,12 +41,13 @@ export function optionWords(text) {
 
 // The format cards, in the mockup's order and words.
 const FORMAT_ORDER = ['stroke', 'match', 'scramble', 'skins'];
-export const FORMAT_TILE = {stroke: 'STROKE PLAY', match: 'MATCH PLAY', scramble: 'SCRAMBLE', skins: 'SKINS'};
+export const FORMAT_TILE = {stroke: 'STROKE PLAY', match: 'MATCH PLAY', scramble: 'SCRAMBLE', skins: 'SKINS', stableford: 'STABLEFORD'};
 export const FORMAT_CARD = {
  stroke: ['Every shot counts. Lowest total wins.', 'ANY GROUP'],
  match: ['Win holes, not strokes. Singles or best-ball teams.', '2 TO 4 GOLFERS'],
  scramble: ['Everyone hits, the team picks the best ball.', 'TEAMS OF 1 TO 4'],
  skins: ['Each hole is worth a skin. Ties carry.', '2 TO 4 GOLFERS'],
+ stableford: ['Points per hole: two for par. A bad hole costs nothing past zero.', 'ANY GROUP'],
 };
 // Formats played in teams: the teams show under the cards for these.
 export const TEAM_FORMATS = new Set(['match', 'scramble']);

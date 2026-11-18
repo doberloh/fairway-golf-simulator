@@ -87,6 +87,16 @@ test('computer golfers of every standard finish every hole of a nine, and the be
  assert.ok(totals[0] < totals[30], `scratch ${totals[0]} against the 30's ${totals[30]} over two nines`);
 });
 
+test('the computer golfers rate a course: a rating near par, a slope in the WHS range', async () => {
+ const {rateCourse} = await import('../src/ai/rating.js');
+ const settings = {...STARTING_COURSE, holes: 9, seed: 'AI-TEST'}, w = world(settings);
+ const r = rateCourse(w.holes, {tee: 'white', rounds: 1, settings});
+ const par = w.holes.reduce((s, h) => s + h.par, 0);
+ assert.ok(Math.abs(r.course - par) < 6, `course rating ${r.course} on a par ${par} nine`);
+ assert.ok(r.bogey > r.course, `bogey rating ${r.bogey} above ${r.course}`);
+ assert.ok(r.slope >= 55 && r.slope <= 155);
+});
+
 test('a group of computer golfers plays three holes in every format, through the ball model', () => {
  const settings = {...STARTING_COURSE, holes: 9, seed: 'AI-TEST'}, w = world(settings);
  const groups = {stroke: ['A', 'A', 'A'], match: ['A', 'B'], scramble: ['A', 'A', 'B', 'B'], skins: ['A', 'A', 'A']};

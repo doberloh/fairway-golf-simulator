@@ -255,6 +255,14 @@ here is a claim of support until it is done.
     flight; the three watch settings; its words; its relief and a computer
     team's scramble pick; your swing refused on its turn and the monitor
     unarmed; a reload mid-hole replaying its shot.
+  - **Net rounds and Stableford** (branch fairway-tour, 17 November 2026;
+    PLAYING *Handicaps and Stableford*): tested in Node, **not seen in the
+    game**. To check: Scoring Net in the rules step and round complete's
+    net ranking; a Stableford round's points; the typed handicap box in a
+    new golfer's seat. **Not built yet**: the scorecard's stroke dots and
+    a net row (round complete shows net totals; the card itself is gross),
+    and net skins status during the round (the skins line mid-round still
+    counts gross; round complete's skins are net).
   - **The swing report's last change** (0.9.18; the owner swung the pad on
     the iPhone and the PC and signed it off on 17 November, DONE *The
     pull-and-push swing, on the owner's iPhone*): the Carry and Total chips

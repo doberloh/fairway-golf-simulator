@@ -16730,6 +16730,27 @@ and 0 for a hole not holed out (the text read). Individual Stableford is
   35 yd a stroke (scratch about 6,900, a 15 about 6,375, a 30 about 5,850),
   on 7,000-yd eighteens.
 
+### Net rounds, Stableford and the course rating: what was placed
+
+- **Skins with handicaps** take 95%, as individual stroke play (Appendix C
+  names no skins allowance). **A three-golfer scramble** takes 30 / 20 /
+  10% from the lowest (between the two- and four-golfer rows). **One
+  golfer alone in a scramble team** plays off their own course handicap.
+- **Stableford is played out**: no picking up once no points are left
+  (stableford.js `noPointsLeft` says when; nothing uses it yet).
+- **A net match hole below zero** (an ace with two strokes) is decided as
+  it is and written on the team card as 0.
+- **No handicaps in Endless or the course of the week** (no set of holes
+  to give strokes on; the week's bests are gross strokes).
+- **The course rating from computer golfers** (src/ai/rating.js): a
+  scratch golfer and a 20 (the USGA's bogey golfer, about a 20 for men)
+  play the course; the ratings are their averages less what each averages
+  over a course's rating on ordinary ground -- scratch 3.5 (the first fit:
+  +4.2 over par on 7,000-yd courses whose yardage rating is 72.7) and the
+  20 4.5 (PLACED, not yet fitted); slope is 5.381 x (bogey - course).
+  Two rounds each by default: the rating of one course moves a stroke or
+  so between runs at that sample (to be measured).
+
 ### The first fit (17 November 2026, branch fairway-tour)
 
 Fitted on one thread while the owner was gaming: bands 0, 15 and 30, four

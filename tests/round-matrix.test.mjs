@@ -61,6 +61,10 @@ const PLAYED = {
  match: {teams: true, fewest: 2},
  scramble: {teams: true, fewest: 1},
  skins: {teams: false, fewest: 2},
+ // Stableford (the fairway-tour goal, 17 November 2026): turns as stroke
+ // play; the points are checked against the course's pars on the generated
+ // course below.
+ stableford: {teams: false, fewest: 1},
 };
 const PLAYED_FORMATS = Object.keys(PLAYED);
 
@@ -225,7 +229,7 @@ function playHole(r, ref, rand, cfg, why) {
    g.strokes += 1 + putts;
    g.holePutts += (shot.puttStroke ? 1 : 0) + putts;
    if (shot.holed || putts > 0) finishGolfer(ref, g, hole);
-   else if (r.mode === 'stroke' || r.mode === 'skins') assert.equal(r.active, i, `${why}: stroke play keeps the golfer up until they hole out`);
+   else if (r.mode === 'stroke' || r.mode === 'skins' || r.mode === 'stableford') assert.equal(r.active, i, `${why}: stroke play keeps the golfer up until they hole out`);
   }
  }
  // The hole is over: every card as the scorer has it.
@@ -559,6 +563,13 @@ test('every format plays a round on a generated course', async () => {
     const expect = card.slice(0, 9).reduce((s, v, h) => s + (Number.isFinite(v) ? v - pars[h] : 0), 0);
     assert.equal(rel, Math.round(expect * 100) / 100, `${designer}, ${cfg.mode} ${cfg.teams.join('')}: golfer ${i + 1} to par`);
     assert.equal(played, card.slice(0, 9).filter(Number.isFinite).length);
+    // Stableford: two points for par, one less a stroke more, none past
+    // double bogey -- counted here by hand, not by stableford.js.
+    if (r.mode === 'stableford') {
+     const {pointsTotal} = await import('../src/stableford.js');
+     const byHand = card.slice(0, 9).reduce((s, v, h) => s + (Number.isFinite(v) ? Math.max(0, 2 + pars[h] - v) : 0), 0);
+     assert.equal(pointsTotal(card.slice(0, 9), pars), byHand, `stableford ${cfg.teams.join('')}: golfer ${i + 1}'s points`);
+    }
    }
   }
  }
