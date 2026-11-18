@@ -2,9 +2,8 @@
 //
 // It stands where the game would put the ball, picks a club and an aim the way
 // the game's turn does (main.js `setUpTurn`, `defaultAim`, `challengeClub`),
-// swings the Swing Meter with the game's own functions (swing-meter.js: the
-// bar zoomed to the shot, the distance tap where the target marker sits, the
-// strike), and flies the ball through the real ball model on the real hole
+// swings with the game's own functions (swing-meter.js: the pull zoomed to the
+// shot, pulled to where the blue stop sits, the strike), and flies the ball through the real ball model on the real hole
 // (physics.js `simulateShot`) -- slopes, bounces, rough, water, trees, the cup.
 // What comes back is the same `ballFacts` main.js hands a challenge.
 //
@@ -18,7 +17,7 @@
 import {simulateShot} from '../src/physics.js';
 import {turfConfig, rollDecelerationAt} from '../src/turf.js';
 import {bagClubs, stockBag} from '../src/clubs.js';
-import {startSwing, tap, swingLaunch, targetShare, swingZoom, fullCarry, shapedLaunch, shortGame, puttRange, puttFullRoll, lieFactor, RUN_UP} from '../src/swing-meter.js';
+import {swingLaunch, targetShare, swingZoom, fullCarry, shapedLaunch, shortGame, puttRange, lieFactor} from '../src/swing-meter.js';
 import {fairwayAim} from '../src/course.js';
 import {localWind} from '../src/shot-visuals.js';
 import {ballFacts} from '../src/challenge-play.js';
@@ -90,13 +89,12 @@ export function virtualGolfer({seed = 'golfer', skill = .012, settings = {}, bag
     wind: wind(hole), altitude: hole.bio?.altitude ?? 0, temperature: hole.bio?.temperature});
    share = t ? Math.min(1, t.share / zoom) : 1;
   }
-  // The taps: the distance where the marker sits, then the strike, each a little off.
-  const sw = startSwing(0, {difficulty: 'normal', club: c, putt, accuracy: !putt, zoom: putt ? ctx.puttRange / puttFullRoll(c, turf) : zoom});
-  // The strike comes as the marker runs back from where the distance was set,
-  // so a part swing is struck sooner: its share of a bar after the first tap.
-  const power = Math.max(.02, share * (1 + stray())), at = sw.rise * (RUN_UP + power);
-  tap(sw, at);
-  if (!putt) tap(sw, at + sw.rise * (power + stray()));
+  // The swing: pulled to where the blue stop sits, and struck, each a little
+  // off. The same two draws, in the same order, as the three-tap bar it
+  // replaced (16 November 2026), so every seeded golfer plays as before: the
+  // strike's error is the second stray (a putt has no strike to miss).
+  const power = Math.max(.02, share * (1 + stray()));
+  const sw = {power, error: putt ? 0 : -stray(), done: true};
   const out = swingLaunch(sw, ctx);
   const result = simulateShot({origin: {...from}, aim, ...out.shot}, hole, {wind: wind(hole), altitude: hole.bio?.altitude ?? 0, temperature: hole.bio?.temperature, turf,
    flagsticks: {current: lie !== 'green' && !putt}});

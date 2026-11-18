@@ -390,6 +390,31 @@ anything**; the screenshot in `bench/shots/smoke/` usually tells. Every journey
 should be green, including `hud-reachable`, `phone-portrait` and
 `phone-landscape`.
 
+## A test copy may report back from the owner's phone
+
+The owner, 17 November 2026: "Im totally fine with test builds passing
+network traffic back to the server in the form of debug info! That makes my
+job easier and then i dont need to copy paste things back to you."
+
+- **When something shows on the owner's own device and not under test, measure
+  it there before guessing.** Smoke's phone emulation is Chrome at two fixed
+  sizes; it never saw a menu spread on a short screen or an iPhone's zoom on
+  a typing box (RULES_HISTORY.md, *Measure on the owner's phone*).
+- **`node tools/phone-probe.mjs`, on port 1923** (the bridge keeps 1922). It
+  serves a copy of `dist/index.html` with a measuring script added. That
+  copy sends back its layout readings, errors, console warnings and anything
+  a `--script` file sends. Each one is written under `bench/probe/` and
+  printed. Give the owner the address it prints.
+- **Only the test copy reports.** The script is added as the page is served;
+  never put it in `src/`, `dist/` or a release. The real game makes no
+  network requests of its own, and smoke fails if it does.
+- **The readings stay on this machine** (`bench/probe/` is ignored). They can
+  hold the player's name from the screen.
+- **It runs on the device, not this computer's graphics card**, so it needs no
+  asking. The rules for this computer still hold: no build beside a game.
+- **Stop it before the turn ends.** It also stops by itself after
+  `--minutes` (30 by default). Check that the port is free.
+
 ## Built is not working
 
 **A feature not seen working in the game is reported as not seen**: in the

@@ -54,8 +54,12 @@
 .course-actions button{padding:6px 11px;font-size:.78rem}
 #shareCode,#courseCode{width:100%;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.74rem;word-break:break-all}
 
-/* Main menu: the entry point, over everything including the top bar. */
-.main-menu{position:fixed;inset:0;z-index:80;display:grid;grid-template-rows:auto 1fr auto;padding:0;color:#eef3e6;background:linear-gradient(180deg,rgba(10,20,14,.78) 0%,rgba(10,20,14,.34) 20%,rgba(10,20,14,0) 40%),linear-gradient(0deg,rgba(10,20,14,.86) 0%,rgba(10,20,14,.46) 24%,rgba(10,20,14,0) 50%)}#app[data-mode=menu] .topbar{display:none}#app[data-mode=menu] #world{height:calc(100dvh / var(--ui-zoom,1))}.menu-masthead{text-align:center;padding:52px 24px 0}.menu-view{pointer-events:none}.menu-deck{padding:0 24px 46px;display:flex;flex-direction:column;align-items:center;gap:18px}.menu-modes{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}.menu-tile{width:216px;min-height:118px;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;gap:2px;padding:18px;border-radius:0;text-align:left;color:#eef3e6;border:1px solid rgba(236,243,230,.22);background:rgba(16,30,21,.52);backdrop-filter:blur(6px);transition:transform .12s ease,background .12s ease,border-color .12s ease}.menu-tile i,.menu-tile svg{width:24px;height:24px;margin-bottom:auto;opacity:.85}.menu-tile strong{font-size:17px;font-weight:600;letter-spacing:-.3px}.menu-tile small{font-size:11px;opacity:.7}.menu-tile:hover{transform:translateY(-2px);background:rgba(24,44,31,.72);border-color:rgba(236,243,230,.42);filter:none}.menu-tile.primary{background:rgba(45,82,61,.82);border-color:rgba(140,190,150,.5)}.menu-tile.primary:hover{background:rgba(56,100,74,.92)}.menu-links{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}.menu-link{display:flex;align-items:center;gap:7px;font-size:11.5px;color:#dbe6d3;opacity:.78;padding:8px 13px;border-radius:0}.menu-link svg{width:14px;height:14px}.menu-link:hover{opacity:1;background:rgba(236,243,230,.12);filter:none}
+/* Main menu: the entry point, over everything including the top bar. Its one
+   column is the screen's width, never its widest line's: left to size itself
+   (`auto`) it took the whole width of a tile's small print, cut short with
+   "..." though it is, and an upright iPhone's menu scrolled 11 px sideways
+   (the owner, 16 November 2026; in 0.9.17 too). */
+.main-menu{position:fixed;inset:0;z-index:80;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr auto;padding:0;color:#eef3e6;background:linear-gradient(180deg,rgba(10,20,14,.78) 0%,rgba(10,20,14,.34) 20%,rgba(10,20,14,0) 40%),linear-gradient(0deg,rgba(10,20,14,.86) 0%,rgba(10,20,14,.46) 24%,rgba(10,20,14,0) 50%)}#app[data-mode=menu] .topbar{display:none}#app[data-mode=menu] #world{height:calc(100dvh / var(--ui-zoom,1))}.menu-masthead{text-align:center;padding:52px 24px 0}.menu-view{pointer-events:none}.menu-deck{padding:0 24px 46px;display:flex;flex-direction:column;align-items:center;gap:18px}.menu-modes{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}.menu-tile{width:216px;min-height:118px;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;gap:2px;padding:18px;border-radius:0;text-align:left;color:#eef3e6;border:1px solid rgba(236,243,230,.22);background:rgba(16,30,21,.52);backdrop-filter:blur(6px);transition:transform .12s ease,background .12s ease,border-color .12s ease}.menu-tile i,.menu-tile svg{width:24px;height:24px;margin-bottom:auto;opacity:.85}.menu-tile strong{font-size:17px;font-weight:600;letter-spacing:-.3px}.menu-tile small{font-size:11px;opacity:.7}.menu-tile:hover{transform:translateY(-2px);background:rgba(24,44,31,.72);border-color:rgba(236,243,230,.42);filter:none}.menu-tile.primary{background:rgba(45,82,61,.82);border-color:rgba(140,190,150,.5)}.menu-tile.primary:hover{background:rgba(56,100,74,.92)}.menu-links{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}.menu-link{display:flex;align-items:center;gap:7px;font-size:11.5px;color:#dbe6d3;opacity:.78;padding:8px 13px;border-radius:0}.menu-link svg{width:14px;height:14px}.menu-link:hover{opacity:1;background:rgba(236,243,230,.12);filter:none}
 
 .menu-brand{display:flex;align-items:center;justify-content:center;gap:10px;font-size:52px;font-weight:650;letter-spacing:-2.6px;text-shadow:0 2px 24px rgba(6,14,9,.55)}.menu-brand .brandmark svg{width:48px;height:48px;stroke:#eef3e6;stroke-width:1.8;fill:none}.menu-brand .brand-dot{color:#a8c98a}
 .menu-brand .brandmark svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
@@ -1198,13 +1202,11 @@ html,body{overscroll-behavior:none}
 #world.meter-mode .shot-tiles,#world.meter-mode #shotToggle,#world.meter-mode .sp-summary{display:none}
 /* In flight the bar stays, still, under its three numbers; nothing on it takes a tap. */
 #world.in-flight .swing-meter{pointer-events:none}
-.sm-result{display:flex;justify-content:space-around;gap:10px;margin-top:10px;padding-top:8px;border-top:1px solid var(--glass-line)}
+/* The meter's row: the stroke's tempo (main.js drawStrokeReport), then the
+   spin ball and Swing, or Skip in flight. Carry, total and apex were its cells
+   until 16 November 2026. */
+.sm-result{display:flex;align-items:stretch;gap:6px;margin-top:6px}
 .sm-result[hidden]{display:none}
-.sm-result>span{display:flex;flex-direction:column;align-items:center;min-width:0}
-.sm-result strong{font-family:var(--font-display,inherit);font-size:22px;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums;color:var(--ink)}
-.sm-result strong small{font-size:11px;font-weight:500;color:var(--ink-dim);margin-left:2px}
-.sm-result>span>span{font-size:9px;letter-spacing:.8px;color:var(--ink-faint)}
-.sm-result .tile-note{display:block;font-size:9.5px;font-weight:600;font-style:normal;color:#ff8f80;text-align:center}
 .sm-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:20px;font-size:11px}
 .sm-title{font-size:9.5px;letter-spacing:.8px;color:var(--ink-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sm-hint{color:var(--ink-dim);white-space:nowrap}
@@ -1246,9 +1248,110 @@ html,body{overscroll-behavior:none}
 .sm-out{color:#ff8f80;font-weight:600}
 .sm-marker{width:4px;margin-left:-2px;top:-5px!important;bottom:-5px!important;border-radius:2px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.45),0 0 10px rgba(255,255,255,.6)}
 .swing-meter[data-stage=ready] .sm-marker{opacity:.55}
-.swing-catcher{position:absolute;inset:0;z-index:30;background:transparent;touch-action:none;cursor:pointer}
-.swing-catcher[hidden]{display:none}
-#world.swinging .swing-meter{z-index:31}
+/* THE SWING PAD (pull-push-swing, 16 November 2026; main.js bindSwingPad and
+   drawStroke): a panel the Swing button opens, in <body> so the Text size zoom
+   leaves its pixels alone, dragged by its header and kept where it was left.
+   Nothing in it may be selected, called out or scrolled by a long press: a
+   thumb rests in it. */
+.swing-pad{position:fixed;left:0;top:0;z-index:58;display:flex;flex-direction:column;background:rgba(6,14,10,.84);box-shadow:0 10px 30px rgba(0,0,0,.45);color:#fff;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;font-family:"Saira Condensed",var(--font-ui,system-ui),sans-serif}
+.swing-pad[hidden]{display:none}
+.swing-pad.waiting .spd-area{opacity:.6}
+.swing-pad.moving{box-shadow:0 0 0 2px #f0c674,0 10px 30px rgba(0,0,0,.45)}
+.spd-head{display:flex;align-items:center;gap:8px;height:34px;padding:0 0 0 10px;background:rgba(6,14,10,.9);cursor:grab;touch-action:none}
+.swing-pad.moving .spd-head{cursor:grabbing}
+.spd-grip{width:14px;height:12px;flex:none;background:radial-gradient(circle,#b9c7bf 1.2px,transparent 1.6px) 0 0/5px 4px;opacity:.8}
+.spd-head b{flex:1;min-width:0;font-size:16px;font-weight:800;font-style:italic;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+.spd-close{flex:none;width:40px;height:34px;padding:0;border:0;border-radius:0;background:none;color:#fff;font-size:16px;cursor:pointer}
+.spd-close:hover{background:rgba(255,255,255,.12)}
+.spd-area{position:relative;cursor:crosshair;touch-action:none;overflow:hidden}
+/* Sized here: the page's own `svg` rule makes every SVG 19 px square (the
+   first pad drew the whole thing in a corner that size). */
+.stroke-pad{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;stroke-width:0;font:600 13px/1 "Saira Condensed",var(--font-ui,system-ui),sans-serif}
+.stroke-pad text{fill:#fff;paint-order:stroke;stroke:rgba(0,0,0,.6);stroke-width:3px}
+.stroke-pad .sp-aim{stroke:#fff;stroke-width:2;stroke-dasharray:6 6;opacity:.75}
+.stroke-pad .sp-tag{font-size:11px;letter-spacing:.08em;text-anchor:middle}
+.stroke-pad .sp-strike{stroke:#f0c674;stroke-width:3}
+.stroke-pad .sp-ball{fill:#fff;stroke:rgba(0,0,0,.4);stroke-width:1}
+.stroke-pad .sp-rule{stroke:rgba(255,255,255,.55);stroke-width:2}
+.stroke-pad .sp-over{stroke:#ff9f43;stroke-width:5;opacity:.8}
+.stroke-pad .sp-tick{stroke:#fff;stroke-width:2;opacity:.75}
+.stroke-pad .sp-tick.full{stroke-width:3;opacity:1}
+.stroke-pad .sp-yd{font-size:12px;text-anchor:start}
+.stroke-pad .sp-target{fill:#8fd3ff;stroke:#0b2533;stroke-width:1}
+.stroke-pad .sp-stopline{stroke:#8fd3ff;stroke-width:1.5;stroke-dasharray:2 5;opacity:.85}
+.stroke-pad .sp-fill{stroke:#f0c674;stroke-width:6;stroke-linecap:round;opacity:.9}
+.stroke-pad .sp-fill.over{stroke:#ff9f43}
+.stroke-pad .sp-zone{fill:rgba(240,198,116,.16);stroke:rgba(250,215,140,.5);stroke-width:1}
+.stroke-pad .sp-perfect{fill:rgba(110,214,135,.32)}
+.stroke-pad .sp-trail{fill:none;stroke:rgba(255,255,255,.6);stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
+.stroke-pad .sp-thumb{fill:rgba(255,255,255,.14);stroke:#fff;stroke-width:2}
+.stroke-pad .sp-thumb.over{stroke:#ff9f43}
+/* The shot cells: PULL left, STRAIGHT, PUSH right, by LOW, NORMAL, HIGH. */
+.stroke-pad .sp-cell{fill:rgba(143,211,255,.07);stroke:rgba(143,211,255,.38);stroke-width:1}
+.stroke-pad .sp-cell.straight{fill:rgba(255,255,255,.06);stroke:rgba(255,255,255,.3)}
+.stroke-pad .sp-cell.lit{fill:rgba(143,211,255,.45);stroke:#8fd3ff;stroke-width:2}
+.stroke-pad .sp-throat{fill:rgba(143,211,255,.05);stroke:rgba(143,211,255,.22);stroke-width:1;stroke-dasharray:3 3}
+.stroke-pad .sp-throat.straight{fill:rgba(255,255,255,.04);stroke:rgba(255,255,255,.18)}
+.stroke-pad .sp-col{font-size:10px;letter-spacing:.1em;text-anchor:middle;fill:#cfe9ff}
+.stroke-pad .sp-col.straight{fill:#fff}
+.stroke-pad .sp-row{font-size:10px;letter-spacing:.08em;fill:rgba(255,255,255,.8)}
+.stroke-pad :is(.sp-col,.sp-row).lit{fill:#8fd3ff;font-weight:800}
+/* The last stroke's path, kept until the next one. */
+.stroke-pad .sp-ghost{fill:none;stroke:#f0c674;stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round;opacity:.85}
+.stroke-pad .sp-mark{fill:#f0c674;stroke:rgba(0,0,0,.5);stroke-width:1}
+.stroke-pad .sp-mark.top{fill:#fff}
+.stroke-pad .sp-mark.end{fill:none;stroke:#8fd3ff;stroke-width:2.5}
+.stroke-pad .sp-cue{fill:#f0c674;stroke:#fff;stroke-width:1.5}
+.stroke-pad .sp-cuetag{font-size:10px;letter-spacing:.1em;fill:#f0c674;text-anchor:end}
+/* The Swing button, beside the spin ball: lit while the pad is open. */
+#world .shot-open.on strong{color:#f0c674}
+#world .shot-open.on::before{box-shadow:inset 0 0 0 2px #f0c674}
+/* WHAT YOU HIT: the chips in the swing box after a stroke, just above the
+   Spin and Swing buttons, and the tempo box in their row, where carry, total
+   and apex were (main.js drawStrokeReport; the owner, 16 November 2026).
+   Chips that wrap, so a phone's narrow box takes them; the tempo's lines wrap
+   in its narrow cell. Empty, the tempo cell keeps its place. */
+.stroke-report{display:flex;flex-wrap:wrap;align-items:stretch;gap:4px;margin:0;font:600 12px/1.15 "Saira Condensed",var(--font-ui,system-ui),sans-serif;color:#fff}
+.stroke-report[hidden]{display:none}
+.srp-chip,.srp-tempo{display:flex;flex-direction:column;justify-content:center;gap:1px;padding:3px 7px;background:var(--panel,rgba(10,22,16,.85));min-width:0}
+.srp-chip small,.srp-tempo small{font-size:9.5px;letter-spacing:.12em;color:var(--soft,#b9c7bf);font-weight:700}
+.srp-chip b{font-size:14px;font-weight:800;font-style:italic;white-space:nowrap}
+.srp-chip.bad b,.srp-tempo.bad b,.srp-tempo b.srp-back.bad{color:#ffb38a}
+.srp-tempo{flex:1 1 150px;position:relative;font:600 12px/1.15 "Saira Condensed",var(--font-ui,system-ui),sans-serif;color:#fff}
+.srp-tempo.empty{visibility:hidden}
+.srp-tempo b{font-size:12px;font-weight:700}
+.srp-tempo b em,.srp-ends em{font-style:normal;color:var(--soft,#b9c7bf);font-weight:600}
+.srp-gauge{position:relative;display:block;height:8px;margin:2px 0;background:rgba(255,255,255,.12)}
+.srp-gauge .srp-zone{position:absolute;inset:0 14.3%;background:rgba(240,198,116,.35)}
+.srp-gauge .srp-ok{position:absolute;top:0;bottom:0;background:rgba(110,214,135,.9)}
+.srp-gauge .srp-mark{position:absolute;top:-3px;bottom:-3px;width:3px;margin-left:-1.5px;background:#fff;box-shadow:0 0 6px rgba(0,0,0,.6)}
+.srp-gauge::after{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:#fff;opacity:.7}
+.srp-ends{display:flex;justify-content:space-between;font-size:8.5px;letter-spacing:.12em}
+/* THE SPIN BALL, where the Curve, Height and Spin boxes were, and the big copy
+   above the swing box while the dot is dragged. */
+#world .spin-ball{align-items:center;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+#world .spin-ball .sb-face{position:relative;display:block;flex:none;width:28px;height:28px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff 0,#eef1f4 45%,#c9ced6 100%);box-shadow:inset 0 0 0 1px rgba(0,0,0,.25);overflow:visible;padding:0!important;max-width:none!important}
+#world .spin-ball .sb-dot{position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;background:#e0342f;box-shadow:0 0 0 1.5px #fff}
+#world .shape-control.spun .sb-face{box-shadow:inset 0 0 0 1px rgba(0,0,0,.25),0 0 0 2px #f0c674}
+.spin-pad{position:absolute;left:50%;bottom:34%;z-index:70;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 14px;background:var(--panel,rgba(10,22,16,.9));pointer-events:none;color:#fff}
+.spin-pad[hidden]{display:none}
+.spin-pad-ball{position:relative;display:block;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff 0,#eef1f4 45%,#c9ced6 100%);box-shadow:inset 0 0 0 2px rgba(0,0,0,.2)}
+.spin-pad-ball::before,.spin-pad-ball::after{content:"";position:absolute;background:rgba(0,0,0,.18)}
+.spin-pad-ball::before{left:50%;top:8%;bottom:8%;width:1px}
+.spin-pad-ball::after{top:50%;left:8%;right:8%;height:1px}
+.spin-pad-ball i{position:absolute;left:50%;top:50%;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;background:#e0342f;box-shadow:0 0 0 2px #fff}
+.spin-pad small{font:700 10px/1.2 "Saira Condensed",var(--font-ui,system-ui),sans-serif;letter-spacing:.1em;color:var(--soft,#b9c7bf);text-align:center;max-width:180px}
+/* Its edges named -- the draw and fade on the sides, as a right-hander's -- and
+   the numbers the dot sets under it: backspin in rpm and the spin axis. */
+.spin-pad-face{display:grid;grid-template-columns:auto 150px auto;grid-template-rows:auto 150px auto;align-items:center;justify-items:center;gap:4px 8px}
+.spin-pad-face .spin-pad-ball{grid-column:2;grid-row:2}
+.spin-edge{font:700 11px/1 "Saira Condensed",var(--font-ui,system-ui),sans-serif;font-style:normal;letter-spacing:.1em;color:var(--soft,#b9c7bf)}
+.spin-edge.top{grid-column:2;grid-row:1}.spin-edge.bottom{grid-column:2;grid-row:3}
+.spin-edge.left,.spin-edge.right{grid-row:2;color:#f0c674;font-size:13px}
+.spin-edge.left{grid-column:1}.spin-edge.right{grid-column:3}
+.spin-pad-read{display:flex;gap:16px;justify-content:center}
+.spin-pad-read span{display:flex;flex-direction:column;align-items:center;gap:2px}
+.spin-pad-read b{font:700 15px/1.1 "Saira Condensed",var(--font-ui,system-ui),sans-serif;letter-spacing:.04em;font-variant-numeric:tabular-nums}
 .meter-choices{display:grid;gap:8px;margin:10px 0 4px}
 .meter-choice{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:10px 12px;border-radius:0;border:1px solid var(--line);cursor:pointer}
 .meter-choice.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}

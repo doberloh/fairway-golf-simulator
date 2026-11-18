@@ -20,6 +20,9 @@ RELEASE_SHA256.txt
 # Scratch screenshots from `node tools/shot-sink.mjs`. Captures a report
 # cites go beside that report, under docs/reports/, which is also local.
 bench/shots/
+# What a phone's test copy sent back to tools/phone-probe.mjs: readings that
+# can hold the player's name, for this machine only.
+bench/probe/
 # Builds compared, results and the GPU run log of tools/frame-ab.mjs.
 bench/ab/
 # Real courses' LIDAR surveys, one folder a course (the owner, 1 November

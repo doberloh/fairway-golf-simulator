@@ -1,27 +1,23 @@
-// THE SWING METER (14 October 2026): how a keyboard, mouse, touch or controller
-// golfer strikes the ball. Three taps, the way Hot Shots Golf and PGA 2K do it:
-// one starts the swing, the second stops the marker at the distance wanted, the
-// third, back at the strike line, decides how straight it goes. A putt is two.
+// THE SWING'S RULES (the Swing Meter, 14 October 2026; its three-tap bar went on
+// 16 November 2026 for the pull and push, swing-stroke.js). What a golfer's
+// swing does to the ball: the club and the shape picked, the lie, how far the
+// swing was pulled (a share of the club's full carry) and how clean the strike
+// was. The name stays: the profile's `meter` field and every caller use it.
 //
-// Everything here is pure: given the times of the taps, the club and the shot
+// Everything here is pure: given the struck swing, the club and the shot
 // the golfer picked, it returns the numbers the ball leaves the club with --
 // ball speed, launch, direction, spin and spin axis -- and nothing downstream
 // changes. The flight, the bounce, the roll and the wind are the same simulator
 // a launch-monitor shot goes through.
 //
-// THE BAR IS IN YARDS, NOT PERCENT. Half the bar is half the club's carry, so a
-// golfer who needs 60 of a 100-yard wedge stops the marker at 60. It used to be
-// a share of the club's SPEED, and carry is not proportional to speed, so half
-// power was nowhere near half the distance. The speed is solved against the
-// ball model on level ground in still air (`speedForCarry`), the same way
+// THE PULL IS IN YARDS, NOT PERCENT. Half a full pull is half the club's carry,
+// so a golfer who needs 60 of a 100-yard wedge pulls to 60. It was once a share
+// of the club's SPEED, and carry is not proportional to speed, so half power
+// was nowhere near half the distance. The speed is solved against the ball
+// model on level ground in still air (`speedForCarry`), the same way
 // `bagClubs` solves a full swing from the bag's yardage.
 //
-// A TAP IS JUDGED ON ITS OWN TIME, never on the frame it was drawn in. The
-// marker's position is a function of the time since the first tap, so a slow
-// frame, a stall or a busy machine cannot move a result: the same three times
-// give the same shot at 20 frames a second or 144.
-//
-// Every timing, width and shape number below is PLACED -- chosen to feel right
+// Every width and shape number below is PLACED -- chosen to feel right
 // and to be tuned by playing -- not taken from a source. RESEARCH.md, *The Swing
 // Meter*, says which is which.
 import {simulateShot, YARD, R, clamp} from './physics.js';
@@ -75,24 +71,23 @@ export function monitorLie(data, surface, {on = true, range = false} = {}) {
   lie: {surface, factor: penalise ? f : 1, spin, before: data.speed, measured: true}};
 }
 
-// Per golfer, kept in the profile. `rise` is the seconds the marker takes from
-// the start line to the full line; it comes back at the same pace. `zone` and
-// `perfect` are HALF-widths of the strike zone and the perfect band, in lengths
-// of the bar (the bar from start to full is 1). (A `putRead` share of the putt
-// preview drawn per difficulty went with the preview, 14 October 2026.)
+// Per golfer, kept in the profile. `zone` and `perfect` are HALF-widths of the
+// strike zone and the perfect band, in lengths of a full swing; the pull and
+// push turns them into degrees (swing-stroke.js `STROKE.degPerBar`). (The
+// bar's `rise`, the marker's seconds to full, went with the bar on 16
+// November 2026; a `putRead` share went with the putt preview, 14 October.)
 export const DIFFICULTIES = {
- easy: {label: 'Easy', rise: 1.5, zone: .1, perfect: .03, wind: true},
- normal: {label: 'Normal', rise: 1.15, zone: .065, perfect: .015, wind: false},
- hard: {label: 'Hard', rise: .9, zone: .04, perfect: .008, wind: false},
+ easy: {label: 'Easy', zone: .1, perfect: .03, wind: true},
+ normal: {label: 'Normal', zone: .065, perfect: .015, wind: false},
+ hard: {label: 'Hard', zone: .04, perfect: .008, wind: false},
 };
 export const DEFAULT_DIFFICULTY = 'normal';
 export const difficultyOf = id => DIFFICULTIES[id] || DIFFICULTIES[DEFAULT_DIFFICULTY];
 
-// The bar runs from MISS_AT (past the strike line, where an untapped swing runs
-// out) through 0 (the strike line) and 1 (full) to 1 + OVERSWING. Overswing is
-// worth up to 5% more carry -- the only way past the bag -- and narrows the
-// strike zone the deeper the marker is stopped in it.
-export const OVERSWING = .12, OVERSWING_CARRY = .05, MISS_AT = -.3;
+// A pull runs from 0 to 1 (full) and on to 1 + OVERSWING. Overswing is worth
+// up to 5% more carry -- the only way past the bag -- and narrows the strike
+// zone the deeper the pull goes into it.
+export const OVERSWING = .12, OVERSWING_CARRY = .05;
 // Below this share of the bar the strike zone widens: a chip is about distance.
 export const SHORT_SHOT = .4;
 
@@ -101,11 +96,34 @@ export const HEIGHTS = ['low', 'normal', 'high'];
 // The spin dial: one step off, the club's own, or up to three added.
 export const SPIN_STEPS = [-1, 0, 1, 2, 3];
 export const DEFAULT_SHAPE = Object.freeze({curve: 'straight', height: 'normal', spin: 0});
+// THE SPIN DOT (branch pull-push-swing, 16 November 2026; the owner: "give the
+// user a golf ball icon with a dot they can drag around. The dot would change
+// the backspin as well as the spin axis"). `dot` is where on the ball face the
+// golfer strikes, x right and y DOWN, inside the unit circle. Below the middle
+// adds backspin (to `more` at the bottom), above takes it off (to `less` at
+// the top); right of the middle tilts the spin axis right, up to `axis`
+// degrees, curving the ball right (a right-hander's fade), and left curves it
+// left (a draw). That tilt is what curves a ball, so since the owner's third
+// try at the swing (16 November 2026: "What impacts draw and fade is the ball
+// spin correct? So our spin meter should expose that") it is THE draw and
+// fade; the swing picks where the ball starts (swing-stroke.js, Push and
+// Pull; `pushStart`). The side spin is NOT started the other way to land on
+// the aim: a Push with a full draw does that. Every step away from the middle narrows the strike's
+// allowance as added spin did (`zone` per third of the way down, per half of
+// the way across). The dot replaces the spin steps for the game; a shape with
+// no dot still reads `spin` steps (tests, older records). All PLACED.
+export const SPIN_DOT = {more: .3, less: .25, axis: 10, zone: .85};
+export function clampDot(d) {
+ const x = Number.isFinite(d?.x) ? d.x : 0, y = Number.isFinite(d?.y) ? d.y : 0, r = Math.hypot(x, y);
+ return r > 1 ? {x: x / r, y: y / r} : {x, y};
+}
+export const dotSpin = d => d.y >= 0 ? 1 + SPIN_DOT.more * d.y : 1 + SPIN_DOT.less * d.y;
 export function validShape(s = {}) {
  return {
   curve: CURVES.includes(s.curve) ? s.curve : 'straight',
   height: HEIGHTS.includes(s.height) ? s.height : 'normal',
   spin: SPIN_STEPS.includes(s.spin) ? s.spin : 0,
+  ...(s.dot ? {dot: clampDot(s.dot)} : {}),
  };
 }
 // Wedges get Bump & run and Flop near the green, in place of Low and High.
@@ -138,17 +156,22 @@ const SPIN_SCALE = {'-1': .75, 0: 1, 1: 1.1, 2: 1.2, 3: 1.3};
 const HEIGHT_SPIN = {low: .92, normal: 1, high: 1.08, bump: .5, flop: .85};
 export function shapedLaunch(club, shape, {short = false} = {}) {
  const s = validShape(shape);
- if (club.code === 'PT') return {vla: 0, spin: 0, axis: 0, zone: 1, flop: false};
+ if (club.code === 'PT') return {vla: 0, spin: 0, axis: 0, side: 0, zone: 1, flop: false};
  const kind = short && s.height === 'low' ? 'bump' : short && s.height === 'high' ? 'flop' : s.height;
  const vla = kind === 'bump' ? club.vla * .55 : kind === 'flop' ? club.vla + 10
   : kind === 'low' ? club.vla - 4 : kind === 'high' ? club.vla + 4 : club.vla;
+ const d = s.dot;
  return {
   vla: clamp(vla, 3, 60),
-  spin: club.spin * HEIGHT_SPIN[kind] * SPIN_SCALE[s.spin],
+  spin: club.spin * HEIGHT_SPIN[kind] * (d ? dotSpin(d) : SPIN_SCALE[s.spin]),
   axis: CURVE_AXIS[s.curve],
+  // The spin dot's side spin, kept apart from the curve's axis: the curve is
+  // started the other way to land on the aim (`curveCompensation`), this is not.
+  side: d ? d.x * SPIN_DOT.axis : 0,
   // The strike zone's width, as a share of the difficulty's: a flop is harder to
-  // hit cleanly, and every step of added spin narrows it.
-  zone: (kind === 'flop' ? .8 : 1) * Math.pow(.85, Math.max(0, s.spin)),
+  // hit cleanly, and every step of added spin -- or the dot away from the
+  // middle -- narrows it.
+  zone: (kind === 'flop' ? .8 : 1) * (d ? Math.pow(SPIN_DOT.zone, 3 * Math.max(0, d.y) + 2 * Math.abs(d.x)) : Math.pow(.85, Math.max(0, s.spin))),
   flop: kind === 'flop', bump: kind === 'bump',
  };
 }
@@ -166,9 +189,6 @@ export function strikeZone({difficulty, shape = 1, lie, putt = false, power = 1,
  }
  return {zone: d.zone * k, perfect: Math.min(d.perfect * k, d.zone * k * .5)};
 }
-// A PUTT IS TWO TAPS on every difficulty (the owner's call, 14 October 2026):
-// start, and stop at the length. Hard had a third, accuracy tap until then.
-export const puttAccuracy = () => false;
 
 // THE BAR ZOOMS FOR A SHORT SHOT, as it already did for a putt (the owner's
 // call, 14 October 2026). When the circle is well inside the club's carry the
@@ -184,72 +204,21 @@ export function swingZoom(fullMetres, aimMetres) {
 // The share of the club's carry a stop on the bar is worth.
 export const carryShare = power => power <= 1 ? Math.max(0, power) : 1 + OVERSWING_CARRY * clamp((power - 1) / OVERSWING, 0, 1);
 
-// A SWING IN PROGRESS. Times are milliseconds on the input's own clock
-// (`event.timeStamp`, which shares `performance.now()`'s origin).
-export function startSwing(t, {difficulty, club = null, putt = false, accuracy = !putt, zoom = 1}) {
- const d = difficultyOf(difficulty);
- // Woods run the marker a little faster, wedges a little slower. A bar zoomed
- // to a half swing runs 12% slower and to a quarter 25% slower (putts too), so
- // a short shot is both a bigger target and a slower one. Placed.
- const pace = (putt ? 1.15 : ({driver: .9, wood: .92, wood5: .94, wood7: .95}[club?.kind] ?? (SHORT_GAME_KINDS.has(club?.kind) ? 1.1 : 1)))
-  * (zoom <= .25 ? 1.25 : zoom < 1 ? 1.12 : 1);
- return {start: t, rise: d.rise * pace * 1000, power: null, powerAt: null, accuracy, done: false, error: null};
-}
-// OVERSWING IS SLOW, AND WAITS (the owner's call, 14 October 2026). Past the
-// full line the marker runs at a quarter of its speed, the meter flashes, and at
-// the end of the overswing zone it stops and holds there, still flashing, until
-// the second tap -- it no longer goes off on its own. Slower means the depth is
-// the golfer's to choose; the strike zone still narrows the deeper it is.
-// Coming back from overswing runs at the normal speed. PLACED.
-export const OVERSWING_SLOW = 4;
-// THE SWEEP STARTS FROM THE FAR LEFT (the owner's call, 14 October 2026). The
-// marker used to start on the strike line, a fifth of the way along the bar, so
-// a short shot's stop was a sliver from where it began. It now starts at the
-// bar's left edge and runs up to the strike line first -- a run-up the length
-// of the miss area (`RUN_UP` bar lengths, 0.35 s at Normal) -- and a tap during
-// the run-up is ignored rather than taken as a swing of nothing.
-export const RUN_UP = -MISS_AT;
-function riseAt(sw, t) {
- const e = (t - sw.start) / sw.rise - RUN_UP;
- return e <= 1 ? Math.max(MISS_AT, e) : Math.min(1 + OVERSWING, 1 + (e - 1) / OVERSWING_SLOW);
-}
-// Is the marker in the overswing zone, still climbing or holding at its end?
-export const inOverswing = (sw, t) => sw.power == null && riseAt(sw, t) > 1;
-// Where the marker is at time t, in bar lengths.
-export function markerAt(sw, t) {
- if (sw.power == null) return riseAt(sw, t);
- return Math.max(MISS_AT, sw.power - (t - sw.powerAt) / sw.rise);
-}
-// Anything owed by the clock alone: running out past the strike zone is a
-// miss. (Until 14 October 2026 the end of overswing set the power on its own.)
-export function advance(sw, t) {
- if (sw.done) return sw;
- if (sw.power != null && !sw.done && markerAt(sw, t) <= MISS_AT) { sw.done = true; sw.error = MISS_AT; sw.duff = true; }
- return sw;
-}
-function setPower(sw, t) {
- sw.power = riseAt(sw, t);sw.powerAt = t;
- if (!sw.accuracy) { sw.done = true; sw.error = 0; }
-}
-// A tap. Returns which tap it was: 'power' or 'strike' (or null if over).
-export function tap(sw, t) {
- advance(sw, t);
- if (sw.done) return null;
- if (sw.power == null) { if (riseAt(sw, t) <= 0) return null; setPower(sw, t); return 'power'; }
- sw.error = markerAt(sw, t);sw.done = true;
- return 'strike';
-}
+// THE THREE-TAP BAR'S TIMING -- startSwing, tap, advance, markerAt, the run-up
+// and the slow overswing -- went with the bar on 16 November 2026 (branch
+// pull-push-swing; the owner: "remove the bar entirely"). A swing is now a
+// pull and push (swing-stroke.js), which hands `swingLaunch` its pull as
+// `power` and its strike already judged as `fx`.
 
-// WHAT THE STRIKE DOES TO THE BALL. `error` is where the marker was when the
-// third tap came: positive is EARLY (before the strike line), negative LATE.
-// The owner's rule (14 October 2026): early sends the ball RIGHT and late sends
-// it LEFT, for every golfer -- the meter has no handedness. Inside the perfect
-// band the ball goes where it was aimed; from there to the zone's edge it
-// starts a degree and a quarter off line with five degrees of curve; outside
-// the zone it keeps growing, to four times that. A swing that ran out is the
-// worst miss there is, a smothered hook at three quarters of the speed.
-export function strikeEffect(error, {zone, perfect}, {putt = false, duff = false} = {}) {
- if (duff) return putt ? {hla: -4, axis: 0, speed: .85, miss: 5, perfect: false} : {hla: -7, axis: -25, speed: .75, miss: 5, perfect: false};
+// WHAT A STRIKE OFF THE LINE DOES TO THE BALL. `error` is how far off, in
+// lengths of a full swing: positive sends the ball RIGHT and negative LEFT,
+// for every golfer -- the swing has no handedness (the owner's rule, 14
+// October 2026, from the bar's early and late). Inside the perfect band the
+// ball goes where it was aimed; from there to the zone's edge it starts a
+// degree and a quarter off line with five degrees of curve; outside the zone
+// it keeps growing, to four times that. The pull and push's line costs the
+// same (swing-stroke.js `strokeEffect`).
+export function strikeEffect(error, {zone, perfect}, {putt = false} = {}) {
  const a = Math.abs(error);
  if (a <= perfect) return {hla: 0, axis: 0, speed: 1, miss: 0, perfect: true};
  const m = Math.min(4, (a - perfect) / Math.max(1e-6, zone - perfect)), side = error > 0 ? 1 : -1;
@@ -306,6 +275,14 @@ export function curveCompensation(club, launch, speed) {
  if (!cache.has(key)) { const l = landing(fly(club, launch, speed)); cache.set(key, Math.atan2(l.x, Math.max(1, l.z)) * 180 / Math.PI); }
  return cache.get(key);
 }
+// HOW FAR OFF THE AIM A PUSH OR PULL STARTS (swing-stroke.js), in degrees:
+// as far as the spin dot's full side spin bends this club at this speed, so a
+// Push with the dot all the way to the draw side comes down on the aim line,
+// and a Push with none finishes right of it. About 4.6 degrees for a driver,
+// 4.9 for a 7-iron and 2.5 for a sand wedge at full speed. PLACED.
+export function pushStart(club, launch, speed) {
+ return Math.abs(curveCompensation(club, {...launch, axis: SPIN_DOT.axis}, speed));
+}
 // The flight's ground track to where it lands, in the aim-0 frame, for drawing
 // the shape on the course before the swing.
 export function previewTrack(club, launch, speed) {
@@ -329,7 +306,16 @@ export function puttFullRoll(putter, turf) { return struckDistance(putter.speed,
 // course grows is about 80 yd across, and on the slowest Stimp (6) the putter's
 // own roll is about 18 yd, so six times holds that with room to spare. On the
 // green, and only for a putt, the bar is not held to the bag.
-export const PUTT_RANGES = [.25, .5, 1, 1.5, 2, 3, 4, 6];
+//
+// AND IN TO A TAP-IN (pull-push-swing, 16 November 2026). A pull shorter than
+// 4% of a full pull is no swing (swing-stroke.js `minShare`), and a half-foot
+// putt on a quarter of the putter's roll was 2% -- it could not be struck (the
+// smoke run's tap-ins, "waited 5s for the putt to start"). So the pull also
+// zooms to an eighth, a sixteenth and a thirty-second of the putter's roll:
+// about 3.4 m, 1.7 m and 0.85 m at Stimp 10, which takes a putt down to a few
+// centimetres. The putt's length is the pull's share of the range either way,
+// so nothing else moves. PLACED.
+export const PUTT_RANGES = [1 / 32, 1 / 16, 1 / 8, .25, .5, 1, 1.5, 2, 3, 4, 6];
 export function puttRange(putter, turf, aimMetres) {
  const full = puttFullRoll(putter, turf);
  for (const k of PUTT_RANGES) if (aimMetres * 1.25 <= full * k) return full * k;
@@ -397,14 +383,18 @@ export function swingLaunch(sw, {club, shape, short = false, lie, difficulty, tu
  const launch = shapedLaunch(club, shape, {short});
  const power = sw.power ?? 0, share = (putt ? 1 : zoom) * carryShare(power);
  const zones = strikeZone({difficulty, shape: launch.zone, lie, putt, power, share: putt ? power : zoom * power});
- const fx = strikeEffect(sw.error ?? 0, zones, {putt, duff: !!sw.duff});
+ // A pull-and-push swing (swing-stroke.js) arrives already judged, in the same
+ // terms, with a launch change of its own (a rushed push flies lower).
+ const fx = sw.fx ?? strikeEffect(sw.error ?? 0, zones, {putt});
  const factor = lieFactor(lie);
  if (putt) {
   const speed = puttSpeedFor(club, turf, share * (range ?? puttFullRoll(club, turf)));
   return {shot: {speed: speed * fx.speed * factor, vla: 0, hla: fx.hla, spin: 0, spinAxis: 0}, before: speed * fx.speed, factor, power, share, strike: fx, zones};
  }
  const speed = speedForCarry(club, launch, share * fullCarry(club, launch)) * fx.speed;
- const comp = curveCompensation(club, launch, speed);
+ // A chosen Push or Pull starts the ball off the aim by the club's own angle.
+ const side = fx.start === 'push' ? 1 : fx.start === 'pull' ? -1 : 0;
+ const comp = curveCompensation(club, launch, speed) + (side ? side * pushStart(club, launch, speed) : 0);
  const spin = launch.spin * lieSpin(lie, launch.vla) * spinForPower(clamp(speed / club.speed, 0, 1.2));
- return {shot: {speed: speed * factor, vla: launch.vla, hla: comp + fx.hla, spin, spinAxis: launch.axis + fx.axis}, before: speed, factor, power, share, strike: fx, zones};
+ return {shot: {speed: speed * factor, vla: clamp(launch.vla + (fx.vla ?? 0), 3, 60), hla: comp + fx.hla, spin, spinAxis: launch.axis + (launch.side ?? 0) + fx.axis}, before: speed, factor, power, share, strike: fx, zones};
 }

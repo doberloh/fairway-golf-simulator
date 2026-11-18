@@ -11,8 +11,6 @@
 // `keys` as printed on the keycaps; `words` what it does, in the list's voice;
 // `tool` the tool column entry it drives, if any.
 export const ROUND_KEYS = [
- {keys: ['Space'], words: 'Swing: start, set the distance, strike'},
- {keys: ['S', 'W', 'X'], words: 'Curve, height, spin (Shift + X for less spin)'},
  {keys: ['Enter'], words: 'Skip the flight; the next hole once a hole is done'},
  {keys: ['←', '→'], words: 'Turn the aim'},
  {keys: ['↑', '↓'], words: 'Aim point further / shorter'},
@@ -48,15 +46,18 @@ export const toolsFor = ({range = false} = {}) => TOOLS.filter(t => !t.range || 
 // The keys Help's essentials page lists: the round's own, in its words.
 export const helpKeys = () => ROUND_KEYS.map(k => [k.keys.join(' '), k.words]);
 
-// THE STRIP BESIDE THE SWING METER, so a first-timer can see how to swing.
-// A launch monitor swings for you; a touch screen taps the bar; a putt has no
-// shape. `[[key, words]]`, or a single line for touch.
+// THE STRIP UNDER THE SWING'S WORDS, so a first-timer can see how to swing:
+// the pull and push on the swing pad (pull-push-swing, 16 November 2026: the
+// three-tap bar and Space are gone, and the Swing button opens the pad). A
+// launch monitor swings for you; a putt has no shape.
+// `[[key, words]]`, or a single line for touch.
 export function swingStrip({monitor = false, touch = false, putting = false} = {}) {
  if (monitor) return [['←→', 'AIM'], ['?', 'KEYS']];
- if (touch) return [['TAP', 'THE BAR TO SWING']];
- return [['SPACE', 'SWING'], ['← →', 'AIM'], ['↑ ↓', putting ? 'LENGTH' : 'DISTANCE'], ['?', 'ALL KEYS']];
+ if (touch) return [['SWING', 'OPENS THE PAD: PULL DOWN, PUSH UP']];
+ return [['SWING', 'OPENS THE PAD: DRAG DOWN, PUSH UP'], ['← →', 'AIM'], ['↑ ↓', putting ? 'LENGTH' : 'DISTANCE'], ['?', 'ALL KEYS']];
 }
 
-// The first-swing coach: shown once per device, on a golfer's first swing
-// with the Swing Meter. Three taps, in the meter's own words.
-export const COACH_STEPS = ['TAP to start the swing', 'TAP when the marker reaches the distance', 'TAP on the line to strike'];
+// The first-swing coach: shown once per device, before a golfer's first swing.
+// Where the ball starts and its height come from the push since 16 November
+// 2026 (the boxes went); the draw and fade are the spin ball's.
+export const COACH_STEPS = ['Press SWING to open the pad; PULL DOWN below the gold line for the distance', 'PUSH UP through the line along the dashed aim line', 'FINISH in a cell: out right to push it, left to pull it; short for low, far for high. The spin ball draws or fades it'];

@@ -649,3 +649,31 @@ October.
 benches, as well as nothing graphical -- until the owner says they are
 done. Reading, editing and git are fine. A new request sent during the game
 is not that word: ask whether it is for now or for after.
+
+## Measure on the owner's phone (17 November 2026)
+
+The rule: AGENTS.md, *A test copy may report back from the owner's phone*.
+
+On 16 November the owner's iPhone main menu scrolled sideways. A fix was
+made and checked with every smoke journey and a measuring script at the
+journeys' phone sizes (390 x 844, 844 x 390). The owner then wrote: "im
+still seeing the sideways scroll on the main menu on my phone. Is the
+server using the latest code?" The server was serving the fix. Chrome's
+emulation simply could not see the rest.
+
+A copy of the page was served on port 1923 with a script that sent its
+readings back, and the owner opened it on the phone. Four readings showed
+two causes:
+
+- a second grid on the menu with a bare `1fr` column, which spread to
+  545 px on the 440 px phone when the screen was 428 tall (the keyboard up);
+- the phone's own 1.78x zoom after a typing box was tapped, with the page
+  then exactly the screen's width.
+
+The first was fixed and the owner saw it fixed. Before that probe the only
+way to get such numbers was the owner copying them by hand.
+
+The owner then asked for this to be the way: "Im totally fine with test
+builds passing network traffic back to the server in the form of debug
+info! That makes my job easier and then i dont need to copy paste things
+back to you." The scratch script became `tools/phone-probe.mjs`.

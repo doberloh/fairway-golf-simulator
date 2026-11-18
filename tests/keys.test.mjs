@@ -23,17 +23,21 @@ test('every tool has a key, and the keys it drives say the same', () => {
 });
 
 test('the swing strip says how to swing, by input', () => {
- assert.deepEqual(swingStrip()[0], ['SPACE', 'SWING']);
+ // The pull and push (pull-push-swing): the Swing button opens the pad, and a
+ // drag in it swings -- never Space.
+ assert.match(swingStrip().flat().join(' '), /SWING.*DRAG/);
+ assert.ok(!swingStrip().some(([k]) => k === 'SPACE'));
  assert.equal(swingStrip({putting: true})[2][1], 'LENGTH');
- assert.match(swingStrip({touch: true})[0].join(' '), /TAP/);
- assert.ok(!swingStrip({monitor: true}).some(([k]) => k === 'SPACE'));
+ assert.match(swingStrip({touch: true})[0].join(' '), /SWING.*PULL DOWN/);
+ assert.ok(!swingStrip({monitor: true}).some(([k]) => k === 'SWING'));
+ assert.ok(!ROUND_KEYS.some(k => k.keys.includes('Space')));
  assert.equal(COACH_STEPS.length, 3);
 });
 
 test('Help lists the round keys, and the main.js key handler answers each', () => {
  const main = fs.readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
  assert.equal(helpKeys().length, ROUND_KEYS.length);
- for (const code of ['KeyC', 'KeyG', 'KeyV', 'KeyM', 'KeyH', 'KeyA', 'Tab', 'Slash', 'Space', 'Enter'])
+ for (const code of ['KeyC', 'KeyG', 'KeyV', 'KeyM', 'KeyH', 'KeyA', 'Tab', 'Slash', 'Enter'])
   assert.ok(main.includes(`e.code==='${code}'`), code);
 });
 

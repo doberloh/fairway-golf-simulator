@@ -57,6 +57,20 @@ wrong, unfinished, or owed a check.
 ## Known wrong
 
 
+- [ ] **One shader is still built after an Ultra course appears** (found
+  17 November 2026 by `npm run smoke`'s `no-late-shaders`). Turning a full
+  circle builds one more, about 10 s in: a `MeshBasicMaterial` with fog and
+  shadow maps (`USE_FOG USE_SHADOWMAP OPAQUE`). A player sees it as a hitch
+  on the first turn. **It is in main and in 0.9.17 too**: main's own build,
+  run on its own, fails the same way, so it came before the pull-push-swing
+  branch and not from it. Which material it is was not looked for. A
+  suspect is anything built since 0.9.14, the last release whose every
+  journey passed: the surroundings rework (0.9.15), phone performance
+  (0.9.16) or the woods past the line (0.9.17). Where: the journey's report
+  names the material's defines. Find the one material with those defines
+  that is made or first drawn late, and warm it in the loading screen's
+  compile pass.
+
 - [ ] **The grass should be darker on every landscape** (the owner, 15
   November 2026, looking at the painted ground on the iPhone: "overall
   across all biomes i want the grass to be darker. Lets make it a todo").
@@ -204,9 +218,37 @@ wrong, unfinished, or owed a check.
 Hardware, browsers and hands the development machine does not have. Nothing
 here is a claim of support until it is done.
 
-- [ ] **Play the current build by hand** (0.9.17, 15 November 2026). What has
+- [ ] **The pull-and-push swing, on the owner's iPhone** (branch
+  `pull-push-swing`, 15-17 November 2026; RESEARCH *The pull-and-push
+  swing*). The owner swung it on the phone and the PC, with a controller,
+  and signed off the rest on 17 November (DONE, same heading). Still open:
+  - **The CARRY and TOTAL chips** (17 November): checked by the smoke
+    harness, not yet seen by a person. Each is written once, when the ball
+    lands and when it stops. The PULL chip before them is gone (the owner,
+    same day), also not yet seen by a person.
+  - **The meter skins colour nothing now.** They coloured the three-tap
+    bar, which is gone; the rewards still unlock them and the Look tab still
+    shows them as "The Swing Meter's look". For the owner to decide: the pad
+    wears them, or they are retired.
+  - **For the owner to decide:** whether putts' lines come back on the
+    course between putts (they are kept only for the hole's summary).
+  - **phone-landscape failed once in three runs** (17 November 2026). Its
+    first shot struck and stopped, with CARRY 172 and TOTAL 190 written and
+    the shot card up. Skip was then tapped, and the game still said the ball
+    was in flight 30 s later; nothing errored. It passed in the full run
+    before and in a run alone after. Not found: whether the tap missed
+    (the report row above the button changes as the numbers arrive) or the
+    flight's end waited on something.
+  - `lab.state().lastStroke` holds the last reading, with its sample count.
+
+- [ ] **Play the current build by hand** (0.9.18, 17 November 2026). What has
   been built and seen only in captures, measurements or smoke runs, and still
   exists in the game. The archive has each item's full list.
+  - **The swing report's last change** (0.9.18; the owner swung the pad on
+    the iPhone and the PC and signed it off on 17 November, DONE *The
+    pull-and-push swing, on the owner's iPhone*): the Carry and Total chips
+    filling in on landing and stopping, and the row without the PULL
+    distance, seen only in smoke pictures.
   - **The woods past the property line** (0.9.17; seen in captures of all
     fifteen landscapes and one built course, DONE *The course's woods
     carried past its line*): a round played near the boundary on a wooded

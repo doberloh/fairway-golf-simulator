@@ -7507,6 +7507,351 @@ Compared and not followed:
 
 Sources in REFERENCES.md *The Swing Meter*.
 
+## The pull-and-push swing (15 November 2026, branch pull-push-swing)
+
+**Why.** The owner: the bar's marker is hard to stop on the iPhone, whose
+frame rate is held to 30. The meter already judges a tap on its own time, never
+on a frame, but the golfer reacts to a marker drawn in jumps a thirtieth of a
+second apart. The owner asked for a swing with nothing moving on its own, chose
+the pull and push from three offered (hold-and-release kept the timing problem;
+pick-and-swing had no skill in the strike), then chose which layers make it
+hard to master, and asked for an indicator of the aim. It was first built as a
+choice per golfer beside the bar; the owner then said "im imagining the
+original swing meter gone", and then (16 November 2026): "remove the bar
+entirely. users can use the new push pull with the mouse, controller, or
+swipe on a touch screen". So on this branch the three-tap bar, its timing
+code (swing-meter.js `startSwing`, `tap`, `markerAt`, the run-up and the slow
+overswing) and Space as a swing key are gone.
+
+**How a swing starts now.**
+- **On the swing pad** (finger or mouse; the owner's second try, 16 November
+  2026: "Lets have the user press a 'shot button'. That brings up the push
+  pull UI for them to use, allow that UI element to be moved around and save
+  its spot after its moved"). The **Swing** button in the swing box opens and
+  closes a panel with a fixed strike line, aim line, ruler and shot cells; a
+  press anywhere in it starts a stroke. It is dragged by its header and kept
+  where it was left in `localStorage` (`fairway-swing-pad-v2`; v1's places
+  were let go when a phone's pad moved to the foot), once per way
+  of holding the screen (wider than tall, or not), and whether it was open.
+  Its size is the screen's: **40% of its height, 220 to 420 px, a full pull
+  of (height - 36) / 1.82 -- about a fifth of the screen -- and 1.5 full
+  pulls wide (PLACED)**; at half the height and 1.75 pulls wide it took the
+  whole width of an upright phone in the first smoke pictures and covered
+  its stroke report. On a big screen it opens at the left, 14% of the way
+  down: on the right it sat over the tool column and the map. **On a phone it
+  opens at the foot, 16 px clear of the edge (PLACED), and has the foot to
+  itself** (the owner, 16 November 2026: "when the push pull UI is up, close
+  all the UI elements on the bottom of the screen and only have the shot UI
+  on the screen ... When the shot ui dissappears, bring everything back"):
+  the swing box, the club box, the aim pad and the upright Menu bar hide
+  while it shows and come back when it shuts. So the club and spin are set
+  before the pad is opened; the pad's ✕ closes it to change them. It sits above all of `#app`, so
+  it steps aside while the tools tray, a sheet, the big map, the keys, the
+  shot list or a notice is open (the first phone run had it over Sim drop). It sits in `<body>`, outside `#app`, so the Text
+  size zoom does not bend its pixels.
+- **Until then (one day), a drag down on the course** swung: a press that
+  moved 8 px mostly downward, begun where it landed, the stroke pad drawn
+  around the thumb over the whole screen. The owner's first try found what
+  that cost: marks under the finger ("Some things are getting lost behind my
+  finger"), the draw and fade lanes growing with the pull, and the pad left
+  on the screen after a pull and a lift. The course is the camera's and the
+  aim's again.
+- **The controller's right stick** is the thumb, read once a frame: pulled
+  down past 0.25 it opens the pad if it is shut and starts a stroke on its
+  strike line; down is the pull, a full deflection (0.95) the end of
+  overswing; the strike line is 0.3 UP from the middle, so a stick let go
+  springs back to the middle without striking -- the stretch between is
+  squeezed into the first 3% of a pull, under a swing's least -- and resting
+  in the middle for 300 ms is no stroke. Past the strike line the rest of its
+  travel up is the follow-through, to 0.65 of a full pull at full deflection.
+  Its ideal push is 150 ms, not 250: a stick travels a short way fast. All
+  PLACED, and not tried with a real pad: the smoke harness has none. A pad is
+  read per frame, so unlike a finger the stick's tempo does depend on the
+  frame rate.
+- **Space** does nothing now; A on a controller neither. Escape still cancels.
+
+**A lift the page never hears about** (the owner, 16 November: "I somehow was
+able to pull back and then let go and the swing display showed up on the
+screen and wont go away", and the same of the big spin ball). Not reproduced
+here; the code had one way out of a stroke, the pointer's own up or cancel on
+the element holding it, and a touch the phone hands to a system gesture, a
+mouse released outside a window that lost focus, or a lost pointer capture
+can each leave that never arriving. Both the stroke and the spin ball now end
+on whichever comes first: the element's up, cancel or lost capture, an up
+anywhere on the page, a touch end with no fingers left (80 ms later, so the
+pointer's own up can carry the last sample first), the window losing focus,
+or a mouse move with no button held. A second finger pressing the pad takes
+over from a stroke whose pointer has been silent 400 ms. The smoke journey
+tests the focus case; the phone's own case is the owner's to try.
+
+**How it is read** (`src/swing-stroke.js`, tests/swing-stroke.test.mjs). The
+pad's strike line is fixed; the pull is how far below it the thumb goes (a
+thumb may land below the line and push straight up, with no backswing: the
+depth it landed at is the pull). The depth is the distance on the meter's own
+scale. Crossing back over the line is the strike. The final push is
+found by walking back from the crossing to where the thumb turned, so slides
+and holds at the top before it do not count. Leaving the top and crossing the
+line are interpolated between pointer samples, and the coalesced moves are
+used where the browser has them, so the frame rate only spaces the samples:
+the same stroke sampled 30 and 120 times a second reads within a hundredth of
+the pull, half a degree of line and 4% of tempo. A perfect stroke launches
+exactly as a perfect meter swing of the same length (tested).
+
+**What is judged, and what it does.** Through the meter's own `strikeZone` --
+so the lie, added spin, a flop, overswing and a short shot narrow it the same
+way -- converted at **120 degrees per bar length (PLACED)**: Normal's zone is
+about 8 degrees each side of the aim line and its perfect band about 2; Easy
+12 and 3.6; Hard 4.8 and 1.
+
+- **Line** (every difficulty). Read from the top of the push to the SHAPE
+  POINT (below) against the (leaning) aim line: a start off line is **2.5
+  degrees of launch direction per zone width (PLACED)**, to four times that,
+  and nothing on the spin axis -- the finish is the curve's (below). (Until 16 November Easy and Normal judged
+  the whole push as one line with the meter's coupled cost, 1.25 degrees and
+  5 of axis per zone width, and Hard alone split start from finish.) Putts
+  judge the line only, on the putting zone (twice as wide), at 0.5 degrees per
+  zone width.
+- **Start and height together: the finish** (every difficulty, since 16
+  November: the owner, "implement the curve idea", with the Curve box
+  removed; then, after trying it: "The draw and fade should not grow in size
+  as the user pulls back. It should be part of the shot UI . I don't think its
+  follow through only. It needs to start some point before the follow through
+  but also be a part of the follow through. Somehow we need to combine the
+  shot height and the draw fade"; then, on the third try: "change the draw
+  and fade into push and pull. What impacts draw and fade is the ball spin
+  correct? So our spin meter should expose that"). Above the strike line the
+  pad draws nine fixed cells, three columns by three rows, fanned from the
+  **SHAPE POINT, 0.3 of a full pull below the strike line** (or half the
+  pull, if less; PLACED). Where the follow-through FINISHES is the shot: its
+  height above the line is the row (below), and the way from the shape point
+  to the finish against the push's own start is the bend, which PICKS WHERE
+  THE BALL STARTS (`sideOf`): Straight, a **Push** (the column on the
+  RIGHT) or a **Pull** (on the left) -- the ball starts the way the thumb
+  went. A line off the aim carried straight on is no Push; when the
+  shape-point-to-finish stretch is under 24 px the aim line is the
+  reference instead (PLACED). The finish is the last sample within 6 px of
+  the highest point after the strike, so a thumb sliding back down as it
+  stops does not count and a hook sideways at the top does. Within the
+  straight band it is Straight; within a lane centred **22 degrees** either
+  way it is a clean Push or Pull. **How far off the aim a Push starts is how
+  far the spin dot's full side spin bends that club back** (swing-meter.js
+  `pushStart`: the start that brings a 10-degree-axis flight down on the aim
+  line, flown on level ground at the shot's speed): **4.6 degrees for a
+  driver, 4.9 for a 3 wood, 5 iron or 7 iron, 4.3 for a 9 iron, 3.8 for a
+  pitching wedge and 2.5 for a sand wedge at full speed** (measured from the
+  ball model, 16 November). So a Push with the dot all the way to the draw
+  side comes back to the aim, and a Push with no side spin finishes right
+  of it. Tying the push to the dot's reach rather than a fixed angle is
+  PLACED: it keeps the two halves of a push-draw matched on every club. No
+  source was looked for; it is the game's own rule. Half-widths, degrees,
+  Easy / Normal / Hard: straight 8 / 6 / 4, lanes 12 / 9 / 6 (PLACED; a
+  thumb's swipe bends several degrees by itself, which is why straight is
+  not narrower). A finish between the straight band and a lane, or past a
+  lane, is a miss toward the nearest one: **1.5 degrees more or less start
+  per lane width off (PLACED)** -- short of a lane starts less far off, past
+  it further, a straight finish leaking toward a lane a little that way. No
+  curve: that is the spin ball's. Not for putts. The push's own LINE miss
+  (above) is now worded *a touch right* / *started right* rather than
+  *pushed right* / *pulled left*, since Push and Pull name the shot chosen.
+  - *What it replaced.* Until the third try the columns were **Draw and
+    Fade**, flown as the Curve box's shapes (8 degrees of axis, started the
+    other way so they landed on the aim), and a miss added **3 degrees of
+    spin axis per lane width**. The owner's point stands on the physics: a
+    ball curves because its spin axis is tilted (the face pointing a
+    different way from the club's path), and its start is mostly where the
+    face points -- so the pad now sets the start and the spin dot the tilt.
+    The spin dot's side spin already existed and is unchanged; it is simply
+    named the draw and fade now. Before the second try the Draw lane was on
+    the left -- a finish to the left, a ball starting right -- and the owner
+    reported "I think draw and fade are producing reversed shots"; the ball
+    model was checked (a 7 iron's draw is 2.3 m right a third of the way out
+    and lands on the aim) and was right, the pad was the reversal. Before
+    that the bend was the second half of the push against its first, ending
+    at the strike line, and the lanes were drawn from mid-push, so they grew
+    with the pull.
+  - *Rejected:* a Push sized by how far the thumb bent (a continuous start
+    angle) -- the owner asked for cells, and a thumb's swipe is too rough to
+    aim a degree with; a fixed Push angle for every club -- a driver's
+    push-draw would not come back while a wedge's overshot.
+- **Tempo** (Normal, Hard; not putts). The push's own pace against an ideal of
+  **250 ms for a full pull, 60% of that for none (PLACED)**, scaled to the leg
+  measured. Normal allows a ratio of 1.6 (perfect within 1.15), Hard 1.35
+  (1.08); **overswing narrows both, to half at the end of it** (as it narrows
+  the line's; added 16 November). Rushed: left (0.75 degrees and 3 of axis per
+  zone width), 1.2 degrees lower launch per zone width, and up to 2% hotter.
+  Lazy: right by the same, and 3% less ball speed per zone width. All PLACED.
+  Easy reports it (the gauge) without judging it.
+- **Height: the follow-through** (every difficulty, since 16 November: the
+  owner, "Implement the height follow through idea. its ok if the ball cant
+  leave right away", with the Height box removed). How far the push carries
+  on past the strike line, in full pulls: **under 0.2 Low, from 0.5 High,
+  Normal between (PLACED; 0.55 until the pad, which has to fit a phone held
+  sideways)**; near the green with a wedge Low and High are Bump & run and
+  Flop, as before. A choice, never a miss. The ball leaves when the
+  follow-through ends: the thumb still for **90 ms**, a lift, **600 ms** after
+  the strike, or 0.7 of a full pull past the line (all PLACED; 0.9 until the
+  pad). So the ball
+  goes 0.1 to 0.6 s after the strike, not on it. The yardage guide and blue
+  stop are worked out for a Normal height before the swing; a Low or High shot
+  pulled to the same mark carries that height's share of its own full carry.
+- **Spin: the spin ball** (since 16 November: the owner, "a golf ball icon
+  with a dot they can drag around. The dot would change the backspin as well
+  as the spin axis", with the Spin box removed). The dot is where the ball is
+  struck, inside the unit circle (swing-meter.js `SPIN_DOT`): at the bottom
+  **30% more spin**, at the top **25% less** (the old dial's +3 and -1), in
+  between in proportion; across, up to **10 degrees of spin axis** that way,
+  NOT started the other way (a Push or Pull does that, or it bends a ball
+  round something). **Since the third try it is the draw and fade**: left a
+  draw, right a fade, as a right-hander's words (the ball bends the way the
+  dot sits for everyone; no handedness is built). While dragged, the big
+  copy names its edges (LESS SPIN, DRAW, FADE, MORE SPIN) and shows **the
+  numbers the ball will leave with**: the backspin in rpm (the club's spin
+  for a Normal height times the dot's share, to the nearest 10) and the spin
+  axis in degrees with DRAW or FADE -- the owner asked "Spin changes the
+  shot numbers which changes the ball flight correct?", and it does: the
+  ball model flies speed, launch, direction, spin and spin axis, and the dot
+  sets the last two. The allowance narrows by 0.85 per third of the way down
+  and per half of the way across. Dragged relatively (70 px from the middle
+  to the edge, wherever the finger goes) with a 150 px copy of the ball shown
+  meanwhile; a tap centres it; on a controller the d-pad moves it a quarter
+  at a time and X centres it. All PLACED.
+- **What you hit** (the owner: "show on the screen via some sort of feedback
+  what the user hit"): a row in the swing box after each stroke -- pull in
+  yards, line, start (Push, Pull or Straight, and too far or not far
+  enough), height, spin (backspin and the draw or fade), and the tempo gauge
+  (the push's ratio to the ideal on a log scale, the zone's edges at the
+  ends of its gold band, the perfect band green, the push's time beside the
+  ideal's, and the backswing's time with its ratio to the push). Kept until
+  the next stroke. **Where it sits** (the owner, 16 November 2026: "we now
+  have sort of two sets of data ... remove [carry, total, apex] and move the
+  tempo box and the pull, line, start, height, spin boxes down to fill that
+  gap"): the chips are a row just above the Spin and Swing buttons and the
+  tempo box is the first cell of their row, where carry, total and apex were;
+  those three are no longer on screen on the Swing Meter (the shot list
+  keeps them). Rejected: the chips and the tempo together beside the
+  buttons -- on a phone the chips then wrapped to three rows in a cell about
+  220 px wide and the box grew taller than before. **Carry and total came
+  back** the next day, as the chip row's last two (the owner, 17 November
+  2026: "I think i do miss carry and total but also, There is a distance
+  number now that didnt match carry or total. What is that?"). The number
+  was PULL: the carry the pull asked for, `fullCarry` of the club and shape
+  times the pull's share, in still air with a clean strike. Strike quality,
+  wind, slope and roll then move the real carry and total away from it.
+  The two chips are written once each, never counted up, so they do not read
+  as a second running PULL and the row (a polite live region) is not
+  announced every frame: CARRY when the ball lands, TOTAL when it stops, a
+  dash until then. A putt gets TOTAL only. PLACED: not counting up, and
+  apex left off. **The PULL chip went** the same day (the owner, told what
+  it was: remove "the distance one"). Three distances in one row, two of
+  them real, read as a mismatch; what a pull reaches is still on the pad's
+  yard marks while pulling. **The path is kept too** (the owner: "allow the user to
+  see the pull and push path after the shot somehow"): the pad goes on
+  drawing the last stroke's trail -- marks where it turned at the top,
+  crossed the line and passed the shape point, a ring at the finish, its
+  cell lit -- until the next stroke, for that golfer on that hole. **The pad
+  shuts 1 s after the shot** (`PAD_LINGER`, PLACED; the owner, third try:
+  "it should only stay for just a second before closing after the shot"),
+  so the path shows for that second and whenever Swing reopens the pad
+  before the next stroke. Until then it stayed open from shot to shot.
+- **Out from under the thumb** (the owner: "Some things are getting lost
+  behind my finger"). Nothing the golfer reads sits on the thumb's path any
+  more: the yards are a ruler down the pad's left edge, the blue stop a notch
+  on it with a dotted line across the pad, the live yards in the pad's
+  header, and the cells, columns' and rows' names above the strike line,
+  where a hand pulling down does not cover them. The ruler is on the left
+  for a right thumb coming in from the lower right; a left-handed setting is
+  not built.
+- **Tap-ins** (found by the full smoke run, 16 November: three journeys could
+  not hole out). A pull under 4% of a full pull is no swing, and a half-foot
+  putt on the shortest putting range then (a quarter of the putter's roll) was
+  2%. The putt's pull now also zooms to an eighth, a sixteenth and a
+  thirty-second of the roll (about 0.85 m at Stimp 10), so a half-foot putt is
+  18% of a pull. PLACED.
+- **The pace cue** (Easy, Normal; not putts), a dot playing the rhythm over
+  and over, never a target. Before the swing it plays the WHOLE swing for the
+  blue stop's pull (the owner: "The pace marker only shows the follow
+  through. Shouldn't pull back also be included?"): down from the strike line
+  in **three times the ideal push (the 3:1 of a golf swing's back and
+  through; PLACED)**, 150 ms at the top, up to the line in the ideal push, on
+  to the middle of NORMAL in 0.45 of it, then a pause of at least 0.5 s while
+  it fades. Resting at the top of a real pull it plays the rest from the
+  thumb. **The backswing is timed** (from the first 6 px of pull to first
+  reaching the top's band, so a rest at the top is not in it) and shown
+  beside the push. Until then the cue ran only from the thumb to the strike
+  line.
+- **The backswing's 3 : 1, judged on Hard only** (the owner, 16 November:
+  "for the 3:1 ratio lets only judge it on hard mode. what number makes the
+  most sense for it to impact?"). The ratio is the backswing's time over the
+  push's measured time (not the ideal's). **What it costs is ball speed**,
+  so carry: rhythm's payoff in a real swing is a well-timed, centred strike
+  -- a rushed or dragged backswing loses the club's speed into the ball and
+  moves the strike off the middle of the face, which shows first as ball
+  speed; the push's own pace already moves the line and launch (Tempo,
+  above), so the ratio leaves those alone. Within **1.2 times either way of
+  3 (2.5 to 3.6 : 1) it costs nothing; at 1.6 times (1.9 or 4.8 : 1) the
+  ball loses 2% of its speed, and at most 4%** (PLACED; 2% of ball speed is
+  about 3 to 4 yards of a 7 iron's 150). Only for a pull of at least 0.4 of
+  a full one (`SHORT_SHOT`): a chip's rhythm is its own (instruction usually
+  gives the short game a quicker 2 : 1). The 3 : 1 itself is the figure
+  golf instruction commonly gives for back to through, popularised by John
+  Novosel's *Tour Tempo* (2004) as a measurement of tour players' full
+  swings -- named from memory, **not fetched or checked for this change**,
+  so the 3 is PLACED as much as the bands around it are; someone should go
+  back for the source before it is defended. Words: *backswing quick* /
+  *backswing slow*; the report marks the back line orange. Rejected:
+  costing the line (the push's tempo does that already, and two judgements
+  moving the same number would be indistinguishable to the golfer), and
+  judging it on Normal (the owner asked for Hard only).
+- **The aim line leans on a side slope**: 1.5 degrees per degree of slope
+  across the aim line, times 0.5 / 0.75 / 1 by difficulty, at most 15 (PLACED).
+  The ball follows the ground from either side of it -- below a right
+  hander's feet and above a left hander's both go right when the ground falls
+  right -- so no handedness is needed. Never on the green or the mat.
+- **Hard hides the help**: no blue stop, no pace cue, and the yards show
+  only once the thumb has been still 150 ms.
+- **The full pull** is the pad's (above): about a fifth of the screen's
+  height, so a thumb learns one length per screen. (It was 30% of the
+  screen, 100 to 260 px, while the swing was on the course.)
+
+**Decided and rejected.**
+- **The 3:1 back-to-through tempo ratio** (offered to the owner as "judged
+  against how long you took to pull back") was replaced by the push's own pace
+  in building: the thumb may hold and adjust at the top as long as it likes.
+  Since the owner's second try the backswing is timed up to its first
+  arrival at the top (holds after that do not count), shown against 3:1 and
+  played by the pace cue, but still not judged; theirs to decide.
+- **The rough's shaking guide** (offered as part of the lie layer) is not built:
+  the lie already narrows the allowance through `strikeZone`.
+- **Starting the pull on the bar itself**: the bar sat at the foot of the
+  screen, where there is no room to pull down. The first build armed the pad
+  with a tap on the bar instead; the bar has since gone and the swing starts
+  on the course.
+- **A drag on the course to swing** was first rejected for the reason
+  swipe-to-aim was (DONE, *Aiming by touch*: a drag on the course moves the
+  camera). It was built for a day once the bar went (only a drag that
+  started DOWN was a swing), and replaced by the swing pad after the owner
+  tried it (above).
+- **The Swing Meter's skins** (rewards that coloured the bar,
+  rewards.js `METER_SKINS`) have nothing to colour now; what they become is
+  open (TODO).
+- **Curve and height kept on buttons for Easy** (offered 16 November) went
+  when the owner asked for the boxes removed: every difficulty shapes with
+  the swing, Easy with wider lanes.
+- **Spin from the swing** was offered as not fitting (every part of the push
+  is already used) and the owner chose the spin ball instead.
+- **Lane and height labels on the pad, first draft**: the lanes ran past the
+  strike line into the height marks, and on a phone held sideways (a full
+  pull of about 120 px) DRAW and FADE sat on NORMAL and PACE on a yard mark.
+  Moot since the pad: its cells, column and row names have fixed places.
+- **Column cells instead of a fan** (a grid of upright columns above the
+  line): rejected for a fan from the shape point, because a finish is a way
+  the thumb goes, not a place it lands -- a fan reads the same however long
+  the follow-through, a grid would make a short (Low) finish land in Straight
+  whatever its direction.
+- **Closing the pad after every stroke**: rejected, because the owner asked
+  to see the path after the shot; the pad stays open, dimmed while the ball
+  flies, until the golfer closes it.
+
 ## The smoke test on GitHub: three harness faults (16 October 2026)
 
 The tests workflow's smoke step (`--software --only boot,range,endless-round`)

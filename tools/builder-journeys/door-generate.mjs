@@ -7,6 +7,27 @@ import {pathToFileURL} from 'node:url';
 
 // The game: a built file handed in, the course played, one tee shot taken.
 // Door 2's journey plays its course the same way.
+// A SHOT ON THE SWING PAD with the mouse, as tools/smoke.mjs `strokeOnPad`
+// takes one: Swing opens the pad, the mouse pulls down most of a full swing
+// and pushes straight up through the line; it returns once the ball is up.
+// Until 17 November 2026 this was three taps of Space on the Swing Meter,
+// which the pull-push-swing branch removed. tools/play-built.mjs uses it too.
+export async function padShot(game) {
+ // A fresh browser is a first visit: the welcome asks a name, over the Swing
+ // button (Space went under it; a click cannot).
+ if (await game.evaluate(() => document.getElementById('welcome')?.hidden === false)) { await game.fill('#welcomeName', 'Tester'); await game.click('#welcomeGo'); await game.waitForTimeout(500); }
+ if (await game.evaluate(() => document.getElementById('swingPad')?.hidden !== false)) await game.click('#shotButton');
+ await game.waitForFunction(() => document.getElementById('swingPad')?.hidden === false, null, {timeout: 10000});
+ const g = await game.evaluate(() => { const a = document.getElementById('swingArea'), r = a.getBoundingClientRect(); return {x: r.left + +a.dataset.x0, y: r.top + +a.dataset.y0, full: +a.dataset.full}; });
+ const top = g.y + .8 * g.full, end = g.y - .12 * g.full;
+ await game.mouse.move(g.x, g.y + 6); await game.mouse.down();
+ for (let i = 1; i <= 10; i++) { await game.mouse.move(g.x, g.y + 6 + (top - g.y - 6) * i / 10); await game.waitForTimeout(25); }
+ await game.waitForTimeout(200);
+ for (let i = 1; i <= 12; i++) { await game.mouse.move(g.x, top - (top - end) * i / 12); await game.waitForTimeout(22); }
+ await game.mouse.up();
+ await game.waitForFunction(() => window.lab.state().inFlight, null, {timeout: 10000});
+}
+
 export async function playOneShot(t, bytes, name) {
  const {ROOT, SHOTS} = t;
  const game = await t.context.newPage();
@@ -22,12 +43,11 @@ export async function playOneShot(t, bytes, name) {
  const hash = await game.evaluate(s => { const bin = atob(s), b = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i); return window.lab.built(b); }, Buffer.from(bytes).toString('base64'));
  await game.evaluate(h => window.lab.course({built: h}), hash);
  await game.waitForFunction(() => document.getElementById('app').dataset.mode === 'play', null, {timeout: 120000});
- // One tee shot, the way a keyboard player takes one (tools/smoke.mjs swing):
- // three taps of Space on the Swing Meter, then Enter to skip the flight.
+ // One tee shot, the way a PC player takes one (`padShot`), then Enter skips
+ // the flight.
  await game.waitForFunction(() => window.lab.state().canSwing, null, {timeout: 60000});
  const from = await game.evaluate(() => window.lab.state().ballAt);
- await game.keyboard.press('Space'); await game.waitForTimeout(800); await game.keyboard.press('Space'); await game.waitForTimeout(300); await game.keyboard.press('Space');
- await game.waitForFunction(() => window.lab.state().inFlight, null, {timeout: 10000});
+ await padShot(game);
  await game.keyboard.press('Enter');
  await game.waitForFunction(() => !window.lab.state().inFlight, null, {timeout: 60000});
  const to = await game.evaluate(() => window.lab.state().ballAt);

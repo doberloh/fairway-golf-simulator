@@ -2156,3 +2156,27 @@ server program's journey skipped until the release built it), and captures
 of the line on all fifteen landscapes and one built course. Not played by
 hand.
 
+## Addendum, 17 November 2026: v0.9.18
+
+**v0.9.18** is published at the owner's request ("merge it back and release
+0.9.18 and also deploy the live site demo"), as "Fairway 0.9.18 (beta)",
+tag `v0.9.18`, not a pre-release, the same six files, from the merge of
+`pull-push-swing` into `main`, notes in `docs/releases/v0.9.18.md`.
+Content: the pull-and-push swing on a swing pad (src/swing-stroke.js, new;
+swing-meter.js, main.js, keys.js, the round's CSS) in place of the three-tap
+Swing Meter bar, and the phone menu's sideways scroll fixed. Generator 103,
+schema 47 and built 3 are unchanged and no world file changed: no saved
+round, course or code moves. The built page is 60,542,342 bytes against
+0.9.17's 60,513,068 (29 KB more). Nothing new is fetched, no dependency or
+asset was added, and the page still opens from a file URL with no network.
+`tools/phone-probe.mjs`, which adds a reporting script to a served test
+copy, is a development tool: its script is never in `src/`, `dist/` or the
+zips. Checked on the released code: 1,673 Node tests (1,670 pass, three
+skipped, none failing), the builder's 9 smoke journeys, the game's 41
+(38 in the full run; surprise-round passed after the fix it found,
+home-screen-private when run again, and no-late-shaders fails the same way
+on 0.9.17's build, TODO *Known wrong*), and the six swing-pad journeys 6 of
+6 after the last change. Swung by the owner on an iPhone and a PC, with a
+mouse and a controller; the carry and total chips and the report without
+PULL not yet seen by a person.
+

@@ -131,7 +131,7 @@
 
  /* The Swing Meter: narrow, its bar tall enough to tap. */
  #world[data-mode=play] .swing-meter{left:50%!important;right:auto!important;top:auto!important;bottom:12px!important;width:300px!important;transform:translateX(-50%);padding:0!important;border:0;border-radius:0;background:none;box-shadow:none;backdrop-filter:none;color:#fff}
- #world[data-mode=play] .swing-meter .sm-head{margin-bottom:14px;font-size:12px;font-weight:800;font-style:italic;text-shadow:var(--outline)}
+ #world[data-mode=play] .swing-meter .sm-head{margin-bottom:6px;font-size:12px;font-weight:800;font-style:italic;text-shadow:var(--outline)}
  #world[data-mode=play] .swing-meter .sm-title{font-size:12px;color:#fff;text-transform:uppercase}
  #world[data-mode=play] .swing-meter .sm-hint{color:var(--hot);text-transform:uppercase}
  #world[data-mode=play] .swing-meter .sm-bar{height:40px;border:0;border-radius:0;transform:none;pointer-events:auto;background:var(--sm-track,rgba(255,255,255,.08));box-shadow:inset 0 0 0 2px var(--sm-edge,rgba(255,255,255,.25)),0 0 0 3px var(--panel)}
@@ -142,8 +142,6 @@
  #world[data-mode=play] .swing-meter .sm-ticks span.over{background:repeating-linear-gradient(90deg,rgba(255,140,40,.55) 0 6px,rgba(255,140,40,.3) 6px 10px)}
  #world[data-mode=play] .swing-meter .sm-marker{width:6px;margin-left:-3px;border-radius:0}
  #world[data-mode=play] .swing-meter .sm-result{margin-top:4px;padding-top:0;border:0}
- #world[data-mode=play] .swing-meter .sm-result strong{font-size:15px;font-weight:800;font-style:italic;color:#fff}
- #world[data-mode=play] .swing-meter .sm-result>span>span{font-size:11px;color:var(--soft)}
 
  /* The aim pad: three by three, slanted, the flag in the middle. */
  #world[data-mode=play] .aim-pad{display:grid!important;position:absolute;left:auto!important;right:16px!important;top:auto!important;bottom:12px!important;z-index:8;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,44px);gap:4px;width:auto!important;height:auto!important;padding:0!important;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;backdrop-filter:none!important}
@@ -272,7 +270,12 @@
 @container app (max-width:560px) or (max-height:500px){
  .main-menu:not(.menu-behind){background:linear-gradient(180deg,rgba(4,8,12,.6),rgba(4,8,12,.82))}
  .main-menu .menu-brand{font-family:"Saira Condensed",var(--font-ui),sans-serif;font-weight:800;font-style:italic;font-synthesis:style}
- .main-menu .menu-modes{display:grid!important;grid-template-columns:1fr;gap:6px;width:100%;max-width:420px}
+ /* Columns are minmax(0,1fr), never 1fr: a bare 1fr is as wide as its
+    longest line, and the Challenges row's nowrap note (cut with "..." but
+    measured whole) spread the two sideways columns to 545 px on the owner's
+    440 px iPhone whenever the screen was under 500 tall -- the keyboard up,
+    say -- and the menu scrolled sideways (17 November 2026). */
+ .main-menu .menu-modes{display:grid!important;grid-template-columns:minmax(0,1fr);gap:6px;width:100%;max-width:420px}
  .main-menu .menu-tile{position:relative;isolation:isolate;display:flex!important;flex-direction:row;align-items:center;justify-content:flex-start;gap:12px;width:100%!important;max-width:none;height:48px;min-height:44px;padding:0 22px!important;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;backdrop-filter:none!important;color:#fff;font-family:"Saira Condensed",var(--font-ui),sans-serif;font-synthesis:style;transform:none}
  /* A hidden row stays hidden: the !important above had brought back the old Endless and Course of the week rows, and Continue with no round, on every phone (audit 3). */
  .main-menu .menu-tile[hidden]{display:none!important}
@@ -291,7 +294,7 @@
  #world .xp-gain{left:16px!important;right:auto!important;top:130px!important;width:300px!important;transform:none!important;zoom:.78}
  /* ... and the folded shot panel it would cover steps out while it is up. */
  #world:has(.xp-gain:not([hidden])) .shot-controls>.shot-panel{visibility:hidden}
- .main-menu .menu-modes{grid-template-columns:1fr 1fr;max-width:640px}
+ .main-menu .menu-modes{grid-template-columns:repeat(2,minmax(0,1fr));max-width:640px}
  .main-menu .menu-tile{height:44px}
 }
 
@@ -380,8 +383,9 @@
 
 /* THE FOOT, COMPACTED, AND THE MAP BEHIND A BUTTON (the owner, 28 October
    2026). As on a big screen (round-hud.css, *THE FOOT, COMPACTED*): the lie is
-   the club box's top band, and the meter's row under the bar holds carry,
-   total and apex beside curve, height and spin, or beside Skip in flight. The
+   the club box's top band, and the meter's row under the bar holds the
+   stroke's tempo (carry, total and apex until 16 November 2026) beside the
+   spin ball and Swing, or beside Skip in flight. The
    old shot panel goes: with the Swing Meter Skip is in that row; with a
    monitor or a typed shot, where there is no meter, Skip stands alone in the
    corner the aim pad leaves in flight. The club's bag opens over everything
@@ -402,15 +406,16 @@
  #world[data-mode=play] .club-control.dd-open{z-index:36}
  #world .club-control>.dd-list{bottom:calc(100% + 8px)}
  #world[data-mode=play] .swing-meter{width:380px!important}
- #world[data-mode=play] .swing-meter .sm-result{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(min-content,1fr);gap:4px;margin-top:6px;align-items:stretch}
- #world[data-mode=play] .swing-meter .sm-result>span{justify-content:center}
+ /* The tempo takes what the buttons leave (16 November 2026: carry, total
+    and apex went, and their three cells with them). */
+ #world[data-mode=play] .swing-meter .sm-result{display:grid;grid-auto-flow:column;grid-template-columns:minmax(0,1fr);grid-auto-columns:minmax(68px,auto);gap:4px;margin-top:4px;align-items:stretch}
  #world[data-mode=play]:not(.in-flight):not(.monitor-armed) .swing-meter .sm-result>.shape-control:not(.putt){display:contents!important}
  #world[data-mode=play] .sm-result .shape-pick{position:relative;isolation:isolate;display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:1px;height:auto;min-height:44px;min-width:0;padding:2px 4px!important;border:0;background:none;color:#fff;font-size:14px;text-shadow:none}
  #world[data-mode=play] .sm-result .shape-pick::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  #world[data-mode=play] .sm-result .shape-pick:disabled{opacity:.55}
  #world[data-mode=play] .sm-result .shape-pick strong{order:-1;max-width:none;overflow:visible;font-size:14px;line-height:1.05}
  #world[data-mode=play] .sm-result .shape-pick small{order:0;font-size:10px}
- #world[data-mode=play] .sm-result>.sm-skip{grid-column:span 3;position:relative;isolation:isolate;display:flex!important;white-space:nowrap;align-items:center;justify-content:center;min-height:44px;margin:0;padding:0 12px;border:0;background:none;color:var(--on-hot);font:800 italic 16px/1 "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase;text-shadow:none;pointer-events:auto}
+ #world[data-mode=play] .sm-result>.sm-skip{grid-column:span 2;position:relative;isolation:isolate;display:flex!important;white-space:nowrap;align-items:center;justify-content:center;min-height:44px;margin:0;padding:0 12px;border:0;background:none;color:var(--on-hot);font:800 italic 16px/1 "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase;text-shadow:none;pointer-events:auto}
  #world[data-mode=play] .sm-result>.sm-skip::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(135deg,var(--a1),var(--a2-text,var(--a2)))}
  #world[data-mode=play] .sm-result>.sm-skip[hidden]{display:none!important}
  #world[data-mode=play] .sm-result>.sm-skip kbd{display:none}
@@ -444,6 +449,14 @@
     fly pad and the club box under the chip; the hole, the wind and camera
     and the bar stay -- Fly is the way back. */
  #world[data-mode=play].exploring :is(.rh-launch,.club-control,.lie-readout,.shape-control,.swing-meter,.monitor-panel,.flag-label,.aim-label,.rh-shot-card,.aim-pad){display:none!important}
+ /* THE SWING PAD ALONE AT THE FOOT (the owner, 16 November 2026: "when the
+    push pull UI is up, close all the UI elements on the bottom of the screen
+    and only have the shot UI on the screen ... When the shot ui disappears,
+    bring everything back"). While the pad shows (main.js drawSwingPad sets
+    `pad-up`) the swing box, the club box and the aim buttons step aside, and
+    the pad opens at the foot of the screen (`placeSwingPad`). The hole, the
+    wind, the golfers and the map stay. */
+ #world[data-mode=play].pad-up :is(.club-control,.lie-readout,.shape-control,.swing-meter,.rh-launch,.rh-shot-card,.aim-pad){display:none!important}
  #world[data-mode=play] .explore-bar{position:static;display:contents}
  #world[data-mode=play] .explore-bar>div:first-child,#world[data-mode=play] .explore-bar .flight-instructions,#world[data-mode=play] .explore-bar #exitExplorer{display:none!important}
  #world[data-mode=play] .explore-bar>label{position:absolute;left:16px;bottom:16px;z-index:8;display:flex;flex-direction:row;white-space:nowrap;align-items:center;gap:8px;height:44px;margin:0;padding:0 0 0 12px;background:var(--panel);color:var(--soft);font:700 11px/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em;text-transform:uppercase}
@@ -479,6 +492,8 @@
  .rh-cards{left:auto;right:12px;top:12px;flex-direction:row-reverse;flex-wrap:wrap;justify-content:flex-start;max-width:150px}
  .rh-subs{left:12px;right:auto;top:72px}
  #world[data-mode=play] .rh-bar{left:12px;right:auto;top:auto;bottom:12px}
+ /* Upright the bar is at the foot too, so it steps aside for the swing pad. */
+ #world[data-mode=play].pad-up .rh-bar{display:none!important}
  /* Jump to green on a row of its own above the bar and the fly pad: beside
     the bar it ran 14 px into the pad on a 360-wide phone. */
  #world[data-mode=play] .explore-bar>label{left:12px;bottom:112px}

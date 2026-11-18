@@ -39,7 +39,7 @@ export const SETTINGS_TABS = [
  ['camera', 'CAMERA'],
  ['graphics', 'GRAPHICS'],
  ['time', 'TIME OF DAY'],
- ['shot', 'SWING METER'],
+ ['shot', 'SWING'],
  ['putting', 'PUTTING'],
  ['shotdata', 'SHOT NUMBERS'],
  ['flight', 'TURF'],

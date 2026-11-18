@@ -11,6 +11,7 @@ changes what it covers.
 | **Node tests** | `npm test` (whole suite); `npm run test:changed`, `npm run test:fast` (*Running the Node tests*) | the processor, about 3 1/2 minutes whole; seconds for the fast set | the rules, the ball, the generator, saves -- every pure module | anything `main.js` wires up, anything drawn |
 | **Generator checks** | `node tools/biome-fingerprint.mjs --check`, `node tools/bench.mjs --tier quick` (and `seated --set trees=65`: no plant's drawn foot above its ground; its `surround` metric, on every course with no setting: no tree past the property line inside the property, in water, or more than 5 cm off the ground drawn under it -- the invariants `surroundInside`, `surroundWet` and `surroundOffGround`, which replaced the far woods' `farSeated` on 12 November 2026) | the processor, seconds | whether generated ground moved; course invariants that must be zero | how a course looks |
 | **Smoke test** | `npm run smoke` | **the graphics card**, about 5 minutes for all | the built single file in a real browser: buttons, panels, journeys a player takes, any error or network request | whether it LOOKS right; real phones, real monitors |
+| **The owner's own phone** | `node tools/phone-probe.mjs` (AGENTS.md, *A test copy may report back*), port 1923, the owner opens the printed address | **the phone**; nothing on this computer's card | the real device's layout: window, visual viewport and zoom, page width, every element past the screen's sides (8 s and 20 s after load, after a turn or resize, on a tap of the yellow strip), uncaught errors, console errors and warnings, and anything a `--script` file sends; written to `bench/probe/` (not committed) | anything the owner does not open or do; a pass on one phone says nothing of another |
 | **Frame profile** | `npm run profile` | **the graphics card**, minutes at full load | what a frame costs | correctness |
 | **Interface audit** | `node tools/ui-audit.mjs` (UI_POLISH.md) | **the graphics card**, about 14 minutes for every screen at sixteen sizes (four side by side), about 5 for `--quick` | every screen's layout at phone to 4K and both Text size ends: overlapping or cut-off text, things off screen or off-centre, two highlights alike, touch targets under 44 px, contrast read from the picture, text under the kit's floor; a picture of each | whether it works (the smoke test's job), whether it is pleasant |
 | **Menu motion** | `node tools/ui-motion-check.mjs` (UI_POLISH.md) | **the graphics card**, under a minute | each animation in ui-motion.css runs 100-300 ms on opacity and transforms only, ends whole when interrupted (Esc while arriving, two presses on Next), lets the keys answer at once, and does not run under reduced motion | how it feels |
@@ -224,10 +225,23 @@ the courses several suites share, and builds many at once on worker threads
   capture curve, lip-outs, the flagstick, and the same hole inside a whole
   shot), `core` (flight), `landing`,
   `refinement`, `green-refinement`, `pins`,
-  `obstacle-collision`, `solid-colliders`, `homes`, `swing-meter` (the lie's
+  `obstacle-collision`, `solid-colliders`, `homes`, `swing-meter` (since the
+  bar went on the pull-push-swing branch, a struck swing is given as its pull
+  and strike error, and the bar's tap-timing tests went with the bar; the lie's
   speed table, the flyer -- grass takes a lofted shot's spin and almost none of a
   long iron's -- from meter and monitor shots alike; nothing in it holds a ball to
-  stopping or staying),
+  stopping or staying), `swing-stroke` (the pull-and-push swing: scripted thumb
+  strokes for pull (from the pad's fixed strike line, a press below it with no
+  backswing too), line, the curve read at the finish -- the Draw column on the
+  right, a draw launching right and turning back, the columns on every
+  difficulty and their misses, the cell a finish is in, a finish that slides
+  back down -- a Push and Pull starting off by the club's angle with no curve
+  of their own, tempo and overswing's narrower window, the backswing timed
+  and its 3 : 1 judged on Hard only (ball speed, not a chip), the tempo gauge, holds and slides at the top, lifting before the
+  push, the follow-through's heights and when it ends, the aim line's lean,
+  the same stroke sampled 30 and 120 times a second, a perfect stroke
+  launching as a perfect clean swing, the pad fitting six screen sizes, and
+  the spin dot's backspin, side spin and allowance),
   `dispersion`, `plays-like`, `aim-preview`, `range` (every green, the aim
   arc, slopes, cups, chip and putt spots), `lab`.
 - **Making a course** -- `world`, `landscape` (with `landscape-water` and
@@ -440,6 +454,7 @@ putt now waits 30 s for the card, and the journey logs how long it took.
 | `endless-round` | one golfer: clubs, aim, cameras, the Swing Meter, a tee shot, a drop, putting out, the scorecard, the next hole. Logs the course and seed, and the hole's par and its hole-out banner ("BIRDIE! 3 strokes") on every run |
 | `surprise-round` | a nine-hole course, every in-round tool opens |
 | `mixed-group` | two golfers, one on the monitor and one on the Swing Meter |
+| `pull-push` (branch pull-push-swing, 15-16 November 2026) | the pull-and-push swing on the swing pad with the mouse: a click on the course still aims and a drag down on it is no swing, the Swing button opens the pad with its aim line, shot cells and blue stop line and nothing of the round's over its strike line, a lift before the push is no stroke (and says so), a lift lost to the window's blur ends the stroke, a pull and push finished out to the right and high strikes a High Push, the report shows line, start, height, spin, tempo and the backswing, the pad shuts after the shot and, opened again, still has the path and its lit cell, the pad follows its top bar and comes back where it was left after closing, Escape cancels mid-pull; pictures of the pad mid-pull and of the path after (bench/shots/smoke/pull-push-pad.png, pull-push-path.png). `endless-round` drags the spin ball's dot right (its big copy must read FADE and an rpm) and taps it back to the middle, and checks the pad shuts after a shot and keeps the path when opened again. Nothing checks yet that a putt draws no tracer. The phone journeys first check that nothing in the main menu reaches past the screen's width (16 November 2026: an iPhone's menu scrolled sideways in a week with a long challenge name). They check it only at their own sizes, 390 x 844 and 844 x 390. A narrow screen under 500 tall, such as an iPhone upright with the keyboard up, is not checked; that is where the second half of the bug was (17 November 2026, found on the owner's phone). Then they check that while the pad is up just after the shot it sits at the foot of the screen (within 40 px of the bottom) with the swing box and club box gone (`pad-up`), then that it shuts and they come back, and leave phone-portrait-pad.png / -report.png and the landscape pair: the pad mid-pull and the report in flight once the pad has shut, to look at. `flightClearsTheScreen` wants the chips (LINE, then CARRY and TOTAL, and no PULL distance: it went on 17 November) and the tempo (TEMPO) in the swing box in flight, and no CARRY beside its buttons (carry, total and apex left that row on 16 November 2026; carry and total came back as chips on 17 November). The pull-push journey's report needs CARRY and TOTAL among the chips, and the endless round needs both with a number once the ball has stopped. With the bar gone, EVERY journey swings this way: `t.shot()` and `t.putt()` open the pad and pull and push in it with the mouse (`strokeOnPad`, reading the strike line from the pad's `data-` values; a putt pulls to the blue stop), the phone journeys by touch. The controller's stick is not driven: the harness has no pad |
 | `skins` | a two-golfer skins round starts; chips and the Skins row |
 | `relief` | water and out of bounds, through a reload, both rules |
 | `profile`, `bag`, `look`, `level-up` | players, bags, looks, levels |
@@ -467,7 +482,11 @@ for all of those are covered in Node (above); the screens for them are not.
 a fresh page per journey (its save dialog, showSaveFilePicker, hidden so Save
 downloads; a journey that tests the dialog puts a stand-in back), and a
 journey fails on any uncaught error,
-`console.error` or network request; a failure leaves a screenshot in
+`console.error` or network request. Where a journey plays its saved course
+in the game, the tee shot is a pull and push on the swing pad with the
+mouse (`padShot` in builder-journeys/door-generate.mjs, which
+tools/play-built.mjs shares). Until 17 November 2026 it was three taps of
+Space, and five journeys failed once the pad replaced them. A failure leaves a screenshot in
 `bench/shots/builder-smoke/`. Journeys added by later stages register from
 `tools/builder-journeys/`. It uses the graphics card (docs/COURSE_BUILDER.md).
 `tools/builder-look.mjs <file.fairway> [--hole n] [--heights 15,40,120]` is
