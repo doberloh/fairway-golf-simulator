@@ -174,9 +174,19 @@ export function computerGolfer({handicap = 15, traits = {}, seed = 'golfer', set
  function readPutt(h, from, lie) {
   const pin = h.pin, d = Math.hypot(pin.x - from.x, pin.z - from.z), straight = Math.atan2(pin.x - from.x, pin.z - from.z) / DEG;
   let aim = straight, roll = d + .43; // Pelz: 17 in past (PLACED as the aim)
+  // THE TRIAL ROLLS ARE CHEAP (18 November 2026): this runs on the frame
+  // loop's thread at the start of a computer golfer's turn, and three rolls
+  // at the ball model's 240 steps a second took up to about 50 ms on the
+  // owner's PC. Over 3 m the trials step at 120 a second (a short putt is
+  // cheap and its read needs the full precision: coarser, scratch golfers
+  // missed short ones); the putt struck is flown at full precision. (Stopping
+  // once a trial finished within 30 cm was tried and dropped: a trial 25 cm
+  // to one side left the aim uncorrected, and scratch's short putts fell
+  // from half holed at 7 ft to 5.)
+  const dt = d > 3 ? 1 / 120 : 1 / 240;
   for (let i = 0; i < 3; i++) {
    const speed = puttSpeedFor(putter, turf, Math.max(.1, roll));
-   const r = simulateShot({origin: {...from}, aim, speed, vla: 0, hla: 0, spin: 0, spinAxis: 0}, h, {...air(h), turf, flagsticks: {current: false}});
+   const r = simulateShot({origin: {...from}, aim, speed, vla: 0, hla: 0, spin: 0, spinAxis: 0}, h, {...air(h), turf, flagsticks: {current: false}, dt});
    if (r.holed) break;
    // The closest the ball came to the cup, and which side.
    let best = null;

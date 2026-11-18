@@ -265,6 +265,12 @@ here is a claim of support until it is done.
     courses has not been written and read on a real browser (the ZIP64
     path is tested on a small file); the hole model is not yet checked
     against the computer golfers' own rounds hole by hole.
+  - **A computer golfer's plan runs on the frame loop** (branch fairway-tour,
+    measured 18 November 2026, RESEARCH *Frame rate with computer golfers*):
+    up to about 36 ms on the owner's PC at the start of its turn (a frame or
+    two; more on a phone, not measured there), during its still pre-shot
+    moment. Drawing a course is level with 0.9.18 on Low, Phone and Ultra.
+    Owed: spread the plan over frames, or hand it to a worker.
   - **The caddie, strokes gained, the tour's rewards, the builder's test
     round on computer golfers** (branch fairway-tour, 18 November 2026):
     tested in Node, **not seen in the game**. To check: the caddie's line

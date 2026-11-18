@@ -16784,6 +16784,37 @@ and 0 for a hole not holed out (the text read). Individual Stableford is
   rival's handicap half a stroke (top ten better, bottom quarter worse),
   never more than three from the roster's figure.
 
+### Frame rate with computer golfers (18 November 2026, measured)
+
+**Drawing a course: level with 0.9.18 on every tier measured.**
+`tools/frame-ab.mjs`, the 0.9.18 page from its release zip (A) against the
+branch's build at step 10 (B), alternated, tees 1, 5 and 9 on the
+profile course, through the card's gate:
+
+| Tier | Rounds | Frame, mean of spots, A / B | Card at full clock |
+| --- | --- | --- | --- |
+| Ultra (desktop) | 2 | 2.88 / 2.86 ms (-0.8%) | level within 2% |
+| Low (desktop) | 4 | 1.57 / 1.57 ms (0.0%) | level within 1% |
+| Phone (iPhone 13 stand-in, `--tier phone`) | 4 | 2.13 / 2.10 ms (-1.6%) | -- |
+
+Low's first two-round run read B 8.5% slower; with four loads a build it is
+level (the two load modes, docs/history/SURROUNDINGS.md). Load times the
+same (course load 13.9 / 14.0 s on Ultra).
+
+**What a computer golfer adds is its plan**, on the frame loop's thread at
+the start of its turn, during its still pre-shot moment: every shot of three
+18-hole rounds (scratch, 15, 30) on a 7,000-yd course, timed in Node on the
+owner's PC: putts median 3.9 ms, 95% 28.9 ms, worst 35 ms; full shots
+median 7.2 ms, 95% 21.4 ms, worst 35.8 ms; short shots under 10 ms. (The
+first shots of a session are slower while the engine compiles: one putt
+read 230 ms and one chip 305 ms in a cold run.) Before the change below the
+warm worst was 55 ms. **So a computer golfer's turn can cost a frame or two
+on this PC, and on a phone about three or four times that** (not measured
+on a phone). Trial rolls of a putt over 3 m now step at 120 a second; the
+early stop once a trial finished within 30 cm was tried and dropped
+(scratch's short putts got worse). Moving the plan off the frame loop
+(spread over frames, or a worker given the hole) is the next step, and owed.
+
 ### Opponents that adapt: all placed (src/ai/adapt.js)
 
 The person's form is their strokes over par plus their handicap strokes
