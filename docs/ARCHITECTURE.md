@@ -30,8 +30,10 @@ with no account, backend, telemetry or fetched fonts. An optional local bridge
 (a separate Node program, shipped compiled as `run_fairway_server`) connects a
 launch monitor. Every course is **generated from a seed**: one continuous
 landscape holding 9 or 18 holes, in one of fifteen landscapes (the work on 15 real golf looks, branch `us-golf-courses`: Classic Parkland has replaced six, Southern Pines three, Lowcountry and Gulf three, Florida Palms two, Hawaiian Resort one, Desert Resort two, Pacific Northwest (`pacnw`) Puget Sound, California Coast (`calcoast`) three, Seaside Links (`seaside`) three, Desert Mountain (`dmountain`) four and Mountain (`mountains`) seven and Prairie & Sand Hills (`prairie`) four, their keys kept in `OLD_KEYS`; the Badlands and Northern Woods keep their keys with new trees; no cart paths, clubhouse, road or lot on a generated course since 8 November 2026, course.js `facilities` [No facilities for now]; the Redwood Coast keeps its key with new trees), first of nine: (the regions of the USA, plus Scottish Links: Puget Sound, Sonoran, Rockies, Scottish Links, Heartland, Keys, Redwood Coast, New England, Lake Dunes -- renamed from their old keys on 2 November 2026, when Haunted Hollow was removed; the US landscapes goal grows the list to forty, TODO *US landscapes*), Cartoon art style only.
-Ball and cup are real size (42.67 mm, 107.95 mm). 1-4 golfers; stroke play,
-match play, scramble, skins, endless; a driving range and a course studio.
+Ball and cup are real size (42.67 mm, 107.95 mm). 1-4 golfers, any of them
+computer golfers (src/ai/); stroke play, match play, scramble, skins,
+Stableford, gross or net, endless; the Fairway Tour (a season of events
+against a field); a driving range and a course studio.
 (PROJECT_HANDOFF *Product and design decisions*.)
 
 The **product is the four platform zips** a release carries, each holding the
