@@ -7,6 +7,7 @@ import {crossingPoint, reliefOptions} from '../relief.js';
 import {outOfBounds} from '../physics.js';
 import {reliefGround} from '../relief-ground.js';
 import {lieAt} from './golfer.js';
+import {strokesFor} from './strokes.js';
 
 // The key of a shot: the round, the hole, the seat and the stroke. A mulligan
 // or a reload asks for the same key, and gets the same shot.
@@ -41,6 +42,20 @@ export function takeTurn(round, hole, golfer, {roundKey = '', pressure = 0, outR
  return {kind: 'shot', shot, outcome, seat, from, lie};
 }
 
+// A SCRAMBLE TEAM'S PICK, for a team of computer golfers: the ball that
+// leaves the fewest strokes for the team's best golfer, penalty included.
+export function chooseForTeam(round, hole, golfers) {
+ const team = round.players[round.candidates[0].player].team;
+ const best = Math.min(...round.players.map((p, i) => p.team === team ? golfers[i]?.handicap ?? 20 : 99));
+ let pick = 0, low = Infinity;
+ round.candidates.forEach((c, i) => {
+  const v = (c.penalty || 0) + (c.holed ? 0 : strokesFor(best, lieAt(hole, c.position.x, c.position.z), c.distance));
+  if (v < low) { low = v; pick = i; }
+ });
+ round.chooseScramble(pick);
+ return pick;
+}
+
 // A whole hole, every seat a computer golfer (`golfers[seat]`). Stops after
 // `limit` actions (PLACED 60) and says so rather than loop for ever.
 export function playHole(round, hole, golfers, {roundKey = '', limit = 60, onTurn = null} = {}) {
@@ -48,6 +63,7 @@ export function playHole(round, hole, golfers, {roundKey = '', limit = 60, onTur
  if (!round.teePlaced) round.placeTee(hole.tees);
  let n = 0;
  while (!round.holeComplete && n < limit) {
+  if (round.scrambleSelection) { chooseForTeam(round, hole, golfers); n++; continue; }
   const seat = round.relief ? round.relief.player : round.active;
   const turn = takeTurn(round, hole, golfers[seat], {roundKey});
   onTurn?.(turn);

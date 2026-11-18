@@ -105,6 +105,11 @@ import {sessionCsv,sessionReport,clubTable} from './range-report.js';
 import {buildRangeControls,sessionRows,updateRangeSession} from './ui-range-controls.js';
 import {simulateShot,parseLaunchMessage,MPH,YARD,clamp,rollPreview,R as BALL_R,outOfBounds} from './physics.js';
 import {reliefGround as sharedReliefGround} from './relief-ground.js';
+import {computerGolfer,golferBag} from './ai/golfer.js';
+import {skillFor} from './ai/skill.js';
+import {strokesFor} from './ai/strokes.js';
+import {shotKey} from './ai/play.js';
+import {isComputer,computerSeat,showShot,PRESHOT_MS,reaction,DEFAULT_WATCH,WATCH,LEVELS,levelName} from './ai/seat.js';
 import {reliefOptions,crossingPoint,OB_RULES,pathRelief,OBSTRUCTIONS} from './relief.js';
 import {SCHEMA_VERSION,GENERATOR_VERSION,SETTINGS,FIELD,CATEGORIES,bound,validateSettings,migrateSettings,generationKeys,playScope,generatorFor} from './settings-schema.js';
 import {listCourses,findCourse,saveCourse,deleteCourse,renameCourse,exportCourse,importCourse,courseSettings,MAX_NAME} from './course-library.js';
@@ -471,7 +476,14 @@ const CONDITIONS_KEY='fairway-conditions-v1';
 let playerTurf=(()=>{try{return turfConfig(JSON.parse(localStorage.getItem(CONDITIONS_KEY)||'null')||{});}catch{return turfConfig();}})();
 const conditionsNow=()=>{try{return turfConfig(settings.turf??playerTurf);}catch{return playerTurf;}};
 const keepConditions=turf=>{playerTurf=settings.turf=turfConfig(turf);try{localStorage.setItem(CONDITIONS_KEY,JSON.stringify(playerTurf));}catch{}};
-const saveRules=()=>{try{localStorage.setItem(RULES_KEY,JSON.stringify({outOfBounds:Round.defaultOutOfBounds,monitorLie:Round.defaultMonitorLie}));}catch{}};
+const saveRules=()=>{try{localStorage.setItem(RULES_KEY,JSON.stringify({outOfBounds:Round.defaultOutOfBounds,monitorLie:Round.defaultMonitorLie,cpuWatch,cpuChat}));}catch{}};
+// COMPUTER GOLFERS (the fairway-tour goal, src/ai/): how much of their play
+// is shown (seat.js WATCH), whether they say a word now and then, the golfer
+// behind each computer seat (one per round and seat, so its memory of a shot
+// that went nowhere lasts the round), and the timer of the turn being played.
+let cpuWatch=DEFAULT_WATCH,cpuChat=true,cpuTimer=0,cpuTurnKey='';
+const cpuGolfers=new Map();
+try{const r=JSON.parse(localStorage.getItem(RULES_KEY)||'null');if(WATCH.some(([k])=>k===r?.cpuWatch))cpuWatch=r.cpuWatch;if(typeof r?.cpuChat==='boolean')cpuChat=r.cpuChat;}catch{}
 let settings={...DEFAULT_COURSE,style:'cartoon'},round=new Round(),course,world,worldKey='',view,aim=0,shotShape={...DEFAULT_SHAPE},swing=null,flight=null,latest=null,ws=null,monitorConnected=false,armed=false,armSwitch=false,monitorDevice=null,panel=null,toastTimer,keys=new Set(),gamepadLast=[],lastTick=performance.now();
 // The 1.0 lobby's course colours, and launch monitor setup's redraw, while open.
 // CARD PICTURES (the 1.0 polish; they were tiny turning 3D models, round 14):
@@ -1228,6 +1240,8 @@ function applyPlaySettings(){
 // round resumes under the bag it was saved with: the bag now belongs to the
 // golfer and travels in their profile and its backup file, not in the round.
 function bagFor(player){
+ // A computer golfer carries the stock bag scaled to its own drive.
+ if(isComputer(player))return golferBag(skillFor(player.cpu.handicap,player.cpu.traits));
  const p=profileOf(player);
  if(p)return p.bag??stockBag();
  return stockBag(settings.clubYardages);
@@ -1358,7 +1372,7 @@ function distance(){return Math.hypot(round.position.x-course.pin.x,round.positi
 // golfer set to the meter, `armed` is the switch, exactly as before.
 function syncArmed(){
  const was=armed;
- armed=armSwitch&&monitorConnected&&playsWith(round?.player)!=='meter';
+ armed=armSwitch&&monitorConnected&&playsWith(round?.player)==='monitor';
  if(was!==armed&&armed)cancelSwing();
  return was!==armed;
 }
@@ -1395,6 +1409,89 @@ function setUpTurn(){
  // keeps it while the player aims (GolfView.setReadingHeading).
  view.setBall(p);updateAim();view.setReadingHeading(p,aim);view.setCamera(p,aim);updateHUD();sendPlayer();
  flashTurn();
+ if(isComputer(round.player))planComputerTurn();
+}
+
+// A COMPUTER GOLFER'S TURN (the fairway-tour goal; SPEC section 2). It plans
+// its shot (src/ai/golfer.js), shows it -- the club in the picker, the aim
+// line where it is aiming, the turn card with the club and yards -- waits
+// its pre-shot moment, and swings: the launch goes through takeShot exactly
+// as a Swing Meter swing does, so the flight, cameras, card and save are a
+// person's. Its shot is keyed by round, hole, seat and stroke, so a reload
+// or a mulligan plays the same shot again.
+function cpuGolferFor(seat){
+ const p=round.players[seat],key=`${round.uid}:${seat}:${p.cpu.id}:${p.cpu.handicap}`;
+ if(!cpuGolfers.has(key)){if(cpuGolfers.size>16)cpuGolfers.clear();cpuGolfers.set(key,computerGolfer({handicap:p.cpu.handicap,traits:p.cpu.traits,seed:`${round.uid}:${seat}:${p.cpu.id}`,settings,name:p.name}));}
+ return cpuGolfers.get(key);
+}
+// Nothing a person must see first: a panel, the relief or pick bars, a
+// hole-out banner, the lab, a flight, a challenge.
+const cpuMayPlay=()=>appMode==='play'&&!rangeMode&&!challenge&&!flight&&!dropState&&!panel&&!round.holeComplete&&!round.finished&&!round.scrambleSelection&&$('versionNotice').hidden&&$('generating')?.hidden!==false&&view.config.mode!=='free';
+function cancelComputerTurn(){clearTimeout(cpuTimer);cpuTimer=0;cpuTurnKey='';}
+function planComputerTurn(tries=0){
+ cancelComputerTurn();
+ const seat=round.active,key=`${round.uid}:${round.hole}:${seat}:${round.strokes?.[seat]??0}`;
+ cpuTurnKey=key;
+ cpuTimer=setTimeout(()=>{
+  if(cpuTurnKey!==key||!isComputer(round.player)||round.active!==seat)return;
+  // Something is open (a banner, a panel): try again shortly.
+  if(!cpuMayPlay()||(!$('holeOut').hidden&&!$('holeOut').classList.contains('leaving'))){if(tries<400)planComputerTurn(tries+1);return;}
+  const g=cpuGolferFor(seat),from={...round.position};
+  let s;try{s=g.shot({hole:course,from,key:shotKey(round,seat,round.uid),fly:false});}catch(e){console.warn('computer golfer:',e.message);toast(`${round.player.name} could not play that shot.`);return;}
+  if(clubs[s.club])$('club').value=s.club;
+  aim=s.aim;aimPoint=null;aimRange=null;updateAim();view.setCamera(round.position,aim);
+  cpuCard(s);updateHUD();
+  cpuTimer=setTimeout(()=>{
+   if(cpuTurnKey!==key||round.active!==seat||!cpuMayPlay())return;
+   if(clubs[s.club])$('club').value=s.club;aim=s.aim;
+   const toPin=Math.hypot(course.pin.x-from.x,course.pin.z-from.z),how=showShot(cpuWatch,{putt:s.kind==='putter',toPinMetres:toPin});
+   cpuShooting={seat,from,before:toPin,putt:s.kind==='putter',key:shotKey(round,seat,round.uid)};
+   const ok=takeShot(null,{shot:s.launch,before:s.before,cpu:true});
+   if(!ok){cpuShooting=null;return;}
+   if(flight){flight.rate=how==='quick'?3:1;if(how==='skip')finishShot();}
+  },PRESHOT_MS[cpuWatch]??1000);
+ },tries?250:450);
+}
+let cpuShooting=null;
+// The turn card for a computer golfer: who, the club, the yards to the hole.
+function cpuCard(s){
+ const el=$('turnFlash');if(!el||menuBackdrop)return;
+ const i=round.active,p=round.player,c=clubs[s.club],yd=Math.round(Math.hypot(course.pin.x-round.position.x,course.pin.z-round.position.z)/YARD);
+ const {rel,played}=toPar(i),score=played?parText(rel):'E',tint=parTint(rel,played),shot=(round.strokes?.[i]||0)+1;
+ el.innerHTML=`<small>${escape(p.cpu.nation?`${p.cpu.nation} · `:'')}HCP ${escape(String(p.cpu.handicap))}</small><div class="turn-flash-row">${golferMark(i)}<strong>${escape(p.name)}</strong><b${tint?` style="background:${tint}"`:''}>${escape(score)}</b><span>Shot ${scoreText(shot)}</span></div>`
+  +`<div class="turn-flash-cpu">${escape(c?.label||s.club)} · ${yd} yd to the hole</div>`;
+ lastTurn=round.players.length>1?`${round.uid}:${round.hole}:${i}`:`${round.uid}:${round.hole}`;
+ el.hidden=true;void el.offsetWidth;el.hidden=false;
+ clearTimeout(flashTurn.timer);flashTurn.timer=setTimeout(()=>{el.hidden=true;},(PRESHOT_MS[cpuWatch]??1000)+500);
+}
+// After a computer golfer's ball comes to rest: tell the golfer where (so a
+// shot that went nowhere is noticed) and, now and then, a word.
+function afterComputerShot(result){
+ const s=cpuShooting;cpuShooting=null;if(!s)return;
+ const g=cpuGolferFor(s.seat);g.landed?.(course,s.from,result.end);
+ if(!cpuChat)return;
+ const after=Math.hypot(course.pin.x-result.end.x,course.pin.z-result.end.z);
+ const toEnd=(result.end.x-s.from.x)*(course.pin.x-s.from.x)+(result.end.z-s.from.z)*(course.pin.z-s.from.z);
+ const say=reaction({holed:!!result.holed,lipped:!!result.lipped,hazard:result.hazard,putt:s.putt,before:s.before,after,short:toEnd<s.before*s.before},s.key);
+ if(say)toast(`${round.players[s.seat]?.name}: “${say}”`);
+}
+// A computer team's scramble pick and a computer golfer's relief are chosen
+// for them, by the strokes each choice leaves (src/ai/strokes.js).
+function computerChoosesRelief(){
+ const r=round.relief;if(!r||!isComputer(round.players[r.player]))return false;
+ const g=cpuGolferFor(r.player),best=g.relief(course,reliefList);if(!best)return false;
+ setTimeout(()=>{if(round.relief===r)takeReliefOption(reliefList.find(o=>o.id===best.id)||best,`${round.players[r.player].name}: ${best.label}, ${best.penalty} penalty stroke${best.penalty===1?'':'s'}.`);},700);
+ return true;
+}
+function computerPicks(){
+ if(!round.scrambleSelection||!round.candidates.length)return false;
+ const team=round.players[round.candidates[0].player]?.team,members=round.players.filter(p=>p.team===team);
+ if(!members.length||!members.every(isComputer))return false;
+ const hcp=Math.min(...members.map(p=>p.cpu.handicap)),list=pickList();
+ const cost=c=>(c.penalty||0)+(c.holed?0:strokesFor(hcp,course.surface(c.position.x,c.position.z),c.distance));
+ let best=0;list.forEach((c,i)=>{if(cost(c)<cost(list[best]))best=i;});
+ setTimeout(()=>{if(!round.scrambleSelection)return;pickIndex=best;try{const carded=cardedSeats();round.chooseScramble(pickIndex);announceHoleOut(carded);afterSelection();}catch(e){toast(e.message);}},900);
+ return true;
 }
 // PLAYS LIKE, under the yards to the hole (plays-like.js): the club in hand at
 // full swing, flown in today's wind, altitude and temperature to the hole's
@@ -1638,7 +1735,7 @@ function swingContext(){const c=clubs[$('club').value],short=isShortGame(),putt=
  const zoom=!c||putt?1:swingZoom(fullCarry(c,shapedLaunch(c,shotShape,{short})),aimRange??c.carry*YARD);
  return {club:c,shape:{...shotShape},short,lie:currentLie(),difficulty:golferDifficulty(),turf:settings.turf,zoom,
   ...(putt?{puttRange:puttRange(c,settings.turf,aimRange??distance())}:{})};}
-function canSwing(){return appMode==='play'&&!tour&&!flight&&!dropState&&view.config.mode!=='free'&&!round.holeComplete&&!round.scrambleSelection&&!round.relief&&!round.finished&&$('versionNotice').hidden&&!armed;}
+function canSwing(){return appMode==='play'&&!tour&&!flight&&!dropState&&view.config.mode!=='free'&&!round.holeComplete&&!round.scrambleSelection&&!round.relief&&!round.finished&&$('versionNotice').hidden&&!armed&&!isComputer(round.player);}
 // The stroke struck: hand it to the shot.
 function releaseSwing(){
  const sw=swing;endPadStroke();
@@ -2462,6 +2559,9 @@ function takeShot(data=null,struck=null){
  if(!data&&armed){toast('The launch monitor is armed. Disarm it to use manual controls.');return false;}
  // A manual shot comes only from a struck pull and push (`releaseSwing`).
  if(!data&&!struck)return false;
+ // A computer golfer's turn is its own: no swing or monitor ball of a
+ // person's is taken for it, and its own shot only on its turn.
+ if(isComputer(round.player)!==!!struck?.cpu)return false;
  closePanel();const c=clubs[$('club').value],lie=course.surface(round.position.x,round.position.z);
  // THE LIE: rough, semi-rough and sand cost ball speed, and grass costs a
  // high-spinning shot spin (the flyer), by one table, for every golfer. The Swing Meter has already taken
@@ -2504,6 +2604,7 @@ function finishShot(){
  // cutting there: the owner asked for the review to come and go smoothly.
  const fromReview=flight.reviewed?{eye:view.camera.position.clone(),look:view.look.clone()}:null;
  const result=flight.result;flight=null;drawPanelState();drawStrokeReport();
+ if(cpuShooting)afterComputerShot(result);
  // The tracer has had the whole flight and the settle hold to be looked at. It
  // goes now rather than hanging over the next shot, and is kept for the summary.
  pushTrail(result.points,round.active,!!result.puttStroke);view.setTrail([]);view.setBall(result.end);
@@ -2724,6 +2825,7 @@ function beginPick(){
  const list=pickList();
  pickIndex=list.reduce((best,c,i)=>c.distance<list[best].distance?i:best,0);
  showPick();
+ computerPicks();
 }
 function showPick(){
  const list=pickList();
@@ -3544,6 +3646,7 @@ function beginRelief(){
  const side=reliefList.findIndex(o=>o.id==='lateral'||o.id==='e5');
  if(side>=0)reliefChoice=side;
  showRelief();
+ computerChoosesRelief();
 }
 function showRelief(){
  const r=round.relief;if(!r||!reliefList.length)return endRelief();
@@ -5062,10 +5165,19 @@ function groupEditor(hostId,start,onChange){
  // player, whose name is typed and who becomes a profile when the group is
  // applied (`readDraft`). A golfer from a save older than profiles is matched by
  // name, and becomes a new player if nobody on this device has that name.
- const draft=start.map(p=>{const prof=findProfile(profiles,p.profile)||profileByName(profiles,p.name);
+ // A COMPUTER GOLFER'S ROW keeps its `cpu` record and has no profile (the
+ // fairway-tour goal; src/ai/seat.js).
+ const draft=start.map(p=>{if(isComputer(p))return {profile:null,name:p.name,team:p.team,hand:'RH',input:'cpu',cpu:p.cpu,tee:p.tee||null,seat:p.id};
+  const prof=findProfile(profiles,p.profile)||profileByName(profiles,p.name);
   return {profile:prof?.id??null,name:prof?.name??p.name,team:p.team,hand:p.hand||prof?.hand||'RH',input:p.input||prof?.input||'monitor',tee:p.tee||prof?.tee||null,seat:p.id};});
  groupDraft=draft;
- const NEW='__new';
+ const NEW='__new',CPU='__cpu';
+ // The person a Matched computer golfer is matched to: the first golfer in
+ // the group with a profile, else the main profile.
+ const personIndex=()=>{const q=findProfile(profiles,draft.find(d=>d.profile)?.profile)||mainProfile(profiles);return q?profileSummary(q).handicap?.index??null:null;};
+ const makeComputer=(p,level='matched')=>{const i=draft.indexOf(p),nth=draft.slice(0,Math.max(0,i)).filter(d=>d.input==='cpu').length;
+  const c=computerSeat({level,personIndex:personIndex(),nth,used:draft.filter(d=>d!==p&&d.cpu).map(d=>d.cpu.id),seed:`${round.uid}|${i}`});
+  Object.assign(p,{profile:null,name:c.name,input:'cpu',cpu:c.cpu,hand:'RH'});};
  const paint=()=>{
   const taken=i=>new Set(draft.filter((q,j)=>j!==i&&q.profile).map(q=>q.profile));
   // Main first, then everyone else in the order they joined -- the same order
@@ -5084,17 +5196,20 @@ function groupEditor(hostId,start,onChange){
    +`<span class="player-mark"><span class="player-dot" style="background:${playerColour(i)}" aria-hidden="true"></span>${q?ballAvatar(q,'tiny'):'<span class="seat-guest" aria-hidden="true">+</span>'}</span>`
    +`<div class="player-who ${nameSize(q?q.name:(p.name||"New player"))}"><select id="who${i}" aria-label="Player ${i+1}">`
    +everyone.filter(o=>!taken(i).has(o.id)).map(o=>`<option value="${o.id}" ${o.id===p.profile?'selected':''}>${escape(o.name)}</option>`).join('')
-   +`<option value="${NEW}" ${p.profile?'':'selected'}>New player…</option></select>`
-   +(p.profile?'':`<input aria-label="Player ${i+1}'s name" id="name${i}" maxlength="${MAX_PLAYER_NAME}" placeholder="New player's name" value="${escape(p.name||'')}">`)
+   +`<option value="${NEW}" ${p.profile||p.cpu?'':'selected'}>New player…</option>`
+   +`<option value="${CPU}" ${p.cpu?'selected':''}>${p.cpu?escape(p.name):'Computer golfer'}</option></select>`
+   +(p.profile||p.cpu?'':`<input aria-label="Player ${i+1}'s name" id="name${i}" maxlength="${MAX_PLAYER_NAME}" placeholder="New player's name" value="${escape(p.name||'')}">`)
    // Round 14: the title on its own line (ending in ... if it must), then level and handicap.
-   +(q?`<span class="player-sub">${escape((titleName(looksOf(q).title)||badgeName(lv)).toUpperCase())}</span><span class="player-hcp">LV ${lv} · HCP ${Number.isFinite(hc)?hc.toFixed(1):'—'}</span>`:'<span class="player-sub">A GUEST BECOMES A PROFILE</span>')
+   +(p.cpu?`<span class="player-sub">COMPUTER${p.cpu.nation?' · '+escape(p.cpu.nation):''}</span><span class="player-hcp">HCP ${escape(String(p.cpu.handicap))}</span>`
+    :q?`<span class="player-sub">${escape((titleName(looksOf(q).title)||badgeName(lv)).toUpperCase())}</span><span class="player-hcp">LV ${lv} · HCP ${Number.isFinite(hc)?hc.toFixed(1):'—'}</span>`:'<span class="player-sub">A GUEST BECOMES A PROFILE</span>')
    +`</div>`
+   +(p.cpu?seatPick('Plays like',`level${i}`,`Player ${i+1}'s standard`,LEVELS.map(([v,t])=>[String(v),t]),String(p.cpu.level??p.cpu.handicap)):'')
    +`<span class="seat-tees" role="group" aria-label="Player ${i+1} tee">${tees.map(t=>`<button type="button" class="seat-tee" data-seat-tee="${t}" aria-pressed="${teeFor(teeOf(p),tees)===t}" aria-label="${teeName(t)} tees" title="${teeName(t)} tees"><i style="background:${TEE_DOT[t]}"></i>${teeLetter(t,tees)}</button>`).join('')}</span>`
    +`<select id="team${i}" aria-label="Player ${i+1} team"><option value="A" ${p.team==='A'?'selected':''}>Team A</option><option value="B" ${p.team==='B'?'selected':''}>Team B</option></select>`
    // Round 14 (frame c-play2l): each picker a label line, then its value on a
    // full-width line with an arrow at each end; the select is still there,
    // see-through over the value, so a click (or a test) can open it.
-   +(bridgeSeen()?seatPick("Plays with",`input${i}`,`Player ${i+1} plays with`,[["monitor","Launch monitor"],["meter","Swing pad"]],p.input==="meter"?"meter":"monitor")
+   +(bridgeSeen()&&!p.cpu?seatPick("Plays with",`input${i}`,`Player ${i+1} plays with`,[["monitor","Launch monitor"],["meter","Swing pad"]],p.input==="meter"?"meter":"monitor")
     +seatPick("Swings",`hand${i}`,`Player ${i+1} handedness`,[["RH","Right"],["LH","Left"]],p.hand==="LH"?"LH":"RH"):'')
    // EVERY GOLFER CAN BE REMOVED, not everyone except the first. The rule is
    // that a round needs one golfer, and this enforced a different one: row zero
@@ -5104,12 +5219,13 @@ function groupEditor(hostId,start,onChange){
    +(draft.length>1?`<button class="small-icon drop-player" data-drop="${i}" aria-label="Remove ${escape(p.name||'player '+(i+1))}"><i data-lucide="trash-2"></i></button>`
       :`<span class="drop-spacer" aria-hidden="true"></span>`)
    +`</div>`;}).join('')
-   +(draft.length<4?`<button class="secondary add-player" data-add><i data-lucide="plus"></i> Add player</button>`:'');
+   +(draft.length<4?`<button class="secondary add-player" data-add><i data-lucide="plus"></i> Add player</button><button class="secondary add-player" data-add-cpu><i data-lucide="bot"></i> Add computer golfer</button>`:'');
   icon();
   draft.forEach((p,i)=>{
    $('who'+i).onchange=e=>{
     const v=e.target.value;
-    if(v===NEW){p.profile=null;p.name='';}else{const q=findProfile(profiles,v);p.profile=v;p.name=q?.name??'';p.hand=q?.hand||'RH';p.input=q?.input||'monitor';p.tee=q?.tee||p.tee;}
+    if(v===CPU){if(!p.cpu)makeComputer(p);}
+    else if(v===NEW){p.profile=null;p.name='';p.cpu=undefined;p.input='monitor';}else{const q=findProfile(profiles,v);p.cpu=undefined;p.profile=v;p.name=q?.name??'';p.hand=q?.hand||'RH';p.input=q?.input||'monitor';p.tee=q?.tee||p.tee;}
     paint();onChange?.();
     if(v===NEW)$('name'+i)?.focus();
    };
@@ -5117,7 +5233,10 @@ function groupEditor(hostId,start,onChange){
    $('team'+i).onchange=e=>{p.team=e.target.value;onChange?.();};
    if($('hand'+i))$('hand'+i).onchange=e=>{p.hand=e.target.value;};
    if($('input'+i))$('input'+i).onchange=e=>{p.input=e.target.value;};
+   if($('level'+i))$('level'+i).onchange=e=>{const v=e.target.value;makeComputer(p,v==='matched'?'matched':Number(v));paint();onChange?.();};
   });
+  const addCpu=host.querySelector('[data-add-cpu]');
+  if(addCpu)addCpu.onclick=()=>{const row={profile:null,name:'',team:draft.length%2?'B':'A',hand:'RH',input:'cpu',tee:null,seat:undefined};draft.push(row);makeComputer(row);paint();onChange?.();};
   host.querySelectorAll('[data-seat-tee]').forEach(b=>b.onclick=()=>{const p=draft[Number(b.closest('[data-seat]').dataset.seat)];p.tee=b.dataset.seatTee;paint();onChange?.();});
   host.querySelectorAll('[data-drop]').forEach(b=>b.onclick=()=>{
    draft.splice(Number(b.dataset.drop),1);paint();onChange?.();});
@@ -5139,14 +5258,17 @@ function groupEditor(hostId,start,onChange){
 // before anything is created, on an empty name or the same golfer twice.
 function readDraft(){
  const rows=(groupDraft||[]).map((p,i)=>{
+  if(p.input==='cpu'&&p.cpu)return {...p,computer:true};
   if(p.profile&&findProfile(profiles,p.profile))return {...p,prof:findProfile(profiles,p.profile)};
   const name=(p.name||'').trim();
   if(!name)throw Error(`Give player ${i+1} a name, or pick someone from the list.`);
   return {...p,typed:name,prof:profileByName(profiles,name)};
  });
  const seen=new Set();
- for(const r of rows){const key=r.prof?.id??r.typed.toLowerCase();if(seen.has(key))throw Error(`${r.prof?.name??r.typed} is in the group twice.`);seen.add(key);}
+ for(const r of rows){const key=r.computer?'cpu:'+(r.cpu.id||r.name):r.prof?.id??r.typed.toLowerCase();if(seen.has(key))throw Error(`${r.prof?.name??r.typed??r.name} is in the group twice.`);seen.add(key);}
+ if(rows.length&&rows.every(r=>r.computer))throw Error('Add at least one person to the group: computer golfers play with you, not on their own.');
  return rows.map(r=>{
+  if(r.computer)return {name:r.name.slice(0,24),team:r.team,hand:'RH',input:'cpu',cpu:r.cpu,...(r.tee?{tee:r.tee}:{}),seat:r.seat};
   let prof=r.prof;
   if(!prof){const made=addProfile(profiles,r.typed);profiles=made.store;prof=made.profile;useMainProfile();}
   // Remembered for the next group this golfer joins.
@@ -5164,7 +5286,7 @@ const FORMAT_NOTES={stroke:'Each golfer finishes the entire hole before the next
 // carry simply runs on (the owner, 16 October 2026).
 // `strokeOnly`: the course of the week, whose bests are strokes for the
 // eighteen, so its format is fixed (the owner, 15 October 2026).
-const formatFields=({match=true,strokeOnly=false}={})=>`<label class="field">Format<select id="roundMode"${strokeOnly?' disabled':''}><option value="stroke">${strokeOnly?'Stroke play only':'Stroke play'}</option>${strokeOnly?'':`<option value="scramble">Team scramble</option>${match?'<option value="match">Match play · best ball teams</option>':''}<option value="skins">Skins · two to four golfers</option>`}</select></label><label class="field">Play from<select id="roundTee">${setupTees().map(t=>`<option value="${t}" ${teeFor(round.tee,setupTees())===t?'selected':''}>${teeName(t)} tees</option>`).join('')}</select></label><label class="field">Out of bounds<select id="roundOB">${Object.entries(OB_RULES).map(([k,v])=>`<option value="${k}" ${round.outOfBounds===k?'selected':''}>${v.label}</option>`).join('')}</select></label><label class="field">Lie penalty for launch-monitor shots<select id="roundMonLie"><option value="on" ${round.monitorLie?'selected':''}>On: rough and sand cost ball speed</option><option value="off" ${round.monitorLie?'':'selected'}>Off: monitor shots fly as measured</option></select></label><label class="field">Course conditions<select id="roundConditions">${Object.entries(CONDITION_PRESETS).map(([k,p])=>`<option value="${k}">${p.label} · ${p.line}</option>`).join('')}<option value="custom">Your own mix · set each below</option></select></label><label class="field">Green speed<select id="roundStimp">${stimpOptions()}</select></label><label class="field">Green firmness<select id="roundGreens">${firmnessOptions('green')}</select></label><label class="field">Fairway firmness<select id="roundFairways">${firmnessOptions('course')}</select></label><label class="field">Putting<select id="roundPuttingMode">${PUTTING_MODES}</select></label><div id="roundPutting-distances">${puttingFields('roundPutting',playerPutting())}</div>`;
+const formatFields=({match=true,strokeOnly=false}={})=>`<label class="field">Format<select id="roundMode"${strokeOnly?' disabled':''}><option value="stroke">${strokeOnly?'Stroke play only':'Stroke play'}</option>${strokeOnly?'':`<option value="scramble">Team scramble</option>${match?'<option value="match">Match play · best ball teams</option>':''}<option value="skins">Skins · two to four golfers</option>`}</select></label><label class="field">Play from<select id="roundTee">${setupTees().map(t=>`<option value="${t}" ${teeFor(round.tee,setupTees())===t?'selected':''}>${teeName(t)} tees</option>`).join('')}</select></label><label class="field">Out of bounds<select id="roundOB">${Object.entries(OB_RULES).map(([k,v])=>`<option value="${k}" ${round.outOfBounds===k?'selected':''}>${v.label}</option>`).join('')}</select></label><label class="field">Lie penalty for launch-monitor shots<select id="roundMonLie"><option value="on" ${round.monitorLie?'selected':''}>On: rough and sand cost ball speed</option><option value="off" ${round.monitorLie?'':'selected'}>Off: monitor shots fly as measured</option></select></label><label class="field">Computer golfers’ shots<select id="roundCpuWatch">${WATCH.map(([k,t])=>`<option value="${k}" ${cpuWatch===k?'selected':''}>${t}</option>`).join('')}</select></label><label class="field">Computer golfers’ words<select id="roundCpuChat"><option value="on" ${cpuChat?'selected':''}>On: a word after a shot worth one</option><option value="off" ${cpuChat?'':'selected'}>Off: they play in silence</option></select></label><label class="field">Course conditions<select id="roundConditions">${Object.entries(CONDITION_PRESETS).map(([k,p])=>`<option value="${k}">${p.label} · ${p.line}</option>`).join('')}<option value="custom">Your own mix · set each below</option></select></label><label class="field">Green speed<select id="roundStimp">${stimpOptions()}</select></label><label class="field">Green firmness<select id="roundGreens">${firmnessOptions('green')}</select></label><label class="field">Fairway firmness<select id="roundFairways">${firmnessOptions('course')}</select></label><label class="field">Putting<select id="roundPuttingMode">${PUTTING_MODES}</select></label><div id="roundPutting-distances">${puttingFields('roundPutting',playerPutting())}</div>`;
 // THE THREE COURSE CONDITIONS (turf.js), as the options of a drop-down each:
 // green speed in Stimp feet with a word beside it, and the two firmnesses.
 const stimpOptions=()=>{let s='';for(let v=STIMP_RANGE.min;v<=STIMP_RANGE.max+1e-9;v+=STIMP_RANGE.step)s+=`<option value="${v}">Stimp ${v} · ${stimpWord(v)}</option>`;return s;};
@@ -5206,6 +5328,9 @@ function wireFormatFields(){
  // Applied as it is changed, like putting: to the round being played and to
  // every round after it.
  $('roundOB').onchange=()=>{const v=$('roundOB').value;if(!OB_RULES[v])return;Round.defaultOutOfBounds=v;round.outOfBounds=v;saveRules();save();};
+ // The computer golfers' two settings: kept for every round after.
+ if($('roundCpuWatch'))$('roundCpuWatch').onchange=()=>{const v=$('roundCpuWatch').value;if(WATCH.some(([k])=>k===v)){cpuWatch=v;saveRules();}};
+ if($('roundCpuChat'))$('roundCpuChat').onchange=()=>{cpuChat=$('roundCpuChat').value!=='off';saveRules();};
  // The lie rule for monitor shots, the same way: this round and every one after.
  // Swing Meter shots keep the lie either way -- on the meter it is part of the
  // swing, not an adjustment to a measurement.
@@ -8164,6 +8289,8 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
    {offsets:options.offsets,decel:rollDeceleration('green',settings.turf)}),
   // Enough internal state to check what is on screen against what should be.
   state:()=>({inFlight:!!flight,canSwing:canSwing(),pinAt:course?.pin?{x:course.pin.x,z:course.pin.z}:null,ballAt:round?.position?{x:round.position.x,z:round.position.z}:null,
+   // Whose turn, and whether a computer golfer's (the fairway-tour goal).
+   turn:round?{hole:round.hole,active:round.active,computer:isComputer(round.player),strokes:[...(round.strokes||[])],cards:round.cards.map(c=>c.slice()),holeComplete:round.holeComplete,cpuWatch}:null,
    // THE SWING IN PROGRESS, on the input clock (`event.timeStamp`): when it
    // started and how long the marker takes per bar length, so the smoke test can
    // time a tap the way a player does -- on the clock, not on a frame, which on a
@@ -8854,7 +8981,7 @@ function tick(now){
  // The flyover circles the whole hole now, so there is no moment where it
  // arrives at the green and the contour heat map becomes the thing to look at.
  if(tour){tour.elapsed+=dt;const pose=tour.path.pose(tour.elapsed);setText($('flightAltitude'),'Hole flyover · Circling the hole');drawMap($('map'),course,round.position,round.candidates,true,pose.eye,null,view.elapsed);view.targetPos.copy(pose.eye);view.targetLook.copy(pose.target);view.camera.position.copy(pose.eye);view.look.copy(pose.target);if(pose.done)stopTour();}
- if(flight){const heardFrom=flight.elapsed;flight.elapsed+=dt*FLIGHT_PLAYBACK*timeScale;playFlightSounds(flight,heardFrom);const pts=flight.result.points;while(flight.index<pts.length-1&&pts[flight.index+1].t<flight.elapsed)flight.index++;const a=pts[flight.index],b=pts[Math.min(flight.index+1,pts.length-1)],f=clamp((flight.elapsed-a.t)/(b.t-a.t||1),0,1),p={x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f,z:a.z+(b.z-a.z)*f};
+ if(flight){const heardFrom=flight.elapsed;flight.elapsed+=dt*FLIGHT_PLAYBACK*timeScale*(flight.rate||1);playFlightSounds(flight,heardFrom);const pts=flight.result.points;while(flight.index<pts.length-1&&pts[flight.index+1].t<flight.elapsed)flight.index++;const a=pts[flight.index],b=pts[Math.min(flight.index+1,pts.length-1)],f=clamp((flight.elapsed-a.t)/(b.t-a.t||1),0,1),p={x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f,z:a.z+(b.z-a.z)*f};
   // The drawn ball skips a little while it rolls (roll-hop.js); `p` itself, which
   // the trail and the camera use, is the simulated position, untouched.
   flight.hop??=createRollHop(seedFor(flight.result));

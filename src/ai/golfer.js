@@ -197,23 +197,27 @@ export function computerGolfer({handicap = 15, traits = {}, seed = 'golfer', set
  // The putter from off the green (PLACED): from the fringe within 25 m, and
  // from the fairway within 12 m, as most golfers would.
  const putts = (lie, toPin) => lie === 'green' || lie === 'fringe' && toPin < 25 || (lie === 'fairway' || lie === 'apron') && toPin < 12;
- function shot({hole: h, from, key = '', pressure = 0, avoid = 0}) {
+ // `fly: false` returns the struck shot without flying it: the game flies it
+ // itself (main.js takeShot), and tells the golfer where it finished with
+ // `landed`, so a shot that went nowhere is still noticed.
+ function shot({hole: h, from, key = '', pressure = 0, avoid = 0, fly = true}) {
   const rnd = seeded(`${seed}|${key}`), lie = lieAt(h, from.x, from.z);
   const nerves = 1 + .25 * (1 - skill.nerve) * Math.min(1, Math.max(0, pressure));
-  stuck = last && last.h === h && Math.hypot(from.x - last.from.x, from.z - last.from.z) < 1 && Math.hypot(last.end.x - last.from.x, last.end.z - last.from.z) < 4 ? stuck + 1 : 0;
-  const out = shotFrom(h, from, lie, rnd, nerves, avoid);
-  last = {h, from: {...from}, end: {x: out.result.end.x, z: out.result.end.z}};
+  stuck = last && last.h === h && Math.hypot(from.x - last.from.x, from.z - last.from.z) < 1 && last.end && Math.hypot(last.end.x - last.from.x, last.end.z - last.from.z) < 4 ? stuck + 1 : 0;
+  const out = shotFrom(h, from, lie, rnd, nerves, avoid, fly);
+  last = {h, from: {...from}, end: out.result ? {x: out.result.end.x, z: out.result.end.z} : null};
   return out;
  }
- function shotFrom(h, from, lie, rnd, nerves, avoid) {
+ function landed(h, from, end) { if (last && last.h === h && Math.hypot(last.from.x - from.x, last.from.z - from.z) < .01) last.end = {x: end.x, z: end.z}; }
+ function shotFrom(h, from, lie, rnd, nerves, avoid, fly) {
   if (putts(lie, Math.hypot(h.pin.x - from.x, h.pin.z - from.z)) && !stuck) {
    const read = readPutt(h, from, lie);
    const aim = read.straight + (read.aim - read.straight) * skill.read + normal(rnd) * skill.puttLine * nerves;
    const roll = read.roll * Math.max(.2, 1 + normal(rnd) * skill.puttPace * nerves);
    const speed = puttSpeedFor(putter, turf, Math.max(.05, roll));
    const launch = {speed, vla: 0, hla: 0, spin: 0, spinAxis: 0};
-   const result = simulateShot({origin: {...from}, aim, ...launch}, h, {...air(h), turf, flagsticks: {current: false}});
-   return {result, club: 'putter', kind: 'putter', launch, aim, target: {...h.pin}, plan: 'putt'};
+   const result = fly ? simulateShot({origin: {...from}, aim, ...launch}, h, {...air(h), turf, flagsticks: {current: false}}) : null;
+   return {result, club: 'putter', kind: 'putter', launch, before: launch.speed, aim, target: {...h.pin}, plan: 'putt'};
   }
   const p = plan(h, from, lie, {avoid, stuck});
   const c = clubs[p.id], toPin = Math.hypot(h.pin.x - from.x, h.pin.z - from.z);
@@ -252,10 +256,12 @@ export function computerGolfer({handicap = 15, traits = {}, seed = 'golfer', set
   if (!short && skill.shape !== 'straight') { const s = skill.shape === 'draw' ? -3 : 3; launch.spinAxis += s; aim += s * .25; }
   for (const k of ['speed', 'vla', 'hla', 'spin', 'spinAxis']) if (!Number.isFinite(launch[k])) throw Error(`computer golfer: ${k} is ${launch[k]} (club ${c.kind}, ${toPin.toFixed(1)} m out, share ${share}, zoom ${zoom})`);
   if (!Number.isFinite(aim)) throw Error(`computer golfer: aim is ${aim} (club ${c.kind}, target ${JSON.stringify(target)})`);
-  let result;
-  try { result = simulateShot({origin: {...from}, aim, ...launch}, h, {...air(h), turf, flagsticks: {current: true}}); }
-  catch (e) { throw Error(`computer golfer's shot failed in the ball model: ${e.message}; from ${JSON.stringify(from)} (${lie}), aim ${aim}, launch ${JSON.stringify(launch)}, club ${c.kind}, mishit ${mishit}`); }
-  return {result, club: p.id, kind: c.kind, launch, aim, target: p.target, plan: short ? 'short' : p.target.x === h.pin.x && p.target.z === h.pin.z ? 'pin' : 'layup', mishit};
+  let result = null;
+  if (fly) {
+   try { result = simulateShot({origin: {...from}, aim, ...launch}, h, {...air(h), turf, flagsticks: {current: true}}); }
+   catch (e) { throw Error(`computer golfer's shot failed in the ball model: ${e.message}; from ${JSON.stringify(from)} (${lie}), aim ${aim}, launch ${JSON.stringify(launch)}, club ${c.kind}, mishit ${mishit}`); }
+  }
+  return {result, before: out.before * Math.max(.15, launch.speed / Math.max(1e-6, out.shot.speed)), club: p.id, kind: c.kind, launch, aim, target: p.target, plan: short ? 'short' : p.target.x === h.pin.x && p.target.z === h.pin.z ? 'pin' : 'layup', mishit};
  }
 
  // THE BEST RELIEF from the options relief.js offers (each {spot, penalty}):
@@ -269,5 +275,5 @@ export function computerGolfer({handicap = 15, traits = {}, seed = 'golfer', set
   return best;
  }
 
- return {name, handicap: skill.handicap, skill, clubs, bag, shot, plan, relief};
+ return {name, handicap: skill.handicap, skill, clubs, bag, shot, landed, plan, relief};
 }

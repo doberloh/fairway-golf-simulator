@@ -85,5 +85,22 @@ test('computer golfers of every standard finish every hole of a nine, and the be
   }
  }
  assert.ok(totals[0] < totals[30], `scratch ${totals[0]} against the 30's ${totals[30]} over two nines`);
+});
+
+test('a group of computer golfers plays three holes in every format, through the ball model', () => {
+ const settings = {...STARTING_COURSE, holes: 9, seed: 'AI-TEST'}, w = world(settings);
+ const groups = {stroke: ['A', 'A', 'A'], match: ['A', 'B'], scramble: ['A', 'A', 'B', 'B'], skins: ['A', 'A', 'A']};
+ for (const [mode, teams] of Object.entries(groups)) {
+  const players = teams.map((team, i) => ({name: `C${i}`, team, input: 'cpu', cpu: {handicap: 5 + 7 * i}}));
+  const golfers = players.map((p, i) => computerGolfer({handicap: p.cpu.handicap, seed: `${mode}${i}`, settings}));
+  const r = new Round({players, mode, holes: 9, putting: {mode: 'holeout'}, tee: 'white', seed: mode});
+  for (let i = 0; i < 3; i++) {
+   const res = playHole(r, w.holes[i], golfers, {roundKey: mode});
+   assert.ok(res.complete, `${mode}: hole ${i + 1} unfinished`);
+   r.nextHole();
+  }
+  const card = mode === 'scramble' ? r.teamCards.A : r.cards[0];
+  assert.ok(card.slice(0, 3).every(v => v >= 1 && v < 15), `${mode}: ${card.slice(0, 3)}`);
+ }
  assert.match(shotKey({seed: 'X', hole: 2, strokes: [3]}, 0), /^X\|h2\|p0\|s3$/);
 });

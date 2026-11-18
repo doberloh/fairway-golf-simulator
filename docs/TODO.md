@@ -247,6 +247,14 @@ here is a claim of support until it is done.
 - [ ] **Play the current build by hand** (0.9.18, 17 November 2026). What has
   been built and seen only in captures, measurements or smoke runs, and still
   exists in the game. The archive has each item's full list.
+  - **Computer golfers in a group** (branch fairway-tour, 17 November 2026;
+    PLAYING *Computer golfers*): built and tested in Node only, **not seen in
+    the game, and its smoke journey `cpu-group` not yet run** (written while
+    the owner was gaming). To check: Add computer golfer and the Plays like
+    levels in the seat editor; a computer golfer's turn card, aim line and
+    flight; the three watch settings; its words; its relief and a computer
+    team's scramble pick; your swing refused on its turn and the monitor
+    unarmed; a reload mid-hole replaying its shot.
   - **The swing report's last change** (0.9.18; the owner swung the pad on
     the iPhone and the PC and signed it off on 17 November, DONE *The
     pull-and-push swing, on the owner's iPhone*): the Carry and Total chips

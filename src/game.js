@@ -1,13 +1,17 @@
 import {puttingConfig,awardedPutts} from './putting.js';
 import {isTee,teeFor} from './tees.js';
 import {goalProblem} from './round-goals.js';
+import {cleanCpu} from './ai/seat.js';
 // HOW A GOLFER PLAYS IN A MIXED GROUP (Phase 3, 14 October 2026). 'monitor' --
 // the default, and every golfer from before this -- plays off the launch
 // monitor whenever it is armed, which is exactly how a round played before;
 // 'meter' always plays on the Swing Meter, armed or not, and a ball hit into the
 // monitor on their turn is refused as if it were unarmed.
-export const INPUTS=['monitor','meter'];
-export const playsWith=p=>p?.input==='meter'?'meter':'monitor';
+// 'cpu' -- a computer golfer (the fairway-tour goal, 17 November 2026; src/ai/):
+// it never plays off the monitor or the meter, and its seat carries a `cpu`
+// record (src/ai/seat.js) saying who it is and how good.
+export const INPUTS=['monitor','meter','cpu'];
+export const playsWith=p=>p?.input==='meter'?'meter':p?.input==='cpu'&&p.cpu?'cpu':'monitor';
 // EVERY ROUND FORMAT, in one list. A format added here is refused by nothing
 // else -- and tests/round-matrix.test.mjs fails until its scorer plays it with
 // every group the format allows (AGENTS.md, *Game rules live in pure modules*).
@@ -41,6 +45,9 @@ export class Round{
   if(!Array.isArray(players)||players.length<1||players.length>4)throw Error('Choose 1–4 players.');
   if(!FORMATS.includes(mode)||![3,9,18].includes(holes)||!Number.isFinite(gimme)||gimme<0||gimme>3)throw Error('Invalid round settings.');
   if(!players.every(p=>p&&typeof p.name==='string'&&p.name.length<=24&&['A','B'].includes(p.team)&&validTee(p)))throw Error('Invalid player.');
+  // A computer golfer's record is cleaned as it comes in (a save, a tour file);
+  // one that cannot be read leaves an ordinary golfer in the seat.
+  players=players.map(p=>{if(p.input!=='cpu'&&!p.cpu)return p;const cpu=cleanCpu(p.cpu);return cpu?{...p,input:'cpu',cpu}:{...p,input:'monitor',cpu:undefined};});
   if(mode==='match'&&new Set(players.map(p=>p.team)).size!==2)throw Error('Match play needs players on both teams.');
   // SKINS (skins.js) is every golfer for themselves, so it needs two to four.
   if(mode==='skins'&&players.length<2)throw Error('Skins is for two to four golfers.');
@@ -121,6 +128,7 @@ export class Round{
  setPlayers(next,tees){
   if(!Array.isArray(next)||next.length<1||next.length>4)throw Error('Choose 1–4 players.');
   if(!next.every(p=>p&&typeof p.name==='string'&&p.name.length<=24&&['A','B'].includes(p.team)&&validTee(p)))throw Error('Invalid player.');
+  next=next.map(p=>{if(p.input!=='cpu'&&!p.cpu)return p;const cpu=cleanCpu(p.cpu);return cpu?{...p,input:'cpu',cpu}:{...p,input:'monitor',cpu:undefined};});
   if(this.mode==='match'&&new Set(next.map(p=>p.team)).size!==2)throw Error('Match play needs players on both teams.');
   if(this.mode==='skins'&&next.length<2)throw Error('Skins is for two to four golfers.');
   const tee=tees&&tees[teeFor(this.tee,Object.keys(tees))];

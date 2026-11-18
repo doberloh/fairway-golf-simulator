@@ -290,7 +290,10 @@ function expectedSkins(golfers, decided) {
 
 function playRound(cfg, seed) {
  const rand = random(seed);
- const players = cfg.teams.map((team, i) => ({name: NAMES[i], team}));
+ // `cfg.cpu`: which seats are computer golfers (the fairway-tour goal). A
+ // computer seat is the same golfer to the rules; nothing may score it
+ // differently.
+ const players = cfg.teams.map((team, i) => cfg.cpu?.[i] ? {name: NAMES[i], team, input: 'cpu', cpu: {handicap: 4 + 6 * i, id: `g00${i + 1}`}} : {name: NAMES[i], team});
  let r = new Round({players, mode: cfg.mode, holes: cfg.holes, gimme: 0, putting: {mode: cfg.putting}, endless: cfg.endless, outOfBounds: cfg.outOfBounds, goal: cfg.goal || '', weekly: cfg.weekly || '', rival: cfg.rival || ''});
  const ref = scorer(r);
  const why = `${cfg.mode}${cfg.endless ? ' (endless)' : ''}, ${cfg.teams.join('')}, ${cfg.holes} holes, ${cfg.putting} putting, seed ${seed}`;
@@ -365,6 +368,18 @@ test('every format over 18 holes with four golfers, golfers joining and leaving 
 test('golfers come and go between holes in every format and group size', () => {
  for (const cfg of configs({holes: 9, changes: true}).filter(c => c.putting === 'dartboard'))
   for (const seed of [11, 12]) playRound(cfg, seed);
+});
+
+test('computer golfers in the seats change nothing about the rules, in every format and group', () => {
+ // Every other seat a computer golfer, then every seat but the first: the
+ // same rounds, the same scorer, and the seats still computer golfers after
+ // the saves and restores the matrix takes along the way.
+ for (const pattern of [i => i % 2 === 1, i => i > 0])
+  for (const cfg of configs().filter(c => c.putting === 'holeout' && c.teams.length > 1)) {
+   const cpu = cfg.teams.map((_, i) => pattern(i));
+   const r = playRound({...cfg, cpu}, 21);
+   r.players.forEach((p, i) => assert.equal(p.input === 'cpu', cpu[i], `${cfg.mode} ${cfg.teams.join('')}: seat ${i + 1} kept`));
+  }
 });
 
 test('the matrix reaches every format, every group size and both team splits', () => {

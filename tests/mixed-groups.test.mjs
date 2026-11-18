@@ -8,7 +8,11 @@ import {Round, playsWith, INPUTS} from '../src/game.js';
 import {blankProfile, normaliseProfile, setProfilePlay} from '../src/profile.js';
 
 test('a golfer plays off the monitor unless set to the Swing Meter, as everyone did before', () => {
- assert.deepEqual(INPUTS, ['monitor', 'meter']);
+ // 'cpu', a computer golfer, since 17 November 2026 (the fairway-tour goal):
+ // only with its record; without one a seat follows the monitor as before.
+ assert.deepEqual(INPUTS, ['monitor', 'meter', 'cpu']);
+ assert.equal(playsWith({input: 'cpu', cpu: {handicap: 10}}), 'cpu');
+ assert.equal(playsWith({input: 'cpu'}), 'monitor');
  assert.equal(playsWith({input: 'meter'}), 'meter');
  assert.equal(playsWith({input: 'monitor'}), 'monitor');
  assert.equal(playsWith({}), 'monitor', 'a golfer from before mixed groups follows the Armed switch');

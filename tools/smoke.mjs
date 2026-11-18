@@ -2826,6 +2826,52 @@ const JOURNEYS = [
    });
   },
  },
+ // A COMPUTER GOLFER IN THE GROUP (the fairway-tour goal, 17 November 2026):
+ // the seat editor makes one, the round starts with it up first, and it
+ // plays its own hole -- the turn card names its club, its balls fly, the
+ // person's swing is refused on its turn -- and hands the turn over.
+ {
+  name: 'cpu-group',
+  what: 'a computer golfer in the group: made in the seat editor, it plays its hole out by itself (its card, its flights, its score) and the turn comes to the person',
+  context: {viewport: {width: 1366, height: 768}},
+  async run(t) {
+   const state = () => t.page.evaluate(() => window.lab.state().turn);
+   await menuReady(t);
+   await t.step('a group of two: a computer golfer first, then a new player', async () => {
+    await fromMenu(t, 'Endless');
+    await t.press('Golfers');
+    await t.page.selectOption('#who0', '__cpu');
+    await t.until(() => t.page.locator('#level0').count().then(n => n > 0), 'the computer golfer\'s level', 5 * SLOW);
+    await t.press('Add player');
+    if (await t.page.locator('#name1').count()) await t.page.fill('#name1', 'Person');
+    const sub = await t.page.locator('#playerRows .seat').first().textContent();
+    if (!/COMPUTER/.test(sub)) throw new Error(`the first seat does not say it is a computer golfer: "${sub.trim().slice(0, 80)}"`);
+    await t.page.selectOption('#level0', '10');
+    await t.press('Start an endless run');
+    await t.inPlay();
+   });
+   await t.step('the computer golfer is up, its card names a club, and its ball flies', async () => {
+    const s = await state();
+    if (!s?.computer || s.active !== 0) throw new Error(`the first turn is not the computer golfer's: ${JSON.stringify(s)}`);
+    await t.until(async () => /yd to the hole/.test(await t.page.textContent('#turnFlash').catch(() => '')), 'the computer golfer\'s turn card', 20 * SLOW);
+    await t.page.locator('#turnFlash').screenshot({path: path.join(SHOTS, 'cpu-turn-card.png')}).catch(() => {});
+    await t.until(() => t.inFlight(), 'the computer golfer\'s first ball in the air', 20 * SLOW);
+    await t.page.screenshot({path: path.join(SHOTS, 'cpu-flight.png')});
+   });
+   await t.step('a swing of the person\'s is not taken on the computer golfer\'s turn', async () => {
+    const ok = await t.page.evaluate(() => window.lab.state().canSwing);
+    const s = await state();
+    if (s.computer && ok) throw new Error('the swing is offered on the computer golfer\'s turn');
+   });
+   await t.step('it plays the hole out by itself and the turn comes to the person', async () => {
+    await t.until(async () => { const s = await state(); return s && (s.active === 1 || s.holeComplete); }, 'the computer golfer to hole out', 240 * SLOW);
+    const s = await state();
+    const score = s.cards[0][s.hole];
+    if (!(score >= 1 && score < 15)) throw new Error(`the computer golfer's card for hole ${s.hole + 1} says ${score}`);
+    await t.page.screenshot({path: path.join(SHOTS, 'cpu-handed-over.png')});
+   });
+  },
+ },
  {
   name: 'monitor-phone',
   what: 'a phone reaches the launch monitor from the menu and Tools, with the bridge address filled in and remembered',
