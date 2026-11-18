@@ -7741,7 +7741,10 @@ about 8 degrees each side of the aim line and its perfect band about 2; Easy
   as a second running PULL and the row (a polite live region) is not
   announced every frame: CARRY when the ball lands, TOTAL when it stops, a
   dash until then. A putt gets TOTAL only. PLACED: not counting up, and
-  apex left off. **The path is kept too** (the owner: "allow the user to
+  apex left off. **The PULL chip went** the same day (the owner, told what
+  it was: remove "the distance one"). Three distances in one row, two of
+  them real, read as a mismatch; what a pull reaches is still on the pad's
+  yard marks while pulling. **The path is kept too** (the owner: "allow the user to
   see the pull and push path after the shot somehow"): the pad goes on
   drawing the last stroke's trail -- marks where it turned at the top,
   crossed the line and passed the shape point, a ring at the finish, its

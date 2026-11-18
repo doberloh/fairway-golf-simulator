@@ -1817,9 +1817,7 @@ function strikeStroke(){
  const shape={...sw.ctx.shape,height,curve:'straight'};
  const fx=strokeEffect(r,zonesFor({...sw.ctx,shape},r.share),{difficulty:sw.ctx.difficulty,putt,lean:sw.lean});
  sw.ctx={...sw.ctx,shape};sw.power=r.share;sw.fx=fx;sw.done=true;
- const {full,unit,per}=sw.scale;
  strokeReport={player:round.player?.name,hole:round.hole,putt,difficulty:sw.ctx.difficulty,fx,back:r.back,idealBack:r.idealBack,
-  pull:Math.round(full*(r.share<=1?r.share:carryShare(r.share))*per),unit,
   height:putt?null:heightName(height,sw.ctx.short),dot:putt?null:(shape.dot||{x:0,y:0})};
  // THE PATH, KEPT (the owner, 16 November 2026: "allow the user to see the
  // pull and push path after the shot somehow"): the pad goes on showing what
@@ -2023,7 +2021,7 @@ function drawMeterScale(){
 }
 // WHAT YOU HIT (the owner, 16 November 2026: "for all of the following, show
 // on the screen via some sort of feedback what the user hit"). A row in the
-// swing box after each stroke: the pull in yards, the line, where it started
+// swing box after each stroke: the line, where it started
 // (Push, Pull, Straight), the height, the spin -- backspin and the draw or
 // fade -- and the TEMPO GAUGE -- quick on the left, the ideal in the middle
 // with its perfect band, slow on the right, the push marked on it with its
@@ -2038,13 +2036,15 @@ function drawMeterScale(){
 // were. With nothing to show the tempo cell keeps its place, empty, so the
 // buttons never move.
 // CARRY AND TOTAL CAME BACK as the row's last two chips (the owner, 17
-// November 2026: "I think i do miss carry and total"). PULL is not either of
-// them: it is the carry the pull ASKED for, a clean strike of that length in
-// still air -- the strike, the wind, the slope and the roll move the real
-// ones. So they are written once each, never counting up (the row is a polite
-// live region, and a number running beside PULL reads as a second PULL):
-// CARRY when the ball lands, TOTAL when it stops, a dash until then. A putt
-// has only its total.
+// November 2026: "I think i do miss carry and total"). They are written once
+// each, never counting up (the row is a polite live region): CARRY when the
+// ball lands, TOTAL when it stops, a dash until then. A putt has only its
+// total.
+// THE PULL CHIP WENT (the owner, 17 November 2026: remove "the distance
+// one"). It was the carry the pull ASKED for -- a clean strike of that length
+// in still air -- and beside the real carry and total it read as a third
+// distance that matched neither. How far a pull reaches is still on the pad
+// itself, in its yard marks as you pull (`drawSwingPad`).
 function drawStrokeReport(){
  const box=$('swingMeter'),row=$('smResult');if(!box||!row)return;
  let el=$('strokeReport'),tp=$('strokeTempo');
@@ -2054,8 +2054,7 @@ function drawStrokeReport(){
  if(el.hidden===mine)el.hidden=!mine;
  if(!mine){if(el.innerHTML){el.innerHTML='';el.dataset.shown='';}if(tp.innerHTML){tp.innerHTML='';tp.dataset.shown='';tp.className='srp-tempo empty';tp.removeAttribute('title');}return;}
  const {line,start,tempo,back}=r.fx.parts,chip=(k,v,bad=false)=>`<span class="srp-chip${bad?' bad':''}"><small>${k}</small><b>${v}</b></span>`;
- let h=chip('PULL',`${r.pull} ${r.unit}`);
- h+=chip('LINE',line.miss>0?`${Math.abs(line.deg).toFixed(1)}° ${line.side>0?'R':'L'}`:'✓',line.miss>0);
+ let h=chip('LINE',line.miss>0?`${Math.abs(line.deg).toFixed(1)}° ${line.side>0?'R':'L'}`:'✓',line.miss>0);
  if(start)h+=chip('START',{push:'PUSH',pull:'PULL',straight:'STRAIGHT'}[start.shape]+(start.miss>0?(start.shape==='straight'?' ~':start.extra===(start.shape==='push'?1:-1)?' +':' −'):''),start.miss>0);
  if(r.height)h+=chip('HEIGHT',escape(r.height.toUpperCase()));
  if(r.dot){const d=r.dot,on=Math.hypot(d.x,d.y)>.05,pct=Math.round((dotSpin(d)-1)*100),side=Math.round(d.x*SPIN_DOT.axis);

@@ -224,7 +224,8 @@ here is a claim of support until it is done.
   and signed off the rest on 17 November (DONE, same heading). Still open:
   - **The CARRY and TOTAL chips** (17 November): checked by the smoke
     harness, not yet seen by a person. Each is written once, when the ball
-    lands and when it stops.
+    lands and when it stops. The PULL chip before them is gone (the owner,
+    same day), also not yet seen by a person.
   - **The meter skins colour nothing now.** They coloured the three-tap
     bar, which is gone; the rewards still unlock them and the Look tab still
     shows them as "The Swing Meter's look". For the owner to decide: the pad

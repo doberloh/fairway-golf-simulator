@@ -8544,7 +8544,9 @@ the iPhone between 15 and 17 November and sent back points after each. On
 - **Carry and total were missed**, and the owner asked what the distance
   number beside them was. It was PULL, the carry the pull asked for. Carry
   and total came back as the report's last two chips, each written once
-  (RESEARCH, *The pull-and-push swing*, What you hit).
+  (RESEARCH, *The pull-and-push swing*, What you hit). Told what PULL
+  was, the owner had it removed ("the distance one"); the pad's yard marks
+  still show what a pull reaches.
 - **"Swing Meter" was renamed** where a player reads it:
   - the group editor's *plays with* (Swing pad);
   - the monitor strip's two lines and the disconnect message;
