@@ -26,7 +26,7 @@
 import {simulateShot, outOfBounds} from '../physics.js';
 import {turfConfig} from '../turf.js';
 import {bagClubs, stockBag} from '../clubs.js';
-import {swingLaunch, targetShare, swingZoom, fullCarry, shapedLaunch, shortGame, puttSpeedFor, lieFactor, DEFAULT_SHAPE} from '../swing-meter.js';
+import {swingLaunchSteps, targetShareSteps, swingZoom, fullCarry, shapedLaunch, shortGame, puttSpeedFor, lieFactor, DEFAULT_SHAPE} from '../swing-meter.js';
 import {fairwayAim} from '../course.js';
 import {localWind} from '../shot-visuals.js';
 import {seeded} from '../challenges.js';
@@ -119,8 +119,20 @@ export function computerGolfer({handicap = 15, traits = {}, seed = 'golfer', set
   }
   return total;
  }
- const reach = (c, h, from, to, lie) => targetShare({club: c, shape: DEFAULT_SHAPE, lie, difficulty: 'normal', metres: Math.hypot(to.x - from.x, to.z - from.z),
-  rise: h.height(to.x, to.z) - h.height(from.x, from.z), bearing: Math.atan2(to.x - from.x, to.z - from.z), ...air(h)});
+ // The last answer kept: the plan asks it of the chosen club and target, and
+ // the shot asks the same again (`shotFrom`), the costliest step of a plan
+ // (18 November 2026). The same question gives the same answer, so nothing moves.
+ // In steps itself (swing-meter.js `targetShareSteps`): a pause after each
+ // flight of the ball or few, so no step of a plan holds more than that.
+ let lastReach = null;
+ function* reach(c, h, from, to, lie) {
+  const key = `${c.kind}|${c.speed}|${from.x}|${from.z}|${to.x}|${to.z}|${lie}`;
+  if (lastReach && lastReach.h === h && lastReach.key === key) return lastReach.t;
+  const t = yield* targetShareSteps({club: c, shape: DEFAULT_SHAPE, lie, difficulty: 'normal', metres: Math.hypot(to.x - from.x, to.z - from.z),
+   rise: h.height(to.x, to.z) - h.height(from.x, from.z), bearing: Math.atan2(to.x - from.x, to.z - from.z), ...air(h)});
+  lastReach = {h, key, t};
+  return t;
+ }
 
  // THE PLAN for a shot off the green: {club id, target (where it should
  // finish), expected strokes}. Candidates are screened by the club's carry
@@ -171,7 +183,7 @@ export function computerGolfer({handicap = 15, traits = {}, seed = 'golfer', set
   options.sort((a, b) => a.ev - b.ev);
   yield;
   for (const o of options) {
-   const t = reach(clubs[o.id], h, from, o.target, lie);
+   const t = yield* reach(clubs[o.id], h, from, o.target, lie);
    yield;
    if (t && !t.out) return o;
   }
@@ -263,10 +275,10 @@ export function computerGolfer({handicap = 15, traits = {}, seed = 'golfer', set
   if (!(Math.hypot(target.x - from.x, target.z - from.z) > 2)) { const k = Math.min(1, 10 / Math.max(1, toPin)); target = {x: from.x + (h.pin.x - from.x) * k, z: from.z + (h.pin.z - from.z) * k}; }
   const range = Math.hypot(target.x - from.x, target.z - from.z);
   const zoom = swingZoom(fullCarry(c, shapedLaunch(c, DEFAULT_SHAPE, {short})), range);
-  const t = reach(c, h, from, target, lie);
+  const t = yield* reach(c, h, from, target, lie);
   yield;
   const share = t && Number.isFinite(t.share / zoom) ? Math.min(1, t.share / zoom) : 1;
-  const out = swingLaunch({power: share, error: 0, done: true}, {club: c, shape: DEFAULT_SHAPE, short, lie, difficulty: 'normal', turf, zoom});
+  const out = yield* swingLaunchSteps({power: share, error: 0, done: true}, {club: c, shape: DEFAULT_SHAPE, short, lie, difficulty: 'normal', turf, zoom});
   const launch = {...out.shot};
   let aim = Math.atan2(target.x - from.x, target.z - from.z) / DEG;
   // The miss.

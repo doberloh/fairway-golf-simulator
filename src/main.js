@@ -1550,12 +1550,13 @@ function planComputerTurn(tries=0){
   if(clubs[s.club])$('club').value=s.club;
   aim=s.aim;aimPoint=null;aimRange=null;updateAim();view.setCamera(round.position,aim);
   cpuCard(s);updateHUD();
+  const flown=preflyComputerShot(s,key);
   cpuTimer=setTimeout(()=>{
    if(cpuTurnKey!==key||round.active!==seat||!cpuMayPlay())return;
    if(clubs[s.club])$('club').value=s.club;aim=s.aim;
    const toPin=Math.hypot(course.pin.x-from.x,course.pin.z-from.z),how=showShot(cpuWatch,{putt:s.kind==='putter',toPinMetres:toPin});
    cpuShooting={seat,from,before:toPin,putt:s.kind==='putter',key:shotKey(round,seat,round.uid)};
-   const ok=takeShot(null,{shot:s.launch,before:s.before,cpu:true});
+   const ok=takeShot(null,{shot:s.launch,before:s.before,cpu:true,flown});
    if(!ok){cpuShooting=null;return;}
    if(flight){flight.rate=how==='quick'?3:1;if(how==='skip')finishShot();}
   },PRESHOT_MS[cpuWatch]??1000);
@@ -2882,6 +2883,36 @@ function setAimView(on){
  updateExplorer();drawRoundHud();
 }
 
+// THE BALL FLOWN for a shot struck from here: the one place a round's shot is
+// simulated, so a flight worked out ahead is the same flight.
+function flyShot(shot,lie,c){
+ return simulateShot(shot,course,{wind:localWind(settings,course.rotation),altitude:course.bio.altitude,temperature:course.bio.temperature,turf:settings.turf,
+  // Only when they are actually standing lit on the course. The whole
+  // floodlight group is hidden when the lights are down, and a ball stopping
+  // dead against a mast nobody can see is worse than one flying through it.
+  poles:view.floodlit?view.poles:null,
+  // This hole's flagstick is in unless the ball is on the green (setPinOut) or
+  // the putter is in hand (liftFlag): exactly when it is drawn standing.
+  flagsticks:{current:lie!=='green'&&c.code!=='PT'}});
+}
+// A COMPUTER GOLFER'S FLIGHT, FLOWN AHEAD (18 November 2026): its shot is
+// known for the whole pre-shot moment, so the ball is flown in one frame of
+// it and the shot camera planned in the next, and the strike's own frame does
+// neither -- on Ultra those two, in the strike's frame, were most of the
+// long frames a computer golfer added (RESEARCH *Frame rate with computer
+// golfers*). The shot is built as takeShot builds it; takeShot uses the
+// flight only if its own shot is exactly this one, and flies it otherwise.
+// Strikes that used the flight flown ahead, and that flew their own (lab.state).
+const cpuFlownAhead=[0,0];
+function preflyComputerShot(s,key){
+ const c=clubs[s.club],lie=course.surface(round.position.x,round.position.z),factor=onMat()?1:lieFactor(lie);
+ if(!c)return null;
+ const shot=gridShot({origin:{...round.position},aim:s.aim,...s.launch,...(factor<1?{lie:{surface:lie,factor,before:s.before}}:{})});
+ const pre={course,shot,floodlit:!!view.floodlit},hole=course;
+ requestAnimationFrame(()=>{if(cpuTurnKey!==key||course!==hole)return;try{pre.result=flyShot(shot,lie,c);}catch{return;}
+  requestAnimationFrame(()=>{if(cpuTurnKey!==key||course!==hole||!pre.result)return;pre.tv=shotCameraPlan(pre.result,course);});});
+ return pre;
+}
 function takeShot(data=null,struck=null){
  if(appMode!=='play'||tour||flight||dropState||view.config.mode==='free'||round.holeComplete||round.scrambleSelection||round.relief||round.finished||!$('versionNotice').hidden)return false;
  // SPACE and the gamepad still reach this while the lab is open, and the lab's
@@ -2913,16 +2944,11 @@ function takeShot(data=null,struck=null){
  // again. Far finer than a monitor reports (0.1 mph is 0.045 m/s), so nothing
  // shown changes and no ball data is invented.
  const shot=gridShot({origin:{...round.position},aim,...launch,...(lieRecord?{lie:lieRecord}:{})});
- const wind=localWind(settings,course.rotation);
- const result=simulateShot(shot,course,{wind,altitude:course.bio.altitude,temperature:course.bio.temperature,turf:settings.turf,
-  // Only when they are actually standing lit on the course. The whole
-  // floodlight group is hidden when the lights are down, and a ball stopping
-  // dead against a mast nobody can see is worse than one flying through it.
-  poles:view.floodlit?view.poles:null,
-  // This hole's flagstick is in unless the ball is on the green (setPinOut) or
-  // the putter is in hand (liftFlag): exactly when it is drawn standing.
-  flagsticks:{current:lie!=='green'&&c.code!=='PT'}});result.puttStroke=lie==='green';
- latest={shot,result,player:round.player.name,typed:!!data};priorShot=lastShot;lastShot={...latest,hole:round.hole,putting:lie==='green',aim,club:c.label,kind:c.kind,aimAt:aimPoint?{x:aimPoint.x,z:aimPoint.z}:null,aimDist:aimRange};shotInputs.set(`${round.uid}:${round.hole}:${round.active}`,data?'monitor':'meter');flight={result,elapsed:0,index:0,origin:shot.origin,record:lastShot,tv:shotCameraPlan(result,course)};view.hitEffects(shot.origin,aim,lie,shot.speed);gameAudio?.strike({kind:c.kind,ballMs:shot.speed,monitor:!!data});lastShot.pinOut=lie==='green'||c.code==='PT';lastShot.poles=!!view.floodlit;showLiveResult();view.setTrail([]);view.aimLine.visible=false;view.aimRing.visible=false;updateHUD();return true;
+ // A computer golfer's flight, flown ahead in its pre-shot moment
+ // (`preflyComputerShot`), is this one only if it is this exact shot.
+ const pre=struck?.flown,ahead=pre?.result&&pre.course===course&&pre.floodlit===!!view.floodlit&&JSON.stringify(pre.shot)===JSON.stringify(shot);
+ const result=ahead?pre.result:flyShot(shot,lie,c);result.puttStroke=lie==='green';if(struck?.cpu)cpuFlownAhead[ahead?0:1]++;
+ latest={shot,result,player:round.player.name,typed:!!data};priorShot=lastShot;lastShot={...latest,hole:round.hole,putting:lie==='green',aim,club:c.label,kind:c.kind,aimAt:aimPoint?{x:aimPoint.x,z:aimPoint.z}:null,aimDist:aimRange};shotInputs.set(`${round.uid}:${round.hole}:${round.active}`,data?'monitor':'meter');flight={result,elapsed:0,index:0,origin:shot.origin,record:lastShot,tv:ahead&&pre.tv?pre.tv:shotCameraPlan(result,course)};view.hitEffects(shot.origin,aim,lie,shot.speed);gameAudio?.strike({kind:c.kind,ballMs:shot.speed,monitor:!!data});lastShot.pinOut=lie==='green'||c.code==='PT';lastShot.poles=!!view.floodlit;showLiveResult();view.setTrail([]);view.aimLine.visible=false;view.aimRing.visible=false;updateHUD();return true;
 }
 function finishShot(){
  if(!flight)return;if(flight.replay){const replay=flight;flight=null;Object.assign(view.config,replay.camera);view.setHole(worldHole(round.hole),true);view.setPutting(round.putting);view.setBall(round.position);view.aimLine.visible=true;view.trackingBall=false;view.config.mode=playCameraMode(view.config.mode,course,round.position);updateAim();view.setCamera(round.position,aim,true);showStandingResult();updateExplorer();updateHUD();
@@ -8655,7 +8681,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   // Enough internal state to check what is on screen against what should be.
   state:()=>({inFlight:!!flight,canSwing:canSwing(),pinAt:course?.pin?{x:course.pin.x,z:course.pin.z}:null,ballAt:round?.position?{x:round.position.x,z:round.position.z}:null,
    // Whose turn, and whether a computer golfer's (the fairway-tour goal).
-   turn:round?{hole:round.hole,active:round.active,computer:isComputer(round.player),strokes:[...(round.strokes||[])],cards:round.cards.map(c=>c.slice()),holeComplete:round.holeComplete,cpuWatch}:null,
+   turn:round?{hole:round.hole,active:round.active,computer:isComputer(round.player),strokes:[...(round.strokes||[])],cards:round.cards.map(c=>c.slice()),holeComplete:round.holeComplete,cpuWatch,flownAhead:[...cpuFlownAhead]}:null,
    // THE SWING IN PROGRESS, on the input clock (`event.timeStamp`): when it
    // started and how long the marker takes per bar length, so the smoke test can
    // time a tap the way a player does -- on the clock, not on a frame, which on a

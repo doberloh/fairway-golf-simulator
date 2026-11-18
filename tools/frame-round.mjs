@@ -113,7 +113,7 @@ async function measure(file, withCpu) {
    }
    await page.waitForTimeout(400);
   }
-  const out = await page.evaluate(() => { window.__framesStop = true; return {d: window.__frames.slice(1), at: window.__at.slice(1), states: window.__states, strokes: window.lab.state().turn?.strokes || []}; });
+  const out = await page.evaluate(() => { window.__framesStop = true; const turn = window.lab.state().turn; return {d: window.__frames.slice(1), at: window.__at.slice(1), states: window.__states, strokes: turn?.strokes || [], ahead: turn?.flownAhead || null}; });
   let cpuProfile = null;
   if (cdp) {
    const {profile} = await cdp.send('Profiler.stop');
@@ -129,6 +129,18 @@ async function measure(file, withCpu) {
    for (const n of profile.nodes) for (const c of n.children || []) parent.set(c, n.id);
    const when = []; let ts = profile.startTime;
    for (const dt of profile.timeDeltas) { ts += dt; when.push(p0 + (ts - profile.startTime) / 1000); }
+   // And over EVERY frame over 50 ms together: what the long frames as a
+   // whole spent their time on (ms summed over the load).
+   const sum = new Map(), windows = out.d.map((ms, i) => [ms, out.at[i]]).filter(([ms]) => ms > 50);
+   profile.samples.forEach((id, i) => {
+    if (!windows.some(([ms, end]) => when[i] >= end - ms && when[i] <= end)) return;
+    const seen = new Set();
+    for (let n = id; n !== undefined; n = parent.get(n)) {
+     const f = byId.get(n).callFrame, k = `${f.functionName || '(anon)'}:${f.lineNumber}`;
+     if (!seen.has(k)) { seen.add(k); sum.set(k, (sum.get(k) || 0) + (profile.timeDeltas[i] || 0)); }
+    }
+   });
+   out.longSum = `${windows.length} frames over 50 ms: ` + [...sum].filter(([k]) => !/^\((root|idle|anon)\)/.test(k)).sort((a, b) => b[1] - a[1]).slice(0, 30).map(([k, us]) => `${k} ${(us / 1000).toFixed(0)}`).join(' > ');
    const longest = out.d.map((ms, i) => [ms, out.at[i]]).sort((x, y) => y[0] - x[0]).slice(0, 3);
    out.inside = longest.map(([ms, end]) => {
     const inc = new Map();
@@ -196,7 +208,9 @@ for (let r = 0; r < ROUNDS; r++) for (const which of r % 2 ? ['B', 'A'] : ['A', 
  const why = blame(res); m.blame = why.counts;
  process.stderr.write(`    by 30 s: ${why.buckets.join(' ')} ms · holes seen ${why.holes} · long frames (>50 ms) after: ${Object.entries(why.counts).map(([k, v]) => `${k} ${v}`).join(', ') || 'none'}\n`);
  process.stderr.write(`    longest: ${why.worst.join(' | ')}\n`);
+ if (res.ahead) process.stderr.write(`    computer strikes on a flight flown ahead: ${res.ahead[0]}, flown at the strike: ${res.ahead[1]}\n`);
  for (const line of res.inside || []) process.stderr.write(`    inside: ${line}\n`);
+ if (res.longSum) process.stderr.write(`    all long frames: ${res.longSum}\n`);
  if (res.cpuProfile) for (const [k, ms] of res.cpuProfile) process.stderr.write(`    ${ms.toFixed(3).padStart(7)} ms a frame  ${k}\n`);
 }
 const sa = stats(all.A), sb = stats(all.B), f = v => v.toFixed(2).padStart(7);

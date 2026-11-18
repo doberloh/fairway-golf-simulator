@@ -352,6 +352,13 @@ export function simulateShot(shot,course,options={}){
   apex=Math.max(apex,p[1]-start[1]);
   const detailed=pin&&hypot(p[0]-pin.x,p[2]-pin.z)<.5;
   if(detailed||step%4===0)points.push({x:p[0],y:p[1],z:p[2],t,v:hypot(v[0],v[1],v[2]),w:rpm()});
+  // `untilLanding`: stop at the first sample at or after the first touchdown.
+  // For the searches that read only the flight -- the carry (taken at
+  // touchdown) and where the falling ball passes a height (plays-like.js) --
+  // every number they read is the full flight's, at a fraction of the cost:
+  // the bounces and roll are most of a long shot's steps (18 November 2026,
+  // the computer golfers' plan; RESEARCH *Frame rate with computer golfers*).
+  if(options.untilLanding&&carry!==null&&(detailed||step%4===0))break;
  }
  points.push({x:p[0],y:p[1],z:p[2],t});
  return {points,end:{x:p[0],y:p[1],z:p[2]},carry:carry??0,hang:hang??0,total:hypot(p[0]-start[0],p[2]-start[2]),apex,time:t,landingSpeed,descentAngle,landingSpin,bounces,skid:skidTotal.value,holed,lipped,hazard,treeHits,homeHits,flagHits,contacts,onGreen:course.surface(p[0],p[2])==='green'};
