@@ -241,9 +241,14 @@ here is a claim of support until it is done.
     flight's end waited on something.
   - `lab.state().lastStroke` holds the last reading, with its sample count.
 
-- [ ] **Play the current build by hand** (0.9.17, 15 November 2026). What has
+- [ ] **Play the current build by hand** (0.9.18, 17 November 2026). What has
   been built and seen only in captures, measurements or smoke runs, and still
   exists in the game. The archive has each item's full list.
+  - **The swing report's last change** (0.9.18; the owner swung the pad on
+    the iPhone and the PC and signed it off on 17 November, DONE *The
+    pull-and-push swing, on the owner's iPhone*): the Carry and Total chips
+    filling in on landing and stopping, and the row without the PULL
+    distance, seen only in smoke pictures.
   - **The woods past the property line** (0.9.17; seen in captures of all
     fifteen landscapes and one built course, DONE *The course's woods
     carried past its line*): a round played near the boundary on a wooded
