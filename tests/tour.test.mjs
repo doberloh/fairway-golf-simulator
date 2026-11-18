@@ -3,7 +3,7 @@
 // played), the standings and awards, Auto strength, the next season.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newTour, quickSeason, shippedSeason, SHIPPED, startEvent, endEvent, seasonOver, standings, awards, nextSeason, readTour, eventSettings, cleanEventDef, eventCourse} from '../src/tour.js';
+import {newTour, quickSeason, shippedSeason, SHIPPED, startEvent, endEvent, seasonOver, standings, awards, nextSeason, readTour, eventSettings, cleanEventDef, eventCourse, tourRecord} from '../src/tour.js';
 import {holeModel, drawField, recordCard, myGroup, makeCut, finish, playoffFor, drawPlayoff, YOU} from '../src/tournament.js';
 import {BIOME_KEYS} from '../src/settings-schema.js';
 
@@ -64,8 +64,15 @@ test('a short season played through: standings, awards, Auto, the next season', 
  const a = awards(t);
  assert.equal(a.champion.id, YOU);
  assert.equal(a.majors.id, YOU);
+ const before = tourRecord([t]);
+ assert.equal(before.titles, 1, 'the season over: its title counts');
+ assert.ok(before.wins >= 2 && before.majors === 1 && before.events === 3 && before.best === '1');
  const n = nextSeason(t);
  assert.equal(n.season, 2); assert.equal(n.at, 0); assert.equal(n.results.length, 0);
+ const after = tourRecord([n]);
+ assert.equal(after.titles, 1, 'kept in the history after the next season starts');
+ assert.equal(after.wins, before.wins);
+ assert.equal(after.trophies.length, before.wins);
  assert.ok(Object.values(n.shifts).some(v => v !== 0) && Object.values(n.shifts).every(v => Math.abs(v) <= 3));
  const back = readTour(JSON.parse(JSON.stringify(t)));
  assert.deepEqual(standings(back), st);

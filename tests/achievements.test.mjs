@@ -6,11 +6,12 @@ import {ACHIEVEMENT_TITLES, isUnlocked, wornItem, reward} from '../src/rewards.j
 // THE SPEC'S TABLE (8.3): thirteen, each with XP, the titles where named.
 // Thirteen from the spec, and five for the challenges (16 October 2026); Ghost
 // Hunter went with Haunted Hollow (2 November 2026).
-test('seventeen achievements, each paying XP, ten with a title', () => {
- assert.equal(ACHIEVEMENTS.length, 17);
- assert.equal(new Set(ACHIEVEMENTS.map(a => a.id)).size, 17);
+// Seven more for the Fairway Tour, three with titles (17 November 2026).
+test('twenty-four achievements, each paying XP, thirteen with a title', () => {
+ assert.equal(ACHIEVEMENTS.length, 24);
+ assert.equal(new Set(ACHIEVEMENTS.map(a => a.id)).size, 24);
  for (const a of ACHIEVEMENTS) assert.ok(a.xp > 0 && a.name && a.how, a.id);
- assert.equal(ACHIEVEMENTS.filter(a => a.title).length, 10);
+ assert.equal(ACHIEVEMENTS.filter(a => a.title).length, 13);
  assert.equal(achievement('ace').xp, 200);
 });
 
@@ -62,7 +63,7 @@ test('stored progress is cleaned on the way in', () => {
 
 // TITLES FROM ACHIEVEMENTS (spec 7.5): worn only once earned, whatever the level.
 test('an achievement title is earned with its achievement, not by level', () => {
- assert.equal(ACHIEVEMENT_TITLES.length, 10);
+ assert.equal(ACHIEVEMENT_TITLES.length, 13);
  assert.equal(reward('title', 'ach-ace').name, 'Ace');
  assert.equal(isUnlocked('title', 'ach-ace', 50, {}), false);
  assert.equal(isUnlocked('title', 'ach-ace', 1, {ace: 1}), true);

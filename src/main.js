@@ -114,7 +114,8 @@ import {roundStrokes,netCard} from './net.js';
 import {form as adaptForm,adaptHandicap} from './ai/adapt.js';
 import {rateCourseSteps} from './ai/rating.js';
 import {YOU,myGroup,golferOf,holeModel,setNetStrokes,drawField,recordCard,makeCut,playoffFor,drawPlayoff,finish as finishEvent} from './tournament.js';
-import {newTour,quickSeason,shippedSeason,startEvent,endEvent,nextSeason,readTour,cleanEventDef,eventCourse} from './tour.js';
+import {newTour,quickSeason,shippedSeason,startEvent,endEvent,nextSeason,readTour,cleanEventDef,eventCourse,seasonOver,standings as tourStandings,tourRecord} from './tour.js';
+import {eventRewards,roundRewards,seasonRewards} from './tour-rewards.js';
 import {loadTours,activeTour,putTour,removeTour,ratingKey,storedRating,storeRating} from './tour-store.js';
 import {tickerText,hubHtml,startHtml,editorHtml} from './ui-tour.js';
 import {writeTourFile,readTourFile,FILE_EXT as TOUR_FILE_EXT} from './tour-file.js';
@@ -1606,13 +1607,26 @@ function finishEventRound(){
  const {tour:t,ev,r}=e;
  round.players.forEach((p,i)=>recordCard(ev,i===0?YOU:p.cpu?.id,round.cards[i],r));
  if(!ev.model)return;
+ // The round against the playing partners (Head to Head).
+ const group=round.players.map((p,i)=>({id:i===0?YOU:p.cpu?.id,total:ev.format==='stableford'?pointsTotal(round.cards[i].slice(0,ev.holes),ev.pars,ev.netStrokes?.[i===0?YOU:p.cpu?.id]||[]):sumScores(round.cards[i])}));
+ payTour(roundRewards(ev,r,group,{tourId:t.id,season:t.season}));
  drawField(ev,r);
  ev.round=r+1;
  if(ev.rounds>=3&&ev.round===(ev.rounds===4?2:1))makeCut(ev);
  // A person who missed the cut: the rest of the event is drawn without them.
  while(ev.round<ev.rounds&&ev.cut&&!ev.cut.made.includes(YOU)){drawField(ev,ev.round,[]);ev.round++;}
- if(ev.round>=ev.rounds){const tied=playoffFor(ev);if(tied)drawPlayoff(ev,tied);finishEvent(ev);}
+ if(ev.round>=ev.rounds){const tied=playoffFor(ev);if(tied)drawPlayoff(ev,tied);finishEvent(ev);payTour(eventRewards(ev,{tourId:t.id,season:t.season}));}
  fwSave(t);
+}
+// WHAT THE TOUR PAYS (src/tour-rewards.js) to the person, through the XP
+// ledger (each under its own key: never twice) and the achievements, in the
+// XP popup like any round's.
+function payTour(r){
+ const prof=fwPerson().prof;if(!prof||(!r.xp.length&&!r.achievements.length))return;
+ const before=prof.xp||0,items=[];
+ for(const x of r.xp)if(award(prof,x.key,x.xp)>0)items.push({label:x.why,xp:x.xp});
+ payAchievements(prof,r.achievements,items);
+ storeProfiles(profiles);queueXpGain(prof,items,before);
 }
 // SHARING A TOUR (src/tour-file.js): the tour and its built courses as one
 // .fairway-tour, saved like a course file. Written a piece at a time, so a
@@ -1695,8 +1709,8 @@ function tourAction(a,id){
   else if(a==='edit'){tourDraft=JSON.parse(JSON.stringify(fwTour()));tourView='edit';}
   else if(a==='start'){const t=fwTour();startEvent(t,{personIndex:me.index});fwSave(t);}
   else if(a==='play'){startEventRound();return;}
-  else if(a==='finish'){const t=fwTour(),ev=t.current;while(ev.round<ev.rounds){drawField(ev,ev.round,[]);ev.round++;}const tied=playoffFor(ev);if(tied)drawPlayoff(ev,tied);finishEvent(ev);fwSave(t);}
-  else if(a==='next'){const t=fwTour();endEvent(t,t.current);fwSave(t);}
+  else if(a==='finish'){const t=fwTour(),ev=t.current;while(ev.round<ev.rounds){drawField(ev,ev.round,[]);ev.round++;}const tied=playoffFor(ev);if(tied)drawPlayoff(ev,tied);finishEvent(ev);payTour(eventRewards(ev,{tourId:t.id,season:t.season}));fwSave(t);}
+  else if(a==='next'){const t=fwTour();endEvent(t,t.current);if(seasonOver(t))payTour(seasonRewards(t,tourStandings(t)));fwSave(t);}
   else if(a==='season'){fwSave(nextSeason(fwTour()));}
   else if(a==='share'){shareTour(fwTour());return;}
   else if(a==='import'){importTourFile();return;}
@@ -6615,6 +6629,16 @@ function lookPicker(profile){
 }
 // THE ACHIEVEMENTS (Phase 7): every one, earned or not, with what it takes,
 // its XP, its title, and how far along a counted one is.
+// THE TROPHY CABINET (the fairway-tour goal, SPEC 6): the main profile's
+// Fairway Tour record across every tour on the device -- events played,
+// wins, majors, seasons won, best finish -- and each win by name.
+function tourCabinet(profile){
+ if(profile?.id!==mainProfile(profiles)?.id)return '';
+ const rec=tourRecord(fwStore().tours);
+ if(!rec.events)return `<h3>Fairway Tour</h3><p class="note">No tour events played yet. Fairway Tour on the main menu starts a season.</p>`;
+ return `<h3>Fairway Tour <small>${rec.events} event${rec.events===1?'':'s'}</small></h3><p>${rec.wins} win${rec.wins===1?'':'s'} · ${rec.majors} major${rec.majors===1?'':'s'} · ${rec.titles} season title${rec.titles===1?'':'s'} · ${rec.top10} top ten${rec.top10===1?'':'s'} · ${rec.cuts} cuts made${rec.best?` · best finish ${escape(rec.best)}`:''}</p>`
+  +(rec.trophies.length?`<ul class="achievement-list">${rec.trophies.map(x=>`<li class="achievement earned"><b>${escape(x.name)}</b><span>${escape(x.tour)} · season ${x.season}${x.major?' · a major':''}</span></li>`).join('')}</ul>`:'');
+}
 function achievementList(profile){
  const e=profile.achievements||{};
  const row=a=>{const at=e[a.id],p=progressOf(a,profile);
@@ -6651,7 +6675,7 @@ function renderProfile(content){
  content.innerHTML=`<div class="profile">${strip}`
   +(xpNote?`<p class="note xp-new"><b>New: XP and levels.</b> ${XP_NEW_TEXT}</p>`:'')
   +`<div class="profile-head">${head}<div class="profile-level"><small>LEVEL · ${escape(badgeName(lv.level).toUpperCase())}</small><strong>${lv.level}</strong><span>${lv.into.toLocaleString()} of ${lv.need.toLocaleString()} XP to level ${lv.level+1}</span><i class="level-bar"><b style="width:${Math.round(lv.into/lv.need*100)}%"></b></i></div><div class="profile-hcp"><small>SIM HANDICAP</small><strong>${hcpText(h.index)}</strong><span>${hcpNote}</span></div></div>`
-  +lookPicker(profile)+achievementList(profile)+challengeRecords(profile)
+  +lookPicker(profile)+achievementList(profile)+challengeRecords(profile)+tourCabinet(profile)
   +`<h3>Overall</h3><div class="stat-grid">${counters}${bests}</div>`
   +`<h3>Scoring</h3><div class="profile-scoring"><div class="score-types">${types}</div><div class="stat-grid compact">`
   +tile('Par 3 average',avg(s.scoringAverage[3]))+tile('Par 4 average',avg(s.scoringAverage[4]))+tile('Par 5 average',avg(s.scoringAverage[5]))

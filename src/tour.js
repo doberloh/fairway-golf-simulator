@@ -31,7 +31,7 @@ export function newTour({name = 'My Tour', year = new Date().getFullYear() + 1, 
  const pool = members || ROSTER.map(g => g.id).slice(0, 100);
  return {kind: TOUR_KIND, v: TOUR_VERSION, id: 't' + idFrom(seed), name: String(name).slice(0, MAX_NAME), year, seed: String(seed).slice(0, 60), defaults: d,
   members: pool.filter(id => rosterGolfer(id)), person: {name: String(person.name || 'You').slice(0, 24), profile: person.profile || null},
-  events: events.slice(0, MAX_EVENTS).map((e, i) => cleanEventDef(e, i)), season: 1, at: 0, current: null, results: [], shifts: {}, autoCentre: null};
+  events: events.slice(0, MAX_EVENTS).map((e, i) => cleanEventDef(e, i)), season: 1, at: 0, current: null, results: [], shifts: {}, autoCentre: null, history: []};
 }
 const idFrom = seed => { const r = seeded('tour|' + seed); return Math.floor(r() * 2 ** 32).toString(36) + Math.floor(r() * 2 ** 32).toString(36); };
 // One event of the calendar, as the editor and a tour file hold it: what it
@@ -144,7 +144,32 @@ export function nextSeason(tour) {
  const st = standings(tour).filter(s => !s.you), n = st.length;
  const shifts = {...tour.shifts};
  st.forEach((s, i) => { const d = i < 10 ? -.5 : i >= n * .75 ? .5 : 0; shifts[s.id] = Math.max(-3, Math.min(3, (shifts[s.id] || 0) + d)); });
- return {...tour, season: tour.season + 1, year: tour.year + 1, at: 0, current: null, results: [], shifts};
+ return {...tour, season: tour.season + 1, year: tour.year + 1, at: 0, current: null, results: [], shifts, history: [...(tour.history || []), seasonSummary(tour)].slice(-50)};
+}
+// What a finished season keeps for the trophy cabinet: the person's events,
+// wins by name, majors, the title.
+export function seasonSummary(tour) {
+ const st = standings(tour), me = st.find(s => s.you);
+ const wins = tour.results.filter(r => r.rows.find(x => x.id === YOU)?.place === 1).map(r => ({name: r.name, major: !!r.major}));
+ const finishes = tour.results.map(r => r.rows.find(x => x.id === YOU)).filter(Boolean);
+ return {season: tour.season, year: tour.year, events: finishes.length, wins, title: !!me && st[0]?.id === YOU && st.filter(s => s.points === st[0].points).length === 1,
+  top10: finishes.filter(x => x.place && x.place <= 10).length, cuts: finishes.filter(x => x.pos !== 'MC').length, best: finishes.filter(x => x.place).sort((a, b) => a.place - b.place)[0]?.pos || ''};
+}
+// THE PERSON'S RECORD over every tour on the device and every season of
+// each, this season included (My profile's trophy cabinet).
+export function tourRecord(tours) {
+ const out = {events: 0, wins: 0, majors: 0, titles: 0, top10: 0, cuts: 0, best: '', trophies: []};
+ let bestPlace = Infinity;
+ for (const t of tours) for (const [i, s] of [...(t.history || []), seasonSummary(t)].entries()) {
+  out.events += s.events; out.wins += s.wins.length; out.majors += s.wins.filter(w => w.major).length; out.top10 += s.top10; out.cuts += s.cuts;
+  // A season's title counts once the season is over (the current one only then).
+  const finished = i < (t.history || []).length || seasonOver(t);
+  if (s.title && finished) out.titles++;
+  for (const w of s.wins) out.trophies.push({...w, tour: t.name, season: s.season});
+  const p = parseInt(String(s.best).replace(/^T/, ''), 10);
+  if (p < bestPlace) { bestPlace = p; out.best = s.best; }
+ }
+ return out;
 }
 
 // A tour read back from the store or a file: refused if this version cannot
@@ -155,7 +180,8 @@ export function readTour(d) {
  if (!Array.isArray(d.events) || !d.events.length) throw Error('This tour has no events.');
  const t = newTour({name: d.name, year: d.year, seed: d.seed, events: d.events, defaults: d.defaults, members: Array.isArray(d.members) ? d.members : null, person: d.person || {}});
  return {...t, id: typeof d.id === 'string' ? d.id.slice(0, 32) : t.id, season: Number.isInteger(d.season) ? d.season : 1, at: Number.isInteger(d.at) ? Math.max(0, Math.min(d.at, t.events.length)) : 0,
-  current: d.current || null, results: Array.isArray(d.results) ? d.results : [], shifts: d.shifts && typeof d.shifts === 'object' ? d.shifts : {}, autoCentre: Number.isFinite(d.autoCentre) ? d.autoCentre : null};
+  current: d.current || null, results: Array.isArray(d.results) ? d.results : [], shifts: d.shifts && typeof d.shifts === 'object' ? d.shifts : {}, autoCentre: Number.isFinite(d.autoCentre) ? d.autoCentre : null,
+  history: Array.isArray(d.history) ? d.history.slice(-50) : []};
 }
 // A golfer's handicap in this tour this season: the roster's, moved by the
 // seasons gone (nextSeason). tournament.js asks it through `ev.shifts`.
