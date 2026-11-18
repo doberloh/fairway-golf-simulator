@@ -30,7 +30,7 @@ import './ui-motion.css';
 import {createIcons,icons} from 'lucide';
 import {GolfView,drawMap} from './renderer.js';
 import {TIME_RATES,RATE_LABELS,PRESETS,formatClock,phaseName,PHASE_ICONS,solarState,saveDaylight,localHour,wrapHour,showcaseHour,roundHour} from './daylight.js';
-import {generateCourse,generateWorld,generateWorldSteps,DEFAULT_COURSE,BIOMES,localSurface} from './course.js';
+import {generateCourse,generateWorld,generateWorldSteps,DEFAULT_COURSE,BIOMES} from './course.js';
 import {makeGridPool} from './gen-pool.js';
 import {Round,playsWith,FORMATS} from './game.js';
 import {XP,XP_MULT,levelOf,holeXp,holeXpParts,shotXpParts,sumParts,onTheNumber,roundXp,withMult,award,takeBack,hasOnNumber,dailyXp,rangeXp,challengePay,CHALLENGE_PAY} from './progression.js';
@@ -103,7 +103,8 @@ import {greenDistance,pinDayOf,pinBandFor,random} from './course.js';
 import {RANGE_SETTINGS,GREEN_RANGE,DEFAULT_GREEN_YARDS,rangeGreenYards,moveRangeGreen,offlineOf,rangeTargets,SHOT_LINE_MAX,loadShotLines,saveShotLines,centreSetup,shortSetup,shapes,loadRangeSetup,saveRangeSetup,SLOPES,SLOPE_NAMES,TILT,CONTOUR,greenById,activeGreen,setActiveGreen,nearestGreen,moveCup,chipSpot,puttSpot,CHIP_YARDS,PUTT_FEET} from './range.js';
 import {sessionCsv,sessionReport,clubTable} from './range-report.js';
 import {buildRangeControls,sessionRows,updateRangeSession} from './ui-range-controls.js';
-import {simulateShot,parseLaunchMessage,MPH,YARD,clamp,rollPreview,R as BALL_R,outOfBounds,trunkRadius} from './physics.js';
+import {simulateShot,parseLaunchMessage,MPH,YARD,clamp,rollPreview,R as BALL_R,outOfBounds} from './physics.js';
+import {reliefGround as sharedReliefGround} from './relief-ground.js';
 import {reliefOptions,crossingPoint,OB_RULES,pathRelief,OBSTRUCTIONS} from './relief.js';
 import {SCHEMA_VERSION,GENERATOR_VERSION,SETTINGS,FIELD,CATEGORIES,bound,validateSettings,migrateSettings,generationKeys,playScope,generatorFor} from './settings-schema.js';
 import {listCourses,findCourse,saveCourse,deleteCourse,renameCourse,exportCourse,importCourse,courseSettings,MAX_NAME} from './course-library.js';
@@ -3521,34 +3522,9 @@ function cancelDrop(){if(!dropState)return;endDrop();toast('Drop cancelled. Your
 // ball. The rules live in relief.js, the strokes in game.js: nothing here
 // decides either.
 let reliefChoice=0,reliefBack=0,reliefList=[];
-// The course as relief.js needs it: what surface a spot is, whether it is out
-// of bounds, and whether a trunk or a house stands on it. Trunks and houses are
-// indexed in ten-metre cells, built once per hole.
-let reliefSolids=null;
-function reliefGround(){
- if(reliefSolids?.course!==course){
-  const cells=new Map(),add=(x,z,r)=>{const k=Math.floor(x/10)+','+Math.floor(z/10);if(!cells.has(k))cells.set(k,[]);cells.get(k).push({x,z,r});};
-  const local=s=>course.world?course.toLocal(s):s;
-  for(const t of course.world?.trees||course.trees||[]){const r=trunkRadius(t);if(r>0){const p=local(t);add(p.x,p.z,r+BALL_R+.2);}}
-  // An Architect course's clubhouse too (clubhouse.js): no drop inside its walls.
-  // An Architect course's field walls (phase 6) are kept clear like a building.
-  for(const h of [...(course.world?.homes||course.homes||[]),...(course.world?.buildings||[]),...(course.world?.wallBoxes||[])]){const p=local(h);add(p.x,p.z,Math.max(h.width,h.depth)/2+1);}
-  // The hole's own ground, for Local Rule E-5's "fairway of the hole being
-  // played": its corridor runs up the z axis from the tee to beyond the green.
-  const len=course.length||Math.hypot(course.pin.x,course.pin.z)+60;
-  reliefSolids={course,cells,area:{minX:-180,maxX:180,minZ:-40,maxZ:len+40}};
- }
- const {cells,area}=reliefSolids;
- return {
-  area,
-  surface:(x,z)=>course.surface(x,z),
-  // What the hole itself calls fairway or fringe, before the landscape is
-  // composed: Local Rule E-5 only counts the fairway of the hole being played.
-  ownFairway:(x,z)=>['fairway','fringe'].includes(localSurface(course,x,z)),
-  out:(x,z)=>outOfBounds(course,x,z),
-  blocked:(x,z)=>{const cx=Math.floor(x/10),cz=Math.floor(z/10);for(let i=cx-2;i<=cx+2;i++)for(let j=cz-2;j<=cz+2;j++)for(const s of cells.get(i+','+j)||[])if(Math.hypot(x-s.x,z-s.z)<s.r)return true;return false;},
- };
-}
+// The course as relief.js needs it (relief-ground.js, shared with the
+// computer golfers since 17 November 2026).
+const reliefGround=()=>sharedReliefGround(course);
 const reliefWhere=p=>{const s=course.surface(p.x,p.z),yd=Math.round(Math.hypot(course.pin.x-p.x,course.pin.z-p.z)/YARD);return `${yd} yd to the hole · ${({semi:'semi-rough',fringe:'fringe',tee:'tee',sand:'bunker'})[s]||(isGround(s)?GROUNDS[s].word:s)}`;};
 function beginRelief(){
  if(!round.relief)return;

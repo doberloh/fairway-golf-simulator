@@ -16726,3 +16726,53 @@ and 0 for a hole not holed out (the text read). Individual Stableford is
   sim handicap of 20 rounds within a stroke of the rating. Wider than the
   sources' own noise, because the game's courses, greens and bag are not
   theirs.
+- **The tee each band plays in the bench**: the set nearest 6,900 yd less
+  35 yd a stroke (scratch about 6,900, a 15 about 6,375, a 30 about 5,850),
+  on 7,000-yd eighteens.
+
+### The first fit (17 November 2026, branch fairway-tour)
+
+Fitted on one thread while the owner was gaming: bands 0, 15 and 30, four
+courses (Puget Sound, Prairie, Seaside, Classic Parkland), six rounds each
+-- 24 rounds a band. 22 of 30 checks within tolerance; both invariants
+zero.
+
+| | Scratch | 15 | 30 |
+| --- | --- | --- | --- |
+| Sim handicap from its last 20 rounds | 0.3 | 13.3 | 28.4 |
+| Average over par (par 72, its tee) | +4.2 | +15.0 | +26.7 |
+| Greens in regulation (want) | 52.5% (59) | 24.3% (21) | 13.4% (7.7) |
+| Drive spread, deg (want) | 4.3 (4.8) | 5.9 (6.4) | 8.7 (7.9) |
+| Drive, 75th percentile, yd (want) | 273 (269) | 239 (237) | 222 (219) |
+| Approach 100-150 yd, median left (want) | .098 (.074) | .140 (.120) | .206 (.167) |
+| Half one-putted from, ft (want) | 8.1 (6.8) | 5.6 (5.1) | 4.0 (4.0) |
+| Two putts on average from, ft (want) | 36.5 (27.1) | 20.1 (19.0) | 8.3 (12.8) |
+| Awful shots a round (want) | 1.2 (1.1) | 3.2 (4.1) | 6.7 (8.7) |
+| Putts a round | 30.2 | 32.8 | 38.3 |
+
+**What fitting found:**
+
+- **The courses were too short.** The starting course's settings asked for
+  18 holes kept its nine's 3,240-yd length (4,831 yd from the back), and
+  every band hit far too many greens (a 15 hit 53%). On 7,000-yd eighteens
+  from the right tee the 15 came in at 22% (Shot Scope: 21%) with nothing
+  else changed. The bench now builds full-length courses.
+- **The game's ground adds spread.** An approach struck with Broadie's
+  median finished 1.25-1.5 times wider (slopes, roll, lies, wind), so the
+  struck spread is scaled down to land on his figure (`CAL.approachScale`),
+  and the short game's and sand's likewise.
+- **An iron keeps its share of the distance**; only the driver, woods and
+  hybrids (by club, not by carry) take the tee shot's wider spread.
+  Ramping by carry gave a 30's short driver an iron's spread.
+- **Putting was right; the measure was wrong.** In isolation, a 15 averages
+  two putts from about 19 ft, as Broadie's Am2. The bench first took the
+  first 2-ft bin that crossed two putts, which noise made far too short;
+  it now fits a line through every first putt.
+- **A bug in the ball model**, found here and fixed (BALL_PHYSICS, *A
+  touchdown is an impact only when the ball moves into the ground*).
+
+**Left for the next fit** (multithreaded, many more rounds, when the owner
+is not gaming): the 20-round sim handicap moves a stroke or more between
+runs at this sample size, so the tolerance cannot be judged yet; scratch's
+lag putting (too good) and the 30's (too poor) pull the same two numbers
+opposite ways; the 30 has too few awful shots and too many greens.
