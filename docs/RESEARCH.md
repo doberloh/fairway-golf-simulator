@@ -16751,6 +16751,17 @@ and 0 for a hole not holed out (the text read). Individual Stableford is
   Two rounds each by default: the rating of one course moves a stroke or
   so between runs at that sample (to be measured).
 
+### Opponents that adapt: all placed (src/ai/adapt.js)
+
+The person's form is their strokes over par plus their handicap strokes
+plus 3 over eighteen (an ordinary round's gap over the index, above),
+scaled to eighteen holes; the opponent's handicap follows 80% of it,
+weighted by the share of the round played (early form is noisy), moves at
+most 1.5 a hole, and stays within 4 of its base over eighteen holes (2
+over nine). None of these has a source: they are judgements meant to keep
+a match close without the opponent's play turning on a hole. Its shots
+still come from its spreads; only the spreads move.
+
 ### The first fit (17 November 2026, branch fairway-tour)
 
 Fitted on one thread while the owner was gaming: bands 0, 15 and 30, four

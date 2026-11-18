@@ -15,7 +15,7 @@ export const isComputer = p => p?.input === 'cpu' && !!p.cpu;
 // The levels a seat offers (PLACED). 'matched' is set from the person in the
 // group (SPEC 4): near their handicap.
 export const LEVELS = [
- ['matched', 'Matched to you'], [-2, 'Tour pro'], [0, 'Scratch'], [5, '5 handicap'], [10, '10 handicap'],
+ ['matched', 'Matched to you'], ['adaptive', 'Adaptive · keeps it close'], [-2, 'Tour pro'], [0, 'Scratch'], [5, '5 handicap'], [10, '10 handicap'],
  [15, '15 handicap'], [20, '20 handicap'], [25, '25 handicap'], [30, '30 handicap']];
 export const levelName = level => (LEVELS.find(([v]) => v === level) || [null, `${level} handicap`])[1];
 
@@ -34,10 +34,12 @@ export function matchedHandicap(personIndex, nth = 0) {
 // (a stable seed), and played AT the asked handicap (its traits and look
 // are the roster golfer's; its handicap is the level's).
 export function computerSeat({level = 'matched', personIndex = null, nth = 0, used = [], seed = 'seat'} = {}) {
- const handicap = level === 'matched' ? matchedHandicap(personIndex, nth) : Math.min(MAX_HANDICAP, Math.max(MIN_HANDICAP, Number(level)));
+ // Adaptive (adapt.js) starts where Matched would, and keeps that as its base.
+ const handicap = level === 'matched' || level === 'adaptive' ? matchedHandicap(personIndex, nth) : Math.min(MAX_HANDICAP, Math.max(MIN_HANDICAP, Number(level)));
  const taken = new Set(used), rnd = seeded(`${seed}|${nth}`);
  const g = ROSTER.filter(r => !taken.has(r.id)).map(r => ({r, k: Math.abs(r.handicap - handicap) + rnd() * 3})).sort((a, b) => a.k - b.k)[0]?.r || ROSTER[0];
- return {name: g.name, cpu: {id: g.id, handicap: Math.round(handicap * 10) / 10, traits: {...g.traits}, ball: g.ball, tracer: g.tracer, nation: g.nation, level}};
+ const h = Math.round(handicap * 10) / 10;
+ return {name: g.name, cpu: {id: g.id, handicap: h, traits: {...g.traits}, ball: g.ball, tracer: g.tracer, nation: g.nation, level, ...(level === 'adaptive' ? {base: h} : {})}};
 }
 
 // A cpu record read back from a save: only known fields, numbers bounded.
@@ -53,8 +55,10 @@ export function cleanCpu(c) {
  }
  const id = typeof c.id === 'string' && rosterGolfer(c.id) ? c.id : '';
  const level = c.level === 'matched' || c.level === 'adaptive' || Number.isFinite(c.level) ? c.level : handicap;
+ const base = Number(c.base);
  return {id, handicap, traits, ball: typeof c.ball === 'string' ? c.ball.slice(0, 24) : 'classic', tracer: typeof c.tracer === 'string' ? c.tracer.slice(0, 24) : 'classic',
-  nation: typeof c.nation === 'string' ? c.nation.slice(0, 3) : '', level};
+  nation: typeof c.nation === 'string' ? c.nation.slice(0, 3) : '', level,
+  ...(level === 'adaptive' ? {base: Number.isFinite(base) && base >= MIN_HANDICAP && base <= MAX_HANDICAP ? base : handicap} : {})};
 }
 
 // HOW MUCH OF A COMPUTER GOLFER'S PLAY TO SHOW (SPEC 2, a setting per

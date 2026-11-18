@@ -111,6 +111,7 @@ import {strokesFor} from './ai/strokes.js';
 import {shotKey} from './ai/play.js';
 import {isComputer,computerSeat,showShot,PRESHOT_MS,reaction,DEFAULT_WATCH,WATCH,LEVELS,levelName} from './ai/seat.js';
 import {roundStrokes,netCard} from './net.js';
+import {form as adaptForm,adaptHandicap} from './ai/adapt.js';
 import {pointsTotal} from './stableford.js';
 import {reliefOptions,crossingPoint,OB_RULES,pathRelief,OBSTRUCTIONS} from './relief.js';
 import {SCHEMA_VERSION,GENERATOR_VERSION,SETTINGS,FIELD,CATEGORIES,bound,validateSettings,migrateSettings,generationKeys,playScope,generatorFor} from './settings-schema.js';
@@ -1393,9 +1394,26 @@ function ensureNet(){
  const players=round.players.map(p=>{if(isComputer(p))return {index:p.cpu.handicap,team:p.team};const q=profileOf(p);return {index:q?playingIndex(q,profileSummary(q).handicap?.index):null,team:p.team};});
  round.setNet(roundStrokes({mode:round.mode,players,holes}));
 }
+// ADAPTIVE COMPUTER GOLFERS (src/ai/adapt.js): at the start of each hole, an
+// Adaptive opponent's handicap moves toward a close game, by the form of the
+// person in the group (the first golfer with a profile) against their own
+// handicap. Never mid-hole; the round saves its new handicap, so a reload
+// keeps it.
+let adaptedAt='';
+function adaptOpponents(){
+ const key=`${round.uid}:${round.hole}`;if(adaptedAt===key||round.endless)return;adaptedAt=key;
+ const seats=round.players.map((p,i)=>i).filter(i=>round.players[i].cpu?.level==='adaptive');if(!seats.length)return;
+ const me=round.players.findIndex(p=>!isComputer(p)&&profileOf(p));if(me<0)return;
+ const prof=profileOf(round.players[me]),idx=playingIndex(prof,profileSummary(prof).handicap?.index);
+ const holes=(world?.holes||[]).slice(0,round.holes).map(h=>({par:h.par,yards:Math.round(h.tees?.[teeFor(round.tee,Object.keys(h.tees||{}))]?.yards||0)}));
+ if(!holes.length)return;
+ const f=adaptForm({card:round.cards[me].slice(0,round.hole),holes:holes.slice(0,round.hole),index:idx});
+ for(const i of seats){const c=round.players[i].cpu;c.handicap=adaptHandicap({base:c.base??c.handicap,now:c.handicap,personForm:f,holes:round.holes});}
+}
 function setUpTurn(){
  if(rangeMode&&course?.greens&&!challenge){setUpRangeTurn(true);return;}
  ensureNet();
+ if(!round.teePlaced||round.strokes.every(s=>!s))adaptOpponents();
  syncArmed();
  // A missed putt: the pin goes back in for the next one.
  if(!round.holeComplete)view.lowerFlag?.();
@@ -1472,7 +1490,7 @@ function cpuCard(s){
  const el=$('turnFlash');if(!el||menuBackdrop)return;
  const i=round.active,p=round.player,c=clubs[s.club],yd=Math.round(Math.hypot(course.pin.x-round.position.x,course.pin.z-round.position.z)/YARD);
  const {rel,played}=toPar(i),score=played?parText(rel):'E',tint=parTint(rel,played),shot=(round.strokes?.[i]||0)+1;
- el.innerHTML=`<small>${escape(p.cpu.nation?`${p.cpu.nation} · `:'')}HCP ${escape(String(p.cpu.handicap))}</small><div class="turn-flash-row">${golferMark(i)}<strong>${escape(p.name)}</strong><b${tint?` style="background:${tint}"`:''}>${escape(score)}</b><span>Shot ${scoreText(shot)}</span></div>`
+ el.innerHTML=`<small>${escape(p.cpu.nation?`${p.cpu.nation} · `:'')}HCP ${escape(String(p.cpu.handicap))}${p.cpu.level==='adaptive'?' · ADAPTIVE':''}</small><div class="turn-flash-row">${golferMark(i)}<strong>${escape(p.name)}</strong><b${tint?` style="background:${tint}"`:''}>${escape(score)}</b><span>Shot ${scoreText(shot)}</span></div>`
   +`<div class="turn-flash-cpu">${escape(c?.label||s.club)} · ${yd} yd to the hole</div>`;
  lastTurn=round.players.length>1?`${round.uid}:${round.hole}:${i}`:`${round.uid}:${round.hole}`;
  el.hidden=true;void el.offsetWidth;el.hidden=false;
@@ -5214,7 +5232,7 @@ function groupEditor(hostId,start,onChange){
    +`<option value="${CPU}" ${p.cpu?'selected':''}>${p.cpu?escape(p.name):'Computer golfer'}</option></select>`
    +(p.profile||p.cpu?'':`<input aria-label="Player ${i+1}'s name" id="name${i}" maxlength="${MAX_PLAYER_NAME}" placeholder="New player's name" value="${escape(p.name||'')}">`)
    // Round 14: the title on its own line (ending in ... if it must), then level and handicap.
-   +(p.cpu?`<span class="player-sub">COMPUTER${p.cpu.nation?' · '+escape(p.cpu.nation):''}</span><span class="player-hcp">HCP ${escape(String(p.cpu.handicap))}</span>`
+   +(p.cpu?`<span class="player-sub">COMPUTER${p.cpu.nation?' · '+escape(p.cpu.nation):''}${p.cpu.level==='adaptive'?' · ADAPTIVE':''}</span><span class="player-hcp">HCP ${escape(String(p.cpu.handicap))}</span>`
     :q?`<span class="player-sub">${escape((titleName(looksOf(q).title)||badgeName(lv)).toUpperCase())}</span><span class="player-hcp">LV ${lv} · HCP ${Number.isFinite(hc)?hc.toFixed(1)
      // No sim handicap yet (fewer than three rounds): one the golfer knows,
      // for net rounds until the game has its own (the fairway-tour goal, Q8).
@@ -5250,7 +5268,7 @@ function groupEditor(hostId,start,onChange){
    $('team'+i).onchange=e=>{p.team=e.target.value;onChange?.();};
    if($('hand'+i))$('hand'+i).onchange=e=>{p.hand=e.target.value;};
    if($('input'+i))$('input'+i).onchange=e=>{p.input=e.target.value;};
-   if($('level'+i))$('level'+i).onchange=e=>{const v=e.target.value;makeComputer(p,v==='matched'?'matched':Number(v));paint();onChange?.();};
+   if($('level'+i))$('level'+i).onchange=e=>{const v=e.target.value;makeComputer(p,v==='matched'||v==='adaptive'?v:Number(v));paint();onChange?.();};
    if($('typed'+i))$('typed'+i).onchange=e=>{const v=e.target.value.trim(),n=Number(v);if(p.profile)setProfilePlay(profiles,p.profile,{typedIndex:v===''?null:Number.isFinite(n)?n:undefined});};
   });
   const addCpu=host.querySelector('[data-add-cpu]');
