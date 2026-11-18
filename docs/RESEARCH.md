@@ -16870,18 +16870,51 @@ then the person; ms a frame):
 | Low | 2.68 / 2.48 (-7.2%) | 4.30 / 3.80 | 8.30 / 8.00 | 19 / 22 | 123 / 109 |
 | Ultra | 4.06 / 3.75 (-7.7%) | 6.70 / 6.10 | 10.90 / 9.90 | 25 / 38 | 213 / 223 |
 
-**The frame rate is no worse on any setting; a few more single long frames
-remain.** Mean, 95th and 99th percentile are level or better everywhere.
-Frames over 50 ms are a few more with the golfers (Ultra 38 against 25 in four
-minutes, most in the frame a computer golfer's shot is struck -- the ball's
-flight worked out, as a person's strike also does, and the flight camera's
-first view). On Phone, in three loads of four, the frame a golfer's first tee
-shot comes to rest was 216-268 ms, against 143-145 for a person's. Profiled
-(unminified, both builds, two loads each) that frame was 109-162 ms on the
-branch and 144 on 0.9.18, the same work: the shot card's position forcing a
-layout (40-58 ms) and the draw. The longer unprofiled ones are NOT explained;
-a garbage collection after the golfers' trial flights is a guess, not shown.
-Open in TODO.
+That table was not the end: frames over 50 ms were still more with the
+golfers, and over eight loads a build on Ultra twice as many (107 against
+53; 0.9.18 steady at 6-8 a load, the branch 7-27). Four loads cannot tell a
+gap from chance in this count -- a load with the person alone read 47 in one
+run, all the driver stalling on uniform uploads -- so the rest was judged on
+eight. Two more causes, each fixed with every shot unchanged:
+
+- **A step could still be a whole swing-strength search** (two or more
+  flights of the ball, 20-36 ms here). The searches are stepped too
+  (`targetShareSteps`, `speedForCarrySteps`, `swingLaunchSteps`,
+  `playsLikeSteps`), and their flights stop at the first landing (physics.js
+  `untilLanding`; the carry is taken at touchdown and the plays-like
+  crossing comes on the way down, so the numbers are the full flight's,
+  tested over the bag, winds and heights). Steps in Node, as the game runs
+  them, over 27 golfer-holes: median 0.4 ms, 99% under 8.7, worst 14.4 (a
+  putt's trial roll); whole plans under 45 ms. This alone did not move
+  Ultra's count (107 against 53 again).
+- **The strike's frame flew the ball and planned the shot camera** -- the
+  two largest things in the golfers' long frames by an unminified profile of
+  the branch against itself (`takeShot`, `shotCameraPlan`, `clearest`,
+  `blocked`, `canopyTop`), and costlier for a wild golfer's ball among trees
+  than for the harness's person, who swings straight down the middle. A
+  computer golfer's ball is now flown in its pre-shot moment and the camera
+  planned the frame after (`preflyComputerShot`); takeShot uses that flight
+  only when its own shot is exactly the one flown. Every computer strike
+  measured since used it (5 of 5 a load).
+
+*The final build* (12:00-12:35; four or eight loads a build, 60 s each):
+
+| Setting | Mean A / B | p99 A / B | Frames over 50 ms, A / B | Worst A / B |
+| --- | --- | --- | --- | --- |
+| Phone (8 loads) | 2.58 / 2.62 | 6.6 / 7.0 | 36 / 35 | 137 / 125 |
+| Low (4 loads) | 2.31 / 2.34 | 7.5 / 7.7 | 19 / 15 | 134 / 109 |
+| Ultra (8 loads, then 4 more) | 3.94 / 3.77; 4.30 / 4.07 | 11.2 / 12.1; 11.5 / 10.5 | 60 / 113; 27 / 32 | 289 / 246; 249 / 205 |
+
+Ultra's eight-load run was level for its first twelve loads (45 against 48)
+and then two branch loads in a row read 31 and 34: in one the whole picture
+ran at 14 ms a frame for its last 30 s, in the other 32 of 34 long frames
+came with nothing happening in the round, and the owner's Remote Desktop was
+on the card at the next run's gate. Four more loads a build read 7, 7, 7, 6
+against 8, 8, 9, 7. **Over the ten undisturbed Ultra loads a build: 72
+against 80 frames over 50 ms**, about one more a minute, inside the 6-9
+0.9.18 itself moves between loads; mean and p99 level or better on every
+setting. Remaining in the long frames on both builds: the card's programs
+set up the first time a view is drawn (`setProgram`, `upload`).
 
 ### Opponents that adapt: all placed (src/ai/adapt.js)
 

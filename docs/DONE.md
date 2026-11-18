@@ -8613,8 +8613,28 @@ worst on an unminified build, and each was fixed:
   Phone, against a person's 110-140): the reaction now comes 900 ms after
   the ball stops, as a golfer reacts.
 
+Then, from TODO *A few long frames with computer golfers* (opened and
+closed the same day), two more, after eight loads a build showed Ultra
+still at twice the long frames:
+
+- **A step could be a whole swing-strength search**: the searches are
+  stepped too (`targetShareSteps`, `speedForCarrySteps`, `swingLaunchSteps`,
+  `playsLikeSteps`, each with a whole twin the person's code calls), their
+  flights stopped at the first landing (physics.js `untilLanding`, tested to
+  give the full flight's numbers). A step is now at most about 14 ms here.
+  On its own it did not move Ultra's count.
+- **The strike's frame flew the ball and planned the shot camera**, costlier
+  for a wild golfer among trees: the ball is now flown in the golfer's
+  pre-shot moment and the camera planned the frame after
+  (`preflyComputerShot`), used only when takeShot's own shot is exactly the
+  one flown. Over ten undisturbed Ultra loads a build: 80 frames over 50 ms
+  against 72 for the person alone on 0.9.18, inside 0.9.18's own spread;
+  Phone 35 against 36, Low 15 against 19.
+
 Dead ends: a Web Worker for the plan (the hole is generated geometry with
-functions, not data a worker can take); reading the long Phone loads as the
+functions, not data a worker can take); a stop at the first sample under the
+ground for the aim correction's flight (`curveCompensation`), added and taken
+out again: a computer golfer's straight shape never flies it; reading the long Phone loads as the
 golfers' cost (a lone person on 0.9.18 reaches the green, a cheap view, after
 a minute, while three golfers are still up the fairway). The figures, before
 and after, are in RESEARCH *Frame rate with computer golfers*, *In a round
