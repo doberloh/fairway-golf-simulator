@@ -62,8 +62,8 @@ async function measure(file, withCpu) {
    // A player already made, so the first tee's welcome does not cover the pad (frame-ab's).
    try { if (!localStorage.getItem('fairway-profiles-v1')) localStorage.setItem('fairway-profiles-v1', JSON.stringify({version: 2, main: 'pprof', profiles: [{id: 'pprof', name: 'Profiler', created: Date.now(), counters: {}, bests: {}, rounds: []}]})); } catch {}
    // Every computer golfer's shot flown in full: the heaviest watching.
-   try { localStorage.setItem('fairway-rules-v1', JSON.stringify({cpuWatch: 'all', cpuChat: true})); } catch {}
-  }, {quality: TIER, frameCap: 0, autoResolution: false});
+   try { localStorage.setItem('fairway-rules-v1', JSON.stringify({cpuWatch: 'all', cpuChat: p.chat})); } catch {}
+  }, {quality: TIER, frameCap: 0, autoResolution: false, chat: flag('chat', '1') !== '0'});
   const errors = [];
   page.on('pageerror', e => errors.push(String(e.message).split('\n')[0]));
   await page.goto(`http://127.0.0.1:${port}/`, {waitUntil: 'load'});
@@ -97,7 +97,8 @@ async function measure(file, withCpu) {
   // --cpuprofile: where the page's main thread went over the whole window,
   // by function, heaviest first (frame-ab's, over a round instead of a spot).
   const cdp = flag('cpuprofile', false) ? await page.context().newCDPSession(page) : null;
-  if (cdp) { await cdp.send('Profiler.enable'); await cdp.send('Profiler.setSamplingInterval', {interval: 200}); await cdp.send('Profiler.start'); }
+  let p0 = 0;
+  if (cdp) { await cdp.send('Profiler.enable'); await cdp.send('Profiler.setSamplingInterval', {interval: 200}); await cdp.send('Profiler.start'); p0 = await page.evaluate(() => performance.now()); }
   const end = Date.now() + SECONDS * 1000;
   let swings = 0;
   while (Date.now() < end) {
@@ -119,6 +120,29 @@ async function measure(file, withCpu) {
    const self = new Map(), byId = new Map(profile.nodes.map(n => [n.id, n]));
    profile.samples.forEach((id, i) => { const n = byId.get(id).callFrame, key = `${n.functionName || '(anon)'} ${n.url.split('/').pop()}:${n.lineNumber}`; self.set(key, (self.get(key) || 0) + (profile.timeDeltas[i] || 0)); });
    cpuProfile = [...self].sort((a, b) => b[1] - a[1]).slice(0, 25).map(([k, us]) => [k, +(us / 1000 / out.d.length).toFixed(3)]);
+   // INSIDE THE LONGEST FRAMES: each sample's whole stack, counted for every
+   // function on it (inclusive time), over the samples that fell in the
+   // frame. The profile's clock is lined up with the page's at its start
+   // (within a few ms; the frames looked at are 100 ms and more). Read on an
+   // unminified build (`vite build --minify false`) for real names.
+   const parent = new Map();
+   for (const n of profile.nodes) for (const c of n.children || []) parent.set(c, n.id);
+   const when = []; let ts = profile.startTime;
+   for (const dt of profile.timeDeltas) { ts += dt; when.push(p0 + (ts - profile.startTime) / 1000); }
+   const longest = out.d.map((ms, i) => [ms, out.at[i]]).sort((x, y) => y[0] - x[0]).slice(0, 3);
+   out.inside = longest.map(([ms, end]) => {
+    const inc = new Map();
+    profile.samples.forEach((id, i) => {
+     if (when[i] < end - ms || when[i] > end) return;
+     const seen = new Set();
+     for (let n = id; n !== undefined; n = parent.get(n)) {
+      const f = byId.get(n).callFrame, k = `${f.functionName || '(anon)'}:${f.lineNumber}`;
+      if (!seen.has(k)) { seen.add(k); inc.set(k, (inc.get(k) || 0) + (profile.timeDeltas[i] || 0)); }
+     }
+    });
+    const top = [...inc].filter(([k]) => !/^\((root|program|idle|anon)\)/.test(k)).sort((a, b) => b[1] - a[1]).slice(0, 14);
+    return `${Math.round(ms)} ms frame at ${((end - out.at[0]) / 1000).toFixed(1)} s: ${top.map(([k, us]) => `${k} ${(us / 1000).toFixed(0)}`).join(' > ')}`;
+   });
   }
   return {...out, swings, errors, cpuProfile};
  } finally { await browser.close(); s.close(); }
@@ -151,9 +175,14 @@ function blame({d, at, states}) {
   const k = e ? e[1] : 'nothing';
   counts[k] = (counts[k] || 0) + 1;
  });
+ // The three longest, each with the events a second either side of it.
+ const worst = d.map((ms, i) => [ms, i]).sort((x, y) => y[0] - x[0]).slice(0, 3).map(([ms, i]) => {
+  const near = ev.filter(([t]) => Math.abs(t - at[i]) < 1500).map(([t, k]) => `${k} ${t < at[i] ? '' : '+'}${Math.round(t - at[i])} ms`);
+  return `${Math.round(ms)} ms at ${((at[i] - at[0]) / 1000).toFixed(1)} s (${near.join('; ') || 'nothing near'})`;
+ });
  const buckets = [], start = at[0];
  for (let b = 0; ; b++) { const xs = d.filter((_, i) => at[i] >= start + b * 30000 && at[i] < start + (b + 1) * 30000); if (!xs.length) break; buckets.push((xs.reduce((t, v) => t + v, 0) / xs.length).toFixed(2)); }
- return {counts, buckets, holes: [...new Set(states.map(s => s.hole))].join(',')};
+ return {counts, buckets, worst, holes: [...new Set(states.map(s => s.hole))].join(',')};
 }
 
 const before = gpuGate({goal, cap: Infinity, utilMax: Number(flag('util', 10)), tempMax: Number(flag('temp', 60)), restMin: Number(flag('rest', 5))});
@@ -166,6 +195,8 @@ for (let r = 0; r < ROUNDS; r++) for (const which of r % 2 ? ['B', 'A'] : ['A', 
  process.stderr.write(`${which} (${m.n} frames, mean ${m.mean.toFixed(2)} ms, p50 ${m.p50.toFixed(2)})\n`);
  const why = blame(res); m.blame = why.counts;
  process.stderr.write(`    by 30 s: ${why.buckets.join(' ')} ms · holes seen ${why.holes} · long frames (>50 ms) after: ${Object.entries(why.counts).map(([k, v]) => `${k} ${v}`).join(', ') || 'none'}\n`);
+ process.stderr.write(`    longest: ${why.worst.join(' | ')}\n`);
+ for (const line of res.inside || []) process.stderr.write(`    inside: ${line}\n`);
  if (res.cpuProfile) for (const [k, ms] of res.cpuProfile) process.stderr.write(`    ${ms.toFixed(3).padStart(7)} ms a frame  ${k}\n`);
 }
 const sa = stats(all.A), sb = stats(all.B), f = v => v.toFixed(2).padStart(7);

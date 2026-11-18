@@ -276,12 +276,15 @@ here is a claim of support until it is done.
     ZIP64 path is tested on a small file); the hole model checked against
     the computer golfers' own rounds hole by hole; the bogey golfer's
     rating offset fitted (rating.js `OVER.bogey`, placed).
-  - **A computer golfer's plan runs on the frame loop** (fairway-tour,
-    measured 18 November 2026, RESEARCH *Frame rate with computer golfers*):
-    up to about 36 ms on the owner's PC at the start of its turn (a frame or
-    two; more on a phone, not measured there), during its still pre-shot
-    moment. Drawing a course is level with 0.9.18 on Low, Phone and Ultra.
-    Owed: spread the plan over frames, or hand it to a worker.
+  - **A few long frames with computer golfers** (fairway-tour, 18 November
+    2026; RESEARCH *Frame rate with computer golfers*, *In a round being
+    played*). The frame rate is level or better on Phone, Low and Ultra, but
+    frames over 50 ms are a few more (Ultra 38 against 25 in four minutes,
+    mostly as a golfer's shot is struck), and on Phone a golfer's first tee
+    shot coming to rest was a 216-268 ms frame in three loads of four,
+    against 145 for a person's; profiled it was the same 109-162 ms work as
+    a person's, so the extra is not explained (a garbage collection is a
+    guess). `tools/frame-round.mjs --tier phone --device iphone-13`.
   - **The swing report's last change** (0.9.18; the owner swung the pad on
     the iPhone and the PC and signed it off on 17 November, DONE *The
     pull-and-push swing, on the owner's iPhone*): the Carry and Total chips

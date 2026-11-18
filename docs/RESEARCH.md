@@ -16801,8 +16801,9 @@ Low's first two-round run read B 8.5% slower; with four loads a build it is
 level (the two load modes, docs/history/SURROUNDINGS.md). Load times the
 same (course load 13.9 / 14.0 s on Ultra).
 
-**What a computer golfer adds is its plan**, on the frame loop's thread at
-the start of its turn, during its still pre-shot moment: every shot of three
+**What a computer golfer adds is its plan** (measured before it was spread
+over frames; see *In a round being played* below for what was done about
+it), on the frame loop's thread at the start of its turn: every shot of three
 18-hole rounds (scratch, 15, 30) on a 7,000-yd course, timed in Node on the
 owner's PC: putts median 3.9 ms, 95% 28.9 ms, worst 35 ms; full shots
 median 7.2 ms, 95% 21.4 ms, worst 35.8 ms; short shots under 10 ms. (The
@@ -16812,8 +16813,75 @@ warm worst was 55 ms. **So a computer golfer's turn can cost a frame or two
 on this PC, and on a phone about three or four times that** (not measured
 on a phone). Trial rolls of a putt over 3 m now step at 120 a second; the
 early stop once a trial finished within 30 cm was tried and dropped
-(scratch's short putts got worse). Moving the plan off the frame loop
-(spread over frames, or a worker given the hole) is the next step, and owed.
+(scratch's short putts got worse). The plan is now spread over frames
+(below); a worker given the hole was not tried (the hole is generated
+geometry with functions, not data a worker can be handed).
+
+**In a round being played** (18 November 2026). Drawing a course at fixed
+spots is not playing one, so `tools/frame-round.mjs` plays the same seeded
+nine (Pacific Northwest, FRAMEROUND) on both builds, alternated, and times
+every frame for 60 s from the first tee: on 0.9.18 the person alone,
+swinging on the pad whenever it is their turn and watching every flight;
+on the branch three computer golfers (handicaps 6, 13, 20) out first with
+every shot watched (`cpuWatch: 'all'`, reactions on), then the person. The
+card's gate before every run (2-8%, 42-51 °C; Steam open and idle), the
+card watcher on throughout.
+
+*The first readings, and two that misled.* Ultra and Low read level from the
+start (mean +1.0% and +4.0% over two loads). Phone read 64% and then 25%
+slower over 90-120 s loads and level over 60 s loads. The long loads were
+not like for like: laid out by 30 s, 0.9.18's frames dropped from 3.7-4.0 ms
+to 1.5-2.0 ms after the first minute -- the lone person had reached the
+green, a cheap view -- while the three computer golfers were still on their
+first shots up the fairway. With the person alone on both builds Phone read
+level (+0.4%, best loads); with the branch against itself, computer golfers
+or not, level (-2.6%). The frames' cost was what was on screen, not the
+golfers; 60 s loads keep both builds on the first hole's long shots.
+
+*What the golfers did cost: long frames.* In every Phone run the branch had
+more frames over 50 ms (45 against 26 in four minutes) and a worse worst
+frame (289-321 ms against 177-196). Each long frame was laid against what had
+happened in the second before it (state read ten times a second in the
+page), and the worst ones profiled on an unminified build. Three causes,
+each fixed:
+
+| Cause | Cost on the Phone setting | Fix |
+| --- | --- | --- |
+| The plan, run whole at the start of a turn | about 1 more frame over 50 ms a computer shot | spread over frames: about 4 ms a frame, at least one flight of the ball (`stepPlan`); the caddie's line too |
+| Making a golfer at its first turn (its bag's carries flown: 110-135 ms on this PC, Node) | the round's worst frame, 283 ms, as a new golfer's turn started | every golfer in the group made in `loadCourse`, under the loading screen |
+| A golfer's reaction shown in the landing's frame (the message's layout) | the landing frame 234-268 ms, against a person's landing 110-140 | the reaction 900 ms after the ball stops; with reactions off the landing was 91-127 ms |
+
+What is left in the longest frames is the same on both builds: the card's
+programs set up the first time a view is drawn (`setProgram`, about half of
+a 160 ms frame) and the ball's flight worked out as a shot is struck --
+0.9.18's own worst, 176-192 ms, is the person's first shot.
+
+*After the three fixes* (Phone, two loads a build): mean -2.1%, p95 -1.9%,
+p99 -1.1%, worst 168 against 192 ms, over 50 ms 12 against 12, over 33 ms
+29 against 26.
+
+*The final build, every setting, four loads a build, 60 s each* (07:15-07:50;
+0.9.18 with the person alone against the branch with three computer golfers
+then the person; ms a frame):
+
+| Setting | Mean A / B | p95 | p99 | Frames over 50 ms | Worst frame |
+| --- | --- | --- | --- | --- | --- |
+| Phone (iPhone 13 stand-in) | 3.52 / 3.33 (-5.5%) | 5.40 / 5.00 | 9.60 / 9.30 | 25 / 30 | 176 / 268 |
+| Low | 2.68 / 2.48 (-7.2%) | 4.30 / 3.80 | 8.30 / 8.00 | 19 / 22 | 123 / 109 |
+| Ultra | 4.06 / 3.75 (-7.7%) | 6.70 / 6.10 | 10.90 / 9.90 | 25 / 38 | 213 / 223 |
+
+**The frame rate is no worse on any setting; a few more single long frames
+remain.** Mean, 95th and 99th percentile are level or better everywhere.
+Frames over 50 ms are a few more with the golfers (Ultra 38 against 25 in four
+minutes, most in the frame a computer golfer's shot is struck -- the ball's
+flight worked out, as a person's strike also does, and the flight camera's
+first view). On Phone, in three loads of four, the frame a golfer's first tee
+shot comes to rest was 216-268 ms, against 143-145 for a person's. Profiled
+(unminified, both builds, two loads each) that frame was 109-162 ms on the
+branch and 144 on 0.9.18, the same work: the shot card's position forcing a
+layout (40-58 ms) and the draw. The longer unprofiled ones are NOT explained;
+a garbage collection after the golfers' trial flights is a guess, not shown.
+Open in TODO.
 
 ### Opponents that adapt: all placed (src/ai/adapt.js)
 

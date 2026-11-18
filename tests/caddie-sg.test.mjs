@@ -2,7 +2,7 @@
 // (src/strokes-gained.js); the fairway-tour goal, Q13.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {suggest} from '../src/caddie.js';
+import {suggest, suggestSteps} from '../src/caddie.js';
 import {computerGolfer, golferBag, lieAt} from '../src/ai/golfer.js';
 import {skillFor} from '../src/ai/skill.js';
 import {holeGained, shotValue, partOf, addGained, gainedText} from '../src/strokes-gained.js';
@@ -20,6 +20,12 @@ test('the caddie suggests what the computer golfer of the same handicap and bag 
  assert.deepEqual(s.target, own.target);
  assert.match(s.line, / yd$/);
  assert.equal(suggest({hole: h, from: {...h.pin, z: h.pin.z - 2}, bag, handicap: 12, settings}), null, 'on the green: nothing to suggest');
+ // In steps (the game spreads them over frames): the same suggestion.
+ const it = suggestSteps({hole: h, from, bag, handicap: 12, settings});
+ let r, steps = 0;
+ while (!(r = it.next()).done) steps++;
+ assert.ok(steps >= 1);
+ assert.deepEqual(r.value, s);
 });
 
 test('strokes gained: a scratch golfer\'s par is zero; the parts', () => {

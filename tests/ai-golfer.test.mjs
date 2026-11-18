@@ -68,6 +68,23 @@ test('the same shot key is the same shot; another key is another', () => {
  assert.equal(a.club, 'driver');
 });
 
+test('a shot thought in steps (the game spreads them over frames) is the same shot, and a dropped one changes nothing', () => {
+ const settings = {...STARTING_COURSE, holes: 9, seed: 'AI-TEST'}, w = world(settings), h = w.holes[0];
+ const tee = {...h.tees[Object.keys(h.tees)[0]]}, near = {x: h.pin.x + 4, z: h.pin.z + 3};
+ for (const from of [tee, near, {x: (tee.x + h.pin.x) / 2, z: (tee.z + h.pin.z) / 2}]) {
+  const whole = computerGolfer({handicap: 12, seed: 'steps', settings}).shot({hole: h, from, key: 'k', fly: false});
+  const it = computerGolfer({handicap: 12, seed: 'steps', settings}).shotSteps({hole: h, from, key: 'k', fly: false});
+  let r, steps = 0;
+  while (!(r = it.next()).done) steps++;
+  assert.ok(steps >= 1, 'a plan pauses at least once (after a flight of the ball)');
+  assert.deepEqual(r.value, whole);
+ }
+ // Half a plan, dropped (the turn cancelled), then the whole: as if never begun.
+ const g = computerGolfer({handicap: 12, seed: 'steps', settings}), half = g.shotSteps({hole: h, from: tee, key: 'k', fly: false});
+ half.next();
+ assert.deepEqual(g.shot({hole: h, from: tee, key: 'k'}), computerGolfer({handicap: 12, seed: 'steps', settings}).shot({hole: h, from: tee, key: 'k'}));
+});
+
 test('computer golfers of every standard finish every hole of a nine, and the better scores better', () => {
  const settings = {...STARTING_COURSE, holes: 9, seed: 'AI-TEST'}, w = world(settings);
  const totals = {};

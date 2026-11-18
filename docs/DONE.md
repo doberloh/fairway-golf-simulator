@@ -8585,3 +8585,37 @@ the iPhone between 15 and 17 November and sent back points after each. On
   - `tools/phone-probe.mjs` with its AGENTS.md rule.
 
 What stayed open is in TODO under the same heading.
+
+## A computer golfer's plan runs on the frame loop (18 November 2026; branch fairway-tour)
+
+From TODO, *Only the owner can check* (the Fairway Tour branch's owed
+items), and the goal's own test: "the frame rate on Low, Phone and Ultra is
+no worse in a round with three computer golfers than main's with one
+person". Drawing a course had been measured level at fixed spots, but that
+is not a round being played, so `tools/frame-round.mjs` was written to play
+one on both builds and time every frame. Average frames were level from the
+start; long frames on the Phone setting were not. Three causes were found by
+laying each long frame against what had just happened and profiling the
+worst on an unminified build, and each was fixed:
+
+- **The plan, run whole at the start of a turn** (up to 36 ms on the
+  owner's PC, three times that on a phone): `planSteps`, `readPutt` and
+  `shotSteps` in src/ai/golfer.js are generators that pause after each
+  flight of the ball, and main.js `stepPlan` runs about 4 ms of one a frame;
+  the caddie's line (`suggestSteps`) the same. Run whole they are the same
+  calls in the same order, so the bench and every saved shot are unchanged
+  (a test holds a stepped plan equal to a whole one, and a plan dropped half
+  way changing nothing).
+- **Making a golfer at its first turn** (its bag's carries flown,
+  110-135 ms here; the round's worst frame, 283 ms on Phone): every golfer
+  in the group is now made in `loadCourse`, under the loading screen.
+- **A golfer's reaction in the landing's frame** (the landing 234-268 ms on
+  Phone, against a person's 110-140): the reaction now comes 900 ms after
+  the ball stops, as a golfer reacts.
+
+Dead ends: a Web Worker for the plan (the hole is generated geometry with
+functions, not data a worker can take); reading the long Phone loads as the
+golfers' cost (a lone person on 0.9.18 reaches the green, a cheap view, after
+a minute, while three golfers are still up the fairway). The figures, before
+and after, are in RESEARCH *Frame rate with computer golfers*, *In a round
+being played*.

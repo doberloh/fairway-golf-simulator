@@ -116,7 +116,7 @@ import {rateCourseSteps} from './ai/rating.js';
 import {YOU,myGroup,golferOf,holeModel,setNetStrokes,drawField,recordCard,makeCut,playoffFor,drawPlayoff,finish as finishEvent} from './tournament.js';
 import {newTour,quickSeason,shippedSeason,startEvent,endEvent,nextSeason,readTour,cleanEventDef,eventCourse,seasonOver,standings as tourStandings,tourRecord} from './tour.js';
 import {eventRewards,roundRewards,seasonRewards} from './tour-rewards.js';
-import {suggest} from './caddie.js';
+import {suggestSteps} from './caddie.js';
 import {holeGained,addGained,gainedText,PARTS as GAINED_PARTS,PART_NAMES as GAINED_NAMES} from './strokes-gained.js';
 import {loadTours,activeTour,putTour,removeTour,ratingKey,storedRating,storeRating} from './tour-store.js';
 import {tickerText,hubHtml,startHtml,editorHtml,eventCourseKey} from './ui-tour.js';
@@ -1370,6 +1370,11 @@ function loadCourse(){
  stopTour();cancelAdvance();endHoleSummary();resetTrails();resetMapNav();view.clearShotHistory?.();if(round.hole===0&&!round.teePlaced){lastShot=null;priorShot=null;}
  const key=settleSettings();
  if(!world||key!==worldKey){lastShot=null;priorShot=null;world=worldNow(settings);worldKey=key;}if(view.world!==world||view.style!==settings.style){view.build(world,settings.style,worldHole(round.hole));}else view.setHole(worldHole(round.hole));
+ // Every computer golfer in the group made now, under the loading screen:
+ // making one (its bag's carries, flown) is 110-135 ms on the owner's PC,
+ // which at its first turn was the round's longest frame (18 November 2026).
+ // Kept once made, so a later load costs nothing.
+ if(!rangeMode)round.players.forEach((p,i)=>{if(isComputer(p))cpuGolferFor(i);});
  // An endless run grows one hole at a time, so the world it just built holds
  // exactly one whichever hole number the player has reached.
  const holeIndex=worldHole(round.hole);
@@ -1478,16 +1483,39 @@ function setUpTurn(){
 }
 // The caddie's hint for the golfer up (caddie.js): the club and where to aim
 // it, never chosen for them. Gone the moment the shot is struck.
+// Worked out over the next few frames (`stepPlan`): it shows once it is
+// ready, and not at all if the shot is struck first.
+let caddieTurn='';
 function showCaddie(){
  let el=$('caddieLine');
  const p=round?.player,on=caddieMode==='on'||(caddieMode==='auto'&&playsWith(p)==='meter');
  const hide=()=>{if(el)el.hidden=true;};
- if(!on||!p||isComputer(p)||rangeMode||challenge||round.holeComplete||round.relief||round.scrambleSelection||!course)return hide();
- const q=profileOf(p);let s=null;
- try{s=suggest({hole:course,from:{...round.position},bag:bagFor(p),handicap:q?playingIndex(q,profileSummary(q).handicap?.index)??20:20,settings});}catch{s=null;}
- if(!s)return hide();
- if(!el){el=document.createElement('div');el.id='caddieLine';el.className='caddie-line';el.setAttribute('role','note');$('world')?.append(el);}
- el.textContent=`CADDIE · ${s.line}`;el.hidden=false;
+ hide();caddieTurn='';
+ if(!on||!p||isComputer(p)||rangeMode||challenge||round.holeComplete||round.relief||round.scrambleSelection||!course)return;
+ const q=profileOf(p),turn=caddieTurn=`${round.uid}:${round.hole}:${round.active}:${round.strokes?.[round.active]??0}`,hole=course;
+ let it;try{it=suggestSteps({hole,from:{...round.position},bag:bagFor(p),handicap:q?playingIndex(q,profileSummary(q).handicap?.index)??20:20,settings});}catch{return;}
+ stepPlan(it,()=>caddieTurn===turn&&course===hole&&!flight,s=>{
+  if(!s)return;
+  el=$('caddieLine');
+  if(!el){el=document.createElement('div');el.id='caddieLine';el.className='caddie-line';el.setAttribute('role','note');$('world')?.append(el);}
+  el.textContent=`CADDIE · ${s.line}`;el.hidden=false;
+ });
+}
+// A PLAN IN STEPS (src/ai/golfer.js `planSteps`): about 4 ms of it a frame,
+// one flight of the ball at least, so a computer golfer's thinking or the
+// caddie's never holds a frame longer than a person's own swing does (it
+// used to run whole: up to 36 ms on the owner's PC, about three times that
+// on a phone, 18 November 2026; RESEARCH *Frame rate with computer
+// golfers*). Dropped, unfinished, once `alive()` says the moment has passed;
+// `done(answer)` when it is ready, `done(null, error)` if it threw.
+function stepPlan(it,alive,done){
+ const step=()=>{
+  if(!alive())return;
+  const t0=performance.now();let r;
+  try{do r=it.next();while(!r.done&&performance.now()-t0<4);}catch(e){done(null,e);return;}
+  if(r.done)done(r.value);else requestAnimationFrame(step);
+ };
+ requestAnimationFrame(step);
 }
 
 // A COMPUTER GOLFER'S TURN (the fairway-tour goal; SPEC section 2). It plans
@@ -1514,8 +1542,11 @@ function planComputerTurn(tries=0){
   if(cpuTurnKey!==key||!isComputer(round.player)||round.active!==seat)return;
   // Something is open (a banner, a panel): try again shortly.
   if(!cpuMayPlay()||(!$('holeOut').hidden&&!$('holeOut').classList.contains('leaving'))){if(tries<400)planComputerTurn(tries+1);return;}
-  const g=cpuGolferFor(seat),from={...round.position};
-  let s;try{s=g.shot({hole:course,from,key:shotKey(round,seat,round.uid),fly:false});}catch(e){console.warn('computer golfer:',e.message);toast(`${round.player.name} could not play that shot.`);return;}
+  const g=cpuGolferFor(seat),from={...round.position},hole=course;
+  let it;try{it=g.shotSteps({hole,from,key:shotKey(round,seat,round.uid),fly:false});}catch(e){console.warn('computer golfer:',e.message);toast(`${round.player.name} could not play that shot.`);return;}
+  // Thought over the next few frames (stepPlan), then shown and swung.
+  stepPlan(it,()=>cpuTurnKey===key&&round.active===seat&&course===hole&&isComputer(round.player),(s,e)=>{
+  if(!s){console.warn('computer golfer:',e?.message);toast(`${round.player.name} could not play that shot.`);return;}
   if(clubs[s.club])$('club').value=s.club;
   aim=s.aim;aimPoint=null;aimRange=null;updateAim();view.setCamera(round.position,aim);
   cpuCard(s);updateHUD();
@@ -1528,6 +1559,7 @@ function planComputerTurn(tries=0){
    if(!ok){cpuShooting=null;return;}
    if(flight){flight.rate=how==='quick'?3:1;if(how==='skip')finishShot();}
   },PRESHOT_MS[cpuWatch]??1000);
+  });
  },tries?250:450);
 }
 let cpuShooting=null;
@@ -1551,7 +1583,12 @@ function afterComputerShot(result){
  const after=Math.hypot(course.pin.x-result.end.x,course.pin.z-result.end.z);
  const toEnd=(result.end.x-s.from.x)*(course.pin.x-s.from.x)+(result.end.z-s.from.z)*(course.pin.z-s.from.z);
  const say=reaction({holed:!!result.holed,lipped:!!result.lipped,hazard:result.hazard,putt:s.putt,before:s.before,after,short:toEnd<s.before*s.before},s.key);
- if(say)toast(`${round.players[s.seat]?.name}: “${say}”`);
+ // A beat after the ball stops, as a golfer reacts: and not in the landing's
+ // own frame, which the message's layout made the round's longest on a
+ // phone (about 100 ms more, 18 November 2026; RESEARCH *Frame rate with
+ // computer golfers*).
+ const who=round.players[s.seat]?.name,uid=round.uid;
+ if(say)setTimeout(()=>{if(round.uid===uid&&appMode==='play')toast(`${who}: “${say}”`);},900);
 }
 // A computer team's scramble pick and a computer golfer's relief are chosen
 // for them, by the strokes each choice leaves (src/ai/strokes.js).

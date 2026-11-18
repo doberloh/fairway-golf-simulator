@@ -66,6 +66,9 @@ const SAMPLES = (() => {
 
 // `bag`: a bag to play with instead of the stock bag scaled to the golfer's
 // drive (the caddie plans with the person's own clubs).
+// A plan in steps (a generator), run to its end at once: its answer.
+export function runSteps(it) { let r; while (!(r = it.next()).done); return r.value; }
+
 export function computerGolfer({handicap = 15, traits = {}, seed = 'golfer', settings = {}, name = '', bag: ownBag = null} = {}) {
  const skill = skillFor(handicap, traits), bag = ownBag || golferBag(skill), clubs = bagClubs(bag);
  const turf = turfConfig(settings.turf), wind = h => localWind(settings, h.rotation || 0);
@@ -128,7 +131,14 @@ export function computerGolfer({handicap = 15, traits = {}, seed = 'golfer', set
  // sand nothing longer than a 7-iron, and from a greenside bunker the sand
  // wedge; from a lie that did not let the last shot out, a wedge back to the
  // fairway.
- function plan(h, from, lie, {avoid = 0, stuck = 0} = {}) {
+ //
+ // IN STEPS (18 November 2026): this and the putt read are generators that
+ // pause (`yield`) after each flight of the ball, the costly part, so the
+ // game can spread a plan over frames (main.js `stepPlan`): no step costs
+ // more than one flight, which is what a person's own swing costs. Run to
+ // the end at once (`runSteps`) they are the same calls in the same order,
+ // so every shot is what it was.
+ function* planSteps(h, from, lie, {avoid = 0, stuck = 0} = {}) {
   const pin = h.pin, toPin = Math.hypot(pin.x - from.x, pin.z - from.z), yds = toPin / YARD;
   const rise = h.height(pin.x, pin.z) - h.height(from.x, from.z), sand = lieClass(lie) === 'sand';
   const options = [];
@@ -159,8 +169,10 @@ export function computerGolfer({handicap = 15, traits = {}, seed = 'golfer', set
    }
   }
   options.sort((a, b) => a.ev - b.ev);
+  yield;
   for (const o of options) {
    const t = reach(clubs[o.id], h, from, o.target, lie);
+   yield;
    if (t && !t.out) return o;
   }
   // Nothing reaches by the ball model (uphill into wind): the longest club
@@ -171,7 +183,8 @@ export function computerGolfer({handicap = 15, traits = {}, seed = 'golfer', set
 
  // A PUTT READ: the aim and roll that hole it, found by rolling it (three
  // tries at most, each correcting line and pace from where it went).
- function readPutt(h, from, lie) {
+ const plan = (h, from, lie, o) => runSteps(planSteps(h, from, lie, o));
+ function* readPutt(h, from, lie) {
   const pin = h.pin, d = Math.hypot(pin.x - from.x, pin.z - from.z), straight = Math.atan2(pin.x - from.x, pin.z - from.z) / DEG;
   let aim = straight, roll = d + .43; // Pelz: 17 in past (PLACED as the aim)
   // THE TRIAL ROLLS ARE CHEAP (18 November 2026): this runs on the frame
@@ -187,6 +200,7 @@ export function computerGolfer({handicap = 15, traits = {}, seed = 'golfer', set
   for (let i = 0; i < 3; i++) {
    const speed = puttSpeedFor(putter, turf, Math.max(.1, roll));
    const r = simulateShot({origin: {...from}, aim, speed, vla: 0, hla: 0, spin: 0, spinAxis: 0}, h, {...air(h), turf, flagsticks: {current: false}, dt});
+   yield;
    if (r.holed) break;
    // The closest the ball came to the cup, and which side.
    let best = null;
@@ -212,18 +226,23 @@ export function computerGolfer({handicap = 15, traits = {}, seed = 'golfer', set
  // `fly: false` returns the struck shot without flying it: the game flies it
  // itself (main.js takeShot), and tells the golfer where it finished with
  // `landed`, so a shot that went nowhere is still noticed.
- function shot({hole: h, from, key = '', pressure = 0, avoid = 0, fly = true}) {
+ // `shotSteps` is the same shot in steps (see `planSteps`); `stuck` and
+ // `last` move only when it finishes, so one dropped half way (the turn
+ // cancelled) leaves the golfer as it was.
+ function* shotSteps({hole: h, from, key = '', pressure = 0, avoid = 0, fly = true}) {
   const rnd = seeded(`${seed}|${key}`), lie = lieAt(h, from.x, from.z);
   const nerves = 1 + .25 * (1 - skill.nerve) * Math.min(1, Math.max(0, pressure));
-  stuck = last && last.h === h && Math.hypot(from.x - last.from.x, from.z - last.from.z) < 1 && last.end && Math.hypot(last.end.x - last.from.x, last.end.z - last.from.z) < 4 ? stuck + 1 : 0;
-  const out = shotFrom(h, from, lie, rnd, nerves, avoid, fly);
+  const wasStuck = last && last.h === h && Math.hypot(from.x - last.from.x, from.z - last.from.z) < 1 && last.end && Math.hypot(last.end.x - last.from.x, last.end.z - last.from.z) < 4 ? stuck + 1 : 0;
+  const out = yield* shotFrom(h, from, lie, rnd, nerves, avoid, fly, wasStuck);
+  stuck = wasStuck;
   last = {h, from: {...from}, end: out.result ? {x: out.result.end.x, z: out.result.end.z} : null};
   return out;
  }
+ const shot = o => runSteps(shotSteps(o));
  function landed(h, from, end) { if (last && last.h === h && Math.hypot(last.from.x - from.x, last.from.z - from.z) < .01) last.end = {x: end.x, z: end.z}; }
- function shotFrom(h, from, lie, rnd, nerves, avoid, fly) {
+ function* shotFrom(h, from, lie, rnd, nerves, avoid, fly, stuck) {
   if (putts(lie, Math.hypot(h.pin.x - from.x, h.pin.z - from.z)) && !stuck) {
-   const read = readPutt(h, from, lie);
+   const read = yield* readPutt(h, from, lie);
    const aim = read.straight + (read.aim - read.straight) * skill.read + normal(rnd) * skill.puttLine * nerves;
    const roll = read.roll * Math.max(.2, 1 + normal(rnd) * skill.puttPace * nerves);
    const speed = puttSpeedFor(putter, turf, Math.max(.05, roll));
@@ -231,7 +250,7 @@ export function computerGolfer({handicap = 15, traits = {}, seed = 'golfer', set
    const result = fly ? simulateShot({origin: {...from}, aim, ...launch}, h, {...air(h), turf, flagsticks: {current: false}}) : null;
    return {result, club: 'putter', kind: 'putter', launch, before: launch.speed, aim, target: {...h.pin}, plan: 'putt'};
   }
-  const p = plan(h, from, lie, {avoid, stuck});
+  const p = yield* planSteps(h, from, lie, {avoid, stuck});
   const c = clubs[p.id], toPin = Math.hypot(h.pin.x - from.x, h.pin.z - from.z);
   const short = shortGame(c, toPin / YARD), sand = lieClass(lie) === 'sand';
   // The swing's carry: a full shot is asked for the target; a short shot is
@@ -245,6 +264,7 @@ export function computerGolfer({handicap = 15, traits = {}, seed = 'golfer', set
   const range = Math.hypot(target.x - from.x, target.z - from.z);
   const zoom = swingZoom(fullCarry(c, shapedLaunch(c, DEFAULT_SHAPE, {short})), range);
   const t = reach(c, h, from, target, lie);
+  yield;
   const share = t && Number.isFinite(t.share / zoom) ? Math.min(1, t.share / zoom) : 1;
   const out = swingLaunch({power: share, error: 0, done: true}, {club: c, shape: DEFAULT_SHAPE, short, lie, difficulty: 'normal', turf, zoom});
   const launch = {...out.shot};
@@ -287,5 +307,5 @@ export function computerGolfer({handicap = 15, traits = {}, seed = 'golfer', set
   return best;
  }
 
- return {name, handicap: skill.handicap, skill, clubs, bag, shot, landed, plan, relief};
+ return {name, handicap: skill.handicap, skill, clubs, bag, shot, shotSteps, landed, plan, planSteps, relief};
 }
