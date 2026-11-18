@@ -78,7 +78,7 @@ import {createPictureLoop} from './picture-loop.js';
 import {LANDSCAPE_SHOTS,EVERY_LANDSCAPE} from './landscape-shots.js';
 import {createPictureStore} from './course-pictures.js';
 import {courseFile,readCourseFile,fileName as courseFileName,pictureViews,pictureOk,PICTURE} from './course-file.js';
-import {createBuiltStore} from './built-store.js';
+import {createBuiltStore,hashOf} from './built-store.js';
 import {worldFromDoc,builtExtent} from './built-world.js';
 import {bakeBuiltFieldPooled} from './bake-pool.js';
 import {isBuiltFile} from './course-doc.js';
@@ -112,6 +112,12 @@ import {shotKey} from './ai/play.js';
 import {isComputer,computerSeat,showShot,PRESHOT_MS,reaction,DEFAULT_WATCH,WATCH,LEVELS,levelName} from './ai/seat.js';
 import {roundStrokes,netCard} from './net.js';
 import {form as adaptForm,adaptHandicap} from './ai/adapt.js';
+import {rateCourseSteps} from './ai/rating.js';
+import {YOU,myGroup,golferOf,holeModel,setNetStrokes,drawField,recordCard,makeCut,playoffFor,drawPlayoff,finish as finishEvent} from './tournament.js';
+import {newTour,quickSeason,shippedSeason,startEvent,endEvent,nextSeason,readTour,cleanEventDef,eventCourse} from './tour.js';
+import {loadTours,activeTour,putTour,removeTour,ratingKey,storedRating,storeRating} from './tour-store.js';
+import {tickerText,hubHtml,startHtml,editorHtml} from './ui-tour.js';
+import {writeTourFile,readTourFile,FILE_EXT as TOUR_FILE_EXT} from './tour-file.js';
 import {pointsTotal} from './stableford.js';
 import {reliefOptions,crossingPoint,OB_RULES,pathRelief,OBSTRUCTIONS} from './relief.js';
 import {SCHEMA_VERSION,GENERATOR_VERSION,SETTINGS,FIELD,CATEGORIES,bound,validateSettings,migrateSettings,generationKeys,playScope,generatorFor} from './settings-schema.js';
@@ -119,7 +125,7 @@ import {listCourses,findCourse,saveCourse,deleteCourse,renameCourse,exportCourse
 import {loadGraphics,saveGraphics,needsRebuild,greenCues,QUALITY,QUALITY_LABELS,FRAME_CAPS,READINGS,READING_LABELS,readingCues,isSoftwareRenderer,hasSavedGraphics,isPhoneDevice,PHONE,PHONE_FRAME_CAP} from './graphics.js';
 import {createAutoResolution} from './auto-resolution.js';
 import {createGameAudio,canopyContacts,nearestWater} from './audio.js';
-import {surpriseSettings} from './settings-schema.js';
+import {surpriseSettings,BIOME_KEYS} from './settings-schema.js';
 const $=id=>document.getElementById(id),escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const icon=()=>createIcons({icons});
 // BUILT COURSES (Fairway Course Builder; docs/COURSE_BUILDER.md): their files
@@ -1412,6 +1418,10 @@ function adaptOpponents(){
 }
 function setUpTurn(){
  if(rangeMode&&course?.greens&&!challenge){setUpRangeTurn(true);return;}
+ // A tour event's field is made ready before the first shot (ensureEvent
+ // calls setUpTurn again when it is).
+ if(ensureEvent())return;
+ drawEventTicker();
  ensureNet();
  if(!round.teePlaced||round.strokes.every(s=>!s))adaptOpponents();
  syncArmed();
@@ -1524,6 +1534,197 @@ function computerPicks(){
  let best=0;list.forEach((c,i)=>{if(cost(c)<cost(list[best]))best=i;});
  setTimeout(()=>{if(!round.scrambleSelection)return;pickIndex=best;try{const carded=cardedSeats();round.chooseScramble(pickIndex);announceHoleOut(carded);afterSelection();}catch(e){toast(e.message);}},900);
  return true;
+}
+
+// THE FAIRWAY TOUR (the fairway-tour goal; src/tour.js, src/tournament.js,
+// src/ui-tour.js, src/tour-store.js). Named `fw...` here: `tour` in this file
+// is the camera's flyover. One tour is active; its current event is played a
+// round at a time, the person's group shot by shot in an ordinary round that
+// carries `round.event` (tour.event.round), the rest of the field drawn.
+let tourStore=null,tourView='hub',tourDraft=null,fieldPrep=null;
+const fwStore=()=>tourStore||(tourStore=loadTours());
+const fwTour=()=>activeTour(fwStore());
+const fwSave=t=>{try{putTour(fwStore(),t);return true;}catch(e){toast(e.message);return false;}};
+// The person: the main profile, their handicap (the sim handicap, else typed).
+const fwPerson=()=>{const q=mainProfile(profiles);return {name:q?.name||'You',profile:q?.id||null,index:q?playingIndex(q,profileSummary(q).handicap?.index):null,prof:q};};
+// The event this round belongs to, when it is the active tour's current one.
+function eventOfRound(){
+ if(!round?.event)return null;
+ const [tid,eid,r]=round.event.split('.'),t=fwTour();
+ return t&&t.id===tid&&t.current?.id===eid?{tour:t,ev:t.current,r:Number(r)}:null;
+}
+function startEventRound(){
+ const t=fwTour(),ev=t?.current;if(!ev||ev.done)return;
+ const r=ev.round,me=fwPerson(),prof=me.prof;
+ const partners=myGroup(ev,r).filter(id=>id!==YOU).map(id=>{const g=golferOf(ev,id);return {name:g.name.slice(0,24),team:'A',hand:'RH',input:'cpu',cpu:{id,handicap:g.handicap,traits:g.traits,ball:g.ball,tracer:g.tracer,nation:g.nation,level:g.handicap}};});
+ const player={name:me.name.slice(0,24),...(prof?{profile:prof.id}:{}),team:'A',hand:prof?.hand||'RH',input:prof?.input==='meter'?'meter':'monitor',...(prof?.tee?{tee:prof.tee}:{})};
+ const group={players:[player,...partners],mode:ev.format,tee:prof?.tee||'blue',handicaps:!!ev.net,event:`${t.id}.${ev.id}.${r}`,outOfBounds:Round.defaultOutOfBounds,monitorLie:Round.defaultMonitorLie};
+ closePanel();
+ startRoundOn({...ev.course.settings,holes:ev.holes},group,`${ev.name} · round ${r+1}`).catch(e=>toast(e.message));
+}
+// GETTING THE FIELD READY: the course's holes and pars, the computer golfers'
+// rating of it (kept, so a course is rated once), the hole model, net
+// strokes, and this round's field drawn. The rating plays a scratch and a
+// bogey golfer round the course a hole at a time between frames, behind the
+// course-growing cover (about 5 s on the owner's PC; RESEARCH).
+function ensureEvent(){
+ const e=eventOfRound();if(!e||!world?.holes?.length)return false;
+ const {tour:t,ev,r}=e;
+ const tee=teeFor(round.tee,Object.keys(world.holes[0].tees||{}));
+ const holes=world.holes.slice(0,ev.holes).map(h=>({par:h.par,yards:Math.round(h.tees?.[tee]?.yards||h.length/YARD||0)}));
+ ev.pars=holes.map(h=>h.par);
+ if(ev.model){if(!ev.scores[ev.field.find(id=>!myGroup(ev,r).includes(id))]?.[r]){drawField(ev,r);fwSave(t);}return false;}
+ if(fieldPrep)return true;
+ const key=ratingKey(ev.course.settings,tee),known=storedRating(key);
+ const finish=rating=>{fieldPrep=null;ev.model=holeModel(holes,rating?.scores||null);setNetStrokes(ev,holes);drawField(ev,r);fwSave(t);$('generating').hidden=true;drawEventTicker();setUpTurn();};
+ if(known){finish(known);return true;}
+ const steps=rateCourseSteps(world.holes.slice(0,ev.holes),{tee,rounds:1,settings,seed:key});
+ fieldPrep=steps;$('generatingLabel').textContent='Getting the field ready…';$('generatingTip').textContent='The computer golfers are playing the course once, so the field\'s scores fit it. A course is only rated the first time.';$('generating').hidden=false;
+ const step=()=>{if(fieldPrep!==steps)return;const t0=performance.now();let s;do{s=steps.next();}while(!s.done&&performance.now()-t0<40);
+  if(s.done){storeRating(key,s.value);finish(s.value);return;}
+  setProgress({done:s.value});setTimeout(step,0);};
+ setTimeout(step,0);
+ return true;
+}
+// The line on the round screen (ui-tour.js tickerText): the leader, the
+// person's place, the cut. Redrawn when a hole is completed, not each frame.
+function drawEventTicker(){
+ let el=$('eventTicker');const e=eventOfRound();
+ if(!e||!e.ev.model||menuBackdrop){if(el)el.hidden=true;return;}
+ if(!el){el=document.createElement('button');el.id='eventTicker';el.className='event-ticker';el.type='button';el.title='The leaderboard';el.onclick=()=>{tourView='hub';openPanel('tour');};$('world')?.append(el);}
+ const thru=round.cards[0].slice(0,e.ev.holes).filter(Number.isFinite).length;
+ // The person's partners are as far as they have got; the rest by tee time.
+ const partnerThru=Object.fromEntries(round.players.map((p,i)=>[p.cpu?.id,round.cards[i].slice(0,e.ev.holes).filter(Number.isFinite).length]).filter(([id])=>id));
+ for(const [i,p] of round.players.entries())recordCard(e.ev,i===0?YOU:p.cpu?.id||YOU,round.cards[i],e.r);
+ el.textContent=tickerText(e.ev,{thru,partnerThru});el.hidden=false;
+}
+// A ROUND OF AN EVENT FINISHED: its cards into the event, the cut, and at the
+// end the playoff (drawn: the person's playoff is not played on the course
+// yet, TODO), the finish, and the season moved on. Once per round.
+function finishEventRound(){
+ const e=eventOfRound();if(!e||!round.finished||e.ev.round!==e.r)return;
+ const {tour:t,ev,r}=e;
+ round.players.forEach((p,i)=>recordCard(ev,i===0?YOU:p.cpu?.id,round.cards[i],r));
+ if(!ev.model)return;
+ drawField(ev,r);
+ ev.round=r+1;
+ if(ev.rounds>=3&&ev.round===(ev.rounds===4?2:1))makeCut(ev);
+ // A person who missed the cut: the rest of the event is drawn without them.
+ while(ev.round<ev.rounds&&ev.cut&&!ev.cut.made.includes(YOU)){drawField(ev,ev.round,[]);ev.round++;}
+ if(ev.round>=ev.rounds){const tied=playoffFor(ev);if(tied)drawPlayoff(ev,tied);finishEvent(ev);}
+ fwSave(t);
+}
+// SHARING A TOUR (src/tour-file.js): the tour and its built courses as one
+// .fairway-tour, saved like a course file. Written a piece at a time, so a
+// season of built courses never needs the whole file in memory.
+async function shareTour(t){
+ if(!t)return;
+ try{toast('Packing the tour…');const blob=await writeTourFile(t,{builtBytes:h=>builtStore.bytes(h)});
+  download(`${(t.name||'Tour').replace(/[^\w .-]+/g,'').trim().slice(0,40)||'Tour'}${TOUR_FILE_EXT}`,blob,'application/zip');
+  toast(`Saved ${t.name}: ${(blob.size/1e6).toFixed(1)} MB.`);}
+ catch(e){toast(e.message);}
+}
+// OPENING SOMEONE'S TOUR FILE: read and checked first, then a screen says
+// what it holds and the space it takes before anything is kept.
+let tourImport=null;
+function importTourFile(){
+ const input=document.createElement('input');input.type='file';input.accept=`${TOUR_FILE_EXT},application/zip`;
+ input.onchange=async()=>{const file=input.files?.[0];if(!file)return;
+  try{const r=await readTourFile(file,{hashOf});
+   const have=await Promise.all(r.courses.map(async c=>!!(await builtStore.bytes(c.hash))));
+   let room=null;try{const est=await navigator.storage?.estimate?.();if(est?.quota)room=est.quota-(est.usage||0);}catch{}
+   tourImport={...r,newCourses:r.courses.filter((c,i)=>!have[i]),room,file:file.name};tourView='import';openPanel('tour');}
+  catch(e){toast(e.message);}};
+ input.click();
+}
+function importPreviewHtml(){
+ const r=tourImport,newBytes=r.newCourses.reduce((s,c)=>s+c.size,0),fits=r.room==null||r.room>newBytes*1.1;
+ return `<div class="tour-hub"><header class="tour-head"><h2>${escape(r.tour.name)}</h2><small>FROM ${escape(r.file)}</small></header>`
+  +`<p>${r.tour.events.length} events, ${r.tour.events.filter(e=>e.major).length} of them majors. ${r.courses.length?`${r.courses.length} built course${r.courses.length===1?'':'s'}, ${r.newCourses.length} new to this device, ${(newBytes/1e6).toFixed(1)} MB to keep.`:'Every course is generated, so nothing large to keep.'}</p>`
+  +(fits?'':`<p class="field-error">This device has room for about ${(r.room/1e6).toFixed(0)} MB more, and the new courses need ${(newBytes/1e6).toFixed(0)} MB. Free some space (delete tours or built courses you no longer play), then open the file again.</p>`)
+  +`<ol class="tour-cal">${r.tour.events.map(e=>`<li><span>WK ${e.week}</span><b>${escape(e.name)}${e.major?' <i>MAJOR</i>':''}</b><em>${escape(e.course.name||'')}</em></li>`).join('')}</ol>`
+  +`<div class="tour-actions">${fits?'<button class="primary" data-tour="addimport">Add tour</button>':''}<button class="secondary" data-tour="cancelimport">Cancel</button></div></div>`;
+}
+async function addImportedTour(){
+ const r=tourImport;if(!r)return;
+ try{
+  for(const [i,c] of r.newCourses.entries()){toast(`Keeping course ${i+1} of ${r.newCourses.length}…`);const bytes=await c.read();await builtStore.put(bytes);}
+  const store=fwStore(),t=r.tour;if(store.tours.some(x=>x.id===t.id))t.id='t'+Date.now().toString(36);
+  fwSave(t);tourImport=null;tourView='hub';toast(`${t.name} added.`);
+ }catch(e){toast(e.message);}
+ openPanel('tour');
+}
+// Round complete in a tour event: where the person stands, and the way on.
+function eventResultHtml(){
+ const e=eventOfRound();if(!e)return '';
+ finishEventRound();
+ const {ev}=e,me=ev.done?ev.results?.find(r=>r.id===YOU):null;
+ const line=ev.done?(me?.place===1?`You win the ${ev.name}!`:me?.pos==='MC'?`You missed the cut at the ${ev.name}.`:`You finish ${me?.pos??'—'} at the ${ev.name}: ${me?.points??0} points.`)
+  :`${ev.name}: round ${e.r+1} of ${ev.rounds} done.${ev.cut?ev.cut.made.includes(YOU)?' You made the cut.':' You missed the cut.':''}`;
+ return `<section class="rh-res-event"><strong>${escape(line)}</strong><button type="button" class="primary" id="resTour">The leaderboard and the tour</button></section>`;
+}
+function renderTourHub(content){
+ content.classList.add('tour-root');
+ const store=fwStore(),t=activeTour(store),me=fwPerson();
+ if(tourView==='edit'&&tourDraft){content.innerHTML=editorHtml(tourDraft,{courses:tourCourseChoices()});bindTourEditor(content);return;}
+ if(tourView==='import'&&tourImport){content.innerHTML=importPreviewHtml();content.querySelectorAll('[data-tour]').forEach(b=>b.onclick=()=>{if(b.dataset.tour==='addimport')addImportedTour();else{tourImport=null;tourView=fwTour()?'hub':'start';openPanel('tour');}});return;}
+ content.innerHTML=t&&tourView!=='start'?hubHtml(t,{personName:me.name}):startHtml({tours:store.tours,active:store.active});
+ content.querySelectorAll('[data-tour]').forEach(b=>b.onclick=()=>tourAction(b.dataset.tour,b.dataset.id));
+}
+// The courses an event can be played on: every landscape (a new generated
+// course on each), every saved course, built ones included.
+function tourCourseChoices(){
+ const out=BIOME_KEYS.map(k=>({value:`land:${k}`,label:`A new course in ${BIOMES[k]?.title||k}`}));
+ for(const c of listCourses())out.push({value:c.built?`built:${c.built}`:`saved:${c.id}`,label:`${c.name}${c.built?' (built)':''}`});
+ return out;
+}
+function courseFromChoice(v,seed){
+ if(v.startsWith('land:'))return eventCourse(v.slice(5),seed,BIOMES[v.slice(5)]?.title||'');
+ if(v.startsWith('saved:')||v.startsWith('built:')){const c=listCourses().find(x=>v==='saved:'+x.id||v==='built:'+x.built);if(c)return {name:c.name,settings:{...c.settings,holes:18},...(c.built?{built:c.built}:{})};}
+ return null;
+}
+function tourAction(a,id){
+ const store=fwStore(),me=fwPerson();
+ try{
+  if(a==='shipped'||a==='quick'){const t=a==='shipped'?shippedSeason({person:me}):quickSeason({seed:'Q'+Date.now().toString(36),person:me});fwSave(t);tourView='hub';}
+  else if(a==='single'){const t=newTour({name:'A single tournament',seed:'S'+Date.now().toString(36),person:me,events:[{name:'The Fairway Invitational',week:1,course:eventCourse(BIOME_KEYS[Math.floor(Math.random()*BIOME_KEYS.length)],'SI'+Date.now().toString(36))}]});tourDraft=t;tourView='edit';}
+  else if(a==='blank'){tourDraft=newTour({name:'My Tour',seed:'B'+Date.now().toString(36),person:me,events:[{name:'Season Opener',week:2,course:eventCourse(BIOME_KEYS[0],'B1'+Date.now().toString(36))}]});tourView='edit';}
+  else if(a==='open'){store.active=id;fwSave(activeTour(store));tourView='hub';}
+  else if(a==='delete'){const t=store.tours.find(x=>x.id===id);if(t&&confirmTwice(`delete:${id}`,`Press ✕ again to delete ${t.name}.`))removeTour(store,id);}
+  else if(a==='switch'){tourView='start';}
+  else if(a==='edit'){tourDraft=JSON.parse(JSON.stringify(fwTour()));tourView='edit';}
+  else if(a==='start'){const t=fwTour();startEvent(t,{personIndex:me.index});fwSave(t);}
+  else if(a==='play'){startEventRound();return;}
+  else if(a==='finish'){const t=fwTour(),ev=t.current;while(ev.round<ev.rounds){drawField(ev,ev.round,[]);ev.round++;}const tied=playoffFor(ev);if(tied)drawPlayoff(ev,tied);finishEvent(ev);fwSave(t);}
+  else if(a==='next'){const t=fwTour();endEvent(t,t.current);fwSave(t);}
+  else if(a==='season'){fwSave(nextSeason(fwTour()));}
+  else if(a==='share'){shareTour(fwTour());return;}
+  else if(a==='import'){importTourFile();return;}
+ }catch(e){toast(e.message);}
+ openPanel('tour');
+}
+// A press that deletes asks for a second press (as the round library does).
+const confirmTwice=(key,msg)=>{if(confirmTwice.armed===key){confirmTwice.armed=null;return true;}confirmTwice.armed=key;toast(msg);setTimeout(()=>{if(confirmTwice.armed===key)confirmTwice.armed=null;},4000);return false;};
+function bindTourEditor(content){
+ const t=tourDraft,played=t.results.length+(t.current?1:0);
+ const read=()=>{
+  t.name=($('tourName').value||'My Tour').slice(0,48);
+  t.defaults={...t.defaults,rounds:Number($('tourRounds').value),format:$('tourFormat').value,net:$('tourNet').value==='net',strength:$('tourStrength').value,size:Number($('tourSize').value),partners:Number($('tourPartners').value)};
+  content.querySelectorAll('.tour-events li').forEach(li=>{const i=Number(li.dataset.i);if(i<played)return;const e=t.events[i];
+   e.name=li.querySelector('.ev-name').value.slice(0,48)||e.name;e.week=Math.max(1,Math.min(52,Number(li.querySelector('.ev-week').value)||e.week));
+   const c=courseFromChoice(li.querySelector('.ev-course').value,`${t.seed}-${e.id}`);if(c)e.course=c;
+   const rv=li.querySelector('.ev-rounds').value;if(rv)e.rounds=Number(rv);else delete e.rounds;e.major=li.querySelector('.ev-major').checked;});
+ };
+ content.querySelectorAll('[data-tour]').forEach(b=>b.onclick=()=>{
+  read();const a=b.dataset.tour,i=Number(b.closest('li')?.dataset.i);
+  if(a==='add'){const n=t.events.length+1;t.events.push(cleanEventDef({id:`ev${Date.now().toString(36)}`,name:`Event ${n}`,week:Math.min(52,(t.events[t.events.length-1]?.week||0)+3),course:eventCourse(BIOME_KEYS[n%BIOME_KEYS.length],`${t.seed}-${n}`,BIOMES[BIOME_KEYS[n%BIOME_KEYS.length]]?.title)},n-1));}
+  else if(a==='remove'&&i>=played&&t.events.length>1)t.events.splice(i,1);
+  else if(a==='up'&&i>played)[t.events[i-1],t.events[i]]=[t.events[i],t.events[i-1]];
+  else if(a==='down'&&i>=played&&i<t.events.length-1)[t.events[i+1],t.events[i]]=[t.events[i],t.events[i+1]];
+  else if(a==='save'){if(fwSave(readTour(JSON.parse(JSON.stringify(t))))){tourDraft=null;tourView='hub';}}
+  else if(a==='cancel'){tourDraft=null;tourView=fwTour()?'hub':'start';}
+  openPanel('tour');
+ });
 }
 // PLAYS LIKE, under the yards to the hole (plays-like.js): the club in hand at
 // full swing, flown in today's wind, altitude and temperature to the hole's
@@ -2989,6 +3190,8 @@ function showHoleCompletion(){
  // The lab is a bench, not a round. Holing out there is the result being
  // examined, so nothing sweeps it away: no scorecard, no countdown, no next hole.
  startHoleSummary();
+ // A tour event: the leaderboard moves on, and a finished round goes in.
+ if(round.event){if(round.finished)finishEventRound();drawEventTicker();}
  let waited=false;
  const open=()=>{completionTimer=null;if(!round.holeComplete||flight)return;
   if(xpBusy()){waited=true;completionTimer=setTimeout(open,SCORECARD_RECHECK_MS);return;}
@@ -6019,7 +6222,7 @@ function roundCompleteHtml(){
  // (crest.js; architect-courses, phase 2).
  const crest=round.endless?'':`<span class="rh-res-crest">${crestSvg({name:playingCourseName(),settings,size:56})}</span>`;
  return `<section class="rh-results"><div class="rh-res-head">${crest}<h2>${escape(res.headline)}</h2>${res.line?`<strong>${escape(res.line)}</strong>`:''}<small>${escape(playingCourseName())} \u00b7 ${escape({scramble:'Team scramble',skins:'Skins',match:'Best-ball match',stableford:'Stableford'}[round.mode]||'Stroke play')}${netOn?' \u00b7 net':''} \u00b7 ${round.holes} holes</small></div>`
-  +`<div class="rh-res-stand">${rows}</div>${rivalResultHtml()}`
+  +`<div class="rh-res-stand">${rows}</div>${rivalResultHtml()}${eventResultHtml()}`
   +`<div class="rh-res-actions"><button type="button" class="primary" id="resMenu">Main menu</button><button type="button" class="secondary" id="resNew">New round</button><button type="button" class="secondary" id="resSave">Save card</button>${share?'<button type="button" class="secondary" id="resShare">Challenge a friend</button>':''}</div>`
   +(share?`<div class="rh-res-share" id="resShareBox" hidden><p class="note">Send a card as a code: the course, every hole's score and every shot. Your friend plays it on Fairway ${escape(GAME_VERSION||'')} and sees your ball on every hole.</p>${round.players.length>1?`<div class="rh-res-seats">${round.players.map((p,i)=>`<button type="button" class="secondary" data-rival-seat="${i}">${escape(p.name)}’s card</button>`).join('')}</div>`:''}<textarea id="rivalCodeOut" rows="3" readonly hidden aria-label="Challenge code"></textarea><button type="button" class="secondary" id="rivalSaveFile" hidden>Save as a file</button></div>`:'')
   +'</section>';
@@ -6272,7 +6475,7 @@ function focusSheetStart(){
 // forms, and a wide sheet that takes the whole screen is right for those.
 const TOOL_PANELS=new Set(['camera','graphics','sound','bag','flight','putting','shot','range','lab','views','shotdata']);
 const POPUP_SIZE={camera:{width:344,height:382},graphics:{width:352,height:300},sound:{width:330,height:360},bag:{width:372,height:430},flight:{width:360,height:430},putting:{width:344,height:330},shot:{width:344,height:520},range:{width:720,height:560},lab:{width:352,height:470},views:{width:392,height:412},shotdata:{width:360,height:470}};
-const PANEL_TITLES={challenge:'Challenge',profile:'My profile',course:'Course studio',round:'Play',camera:'Camera & bay',monitor:'Launch monitor',score:'The scorecard',shot:'Swing',help:'Keys & help',bag:'Bag',flight:'Turf settings',lab:'Lab tools',views:'Shot views',range:'Range controls',putting:'Putting options',library:'Saved courses',graphics:'Graphics & performance',sound:'Sound',shotdata:'Shot data'};
+const PANEL_TITLES={tour:'Fairway Tour',challenge:'Challenge',profile:'My profile',course:'Course studio',round:'Play',camera:'Camera & bay',monitor:'Launch monitor',score:'The scorecard',shot:'Swing',help:'Keys & help',bag:'Bag',flight:'Turf settings',lab:'Lab tools',views:'Shot views',range:'Range controls',putting:'Putting options',library:'Saved courses',graphics:'Graphics & performance',sound:'Sound',shotdata:'Shot data'};
 // One panel key, three variants -- a round, a practice ground and an endless
 // run -- so the heading has to follow the variant, not the key. All three used
 // to read "Your next round", which is wrong on two of them.
@@ -6638,6 +6841,7 @@ function renderPanel(name,content){
  for(const c of [...content.classList])if(c.endsWith('-root'))content.classList.remove(c);
  if(name==='profile'){renderProfile(content);return;}
  if(name==='challenge'){renderChallengeResult(content);return;}
+ if(name==='tour'){renderTourHub(content);return;}
  if(name==='library'){
   // The box is pre-filled with the name this course is ALREADY going by on the
   // card, so saving it keeps calling it the same thing. It used to offer the
@@ -7545,7 +7749,7 @@ function renderPanel(name,content){
   // Between holes Download goes in the countdown's row, not alone under it (UI/UX pass V2).
   {const adv=content.querySelector('.hole-advance'),dl=$('downloadScore');if(adv&&dl)adv.querySelector('#pauseAdvance')?.before(dl);}
 
-  if(round.finished&&hud1){content.insertAdjacentHTML('afterbegin',roundCompleteHtml());$('drawerTitle').textContent='Round complete';if(roundSoundFor!==round.uid){roundSoundFor=round.uid;gameAudio?.moment?.('round');}$('resNew').onclick=()=>openPanel('round');$('resMenu').onclick=()=>returnToMenu();$('resSave').onclick=()=>$('downloadScore')?.click();
+  if(round.finished&&hud1){content.insertAdjacentHTML('afterbegin',roundCompleteHtml());$('drawerTitle').textContent='Round complete';if(roundSoundFor!==round.uid){roundSoundFor=round.uid;gameAudio?.moment?.('round');}$('resNew').onclick=()=>openPanel('round');$('resMenu').onclick=()=>returnToMenu();if($('resTour'))$('resTour').onclick=()=>{tourView='hub';openPanel('tour');};$('resSave').onclick=()=>$('downloadScore')?.click();
    // THE CARD FIRST: the table goes under the title, and what the results
    // already say -- the course line, the in-progress note, the friend's running
    // line, a second download button -- leaves (owner, 20 October 2026). The
@@ -7988,6 +8192,8 @@ function bind(){
  };
  $('menuStudio').onclick=()=>openStudioSetup();
  $('menuCourses').onclick=()=>openPanel('library');
+ // The Fairway Tour's hub: the active tour, or the ways to start one.
+ if($('menuTour'))$('menuTour').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}tourView=fwTour()?'hub':'start';openPanel('tour');};
  $('menuProfile').onclick=()=>{renamingProfile=false;viewingProfile=profiles?.main??null;openPanel('profile');};
  $('menuHelp').onclick=()=>openPanel('help');
  // The row under the pointer takes the focus, so one row is lit, never two.

@@ -2180,3 +2180,19 @@ on 0.9.17's build, TODO *Known wrong*), and the six swing-pad journeys 6 of
 mouse and a controller; the carry and total chips and the report without
 PULL not yet seen by a person.
 
+## Branch note, 18 November 2026: fairway-tour (not released)
+
+The Fairway Tour branch adds computer golfers, net rounds and Stableford, a
+tournament and a season, and a tour file. **Still one offline file, no
+network**: the tour file is saved and opened by the player like a course
+file, nothing is fetched, and no dependency is added (the tour file's ZIP is
+written by hand, beside zip.js). **The built page** is 60,624,592 bytes on
+the branch at step 9, against 0.9.18's 60,542,342 (82 KB more: the roster's
+word lists, the computer golfer, the tour and their screens). **A tour
+file's size** is about the sum of its built courses, each stored as the
+built store keeps it (the bench's courses are 2.8 to 10.4 MB as files; the
+game's own limit for one is 64 MB), plus a few kilobytes; a season of
+generated courses is a few kilobytes. It has no cap of its own (the owner);
+it is written into a Blob and read from a File a piece at a time, with ZIP64
+past 4 GB. Not yet measured on a real browser at full size.
+

@@ -54,7 +54,7 @@ export class Round{
  // Meter one (main.js, *THE LIE*). On unless the group switches it off; main.js
  // keeps the choice as a preference, like the out-of-bounds rule.
  static defaultMonitorLie=true;
- constructor({players=[{...Round.defaultPlayer}],mode='stroke',holes=9,gimme=0,putting,tee='blue',endless=false,seed='',uid,outOfBounds=Round.defaultOutOfBounds,monitorLie=Round.defaultMonitorLie,weekly='',goal='',rival='',pinSeed='',net=null,handicaps=false}={}){
+ constructor({players=[{...Round.defaultPlayer}],mode='stroke',holes=9,gimme=0,putting,tee='blue',endless=false,seed='',uid,outOfBounds=Round.defaultOutOfBounds,monitorLie=Round.defaultMonitorLie,weekly='',goal='',rival='',pinSeed='',net=null,handicaps=false,event=''}={}){
   if(!Array.isArray(players)||players.length<1||players.length>4)throw Error('Choose 1–4 players.');
   if(!FORMATS.includes(mode)||![3,9,18].includes(holes)||!Number.isFinite(gimme)||gimme<0||gimme>3)throw Error('Invalid round settings.');
   if(!players.every(p=>p&&typeof p.name==='string'&&p.name.length<=24&&['A','B'].includes(p.team)&&validTee(p)))throw Error('Invalid player.');
@@ -99,6 +99,9 @@ export class Round{
   // An endless run has no set of holes to give strokes on.
   if(handicaps&&endless)throw Error('Handicaps need a set of holes, so an endless run is played without them.');
   this.handicaps=!!handicaps;
+  // A ROUND OF A TOUR EVENT (tour.js, tournament.js): which tour, event and
+  // round, as `tour.event.round`, or ''. Rides through saves like `weekly`.
+  if(typeof event!=='string'||(event&&!/^[a-z0-9]{2,40}\.[a-z0-9]{2,40}\.[0-3]$/.test(event)))throw Error('Invalid tour event.');this.event=event;
   this.players=players.map((p,i)=>({...p,id:i}));this.mode=mode;this.holes=holes;this.gimme=gimme;this.hole=0;this.finished=false;this.endless=!!endless;this.seed=seed;this.pars=[];
   this.putting=puttingConfig(putting);this.history=[];this.puttCards=players.map(()=>[]);this.cards=players.map(()=>[]);this.teamCards={A:[],B:[]};this.match={A:0,B:0};this.beginHole();
  }

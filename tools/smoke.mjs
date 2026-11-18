@@ -2872,6 +2872,42 @@ const JOURNEYS = [
    });
   },
  },
+ // A TOUR EVENT'S FIRST TEE (the fairway-tour goal): a Quick season from the
+ // main menu, its first event started, round one begun -- the field made
+ // ready, the person's group of four with three computer golfers, the
+ // leaderboard's line on the round screen -- and the first shot struck.
+ {
+  name: 'tour-event',
+  what: 'a Quick season from the main menu: its hub, the first event started, round one with three computer golfers in the group, the field ready and the leaderboard line on the round screen, the first shot',
+  context: {viewport: {width: 1366, height: 768}},
+  async run(t) {
+   await menuReady(t);
+   await t.step('the Fairway Tour from the main menu: a Quick season', async () => {
+    await t.page.locator('#mainMenu').getByRole('button', {name: /Fairway Tour/}).first().click();
+    await t.until(() => t.page.locator('[data-tour="quick"]').isVisible().catch(() => false), 'the tour\'s start screen', 10 * SLOW);
+    await t.page.screenshot({path: path.join(SHOTS, 'tour-start.png')});
+    await t.page.click('[data-tour="quick"]');
+    await t.until(() => t.page.locator('[data-tour="start"]').isVisible().catch(() => false), 'the hub', 10 * SLOW);
+    await t.page.screenshot({path: path.join(SHOTS, 'tour-hub.png')});
+   });
+   await t.step('the first event started; round one begins on its course', async () => {
+    await t.page.click('[data-tour="start"]');
+    await t.until(() => t.page.locator('[data-tour="play"]').isVisible().catch(() => false), 'Play round 1', 10 * SLOW);
+    await t.page.click('[data-tour="play"]');
+    await t.inPlay(180 * SLOW);
+   });
+   await t.step('the field ready: the leaderboard line, a group of four with three computer golfers', async () => {
+    await t.until(() => t.page.locator('#eventTicker').isVisible().catch(() => false), 'the leaderboard line', 120 * SLOW);
+    const text = await t.page.textContent('#eventTicker');
+    if (!/YOU/.test(text)) throw new Error(`the leaderboard line says "${text}"`);
+    const s = await t.page.evaluate(() => window.lab.state().turn);
+    if (!s || s.cards.length !== 4) throw new Error(`the group is ${s?.cards.length} golfers, not four`);
+    if (s.computer) throw new Error('a computer golfer is up first; the person is seat one');
+    await t.page.screenshot({path: path.join(SHOTS, 'tour-first-tee.png')});
+   });
+   await t.step('the first shot', () => t.shot());
+  },
+ },
  {
   name: 'monitor-phone',
   what: 'a phone reaches the launch monitor from the menu and Tools, with the bridge address filled in and remembered',

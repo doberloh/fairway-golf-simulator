@@ -255,6 +255,16 @@ here is a claim of support until it is done.
     flight; the three watch settings; its words; its relief and a computer
     team's scramble pick; your swing refused on its turn and the monitor
     unarmed; a reload mid-hole replaying its shot.
+  - **The Fairway Tour** (branch fairway-tour, 17-18 November 2026;
+    PLAYING *The Fairway Tour*): tested in Node, **not seen in the game**.
+    To check: the start screen, the hub, the editor, an event's rounds with
+    the leaderboard line, Getting the field ready on a new course, the cut,
+    a season's end, sharing and opening a tour file. **Not built**: the
+    person's playoff is drawn, not played on the course; a tour file
+    carries no pictures for the event cards; a full 3.2 GB season of built
+    courses has not been written and read on a real browser (the ZIP64
+    path is tested on a small file); the hole model is not yet checked
+    against the computer golfers' own rounds hole by hole.
   - **Net rounds and Stableford** (branch fairway-tour, 17 November 2026;
     PLAYING *Handicaps and Stableford*): tested in Node, **not seen in the
     game**. To check: Scoring Net in the rules step and round complete's
