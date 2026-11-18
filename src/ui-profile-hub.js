@@ -22,7 +22,7 @@ const make = (doc, tag, cls, html) => { const e = doc.createElement(tag); if (cl
 export const HUB_TABS = ['Overview', 'Locker', 'Achievements', 'Stats', 'Bag', 'History'];
 
 // Which tab each of the old page's headings goes to (its first word).
-const SECTION_TAB = {'Your look': 'Locker', Achievements: 'Achievements', Challenges: 'Achievements', 'Fairway Tour': 'Achievements', Overall: 'Stats', Scoring: 'Stats', Bag: 'Bag', 'Round history': 'History', 'Back up': 'History'};
+const SECTION_TAB = {'Your look': 'Locker', Achievements: 'Achievements', Challenges: 'Achievements', 'Fairway Tour': 'Achievements', 'Strokes gained': 'Stats', Overall: 'Stats', Scoring: 'Stats', Bag: 'Bag', 'Round history': 'History', 'Back up': 'History'};
 export function tabOfHeading(text) {
  const t = String(text || '').trim();
  const key = Object.keys(SECTION_TAB).find(k => t === k || t.startsWith(k + ' ') || t.startsWith(k + ' '));

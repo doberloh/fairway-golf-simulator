@@ -1033,6 +1033,10 @@
  .rh-results h3{margin:6px 0 4px;font-size:14px;letter-spacing:.16em;color:var(--soft);font-weight:700;text-transform:uppercase}
  /* Across the card (audit 3: at 820 px the rows left its right half empty). */
  .rh-res-stand{display:grid;gap:8px}
+ /* Strokes gained on round complete (the fairway-tour goal). */
+ .rh-res-gained{display:grid;gap:6px;padding:10px 0}
+ .rh-res-gained small{letter-spacing:.14em;color:var(--soft);font-weight:700}
+ .rh-res-gained ul{list-style:none;margin:0;padding:0;display:grid;gap:4px;font-variant-numeric:tabular-nums}
  /* A tour event's line on round complete (the fairway-tour goal). */
  .rh-res-event{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;padding:12px 0;border-top:2px solid var(--a1,#7bd389)}
  .rh-res-event strong{font:800 italic 20px/1.2 "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase}

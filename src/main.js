@@ -34,7 +34,7 @@ import {generateCourse,generateWorld,generateWorldSteps,DEFAULT_COURSE,BIOMES} f
 import {makeGridPool} from './gen-pool.js';
 import {Round,playsWith,FORMATS} from './game.js';
 import {XP,XP_MULT,levelOf,holeXp,holeXpParts,shotXpParts,sumParts,onTheNumber,roundXp,withMult,award,takeBack,hasOnNumber,dailyXp,rangeXp,challengePay,CHALLENGE_PAY} from './progression.js';
-import {loadProfiles,storeProfiles,addProfile,renameProfile,setMainProfile,deleteProfile,removeRound,findProfile,exportProfiles,importProfiles,profileByName,mainProfile,tallyShot,tallyMulligan,syncHole,profileSummary,sameGolfer,COUNTERS,BESTS,SCORE_TYPES,roundTotals,qualifies,MAX_PLAYER_NAME,setProfileBag,adoptDistances,setProfileMeter,meterDifficulty,setProfilePlay,setProfileWorn,playingIndex} from './profile.js';
+import {loadProfiles,storeProfiles,addProfile,renameProfile,setMainProfile,deleteProfile,removeRound,findProfile,exportProfiles,importProfiles,profileByName,mainProfile,tallyShot,tallyMulligan,syncHole,profileSummary,sameGolfer,COUNTERS,BESTS,SCORE_TYPES,roundTotals,qualifies,MAX_PLAYER_NAME,setProfileBag,adoptDistances,setProfileMeter,meterDifficulty,setProfilePlay,setProfileWorn,playingIndex,gainedSummary} from './profile.js';
 import {rewardsOf,reward,unlocksBetween,wornItem,TRACERS,KIND_NAMES,WEARABLE,ACHIEVEMENT_TITLES,FRAMES,badgeName,highestBadge,meterSkin,METER_SKINS,flourishFor,goldFlourishes,SECRET_FLOURISHES} from './rewards.js';
 import {playFlourish} from './flourishes.js';
 import {CHALLENGES,GROUPS,MEDALS,challenge as challengeDef,challengesIn,recordChallenge,recordScore,scoreText as challengeScoreText,targetText,medalTargets,medalsFromRecords,challengeCourseSettings,CHALLENGE_COURSE_NAME,MEDAL_TOTAL,isVersus,medalOf,challengeGroup,CHALLENGE_RULE_ROWS} from './challenges.js';
@@ -116,6 +116,8 @@ import {rateCourseSteps} from './ai/rating.js';
 import {YOU,myGroup,golferOf,holeModel,setNetStrokes,drawField,recordCard,makeCut,playoffFor,drawPlayoff,finish as finishEvent} from './tournament.js';
 import {newTour,quickSeason,shippedSeason,startEvent,endEvent,nextSeason,readTour,cleanEventDef,eventCourse,seasonOver,standings as tourStandings,tourRecord} from './tour.js';
 import {eventRewards,roundRewards,seasonRewards} from './tour-rewards.js';
+import {suggest} from './caddie.js';
+import {holeGained,addGained,gainedText,PARTS as GAINED_PARTS,PART_NAMES as GAINED_NAMES} from './strokes-gained.js';
 import {loadTours,activeTour,putTour,removeTour,ratingKey,storedRating,storeRating} from './tour-store.js';
 import {tickerText,hubHtml,startHtml,editorHtml} from './ui-tour.js';
 import {writeTourFile,readTourFile,FILE_EXT as TOUR_FILE_EXT} from './tour-file.js';
@@ -486,14 +488,18 @@ const CONDITIONS_KEY='fairway-conditions-v1';
 let playerTurf=(()=>{try{return turfConfig(JSON.parse(localStorage.getItem(CONDITIONS_KEY)||'null')||{});}catch{return turfConfig();}})();
 const conditionsNow=()=>{try{return turfConfig(settings.turf??playerTurf);}catch{return playerTurf;}};
 const keepConditions=turf=>{playerTurf=settings.turf=turfConfig(turf);try{localStorage.setItem(CONDITIONS_KEY,JSON.stringify(playerTurf));}catch{}};
-const saveRules=()=>{try{localStorage.setItem(RULES_KEY,JSON.stringify({outOfBounds:Round.defaultOutOfBounds,monitorLie:Round.defaultMonitorLie,cpuWatch,cpuChat}));}catch{}};
+const saveRules=()=>{try{localStorage.setItem(RULES_KEY,JSON.stringify({outOfBounds:Round.defaultOutOfBounds,monitorLie:Round.defaultMonitorLie,cpuWatch,cpuChat,caddie:caddieMode}));}catch{}};
 // COMPUTER GOLFERS (the fairway-tour goal, src/ai/): how much of their play
 // is shown (seat.js WATCH), whether they say a word now and then, the golfer
 // behind each computer seat (one per round and seat, so its memory of a shot
 // that went nowhere lasts the round), and the timer of the turn being played.
 let cpuWatch=DEFAULT_WATCH,cpuChat=true,cpuTimer=0,cpuTurnKey='';
+// THE CADDIE (caddie.js): 'auto' -- on for a golfer on the swing pad, off for
+// one on a launch monitor (PLACED: a monitor golfer has a real bag in hand) --
+// 'on' or 'off'. Kept with the round rules.
+let caddieMode='auto';
 const cpuGolfers=new Map();
-try{const r=JSON.parse(localStorage.getItem(RULES_KEY)||'null');if(WATCH.some(([k])=>k===r?.cpuWatch))cpuWatch=r.cpuWatch;if(typeof r?.cpuChat==='boolean')cpuChat=r.cpuChat;}catch{}
+try{const r=JSON.parse(localStorage.getItem(RULES_KEY)||'null');if(WATCH.some(([k])=>k===r?.cpuWatch))cpuWatch=r.cpuWatch;if(typeof r?.cpuChat==='boolean')cpuChat=r.cpuChat;if(['auto','on','off'].includes(r?.caddie))caddieMode=r.caddie;}catch{}
 let settings={...DEFAULT_COURSE,style:'cartoon'},round=new Round(),course,world,worldKey='',view,aim=0,shotShape={...DEFAULT_SHAPE},swing=null,flight=null,latest=null,ws=null,monitorConnected=false,armed=false,armSwitch=false,monitorDevice=null,panel=null,toastTimer,keys=new Set(),gamepadLast=[],lastTick=performance.now();
 // The 1.0 lobby's course colours, and launch monitor setup's redraw, while open.
 // CARD PICTURES (the 1.0 polish; they were tiny turning 3D models, round 14):
@@ -584,6 +590,21 @@ function profileMeta(seat){
   course:{name:playingCourseName(),settings:round.endless?null:courseSettings(settings),seed:round.endless?round.seed:settings.seed,biome:settings.biome,generator:round.endless?GENERATOR_VERSION:generatorFor(settings),schema:SCHEMA_VERSION}};
 }
 const holeFacts=()=>({index:round.hole,par:course.par,yards:Math.round(course.tees?.[round.tee]?.yards||0)});
+// STROKES GAINED ON THIS HOLE for a seat (strokes-gained.js), from the shot
+// log the friend's challenge keeps: each shot from where it was struck to
+// where the next was (a drop in between is a penalty stroke), the last holed.
+// Only a hole played out with every shot logged; null otherwise.
+function holeGainedFor(seat){
+ if(shotLog.uid!==round.uid||!course)return null;
+ const mine=shotLog.list.filter(f=>f.hole===round.hole&&f.seat===seat);if(!mine.length)return null;
+ const at=(x,z)=>({surface:course.surface(x,z),metres:Math.hypot(course.pin.x-x,course.pin.z-z)});
+ const shots=mine.map((f,i)=>{const fx=f.s[1]/1000,fz=f.s[2]/1000,ex=f.s[9]/1000,ez=f.s[10]/1000,next=mine[i+1];
+  const holed=!next&&Math.hypot(course.pin.x-ex,course.pin.z-ez)<.2;
+  const dropped=next&&Math.hypot(next.s[1]/1000-ex,next.s[2]/1000-ez)>.5;
+  const to=holed?null:next?at(next.s[1]/1000,next.s[2]/1000):at(ex,ez);
+  return {from:at(fx,fz),to,penalty:dropped?1:0};});
+ return holeGained(shots,course.par);
+}
 // THE CARD, COPIED INTO EVERY GOLFER'S HISTORY. save() runs whenever the round
 // changes -- a shot, a scramble choice, a mulligan, a golfer joining -- so a
 // history can never disagree with the scorecard. It also runs for things that
@@ -595,7 +616,7 @@ function syncProfile(){
  const rows=round.players.map((p,seat)=>({prof:profileOf(p),seat,score:round.cards[seat]?.[round.hole],putts:round.puttCards[seat]?.[round.hole]})).filter(r=>r.prof);
  const key=[round.uid,round.hole,round.holeComplete,round.finished,...rows.map(r=>`${r.prof.id}:${r.seat}:${r.score}:${r.putts}`)].join('|');
  if(key===profileSynced)return;profileSynced=key;
- for(const r of rows)syncHole(r.prof,profileMeta(r.seat),{...holeFacts(),score:r.score,putts:r.putts});
+ for(const r of rows)syncHole(r.prof,profileMeta(r.seat),{...holeFacts(),score:r.score,putts:r.putts,gained:Number.isFinite(r.score)&&round.mode!=='scramble'?holeGainedFor(r.seat):null});
  // XP FOR THE HOLE AND THE ROUND (Phase 4). Worked out from the card on every
  // save and kept under one key per hole, so a hole is never paid twice and a
  // mulligan that un-holes a putt takes the hole's XP back with it.
@@ -1453,6 +1474,20 @@ function setUpTurn(){
  view.setBall(p);updateAim();view.setReadingHeading(p,aim);view.setCamera(p,aim);updateHUD();sendPlayer();
  flashTurn();
  if(isComputer(round.player))planComputerTurn();
+ showCaddie();
+}
+// The caddie's hint for the golfer up (caddie.js): the club and where to aim
+// it, never chosen for them. Gone the moment the shot is struck.
+function showCaddie(){
+ let el=$('caddieLine');
+ const p=round?.player,on=caddieMode==='on'||(caddieMode==='auto'&&playsWith(p)==='meter');
+ const hide=()=>{if(el)el.hidden=true;};
+ if(!on||!p||isComputer(p)||rangeMode||challenge||round.holeComplete||round.relief||round.scrambleSelection||!course)return hide();
+ const q=profileOf(p);let s=null;
+ try{s=suggest({hole:course,from:{...round.position},bag:bagFor(p),handicap:q?playingIndex(q,profileSummary(q).handicap?.index)??20:20,settings});}catch{s=null;}
+ if(!s)return hide();
+ if(!el){el=document.createElement('div');el.id='caddieLine';el.className='caddie-line';el.setAttribute('role','note');$('world')?.append(el);}
+ el.textContent=`CADDIE · ${s.line}`;el.hidden=false;
 }
 
 // A COMPUTER GOLFER'S TURN (the fairway-tour goal; SPEC section 2). It plans
@@ -1667,6 +1702,17 @@ async function addImportedTour(){
   fwSave(t);tourImport=null;tourView='hub';toast(`${t.name} added.`);
  }catch(e){toast(e.message);}
  openPanel('tour');
+}
+// STROKES GAINED ON ROUND COMPLETE (strokes-gained.js): each person's round
+// against a scratch golfer, in its four parts, from the holes their profile
+// kept. A computer golfer and a scramble show none.
+function gainedRoundHtml(){
+ if(round.mode==='scramble')return '';
+ const lines=round.players.map((p,i)=>{const q=profileOf(p);if(!q||isComputer(p))return '';
+  const holes=(q.rounds.find(e=>e.id===round.uid)?.card||[]).map(h=>h?.sg).filter(Boolean);if(!holes.length)return '';
+  const g=addGained(holes);
+  return `<li><b>${escape(p.name)}</b> ${GAINED_PARTS.map(k=>`${escape(GAINED_NAMES[k])} ${gainedText(g[k])}`).join(' · ')} · <b>Total ${gainedText(g.total)}</b></li>`;}).filter(Boolean);
+ return lines.length?`<section class="rh-res-gained"><small>STROKES GAINED AGAINST A SCRATCH GOLFER</small><ul>${lines.join('')}</ul></section>`:'';
 }
 // Round complete in a tour event: where the person stands, and the way on.
 function eventResultHtml(){
@@ -2809,6 +2855,7 @@ function takeShot(data=null,struck=null){
  // A computer golfer's turn is its own: no swing or monitor ball of a
  // person's is taken for it, and its own shot only on its turn.
  if(isComputer(round.player)!==!!struck?.cpu)return false;
+ if($('caddieLine'))$('caddieLine').hidden=true;
  closePanel();const c=clubs[$('club').value],lie=course.surface(round.position.x,round.position.z);
  // THE LIE: rough, semi-rough and sand cost ball speed, and grass costs a
  // high-spinning shot spin (the flyer), by one table, for every golfer. The Swing Meter has already taken
@@ -5539,7 +5586,7 @@ const FORMAT_NOTES={stroke:'Each golfer finishes the entire hole before the next
 // carry simply runs on (the owner, 16 October 2026).
 // `strokeOnly`: the course of the week, whose bests are strokes for the
 // eighteen, so its format is fixed (the owner, 15 October 2026).
-const formatFields=({match=true,strokeOnly=false}={})=>`<label class="field">Format<select id="roundMode"${strokeOnly?' disabled':''}><option value="stroke">${strokeOnly?'Stroke play only':'Stroke play'}</option>${strokeOnly?'':`<option value="scramble">Team scramble</option>${match?'<option value="match">Match play · best ball teams</option>':''}<option value="skins">Skins · two to four golfers</option><option value="stableford">Stableford · points per hole</option>`}</select></label>${strokeOnly||!match?'':`<label class="field">Scoring<select id="roundNet"><option value="gross">Gross · strokes as played</option><option value="net" ${round.handicaps?'selected':''}>Net · each golfer’s handicap strokes off</option></select></label>`}<label class="field">Play from<select id="roundTee">${setupTees().map(t=>`<option value="${t}" ${teeFor(round.tee,setupTees())===t?'selected':''}>${teeName(t)} tees</option>`).join('')}</select></label><label class="field">Out of bounds<select id="roundOB">${Object.entries(OB_RULES).map(([k,v])=>`<option value="${k}" ${round.outOfBounds===k?'selected':''}>${v.label}</option>`).join('')}</select></label><label class="field">Lie penalty for launch-monitor shots<select id="roundMonLie"><option value="on" ${round.monitorLie?'selected':''}>On: rough and sand cost ball speed</option><option value="off" ${round.monitorLie?'':'selected'}>Off: monitor shots fly as measured</option></select></label><label class="field">Computer golfers’ shots<select id="roundCpuWatch">${WATCH.map(([k,t])=>`<option value="${k}" ${cpuWatch===k?'selected':''}>${t}</option>`).join('')}</select></label><label class="field">Computer golfers’ words<select id="roundCpuChat"><option value="on" ${cpuChat?'selected':''}>On: a word after a shot worth one</option><option value="off" ${cpuChat?'':'selected'}>Off: they play in silence</option></select></label><label class="field">Course conditions<select id="roundConditions">${Object.entries(CONDITION_PRESETS).map(([k,p])=>`<option value="${k}">${p.label} · ${p.line}</option>`).join('')}<option value="custom">Your own mix · set each below</option></select></label><label class="field">Green speed<select id="roundStimp">${stimpOptions()}</select></label><label class="field">Green firmness<select id="roundGreens">${firmnessOptions('green')}</select></label><label class="field">Fairway firmness<select id="roundFairways">${firmnessOptions('course')}</select></label><label class="field">Putting<select id="roundPuttingMode">${PUTTING_MODES}</select></label><div id="roundPutting-distances">${puttingFields('roundPutting',playerPutting())}</div>`;
+const formatFields=({match=true,strokeOnly=false}={})=>`<label class="field">Format<select id="roundMode"${strokeOnly?' disabled':''}><option value="stroke">${strokeOnly?'Stroke play only':'Stroke play'}</option>${strokeOnly?'':`<option value="scramble">Team scramble</option>${match?'<option value="match">Match play · best ball teams</option>':''}<option value="skins">Skins · two to four golfers</option><option value="stableford">Stableford · points per hole</option>`}</select></label>${strokeOnly||!match?'':`<label class="field">Scoring<select id="roundNet"><option value="gross">Gross · strokes as played</option><option value="net" ${round.handicaps?'selected':''}>Net · each golfer’s handicap strokes off</option></select></label>`}<label class="field">Play from<select id="roundTee">${setupTees().map(t=>`<option value="${t}" ${teeFor(round.tee,setupTees())===t?'selected':''}>${teeName(t)} tees</option>`).join('')}</select></label><label class="field">Out of bounds<select id="roundOB">${Object.entries(OB_RULES).map(([k,v])=>`<option value="${k}" ${round.outOfBounds===k?'selected':''}>${v.label}</option>`).join('')}</select></label><label class="field">Lie penalty for launch-monitor shots<select id="roundMonLie"><option value="on" ${round.monitorLie?'selected':''}>On: rough and sand cost ball speed</option><option value="off" ${round.monitorLie?'':'selected'}>Off: monitor shots fly as measured</option></select></label><label class="field">Computer golfers’ shots<select id="roundCpuWatch">${WATCH.map(([k,t])=>`<option value="${k}" ${cpuWatch===k?'selected':''}>${t}</option>`).join('')}</select></label><label class="field">Caddie’s suggestion<select id="roundCaddie"><option value="auto" ${caddieMode==='auto'?'selected':''}>For swing pad golfers</option><option value="on" ${caddieMode==='on'?'selected':''}>For everyone</option><option value="off" ${caddieMode==='off'?'selected':''}>Off</option></select></label><label class="field">Computer golfers’ words<select id="roundCpuChat"><option value="on" ${cpuChat?'selected':''}>On: a word after a shot worth one</option><option value="off" ${cpuChat?'':'selected'}>Off: they play in silence</option></select></label><label class="field">Course conditions<select id="roundConditions">${Object.entries(CONDITION_PRESETS).map(([k,p])=>`<option value="${k}">${p.label} · ${p.line}</option>`).join('')}<option value="custom">Your own mix · set each below</option></select></label><label class="field">Green speed<select id="roundStimp">${stimpOptions()}</select></label><label class="field">Green firmness<select id="roundGreens">${firmnessOptions('green')}</select></label><label class="field">Fairway firmness<select id="roundFairways">${firmnessOptions('course')}</select></label><label class="field">Putting<select id="roundPuttingMode">${PUTTING_MODES}</select></label><div id="roundPutting-distances">${puttingFields('roundPutting',playerPutting())}</div>`;
 // THE THREE COURSE CONDITIONS (turf.js), as the options of a drop-down each:
 // green speed in Stimp feet with a word beside it, and the two firmnesses.
 const stimpOptions=()=>{let s='';for(let v=STIMP_RANGE.min;v<=STIMP_RANGE.max+1e-9;v+=STIMP_RANGE.step)s+=`<option value="${v}">Stimp ${v} · ${stimpWord(v)}</option>`;return s;};
@@ -5584,6 +5631,7 @@ function wireFormatFields(){
  // The computer golfers' two settings: kept for every round after.
  if($('roundCpuWatch'))$('roundCpuWatch').onchange=()=>{const v=$('roundCpuWatch').value;if(WATCH.some(([k])=>k===v)){cpuWatch=v;saveRules();}};
  if($('roundCpuChat'))$('roundCpuChat').onchange=()=>{cpuChat=$('roundCpuChat').value!=='off';saveRules();};
+ if($('roundCaddie'))$('roundCaddie').onchange=()=>{const v=$('roundCaddie').value;if(['auto','on','off'].includes(v)){caddieMode=v;saveRules();showCaddie();}};
  // The lie rule for monitor shots, the same way: this round and every one after.
  // Swing Meter shots keep the lie either way -- on the meter it is part of the
  // swing, not an adjustment to a measurement.
@@ -6236,7 +6284,7 @@ function roundCompleteHtml(){
  // (crest.js; architect-courses, phase 2).
  const crest=round.endless?'':`<span class="rh-res-crest">${crestSvg({name:playingCourseName(),settings,size:56})}</span>`;
  return `<section class="rh-results"><div class="rh-res-head">${crest}<h2>${escape(res.headline)}</h2>${res.line?`<strong>${escape(res.line)}</strong>`:''}<small>${escape(playingCourseName())} \u00b7 ${escape({scramble:'Team scramble',skins:'Skins',match:'Best-ball match',stableford:'Stableford'}[round.mode]||'Stroke play')}${netOn?' \u00b7 net':''} \u00b7 ${round.holes} holes</small></div>`
-  +`<div class="rh-res-stand">${rows}</div>${rivalResultHtml()}${eventResultHtml()}`
+  +`<div class="rh-res-stand">${rows}</div>${gainedRoundHtml()}${rivalResultHtml()}${eventResultHtml()}`
   +`<div class="rh-res-actions"><button type="button" class="primary" id="resMenu">Main menu</button><button type="button" class="secondary" id="resNew">New round</button><button type="button" class="secondary" id="resSave">Save card</button>${share?'<button type="button" class="secondary" id="resShare">Challenge a friend</button>':''}</div>`
   +(share?`<div class="rh-res-share" id="resShareBox" hidden><p class="note">Send a card as a code: the course, every hole's score and every shot. Your friend plays it on Fairway ${escape(GAME_VERSION||'')} and sees your ball on every hole.</p>${round.players.length>1?`<div class="rh-res-seats">${round.players.map((p,i)=>`<button type="button" class="secondary" data-rival-seat="${i}">${escape(p.name)}’s card</button>`).join('')}</div>`:''}<textarea id="rivalCodeOut" rows="3" readonly hidden aria-label="Challenge code"></textarea><button type="button" class="secondary" id="rivalSaveFile" hidden>Save as a file</button></div>`:'')
   +'</section>';
@@ -6639,6 +6687,14 @@ function tourCabinet(profile){
  return `<h3>Fairway Tour <small>${rec.events} event${rec.events===1?'':'s'}</small></h3><p>${rec.wins} win${rec.wins===1?'':'s'} · ${rec.majors} major${rec.majors===1?'':'s'} · ${rec.titles} season title${rec.titles===1?'':'s'} · ${rec.top10} top ten${rec.top10===1?'':'s'} · ${rec.cuts} cuts made${rec.best?` · best finish ${escape(rec.best)}`:''}</p>`
   +(rec.trophies.length?`<ul class="achievement-list">${rec.trophies.map(x=>`<li class="achievement earned"><b>${escape(x.name)}</b><span>${escape(x.tour)} · season ${x.season}${x.major?' · a major':''}</span></li>`).join('')}</ul>`:'');
 }
+// STROKES GAINED ON MY PROFILE: every hole that kept them, a round's worth
+// (eighteen holes) at a time, so the part of the game costing most shows.
+function gainedProfileHtml(profile){
+ const g=gainedSummary(profile);
+ if(!g.holes)return `<h3>Strokes gained</h3><p class="note">Played from now on, each round is measured shot by shot against a scratch golfer: off the tee, approach, around the green and putting.</p>`;
+ const per=k=>g[k]*18/g.holes,worst=GAINED_PARTS.reduce((w,k)=>per(k)<per(w)?k:w,GAINED_PARTS[0]);
+ return `<h3>Strokes gained <small>${(g.holes/18).toFixed(1)} rounds' worth</small></h3><p>${GAINED_PARTS.map(k=>`${escape(GAINED_NAMES[k])} <b>${gainedText(per(k))}</b>`).join(' · ')} · a round, against a scratch golfer. Total ${gainedText(per('total'))}.</p><p class="note">${escape(GAINED_NAMES[worst])} costs you the most.</p>`;
+}
 function achievementList(profile){
  const e=profile.achievements||{};
  const row=a=>{const at=e[a.id],p=progressOf(a,profile);
@@ -6675,7 +6731,7 @@ function renderProfile(content){
  content.innerHTML=`<div class="profile">${strip}`
   +(xpNote?`<p class="note xp-new"><b>New: XP and levels.</b> ${XP_NEW_TEXT}</p>`:'')
   +`<div class="profile-head">${head}<div class="profile-level"><small>LEVEL · ${escape(badgeName(lv.level).toUpperCase())}</small><strong>${lv.level}</strong><span>${lv.into.toLocaleString()} of ${lv.need.toLocaleString()} XP to level ${lv.level+1}</span><i class="level-bar"><b style="width:${Math.round(lv.into/lv.need*100)}%"></b></i></div><div class="profile-hcp"><small>SIM HANDICAP</small><strong>${hcpText(h.index)}</strong><span>${hcpNote}</span></div></div>`
-  +lookPicker(profile)+achievementList(profile)+challengeRecords(profile)+tourCabinet(profile)
+  +lookPicker(profile)+achievementList(profile)+challengeRecords(profile)+tourCabinet(profile)+gainedProfileHtml(profile)
   +`<h3>Overall</h3><div class="stat-grid">${counters}${bests}</div>`
   +`<h3>Scoring</h3><div class="profile-scoring"><div class="score-types">${types}</div><div class="stat-grid compact">`
   +tile('Par 3 average',avg(s.scoringAverage[3]))+tile('Par 4 average',avg(s.scoringAverage[4]))+tile('Par 5 average',avg(s.scoringAverage[5]))

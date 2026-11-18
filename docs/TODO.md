@@ -265,6 +265,13 @@ here is a claim of support until it is done.
     courses has not been written and read on a real browser (the ZIP64
     path is tested on a small file); the hole model is not yet checked
     against the computer golfers' own rounds hole by hole.
+  - **The caddie, strokes gained, the tour's rewards, the builder's test
+    round on computer golfers** (branch fairway-tour, 18 November 2026):
+    tested in Node, **not seen in the game**. To check: the caddie's line
+    on a swing pad turn and gone after the swing; round complete's strokes
+    gained; My profile's Strokes gained and Fairway Tour sections; the XP
+    popup after a made cut or a win; the builder's test round naming a
+    scratch and a bogey golfer (about 11 s for a nine, slower than before).
   - **Net rounds and Stableford** (branch fairway-tour, 17 November 2026;
     PLAYING *Handicaps and Stableford*): tested in Node, **not seen in the
     game**. To check: Scoring Net in the rules step and round complete's

@@ -213,7 +213,8 @@ texture update and the next frame shows it. Surface paint and outlines,
 holes (tees, green, the line, bends, par, stroke index, renumbering), water
 (outline and level), trees (place, remove, thin, paint a wood), bunker and
 green shaping by recipe (the generator's own), checks with fly-to, a test round
-by the virtual golfer, undo and redo, plan and 3D views, autosave.
+by a scratch and a bogey computer golfer (the virtual golfer until 18 November
+2026), undo and redo, plan and 3D views, autosave.
 
 **Surroundings** (12 November 2026; builder/editor.js, editing.js
 `setSurround`). A block under Landscape in the right panel: **North**,
@@ -1128,7 +1129,12 @@ the builder has been played by a person (TODO lists what to check).
   virtual-golfer.mjs, unchanged) plays every hole twice -- a steady golfer and
   a looser one -- with the round's own rules and pins, and reports strokes
   against par and any hole not finished in 40 (where the ball was left). A
-  frozen nine plays in 1.9 s.
+  frozen nine plays in 1.9 s. **Since 18 November 2026 (the fairway-tour
+  branch) the two are the game's computer golfers** (src/ai/golfer.js): a
+  scratch golfer and a bogey golfer (a 20), the two a course rating is made
+  from, taking their own relief and laying up (src/ai/play.js); a frozen
+  nine takes about 11 s now (they read putts by rolling them and weigh
+  every club). tests/builder-test-round.test.mjs plays one.
 - **Measured**: the `builder-tools` journey drives every tool by its button
   and the mouse, undoes, runs the checks and a test round, saves, and finds
   each change in the file read back in Node (passed, 11 s). Its test round

@@ -780,3 +780,5 @@ body:has(#world[data-mode=studio]):has(#drawer:not([hidden])) #studioBar{display
    8 px, the first browser run); a press opens the leaderboard. */
 .event-ticker{position:absolute;z-index:33;top:calc(62px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);max-width:min(92vw,720px);padding:6px 16px;border:0;border-top:3px solid var(--a1,#7bd389);background:var(--panel,rgba(12,24,17,.86));color:#fff;font:700 15px/1.2 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
 .event-ticker:focus-visible{outline:3px solid var(--cursor,#fff);outline-offset:2px}
+/* THE CADDIE'S HINT (caddie.js): under the hole's box, top left. */
+.caddie-line{position:absolute;z-index:32;left:calc(22px + env(safe-area-inset-left,0px));top:calc(112px + env(safe-area-inset-top,0px));max-width:min(60vw,420px);padding:5px 12px;border-left:3px solid var(--a1,#7bd389);background:var(--panel,rgba(12,24,17,.86));color:#fff;font:700 14px/1.25 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.08em;text-transform:uppercase;pointer-events:none}

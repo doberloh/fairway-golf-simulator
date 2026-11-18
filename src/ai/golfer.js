@@ -64,8 +64,10 @@ const SAMPLES = (() => {
  return pts.map(([a, b], i) => ({a, b, w: w[i] / sum}));
 })();
 
-export function computerGolfer({handicap = 15, traits = {}, seed = 'golfer', settings = {}, name = ''} = {}) {
- const skill = skillFor(handicap, traits), bag = golferBag(skill), clubs = bagClubs(bag);
+// `bag`: a bag to play with instead of the stock bag scaled to the golfer's
+// drive (the caddie plans with the person's own clubs).
+export function computerGolfer({handicap = 15, traits = {}, seed = 'golfer', settings = {}, name = '', bag: ownBag = null} = {}) {
+ const skill = skillFor(handicap, traits), bag = ownBag || golferBag(skill), clubs = bagClubs(bag);
  const turf = turfConfig(settings.turf), wind = h => localWind(settings, h.rotation || 0);
  const list = Object.entries(clubs).filter(([id]) => id !== 'putter');
  const putter = clubs.putter;
