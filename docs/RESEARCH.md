@@ -16751,6 +16751,39 @@ and 0 for a hole not holed out (the text read). Individual Stableford is
   Two rounds each by default: the rating of one course moves a stroke or
   so between runs at that sample (to be measured).
 
+### A tournament's field, and a season: measured and placed
+
+- **Measured: why the field is drawn.** One computer golfer's eighteen
+  through the ball model took about 2.5 s on the owner's PC (the bench,
+  one thread, 17 November 2026): a field of 60 flown ball by ball would
+  take about two and a half minutes a round. So only the person's group
+  is flown; the rest is drawn from a hole model.
+- **The hole model** (tournament.js): each hole's mean for a handicap from
+  the strokes table by its length from the tee, scaled so the course comes
+  to what a scratch and a bogey computer golfer scored on it (rating.js),
+  joined in a line between 0 and 20 and on past them (PLACED). Spread per
+  hole 0.75 strokes for scratch plus 0.02 a stroke of handicap, and a day's
+  form of about 1.1 strokes a round (PLACED, from round spreads of about 3
+  for tour golfers and 4-5 for club golfers). Not yet checked against the
+  computer golfers' own rounds hole by hole (owed: the bench).
+- **The event** (PLACED): groups ten minutes apart from 7:30 and thirteen
+  minutes a hole, for the leaderboard's "thru"; the cut after round two of
+  four (after round one of three), the top 45% and ties (scaled from the
+  professional tours' top 65 and ties of about 144); a last group of one
+  joins the group before; points 500 to the winner (majors double), the
+  rest by the professional tours' shape (`POINT_SHARE`); a purse of
+  2,000,000 (4,000,000 for a major) split 18% to the winner and on down
+  (`PURSE_SHARE`, from the usual professional split, from memory); tied
+  places share the points and money of the places they cover.
+- **A season** (PLACED): Quick season is eight events on eight landscapes,
+  the fourth and last majors; the shipped season is fifteen, one a
+  landscape, four majors; a tour's members are 100 roster golfers; Auto
+  strength centres the next field a stroke tougher after a top ten and a
+  stroke easier after a missed cut or the bottom quarter; the scoring
+  average needs half the season's rounds; the next season moves each
+  rival's handicap half a stroke (top ten better, bottom quarter worse),
+  never more than three from the roster's figure.
+
 ### Opponents that adapt: all placed (src/ai/adapt.js)
 
 The person's form is their strokes over par plus their handicap strokes
