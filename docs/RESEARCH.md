@@ -16569,3 +16569,160 @@ figures a later attempt needs:
   9 to 15 for a full rewrite, and two front ends to keep alike from then on.
 - **What came back to the game**: the course's woods carried past its line
   (above), found by looking at the Godot pictures.
+
+## How a golfer of each handicap misses (17 November 2026, the fairway-tour goal)
+
+The computer golfers (branch `fairway-tour`; the design is local,
+docs/studies/fairway-tour/SPEC.md) must miss the way a real golfer of their
+handicap misses, and score what such a golfer scores. These are the figures
+they are held to, by `tools/ai-bench.mjs`. Every source is in REFERENCES.md
+under the same heading; copies of the two papers are kept locally under
+docs/sources/fairway-tour/ (with their text, pulled out because the PDFs
+would not convert any other way).
+
+### The primary source: Broadie's Golfmetrics (2008)
+
+Mark Broadie, *Assessing Golfer Performance Using Golfmetrics*, Science and
+Golf V (2008). About 40,000 shots, 500 rounds, 130 golfers, six courses,
+mostly 2005-2007, every shot's start and end placed on a map. Five groups by
+18-hole score: Pro1 (PGA Tour, 64-71), Pro2 (PGA Tour, 72-79), Am1 (70-83),
+Am2 (84-97), Am3 (97-120). Taken, as published:
+
+| Group | 50% one-putt distance (ft) | Average two-putt distance (ft) | Sand save (%) | Sand median FRL (%) | Drive, 75th percentile (yd) | Drive direction, standard deviation (deg) |
+| --- | --- | --- | --- | --- | --- | --- |
+| Pro (64-79) | 8.2 | 30 | 50 | 16 | 297 | 4.0 |
+| Am1 (70-83) | 5.8 | 25 | 26 | 30 | 248 | 5.4 |
+| Am2 (84-97) | 5.1 | 19 | 17 | 40 | 237 | 6.4 |
+| Am3 (97-120) | 3.8 | 12 | 7 | 49 | 216 | 8.1 |
+
+FRL is the "fractional remaining length": the distance left to the target
+after the shot, divided by the distance before it; the median is the
+group's typical shot.
+
+| Group | 20-60 yd: on green, fairway / rough (%) | 20-60 yd: distance error / direction error | 20-60 yd median FRL, fairway / rough (%) | 100-150 yd: on green, fairway / rough (%) | 100-150 yd median FRL, fairway / rough (%) |
+| --- | --- | --- | --- | --- | --- |
+| Pro1 | 96 / 87 | 1.5 | 7.3 / 12.9 | 85 / 63 | 5.4 / 11.1 |
+| Pro2 | 95 / 80 | 1.6 | 9.4 / 15.3 | 77 / 46 | 5.8 / 12.8 |
+| Am1 | 93 / 86 | 3.2 | 13.8 / 15.4 | 63 / 53 | 8.7 / 10.4 |
+| Am2 | 81 / 72 | 3.3 | 16.9 / 21.0 | 46 / 34 | 12.0 / 13.5 |
+| Am3 | 75 / 64 | 3.1 | 20.3 / 25.6 | 25 / 25 | 17.3 / 18.4 |
+
+And, from the same paper:
+
+- **Longer hitters are straighter**, across golfers: direction standard
+  deviation (deg) = -0.0315 x (75th-percentile drive, yd) + 13.223. Taken
+  as the link between a computer golfer's Power and Accuracy before its own
+  variation is added.
+- **An amateur's short-game miss is about three times as long as it is
+  wide** (the 20-60 yd ratio above, and greenside sand alike); a pro's is
+  1.5. Taken: a chip or pitch errs mostly in distance.
+- **Awful shots** (worth 0.8 of a stroke or more against a scratch golfer:
+  out of bounds, most water, a chip into a bunker, a two-foot putt missed):
+  0.1, 0.6, 1.9, 4.1, 9.3 a round for Pro1, Pro2, Am1, Am2, Am3; across
+  golfers, awful shots = 0.24 x score - 17.1 (one at 75, six at 95). Taken
+  as the target for the Mishits rating.
+- **Where the strokes go**, against a scratch golfer, a round: putting -0.8,
+  -2.3, -5.1; long game (over 100 yd) -2.2, -9.3, -17.5; short game -0.8,
+  -3.4, -7.3; sand -0.2, -0.6, -1.1 for Am1, Am2, Am3. The long game is most
+  of the difference at every level. Taken as the shape of the four parts of
+  strokes gained, and a check that a computer golfer loses its strokes in
+  the right places.
+- **The high handicapper's putts**: Am3 loses 2.4 of its 5.1 putting strokes
+  from 3-6 ft, misses 60% of those on the low side, and leaves them short.
+  Taken: a weak putter's read under-plays the break.
+
+### The tour's own baseline: Broadie (2012)
+
+Mark Broadie, *Assessing Golfer Performance on the PGA TOUR*, Interfaces
+42(2) 146-165 (2012). Table B.1, the average strokes for PGA Tour golfers to
+hole out from tee, fairway, rough, sand and recovery positions, 10 to 600
+yd, from over eight million ShotLink shots 2003-2010; kept whole in the
+local copy. Taken as the shape of the strokes-to-hole-out table the computer
+golfer plans with and strokes gained scores against (a tour baseline,
+shifted for each handicap by the bench, below). Also: a 90-golfer (Am2)
+one-putts half the time from about 5 ft, averages two putts from 19 ft and
+three-putts about 2.3 times a round; a tour golfer 0.55.
+
+### Handicap bands: Shot Scope and Arccos, through magazines
+
+The tracking companies publish their averages through golf magazines, not
+in pages that could be fetched here (MyGolfSpy refused every request; the
+Arccos 2026 report's PDF has its text in a font that does not convert).
+What was read, and is used as a check rather than a fit:
+
+| Handicap | Greens in regulation (Shot Scope 2026) | Drive, all drives (Shot Scope 2026, men, yd) | Fairways (Arccos) | Up and down (Shot Scope) |
+| --- | --- | --- | --- | --- |
+| 0 | 59% | 285 | about 50% (0-4.9) | 54% |
+| 5 | 41% | 261 | | |
+| 10 | 32% | 259 | about 45% (10-14.9) | 39% |
+| 15 | 21% | 236 | | |
+| 20 | 14% | 225 | | 31% |
+| 25+ | 9% | 204 | about 40% (30+) | |
+
+**Where the sources disagree, and what is followed:**
+
+- **Driving distance.** Shot Scope's 2026 averages (285 for scratch) are
+  well above Arccos's older ones (250 for under 5, 224.7 for 10-14.9) and
+  Broadie's 75th percentile (248 for Am1). Arccos's 2026 report, as quoted,
+  contradicts itself for 30+ (181 and 145 yd in two tables). **Followed:
+  Broadie and the older Arccos**, the two that agree, for the bag a
+  computer golfer carries at its handicap; Shot Scope's are used only to
+  rank the bands. The game's own stock bag (clubs.js) stays what a person
+  is given.
+- **Greens in regulation.** Shot Scope 2026 (59% scratch, 41% at 5, 21% at
+  15) and an older Shot Scope table (52, 37, 23) differ by a few points;
+  Today's Golfer's table (69% scratch, 62% at 5) is far above both and is
+  **rejected** as an outlier with no stated method. Followed: Shot Scope
+  2026, with a band of about 5 points either way.
+- **Putts a round**: 32.1 for a 15 (Golf Monthly), 31.2 for a 10 and 33.4
+  for a 20 (MyGolfSpy, quoted in a search summary; the page refused a
+  direct read). Used as a check only, since greens hit decide most of it.
+
+### What a handicap means for the score
+
+A Handicap Index is the average of a golfer's best 8 differentials of their
+last 20, so a golfer's ordinary round is worse than their index. The USGA
+is quoted (GolfNow, secondary; the USGA's own pages refused a direct read)
+as expecting a golfer to play to their handicap 15-20% of the time and 2-4
+strokes above it otherwise; MyGolfSpy, quoted in a search summary, finds
+low handicappers averaging 4-5 over their index and high handicappers 6-8.
+
+**Not taken as a number.** The bench checks the thing these numbers come
+from instead: a computer golfer of rating *i* plays 20 rounds on a course,
+the game's own sim handicap (handicap.js, the WHS's best 8 of 20 as
+published) works out its index, and that index must come back within a
+stroke of *i* (PLACED tolerance). The gap between its average score and its
+index then falls out of how spread its rounds are, as a real golfer's does.
+
+### Allowances, Stableford
+
+The WHS's recommended allowances (Rules of Handicapping, Appendix C) are a
+table drawn as a picture on both the USGA's and the R&A's pages; the text
+around it was read at the R&A, and the figures are quoted by the USGA's
+FAQ and the SCGA. Taken: individual stroke play 95% (C/1, a medium field;
+100% "could be considered" under 30 players); four-ball stroke play 85%;
+singles match play 100% of the difference, the lowest playing handicap
+playing off zero; four-ball match play 90%; foursomes 50% of the combined
+difference; scramble, four players 25 / 20 / 15 / 10% from the lowest
+handicap and two players 35 / 15% (quoted by secondary sites, not read in
+the table itself). Stableford: the points table of Rule 21.1b is also a
+picture; taken as the Rules have long stated it -- 0 for two over the
+target or worse, 1 for one over, 2 for the target (par, or net par with
+strokes applied before the points), 3 one under, 4 two under, 5 three under,
+and 0 for a hole not holed out (the text read). Individual Stableford is
+95% as stroke play is (Appendix C, as quoted).
+
+### Placed, for the owner to overrule
+
+- **Which handicaps Broadie's groups are**: Am1 (scores 70-83) is taken as
+  about a 3, Am2 (84-97) about a 15, Am3 (97-120) about a 32, by their
+  middle scores less par 72 less the 3-4 strokes an ordinary round runs
+  over the index (above). The figures in between are joined in straight
+  lines by handicap, and held outside them (Pro below 0, Am3 above 32).
+- **What the bench must hit, and how closely**: each band's greens in
+  regulation within 6 points of Shot Scope 2026; drive direction spread
+  within 1 degree of the Broadie line; one-putt and two-putt distances
+  within a fifth; awful shots within one a round of Broadie's line; the
+  sim handicap of 20 rounds within a stroke of the rating. Wider than the
+  sources' own noise, because the game's courses, greens and bag are not
+  theirs.
