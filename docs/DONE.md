@@ -8619,3 +8619,24 @@ golfers' cost (a lone person on 0.9.18 reaches the green, a cheap view, after
 a minute, while three golfers are still up the fairway). The figures, before
 and after, are in RESEARCH *Frame rate with computer golfers*, *In a round
 being played*.
+
+## One shader is still built after an Ultra course appears (18 November 2026; branch fairway-tour)
+
+From TODO, *Known wrong* (found 17 November by `no-late-shaders`, in main
+and 0.9.17 too). Turning a full circle on Ultra built one more program about
+10 s in, `MeshBasicMaterial` with `USE_FOG USE_SHADOWMAP OPAQUE`, on about one
+course in two or three that Surprise me drew (it failed the goal's last full
+smoke run, 45 of 46). The journey only named the material, and the material
+was the god rays' black override (godrays.js), which holds no program of its
+own to look up, so the journey now notes the object being drawn (every
+object's before-draw hook, on the capture build) and names it beside a late
+program. It was the green reading's grid surface (green-reading.js: position,
+slope, fall and inside, no normals): a kind of object the mask's black
+material needs its own program for, hidden when the loading screen warms the
+mask, and drawn into it the first time the reading showed with the sun in
+view. **Fix:** the grid surface and the heat map carry `noSunMask`, as the
+far trees do: each lies a hair over the green, which already blocks the sun
+in the mask, so nothing about the rays changes. The journey passed 6 of 6
+after (it had failed 2 in 4 and 1 in 3 just before). The other way, warming
+the overlay's mask program behind the loading screen, was not taken: it
+would draw an overlay into the mask that has no reason to be there.

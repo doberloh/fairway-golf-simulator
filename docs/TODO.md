@@ -60,20 +60,6 @@ wrong, unfinished, or owed a check.
 ## Known wrong
 
 
-- [ ] **One shader is still built after an Ultra course appears** (found
-  17 November 2026 by `npm run smoke`'s `no-late-shaders`). Turning a full
-  circle builds one more, about 10 s in: a `MeshBasicMaterial` with fog and
-  shadow maps (`USE_FOG USE_SHADOWMAP OPAQUE`). A player sees it as a hitch
-  on the first turn. **It is in main and in 0.9.17 too**: main's own build,
-  run on its own, fails the same way, so it came before the pull-push-swing
-  branch and not from it. Which material it is was not looked for. A
-  suspect is anything built since 0.9.14, the last release whose every
-  journey passed: the surroundings rework (0.9.15), phone performance
-  (0.9.16) or the woods past the line (0.9.17). Where: the journey's report
-  names the material's defines. Find the one material with those defines
-  that is made or first drawn late, and warm it in the loading screen's
-  compile pass.
-
 - [ ] **The grass should be darker on every landscape** (the owner, 15
   November 2026, looking at the painted ground on the iPhone: "overall
   across all biomes i want the grass to be darker. Lets make it a todo").

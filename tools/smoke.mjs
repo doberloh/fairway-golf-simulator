@@ -1115,6 +1115,8 @@ const JOURNEYS = [
       const text = (parts.get(program) || []).map(s => src.get(s) || '').join('\n');
       const type = (text.match(/#define SHADER_TYPE (\w+)/) || [])[1];
       const at = {type: type || 'ShaderMaterial', after: Math.round(performance.now() - window.__shownAt), marks: [...new Set((text.match(/#define (USE_[A-Z_0-9]+|[A-Z_]*INSTANC[A-Z_]*|DOUBLE_SIDED|FLAT_SHADED|ALPHATEST|OPAQUE)/g) || []).map(d => d.slice(8)))].join(' ') + ' | ' + ['farNormals', 'vThin', 'thinLvl', 'windTime', 'treeRoot', 'flex', 'vMistWorld', 'groundPoint', 'mirrorMap', 'aFoot', 'floodlit', 'snow'].filter(n => text.includes(n)).join(',')};
+      // The object being drawn (capture build only: `__naming`, below).
+      if (window.__drawing) at.who = window.__drawing();
       window.__lateAny.push(at);
       if (/^Mesh(Toon|Standard|Physical|Lambert|Phong)Material$/.test(type)) window.__lateLit.push(at);
      }
@@ -1163,12 +1165,29 @@ const JOURNEYS = [
    await t.step('turning a full circle, toward the sun and away, builds no shader of any kind', async () => {
     // From above the first fairway, looking up a little: the sun is in shot
     // for part of the turn whatever the hour and the course's heading.
+    // On the capture build (`--file bench/shots/dist-exp/index.html`, which
+    // has window.__view), every object's before-draw hook notes the object,
+    // so a late program names what it was drawn for -- an override material
+    // (the god rays' black mask) holds no program of its own to look up.
+    await t.page.evaluate(() => {
+     const v = window.__view;
+     if (!v) return;
+     const proto = Object.getPrototypeOf(Object.getPrototypeOf(v.scene)), was = proto.onBeforeRender;
+     let cur = null;
+     proto.onBeforeRender = function (...a) { cur = this; return was.apply(this, a); };
+     window.__drawing = () => {
+      if (!cur) return '(nothing noted)';
+      const path = []; for (let q = cur; q && q !== v.scene; q = q.parent) path.push(q.name || q.type);
+      const g = cur.geometry?.attributes || {};
+      return `${path.join(' < ')} | ${cur.isInstancedMesh ? 'instanced ' + cur.count : cur.type} | ${g.position?.count} verts | attributes ${Object.keys(g).join(',')} | material ${[].concat(cur.material || []).map(m => m.type).join(',')} | in scene ${!!cur.parent} | mask override ${v.scene.overrideMaterial ? v.scene.overrideMaterial.type : 'none'} | userData ${JSON.stringify(cur.userData).slice(0, 80)}`;
+     };
+    });
     for (let yaw = 0; yaw < 360; yaw += 30) {
      await t.page.evaluate(y => window.lab.camera({hole: 0, along: 60, height: 25, look: y, pitch: 25}), yaw);
      await t.page.waitForTimeout(300);
     }
     const late = await t.page.evaluate(() => window.__lateAny);
-    if (late.length) throw new Error(`${late.length} shader(s) built after the course appeared: ${late.map(l => `${l.type} at ${l.after} ms${l.marks ? ' [' + l.marks + ']' : ''}`).join(', ')}`);
+    if (late.length) throw new Error(`${late.length} shader(s) built after the course appeared: ${late.map(l => `${l.type} at ${l.after} ms${l.marks ? ' [' + l.marks + ']' : ''}${l.who ? ' -- drawn for ' + l.who : ''}`).join(', ')}`);
    });
   },
  },
