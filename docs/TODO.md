@@ -247,45 +247,41 @@ here is a claim of support until it is done.
 - [ ] **Play the current build by hand** (0.9.18, 17 November 2026). What has
   been built and seen only in captures, measurements or smoke runs, and still
   exists in the game. The archive has each item's full list.
-  - **Computer golfers in a group** (branch fairway-tour, 17 November 2026;
-    PLAYING *Computer golfers*): built and tested in Node only, **not seen in
-    the game, and its smoke journey `cpu-group` not yet run** (written while
-    the owner was gaming). To check: Add computer golfer and the Plays like
-    levels in the seat editor; a computer golfer's turn card, aim line and
-    flight; the three watch settings; its words; its relief and a computer
-    team's scramble pick; your swing refused on its turn and the monitor
-    unarmed; a reload mid-hole replaying its shot.
-  - **The Fairway Tour** (branch fairway-tour, 17-18 November 2026;
-    PLAYING *The Fairway Tour*): tested in Node, **not seen in the game**.
-    To check: the start screen, the hub, the editor, an event's rounds with
-    the leaderboard line, Getting the field ready on a new course, the cut,
-    a season's end, sharing and opening a tour file. **Not built**: the
-    person's playoff is drawn, not played on the course; a tour file
-    carries no pictures for the event cards; a full 3.2 GB season of built
-    courses has not been written and read on a real browser (the ZIP64
-    path is tested on a small file); the hole model is not yet checked
-    against the computer golfers' own rounds hole by hole.
-  - **A computer golfer's plan runs on the frame loop** (branch fairway-tour,
+  - **The Fairway Tour branch, by hand** (fairway-tour, 17-18 November 2026;
+    PLAYING *Computer golfers*, *Handicaps and Stableford*, *The caddie and
+    strokes gained*, *The Fairway Tour*). **Seen in smoke journeys, not by a
+    person** (cpu-group, tour-event, net-stableford, tour-file; their
+    pictures in bench/shots/smoke): a computer golfer made in the seat
+    editor playing its hole out and handing the turn over, its turn card
+    and flight; a Quick season's hub, an event started, the field made
+    ready, the group of four, the leaderboard line, the first shot; Play
+    offering Stableford and Net, a net Stableford round with its strokes,
+    the caddie's line; the editor, a tour shared and opened again.
+    **Not seen at all**: whether computer golfers feel like real players
+    over a whole round (their pace, the three watch settings, their words);
+    Adaptive in a round; their relief and a computer team's scramble pick
+    on screen; a reload mid-hole replaying a computer golfer's shot; a whole
+    event -- four rounds, the cut, round complete's event block, the next
+    event, a season's end and the next season; the XP popup and the tour
+    achievements; My profile's Fairway Tour and Strokes gained sections;
+    round complete's strokes gained and net ranking; the typed handicap
+    box; the builder's test round with its new golfers (about 11 s for a
+    nine, slower than before); a built course in a tour file.
+  - **The Fairway Tour branch, not built** (each written up in RESEARCH or
+    PLAYING): your playoff is drawn, not played on the course; the
+    scorecard's stroke dots and net row (round complete shows net totals;
+    the card is gross); net skins during the round (the mid-round skins line
+    counts gross; round complete's is net); pictures for the event cards in
+    a tour file; a full 3.2 GB tour file written and read in a browser (the
+    ZIP64 path is tested on a small file); the hole model checked against
+    the computer golfers' own rounds hole by hole; the bogey golfer's
+    rating offset fitted (rating.js `OVER.bogey`, placed).
+  - **A computer golfer's plan runs on the frame loop** (fairway-tour,
     measured 18 November 2026, RESEARCH *Frame rate with computer golfers*):
     up to about 36 ms on the owner's PC at the start of its turn (a frame or
     two; more on a phone, not measured there), during its still pre-shot
     moment. Drawing a course is level with 0.9.18 on Low, Phone and Ultra.
     Owed: spread the plan over frames, or hand it to a worker.
-  - **The caddie, strokes gained, the tour's rewards, the builder's test
-    round on computer golfers** (branch fairway-tour, 18 November 2026):
-    tested in Node, **not seen in the game**. To check: the caddie's line
-    on a swing pad turn and gone after the swing; round complete's strokes
-    gained; My profile's Strokes gained and Fairway Tour sections; the XP
-    popup after a made cut or a win; the builder's test round naming a
-    scratch and a bogey golfer (about 11 s for a nine, slower than before).
-  - **Net rounds and Stableford** (branch fairway-tour, 17 November 2026;
-    PLAYING *Handicaps and Stableford*): tested in Node, **not seen in the
-    game**. To check: Scoring Net in the rules step and round complete's
-    net ranking; a Stableford round's points; the typed handicap box in a
-    new golfer's seat. **Not built yet**: the scorecard's stroke dots and
-    a net row (round complete shows net totals; the card itself is gross),
-    and net skins status during the round (the skins line mid-round still
-    counts gross; round complete's skins are net).
   - **The swing report's last change** (0.9.18; the owner swung the pad on
     the iPhone and the PC and signed it off on 17 November, DONE *The
     pull-and-push swing, on the owner's iPhone*): the Carry and Total chips

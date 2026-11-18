@@ -97,13 +97,17 @@ export function startHtml({tours = [], active = null} = {}) {
   + `</div>${list}</div>`;
 }
 
+// The editor's value for an event's course: a built course by its file, a
+// generated one by its landscape (the choice "a new course in ..."; the
+// event keeps its own seed unless the choice is changed -- main.js).
+export const eventCourseKey = e => e.course.built ? `built:${e.course.built}` : `land:${e.course.settings.biome}`;
 // THE EDITOR (SPEC 6): the tour's defaults, then each event -- name, week,
 // course, rounds, major -- with buttons to move, remove and add. `courses`
 // [{value, label}] the courses to choose from (saved, built, landscapes).
 export function editorHtml(tour, {courses = []} = {}) {
  const d = tour.defaults, played = tour.results.length + (tour.current ? 1 : 0);
  const opt = (v, cur, t) => `<option value="${esc(v)}" ${String(v) === String(cur) ? 'selected' : ''}>${esc(t)}</option>`;
- const courseKey = e => e.course.built ? `built:${e.course.built}` : `gen:${e.course.settings.biome}:${e.course.settings.seed}`;
+ const courseKey = eventCourseKey;
  return `<div class="tour-edit"><label class="field">Tour name<input id="tourName" maxlength="48" value="${esc(tour.name)}"></label>`
   + `<label class="field">Each event<select id="tourRounds">${opt(4, d.rounds, 'Full weekends · four rounds, a cut after two')}${opt(1, d.rounds, 'One round a weekend')}${opt(2, d.rounds, 'Two rounds')}${opt(3, d.rounds, 'Three rounds, a cut after one')}</select></label>`
   + `<label class="field">Format<select id="tourFormat">${opt('stroke', d.format, 'Stroke play')}${opt('stableford', d.format, 'Stableford')}</select></label>`

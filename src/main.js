@@ -119,7 +119,7 @@ import {eventRewards,roundRewards,seasonRewards} from './tour-rewards.js';
 import {suggest} from './caddie.js';
 import {holeGained,addGained,gainedText,PARTS as GAINED_PARTS,PART_NAMES as GAINED_NAMES} from './strokes-gained.js';
 import {loadTours,activeTour,putTour,removeTour,ratingKey,storedRating,storeRating} from './tour-store.js';
-import {tickerText,hubHtml,startHtml,editorHtml} from './ui-tour.js';
+import {tickerText,hubHtml,startHtml,editorHtml,eventCourseKey} from './ui-tour.js';
 import {writeTourFile,readTourFile,FILE_EXT as TOUR_FILE_EXT} from './tour-file.js';
 import {pointsTotal} from './stableford.js';
 import {reliefOptions,crossingPoint,OB_RULES,pathRelief,OBSTRUCTIONS} from './relief.js';
@@ -1670,7 +1670,7 @@ async function shareTour(t){
  if(!t)return;
  try{toast('Packing the tour…');const blob=await writeTourFile(t,{builtBytes:h=>builtStore.bytes(h)});
   download(`${(t.name||'Tour').replace(/[^\w .-]+/g,'').trim().slice(0,40)||'Tour'}${TOUR_FILE_EXT}`,blob,'application/zip');
-  toast(`Saved ${t.name}: ${(blob.size/1e6).toFixed(1)} MB.`);}
+  toast(`Saved ${t.name}: ${blob.size<1e6?`${Math.max(1,Math.round(blob.size/1e3))} KB`:`${(blob.size/1e6).toFixed(1)} MB`}.`);}
  catch(e){toast(e.message);}
 }
 // OPENING SOMEONE'S TOUR FILE: read and checked first, then a screen says
@@ -1772,7 +1772,9 @@ function bindTourEditor(content){
   t.defaults={...t.defaults,rounds:Number($('tourRounds').value),format:$('tourFormat').value,net:$('tourNet').value==='net',strength:$('tourStrength').value,size:Number($('tourSize').value),partners:Number($('tourPartners').value)};
   content.querySelectorAll('.tour-events li').forEach(li=>{const i=Number(li.dataset.i);if(i<played)return;const e=t.events[i];
    e.name=li.querySelector('.ev-name').value.slice(0,48)||e.name;e.week=Math.max(1,Math.min(52,Number(li.querySelector('.ev-week').value)||e.week));
-   const c=courseFromChoice(li.querySelector('.ev-course').value,`${t.seed}-${e.id}`);if(c)e.course=c;
+   // Only a changed choice changes the course: an event left alone keeps its
+   // own seed (the shipped season's courses never move).
+   const v=li.querySelector('.ev-course').value;if(v!==eventCourseKey(e)){const c=courseFromChoice(v,`${t.seed}-${e.id}`);if(c)e.course=c;}
    const rv=li.querySelector('.ev-rounds').value;if(rv)e.rounds=Number(rv);else delete e.rounds;e.major=li.querySelector('.ev-major').checked;});
  };
  content.querySelectorAll('[data-tour]').forEach(b=>b.onclick=()=>{

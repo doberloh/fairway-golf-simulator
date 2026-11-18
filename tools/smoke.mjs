@@ -2899,13 +2899,104 @@ const JOURNEYS = [
    await t.step('the field ready: the leaderboard line, a group of four with three computer golfers', async () => {
     await t.until(() => t.page.locator('#eventTicker').isVisible().catch(() => false), 'the leaderboard line', 120 * SLOW);
     const text = await t.page.textContent('#eventTicker');
-    if (!/YOU/.test(text)) throw new Error(`the leaderboard line says "${text}"`);
+    // Before anyone has a score it names the event and the field; when the
+    // person's group is not first out, the groups ahead are already on the
+    // course and it names the leader and the person's place (ui-tour.js).
+    if (!/ROUND 1 OF \d · \d+ GOLFERS|YOU (T?\d+|LEAD)/.test(text)) throw new Error(`the leaderboard line says "${text}"`);
     const s = await t.page.evaluate(() => window.lab.state().turn);
     if (!s || s.cards.length !== 4) throw new Error(`the group is ${s?.cards.length} golfers, not four`);
     if (s.computer) throw new Error('a computer golfer is up first; the person is seat one');
     await t.page.screenshot({path: path.join(SHOTS, 'tour-first-tee.png')});
    });
    await t.step('the first shot', () => t.shot());
+  },
+ },
+ // NET STABLEFORD WITH A COMPUTER GOLFER, AND THE CADDIE (the fairway-tour
+ // goal): Play offers Stableford and the Scoring choice; a net Stableford
+ // round with a computer golfer starts with each golfer's strokes worked out;
+ // a swing pad golfer's turn shows the caddie's line, gone after the swing.
+ {
+  name: 'net-stableford',
+  what: 'Play offers Stableford and net scoring; a net Stableford round with a computer golfer starts with the strokes worked out; the caddie\'s line on a swing pad turn, gone after the swing',
+  context: {viewport: {width: 1366, height: 768}},
+  async run(t) {
+   await menuReady(t);
+   await t.step('Play: Stableford with its note, and Scoring with Net', async () => {
+    await fromMenu(t, 'Play');
+    await t.page.waitForSelector('#roundMode', {state: 'attached', timeout: 10000 * SLOW});
+    const r = await t.page.evaluate(() => {
+     const sel = document.getElementById('roundMode');
+     if (![...sel.options].some(o => o.value === 'stableford')) return null;
+     sel.value = 'stableford'; sel.dispatchEvent(new Event('change'));
+     return {note: document.getElementById('formatNote').textContent, net: [...(document.getElementById('roundNet')?.options || [])].map(o => o.value)};
+    });
+    if (!r) throw new Error('Format has no Stableford choice');
+    if (!/points/i.test(r.note)) throw new Error(`the Stableford note reads: ${r.note}`);
+    if (!r.net.includes('net')) throw new Error('Scoring has no Net choice');
+   });
+   await t.step('a net Stableford round with a computer golfer, the strokes worked out', async () => {
+    await t.page.evaluate(() => window.lab.course({holes: 9}, {players: [{name: 'Ann', team: 'A', hand: 'RH', input: 'meter'}, {name: 'Calum Lennox', team: 'A', hand: 'RH', input: 'cpu', cpu: {id: 'g050', handicap: 12}}], mode: 'stableford', tee: 'blue', handicaps: true}));
+    await t.inPlay(120 * SLOW);
+    const saved = await t.page.evaluate(() => JSON.parse(localStorage.getItem('fairway-round-v1') || 'null')?.round);
+    if (saved?.mode !== 'stableford' || !saved?.handicaps) throw new Error(`the saved round is ${saved?.mode}, handicaps ${saved?.handicaps}`);
+    if (!saved.net || saved.net.strokes.length !== 2 || saved.net.strokes[1].reduce((s, v) => s + v, 0) < 1) throw new Error(`the strokes are ${JSON.stringify(saved.net?.strokes)}`);
+   });
+   await t.step('the caddie\'s line on the swing pad golfer\'s turn, gone after the swing', async () => {
+    await t.until(() => t.page.locator('#caddieLine').isVisible().catch(() => false), 'the caddie\'s line', 20 * SLOW);
+    const line = await t.page.textContent('#caddieLine');
+    if (!/^CADDIE · .+ yd$/.test(line)) throw new Error(`the caddie says "${line}"`);
+    await t.page.screenshot({path: path.join(SHOTS, 'caddie-line.png')});
+    // After the swing the golfer plays on from where the ball stopped (stroke
+    // play's order): the line, if up, is a new suggestion from the new spot.
+    await t.shot();
+    const after = await t.page.locator('#caddieLine').isVisible().catch(() => false) ? await t.page.textContent('#caddieLine') : '';
+    if (after === line) throw new Error(`the caddie's line did not change after the swing: "${line}"`);
+   });
+  },
+ },
+ // THE TOUR EDITOR AND A TOUR FILE (the fairway-tour goal): a tour built in
+ // the editor and saved; shared as a .fairway-tour; opened again, its
+ // contents shown before Add tour, and added.
+ {
+  name: 'tour-file',
+  what: 'Build your own: the editor names a tour, sets one round a weekend and adds an event; saved, it is the hub; shared as a .fairway-tour and opened again, shown before Add tour, and added',
+  context: {viewport: {width: 1366, height: 768}, acceptDownloads: true},
+  async run(t) {
+   await menuReady(t);
+   let bytes = null;
+   await t.step('the editor: a name, one round a weekend, a second event, saved', async () => {
+    await t.page.locator('#mainMenu').getByRole('button', {name: /Fairway Tour/}).first().click();
+    await t.until(() => t.page.locator('[data-tour="blank"]').isVisible().catch(() => false), 'the tour\'s start screen', 10 * SLOW);
+    await t.page.click('[data-tour="blank"]');
+    await t.until(() => t.page.locator('#tourName').isVisible().catch(() => false), 'the editor', 10 * SLOW);
+    await t.page.fill('#tourName', 'Smoke Tour');
+    await t.page.selectOption('#tourRounds', '1');
+    await t.page.click('[data-tour="add"]');
+    await t.until(async () => (await t.page.locator('.tour-events li').count()) === 2, 'a second event', 5 * SLOW);
+    await t.page.screenshot({path: path.join(SHOTS, 'tour-editor.png')});
+    await t.page.click('[data-tour="save"]');
+    await t.until(async () => /Smoke Tour/.test(await t.page.textContent('#drawerContent')) && await t.page.locator('[data-tour="start"]').isVisible().catch(() => false), 'the hub of the saved tour', 10 * SLOW);
+    if (!/one round/.test(await t.page.textContent('#drawerContent'))) throw new Error('the hub does not say one round');
+   });
+   await t.step('shared as one .fairway-tour file', async () => {
+    const [download] = await Promise.all([t.page.waitForEvent('download'), t.page.click('[data-tour="share"]')]);
+    if (!/\.fairway-tour$/.test(download.suggestedFilename())) throw new Error(`the file is called ${download.suggestedFilename()}`);
+    bytes = await (await import('node:fs/promises')).readFile(await download.path());
+    if (bytes[0] !== 0x50 || bytes[1] !== 0x4b) throw new Error('the file is not a ZIP');
+   });
+   await t.step('opened again: shown before Add tour, then added', async () => {
+    await t.page.click('[data-tour="switch"]');
+    await t.until(() => t.page.locator('[data-tour="import"]').isVisible().catch(() => false), 'the start screen', 5 * SLOW);
+    const [chooser] = await Promise.all([t.page.waitForEvent('filechooser'), t.page.click('[data-tour="import"]')]);
+    await chooser.setFiles({name: 'Smoke Tour.fairway-tour', mimeType: 'application/zip', buffer: bytes});
+    await t.until(() => t.page.locator('[data-tour="addimport"]').isVisible().catch(() => false), 'the file\'s contents and Add tour', 10 * SLOW);
+    if (!/2 events/.test(await t.page.textContent('#drawerContent'))) throw new Error('the preview does not say two events');
+    await t.page.screenshot({path: path.join(SHOTS, 'tour-import.png')});
+    await t.page.click('[data-tour="addimport"]');
+    await t.until(() => t.page.locator('[data-tour="start"]').isVisible().catch(() => false), 'the added tour\'s hub', 10 * SLOW);
+    const n = await t.page.evaluate(() => JSON.parse(localStorage.getItem('fairway-tours-v1')).tours.length);
+    if (n !== 2) throw new Error(`${n} tours kept, not two`);
+   });
   },
  },
  {

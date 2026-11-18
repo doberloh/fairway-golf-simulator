@@ -36,6 +36,10 @@ test('the start screen and the editor', () => {
  const e = editorHtml(t, {courses: [{value: 'land:pacnw', label: 'A new course in Cedar Hollow'}]});
  for (const b of ['add', 'save', 'cancel', 'up', 'down', 'remove']) assert.ok(buttons(e).includes(b), b);
  assert.equal((e.match(/class="ev-name"/g) || []).length, 8);
+ // A generated event shows its landscape among the choices, selected.
+ const first = t.events[0].course.settings.biome;
+ const e2 = editorHtml(t, {courses: [{value: `land:${first}`, label: 'Its landscape'}]});
+ assert.match(e2, new RegExp(`value="land:${first}" selected`));
 });
 
 test('scores and money as a leaderboard prints them', () => {
