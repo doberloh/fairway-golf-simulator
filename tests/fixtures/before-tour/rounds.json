@@ -1,0 +1,11995 @@
+{
+ "stroke": {
+  "tee": "white",
+  "outOfBounds": "stroke",
+  "monitorLie": true,
+  "weekly": "",
+  "rival": "",
+  "goal": "",
+  "uid": "gmwlrpoywnju34z",
+  "pinSeed": "gmwlrpoywnju34z",
+  "players": [
+   {
+    "name": "Alex",
+    "team": "A",
+    "hand": "RH",
+    "id": 0
+   },
+   {
+    "name": "Sam",
+    "team": "B",
+    "hand": "LH",
+    "input": "meter",
+    "id": 1
+   }
+  ],
+  "mode": "stroke",
+  "holes": 9,
+  "gimme": 0,
+  "hole": 3,
+  "finished": false,
+  "endless": false,
+  "seed": "BEFORE-1",
+  "pars": [
+   4,
+   4,
+   4
+  ],
+  "putting": {
+   "mode": "holeout",
+   "one": 3,
+   "two": 10,
+   "three": 20,
+   "gimme": 3
+  },
+  "history": [
+   {
+    "tee": "white",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoywnju34z",
+    "pinSeed": "gmwlrpoywnju34z",
+    "players": [
+     {
+      "name": "Alex",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Sam",
+      "team": "B",
+      "hand": "LH",
+      "input": "meter",
+      "id": 1
+     }
+    ],
+    "mode": "stroke",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 0,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-1",
+    "pars": [
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     []
+    ],
+    "cards": [
+     [
+      4
+     ],
+     []
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 1,
+      "z": 80
+     }
+    ],
+    "strokes": [
+     4,
+     2
+    ],
+    "done": [
+     true,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1
+    ],
+    "active": 1
+   },
+   {
+    "tee": "white",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoywnju34z",
+    "pinSeed": "gmwlrpoywnju34z",
+    "players": [
+     {
+      "name": "Alex",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Sam",
+      "team": "B",
+      "hand": "LH",
+      "input": "meter",
+      "id": 1
+     }
+    ],
+    "mode": "stroke",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 0,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-1",
+    "pars": [
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     []
+    ],
+    "cards": [
+     [
+      4
+     ],
+     []
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 1,
+      "z": 120
+     }
+    ],
+    "strokes": [
+     4,
+     3
+    ],
+    "done": [
+     true,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1
+    ],
+    "active": 1
+   },
+   {
+    "tee": "white",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoywnju34z",
+    "pinSeed": "gmwlrpoywnju34z",
+    "players": [
+     {
+      "name": "Alex",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Sam",
+      "team": "B",
+      "hand": "LH",
+      "input": "meter",
+      "id": 1
+     }
+    ],
+    "mode": "stroke",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-1",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4
+     ],
+     [
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 0
+     },
+     {
+      "x": 0,
+      "z": 0
+     }
+    ],
+    "strokes": [
+     0,
+     0
+    ],
+    "done": [
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1
+    ],
+    "active": 0
+   },
+   {
+    "tee": "white",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoywnju34z",
+    "pinSeed": "gmwlrpoywnju34z",
+    "players": [
+     {
+      "name": "Alex",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Sam",
+      "team": "B",
+      "hand": "LH",
+      "input": "meter",
+      "id": 1
+     }
+    ],
+    "mode": "stroke",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-1",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4
+     ],
+     [
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 0
+     },
+     {
+      "x": 0,
+      "z": 0
+     }
+    ],
+    "strokes": [
+     0,
+     0
+    ],
+    "done": [
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1
+    ],
+    "active": 0
+   },
+   {
+    "tee": "white",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoywnju34z",
+    "pinSeed": "gmwlrpoywnju34z",
+    "players": [
+     {
+      "name": "Alex",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Sam",
+      "team": "B",
+      "hand": "LH",
+      "input": "meter",
+      "id": 1
+     }
+    ],
+    "mode": "stroke",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-1",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4
+     ],
+     [
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 40
+     },
+     {
+      "x": 0,
+      "z": 0
+     }
+    ],
+    "strokes": [
+     1,
+     0
+    ],
+    "done": [
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1
+    ],
+    "active": 0
+   },
+   {
+    "tee": "white",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoywnju34z",
+    "pinSeed": "gmwlrpoywnju34z",
+    "players": [
+     {
+      "name": "Alex",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Sam",
+      "team": "B",
+      "hand": "LH",
+      "input": "meter",
+      "id": 1
+     }
+    ],
+    "mode": "stroke",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-1",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4
+     ],
+     [
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 40
+     },
+     {
+      "x": 0,
+      "z": 0
+     }
+    ],
+    "strokes": [
+     1,
+     0
+    ],
+    "done": [
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1
+    ],
+    "active": 0
+   },
+   {
+    "tee": "white",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoywnju34z",
+    "pinSeed": "gmwlrpoywnju34z",
+    "players": [
+     {
+      "name": "Alex",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Sam",
+      "team": "B",
+      "hand": "LH",
+      "input": "meter",
+      "id": 1
+     }
+    ],
+    "mode": "stroke",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-1",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4
+     ],
+     [
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 80
+     },
+     {
+      "x": 0,
+      "z": 0
+     }
+    ],
+    "strokes": [
+     2,
+     0
+    ],
+    "done": [
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1
+    ],
+    "active": 0
+   },
+   {
+    "tee": "white",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoywnju34z",
+    "pinSeed": "gmwlrpoywnju34z",
+    "players": [
+     {
+      "name": "Alex",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Sam",
+      "team": "B",
+      "hand": "LH",
+      "input": "meter",
+      "id": 1
+     }
+    ],
+    "mode": "stroke",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-1",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4
+     ],
+     [
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 80
+     },
+     {
+      "x": 0,
+      "z": 0
+     }
+    ],
+    "strokes": [
+     2,
+     0
+    ],
+    "done": [
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1
+    ],
+    "active": 0
+   },
+   {
+    "tee": "white",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoywnju34z",
+    "pinSeed": "gmwlrpoywnju34z",
+    "players": [
+     {
+      "name": "Alex",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Sam",
+      "team": "B",
+      "hand": "LH",
+      "input": "meter",
+      "id": 1
+     }
+    ],
+    "mode": "stroke",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-1",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4
+     ],
+     [
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 120
+     },
+     {
+      "x": 0,
+      "z": 0
+     }
+    ],
+    "strokes": [
+     3,
+     0
+    ],
+    "done": [
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1
+    ],
+    "active": 0
+   },
+   {
+    "tee": "white",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoywnju34z",
+    "pinSeed": "gmwlrpoywnju34z",
+    "players": [
+     {
+      "name": "Alex",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Sam",
+      "team": "B",
+      "hand": "LH",
+      "input": "meter",
+      "id": 1
+     }
+    ],
+    "mode": "stroke",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-1",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4,
+      4
+     ],
+     [
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 0,
+      "z": 0
+     }
+    ],
+    "strokes": [
+     4,
+     0
+    ],
+    "done": [
+     true,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1
+    ],
+    "active": 1
+   },
+   {
+    "tee": "white",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoywnju34z",
+    "pinSeed": "gmwlrpoywnju34z",
+    "players": [
+     {
+      "name": "Alex",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Sam",
+      "team": "B",
+      "hand": "LH",
+      "input": "meter",
+      "id": 1
+     }
+    ],
+    "mode": "stroke",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-1",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4,
+      4
+     ],
+     [
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 0,
+      "z": 0
+     }
+    ],
+    "strokes": [
+     4,
+     0
+    ],
+    "done": [
+     true,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1
+    ],
+    "active": 1
+   },
+   {
+    "tee": "white",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoywnju34z",
+    "pinSeed": "gmwlrpoywnju34z",
+    "players": [
+     {
+      "name": "Alex",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Sam",
+      "team": "B",
+      "hand": "LH",
+      "input": "meter",
+      "id": 1
+     }
+    ],
+    "mode": "stroke",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-1",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4,
+      4
+     ],
+     [
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 1,
+      "z": 40
+     }
+    ],
+    "strokes": [
+     4,
+     1
+    ],
+    "done": [
+     true,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1
+    ],
+    "active": 1
+   },
+   {
+    "tee": "white",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoywnju34z",
+    "pinSeed": "gmwlrpoywnju34z",
+    "players": [
+     {
+      "name": "Alex",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Sam",
+      "team": "B",
+      "hand": "LH",
+      "input": "meter",
+      "id": 1
+     }
+    ],
+    "mode": "stroke",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-1",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4,
+      4
+     ],
+     [
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 1,
+      "z": 40
+     }
+    ],
+    "strokes": [
+     4,
+     1
+    ],
+    "done": [
+     true,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1
+    ],
+    "active": 1
+   },
+   {
+    "tee": "white",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoywnju34z",
+    "pinSeed": "gmwlrpoywnju34z",
+    "players": [
+     {
+      "name": "Alex",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Sam",
+      "team": "B",
+      "hand": "LH",
+      "input": "meter",
+      "id": 1
+     }
+    ],
+    "mode": "stroke",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-1",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4,
+      4
+     ],
+     [
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 1,
+      "z": 80
+     }
+    ],
+    "strokes": [
+     4,
+     2
+    ],
+    "done": [
+     true,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1
+    ],
+    "active": 1
+   },
+   {
+    "tee": "white",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoywnju34z",
+    "pinSeed": "gmwlrpoywnju34z",
+    "players": [
+     {
+      "name": "Alex",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Sam",
+      "team": "B",
+      "hand": "LH",
+      "input": "meter",
+      "id": 1
+     }
+    ],
+    "mode": "stroke",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-1",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4,
+      4
+     ],
+     [
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 1,
+      "z": 80
+     }
+    ],
+    "strokes": [
+     4,
+     2
+    ],
+    "done": [
+     true,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1
+    ],
+    "active": 1
+   },
+   {
+    "tee": "white",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoywnju34z",
+    "pinSeed": "gmwlrpoywnju34z",
+    "players": [
+     {
+      "name": "Alex",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Sam",
+      "team": "B",
+      "hand": "LH",
+      "input": "meter",
+      "id": 1
+     }
+    ],
+    "mode": "stroke",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-1",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4,
+      4
+     ],
+     [
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 1,
+      "z": 120
+     }
+    ],
+    "strokes": [
+     4,
+     3
+    ],
+    "done": [
+     true,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1
+    ],
+    "active": 1
+   },
+   {
+    "tee": "white",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoywnju34z",
+    "pinSeed": "gmwlrpoywnju34z",
+    "players": [
+     {
+      "name": "Alex",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Sam",
+      "team": "B",
+      "hand": "LH",
+      "input": "meter",
+      "id": 1
+     }
+    ],
+    "mode": "stroke",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 2,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-1",
+    "pars": [
+     4,
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0
+     ],
+     [
+      0,
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4,
+      4
+     ],
+     [
+      4,
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 0
+     },
+     {
+      "x": 0,
+      "z": 0
+     }
+    ],
+    "strokes": [
+     0,
+     0
+    ],
+    "done": [
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1
+    ],
+    "active": 0
+   },
+   {
+    "tee": "white",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoywnju34z",
+    "pinSeed": "gmwlrpoywnju34z",
+    "players": [
+     {
+      "name": "Alex",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Sam",
+      "team": "B",
+      "hand": "LH",
+      "input": "meter",
+      "id": 1
+     }
+    ],
+    "mode": "stroke",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 2,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-1",
+    "pars": [
+     4,
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0
+     ],
+     [
+      0,
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4,
+      4
+     ],
+     [
+      4,
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 0
+     },
+     {
+      "x": 0,
+      "z": 0
+     }
+    ],
+    "strokes": [
+     0,
+     0
+    ],
+    "done": [
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1
+    ],
+    "active": 0
+   },
+   {
+    "tee": "white",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoywnju34z",
+    "pinSeed": "gmwlrpoywnju34z",
+    "players": [
+     {
+      "name": "Alex",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Sam",
+      "team": "B",
+      "hand": "LH",
+      "input": "meter",
+      "id": 1
+     }
+    ],
+    "mode": "stroke",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 2,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-1",
+    "pars": [
+     4,
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0
+     ],
+     [
+      0,
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4,
+      4
+     ],
+     [
+      4,
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 40
+     },
+     {
+      "x": 0,
+      "z": 0
+     }
+    ],
+    "strokes": [
+     1,
+     0
+    ],
+    "done": [
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1
+    ],
+    "active": 0
+   },
+   {
+    "tee": "white",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoywnju34z",
+    "pinSeed": "gmwlrpoywnju34z",
+    "players": [
+     {
+      "name": "Alex",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Sam",
+      "team": "B",
+      "hand": "LH",
+      "input": "meter",
+      "id": 1
+     }
+    ],
+    "mode": "stroke",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 2,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-1",
+    "pars": [
+     4,
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0
+     ],
+     [
+      0,
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4,
+      4
+     ],
+     [
+      4,
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 40
+     },
+     {
+      "x": 0,
+      "z": 0
+     }
+    ],
+    "strokes": [
+     1,
+     0
+    ],
+    "done": [
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1
+    ],
+    "active": 0
+   },
+   {
+    "tee": "white",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoywnju34z",
+    "pinSeed": "gmwlrpoywnju34z",
+    "players": [
+     {
+      "name": "Alex",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Sam",
+      "team": "B",
+      "hand": "LH",
+      "input": "meter",
+      "id": 1
+     }
+    ],
+    "mode": "stroke",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 2,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-1",
+    "pars": [
+     4,
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0
+     ],
+     [
+      0,
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4,
+      4
+     ],
+     [
+      4,
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 80
+     },
+     {
+      "x": 0,
+      "z": 0
+     }
+    ],
+    "strokes": [
+     2,
+     0
+    ],
+    "done": [
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1
+    ],
+    "active": 0
+   },
+   {
+    "tee": "white",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoywnju34z",
+    "pinSeed": "gmwlrpoywnju34z",
+    "players": [
+     {
+      "name": "Alex",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Sam",
+      "team": "B",
+      "hand": "LH",
+      "input": "meter",
+      "id": 1
+     }
+    ],
+    "mode": "stroke",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 2,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-1",
+    "pars": [
+     4,
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0
+     ],
+     [
+      0,
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4,
+      4
+     ],
+     [
+      4,
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 80
+     },
+     {
+      "x": 0,
+      "z": 0
+     }
+    ],
+    "strokes": [
+     2,
+     0
+    ],
+    "done": [
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1
+    ],
+    "active": 0
+   },
+   {
+    "tee": "white",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoywnju34z",
+    "pinSeed": "gmwlrpoywnju34z",
+    "players": [
+     {
+      "name": "Alex",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Sam",
+      "team": "B",
+      "hand": "LH",
+      "input": "meter",
+      "id": 1
+     }
+    ],
+    "mode": "stroke",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 2,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-1",
+    "pars": [
+     4,
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0
+     ],
+     [
+      0,
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4,
+      4
+     ],
+     [
+      4,
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 120
+     },
+     {
+      "x": 0,
+      "z": 0
+     }
+    ],
+    "strokes": [
+     3,
+     0
+    ],
+    "done": [
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1
+    ],
+    "active": 0
+   },
+   {
+    "tee": "white",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoywnju34z",
+    "pinSeed": "gmwlrpoywnju34z",
+    "players": [
+     {
+      "name": "Alex",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Sam",
+      "team": "B",
+      "hand": "LH",
+      "input": "meter",
+      "id": 1
+     }
+    ],
+    "mode": "stroke",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 2,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-1",
+    "pars": [
+     4,
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4,
+      4,
+      4
+     ],
+     [
+      4,
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 0,
+      "z": 0
+     }
+    ],
+    "strokes": [
+     4,
+     0
+    ],
+    "done": [
+     true,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1
+    ],
+    "active": 1
+   },
+   {
+    "tee": "white",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoywnju34z",
+    "pinSeed": "gmwlrpoywnju34z",
+    "players": [
+     {
+      "name": "Alex",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Sam",
+      "team": "B",
+      "hand": "LH",
+      "input": "meter",
+      "id": 1
+     }
+    ],
+    "mode": "stroke",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 2,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-1",
+    "pars": [
+     4,
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4,
+      4,
+      4
+     ],
+     [
+      4,
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 0,
+      "z": 0
+     }
+    ],
+    "strokes": [
+     4,
+     0
+    ],
+    "done": [
+     true,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1
+    ],
+    "active": 1
+   },
+   {
+    "tee": "white",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoywnju34z",
+    "pinSeed": "gmwlrpoywnju34z",
+    "players": [
+     {
+      "name": "Alex",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Sam",
+      "team": "B",
+      "hand": "LH",
+      "input": "meter",
+      "id": 1
+     }
+    ],
+    "mode": "stroke",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 2,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-1",
+    "pars": [
+     4,
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4,
+      4,
+      4
+     ],
+     [
+      4,
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 1,
+      "z": 40
+     }
+    ],
+    "strokes": [
+     4,
+     1
+    ],
+    "done": [
+     true,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1
+    ],
+    "active": 1
+   },
+   {
+    "tee": "white",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoywnju34z",
+    "pinSeed": "gmwlrpoywnju34z",
+    "players": [
+     {
+      "name": "Alex",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Sam",
+      "team": "B",
+      "hand": "LH",
+      "input": "meter",
+      "id": 1
+     }
+    ],
+    "mode": "stroke",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 2,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-1",
+    "pars": [
+     4,
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4,
+      4,
+      4
+     ],
+     [
+      4,
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 1,
+      "z": 40
+     }
+    ],
+    "strokes": [
+     4,
+     1
+    ],
+    "done": [
+     true,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1
+    ],
+    "active": 1
+   },
+   {
+    "tee": "white",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoywnju34z",
+    "pinSeed": "gmwlrpoywnju34z",
+    "players": [
+     {
+      "name": "Alex",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Sam",
+      "team": "B",
+      "hand": "LH",
+      "input": "meter",
+      "id": 1
+     }
+    ],
+    "mode": "stroke",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 2,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-1",
+    "pars": [
+     4,
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4,
+      4,
+      4
+     ],
+     [
+      4,
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 1,
+      "z": 80
+     }
+    ],
+    "strokes": [
+     4,
+     2
+    ],
+    "done": [
+     true,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1
+    ],
+    "active": 1
+   },
+   {
+    "tee": "white",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoywnju34z",
+    "pinSeed": "gmwlrpoywnju34z",
+    "players": [
+     {
+      "name": "Alex",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Sam",
+      "team": "B",
+      "hand": "LH",
+      "input": "meter",
+      "id": 1
+     }
+    ],
+    "mode": "stroke",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 2,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-1",
+    "pars": [
+     4,
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4,
+      4,
+      4
+     ],
+     [
+      4,
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 1,
+      "z": 80
+     }
+    ],
+    "strokes": [
+     4,
+     2
+    ],
+    "done": [
+     true,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1
+    ],
+    "active": 1
+   },
+   {
+    "tee": "white",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoywnju34z",
+    "pinSeed": "gmwlrpoywnju34z",
+    "players": [
+     {
+      "name": "Alex",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Sam",
+      "team": "B",
+      "hand": "LH",
+      "input": "meter",
+      "id": 1
+     }
+    ],
+    "mode": "stroke",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 2,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-1",
+    "pars": [
+     4,
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4,
+      4,
+      4
+     ],
+     [
+      4,
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 1,
+      "z": 120
+     }
+    ],
+    "strokes": [
+     4,
+     3
+    ],
+    "done": [
+     true,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1
+    ],
+    "active": 1
+   }
+  ],
+  "puttCards": [
+   [
+    0,
+    0,
+    0
+   ],
+   [
+    0,
+    0,
+    0
+   ]
+  ],
+  "cards": [
+   [
+    4,
+    4,
+    4
+   ],
+   [
+    4,
+    4,
+    4
+   ]
+  ],
+  "teamCards": {
+   "A": [],
+   "B": []
+  },
+  "match": {
+   "A": 0,
+   "B": 0
+  },
+  "relief": null,
+  "teePlaced": false,
+  "puttStrokes": [
+   0,
+   0
+  ],
+  "teamPutts": {
+   "A": 0,
+   "B": 0
+  },
+  "positions": [
+   {
+    "x": 0,
+    "z": 0
+   },
+   {
+    "x": 0,
+    "z": 0
+   }
+  ],
+  "strokes": [
+   0,
+   0
+  ],
+  "done": [
+   false,
+   false
+  ],
+  "holeComplete": false,
+  "candidates": [],
+  "scrambleSelection": false,
+  "scrambleShots": {
+   "A": 0,
+   "B": 0
+  },
+  "order": [
+   0,
+   1
+  ],
+  "active": 0
+ },
+ "match": {
+  "tee": "blue",
+  "outOfBounds": "stroke",
+  "monitorLie": true,
+  "weekly": "",
+  "rival": "",
+  "goal": "",
+  "uid": "gmwlrpoyz3pk66a",
+  "pinSeed": "gmwlrpoyz3pk66a",
+  "players": [
+   {
+    "name": "A1",
+    "team": "A",
+    "hand": "RH",
+    "id": 0
+   },
+   {
+    "name": "A2",
+    "team": "A",
+    "hand": "RH",
+    "id": 1
+   },
+   {
+    "name": "B1",
+    "team": "B",
+    "hand": "RH",
+    "id": 2
+   },
+   {
+    "name": "B2",
+    "team": "B",
+    "hand": "RH",
+    "id": 3
+   }
+  ],
+  "mode": "match",
+  "holes": 18,
+  "gimme": 0,
+  "hole": 2,
+  "finished": false,
+  "endless": false,
+  "seed": "BEFORE-2",
+  "pars": [
+   4,
+   4
+  ],
+  "putting": {
+   "mode": "holeout",
+   "one": 3,
+   "two": 10,
+   "three": 20,
+   "gimme": 3
+  },
+  "history": [
+   {
+    "tee": "blue",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoyz3pk66a",
+    "pinSeed": "gmwlrpoyz3pk66a",
+    "players": [
+     {
+      "name": "A1",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "A2",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "B1",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     },
+     {
+      "name": "B2",
+      "team": "B",
+      "hand": "RH",
+      "id": 3
+     }
+    ],
+    "mode": "match",
+    "holes": 18,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-2",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ]
+    ],
+    "teamCards": {
+     "A": [
+      5
+     ],
+     "B": [
+      5
+     ]
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 40
+     },
+     {
+      "x": 1,
+      "z": 40
+     },
+     {
+      "x": 1,
+      "z": 40
+     },
+     {
+      "x": 0,
+      "z": -10
+     }
+    ],
+    "strokes": [
+     1,
+     1,
+     1,
+     0
+    ],
+    "done": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "active": 3
+   },
+   {
+    "tee": "blue",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoyz3pk66a",
+    "pinSeed": "gmwlrpoyz3pk66a",
+    "players": [
+     {
+      "name": "A1",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "A2",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "B1",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     },
+     {
+      "name": "B2",
+      "team": "B",
+      "hand": "RH",
+      "id": 3
+     }
+    ],
+    "mode": "match",
+    "holes": 18,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-2",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ]
+    ],
+    "teamCards": {
+     "A": [
+      5
+     ],
+     "B": [
+      5
+     ]
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 40
+     },
+     {
+      "x": 1,
+      "z": 40
+     },
+     {
+      "x": 1,
+      "z": 40
+     },
+     {
+      "x": 0,
+      "z": -10
+     }
+    ],
+    "strokes": [
+     1,
+     1,
+     1,
+     0
+    ],
+    "done": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "active": 3
+   },
+   {
+    "tee": "blue",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoyz3pk66a",
+    "pinSeed": "gmwlrpoyz3pk66a",
+    "players": [
+     {
+      "name": "A1",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "A2",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "B1",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     },
+     {
+      "name": "B2",
+      "team": "B",
+      "hand": "RH",
+      "id": 3
+     }
+    ],
+    "mode": "match",
+    "holes": 18,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-2",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ]
+    ],
+    "teamCards": {
+     "A": [
+      5
+     ],
+     "B": [
+      5
+     ]
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 40
+     },
+     {
+      "x": 1,
+      "z": 40
+     },
+     {
+      "x": 1,
+      "z": 40
+     },
+     {
+      "x": 1,
+      "z": 40
+     }
+    ],
+    "strokes": [
+     1,
+     1,
+     1,
+     1
+    ],
+    "done": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "active": 0
+   },
+   {
+    "tee": "blue",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoyz3pk66a",
+    "pinSeed": "gmwlrpoyz3pk66a",
+    "players": [
+     {
+      "name": "A1",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "A2",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "B1",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     },
+     {
+      "name": "B2",
+      "team": "B",
+      "hand": "RH",
+      "id": 3
+     }
+    ],
+    "mode": "match",
+    "holes": 18,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-2",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ]
+    ],
+    "teamCards": {
+     "A": [
+      5
+     ],
+     "B": [
+      5
+     ]
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 40
+     },
+     {
+      "x": 1,
+      "z": 40
+     },
+     {
+      "x": 1,
+      "z": 40
+     },
+     {
+      "x": 1,
+      "z": 40
+     }
+    ],
+    "strokes": [
+     1,
+     1,
+     1,
+     1
+    ],
+    "done": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "active": 0
+   },
+   {
+    "tee": "blue",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoyz3pk66a",
+    "pinSeed": "gmwlrpoyz3pk66a",
+    "players": [
+     {
+      "name": "A1",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "A2",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "B1",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     },
+     {
+      "name": "B2",
+      "team": "B",
+      "hand": "RH",
+      "id": 3
+     }
+    ],
+    "mode": "match",
+    "holes": 18,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-2",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ]
+    ],
+    "teamCards": {
+     "A": [
+      5
+     ],
+     "B": [
+      5
+     ]
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 80
+     },
+     {
+      "x": 1,
+      "z": 40
+     },
+     {
+      "x": 1,
+      "z": 40
+     },
+     {
+      "x": 1,
+      "z": 40
+     }
+    ],
+    "strokes": [
+     2,
+     1,
+     1,
+     1
+    ],
+    "done": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "active": 1
+   },
+   {
+    "tee": "blue",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoyz3pk66a",
+    "pinSeed": "gmwlrpoyz3pk66a",
+    "players": [
+     {
+      "name": "A1",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "A2",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "B1",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     },
+     {
+      "name": "B2",
+      "team": "B",
+      "hand": "RH",
+      "id": 3
+     }
+    ],
+    "mode": "match",
+    "holes": 18,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-2",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ]
+    ],
+    "teamCards": {
+     "A": [
+      5
+     ],
+     "B": [
+      5
+     ]
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 80
+     },
+     {
+      "x": 1,
+      "z": 40
+     },
+     {
+      "x": 1,
+      "z": 40
+     },
+     {
+      "x": 1,
+      "z": 40
+     }
+    ],
+    "strokes": [
+     2,
+     1,
+     1,
+     1
+    ],
+    "done": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "active": 1
+   },
+   {
+    "tee": "blue",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoyz3pk66a",
+    "pinSeed": "gmwlrpoyz3pk66a",
+    "players": [
+     {
+      "name": "A1",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "A2",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "B1",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     },
+     {
+      "name": "B2",
+      "team": "B",
+      "hand": "RH",
+      "id": 3
+     }
+    ],
+    "mode": "match",
+    "holes": 18,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-2",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ]
+    ],
+    "teamCards": {
+     "A": [
+      5
+     ],
+     "B": [
+      5
+     ]
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 80
+     },
+     {
+      "x": 1,
+      "z": 80
+     },
+     {
+      "x": 1,
+      "z": 40
+     },
+     {
+      "x": 1,
+      "z": 40
+     }
+    ],
+    "strokes": [
+     2,
+     2,
+     1,
+     1
+    ],
+    "done": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "active": 2
+   },
+   {
+    "tee": "blue",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoyz3pk66a",
+    "pinSeed": "gmwlrpoyz3pk66a",
+    "players": [
+     {
+      "name": "A1",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "A2",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "B1",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     },
+     {
+      "name": "B2",
+      "team": "B",
+      "hand": "RH",
+      "id": 3
+     }
+    ],
+    "mode": "match",
+    "holes": 18,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-2",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ]
+    ],
+    "teamCards": {
+     "A": [
+      5
+     ],
+     "B": [
+      5
+     ]
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 80
+     },
+     {
+      "x": 1,
+      "z": 80
+     },
+     {
+      "x": 1,
+      "z": 40
+     },
+     {
+      "x": 1,
+      "z": 40
+     }
+    ],
+    "strokes": [
+     2,
+     2,
+     1,
+     1
+    ],
+    "done": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "active": 2
+   },
+   {
+    "tee": "blue",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoyz3pk66a",
+    "pinSeed": "gmwlrpoyz3pk66a",
+    "players": [
+     {
+      "name": "A1",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "A2",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "B1",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     },
+     {
+      "name": "B2",
+      "team": "B",
+      "hand": "RH",
+      "id": 3
+     }
+    ],
+    "mode": "match",
+    "holes": 18,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-2",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ]
+    ],
+    "teamCards": {
+     "A": [
+      5
+     ],
+     "B": [
+      5
+     ]
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 80
+     },
+     {
+      "x": 1,
+      "z": 80
+     },
+     {
+      "x": 1,
+      "z": 80
+     },
+     {
+      "x": 1,
+      "z": 40
+     }
+    ],
+    "strokes": [
+     2,
+     2,
+     2,
+     1
+    ],
+    "done": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "active": 3
+   },
+   {
+    "tee": "blue",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoyz3pk66a",
+    "pinSeed": "gmwlrpoyz3pk66a",
+    "players": [
+     {
+      "name": "A1",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "A2",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "B1",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     },
+     {
+      "name": "B2",
+      "team": "B",
+      "hand": "RH",
+      "id": 3
+     }
+    ],
+    "mode": "match",
+    "holes": 18,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-2",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ]
+    ],
+    "teamCards": {
+     "A": [
+      5
+     ],
+     "B": [
+      5
+     ]
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 80
+     },
+     {
+      "x": 1,
+      "z": 80
+     },
+     {
+      "x": 1,
+      "z": 80
+     },
+     {
+      "x": 1,
+      "z": 40
+     }
+    ],
+    "strokes": [
+     2,
+     2,
+     2,
+     1
+    ],
+    "done": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "active": 3
+   },
+   {
+    "tee": "blue",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoyz3pk66a",
+    "pinSeed": "gmwlrpoyz3pk66a",
+    "players": [
+     {
+      "name": "A1",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "A2",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "B1",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     },
+     {
+      "name": "B2",
+      "team": "B",
+      "hand": "RH",
+      "id": 3
+     }
+    ],
+    "mode": "match",
+    "holes": 18,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-2",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ]
+    ],
+    "teamCards": {
+     "A": [
+      5
+     ],
+     "B": [
+      5
+     ]
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 80
+     },
+     {
+      "x": 1,
+      "z": 80
+     },
+     {
+      "x": 1,
+      "z": 80
+     },
+     {
+      "x": 1,
+      "z": 80
+     }
+    ],
+    "strokes": [
+     2,
+     2,
+     2,
+     2
+    ],
+    "done": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "active": 0
+   },
+   {
+    "tee": "blue",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoyz3pk66a",
+    "pinSeed": "gmwlrpoyz3pk66a",
+    "players": [
+     {
+      "name": "A1",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "A2",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "B1",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     },
+     {
+      "name": "B2",
+      "team": "B",
+      "hand": "RH",
+      "id": 3
+     }
+    ],
+    "mode": "match",
+    "holes": 18,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-2",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ]
+    ],
+    "teamCards": {
+     "A": [
+      5
+     ],
+     "B": [
+      5
+     ]
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 80
+     },
+     {
+      "x": 1,
+      "z": 80
+     },
+     {
+      "x": 1,
+      "z": 80
+     },
+     {
+      "x": 1,
+      "z": 80
+     }
+    ],
+    "strokes": [
+     2,
+     2,
+     2,
+     2
+    ],
+    "done": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "active": 0
+   },
+   {
+    "tee": "blue",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoyz3pk66a",
+    "pinSeed": "gmwlrpoyz3pk66a",
+    "players": [
+     {
+      "name": "A1",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "A2",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "B1",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     },
+     {
+      "name": "B2",
+      "team": "B",
+      "hand": "RH",
+      "id": 3
+     }
+    ],
+    "mode": "match",
+    "holes": 18,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-2",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ]
+    ],
+    "teamCards": {
+     "A": [
+      5
+     ],
+     "B": [
+      5
+     ]
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 120
+     },
+     {
+      "x": 1,
+      "z": 80
+     },
+     {
+      "x": 1,
+      "z": 80
+     },
+     {
+      "x": 1,
+      "z": 80
+     }
+    ],
+    "strokes": [
+     3,
+     2,
+     2,
+     2
+    ],
+    "done": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "active": 1
+   },
+   {
+    "tee": "blue",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoyz3pk66a",
+    "pinSeed": "gmwlrpoyz3pk66a",
+    "players": [
+     {
+      "name": "A1",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "A2",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "B1",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     },
+     {
+      "name": "B2",
+      "team": "B",
+      "hand": "RH",
+      "id": 3
+     }
+    ],
+    "mode": "match",
+    "holes": 18,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-2",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ]
+    ],
+    "teamCards": {
+     "A": [
+      5
+     ],
+     "B": [
+      5
+     ]
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 120
+     },
+     {
+      "x": 1,
+      "z": 80
+     },
+     {
+      "x": 1,
+      "z": 80
+     },
+     {
+      "x": 1,
+      "z": 80
+     }
+    ],
+    "strokes": [
+     3,
+     2,
+     2,
+     2
+    ],
+    "done": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "active": 1
+   },
+   {
+    "tee": "blue",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoyz3pk66a",
+    "pinSeed": "gmwlrpoyz3pk66a",
+    "players": [
+     {
+      "name": "A1",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "A2",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "B1",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     },
+     {
+      "name": "B2",
+      "team": "B",
+      "hand": "RH",
+      "id": 3
+     }
+    ],
+    "mode": "match",
+    "holes": 18,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-2",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ]
+    ],
+    "teamCards": {
+     "A": [
+      5
+     ],
+     "B": [
+      5
+     ]
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 120
+     },
+     {
+      "x": 1,
+      "z": 120
+     },
+     {
+      "x": 1,
+      "z": 80
+     },
+     {
+      "x": 1,
+      "z": 80
+     }
+    ],
+    "strokes": [
+     3,
+     3,
+     2,
+     2
+    ],
+    "done": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "active": 2
+   },
+   {
+    "tee": "blue",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoyz3pk66a",
+    "pinSeed": "gmwlrpoyz3pk66a",
+    "players": [
+     {
+      "name": "A1",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "A2",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "B1",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     },
+     {
+      "name": "B2",
+      "team": "B",
+      "hand": "RH",
+      "id": 3
+     }
+    ],
+    "mode": "match",
+    "holes": 18,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-2",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ]
+    ],
+    "teamCards": {
+     "A": [
+      5
+     ],
+     "B": [
+      5
+     ]
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 120
+     },
+     {
+      "x": 1,
+      "z": 120
+     },
+     {
+      "x": 1,
+      "z": 80
+     },
+     {
+      "x": 1,
+      "z": 80
+     }
+    ],
+    "strokes": [
+     3,
+     3,
+     2,
+     2
+    ],
+    "done": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "active": 2
+   },
+   {
+    "tee": "blue",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoyz3pk66a",
+    "pinSeed": "gmwlrpoyz3pk66a",
+    "players": [
+     {
+      "name": "A1",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "A2",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "B1",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     },
+     {
+      "name": "B2",
+      "team": "B",
+      "hand": "RH",
+      "id": 3
+     }
+    ],
+    "mode": "match",
+    "holes": 18,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-2",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ]
+    ],
+    "teamCards": {
+     "A": [
+      5
+     ],
+     "B": [
+      5
+     ]
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 120
+     },
+     {
+      "x": 1,
+      "z": 120
+     },
+     {
+      "x": 1,
+      "z": 120
+     },
+     {
+      "x": 1,
+      "z": 80
+     }
+    ],
+    "strokes": [
+     3,
+     3,
+     3,
+     2
+    ],
+    "done": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "active": 3
+   },
+   {
+    "tee": "blue",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoyz3pk66a",
+    "pinSeed": "gmwlrpoyz3pk66a",
+    "players": [
+     {
+      "name": "A1",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "A2",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "B1",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     },
+     {
+      "name": "B2",
+      "team": "B",
+      "hand": "RH",
+      "id": 3
+     }
+    ],
+    "mode": "match",
+    "holes": 18,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-2",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ]
+    ],
+    "teamCards": {
+     "A": [
+      5
+     ],
+     "B": [
+      5
+     ]
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 120
+     },
+     {
+      "x": 1,
+      "z": 120
+     },
+     {
+      "x": 1,
+      "z": 120
+     },
+     {
+      "x": 1,
+      "z": 80
+     }
+    ],
+    "strokes": [
+     3,
+     3,
+     3,
+     2
+    ],
+    "done": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "active": 3
+   },
+   {
+    "tee": "blue",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoyz3pk66a",
+    "pinSeed": "gmwlrpoyz3pk66a",
+    "players": [
+     {
+      "name": "A1",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "A2",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "B1",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     },
+     {
+      "name": "B2",
+      "team": "B",
+      "hand": "RH",
+      "id": 3
+     }
+    ],
+    "mode": "match",
+    "holes": 18,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-2",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ]
+    ],
+    "teamCards": {
+     "A": [
+      5
+     ],
+     "B": [
+      5
+     ]
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 120
+     },
+     {
+      "x": 1,
+      "z": 120
+     },
+     {
+      "x": 1,
+      "z": 120
+     },
+     {
+      "x": 1,
+      "z": 120
+     }
+    ],
+    "strokes": [
+     3,
+     3,
+     3,
+     3
+    ],
+    "done": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "active": 0
+   },
+   {
+    "tee": "blue",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoyz3pk66a",
+    "pinSeed": "gmwlrpoyz3pk66a",
+    "players": [
+     {
+      "name": "A1",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "A2",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "B1",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     },
+     {
+      "name": "B2",
+      "team": "B",
+      "hand": "RH",
+      "id": 3
+     }
+    ],
+    "mode": "match",
+    "holes": 18,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-2",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ]
+    ],
+    "teamCards": {
+     "A": [
+      5
+     ],
+     "B": [
+      5
+     ]
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 120
+     },
+     {
+      "x": 1,
+      "z": 120
+     },
+     {
+      "x": 1,
+      "z": 120
+     },
+     {
+      "x": 1,
+      "z": 120
+     }
+    ],
+    "strokes": [
+     3,
+     3,
+     3,
+     3
+    ],
+    "done": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "active": 0
+   },
+   {
+    "tee": "blue",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoyz3pk66a",
+    "pinSeed": "gmwlrpoyz3pk66a",
+    "players": [
+     {
+      "name": "A1",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "A2",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "B1",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     },
+     {
+      "name": "B2",
+      "team": "B",
+      "hand": "RH",
+      "id": 3
+     }
+    ],
+    "mode": "match",
+    "holes": 18,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-2",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ]
+    ],
+    "teamCards": {
+     "A": [
+      5
+     ],
+     "B": [
+      5
+     ]
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 160
+     },
+     {
+      "x": 1,
+      "z": 120
+     },
+     {
+      "x": 1,
+      "z": 120
+     },
+     {
+      "x": 1,
+      "z": 120
+     }
+    ],
+    "strokes": [
+     4,
+     3,
+     3,
+     3
+    ],
+    "done": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "active": 1
+   },
+   {
+    "tee": "blue",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoyz3pk66a",
+    "pinSeed": "gmwlrpoyz3pk66a",
+    "players": [
+     {
+      "name": "A1",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "A2",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "B1",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     },
+     {
+      "name": "B2",
+      "team": "B",
+      "hand": "RH",
+      "id": 3
+     }
+    ],
+    "mode": "match",
+    "holes": 18,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-2",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ]
+    ],
+    "teamCards": {
+     "A": [
+      5
+     ],
+     "B": [
+      5
+     ]
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 160
+     },
+     {
+      "x": 1,
+      "z": 120
+     },
+     {
+      "x": 1,
+      "z": 120
+     },
+     {
+      "x": 1,
+      "z": 120
+     }
+    ],
+    "strokes": [
+     4,
+     3,
+     3,
+     3
+    ],
+    "done": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "active": 1
+   },
+   {
+    "tee": "blue",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoyz3pk66a",
+    "pinSeed": "gmwlrpoyz3pk66a",
+    "players": [
+     {
+      "name": "A1",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "A2",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "B1",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     },
+     {
+      "name": "B2",
+      "team": "B",
+      "hand": "RH",
+      "id": 3
+     }
+    ],
+    "mode": "match",
+    "holes": 18,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-2",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ]
+    ],
+    "teamCards": {
+     "A": [
+      5
+     ],
+     "B": [
+      5
+     ]
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 160
+     },
+     {
+      "x": 1,
+      "z": 160
+     },
+     {
+      "x": 1,
+      "z": 120
+     },
+     {
+      "x": 1,
+      "z": 120
+     }
+    ],
+    "strokes": [
+     4,
+     4,
+     3,
+     3
+    ],
+    "done": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "active": 2
+   },
+   {
+    "tee": "blue",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoyz3pk66a",
+    "pinSeed": "gmwlrpoyz3pk66a",
+    "players": [
+     {
+      "name": "A1",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "A2",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "B1",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     },
+     {
+      "name": "B2",
+      "team": "B",
+      "hand": "RH",
+      "id": 3
+     }
+    ],
+    "mode": "match",
+    "holes": 18,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-2",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ]
+    ],
+    "teamCards": {
+     "A": [
+      5
+     ],
+     "B": [
+      5
+     ]
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 160
+     },
+     {
+      "x": 1,
+      "z": 160
+     },
+     {
+      "x": 1,
+      "z": 120
+     },
+     {
+      "x": 1,
+      "z": 120
+     }
+    ],
+    "strokes": [
+     4,
+     4,
+     3,
+     3
+    ],
+    "done": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "active": 2
+   },
+   {
+    "tee": "blue",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoyz3pk66a",
+    "pinSeed": "gmwlrpoyz3pk66a",
+    "players": [
+     {
+      "name": "A1",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "A2",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "B1",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     },
+     {
+      "name": "B2",
+      "team": "B",
+      "hand": "RH",
+      "id": 3
+     }
+    ],
+    "mode": "match",
+    "holes": 18,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-2",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ]
+    ],
+    "teamCards": {
+     "A": [
+      5
+     ],
+     "B": [
+      5
+     ]
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 160
+     },
+     {
+      "x": 1,
+      "z": 160
+     },
+     {
+      "x": 1,
+      "z": 160
+     },
+     {
+      "x": 1,
+      "z": 120
+     }
+    ],
+    "strokes": [
+     4,
+     4,
+     4,
+     3
+    ],
+    "done": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "active": 3
+   },
+   {
+    "tee": "blue",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoyz3pk66a",
+    "pinSeed": "gmwlrpoyz3pk66a",
+    "players": [
+     {
+      "name": "A1",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "A2",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "B1",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     },
+     {
+      "name": "B2",
+      "team": "B",
+      "hand": "RH",
+      "id": 3
+     }
+    ],
+    "mode": "match",
+    "holes": 18,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-2",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ]
+    ],
+    "teamCards": {
+     "A": [
+      5
+     ],
+     "B": [
+      5
+     ]
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 160
+     },
+     {
+      "x": 1,
+      "z": 160
+     },
+     {
+      "x": 1,
+      "z": 160
+     },
+     {
+      "x": 1,
+      "z": 120
+     }
+    ],
+    "strokes": [
+     4,
+     4,
+     4,
+     3
+    ],
+    "done": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "active": 3
+   },
+   {
+    "tee": "blue",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoyz3pk66a",
+    "pinSeed": "gmwlrpoyz3pk66a",
+    "players": [
+     {
+      "name": "A1",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "A2",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "B1",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     },
+     {
+      "name": "B2",
+      "team": "B",
+      "hand": "RH",
+      "id": 3
+     }
+    ],
+    "mode": "match",
+    "holes": 18,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-2",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ]
+    ],
+    "teamCards": {
+     "A": [
+      5
+     ],
+     "B": [
+      5
+     ]
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 160
+     },
+     {
+      "x": 1,
+      "z": 160
+     },
+     {
+      "x": 1,
+      "z": 160
+     },
+     {
+      "x": 1,
+      "z": 160
+     }
+    ],
+    "strokes": [
+     4,
+     4,
+     4,
+     4
+    ],
+    "done": [
+     false,
+     false,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "active": 0
+   },
+   {
+    "tee": "blue",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoyz3pk66a",
+    "pinSeed": "gmwlrpoyz3pk66a",
+    "players": [
+     {
+      "name": "A1",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "A2",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "B1",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     },
+     {
+      "name": "B2",
+      "team": "B",
+      "hand": "RH",
+      "id": 3
+     }
+    ],
+    "mode": "match",
+    "holes": 18,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-2",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      5,
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ]
+    ],
+    "teamCards": {
+     "A": [
+      5
+     ],
+     "B": [
+      5
+     ]
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 1,
+      "z": 160
+     },
+     {
+      "x": 1,
+      "z": 160
+     },
+     {
+      "x": 1,
+      "z": 160
+     }
+    ],
+    "strokes": [
+     5,
+     4,
+     4,
+     4
+    ],
+    "done": [
+     true,
+     false,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "active": 1
+   },
+   {
+    "tee": "blue",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoyz3pk66a",
+    "pinSeed": "gmwlrpoyz3pk66a",
+    "players": [
+     {
+      "name": "A1",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "A2",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "B1",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     },
+     {
+      "name": "B2",
+      "team": "B",
+      "hand": "RH",
+      "id": 3
+     }
+    ],
+    "mode": "match",
+    "holes": 18,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-2",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0
+     ],
+     [
+      0,
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      5,
+      5
+     ],
+     [
+      5,
+      5
+     ],
+     [
+      5
+     ],
+     [
+      5
+     ]
+    ],
+    "teamCards": {
+     "A": [
+      5
+     ],
+     "B": [
+      5
+     ]
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 1,
+      "z": 160
+     },
+     {
+      "x": 1,
+      "z": 160
+     }
+    ],
+    "strokes": [
+     5,
+     5,
+     4,
+     4
+    ],
+    "done": [
+     true,
+     true,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "active": 2
+   },
+   {
+    "tee": "blue",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoyz3pk66a",
+    "pinSeed": "gmwlrpoyz3pk66a",
+    "players": [
+     {
+      "name": "A1",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "A2",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "B1",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     },
+     {
+      "name": "B2",
+      "team": "B",
+      "hand": "RH",
+      "id": 3
+     }
+    ],
+    "mode": "match",
+    "holes": 18,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-2",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0
+     ],
+     [
+      0,
+      0
+     ],
+     [
+      0,
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      5,
+      5
+     ],
+     [
+      5,
+      5
+     ],
+     [
+      5,
+      5
+     ],
+     [
+      5
+     ]
+    ],
+    "teamCards": {
+     "A": [
+      5
+     ],
+     "B": [
+      5
+     ]
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 1,
+      "z": 160
+     }
+    ],
+    "strokes": [
+     5,
+     5,
+     5,
+     4
+    ],
+    "done": [
+     true,
+     true,
+     true,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "active": 3
+   }
+  ],
+  "puttCards": [
+   [
+    0,
+    0
+   ],
+   [
+    0,
+    0
+   ],
+   [
+    0,
+    0
+   ],
+   [
+    0,
+    0
+   ]
+  ],
+  "cards": [
+   [
+    5,
+    5
+   ],
+   [
+    5,
+    5
+   ],
+   [
+    5,
+    5
+   ],
+   [
+    5,
+    5
+   ]
+  ],
+  "teamCards": {
+   "A": [
+    5,
+    5
+   ],
+   "B": [
+    5,
+    5
+   ]
+  },
+  "match": {
+   "A": 0,
+   "B": 0
+  },
+  "relief": null,
+  "teePlaced": false,
+  "puttStrokes": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "teamPutts": {
+   "A": 0,
+   "B": 0
+  },
+  "positions": [
+   {
+    "x": 0,
+    "z": 0
+   },
+   {
+    "x": 0,
+    "z": 0
+   },
+   {
+    "x": 0,
+    "z": 0
+   },
+   {
+    "x": 0,
+    "z": 0
+   }
+  ],
+  "strokes": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "done": [
+   false,
+   false,
+   false,
+   false
+  ],
+  "holeComplete": false,
+  "candidates": [],
+  "scrambleSelection": false,
+  "scrambleShots": {
+   "A": 0,
+   "B": 0
+  },
+  "order": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "active": 0
+ },
+ "skins": {
+  "tee": "red",
+  "outOfBounds": "stroke",
+  "monitorLie": true,
+  "weekly": "",
+  "rival": "",
+  "goal": "",
+  "uid": "gmwlrpoz0m9b4x9",
+  "pinSeed": "gmwlrpoz0m9b4x9",
+  "players": [
+   {
+    "name": "One",
+    "team": "A",
+    "hand": "RH",
+    "id": 0
+   },
+   {
+    "name": "Two",
+    "team": "A",
+    "hand": "RH",
+    "id": 1
+   },
+   {
+    "name": "Three",
+    "team": "B",
+    "hand": "RH",
+    "id": 2
+   }
+  ],
+  "mode": "skins",
+  "holes": 9,
+  "gimme": 0,
+  "hole": 2,
+  "finished": false,
+  "endless": false,
+  "seed": "BEFORE-3",
+  "pars": [
+   4,
+   4
+  ],
+  "putting": {
+   "mode": "holeout",
+   "one": 3,
+   "two": 10,
+   "three": 20,
+   "gimme": 3
+  },
+  "history": [
+   {
+    "tee": "red",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoz0m9b4x9",
+    "pinSeed": "gmwlrpoz0m9b4x9",
+    "players": [
+     {
+      "name": "One",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Two",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "Three",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     }
+    ],
+    "mode": "skins",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 0,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-3",
+    "pars": [
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [],
+     []
+    ],
+    "cards": [
+     [
+      4
+     ],
+     [],
+     []
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 1,
+      "z": 80
+     },
+     {
+      "x": 0,
+      "z": 10
+     }
+    ],
+    "strokes": [
+     4,
+     2,
+     0
+    ],
+    "done": [
+     true,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2
+    ],
+    "active": 1
+   },
+   {
+    "tee": "red",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoz0m9b4x9",
+    "pinSeed": "gmwlrpoz0m9b4x9",
+    "players": [
+     {
+      "name": "One",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Two",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "Three",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     }
+    ],
+    "mode": "skins",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 0,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-3",
+    "pars": [
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [],
+     []
+    ],
+    "cards": [
+     [
+      4
+     ],
+     [],
+     []
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 1,
+      "z": 120
+     },
+     {
+      "x": 0,
+      "z": 10
+     }
+    ],
+    "strokes": [
+     4,
+     3,
+     0
+    ],
+    "done": [
+     true,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2
+    ],
+    "active": 1
+   },
+   {
+    "tee": "red",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoz0m9b4x9",
+    "pinSeed": "gmwlrpoz0m9b4x9",
+    "players": [
+     {
+      "name": "One",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Two",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "Three",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     }
+    ],
+    "mode": "skins",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 0,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-3",
+    "pars": [
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     []
+    ],
+    "cards": [
+     [
+      4
+     ],
+     [
+      4
+     ],
+     []
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 0,
+      "z": 10
+     }
+    ],
+    "strokes": [
+     4,
+     4,
+     0
+    ],
+    "done": [
+     true,
+     true,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2
+    ],
+    "active": 2
+   },
+   {
+    "tee": "red",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoz0m9b4x9",
+    "pinSeed": "gmwlrpoz0m9b4x9",
+    "players": [
+     {
+      "name": "One",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Two",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "Three",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     }
+    ],
+    "mode": "skins",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 0,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-3",
+    "pars": [
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     []
+    ],
+    "cards": [
+     [
+      4
+     ],
+     [
+      4
+     ],
+     []
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 0,
+      "z": 10
+     }
+    ],
+    "strokes": [
+     4,
+     4,
+     0
+    ],
+    "done": [
+     true,
+     true,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2
+    ],
+    "active": 2
+   },
+   {
+    "tee": "red",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoz0m9b4x9",
+    "pinSeed": "gmwlrpoz0m9b4x9",
+    "players": [
+     {
+      "name": "One",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Two",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "Three",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     }
+    ],
+    "mode": "skins",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 0,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-3",
+    "pars": [
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     []
+    ],
+    "cards": [
+     [
+      4
+     ],
+     [
+      4
+     ],
+     []
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 1,
+      "z": 40
+     }
+    ],
+    "strokes": [
+     4,
+     4,
+     1
+    ],
+    "done": [
+     true,
+     true,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2
+    ],
+    "active": 2
+   },
+   {
+    "tee": "red",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoz0m9b4x9",
+    "pinSeed": "gmwlrpoz0m9b4x9",
+    "players": [
+     {
+      "name": "One",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Two",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "Three",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     }
+    ],
+    "mode": "skins",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 0,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-3",
+    "pars": [
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     []
+    ],
+    "cards": [
+     [
+      4
+     ],
+     [
+      4
+     ],
+     []
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 1,
+      "z": 40
+     }
+    ],
+    "strokes": [
+     4,
+     4,
+     1
+    ],
+    "done": [
+     true,
+     true,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2
+    ],
+    "active": 2
+   },
+   {
+    "tee": "red",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoz0m9b4x9",
+    "pinSeed": "gmwlrpoz0m9b4x9",
+    "players": [
+     {
+      "name": "One",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Two",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "Three",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     }
+    ],
+    "mode": "skins",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 0,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-3",
+    "pars": [
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     []
+    ],
+    "cards": [
+     [
+      4
+     ],
+     [
+      4
+     ],
+     []
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 1,
+      "z": 80
+     }
+    ],
+    "strokes": [
+     4,
+     4,
+     2
+    ],
+    "done": [
+     true,
+     true,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2
+    ],
+    "active": 2
+   },
+   {
+    "tee": "red",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoz0m9b4x9",
+    "pinSeed": "gmwlrpoz0m9b4x9",
+    "players": [
+     {
+      "name": "One",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Two",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "Three",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     }
+    ],
+    "mode": "skins",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 0,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-3",
+    "pars": [
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     []
+    ],
+    "cards": [
+     [
+      4
+     ],
+     [
+      4
+     ],
+     []
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 1,
+      "z": 80
+     }
+    ],
+    "strokes": [
+     4,
+     4,
+     2
+    ],
+    "done": [
+     true,
+     true,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2
+    ],
+    "active": 2
+   },
+   {
+    "tee": "red",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoz0m9b4x9",
+    "pinSeed": "gmwlrpoz0m9b4x9",
+    "players": [
+     {
+      "name": "One",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Two",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "Three",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     }
+    ],
+    "mode": "skins",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 0,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-3",
+    "pars": [
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     []
+    ],
+    "cards": [
+     [
+      4
+     ],
+     [
+      4
+     ],
+     []
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 1,
+      "z": 120
+     }
+    ],
+    "strokes": [
+     4,
+     4,
+     3
+    ],
+    "done": [
+     true,
+     true,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2
+    ],
+    "active": 2
+   },
+   {
+    "tee": "red",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoz0m9b4x9",
+    "pinSeed": "gmwlrpoz0m9b4x9",
+    "players": [
+     {
+      "name": "One",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Two",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "Three",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     }
+    ],
+    "mode": "skins",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-3",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4
+     ],
+     [
+      4
+     ],
+     [
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 10
+     },
+     {
+      "x": 0,
+      "z": 10
+     },
+     {
+      "x": 0,
+      "z": 10
+     }
+    ],
+    "strokes": [
+     0,
+     0,
+     0
+    ],
+    "done": [
+     false,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2
+    ],
+    "active": 0
+   },
+   {
+    "tee": "red",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoz0m9b4x9",
+    "pinSeed": "gmwlrpoz0m9b4x9",
+    "players": [
+     {
+      "name": "One",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Two",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "Three",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     }
+    ],
+    "mode": "skins",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-3",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4
+     ],
+     [
+      4
+     ],
+     [
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 10
+     },
+     {
+      "x": 0,
+      "z": 10
+     },
+     {
+      "x": 0,
+      "z": 10
+     }
+    ],
+    "strokes": [
+     0,
+     0,
+     0
+    ],
+    "done": [
+     false,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2
+    ],
+    "active": 0
+   },
+   {
+    "tee": "red",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoz0m9b4x9",
+    "pinSeed": "gmwlrpoz0m9b4x9",
+    "players": [
+     {
+      "name": "One",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Two",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "Three",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     }
+    ],
+    "mode": "skins",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-3",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4
+     ],
+     [
+      4
+     ],
+     [
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 40
+     },
+     {
+      "x": 0,
+      "z": 10
+     },
+     {
+      "x": 0,
+      "z": 10
+     }
+    ],
+    "strokes": [
+     1,
+     0,
+     0
+    ],
+    "done": [
+     false,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2
+    ],
+    "active": 0
+   },
+   {
+    "tee": "red",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoz0m9b4x9",
+    "pinSeed": "gmwlrpoz0m9b4x9",
+    "players": [
+     {
+      "name": "One",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Two",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "Three",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     }
+    ],
+    "mode": "skins",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-3",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4
+     ],
+     [
+      4
+     ],
+     [
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 40
+     },
+     {
+      "x": 0,
+      "z": 10
+     },
+     {
+      "x": 0,
+      "z": 10
+     }
+    ],
+    "strokes": [
+     1,
+     0,
+     0
+    ],
+    "done": [
+     false,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2
+    ],
+    "active": 0
+   },
+   {
+    "tee": "red",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoz0m9b4x9",
+    "pinSeed": "gmwlrpoz0m9b4x9",
+    "players": [
+     {
+      "name": "One",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Two",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "Three",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     }
+    ],
+    "mode": "skins",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-3",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4
+     ],
+     [
+      4
+     ],
+     [
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 80
+     },
+     {
+      "x": 0,
+      "z": 10
+     },
+     {
+      "x": 0,
+      "z": 10
+     }
+    ],
+    "strokes": [
+     2,
+     0,
+     0
+    ],
+    "done": [
+     false,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2
+    ],
+    "active": 0
+   },
+   {
+    "tee": "red",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoz0m9b4x9",
+    "pinSeed": "gmwlrpoz0m9b4x9",
+    "players": [
+     {
+      "name": "One",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Two",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "Three",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     }
+    ],
+    "mode": "skins",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-3",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4
+     ],
+     [
+      4
+     ],
+     [
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 80
+     },
+     {
+      "x": 0,
+      "z": 10
+     },
+     {
+      "x": 0,
+      "z": 10
+     }
+    ],
+    "strokes": [
+     2,
+     0,
+     0
+    ],
+    "done": [
+     false,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2
+    ],
+    "active": 0
+   },
+   {
+    "tee": "red",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoz0m9b4x9",
+    "pinSeed": "gmwlrpoz0m9b4x9",
+    "players": [
+     {
+      "name": "One",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Two",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "Three",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     }
+    ],
+    "mode": "skins",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-3",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4
+     ],
+     [
+      4
+     ],
+     [
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 1,
+      "z": 120
+     },
+     {
+      "x": 0,
+      "z": 10
+     },
+     {
+      "x": 0,
+      "z": 10
+     }
+    ],
+    "strokes": [
+     3,
+     0,
+     0
+    ],
+    "done": [
+     false,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2
+    ],
+    "active": 0
+   },
+   {
+    "tee": "red",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoz0m9b4x9",
+    "pinSeed": "gmwlrpoz0m9b4x9",
+    "players": [
+     {
+      "name": "One",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Two",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "Three",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     }
+    ],
+    "mode": "skins",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-3",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4,
+      4
+     ],
+     [
+      4
+     ],
+     [
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 0,
+      "z": 10
+     },
+     {
+      "x": 0,
+      "z": 10
+     }
+    ],
+    "strokes": [
+     4,
+     0,
+     0
+    ],
+    "done": [
+     true,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2
+    ],
+    "active": 1
+   },
+   {
+    "tee": "red",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoz0m9b4x9",
+    "pinSeed": "gmwlrpoz0m9b4x9",
+    "players": [
+     {
+      "name": "One",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Two",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "Three",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     }
+    ],
+    "mode": "skins",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-3",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4,
+      4
+     ],
+     [
+      4
+     ],
+     [
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 0,
+      "z": 10
+     },
+     {
+      "x": 0,
+      "z": 10
+     }
+    ],
+    "strokes": [
+     4,
+     0,
+     0
+    ],
+    "done": [
+     true,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2
+    ],
+    "active": 1
+   },
+   {
+    "tee": "red",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoz0m9b4x9",
+    "pinSeed": "gmwlrpoz0m9b4x9",
+    "players": [
+     {
+      "name": "One",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Two",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "Three",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     }
+    ],
+    "mode": "skins",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-3",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4,
+      4
+     ],
+     [
+      4
+     ],
+     [
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 1,
+      "z": 40
+     },
+     {
+      "x": 0,
+      "z": 10
+     }
+    ],
+    "strokes": [
+     4,
+     1,
+     0
+    ],
+    "done": [
+     true,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2
+    ],
+    "active": 1
+   },
+   {
+    "tee": "red",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoz0m9b4x9",
+    "pinSeed": "gmwlrpoz0m9b4x9",
+    "players": [
+     {
+      "name": "One",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Two",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "Three",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     }
+    ],
+    "mode": "skins",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-3",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4,
+      4
+     ],
+     [
+      4
+     ],
+     [
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 1,
+      "z": 40
+     },
+     {
+      "x": 0,
+      "z": 10
+     }
+    ],
+    "strokes": [
+     4,
+     1,
+     0
+    ],
+    "done": [
+     true,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2
+    ],
+    "active": 1
+   },
+   {
+    "tee": "red",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoz0m9b4x9",
+    "pinSeed": "gmwlrpoz0m9b4x9",
+    "players": [
+     {
+      "name": "One",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Two",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "Three",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     }
+    ],
+    "mode": "skins",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-3",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4,
+      4
+     ],
+     [
+      4
+     ],
+     [
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 1,
+      "z": 80
+     },
+     {
+      "x": 0,
+      "z": 10
+     }
+    ],
+    "strokes": [
+     4,
+     2,
+     0
+    ],
+    "done": [
+     true,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2
+    ],
+    "active": 1
+   },
+   {
+    "tee": "red",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoz0m9b4x9",
+    "pinSeed": "gmwlrpoz0m9b4x9",
+    "players": [
+     {
+      "name": "One",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Two",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "Three",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     }
+    ],
+    "mode": "skins",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-3",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4,
+      4
+     ],
+     [
+      4
+     ],
+     [
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 1,
+      "z": 80
+     },
+     {
+      "x": 0,
+      "z": 10
+     }
+    ],
+    "strokes": [
+     4,
+     2,
+     0
+    ],
+    "done": [
+     true,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2
+    ],
+    "active": 1
+   },
+   {
+    "tee": "red",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoz0m9b4x9",
+    "pinSeed": "gmwlrpoz0m9b4x9",
+    "players": [
+     {
+      "name": "One",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Two",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "Three",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     }
+    ],
+    "mode": "skins",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-3",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0
+     ],
+     [
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4,
+      4
+     ],
+     [
+      4
+     ],
+     [
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 1,
+      "z": 120
+     },
+     {
+      "x": 0,
+      "z": 10
+     }
+    ],
+    "strokes": [
+     4,
+     3,
+     0
+    ],
+    "done": [
+     true,
+     false,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2
+    ],
+    "active": 1
+   },
+   {
+    "tee": "red",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoz0m9b4x9",
+    "pinSeed": "gmwlrpoz0m9b4x9",
+    "players": [
+     {
+      "name": "One",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Two",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "Three",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     }
+    ],
+    "mode": "skins",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-3",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0
+     ],
+     [
+      0,
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4,
+      4
+     ],
+     [
+      4,
+      4
+     ],
+     [
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 0,
+      "z": 10
+     }
+    ],
+    "strokes": [
+     4,
+     4,
+     0
+    ],
+    "done": [
+     true,
+     true,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2
+    ],
+    "active": 2
+   },
+   {
+    "tee": "red",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoz0m9b4x9",
+    "pinSeed": "gmwlrpoz0m9b4x9",
+    "players": [
+     {
+      "name": "One",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Two",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "Three",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     }
+    ],
+    "mode": "skins",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-3",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0
+     ],
+     [
+      0,
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4,
+      4
+     ],
+     [
+      4,
+      4
+     ],
+     [
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 0,
+      "z": 10
+     }
+    ],
+    "strokes": [
+     4,
+     4,
+     0
+    ],
+    "done": [
+     true,
+     true,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2
+    ],
+    "active": 2
+   },
+   {
+    "tee": "red",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoz0m9b4x9",
+    "pinSeed": "gmwlrpoz0m9b4x9",
+    "players": [
+     {
+      "name": "One",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Two",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "Three",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     }
+    ],
+    "mode": "skins",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-3",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0
+     ],
+     [
+      0,
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4,
+      4
+     ],
+     [
+      4,
+      4
+     ],
+     [
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 1,
+      "z": 40
+     }
+    ],
+    "strokes": [
+     4,
+     4,
+     1
+    ],
+    "done": [
+     true,
+     true,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2
+    ],
+    "active": 2
+   },
+   {
+    "tee": "red",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoz0m9b4x9",
+    "pinSeed": "gmwlrpoz0m9b4x9",
+    "players": [
+     {
+      "name": "One",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Two",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "Three",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     }
+    ],
+    "mode": "skins",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-3",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0
+     ],
+     [
+      0,
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4,
+      4
+     ],
+     [
+      4,
+      4
+     ],
+     [
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 1,
+      "z": 40
+     }
+    ],
+    "strokes": [
+     4,
+     4,
+     1
+    ],
+    "done": [
+     true,
+     true,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2
+    ],
+    "active": 2
+   },
+   {
+    "tee": "red",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoz0m9b4x9",
+    "pinSeed": "gmwlrpoz0m9b4x9",
+    "players": [
+     {
+      "name": "One",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Two",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "Three",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     }
+    ],
+    "mode": "skins",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-3",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0
+     ],
+     [
+      0,
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4,
+      4
+     ],
+     [
+      4,
+      4
+     ],
+     [
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 1,
+      "z": 80
+     }
+    ],
+    "strokes": [
+     4,
+     4,
+     2
+    ],
+    "done": [
+     true,
+     true,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2
+    ],
+    "active": 2
+   },
+   {
+    "tee": "red",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoz0m9b4x9",
+    "pinSeed": "gmwlrpoz0m9b4x9",
+    "players": [
+     {
+      "name": "One",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Two",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "Three",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     }
+    ],
+    "mode": "skins",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-3",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0
+     ],
+     [
+      0,
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4,
+      4
+     ],
+     [
+      4,
+      4
+     ],
+     [
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 1,
+      "z": 80
+     }
+    ],
+    "strokes": [
+     4,
+     4,
+     2
+    ],
+    "done": [
+     true,
+     true,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2
+    ],
+    "active": 2
+   },
+   {
+    "tee": "red",
+    "outOfBounds": "stroke",
+    "monitorLie": true,
+    "weekly": "",
+    "rival": "",
+    "goal": "",
+    "uid": "gmwlrpoz0m9b4x9",
+    "pinSeed": "gmwlrpoz0m9b4x9",
+    "players": [
+     {
+      "name": "One",
+      "team": "A",
+      "hand": "RH",
+      "id": 0
+     },
+     {
+      "name": "Two",
+      "team": "A",
+      "hand": "RH",
+      "id": 1
+     },
+     {
+      "name": "Three",
+      "team": "B",
+      "hand": "RH",
+      "id": 2
+     }
+    ],
+    "mode": "skins",
+    "holes": 9,
+    "gimme": 0,
+    "hole": 1,
+    "finished": false,
+    "endless": false,
+    "seed": "BEFORE-3",
+    "pars": [
+     4,
+     4
+    ],
+    "putting": {
+     "mode": "holeout",
+     "one": 3,
+     "two": 10,
+     "three": 20,
+     "gimme": 3
+    },
+    "puttCards": [
+     [
+      0,
+      0
+     ],
+     [
+      0,
+      0
+     ],
+     [
+      0
+     ]
+    ],
+    "cards": [
+     [
+      4,
+      4
+     ],
+     [
+      4,
+      4
+     ],
+     [
+      4
+     ]
+    ],
+    "teamCards": {
+     "A": [],
+     "B": []
+    },
+    "match": {
+     "A": 0,
+     "B": 0
+    },
+    "relief": null,
+    "teePlaced": true,
+    "puttStrokes": [
+     0,
+     0,
+     0
+    ],
+    "teamPutts": {
+     "A": 0,
+     "B": 0
+    },
+    "positions": [
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 0,
+      "z": 150
+     },
+     {
+      "x": 1,
+      "z": 120
+     }
+    ],
+    "strokes": [
+     4,
+     4,
+     3
+    ],
+    "done": [
+     true,
+     true,
+     false
+    ],
+    "holeComplete": false,
+    "candidates": [],
+    "scrambleSelection": false,
+    "scrambleShots": {
+     "A": 0,
+     "B": 0
+    },
+    "order": [
+     0,
+     1,
+     2
+    ],
+    "active": 2
+   }
+  ],
+  "puttCards": [
+   [
+    0,
+    0
+   ],
+   [
+    0,
+    0
+   ],
+   [
+    0,
+    0
+   ]
+  ],
+  "cards": [
+   [
+    4,
+    4
+   ],
+   [
+    4,
+    4
+   ],
+   [
+    4,
+    4
+   ]
+  ],
+  "teamCards": {
+   "A": [],
+   "B": []
+  },
+  "match": {
+   "A": 0,
+   "B": 0
+  },
+  "relief": null,
+  "teePlaced": false,
+  "puttStrokes": [
+   0,
+   0,
+   0
+  ],
+  "teamPutts": {
+   "A": 0,
+   "B": 0
+  },
+  "positions": [
+   {
+    "x": 0,
+    "z": 0
+   },
+   {
+    "x": 0,
+    "z": 0
+   },
+   {
+    "x": 0,
+    "z": 0
+   }
+  ],
+  "strokes": [
+   0,
+   0,
+   0
+  ],
+  "done": [
+   false,
+   false,
+   false
+  ],
+  "holeComplete": false,
+  "candidates": [],
+  "scrambleSelection": false,
+  "scrambleShots": {
+   "A": 0,
+   "B": 0
+  },
+  "order": [
+   0,
+   1,
+   2
+  ],
+  "active": 0
+ }
+}

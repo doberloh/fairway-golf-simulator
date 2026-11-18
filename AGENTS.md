@@ -325,6 +325,30 @@ when it was merged (10 November 2026).
 - **When the game cannot be driven,** run the CPU checks (`npm test`, `npm run
   build`, the fingerprint, the bench) and say so (next-but-one section).
 
+## On the fairway-tour branch, the computer is free under the goal's terms
+
+**Branch-only; delete this section in the merge.** The owner, 17 November
+2026, answering the Fairway Tour goal's question 10: "yes but with the
+following addition, GPU and CPU use only one at a time while im gaming.
+Multithreaded if im not." This loosens *Nothing at all while the owner
+plays*, above, for this branch alone. docs/studies/fairway-tour/GOAL.md
+(local), *The computer*, has the whole rule; in short:
+
+- **Read the gate before every job** (`node tools/gpu-gate.mjs`): one program
+  at 15% of the card or more is a game.
+- **While the owner is gaming: one job at a time, on one thread**, graphics
+  or processor, never both: `node tools/test.mjs --jobs 1`, benches with
+  one worker, one smoke journey at a time. No frame measuring (profile, frame-ab,
+  frame-sweep): a game on the card makes the numbers meaningless.
+- **While the owner is not gaming: multithreaded**, still one graphics job
+  at a time (`tools/gpu-lock.mjs`).
+- **Every graphics job** through `node tools/gpu-run.mjs --goal fairway-tour`,
+  with `tools/gpu-watch.mjs` running during it. No software-renderer runs.
+  Close every browser and pane tab after each job.
+- **Any trouble ends graphics work until the owner is back**: a hung run, a
+  driver reset, a lost WebGL context, the temperature jumping. After a
+  machine crash, stop everything and write it in the goal's log.
+
 ## A `/goal` that says "GPU allowed" is the owner asking
 
 A `/goal` keeps working through turns the owner did not start, so the rule

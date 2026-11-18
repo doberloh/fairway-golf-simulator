@@ -44,15 +44,18 @@ wrong, unfinished, or owed a check.
 
 ## Next feature
 
-- [ ] **Plan the Fairway Tour with the owner, before any code** (the owner, 9
-  November 2026: "Fairway tour is going to be our next feature"). Three steps,
-  each worth shipping alone: computer opponents who miss the way a golfer of
-  their handicap misses; a tournament weekend of four rounds against a field,
-  with a leaderboard and a cut; a season across the landscapes, kept offline in
-  the profile. To settle first: how a computer golfer's miss is modelled and
-  anchored, how a field's scores are made without playing every shot, whether
-  built courses host events, what a season rewards. Rules in pure modules with
-  Node tests; any new format joins the round matrix. Large. (was: same heading)
+- [ ] **The Fairway Tour and computer golfers: the goal on branch
+  `fairway-tour`** (the owner, 17 November 2026; planned with the owner the
+  same day, which closes *Plan the Fairway Tour with the owner, before any
+  code*). Computer golfers who miss the way a golfer of their handicap
+  misses, in any round; gross or net rounds and Stableford; opponents that
+  adapt; a tournament against a field with a leaderboard and a cut; a
+  season the player sets up on built and generated courses; a tour shared
+  as one file with its built courses; the caddie's club suggestion,
+  strokes gained and course ratings from the computer golfers (the last
+  three and Stableford left IDEAS.md for it). The design, the owner's
+  answers and the order of work are local: docs/studies/fairway-tour/
+  (SPEC.md, GOAL.md, SUMMARY.md). Large.
 
 ## Known wrong
 

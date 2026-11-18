@@ -502,6 +502,28 @@ designed yet; the first job is a plan for the owner to approve.
   field is and how its scores are made without playing every shot, whether
   built courses can host events, and what the season rewards. Large. (Claude,
   from the owner's pick, 9 November 2026.)
+- **Planned with the owner, 17 November 2026.** The owner asked for every
+  AI idea at once: computer golfers who feel like real players, gross or
+  net rounds, opponents that adapt to the player, a season the player sets
+  up on built and generated courses (four rounds an event or one), and a
+  tour shared as one ZIP with its built courses. Claude drafted a spec and
+  a goal; the owner answered its thirteen questions the same day: no golfer
+  figures on the course (and not to be offered later), a fourball in a
+  field of 60, adaptive never inside an event (a tour's field may be Auto
+  between events), tours single player, points decide a season and prize
+  money is for show, a shared tour carries no results, a shipped season,
+  a typed handicap until the sim handicap has one, invented names, course
+  ratings from the computer golfers, and the caddie's club suggestion,
+  Stableford and strokes gained pulled in from IDEAS.md. The owner also
+  overruled the tour file's 100 MB cap: no cap of the game's own, at least
+  a full season of built courses. The questions' answers: how a computer
+  golfer's miss is anchored -- sourced handicap statistics and a bench; a
+  field's scores -- the player's group flown, the rest drawn from a hole
+  model learned by the computer golfers or flown in a worker, whichever
+  the timing allows; built courses host events; a season pays points,
+  trophies, XP and achievements. The goal runs on branch `fairway-tour`
+  (TODO *The Fairway Tour and computer golfers*); the design is local, in
+  docs/studies/fairway-tour/.
 
 ### Release 0.9.12 (10 November 2026)
 
