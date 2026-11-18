@@ -90,7 +90,9 @@ test('computer golfers of every standard finish every hole of a nine, and the be
 test('the computer golfers rate a course: a rating near par, a slope in the WHS range', async () => {
  const {rateCourse} = await import('../src/ai/rating.js');
  const settings = {...STARTING_COURSE, holes: 9, seed: 'AI-TEST'}, w = world(settings);
- const r = rateCourse(w.holes, {tee: 'white', rounds: 1, settings});
+ // A long seed, as the game passes (the course's whole rating key): the
+ // first browser run threw "Invalid round seed" on it.
+ const r = rateCourse(w.holes, {tee: 'white', rounds: 1, settings, seed: JSON.stringify(['', 'AI-TEST', 'pacnw', 9, 3240, 'white'])});
  const par = w.holes.reduce((s, h) => s + h.par, 0);
  assert.ok(Math.abs(r.course - par) < 6, `course rating ${r.course} on a par ${par} nine`);
  assert.ok(r.bogey > r.course, `bogey rating ${r.bogey} above ${r.course}`);

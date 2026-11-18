@@ -776,6 +776,7 @@ body:has(#world[data-mode=studio]):has(#drawer:not([hidden])) #studioBar{display
    there, in a round; a big screen has the tool column. */
 .rh-bar{display:none}
 /* A TOUR EVENT'S LINE (the fairway-tour goal): the leader, your place, the
-   cut, top centre under the hole's bar; a press opens the leaderboard. */
-.event-ticker{position:absolute;z-index:33;top:calc(8px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);max-width:min(92vw,720px);padding:6px 16px;border:0;border-top:3px solid var(--a1,#7bd389);background:var(--panel,rgba(12,24,17,.86));color:#fff;font:700 15px/1.2 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+   cut, top centre under the wind and camera chips (it sat on top of them at
+   8 px, the first browser run); a press opens the leaderboard. */
+.event-ticker{position:absolute;z-index:33;top:calc(62px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);max-width:min(92vw,720px);padding:6px 16px;border:0;border-top:3px solid var(--a1,#7bd389);background:var(--panel,rgba(12,24,17,.86));color:#fff;font:700 15px/1.2 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
 .event-ticker:focus-visible{outline:3px solid var(--cursor,#fff);outline-offset:2px}

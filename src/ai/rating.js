@@ -43,7 +43,9 @@ export function* rateCourseSteps(holes, {tee = 'white', rounds = 2, settings = {
   let total = 0;
   for (let k = 0; k < rounds; k++) {
    const g = computerGolfer({handicap, seed: `${seed}|${handicap}|${k}`, settings});
-   const r = new Round({players: [{name: 'Rater', team: 'A', hand: 'RH'}], mode: 'stroke', holes: holes.length === 9 ? 9 : 18, putting: {mode: 'holeout'}, tee, seed: `${seed}${k}`});
+   // The round's own seed is short (a Round takes 40 characters); the shots
+   // are keyed by the whole rating seed.
+   const r = new Round({players: [{name: 'Rater', team: 'A', hand: 'RH'}], mode: 'stroke', holes: holes.length === 9 ? 9 : 18, putting: {mode: 'holeout'}, tee, seed: `rate${handicap}-${k}`});
    for (let i = 0; i < holes.length; i++) { playHole(r, holes[i], [g], {roundKey: `${seed}${k}`}); if (!r.finished) r.nextHole(); yield ++done / n; }
    total += r.cards[0].reduce((s, v) => s + (Number.isFinite(v) ? v : 0), 0);
   }

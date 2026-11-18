@@ -27,8 +27,11 @@ export function leaderboardHtml(ev, {r = ev.round, thru = 0, partnerThru = {}, l
 export function tickerText(ev, {thru = 0, partnerThru = {}} = {}) {
  const rows = leaderboard(ev, {thru, partnerThru}).filter(x => !x.mc), me = rows.find(x => x.id === YOU), lead = rows[0];
  if (!lead || !me) return '';
+ // Before anyone has a score there is no leader, only the event.
+ if (ev.round === 0 && !rows.some(x => x.thru > 0)) return `${ev.name} · ROUND 1 OF ${ev.rounds} · ${rows.length} GOLFERS`;
  const cut = projectedCut(ev, rows);
- return `${lead.id === YOU ? 'YOU LEAD' : `LEADER ${lead.short} ${scoreText(ev, lead.total)}`} · YOU ${me.pos} ${scoreText(ev, me.total)}${cut != null && ev.rounds >= 3 && ev.round < (ev.rounds === 4 ? 2 : 1) ? ` · CUT ${scoreText(ev, cut)}` : ''}`;
+ const lone = lead.id === YOU && !String(me.pos).startsWith('T');
+ return `${lone ? 'YOU LEAD' : `LEADER ${lead.id === YOU ? 'YOU' : lead.short} ${scoreText(ev, lead.total)}`} · YOU ${me.pos} ${scoreText(ev, me.total)}${cut != null && ev.rounds >= 3 && ev.round < (ev.rounds === 4 ? 2 : 1) ? ` · CUT ${scoreText(ev, cut)}` : ''}`;
 }
 
 // THE HUB, with a tour going: the next event, the person's season, the
