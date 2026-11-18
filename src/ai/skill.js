@@ -34,7 +34,7 @@ export const TARGETS = {
 export const CAL = {
  // A full shot's start-line spread as a share of the measured finish
  // spread (the rest comes from curve and the ground).
- dir: [.82, .82, .76, .76],
+ dir: [.82, .82, .76, .66],
  // Long-game error along the line against across it (Broadie's figure 5:
  // the ellipses from 100-150 yd are longer than wide). Fitted.
  longWide: [1.4, 1.5, 1.7, 1.6],
@@ -43,26 +43,26 @@ export const CAL = {
  // An approach's struck spread against Broadie's finished median: the
  // game's slopes, roll, lies and wind add their own (measured: finishes ran
  // 1.25-1.5 times the struck spread). Fitted.
- approachScale: [.62, .66, .88, 1],
+ approachScale: [.4, .45, .82, .82],
  // The short game's spread against Broadie's median (the game's lies and
  // greens hold a chip differently from his courses). Fitted.
  shortScale: [.6, .55, .72, .7],
  // The same for greenside sand. Fitted.
- sandScale: [.75, .75, .62, .65],
+ sandScale: [.5, .55, .85, .65],
  // Speed spread per unit of distance spread (the ball runs on after
  // landing, so less speed error is needed than distance error).
  speed: [.8, .8, .8, .8],
  // The driver's carry against the measured 75th-percentile drive (the ball
  // runs on, and a full swing is the golfer's usual one). Fitted.
- carry: [.92, .90, .87, .845],
+ carry: [.92, .90, .85, .80],
  // Putting: start-line spread (deg) and pace spread (share of the roll).
- puttLine: [1.1, 1.6, 1.9, 3.1],
- puttPace: [.06, .08, .08, .11],
+ puttLine: [1.1, 1.6, 1.9, 2.6],
+ puttPace: [.09, .095, .08, .07],
  // How much of a putt's break the golfer plays (Broadie 2008: the high
  // handicapper misses low 60% of the time).
  read: [.95, .8, .7, .5],
  // A proper miss (thin, fat, block, shank) per full or short shot.
- mishit: [.003, .025, .08, .26],
+ mishit: [.003, .09, .13, .38],
 };
 
 const lerp = (row, h) => {

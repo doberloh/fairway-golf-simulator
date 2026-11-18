@@ -16836,8 +16836,46 @@ zero.
 - **A bug in the ball model**, found here and fixed (BALL_PHYSICS, *A
   touchdown is an impact only when the ball moves into the ground*).
 
-**Left for the next fit** (multithreaded, many more rounds, when the owner
-is not gaming): the 20-round sim handicap moves a stroke or more between
+### The second fit (18 November 2026, branch fairway-tour, 31 threads)
+
+Every band 0 to 30 by fives, six courses (the four above, Florida Palms and
+Desert Mountain), six rounds each: 36 rounds a band, two minutes. Three
+passes; the last: **58 of 70 checks within tolerance, both invariants zero**.
+
+| Band | Sim handicap (last 20 rounds) | Over par | Putts | Greens (want) | Awful a round (want) |
+| --- | --- | --- | --- | --- | --- |
+| 0 | -0.6 | +4.3 | 32.1 | in tolerance | in tolerance |
+| 5 | 6.0 | +10.9 | 33.0 | 34% (41) | in tolerance |
+| 10 | 11.4 | +13.3 | 33.2 | in tolerance | in tolerance |
+| 15 | 13.8 | +16.2 | 32.5 | in tolerance | in tolerance |
+| 20 | 19.1 | +21.1 | 33.8 | in tolerance | in tolerance |
+| 25 | 23.8 | +21.7 | 35.3 | 17.6% (9) | 6.0 (7.2) |
+| 30 | 27.8 | +26.7 | 35.8 | in tolerance | in tolerance |
+
+(Over par is each band from its own tee: the 25s and 30s play the red tees,
+about 5,700 yd, which is why the 25 is not much over the 20.)
+
+What the passes changed (skill.js `CAL`): more proper mishits at every
+amateur level (awful shots ran at two thirds of Broadie's), the high
+handicaps' driver carry down and their start line tighter (their drives
+were long and wide), scratch's sand and lag putting worse and the 30's lag
+better (two-putt distances), the 15's sand better.
+
+**Found, and left:**
+
+- **A floor under the good player's approach.** Scratch's median from
+  100-150 yd stays about 10% of the distance (Broadie: 7.4%) however tight
+  the struck spread: at half the spread it moved by a thousandth. The
+  game's green slopes and the ball's run after landing set it. Not chased.
+- **The 20s to 30s still drive wider than Broadie's line** (8.5-8.8 degrees
+  against 6.9-7.4), the mishits' wide misses counted in. Their score is
+  right; their greens hit too high on the red tees (the 25: 17.6% against
+  Shot Scope's 9%).
+- **The sim handicap's noise**: twenty rounds give an index that moves a
+  stroke and more between runs of the same golfers, so a band within 1.5
+  is as close as this sample can show; the 30 sits 2.2 better.
+
+**Left for the next fit, from the first:** the 20-round sim handicap moves a stroke or more between
 runs at this sample size, so the tolerance cannot be judged yet; scratch's
 lag putting (too good) and the 30's (too poor) pull the same two numbers
 opposite ways; the 30 has too few awful shots and too many greens.
