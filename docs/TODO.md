@@ -172,6 +172,15 @@ wrong, unfinished, or owed a check.
   not what a player gets. Every frame comparison needs four loads a build
   until it is understood. docs/history/SURROUNDINGS.md, *A load runs in one
   of two modes*.
+- [ ] **The `look` smoke journey failed once** (fairway-tour's final build,
+  18 November 2026, 12:36 run): "six putts from two yards and the ball never
+  dropped", on an Endless hole (seed WINDROW-5141-2, hole 2). Passed 4 of 4
+  alone straight after, and in the full runs before and after (46 of 46,
+  13:16). The step putts straight at the cup with a fixed pull, so a steep
+  green can beat it; not shown, as the screenshot was overwritten by the
+  passing reruns (the journey writes one file name). A person's putt runs no
+  code the branch changed that day. Where: tools/smoke.mjs, *holing out
+  plays a flourish over the cup*.
 - [ ] **The `no-late-shaders` smoke journey failed once** on round F3's build
   (Ultra, a drawn Lowcountry nine, seed HOLLOW-1812: one lit shader built 142
   ms after the course appeared), passed ten times alone, and passed in the
