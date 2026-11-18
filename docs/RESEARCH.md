@@ -16916,6 +16916,17 @@ against 80 frames over 50 ms**, about one more a minute, inside the 6-9
 setting. Remaining in the long frames on both builds: the card's programs
 set up the first time a view is drawn (`setProgram`, `upload`).
 
+**That leaving-out was not clean**, and the goal's check said so: two loads
+dropped after they were seen. So a rule was written down before the next run
+(GOAL.md's log, 13:35): Ultra, twelve loads a build, every load counted. It
+came out **level**: frames over 50 ms 114 (0.9.18, the person alone) against
+116 (the branch, three golfers); mean 3.78 against 3.79 ms; p99 10.5 against
+10.7; worst 253 against 250. Load by load the middle 0.9.18 load had 8 and
+the middle branch load 10, and one 0.9.18 load of 32 is what evens the
+totals -- the same disturbance as the branch's two, landing on the other
+build. Long-frame counts on this machine move by that much from load to
+load; the totals are the figure the rule names.
+
 ### Opponents that adapt: all placed (src/ai/adapt.js)
 
 The person's form is their strokes over par plus their handicap strokes

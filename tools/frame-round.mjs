@@ -69,7 +69,7 @@ async function measure(file, withCpu) {
   await page.goto(`http://127.0.0.1:${port}/`, {waitUntil: 'load'});
   await page.waitForFunction(() => window.lab?.course && !document.getElementById('mainMenu').hidden, null, {timeout: 120000});
   const person = {name: 'Person', team: 'A', hand: 'RH', input: 'meter'};
-  const cpu = Array.from({length: withCpu}, (_, i) => ({name: `Computer ${i + 1}`, team: 'A', hand: 'RH', input: 'cpu', cpu: {id: `g0${40 + i}`, handicap: 6 + 7 * i}}));
+  const cpu = Array.from({length: withCpu}, (_, i) => ({name: `Computer ${i + 1}`, team: 'A', hand: 'RH', input: 'cpu', cpu: {id: `g0${40 + i}`, handicap: flag('b-hcp', null) != null ? Number(flag('b-hcp')) : 6 + 7 * i}}));
   // lab.course resolves once the round is on the first tee (0.9.18 has it too).
   await page.evaluate(g => window.lab.course({holes: 9, biome: 'pacnw', seed: 'FRAMEROUND'}, g), {players: [...cpu, person], mode: 'stroke', tee: 'blue'});
   const renderer = await page.evaluate(() => { const gl = document.createElement('canvas').getContext('webgl2'), d = gl && gl.getExtension('WEBGL_debug_renderer_info'); return d ? gl.getParameter(d.UNMASKED_RENDERER_WEBGL) : 'unknown'; });
@@ -141,6 +141,22 @@ async function measure(file, withCpu) {
     }
    });
    out.longSum = `${windows.length} frames over 50 ms: ` + [...sum].filter(([k]) => !/^\((root|idle|anon)\)/.test(k)).sort((a, b) => b[1] - a[1]).slice(0, 30).map(([k, us]) => `${k} ${(us / 1000).toFixed(0)}`).join(' > ');
+   // And the same split by what came just before each (blame's moments).
+   const ev = eventsOf(out.states), byCat = new Map();
+   for (const [ms, end] of windows) {
+    const cat = categoryOf(ev, end, ms);
+    if (!byCat.has(cat)) byCat.set(cat, {n: 0, sum: new Map()});
+    const c = byCat.get(cat); c.n++;
+    profile.samples.forEach((id, i) => {
+     if (when[i] < end - ms || when[i] > end) return;
+     const seen = new Set();
+     for (let n = id; n !== undefined; n = parent.get(n)) {
+      const f = byId.get(n).callFrame, k = `${f.functionName || '(anon)'}:${f.lineNumber}`;
+      if (!seen.has(k)) { seen.add(k); c.sum.set(k, (c.sum.get(k) || 0) + (profile.timeDeltas[i] || 0)); }
+     }
+    });
+   }
+   out.byCat = [...byCat].map(([cat, c]) => `${cat} (${c.n}): ` + [...c.sum].filter(([k]) => !/^\((root|idle|anon)\)|^tick:|^render:|WebGLRenderer\.render:|renderBufferDirect|renderObjects?:|renderScene/.test(k)).sort((a, b) => b[1] - a[1]).slice(0, 16).map(([k, us]) => `${k} ${(us / 1000).toFixed(0)}`).join(' > '));
    const longest = out.d.map((ms, i) => [ms, out.at[i]]).sort((x, y) => y[0] - x[0]).slice(0, 3);
    out.inside = longest.map(([ms, end]) => {
     const inc = new Map();
@@ -168,7 +184,7 @@ const stats = d => { const s = [...d].sort((x, y) => x - y), q = p => s[Math.min
 // new hole, the hole finished), and each frame over 50 ms put down to the
 // latest event in the second before it, or "nothing". Also the mean frame of
 // each 30 s of the load, so a cheap stretch (a green, a scorecard) shows.
-function blame({d, at, states}) {
+function eventsOf(states) {
  const ev = [];
  for (let i = 1; i < states.length; i++) {
   const a = states[i - 1], b = states[i];
@@ -179,12 +195,17 @@ function blame({d, at, states}) {
   else if (!b.fly && a.fly) ev.push([b.t, 'shot lands']);
   else if (b.cpu && a.cpu && !b.fly && !a.fly && b.who === a.who && i > 1 && states[i - 2].fly) ev.push([b.t, 'computer plans next shot']);
  }
+ return ev;
+}
+// The latest event in the second before a frame that ended at `end` and
+// lasted `ms`, or 'nothing'.
+const categoryOf = (ev, end, ms) => (ev.filter(([t]) => t <= end && t >= end - ms - 1000).at(-1) || [0, 'nothing'])[1];
+function blame({d, at, states}) {
+ const ev = eventsOf(states);
  const counts = {};
  d.forEach((ms, i) => {
   if (ms <= 50) return;
-  const t0 = at[i] - ms;
-  const e = ev.filter(([t]) => t <= at[i] && t >= t0 - 1000).at(-1);
-  const k = e ? e[1] : 'nothing';
+  const k = categoryOf(ev, at[i], ms);
   counts[k] = (counts[k] || 0) + 1;
  });
  // The three longest, each with the events a second either side of it.
@@ -211,6 +232,7 @@ for (let r = 0; r < ROUNDS; r++) for (const which of r % 2 ? ['B', 'A'] : ['A', 
  if (res.ahead) process.stderr.write(`    computer strikes on a flight flown ahead: ${res.ahead[0]}, flown at the strike: ${res.ahead[1]}\n`);
  for (const line of res.inside || []) process.stderr.write(`    inside: ${line}\n`);
  if (res.longSum) process.stderr.write(`    all long frames: ${res.longSum}\n`);
+ for (const line of res.byCat || []) process.stderr.write(`    after ${line}\n`);
  if (res.cpuProfile) for (const [k, ms] of res.cpuProfile) process.stderr.write(`    ${ms.toFixed(3).padStart(7)} ms a frame  ${k}\n`);
 }
 const sa = stats(all.A), sb = stats(all.B), f = v => v.toFixed(2).padStart(7);

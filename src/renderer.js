@@ -4126,7 +4126,15 @@ export function drawMap(canvas,course,position,candidates=[],full=false,camera=n
  // what they show changes; a draw is then two copies, the moving marks and
  // nothing else.
  const g=course.green??course.pin;
- const layers=mapLayers(canvas,`${worldKey(world)}|${course.hole}|${full?1:0}|${canvas.mapHeat!==false?1:0}|${w}x${h}|${transform.cx},${transform.cz},${transform.scale},${transform.focus??''}|${course.active??''}|${g.x},${g.z}|${course.pin?.x},${course.pin?.z}`,w,h);
+ // THE FRAMING IN THE KEY IS ROUNDED (to a centimetre and 1/10,000 of the
+ // scale; under a hundredth of a pixel here): framed on the ball at the
+ // tee, the map moved by the grid-rounding of the shot's origin (rival.js
+ // `gridShot`, a fraction of a millimetre) as each shot was struck, and redrew
+ // its whole background at the strike and again at the landing -- about
+ // 60 ms a time on the owner's PC, twice a tee shot, three times as often
+ // with three computer golfers (18 November 2026; RESEARCH *Frame rate with
+ // computer golfers*).
+ const layers=mapLayers(canvas,`${worldKey(world)}|${course.hole}|${full?1:0}|${canvas.mapHeat!==false?1:0}|${w}x${h}|${transform.cx.toFixed(2)},${transform.cz.toFixed(2)},${transform.scale.toFixed(4)},${transform.focus??''}|${course.active??''}|${g.x},${g.z}|${course.pin?.x},${course.pin?.z}`,w,h);
  if(layers.fresh){const ctx=layers.base.getContext('2d');
  ctx.fillStyle=full?world.bio.mapWater:(world.bio.mapGround??world.bio.rough);
  ctx.fillRect(0,0,w,h);
