@@ -73,6 +73,15 @@ wrong, unfinished, or owed a check.
     others; the choice kept for the next round. Other golfers' balls are
     not drawn while they wait (as in match play), which may read oddly
     with turns passing every shot.
+  - **Bold putting rings, a blaze-orange aim line, no aim line for a
+    computer golfer: built, not seen** (the owner, 19 November 2026).
+    Tested: which ring lights (tests/putting-rings.test.mjs). To check on
+    the phone and the PC: the gimme circle bold and white, turning pink
+    as a putt rolls inside it; Dartboard's three rings, only the inner one
+    round the ball lit; the orange line readable on the palest greens; no
+    line, landing circle or map aim mark on a computer golfer's turn, and
+    yours back on your turn. The fat rings are a renderer change on every
+    tier: frame cost not measured (a profile needs the owner's word).
 
 ## Known wrong
 

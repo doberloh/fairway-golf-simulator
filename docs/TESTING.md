@@ -224,7 +224,7 @@ All in `tests/`, one file per subject; `tests/worlds.mjs` builds and memoises
 the courses several suites share, and builds many at once on worker threads
 (`measured`, with the measuring modules in `tests/measure/`).
 
-- **A round and its records** -- `round-matrix`, `core`, `play`, `putting-gimme`, `honours`, `play-order`,
+- **A round and its records** -- `round-matrix`, `core`, `play`, `putting-gimme`, `putting-rings` (which ring a ball lights, the rings' colours and width), `honours`, `play-order`,
   `relief`, `skins`, `mixed-groups`, `endless`, `round-library`,
   `course-library`, `scoring`, `handicap`, `profile`, `progression`, `rewards`,
   `achievements`, `challenges`, `challenge-play`, `challenge-matrix`,

@@ -1399,7 +1399,7 @@ function updateExplorer(){
  {const z=$('map')?.mapNav?.zoom??1;
   if(z>1.02)$('mapTitle').textContent+=` · ${z.toFixed(1)}×`;}
  $('exploreHole').innerHTML=world.holes.map(h=>`<option value="${h.hole}">Hole ${h.hole+1} · Par ${h.par}</option>`).join('');$('exploreHole').value=round.hole;$('exploreHole').__dd?.refresh();
-  drawMap($('map'),flight?.replay?view.course:course,flight?.replay?lastShot.shot.origin:round.position,round.candidates,['free','overview'].includes(view.config.mode),view.camera.position,flight||dropState?null:aimPoint,view.elapsed);
+  drawMap($('map'),flight?.replay?view.course:course,flight?.replay?lastShot.shot.origin:round.position,round.candidates,['free','overview'].includes(view.config.mode),view.camera.position,flight||dropState||computerUp()?null:aimPoint,view.elapsed);
 }
 
 function distance(){return Math.hypot(round.position.x-course.pin.x,round.position.z-course.pin.z);}
@@ -2038,6 +2038,22 @@ function updateAim(){const c=clubs[$('club').value];
  $('world').dataset.aim=aim.toFixed(1);$('world').dataset.aimYards=(range/YARD).toFixed(1);
  if(putt)drawLie();
  drawMeterScale();
+ hideComputerAim();
+}
+// A COMPUTER GOLFER'S AIM IS NOT SHOWN (the owner, 19 November 2026: "Do not
+// show their aim line. It makes it look like they are aiming to miss when
+// they do"). A computer golfer's aim carries its miss (golfer.js plans the
+// shot it will hit, not the one it wants), so the line and the landing
+// circle -- and the map's aim mark, redrawMap -- are hidden for its turn and
+// come back for the next person's. Every turn sets its aim through
+// updateAim, so this is the one place that needs it.
+// A function and a `var`, not a const and a let: the map and updateAim can
+// run while the module is still being read, before this line is reached.
+function computerUp(){return appMode==='play'&&!rangeMode&&!challenge&&!!round&&isComputer(round.player);}
+var aimHiddenForComputer=false;
+function hideComputerAim(){
+ if(computerUp()){view.aimLine.visible=false;view.aimRing.visible=false;aimHiddenForComputer=true;}
+ else if(aimHiddenForComputer){aimHiddenForComputer=false;if(!flight&&!dropState&&!round.relief)view.aimLine.visible=true;}
 }
 // THE SHAPE ON THE COURSE. The club's full swing with this shape is flown once on
 // level ground (swing-meter.js `previewTrack`), started off line by as much as it
@@ -5824,7 +5840,7 @@ function redrawMap(){
  // itself mid-flight.
  drawMap($('map'),flight?.replay?view.course:course,flight?flight.origin:round.position,
   round.candidates,['free','overview'].includes(view.config.mode),view.camera.position,
-  flight||dropState?null:aimPoint,view.elapsed);
+  flight||dropState||computerUp()?null:aimPoint,view.elapsed);
  drawFlightOnMap();
 }
 // THE BALL IN FLIGHT, ON THE MAP: the line it has drawn so far and where it is
@@ -8313,7 +8329,7 @@ function bind(){
  // so it was already soft before the green tile was magnified on top of it.
  // Capped at 3 because the gain above that is invisible and the fill cost is
  // not. `mapPixels` divides by the ratio it finds, so pointer input follows.
- new ResizeObserver(()=>{const r=Math.min(Math.max(globalThis.devicePixelRatio||1,1)*(hud1?Number(getComputedStyle($('app')).getPropertyValue('--hud-z'))||1:1),4),c=$('map'),w=Math.round(c.clientWidth*r),h=Math.round(c.clientHeight*r);if(w>0&&h>0&&(c.width!==w||c.height!==h)){c.width=w;c.height=h;drawMap(c,course,round.position,round.candidates,['free','overview'].includes(view.config.mode),view.camera.position,flight||dropState?null:aimPoint,view.elapsed);}}).observe($('map'));
+ new ResizeObserver(()=>{const r=Math.min(Math.max(globalThis.devicePixelRatio||1,1)*(hud1?Number(getComputedStyle($('app')).getPropertyValue('--hud-z'))||1:1),4),c=$('map'),w=Math.round(c.clientWidth*r),h=Math.round(c.clientHeight*r);if(w>0&&h>0&&(c.width!==w||c.height!==h)){c.width=w;c.height=h;drawMap(c,course,round.position,round.candidates,['free','overview'].includes(view.config.mode),view.camera.position,flight||dropState||computerUp()?null:aimPoint,view.elapsed);}}).observe($('map'));
  // The course card's menu button is gone from every mode -- the card reports the
  // hole, and a second way into the menu sitting on top of it was clutter beside
  // the nav that already does the job.
@@ -9403,7 +9419,7 @@ function tick(now){
   else if(tvOn){if(!flight.tvStarted){flight.tvStarted=true;view.tvShot(flight.tv);}view.tvFollow(p,flight.elapsed);}
   else if(flight.hold>=CAMERA_HOLD||flight.result.puttStroke)view.follow(p,flight.replay?flight.aim:aim,!!flight.result.puttStroke);
   if(flight.elapsed>=flight.result.time&&!flight.reviewing){flight.reviewing=true;if(hud1&&!flight.replay)showShotCard(cardRecord(),true,apexOf(flight.result.points));if(tvOn&&view.config.review!==false){const pose=planReview({points:flight.result.points,toWorld:q=>view.course.toWorld(q),groundAt:(x,z)=>view.world.height(x,z),trees:view.world.trees,fov:view.camera.fov,aspect:view.camera.aspect});if(pose){view.tvReview(pose);flight.reviewed=true;}}}view.setTrail(flight.result.puttStroke?[]:trailUpTo(pts,flight.elapsed-TRACER_LAG,flight.index+1));if(flight.elapsed>=flight.result.time){if(flight.replay){flight.endHold=(flight.endHold||0)+dt;liveLine(`Final lie · returning in ${Math.max(0,Math.ceil(REPLAY_HOLD_SECONDS-flight.endHold))}s`);if(replayFinished(flight.elapsed,flight.result.time,flight.endHold))finishShot();}else{flight.endHold=(flight.endHold||0)+dt;const need=flight.reviewed?REVIEW_HOLD_SECONDS:flight.result.holed?HOLED_HOLD_SECONDS:SHOT_HOLD_SECONDS;liveLine(`Final lie · playing on in ${Math.max(0,Math.ceil(need-flight.endHold))}s`);if(shotSettled(flight.elapsed,flight.result.time,flight.endHold,need)){finishShot();sendPlayer();}}}}
- if(!flight&&!dropState&&view.config.mode!=='free'&&now-lastMapFrame>80){lastMapFrame=now;drawMap($('map'),course,round.position,round.candidates,view.config.mode==='overview',view.camera.position,aimPoint,view.elapsed);}
+ if(!flight&&!dropState&&view.config.mode!=='free'&&now-lastMapFrame>80){lastMapFrame=now;drawMap($('map'),course,round.position,round.candidates,view.config.mode==='overview',view.camera.position,computerUp()?null:aimPoint,view.elapsed);}
  // The reading tools come off while the ball is moving. Driven from the state
  // every frame rather than flipped at the two ends of a shot: a shot starts and
  // finishes several ways -- struck, replayed, skipped, settled -- and a flag set

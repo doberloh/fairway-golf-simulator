@@ -72,7 +72,11 @@ import {holePath} from './low-trees.js';
 import {cullInstances} from './instance-cull.js';
 import {playerCameraPose,flightCameraPose,followPose,framedForBall,puttAimPose,stepOrbit,orbitEye} from './camera.js';
 import {R,CUP_RADIUS,YARD,clamp,FLAGSTICK_HEIGHT,FLAGSTICK_TOP_R,FLAGSTICK_BASE_R} from './physics.js';
-import {puttingRings} from './putting.js';
+import {puttingRings,litRing,RING_INSIDE,RING_WIDTH} from './putting.js';
+// The aim line and its landing circle (see where the aim line is made).
+const AIM_COLOUR='#ff5a14';
+import {LineSegments2} from 'three/addons/lines/LineSegments2.js';
+import {LineSegmentsGeometry} from 'three/addons/lines/LineSegmentsGeometry.js';
 import {teeAim} from './camera-tours.js';
 import {tierOf,greenCues} from './graphics.js';
 import {CSM} from 'three/addons/csm/CSM.js';
@@ -1337,7 +1341,14 @@ export class GolfView{
   this.ballHalo=new T.Sprite(new T.SpriteMaterial({map:halo,color:GLOW_BALL,blending:T.AdditiveBlending,depthWrite:false,transparent:true,opacity:0}));
   this.ballHalo.scale.setScalar(R*9);this.ballHalo.visible=false;this.ball.add(this.ballHalo);
   this.ballRing=add(new T.Mesh(new T.RingGeometry(.45,.51,64),new T.MeshBasicMaterial({color:'#fff8d9',side:T.DoubleSide})));this.ringBase=this.ballRing.material.color.clone();this.ballRing.rotation.x=-Math.PI/2;
-  this.aimLine=add(new Line2(new LineGeometry(),new LineMaterial({color:'#fff5d2',linewidth:3.5,transparent:true,opacity:.82,depthWrite:false})));
+  // THE AIM LINE IS BLAZE ORANGE (the owner, 19 November 2026: the aim lines
+  // "need to change to a color that is more readable against our more pale
+  // greens"). It was cream (#fff5d2), as light as the palest greens and so
+  // lost on them. Blaze orange is the colour picked for being seen against
+  // vegetation -- hunters' and road crews' orange -- and sits away from the
+  // golfers' four hues, the rings' white and the lit ring's pink (PLACED:
+  // no source fixes a sim's aim colour). The landing circle matches it.
+  this.aimLine=add(new Line2(new LineGeometry(),new LineMaterial({color:AIM_COLOUR,linewidth:3.5,transparent:true,opacity:.95,depthWrite:false})));
   this.effects=createShotEffects(this);add(this.effects.group);
   // The live tracer, its comet head and its bright core (tracer styles,
   // Phase 5; setTracer). White materials: the colour is in the vertices, and
@@ -1366,7 +1377,7 @@ export class GolfView{
   this.pickBalls=[];this.pickGroup=new T.Group();add(this.pickGroup);
   // Drawn over the ground (UI/UX pass, 21 October 2026): flat on uneven ground the
   // terrain cut it into a broken arc, worst from the aim point view above it.
-  this.aimRing=add(new T.Mesh(new T.RingGeometry(2.5,2.7,64),new T.MeshBasicMaterial({color:'#fff4cd',side:T.DoubleSide,depthTest:false,transparent:true,opacity:.95})));this.aimRing.rotation.x=-Math.PI/2;this.aimRing.renderOrder=5;
+  this.aimRing=add(new T.Mesh(new T.RingGeometry(2.5,2.7,64),new T.MeshBasicMaterial({color:AIM_COLOUR,side:T.DoubleSide,depthTest:false,transparent:true,opacity:.95})));this.aimRing.rotation.x=-Math.PI/2;this.aimRing.renderOrder=5;
   if(this.config.mode==='free'){const pose=playerCameraPose(this.course,this.course.tee,0,this.config);this.camera.position.set(pose.eye.x,pose.eye.y,pose.eye.z);this.look.set(pose.target.x,pose.target.y,pose.target.z);this.wasFree=false;}this.setHole(holeIndex,true);this.renderer.shadowMap.needsUpdate=true;
   // Real clouds in the sky, and the discs they shade the ground with. Built
   // before material registration, because every lit material reads the discs.
@@ -3127,7 +3138,7 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   }
   this.reading.update(this.elapsed-this.readingEpoch,heading,this.renderer.getPixelRatio());
  }
- setBall(p){this.localBall={...p};const v=this.course.toWorld(p),h=this.course.height(p.x,p.z),surface=this.course.surface(p.x,p.z),lift=0;this.ball.position.set(v.x,(p.y!==undefined?p.y:h+R)+lift,v.z);this.ballRing.position.set(v.x,h+lift+.01,v.z);const near=Math.hypot(p.x-this.course.pin.x,p.z-this.course.pin.z)<5;this.ballRing.scale.setScalar(near?.22:1);this.ballRing.visible=!near&&!(p.y!==undefined&&p.y<h);this.placeBallShadow(v.x,v.z,h,this.ball.position.y);}
+ setBall(p){this.localBall={...p};const v=this.course.toWorld(p),h=this.course.height(p.x,p.z),surface=this.course.surface(p.x,p.z),lift=0;this.ball.position.set(v.x,(p.y!==undefined?p.y:h+R)+lift,v.z);this.ballRing.position.set(v.x,h+lift+.01,v.z);const near=Math.hypot(p.x-this.course.pin.x,p.z-this.course.pin.z)<5;this.ballRing.scale.setScalar(near?.22:1);this.ballRing.visible=!near&&!(p.y!==undefined&&p.y<h);this.placeBallShadow(v.x,v.z,h,this.ball.position.y);this.paintRings(p);}
  // WHAT PUTS THE BALL ON THE GROUND.
  //
  // A shadow does two things as the thing casting it rises: it spreads, and it
@@ -3181,10 +3192,32 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
   this.ballShadow.material.opacity=this.ballShadowInk*(1-t)*(1-t);
  }
  setPutting(config){
-  this.putting=config;if(this.puttingRings){this.group.remove(this.puttingRings);this.puttingRings.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});}this.puttingRings=new T.Group();this.group.add(this.puttingRings);if(!config)return;
+  this.putting=config;if(this.puttingRings){this.group.remove(this.puttingRings);this.puttingRings.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});}this.puttingRings=new T.Group();this.group.add(this.puttingRings);this.ringList=[];if(!config)return;
   // The rings come from putting.js: three for dartboard and decimal, one for the
   // gimme circle, none for hole out.
-  const h=this.course;puttingRings(config).forEach(({radius,colour})=>{const points=[];for(let j=0;j<256;j++){const a=j/256*TAU,b=(j+1)/256*TAU,pts=[a,b].map(t=>({x:h.pin.x+Math.cos(t)*radius,z:h.pin.z+Math.sin(t)*radius}));if(pts.some(p=>h.surface(p.x,p.z)!=='green'))continue;for(const p of pts){const w=h.toWorld(p);points.push(new T.Vector3(w.x,h.height(p.x,p.z)+.025,w.z));}}const line=new T.LineSegments(new T.BufferGeometry().setFromPoints(points),new T.LineBasicMaterial({color:colour,transparent:true,opacity:.85,depthWrite:false}));this.puttingRings.add(line);});
+  // Drawn as fat lines (LineSegments2, RING_WIDTH screen pixels, the aim
+  // line's kind) since 19 November 2026: a plain line is one pixel on WebGL
+  // whatever width it is given, which the owner could barely see.
+  const h=this.course;this.ringList=puttingRings(config);this.ringLit=-2;
+  this.ringList.forEach(r=>{const {radius,colour}=r,flat=[];for(let j=0;j<256;j++){const a=j/256*TAU,b=(j+1)/256*TAU,pts=[a,b].map(t=>({x:h.pin.x+Math.cos(t)*radius,z:h.pin.z+Math.sin(t)*radius}));if(pts.some(p=>h.surface(p.x,p.z)!=='green'))continue;for(const p of pts){const w=h.toWorld(p);flat.push(w.x,h.height(p.x,p.z)+.025,w.z);}}
+   if(!flat.length){r.line=null;return;}
+   const g=new LineSegmentsGeometry();g.setPositions(flat);
+   const line=new LineSegments2(g,new LineMaterial({color:colour,linewidth:RING_WIDTH,transparent:true,opacity:.95,depthWrite:false}));
+   r.line=line;r.base=new T.Color(colour);this.puttingRings.add(line);});
+  if(this.localBall)this.paintRings(this.localBall);
+ }
+ // THE RING THE BALL IS IN turns RING_INSIDE (putting.js litRing), the rest
+ // keep their own colour. Only a ball on or near the ground lights one -- a
+ // ball flying over the green has not passed inside anything yet. Called from
+ // setBall, so it follows the ball every frame of a roll; it touches a
+ // material only when the lit ring changes.
+ paintRings(p){
+  if(!this.ringList?.length||!this.course?.pin)return;
+  const h=this.course,ground=h.height(p.x,p.z),low=p.y===undefined||p.y-ground<.3;
+  const lit=low?litRing(this.ringList,Math.hypot(p.x-h.pin.x,p.z-h.pin.z)):-1;
+  if(lit===this.ringLit)return;
+  this.ringLit=lit;
+  this.ringList.forEach((r,i)=>{if(r.line)r.line.material.color.set(i===lit?RING_INSIDE:r.base);});
  }
 
  // Scratch space for a line's points, grown when a longer one is asked for and

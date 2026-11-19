@@ -34,12 +34,33 @@ export function awardedPutts(distance,onGreen,config){
 }
 // THE RINGS DRAWN ON THE GREEN for a putting mode: radius in metres, colour.
 // renderer.js `setPutting` draws each where it lies on the green.
-const RING_COLOURS=['#f7f6ae','#edb351','#e68670'];
+//
+// BOLD, AND LIT WHEN THE BALL IS IN (the owner, 19 November 2026: "make the
+// gimmie circles more visible. Thicker bold lines, and make the line change
+// color when the ball passes inside its edges"). The first ring -- the gimme
+// circle, or the one-putt ring -- is white: the pale yellow it was read as
+// nothing on the paler greens. RING_INSIDE is the colour the innermost ring
+// round the rolling ball turns, a hot pink chosen for being opposite the
+// greens' yellow-green on the colour wheel and unlike the white, orange and
+// salmon rings and the blaze-orange aim line (PLACED). RING_WIDTH is in
+// screen pixels, as the aim line's is (renderer.js; it was 1, WebGL's only
+// width for a plain line).
+const RING_COLOURS=['#ffffff','#edb351','#e68670'];
+export const RING_INSIDE='#ff3d9a';
+export const RING_WIDTH=5;
 export function puttingRings(config){
  const p=puttingConfig(config);
  if(p.mode==='holeout')return [];
  if(p.mode==='gimme')return [{radius:p.gimme*FOOT,colour:RING_COLOURS[0]}];
  return [p.one,p.two,p.three].map((yards,i)=>({radius:yards*YARD,colour:RING_COLOURS[i]}));
+}
+// WHICH RING IS LIT for a ball `distance` metres from the hole: the innermost
+// one it is inside (the edge counts as inside, as the gimme does), or -1. A
+// ball inside the one-putt ring lights that ring alone, not the two around it.
+export function litRing(rings,distance){
+ let best=-1;
+ rings.forEach((r,i)=>{if(distance<=r.radius+1e-9&&(best<0||r.radius<rings[best].radius))best=i;});
+ return best;
 }
 // Which of the putting fields a mode uses: the three ring distances (yards)
 // or the gimme circle (feet). Hole out uses neither.

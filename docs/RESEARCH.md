@@ -16978,6 +16978,31 @@ three to five refreshes. One machine and one short round: the harness's
 Ultra gap is not obvious to a player there, which is not evidence it is
 gone on this PC's card.
 
+### The rings and the aim line, made readable (19 November 2026)
+
+The owner: the gimme circles should be "more visible. Thicker bold lines,
+and make the line change color when the ball passes inside its edges"; the
+aim lines need "a color that is more readable against our more pale
+greens"; and a computer golfer's aim line should not show ("It makes it
+look like they are aiming to miss when they do"). All PLACED, from no
+outside source:
+- **Ring width 5 screen pixels** (putting.js `RING_WIDTH`), drawn as fat
+  lines; it was 1, the only width WebGL draws a plain line at. The aim line
+  is 3.5.
+- **The first ring white** (#ffffff), was pale yellow (#f7f6ae). The paler
+  greens run to about #b3cc86 (biomes.js), whose lightness the pale yellow
+  nearly matched; white is the lightest there is, and the line is now bold.
+- **The lit ring hot pink** (#ff3d9a, `RING_INSIDE`): near the opposite of
+  the greens' yellow-green on the colour wheel (the greens sit about 80-95
+  degrees, the pink about 330), and unlike every other ring colour and the
+  aim line.
+- **The aim line blaze orange** (#ff5a14, renderer.js `AIM_COLOUR`), was
+  cream (#fff5d2), opacity .82 to .95. Blaze orange is the colour worn to
+  be seen against vegetation; it is 20 degrees round from the golfers' gold
+  (43) and far from their cyan, indigo and magenta. Its lightness is about
+  half the palest greens', so it reads by colour and by shade at once. Not
+  measured on screen: chosen, then shown to the owner.
+
 ### The order of play (src/play-order.js, 19 November 2026)
 
 The owner, after a round with three computer golfers: "finishing the hole
