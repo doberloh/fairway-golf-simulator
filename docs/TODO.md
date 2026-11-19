@@ -75,7 +75,9 @@ wrong, unfinished, or owed a check.
     with turns passing every shot.
   - **Bold putting rings, a blaze-orange aim line, no aim line for a
     computer golfer: built, not seen** (the owner, 19 November 2026).
-    Tested: which ring lights (tests/putting-rings.test.mjs). To check on
+    Tested: which ring lights (tests/putting-rings.test.mjs); every smoke
+    journey passed on its build (46 of 46), none of them looking at the
+    rings or the line's colour. To check on
     the phone and the PC: the gimme circle bold and white, turning pink
     as a putt rolls inside it; Dartboard's three rings, only the inner one
     round the ball lit; the orange line readable on the palest greens; no
