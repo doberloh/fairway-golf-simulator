@@ -16963,6 +16963,21 @@ often after a computer strike is not established.** A guess, not tested:
 its camera follows a ball to views the harness's straight-hitting person
 never shows. Left open in TODO.
 
+*A person playing it* (19 November 2026; tools/probe-frames.js through
+tools/phone-probe.mjs, every frame over 50 ms with the strike before it).
+The owner on a Mac mini (Apple M4, Chrome 157 through ANGLE Metal, Ultra,
+uncapped on a 60 Hz screen, 1920x870 window), one Endless round with
+computer golfers, about five minutes: "It went pretty smoothly". In play
+the mean frame was 16.8-17.5 ms (the screen's 16.7), frames over 50 ms 2,
+0 and 7 in the three minutes after the first shot, and none 150-270 ms
+after a computer strike (the nearest 67 ms, 1.35 s after). The longest
+frames were elsewhere: 1,733, 533 and 467 ms while the course loaded,
+1,232 ms before the first shot, 900 ms at the change to the second hole.
+On a 60 Hz screen a frame is a whole number of 16.7 ms, so 50-83 ms is
+three to five refreshes. One machine and one short round: the harness's
+Ultra gap is not obvious to a player there, which is not evidence it is
+gone on this PC's card.
+
 ### Opponents that adapt: all placed (src/ai/adapt.js)
 
 The person's form is their strokes over par plus their handicap strokes

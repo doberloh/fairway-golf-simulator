@@ -80,7 +80,16 @@ wrong, unfinished, or owed a check.
   `tools/frame-round.mjs --tier ultra --rounds 12`, every load counted.
   Whether a person playing feels them: `node tools/phone-probe.mjs --script
   tools/probe-frames.js` writes each frame over 50 ms with whose strike came
-  before it and how long before (the owner's own rounds; not yet played).
+  before it and how long before. First played 19 November 2026, the owner
+  on a Mac mini (Apple M4, Chrome, Ultra, 60 Hz screen), one Endless round
+  with computer golfers, about five minutes ("It went pretty smoothly"):
+  mean 16.8-17.5 ms in play, one minute with no frame over 50 ms, and **no
+  stall 150-270 ms after a computer strike** (the nearest, 67 ms at 1.35 s).
+  What it did show: 0.5-1.7 s while the course loaded, one of 1.2 s before
+  the first shot, and 0.9 s at the move to the second hole (the phone's
+  *Half a second at a new hole* below, on a Mac too). One machine, one
+  short round: it says the harness's Ultra gap is not obvious to a player
+  there, not that it is gone.
 
 - [ ] **The grass should be darker on every landscape** (the owner, 15
   November 2026, looking at the painted ground on the iPhone: "overall
@@ -105,7 +114,9 @@ wrong, unfinished, or owed a check.
     known why. The cheap way round without the cause: repaint less often,
     and when the player will not notice (the ball at rest, a hole's change).
   - **Half a second at a new hole** (programs built then: the recorder names
-    ShaderMaterial, MeshToonMaterial, Far ground).
+    ShaderMaterial, MeshToonMaterial, Far ground). Not the phone alone: a
+    Mac mini (M4, Ultra) showed 0.9 s at the move to a second hole (19
+    November 2026, tools/probe-frames.js).
   - **Hiding the graphics options on a phone** (the owner's idea of 14
     November, held "until its figures are good"; they are now).
   - **45 a second sustained** (the owner's first target) needs about half
