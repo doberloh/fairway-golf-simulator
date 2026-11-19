@@ -60,8 +60,9 @@ wrong, unfinished, or owed a check.
     November 2026, on the same branch). Format & tees, *Order of play*:
     *Rules of golf* (honours, then the ball farthest from the hole) or
     *Hole out in turn* (the default). Tested in tests/play-order.test.mjs
-    and the round matrix, every format with both orders; nobody has
-    played it. To check by hand: a stroke round with three computer
+    and the round matrix, every format with both orders; every smoke
+    journey passed on its build (46 of 46, 19 November 2026), but none
+    plays the *Rules of golf* order, and nobody has played it. To check by hand: a stroke round with three computer
     golfers on *Rules of golf* -- all four tee off, then turns pass ball
     to ball, the camera and the turn card following; a scramble of two
     teams taking turns; a ball out of bounds off the tee waiting for the
