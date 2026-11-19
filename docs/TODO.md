@@ -65,15 +65,19 @@ wrong, unfinished, or owed a check.
   goal asked for a round with three golfers to be no worse than 0.9.18 with
   one person, on Low, Phone and Ultra. Phone and Low met it; Ultra's mean and
   p99 are better but frames over 50 ms read 108 against 85 over twelve
-  minutes, and the worst frame 253 against 216 ms. The long frames come as
-  the camera follows a computer shot to a view not drawn before: the
-  renderer's uniform uploads and program set-up (`renderBufferDirect`),
-  no golfer code. A way in: warm the views a computer shot will show (the
-  landing area's objects drawn once, off screen, in the pre-shot moment
-  that already flies the ball, `preflyComputerShot`), or set up programs
-  for a hole's objects at its start (the phone's *Half a second at a new
-  hole* below is the same cost). Measure with `tools/frame-round.mjs
-  --tier ultra --rounds 12`, every load counted.
+  minutes, and the worst frame 253 against 216 ms. The extra ones come
+  150-270 ms after a computer strike. An unminified profile of them holds
+  the renderer setting up programs and uniforms (`setProgram`, `upload`)
+  and the shot card's layout read (`placeShotCard`), the same work as
+  after the person's strike, and no golfer code; the branch against itself
+  read 21 against 21 over three loads. **Why it comes more often after a
+  computer strike is not known.** A guess, untested: its camera follows a
+  ball to views not drawn before. If so, a way in is to draw the landing
+  area once, off screen, in the pre-shot moment (`preflyComputerShot`
+  already flies the ball there), or set up a hole's programs at its start
+  (the phone's *Half a second at a new hole* below). `placeShotCard`'s
+  layout read is worth taking out either way. Measure with
+  `tools/frame-round.mjs --tier ultra --rounds 12`, every load counted.
 
 - [ ] **The grass should be darker on every landscape** (the owner, 15
   November 2026, looking at the painted ground on the iPhone: "overall

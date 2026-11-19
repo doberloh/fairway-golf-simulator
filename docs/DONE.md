@@ -8647,9 +8647,10 @@ splitting the long frames' profile by the moment they came in:
 The last run (15:20-16:33; Ultra twelve loads, Phone eight, Low four):
 Phone 23 frames over 50 ms against 38 for the person alone, Low 10
 against 24, both met. **Ultra missed**: 108 against 85, worst 253 against
-216 ms, though its mean and p99 are better. Profiled, those frames are the
-renderer setting up a view the camera has not drawn before, as it follows a
-computer shot; open in TODO, *Ultra: about two more stalls a minute with
+216 ms, though its mean and p99 are better. Profiled unminified, those
+frames are the renderer setting up programs and uniforms and the shot
+card's layout read, as after the person's strike, with no golfer code;
+why they come more often after a computer strike is not known. Open in TODO, *Ultra: about two more stalls a minute with
 three computer golfers*.
 
 Dead ends: a Web Worker for the plan (the hole is generated geometry with

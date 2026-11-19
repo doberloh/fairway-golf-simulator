@@ -16943,14 +16943,25 @@ golfers; ms a frame):
 **Ultra missed on long frames**: about two more a minute with the golfers
 (0.9.18 6-8 a load, the branch 6-11), and a worse worst frame; its mean and
 p99 are better. 44 of the branch's 108 came 150-270 ms after a computer
-strike. Profiled (two loads a build, which happened to read 28 against
-16 the other way), those frames are the renderer's own: uniform uploads
-and program set-up in `renderBufferDirect` as the camera first draws a
-new view, with no golfer code in them. A computer golfer's camera follows
-its ball to places the harness's person, who swings straight down the
-middle, never visits. So the gap is the price of new views on this card,
-not of the golfers' thinking; making a new view cheap is renderer work,
-left open in TODO.
+strike; 0.9.18 has the same kind of frame after the person's strike (its
+worst load by load, 163-216 ms, 200-340 ms after it), but about 13 over 48
+strikes against 44 over about 50 computer ones.
+
+Profiled twice. The minified build (two loads a build, which read 28
+against 16 the other way) showed the renderer's uniform uploads in the
+strike frames, with some app functions it could not name. So the branch
+was built unminified (`MINIFY=0 tools/capture/build-hooked.mjs`) and
+profiled against itself, the person alone against three golfers, three
+loads each (17:15-17:24): **21 against 21 frames over 50 ms**, mean 3.88
+against 3.35 ms. Inside the golfers' long frames: `setProgram` and
+`upload` (the renderer setting up programs and their uniforms) and
+`placeShotCard`'s `getBoundingClientRect` (the shot card's layout read,
+27-76 ms); no planning, no flight, no camera search. The person's own
+strike frames hold `flyShot` and `shotCameraPlan` (20-34 ms), which a
+golfer's strike no longer does. **Why those renderer frames come more
+often after a computer strike is not established.** A guess, not tested:
+its camera follows a ball to views the harness's straight-hitting person
+never shows. Left open in TODO.
 
 ### Opponents that adapt: all placed (src/ai/adapt.js)
 
