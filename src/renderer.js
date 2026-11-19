@@ -70,7 +70,7 @@ import {buildGroundLod, select as selectGround, nodeBox as groundNodeBox, GROUND
 import {BAKE, levelCenter, courseSquare, pickRepaint, bakeFragment, encodeTurf} from './ground-bake.js';
 import {holePath} from './low-trees.js';
 import {cullInstances} from './instance-cull.js';
-import {playerCameraPose,flightCameraPose,followPose,framedForBall,puttAimPose,stepOrbit,orbitEye} from './camera.js';
+import {playerCameraPose,flightCameraPose,followPose,framedForBall,puttAimPose,stepOrbit,orbitEye,chasePose,puttChasePose} from './camera.js';
 import {R,CUP_RADIUS,YARD,clamp,FLAGSTICK_HEIGHT,FLAGSTICK_TOP_R,FLAGSTICK_BASE_R} from './physics.js';
 import {puttingRings,litRing,RING_INSIDE,RING_WIDTH} from './putting.js';
 // The aim line and its landing circle (see where the aim line is made).
@@ -3923,6 +3923,22 @@ for(const flag of this.flagsticks||[]){flag.userData.lift=false;flag.position.y=
  follow(p,aim,putting=false){if(!this.config.follow||['overview','free'].includes(this.config.mode))return;
   this.camFlight=null;this.tv=null;
   const pose=followPose(this.course,p,aim,putting);this.targetPos.set(pose.eye.x,pose.eye.y,pose.eye.z);this.targetLook.set(pose.target.x,pose.target.y,pose.target.z);this.trackingBall=true;}
+
+ // FOLLOW THE FLIGHT on a bearing fixed at the strike (camera.js chasePose):
+ // the camera slides after the ball and never turns round it.
+ chase(p,bearing){if(!this.config.follow||['overview','free'].includes(this.config.mode))return;
+  this.camFlight=null;this.tv=null;
+  const pose=chasePose(this.course,p,bearing);this.targetPos.set(pose.eye.x,pose.eye.y,pose.eye.z);this.targetLook.set(pose.target.x,pose.target.y,pose.target.z);this.trackingBall=true;}
+ // A PUTT FOLLOWED FROM BEHIND (camera.js puttChasePose). `fresh` on the
+ // putt's first frame forgets the last putt's stop. Once the ball is near the
+ // cup the camera stops WHERE IT IS -- not where it was heading, which it
+ // would otherwise go on easing toward -- and only turns after that.
+ puttChase(p,bearing,fresh=false){if(!this.config.follow||['overview','free'].includes(this.config.mode))return;
+  this.camFlight=null;this.tv=null;if(fresh)this.puttStopAt=null;
+  const pose=puttChasePose(this.course,p,bearing,this.puttStopAt);
+  if(pose.stopped&&!this.puttStopAt)this.puttStopAt={x:this.camera.position.x,y:this.camera.position.y,z:this.camera.position.z};
+  const eye=this.puttStopAt||pose.eye;
+  this.targetPos.set(eye.x,eye.y,eye.z);this.targetLook.set(pose.target.x,pose.target.y,pose.target.z);this.trackingBall=true;}
 
  // THE TELEVISION CAMERA (tv-camera.js). tvShot starts a shot from wherever
  // the camera stands -- the player's view, which is the tee camera -- with the

@@ -128,7 +128,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `src/map-relief.js` -- the maps' relief shading, lit from the top left of the screen (pure; tests/map-relief.test.mjs) [Relief on the maps]
 - `src/green-reading.js`, `src/green-map.js`, `src/course-map.js` -- reading a green, the maps
 - `src/camera.js`, `src/camera-tours.js`, `src/camera-prefs.js`, `src/projector.js` -- cameras (and the turn a drag gives the green and aim point views, `stepOrbit`), flyovers, the simulator bay
-- `src/tv-camera.js` -- a full shot filmed by a tee camera and a landing camera, and the whole-shot view after it
+- `src/tv-camera.js` -- the Television shot camera (a tee camera and a landing camera) and the whole-shot view after any shot; the default follow camera is camera.js `chasePose`/`puttChasePose` [FOLLOW THE FLIGHT IS THE DEFAULT AGAIN]
 - `src/gen-pool.js`, `src/gen-worker.js` -- workers that compute ground heights while a course generates
 - `src/shot-visuals.js`, `src/roll-hop.js`, `src/auto-resolution.js` -- tracers and effects, automatic resolution
 

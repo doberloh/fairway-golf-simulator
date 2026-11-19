@@ -88,7 +88,7 @@ import './ui-dropdown.css';
 import {makeWindow} from './ui-windows.js';
 import {settingsChanges,studioHud,paintStudioHud,buildStudioSheet} from './ui-studio.js';
 import {nextFocus,dirOfKey,dirOfPad} from './ui-focus.js';
-import {framedForBall} from './camera.js';
+import {framedForBall,shotBearing} from './camera.js';
 import {buildLabel,buildStamp,deviceFacts,webglFacts,frameMeter,errorLog,diagnosticReport} from './diagnostic.js';
 import {runBench,readingOf} from './device-bench.js';
 import {secondRecorder,runWatch,BEFORE_SECONDS} from './device-watch.js';
@@ -7778,8 +7778,9 @@ function renderPanel(name,content){
   ${slider('cameraFov','Field of view',c.fov,30,90,'°')}`}
   <p class="note" id="bayNote"></p>
   <label class="check"><input id="cameraFollow" type="checkbox" ${c.follow?'checked':''}> Follow the ball in flight</label>
+  <label class="field">Shot camera<select id="cameraShot"><option value="follow" ${c.shotCamera!=='tv'?'selected':''}>Follow the flight · the camera trails the ball</option><option value="tv" ${c.shotCamera==='tv'?'selected':''}>Television · a still camera, then one where it lands</option></select></label>
   <label class="check"><input id="cameraReview" type="checkbox" ${c.review!==false?'checked':''}> Show the whole shot when the ball stops</label>
-  <p class="note">A putt is followed with the camera pointed at the hole, so the cup stays still on screen while the ball rolls to it.</p>
+  <p class="note">The camera follows each shot along the line it was struck on and never circles the ball. A putt is followed from behind and the camera stops two metres short of the cup, then only turns to watch the ball in.</p>
   ${slider('freeSpeed','Free-flight speed',c.freeSpeed||45,5,180,' m/s')}
   <p class="note">Free flight: drag to look; W/A/S/D to move; R/F to rise or descend; Shift to move faster. Arrow keys look around. The on-screen controls work with touch.</p>
   <button class="secondary" id="resetCamera">Reset camera</button>`;
@@ -7804,7 +7805,7 @@ function renderPanel(name,content){
    }
   };
   const apply=()=>{
-   Object.assign(c,{freeSpeed:Number($('freeSpeed').value),follow:$('cameraFollow').checked,review:$('cameraReview').checked});
+   Object.assign(c,{freeSpeed:Number($('freeSpeed').value),follow:$('cameraFollow').checked,review:$('cameraReview').checked,shotCamera:$('cameraShot')?.value==='tv'?'tv':'follow'});
    if(c.sim)Object.assign(c,{eyeHeight:Number($('eyeHeight').value),ballAhead:Number($('ballAhead').value),
     screenWidth:Number($('screenWidth').value)||c.screenWidth,screenHeight:Number($('screenHeight').value)||c.screenHeight,standFeet:Number($('standFeet').value),standSide:Number($('standSide').value)});
    else Object.assign(c,{height:Number($('cameraHeight').value),offset:Number($('cameraOffset').value),
@@ -9414,11 +9415,18 @@ function tick(now){
   // is filmed by the television pair (tv-camera.js) -- the tee camera turning
   // with the ball, then the landing camera -- and once the ball stops, the
   // camera flies up to show the whole shot, if the player has that on.
-  const tvOn=view.config.follow&&flight.tv&&!flight.result.puttStroke&&!['overview','free'].includes(view.config.mode);
+  // FOLLOW THE FLIGHT IS THE DEFAULT AGAIN (the owner, 19 November 2026):
+  // the camera trails the ball on a line fixed at the strike (camera.js
+  // chasePose, puttChasePose), so it never circles it; the television pair
+  // is kept as Camera settings' other shot camera (`shotCamera: 'tv'`).
+  const watching=view.config.follow&&!['overview','free'].includes(view.config.mode);
+  const tvOn=watching&&view.config.shotCamera==='tv'&&flight.tv&&!flight.result.puttStroke;
+  if(flight.camBearing===undefined)flight.camBearing=flight.result.puttStroke?(flight.replay?flight.aim:aim)*Math.PI/180:shotBearing(flight.result.points);
   if(flight.reviewing){}
   else if(tvOn){if(!flight.tvStarted){flight.tvStarted=true;view.tvShot(flight.tv);}view.tvFollow(p,flight.elapsed);}
-  else if(flight.hold>=CAMERA_HOLD||flight.result.puttStroke)view.follow(p,flight.replay?flight.aim:aim,!!flight.result.puttStroke);
-  if(flight.elapsed>=flight.result.time&&!flight.reviewing){flight.reviewing=true;if(hud1&&!flight.replay)showShotCard(cardRecord(),true,apexOf(flight.result.points));if(tvOn&&view.config.review!==false){const pose=planReview({points:flight.result.points,toWorld:q=>view.course.toWorld(q),groundAt:(x,z)=>view.world.height(x,z),trees:view.world.trees,fov:view.camera.fov,aspect:view.camera.aspect});if(pose){view.tvReview(pose);flight.reviewed=true;}}}view.setTrail(flight.result.puttStroke?[]:trailUpTo(pts,flight.elapsed-TRACER_LAG,flight.index+1));if(flight.elapsed>=flight.result.time){if(flight.replay){flight.endHold=(flight.endHold||0)+dt;liveLine(`Final lie · returning in ${Math.max(0,Math.ceil(REPLAY_HOLD_SECONDS-flight.endHold))}s`);if(replayFinished(flight.elapsed,flight.result.time,flight.endHold))finishShot();}else{flight.endHold=(flight.endHold||0)+dt;const need=flight.reviewed?REVIEW_HOLD_SECONDS:flight.result.holed?HOLED_HOLD_SECONDS:SHOT_HOLD_SECONDS;liveLine(`Final lie · playing on in ${Math.max(0,Math.ceil(need-flight.endHold))}s`);if(shotSettled(flight.elapsed,flight.result.time,flight.endHold,need)){finishShot();sendPlayer();}}}}
+  else if(flight.result.puttStroke){view.puttChase(p,flight.camBearing,!flight.puttChased);flight.puttChased=true;}
+  else if(flight.hold>=CAMERA_HOLD)view.chase(p,flight.camBearing);
+  if(flight.elapsed>=flight.result.time&&!flight.reviewing){flight.reviewing=true;if(hud1&&!flight.replay)showShotCard(cardRecord(),true,apexOf(flight.result.points));if(watching&&!flight.result.puttStroke&&view.config.review!==false){const pose=planReview({points:flight.result.points,toWorld:q=>view.course.toWorld(q),groundAt:(x,z)=>view.world.height(x,z),trees:view.world.trees,fov:view.camera.fov,aspect:view.camera.aspect});if(pose){view.tvReview(pose);flight.reviewed=true;}}}view.setTrail(flight.result.puttStroke?[]:trailUpTo(pts,flight.elapsed-TRACER_LAG,flight.index+1));if(flight.elapsed>=flight.result.time){if(flight.replay){flight.endHold=(flight.endHold||0)+dt;liveLine(`Final lie · returning in ${Math.max(0,Math.ceil(REPLAY_HOLD_SECONDS-flight.endHold))}s`);if(replayFinished(flight.elapsed,flight.result.time,flight.endHold))finishShot();}else{flight.endHold=(flight.endHold||0)+dt;const need=flight.reviewed?REVIEW_HOLD_SECONDS:flight.result.holed?HOLED_HOLD_SECONDS:SHOT_HOLD_SECONDS;liveLine(`Final lie · playing on in ${Math.max(0,Math.ceil(need-flight.endHold))}s`);if(shotSettled(flight.elapsed,flight.result.time,flight.endHold,need)){finishShot();sendPlayer();}}}}
  if(!flight&&!dropState&&view.config.mode!=='free'&&now-lastMapFrame>80){lastMapFrame=now;drawMap($('map'),course,round.position,round.candidates,view.config.mode==='overview',view.camera.position,computerUp()?null:aimPoint,view.elapsed);}
  // The reading tools come off while the ball is moving. Driven from the state
  // every frame rather than flipped at the two ends of a shot: a shot starts and

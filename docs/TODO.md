@@ -73,6 +73,16 @@ wrong, unfinished, or owed a check.
     others; the choice kept for the next round. Other golfers' balls are
     not drawn while they wait (as in match play), which may read oddly
     with turns passing every shot.
+  - **Follow the flight again, and a putt camera that stops: built, not
+    seen** (the owner, 19 November 2026). Camera settings, *Shot camera*:
+    *Follow the flight* (default) or *Television*. Tested in
+    tests/chase-camera.test.mjs (the camera's angle to the ball never
+    changes; a putt starts from the aim view and stops 2 m out). To check
+    by hand: a drive, a curving shot and a pitch past the pin -- the
+    camera trails and never swings round; a long putt -- the camera glides
+    after the ball and stops 2 m short, then only turns; a short putt --
+    no move; Television still as before; the review fly-up after a full
+    shot with either. Frame figures were taken with the television camera.
   - **Bold putting rings, a blaze-orange aim line, no aim line for a
     computer golfer: built, not seen** (the owner, 19 November 2026).
     Tested: which ring lights (tests/putting-rings.test.mjs); every smoke

@@ -299,7 +299,10 @@ the courses several suites share, and builds many at once on worker threads
 - **Cameras and maps** -- `waterways-tours` also checks `treeBlocksView` (a tree on
   the line or filling the frame near the camera is cleared, one behind the ball,
   behind the camera, far off to the side, or under the line is not);
-  `camera-flight`, `approach-camera`, `tv-camera`,
+  `camera-flight`, `approach-camera`, `tv-camera`, `chase-camera` (follow
+  the flight on a bearing fixed at the strike: the camera's angle to the ball
+  never changes; a putt's first frame is the aim view's, it stops inside 2 m;
+  the `shotCamera` setting),
   `camera-orbit` (the drag round the green and aim point views: no turn
   leaves the view as it was, a turn keeps distance and height, the tilt stops
   at 5 and 85 degrees and turns back at once, the wheel stops at a third and

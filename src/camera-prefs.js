@@ -15,6 +15,10 @@ export const DEFAULT_CAMERA = {
  // The broadcast rig: high and well back, which is what reads on a laptop.
  height: 9, offset: 0, distance: 23, fov: 53,
  follow: true, freeSpeed: 45,
+ // Which camera films a full shot: 'follow', trailing the ball on a line set
+ // at the strike (camera.js chasePose; the default again since the owner's
+ // word of 19 November 2026), or 'tv', the television pair (tv-camera.js).
+ shotCamera: 'follow',
  // After a full shot stops, fly up to show the whole of it (tv-camera.js).
  review: true,
  // The simulator rig. Off by default -- most people are not standing in a bay,
@@ -36,6 +40,7 @@ const NUMBERS = {
  screenWidth: [12, 480], screenHeight: [8, 300], standFeet: [1, 60], standSide: [-SIDE_MAX_FEET, SIDE_MAX_FEET],
 };
 const MODES = ['player', 'overview', 'green', 'free'];
+export const SHOT_CAMERAS = ['follow', 'tv'];
 
 // Anything unreadable falls back to the default for that field alone, so one bad
 // number cannot cost you the rest of the setup.
@@ -52,6 +57,7 @@ export function validateCamera(raw = {}) {
  if (MODES.includes(raw.mode)) out.mode = raw.mode;
  if (typeof raw.follow === 'boolean') out.follow = raw.follow;
  if (typeof raw.review === 'boolean') out.review = raw.review;
+ if (SHOT_CAMERAS.includes(raw.shotCamera)) out.shotCamera = raw.shotCamera;
  if (typeof raw.sim === 'boolean') out.sim = raw.sim;
  return out;
 }

@@ -181,6 +181,67 @@ export function flightCameraPose(hole,p,aim,putting=false){
  return {eye,target:{x:ball.x+Math.sin(base)*lead,y:p.y,z:ball.z+Math.cos(base)*lead}};
 }
 
+// FOLLOW THE FLIGHT, ON A LINE FIXED AT THE STRIKE (the owner, 19 November
+// 2026, going back to the follow camera from the television pair: "For ball
+// flight cameras i want to go back to the 'follow the flight' camera", and "I
+// want the camera to stop circling around the ball while its showing a
+// shot"). `flightCameraPose` trails along the line to the HOLE, which turns as
+// the ball moves -- past or beside the pin it swings half way round the ball.
+// These trail along ONE bearing, set when the ball is struck and never
+// changed: the line from where it was struck to where it will stop (the whole
+// shot is simulated at the strike), so the camera slides after the ball and
+// never orbits it. A draw or a fade shows as the ball moving across the
+// frame, which the old chase hid. `bearing` is in the hole's own frame, in
+// radians: 0 down the hole, as `aim` is.
+export function shotBearing(points){
+ const a=points?.[0],b=points?.[points.length-1];
+ if(!a||!b)return 0;
+ const dx=b.x-a.x,dz=b.z-a.z;
+ return Math.hypot(dx,dz)>.05?Math.atan2(dx,dz):0;
+}
+// A full shot: off the shoulder by FLIGHT_VIEW as the old chase was, as far
+// back and as high as it was (closing in toward the pin, and down to turf
+// level for a ball trickling up to the cup) -- only the bearing no longer
+// turns.
+export function chasePose(hole,p,bearing){
+ const a=bearing+FLIGHT_VIEW;
+ const close=approachCloseness(hole,p),track=trackCloseness(hole,p);
+ const wide=TRACK_WIDE_DISTANCE+(TRACK_TIGHT_DISTANCE-TRACK_WIDE_DISTANCE)*track;
+ const tall=TRACK_WIDE_HEIGHT+(TRACK_TIGHT_HEIGHT-TRACK_WIDE_HEIGHT)*track;
+ const distance=wide*(1-close)+CLOSE_DISTANCE*close,height=tall*(1-close)+CLOSE_HEIGHT*close;
+ const y=p.y??hole.height(p.x,p.z);
+ const e={x:p.x-Math.sin(a)*distance,z:p.z-Math.cos(a)*distance};
+ const toPin=hole?.pin?Math.hypot(hole.pin.x-p.x,hole.pin.z-p.z):0;
+ const lead=Math.min(distance*LOOK_AHEAD,toPin*LOOK_CAP);
+ const t={x:p.x+Math.sin(bearing)*lead,z:p.z+Math.cos(bearing)*lead};
+ return {eye:hole.toWorld({...e,y:y+height}),target:hole.toWorld({...t,y})};
+}
+// A PUTT: straight behind the ball down the line it was struck on, as far back
+// and as high as the putt was aimed from (PUTT_RIG), so the camera does not
+// jump when the ball starts -- it glides forward with it. It STOPS once the
+// ball is within PUTT_STOP of the cup: from there it only turns to keep the
+// ball in the picture as it drops, lips out or runs by. The look is the aim
+// view's own, worked from where the ball is now: along the line, the cup's
+// distance plus PUTT_RIG.beyond, between PUTT_RIG.near and .far -- so on the
+// first frame eye and look are exactly where the aim view had them (no jump),
+// the look then rests just past the cup while the ball runs up to it, and it
+// follows a ball that breaks off the line or runs by. `stopAt` is the eye the
+// camera stopped at (renderer.js keeps it), or null while it still follows.
+// PLACED: PUTT_STOP 2 m; followed from the aim view's 6.5 m back and 2.2 m up.
+export const PUTT_STOP=2;
+export function puttChasePose(hole,p,bearing,stopAt=null){
+ const dx=Math.sin(bearing),dz=Math.cos(bearing);
+ const toCup=hole?.pin?Math.hypot(hole.pin.x-p.x,hole.pin.z-p.z):PUTT_RIG.near;
+ const lead=Math.min(PUTT_RIG.far,Math.max(PUTT_RIG.near,toCup+PUTT_RIG.beyond));
+ const t={x:p.x+dx*lead,z:p.z+dz*lead};
+ const target=hole.toWorld({...t,y:hole.height(t.x,t.z)});
+ if(stopAt)return {eye:stopAt,target,stopped:true};
+ const e={x:p.x-dx*PUTT_RIG.distance,z:p.z-dz*PUTT_RIG.distance};
+ // The aim view stands on the ground under the ball, not the ball's centre.
+ const g=hole.height(p.x,p.z),eyeY=Math.max(g+PUTT_RIG.height,hole.height(e.x,e.z)+PUTT_RIG.clear);
+ return {eye:hole.toWorld({...e,y:eyeY}),target,stopped:toCup<=PUTT_STOP};
+}
+
 // THE PUTT FOLLOW: the same camera, pointed at the hole.
 //
 // There is one camera for every shot -- that was settled when the separate putt

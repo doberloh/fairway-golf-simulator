@@ -16978,6 +16978,25 @@ three to five refreshes. One machine and one short round: the harness's
 Ultra gap is not obvious to a player there, which is not evidence it is
 gone on this PC's card.
 
+### Follow the flight again, without the circling (19 November 2026)
+
+The owner went back to the follow camera from the television pair, and
+asked that the camera stop "circling around the ball while its showing a
+shot"; for putts, to "follow once the ball starts moving at a comfortable
+viewing distance from behind the ball and then stop once its close the
+hole". The chase keeps its old numbers (24 m back and 11 m up, closing to
+13 and 6.5 m as the ball nears the pin, 1.45 and 0.6 m at the cup; 25
+degrees off the shoulder; held 1.5 s after the strike) and trails one
+bearing fixed at the strike, strike to rest, instead of the line to the
+hole. The putt follow is the aim view moved with the ball -- 6.5 m back,
+2.2 m up, looking 2.5 m past the cup (6-30 m ahead) -- and stops 2 m from
+the cup. **PLACED:** the fixed bearing being strike-to-rest rather than the
+first metres of flight (a slice then shows as the ball crossing the frame);
+the 2 m stop (inside it a putt is watched from where it was aimed); the
+review fly-up kept after a followed shot (it was the television camera's,
+and is its own setting). The frame-rate figures above were taken with the
+television camera; none were retaken.
+
 ### The rings and the aim line, made readable (19 November 2026)
 
 The owner: the gimme circles should be "more visible. Thicker bold lines,
