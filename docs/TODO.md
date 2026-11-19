@@ -61,7 +61,7 @@ wrong, unfinished, or owed a check.
     (it was drawn on the old panel only, which Play hides, until the owner
     could not find it; Scoring, Caddie and the computer golfers' two
     settings had the same fault and were placed with it; the `relief`
-    smoke journey's new check for them has not run yet):
+    smoke journey's new check for them passed, 19 November 2026):
     *Rules of golf* (honours, then the ball farthest from the hole) or
     *Hole out in turn* (the default). Tested in tests/play-order.test.mjs
     and the round matrix, every format with both orders; every smoke
