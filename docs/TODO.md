@@ -60,6 +60,21 @@ wrong, unfinished, or owed a check.
 ## Known wrong
 
 
+- [ ] **Ultra: about two more stalls a minute with three computer golfers**
+  (fairway-tour, 18 November 2026; RESEARCH, *After the minimap fix*). The
+  goal asked for a round with three golfers to be no worse than 0.9.18 with
+  one person, on Low, Phone and Ultra. Phone and Low met it; Ultra's mean and
+  p99 are better but frames over 50 ms read 108 against 85 over twelve
+  minutes, and the worst frame 253 against 216 ms. The long frames come as
+  the camera follows a computer shot to a view not drawn before: the
+  renderer's uniform uploads and program set-up (`renderBufferDirect`),
+  no golfer code. A way in: warm the views a computer shot will show (the
+  landing area's objects drawn once, off screen, in the pre-shot moment
+  that already flies the ball, `preflyComputerShot`), or set up programs
+  for a hole's objects at its start (the phone's *Half a second at a new
+  hole* below is the same cost). Measure with `tools/frame-round.mjs
+  --tier ultra --rounds 12`, every load counted.
+
 - [ ] **The grass should be darker on every landscape** (the owner, 15
   November 2026, looking at the painted ground on the iPhone: "overall
   across all biomes i want the grass to be darker. Lets make it a todo").

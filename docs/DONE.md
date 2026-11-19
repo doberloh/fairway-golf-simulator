@@ -8631,6 +8631,27 @@ still at twice the long frames:
   against 72 for the person alone on 0.9.18, inside 0.9.18's own spread;
   Phone 35 against 36, Low 15 against 19.
 
+Leaving loads out after seeing them was not clean, so the next runs were
+judged on rules written down first (GOAL.md's log), every load counted.
+Ultra read level at 13:35 (114 against 116). A sixth cause was then found by
+splitting the long frames' profile by the moment they came in:
+
+- **The minimap redrew its whole background at every tee shot** (about
+  60 ms here, at the strike and again at the landing, a person's shot
+  too): the shot's origin, rounded to the grid as it is struck, moved the
+  map's framing by a fraction of a millimetre, and the background's key
+  held it exactly. The key now rounds the framing (renderer.js `drawMap`;
+  PROJECT_HANDOFF *The map's still layer is keyed on its framing
+  rounded*).
+
+The last run (15:20-16:33; Ultra twelve loads, Phone eight, Low four):
+Phone 23 frames over 50 ms against 38 for the person alone, Low 10
+against 24, both met. **Ultra missed**: 108 against 85, worst 253 against
+216 ms, though its mean and p99 are better. Profiled, those frames are the
+renderer setting up a view the camera has not drawn before, as it follows a
+computer shot; open in TODO, *Ultra: about two more stalls a minute with
+three computer golfers*.
+
 Dead ends: a Web Worker for the plan (the hole is generated geometry with
 functions, not data a worker can take); a stop at the first sample under the
 ground for the aim correction's flight (`curveCompensation`), added and taken

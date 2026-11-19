@@ -16927,6 +16927,31 @@ totals -- the same disturbance as the branch's two, landing on the other
 build. Long-frame counts on this machine move by that much from load to
 load; the totals are the figure the rule names.
 
+*After the minimap fix* (the map's background had been redrawn at every
+tee shot, PROJECT_HANDOFF *The map's still layer is keyed on its framing
+rounded*), a second rule written before the run (GOAL.md, 15:19): Ultra
+twelve loads a build, Phone eight, Low four, every load counted
+(15:20-16:33; 0.9.18 with the person alone against the branch with three
+golfers; ms a frame):
+
+| Setting | Mean A / B | p99 A / B | Frames over 50 ms, A / B | Worst A / B |
+| --- | --- | --- | --- | --- |
+| Phone (8 loads) | 2.80 / 2.69 | 7.2 / 7.2 | 38 / 23 | 140 / 124 |
+| Low (4 loads) | 2.00 / 1.99 | 6.6 / 6.7 | 24 / 10 | 127 / 72 |
+| Ultra (12 loads) | 3.79 / 3.59 | 11.2 / 10.1 | **85 / 108** | **216 / 253** |
+
+**Ultra missed on long frames**: about two more a minute with the golfers
+(0.9.18 6-8 a load, the branch 6-11), and a worse worst frame; its mean and
+p99 are better. 44 of the branch's 108 came 150-270 ms after a computer
+strike. Profiled (two loads a build, which happened to read 28 against
+16 the other way), those frames are the renderer's own: uniform uploads
+and program set-up in `renderBufferDirect` as the camera first draws a
+new view, with no golfer code in them. A computer golfer's camera follows
+its ball to places the harness's person, who swings straight down the
+middle, never visits. So the gap is the price of new views on this card,
+not of the golfers' thinking; making a new view cheap is renderer work,
+left open in TODO.
+
 ### Opponents that adapt: all placed (src/ai/adapt.js)
 
 The person's form is their strokes over par plus their handicap strokes

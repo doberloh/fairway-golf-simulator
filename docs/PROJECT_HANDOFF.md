@@ -527,6 +527,8 @@ Each outcrop must lie wholly on its own hole's ground (`nearby`) and stop 10 m s
 
 ### Relief on the maps
 
+**THE MAP'S STILL LAYER IS KEYED ON ITS FRAMING ROUNDED** (renderer.js `drawMap`, `mapLayers`; 18 November 2026): framed on the ball at the tee, the framing moved by the shot origin's grid rounding (rival.js `gridShot`, under a millimetre) as each shot was struck, and the whole still layer -- about 60 ms here -- was redrawn at the strike and again at the landing, every tee shot. The key now holds the framing to a centimetre and the scale to 1/10,000. Anything added to the key that moves by a hair between two draws of the same picture brings the rebuild back; `bench/ab/map-probe.mjs` (local) logs each rebuild with the framing.
+
 The course map and the hole map are shaded as if lit from the top left of the SCREEN (src/map-relief.js; the owner, 8 November 2026). Two traps. **The course map turns the world through 180 degrees** (`mapPoint` negates both axes), so the pixel to the right on screen is the ground at -x and the one below it at -z; light set up in world terms comes from the bottom right and every hill reads as a hollow. **The hole map redraws its still layer on every pan and zoom**, so its relief reads each height once on a grid of screen points and lights each pixel from its neighbours on that grid (about 5,300 lookups); a lookup per neighbour measured 13-40 ms a redraw. Flat ground keeps its colour exactly (the multiplier is 1), so a flat course looks as it did.
 
 ### No facilities for now

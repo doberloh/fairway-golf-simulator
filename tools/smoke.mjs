@@ -1719,6 +1719,10 @@ const JOURNEYS = [
     // The pad shuts a second after the shot (the owner, 16 November 2026);
     // opened again, it still has the path, its finish in the High Push cell.
     await t.until(() => t.page.evaluate(() => document.getElementById('swingPad').hidden), 'the pad to shut after the shot', 4 * SLOW);
+    // Endless draws a new course each run: a push can find water, and its
+    // relief choice covers the Swing button until it is taken (18 November
+    // 2026, MARROWOOD-4146-1). The path is the last stroke's, kept through it.
+    await reliefFirst(t);
     await openPad(t);
     if (!await t.page.evaluate(() => !!document.querySelector('#strokePad .sp-ghost') && !!document.querySelector('#strokePad .sp-cell.push.high.lit'))) throw new Error('the pad did not keep the path and its cell');
     await t.page.screenshot({path: path.join(SHOTS, 'pull-push-path.png')});
