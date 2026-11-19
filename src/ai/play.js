@@ -52,7 +52,7 @@ export function chooseForTeam(round, hole, golfers) {
   const v = (c.penalty || 0) + (c.holed ? 0 : strokesFor(best, lieAt(hole, c.position.x, c.position.z), c.distance));
   if (v < low) { low = v; pick = i; }
  });
- round.chooseScramble(pick);
+ round.chooseScramble(pick, hole.pin);
  return pick;
 }
 

@@ -56,6 +56,18 @@ wrong, unfinished, or owed a check.
   three and Stableford left IDEAS.md for it). The design, the owner's
   answers and the order of work are local: docs/studies/fairway-tour/
   (SPEC.md, GOAL.md, SUMMARY.md). Large.
+  - **Order of play, built and not seen in the game** (the owner, 19
+    November 2026, on the same branch). Format & tees, *Order of play*:
+    *Rules of golf* (honours, then the ball farthest from the hole) or
+    *Hole out in turn* (the default). Tested in tests/play-order.test.mjs
+    and the round matrix, every format with both orders; nobody has
+    played it. To check by hand: a stroke round with three computer
+    golfers on *Rules of golf* -- all four tee off, then turns pass ball
+    to ball, the camera and the turn card following; a scramble of two
+    teams taking turns; a ball out of bounds off the tee waiting for the
+    others; the choice kept for the next round. Other golfers' balls are
+    not drawn while they wait (as in match play), which may read oddly
+    with turns passing every shot.
 
 ## Known wrong
 
@@ -113,6 +125,12 @@ wrong, unfinished, or owed a check.
     the bands between cost 0-1 ms; not the painting, not the mipmaps. Not
     known why. The cheap way round without the cause: repaint less often,
     and when the player will not notice (the ball at rest, a hole's change).
+    Seen again 19 November 2026 (tools/probe-frames.js, the owner's iPhone,
+    Safari, a hole with computer golfers on the fairway-tour build): about
+    three a shot, for the person's shots and the computers' alike -- 85-120
+    ms on the strike's own frame, 130-190 ms 4-10 s after it, a smaller one
+    soon after -- and 500-610 ms at the move to the second hole; mean frame
+    17-18 ms.
   - **Half a second at a new hole** (programs built then: the recorder names
     ShaderMaterial, MeshToonMaterial, Far ground). Not the phone alone: a
     Mac mini (M4, Ultra) showed 0.9 s at the move to a second hole (19

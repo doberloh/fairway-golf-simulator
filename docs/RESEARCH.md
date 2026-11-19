@@ -16978,6 +16978,45 @@ three to five refreshes. One machine and one short round: the harness's
 Ultra gap is not obvious to a player there, which is not evidence it is
 gone on this PC's card.
 
+### The order of play (src/play-order.js, 19 November 2026)
+
+The owner, after a round with three computer golfers: "finishing the hole
+and then watching the AI play the hole by itself for 3 players is not
+enjoyable", asking for "the regular rules of golf for who plays first and
+Honors on the following tee", across every format. Taken from the R&A's
+Rules of Golf (2023), read 19 November 2026; usga.org's Rule 6 page
+answered 403 to a fetch:
+
+- **Rule 6.4a, match play** (https://www.randa.org/en/rog/the-rules-of-golf/rule-6):
+  "The player who wins a hole has the honour at the next teeing area";
+  "If the hole was tied, the player with the honour at the previous teeing
+  area keeps it"; after both have started, "The ball that is farther from
+  the hole is to be played first."
+- **Rule 6.4b, stroke play**: "The player in the group with the lowest gross
+  score at a hole has the honour at the next teeing area"; "The honour is
+  based on gross scores, even in a handicap competition"; a tie plays "in
+  the same order as at the previous teeing area"; then "The ball that is
+  farthest from the hole should be played first", equal distances "by
+  agreement or by using a random method". Ready golf is "allowed and
+  encouraged" -- not modelled.
+- **Rule 6.4c**: a player playing again from the tee waits for "all other
+  players in the group to make their first stroke on the hole".
+- **Rule 23.6, four-ball** (https://www.randa.org/en/rog/the-rules-of-golf/rule-23):
+  "Partners may play in the order the side considers best."
+- **Rule 21** (Stableford, https://www.randa.org/en/rog/the-rules-of-golf/rule-21)
+  says nothing of the honour: Stableford follows 6.4b, gross.
+
+What the game does: honours as 6.4b in every format but match play, which
+takes the side's honour of 6.4a (net on the team card when handicaps are
+on, since a handicap match's hole is won on net). Under the Rules order,
+anyone yet to strike plays first in honour order, then the ball farthest
+from the hole. **PLACED:** an equal distance goes to the honour order, not a
+lot; partners in a match side play by their gross score on the last hole
+(23.6 leaves it to the side); a scramble is played as teams taking turns
+by the team ball's distance (no Rule covers a scramble; it is a format,
+not a Rule of Golf); **the default stays hole-out in turn**, how every
+round here was played before, with the choice remembered once made.
+
 ### Opponents that adapt: all placed (src/ai/adapt.js)
 
 The person's form is their strokes over par plus their handicap strokes

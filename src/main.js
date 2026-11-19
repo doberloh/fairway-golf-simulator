@@ -33,6 +33,7 @@ import {TIME_RATES,RATE_LABELS,PRESETS,formatClock,phaseName,PHASE_ICONS,solarSt
 import {generateCourse,generateWorld,generateWorldSteps,DEFAULT_COURSE,BIOMES} from './course.js';
 import {makeGridPool} from './gen-pool.js';
 import {Round,playsWith,FORMATS} from './game.js';
+import {PLAY_ORDERS,validPlayOrder} from './play-order.js';
 import {XP,XP_MULT,levelOf,holeXp,holeXpParts,shotXpParts,sumParts,onTheNumber,roundXp,withMult,award,takeBack,hasOnNumber,dailyXp,rangeXp,challengePay,CHALLENGE_PAY} from './progression.js';
 import {loadProfiles,storeProfiles,addProfile,renameProfile,setMainProfile,deleteProfile,removeRound,findProfile,exportProfiles,importProfiles,profileByName,mainProfile,tallyShot,tallyMulligan,syncHole,profileSummary,sameGolfer,COUNTERS,BESTS,SCORE_TYPES,roundTotals,qualifies,MAX_PLAYER_NAME,setProfileBag,adoptDistances,setProfileMeter,meterDifficulty,setProfilePlay,setProfileWorn,playingIndex,gainedSummary} from './profile.js';
 import {rewardsOf,reward,unlocksBetween,wornItem,TRACERS,KIND_NAMES,WEARABLE,ACHIEVEMENT_TITLES,FRAMES,badgeName,highestBadge,meterSkin,METER_SKINS,flourishFor,goldFlourishes,SECRET_FLOURISHES} from './rewards.js';
@@ -476,7 +477,10 @@ useMainProfile();
 // The round's out-of-bounds rule is a player preference: chosen once in Format &
 // tees, it stays for every round until changed.
 const RULES_KEY='fairway-rules-v1';
-try{const r=JSON.parse(localStorage.getItem(RULES_KEY)||'null');if(OB_RULES[r?.outOfBounds])Round.defaultOutOfBounds=r.outOfBounds;if(typeof r?.monitorLie==='boolean')Round.defaultMonitorLie=r.monitorLie;}catch{}
+try{const r=JSON.parse(localStorage.getItem(RULES_KEY)||'null');if(OB_RULES[r?.outOfBounds])Round.defaultOutOfBounds=r.outOfBounds;if(typeof r?.monitorLie==='boolean')Round.defaultMonitorLie=r.monitorLie;if(validPlayOrder(r?.playOrder))Round.defaultPlayOrder=r.playOrder;}catch{}
+// WHO PLAYS NEXT (play-order.js), as the Format & tees panel offers it.
+const ORDER_LABELS={holeOut:'Hole out in turn · each golfer finishes the hole',farthest:'Rules of golf · honours, then farthest from the hole'};
+const ORDER_NOTES={holeOut:'Each golfer (or team) plays the hole out before the next one tees off.',farthest:'The honour tees off first; after that the ball farthest from the hole is played next, as on a real course.',match:'The ball farthest from the hole is played first, whichever order of play is chosen.'};
 // Both round rules a group sets and the next round starts with, written together
 // so changing one never forgets the other.
 // THE PLAYER'S COURSE CONDITIONS (turf.js: green speed, green firmness, fairway
@@ -488,7 +492,7 @@ const CONDITIONS_KEY='fairway-conditions-v1';
 let playerTurf=(()=>{try{return turfConfig(JSON.parse(localStorage.getItem(CONDITIONS_KEY)||'null')||{});}catch{return turfConfig();}})();
 const conditionsNow=()=>{try{return turfConfig(settings.turf??playerTurf);}catch{return playerTurf;}};
 const keepConditions=turf=>{playerTurf=settings.turf=turfConfig(turf);try{localStorage.setItem(CONDITIONS_KEY,JSON.stringify(playerTurf));}catch{}};
-const saveRules=()=>{try{localStorage.setItem(RULES_KEY,JSON.stringify({outOfBounds:Round.defaultOutOfBounds,monitorLie:Round.defaultMonitorLie,cpuWatch,cpuChat,caddie:caddieMode}));}catch{}};
+const saveRules=()=>{try{localStorage.setItem(RULES_KEY,JSON.stringify({outOfBounds:Round.defaultOutOfBounds,monitorLie:Round.defaultMonitorLie,playOrder:Round.defaultPlayOrder,cpuWatch,cpuChat,caddie:caddieMode}));}catch{}};
 // COMPUTER GOLFERS (the fairway-tour goal, src/ai/): how much of their play
 // is shown (seat.js WATCH), whether they say a word now and then, the golfer
 // behind each computer seat (one per round and seat, so its memory of a shot
@@ -1606,7 +1610,7 @@ function computerPicks(){
  const hcp=Math.min(...members.map(p=>p.cpu.handicap)),list=pickList();
  const cost=c=>(c.penalty||0)+(c.holed?0:strokesFor(hcp,course.surface(c.position.x,c.position.z),c.distance));
  let best=0;list.forEach((c,i)=>{if(cost(c)<cost(list[best]))best=i;});
- setTimeout(()=>{if(!round.scrambleSelection)return;pickIndex=best;try{const carded=cardedSeats();round.chooseScramble(pickIndex);announceHoleOut(carded);afterSelection();}catch(e){toast(e.message);}},900);
+ setTimeout(()=>{if(!round.scrambleSelection)return;pickIndex=best;try{const carded=cardedSeats();round.chooseScramble(pickIndex,course.pin);announceHoleOut(carded);afterSelection();}catch(e){toast(e.message);}},900);
  return true;
 }
 
@@ -4048,7 +4052,7 @@ function confirmDrop(){if(!dropState||$('confirmDrop').disabled)return;try{round
 
 // The group as the round panel currently describes it. Hole count is not here:
 // a course owns that, so the two can never disagree.
-function readGroup(){return {players:readDraft(),mode:$('roundMode').value,tee:$('roundTee').value,outOfBounds:$('roundOB')?.value||Round.defaultOutOfBounds,monitorLie:$('roundMonLie')?$('roundMonLie').value!=='off':Round.defaultMonitorLie,handicaps:$('roundNet')?.value==='net'};}
+function readGroup(){return {players:readDraft(),mode:$('roundMode').value,tee:$('roundTee').value,outOfBounds:$('roundOB')?.value||Round.defaultOutOfBounds,playOrder:validPlayOrder($('roundOrder')?.value)?$('roundOrder').value:Round.defaultPlayOrder,monitorLie:$('roundMonLie')?$('roundMonLie').value!=='off':Round.defaultMonitorLie,handicaps:$('roundNet')?.value==='net'};}
 // Guarded at the entrance rather than at each call site: this is reachable from
 // the library panel, which opens in the studio too, and it used to walk straight
 // out of an unsaved landscape without a word.
@@ -5643,7 +5647,7 @@ function readDraft(){
 }
 // What each format is called in Saved rounds and a golfer's history.
 const FORMAT_NAMES={stroke:'Stroke play',match:'Match play',scramble:'Scramble',skins:'Skins',stableford:'Stableford'};
-const FORMAT_NOTES={stroke:'Each golfer finishes the entire hole before the next player tees off. Lowest total wins.',scramble:'All teammates hit from the same lie. Choose one result for the next stroke; only that shot’s penalty counts. One or two teams are supported.',match:'Two sides compete hole by hole. Each side uses its lowest individual score (best ball). Singles works with one golfer per side. The match ends when the lead exceeds holes remaining.',skins:'Two to four golfers, each for themselves, playing every hole out as in stroke play. Every hole is worth a skin: the lowest score alone wins it, and a tie carries it to the next hole. Skins still carried after the last hole go unclaimed.',stableford:'Played like stroke play, scored in points: two for par, three for a birdie, one for a bogey, none for worse, so one bad hole costs no more than zero. With handicaps on, each golfer’s strokes come off first. Most points wins.'};
+const FORMAT_NOTES={stroke:'Each golfer plays their own ball. Lowest total wins.',scramble:'All teammates hit from the same lie. Choose one result for the next stroke; only that shot’s penalty counts. One or two teams are supported.',match:'Two sides compete hole by hole. Each side uses its lowest individual score (best ball). Singles works with one golfer per side. The match ends when the lead exceeds holes remaining.',skins:'Two to four golfers, each for themselves, playing every hole out as in stroke play. Every hole is worth a skin: the lowest score alone wins it, and a tie carries it to the next hole. Skins still carried after the last hole go unclaimed.',stableford:'Played like stroke play, scored in points: two for par, three for a birdie, one for a bogey, none for worse, so one bad hole costs no more than zero. With handicaps on, each golfer’s strokes come off first. Most points wins.'};
 // `match` is false for endless: a match ends when the lead exceeds the holes
 // remaining and an endless run has no last hole, so `Round` rejects the
 // combination outright. Offering it and then throwing would be a worse answer.
@@ -5651,7 +5655,7 @@ const FORMAT_NOTES={stroke:'Each golfer finishes the entire hole before the next
 // carry simply runs on (the owner, 16 October 2026).
 // `strokeOnly`: the course of the week, whose bests are strokes for the
 // eighteen, so its format is fixed (the owner, 15 October 2026).
-const formatFields=({match=true,strokeOnly=false}={})=>`<label class="field">Format<select id="roundMode"${strokeOnly?' disabled':''}><option value="stroke">${strokeOnly?'Stroke play only':'Stroke play'}</option>${strokeOnly?'':`<option value="scramble">Team scramble</option>${match?'<option value="match">Match play · best ball teams</option>':''}<option value="skins">Skins · two to four golfers</option><option value="stableford">Stableford · points per hole</option>`}</select></label>${strokeOnly||!match?'':`<label class="field">Scoring<select id="roundNet"><option value="gross">Gross · strokes as played</option><option value="net" ${round.handicaps?'selected':''}>Net · each golfer’s handicap strokes off</option></select></label>`}<label class="field">Play from<select id="roundTee">${setupTees().map(t=>`<option value="${t}" ${teeFor(round.tee,setupTees())===t?'selected':''}>${teeName(t)} tees</option>`).join('')}</select></label><label class="field">Out of bounds<select id="roundOB">${Object.entries(OB_RULES).map(([k,v])=>`<option value="${k}" ${round.outOfBounds===k?'selected':''}>${v.label}</option>`).join('')}</select></label><label class="field">Lie penalty for launch-monitor shots<select id="roundMonLie"><option value="on" ${round.monitorLie?'selected':''}>On: rough and sand cost ball speed</option><option value="off" ${round.monitorLie?'':'selected'}>Off: monitor shots fly as measured</option></select></label><label class="field">Computer golfers’ shots<select id="roundCpuWatch">${WATCH.map(([k,t])=>`<option value="${k}" ${cpuWatch===k?'selected':''}>${t}</option>`).join('')}</select></label><label class="field">Caddie’s suggestion<select id="roundCaddie"><option value="auto" ${caddieMode==='auto'?'selected':''}>For swing pad golfers</option><option value="on" ${caddieMode==='on'?'selected':''}>For everyone</option><option value="off" ${caddieMode==='off'?'selected':''}>Off</option></select></label><label class="field">Computer golfers’ words<select id="roundCpuChat"><option value="on" ${cpuChat?'selected':''}>On: a word after a shot worth one</option><option value="off" ${cpuChat?'':'selected'}>Off: they play in silence</option></select></label><label class="field">Course conditions<select id="roundConditions">${Object.entries(CONDITION_PRESETS).map(([k,p])=>`<option value="${k}">${p.label} · ${p.line}</option>`).join('')}<option value="custom">Your own mix · set each below</option></select></label><label class="field">Green speed<select id="roundStimp">${stimpOptions()}</select></label><label class="field">Green firmness<select id="roundGreens">${firmnessOptions('green')}</select></label><label class="field">Fairway firmness<select id="roundFairways">${firmnessOptions('course')}</select></label><label class="field">Putting<select id="roundPuttingMode">${PUTTING_MODES}</select></label><div id="roundPutting-distances">${puttingFields('roundPutting',playerPutting())}</div>`;
+const formatFields=({match=true,strokeOnly=false}={})=>`<label class="field">Format<select id="roundMode"${strokeOnly?' disabled':''}><option value="stroke">${strokeOnly?'Stroke play only':'Stroke play'}</option>${strokeOnly?'':`<option value="scramble">Team scramble</option>${match?'<option value="match">Match play · best ball teams</option>':''}<option value="skins">Skins · two to four golfers</option><option value="stableford">Stableford · points per hole</option>`}</select></label>${strokeOnly||!match?'':`<label class="field">Scoring<select id="roundNet"><option value="gross">Gross · strokes as played</option><option value="net" ${round.handicaps?'selected':''}>Net · each golfer’s handicap strokes off</option></select></label>`}<label class="field">Play from<select id="roundTee">${setupTees().map(t=>`<option value="${t}" ${teeFor(round.tee,setupTees())===t?'selected':''}>${teeName(t)} tees</option>`).join('')}</select></label><label class="field">Order of play<select id="roundOrder">${PLAY_ORDERS.map(k=>`<option value="${k}" ${round.playOrder===k?'selected':''}>${ORDER_LABELS[k]}</option>`).join('')}</select></label><label class="field">Out of bounds<select id="roundOB">${Object.entries(OB_RULES).map(([k,v])=>`<option value="${k}" ${round.outOfBounds===k?'selected':''}>${v.label}</option>`).join('')}</select></label><label class="field">Lie penalty for launch-monitor shots<select id="roundMonLie"><option value="on" ${round.monitorLie?'selected':''}>On: rough and sand cost ball speed</option><option value="off" ${round.monitorLie?'':'selected'}>Off: monitor shots fly as measured</option></select></label><label class="field">Computer golfers’ shots<select id="roundCpuWatch">${WATCH.map(([k,t])=>`<option value="${k}" ${cpuWatch===k?'selected':''}>${t}</option>`).join('')}</select></label><label class="field">Caddie’s suggestion<select id="roundCaddie"><option value="auto" ${caddieMode==='auto'?'selected':''}>For swing pad golfers</option><option value="on" ${caddieMode==='on'?'selected':''}>For everyone</option><option value="off" ${caddieMode==='off'?'selected':''}>Off</option></select></label><label class="field">Computer golfers’ words<select id="roundCpuChat"><option value="on" ${cpuChat?'selected':''}>On: a word after a shot worth one</option><option value="off" ${cpuChat?'':'selected'}>Off: they play in silence</option></select></label><label class="field">Course conditions<select id="roundConditions">${Object.entries(CONDITION_PRESETS).map(([k,p])=>`<option value="${k}">${p.label} · ${p.line}</option>`).join('')}<option value="custom">Your own mix · set each below</option></select></label><label class="field">Green speed<select id="roundStimp">${stimpOptions()}</select></label><label class="field">Green firmness<select id="roundGreens">${firmnessOptions('green')}</select></label><label class="field">Fairway firmness<select id="roundFairways">${firmnessOptions('course')}</select></label><label class="field">Putting<select id="roundPuttingMode">${PUTTING_MODES}</select></label><div id="roundPutting-distances">${puttingFields('roundPutting',playerPutting())}</div>`;
 // THE THREE COURSE CONDITIONS (turf.js), as the options of a drop-down each:
 // green speed in Stimp feet with a word beside it, and the two firmnesses.
 const stimpOptions=()=>{let s='';for(let v=STIMP_RANGE.min;v<=STIMP_RANGE.max+1e-9;v+=STIMP_RANGE.step)s+=`<option value="${v}">Stimp ${v} · ${stimpWord(v)}</option>`;return s;};
@@ -5682,7 +5686,7 @@ function wireConditions(id,after){
 function wireFormatFields(){
  const modes=[...$('roundMode').options].map(o=>o.value);
  $('roundMode').value=modes.includes(round.mode)?round.mode:'stroke';
- const formatNote=()=>$('formatNote').textContent=FORMAT_NOTES[$('roundMode').value];
+ const formatNote=()=>{const m=$('roundMode').value,o=$('roundOrder')?.value||round.playOrder;$('formatNote').textContent=FORMAT_NOTES[m]+' '+(m==='match'?ORDER_NOTES.match:ORDER_NOTES[o]||'');};
  $('roundPuttingMode').value=playerPutting().mode;
  // Applied as it is changed. A button here would have been a third place to
  // press Save for one setting, and both panels already have a primary action.
@@ -5693,6 +5697,9 @@ function wireFormatFields(){
  // Applied as it is changed, like putting: to the round being played and to
  // every round after it.
  $('roundOB').onchange=()=>{const v=$('roundOB').value;if(!OB_RULES[v])return;Round.defaultOutOfBounds=v;round.outOfBounds=v;saveRules();save();};
+ // The order of play (play-order.js), the same way. Changed mid-hole, it
+ // takes over from the next shot; whoever is up now keeps the turn.
+ $('roundOrder').onchange=()=>{const v=$('roundOrder').value;if(!validPlayOrder(v))return;Round.defaultPlayOrder=v;round.playOrder=v;saveRules();save();formatNote();};
  // The computer golfers' two settings: kept for every round after.
  if($('roundCpuWatch'))$('roundCpuWatch').onchange=()=>{const v=$('roundCpuWatch').value;if(WATCH.some(([k])=>k===v)){cpuWatch=v;saveRules();}};
  if($('roundCpuChat'))$('roundCpuChat').onchange=()=>{cpuChat=$('roundCpuChat').value!=='off';saveRules();};
@@ -8456,7 +8463,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   else return;
   e.preventDefault();e.stopImmediatePropagation();
  },true);
- $('pickAccept').onclick=()=>{if(!round.scrambleSelection)return endPick();try{const carded=cardedSeats();round.chooseScramble(pickIndex);announceHoleOut(carded);afterSelection();}catch(e){toast(e.message);}};
+ $('pickAccept').onclick=()=>{if(!round.scrambleSelection)return endPick();try{const carded=cardedSeats();round.chooseScramble(pickIndex,course.pin);announceHoleOut(carded);afterSelection();}catch(e){toast(e.message);}};
  $('simDrop').onclick=beginDrop;$('confirmDrop').onclick=confirmDrop;$('cancelDrop').onclick=cancelDrop;$('dropAtGreen').onclick=()=>previewDrop({x:course.pin.x+2*YARD,z:course.pin.z});for(const id of ['dropX','dropZ'])$(id).oninput=()=>previewDrop({x:dropState.origin.x+Number($('dropX').value)*YARD,z:dropState.origin.z+Number($('dropZ').value)*YARD},false);$('resetLayout').onclick=()=>{resetTilePlaces();resetHudPlaces();toast('The map and the shot numbers are back where they started.');};$('menuRange').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}guardRound(()=>openRangePanel());};
  // The lab is driven from the console. Everything it does goes through the same
  // shot path the game uses, so anything watched here is the real behaviour.

@@ -124,7 +124,10 @@ DOM and no three.js, so whole rounds can be played in Node in moments.
 each shot (long shots come up short, some go in water or out of bounds, short
 ones are holed or left close), and a scorer written separately from game.js
 checks the round after every shot: strokes, penalties, putts, whose turn it is,
-honours on the next tee, match holes and the match result, scramble team shots,
+honours on the next tee (a match play side's after it wins a hole), match holes and the match result, scramble team shots,
+who is up under both orders of play (play-order.js: hole-out, or honours then
+farthest from the hole, worked out by the scorer itself; a rule broken on
+purpose was caught in every format, 19 November 2026),
 skins and carries, when the round ends. Along the way it saves and restores the
 round mid-hole, while a ball waits for relief and between holes; takes
 mulligans and checks they put everything back; drops balls; and has golfers
@@ -221,7 +224,7 @@ All in `tests/`, one file per subject; `tests/worlds.mjs` builds and memoises
 the courses several suites share, and builds many at once on worker threads
 (`measured`, with the measuring modules in `tests/measure/`).
 
-- **A round and its records** -- `round-matrix`, `core`, `play`, `putting-gimme`, `honours`,
+- **A round and its records** -- `round-matrix`, `core`, `play`, `putting-gimme`, `honours`, `play-order`,
   `relief`, `skins`, `mixed-groups`, `endless`, `round-library`,
   `course-library`, `scoring`, `handicap`, `profile`, `progression`, `rewards`,
   `achievements`, `challenges`, `challenge-play`, `challenge-matrix`,

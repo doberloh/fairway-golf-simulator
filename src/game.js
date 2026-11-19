@@ -2,6 +2,7 @@ import {puttingConfig,awardedPutts} from './putting.js';
 import {isTee,teeFor} from './tees.js';
 import {goalProblem} from './round-goals.js';
 import {cleanCpu} from './ai/seat.js';
+import {honours,nextToPlay,validPlayOrder,defaultPlayOrder} from './play-order.js';
 // HOW A GOLFER PLAYS IN A MIXED GROUP (Phase 3, 14 October 2026). 'monitor' --
 // the default, and every golfer from before this -- plays off the launch
 // monitor whenever it is armed, which is exactly how a round played before;
@@ -54,7 +55,10 @@ export class Round{
  // Meter one (main.js, *THE LIE*). On unless the group switches it off; main.js
  // keeps the choice as a preference, like the out-of-bounds rule.
  static defaultMonitorLie=true;
- constructor({players=[{...Round.defaultPlayer}],mode='stroke',holes=9,gimme=0,putting,tee='blue',endless=false,seed='',uid,outOfBounds=Round.defaultOutOfBounds,monitorLie=Round.defaultMonitorLie,weekly='',goal='',rival='',pinSeed='',net=null,handicaps=false,event=''}={}){
+ // WHO PLAYS NEXT (play-order.js): 'holeOut' or 'farthest'. main.js keeps the
+ // group's choice as a preference, like the out-of-bounds rule.
+ static defaultPlayOrder=defaultPlayOrder;
+ constructor({players=[{...Round.defaultPlayer}],mode='stroke',holes=9,gimme=0,putting,tee='blue',endless=false,seed='',uid,outOfBounds=Round.defaultOutOfBounds,monitorLie=Round.defaultMonitorLie,playOrder=Round.defaultPlayOrder,weekly='',goal='',rival='',pinSeed='',net=null,handicaps=false,event=''}={}){
   if(!Array.isArray(players)||players.length<1||players.length>4)throw Error('Choose 1–4 players.');
   if(!FORMATS.includes(mode)||![3,9,18].includes(holes)||!Number.isFinite(gimme)||gimme<0||gimme>3)throw Error('Invalid round settings.');
   if(!players.every(p=>p&&typeof p.name==='string'&&p.name.length<=24&&['A','B'].includes(p.team)&&validTee(p)))throw Error('Invalid player.');
@@ -71,6 +75,7 @@ export class Round{
   // two-stroke drop of Model Local Rule E-5 (relief.js).
   if(!['stroke','e5'].includes(outOfBounds))throw Error('Invalid out-of-bounds rule.');this.outOfBounds=outOfBounds;
   if(typeof monitorLie!=='boolean')throw Error('Invalid lie rule.');this.monitorLie=monitorLie;
+  if(!validPlayOrder(playOrder))throw Error('Invalid order of play.');this.playOrder=playOrder;
   // THE COURSE OF THE WEEK this round is on (weekly.js weekKey), or ''. It rides
   // through saves like the rest, so a week's round resumed still counts for it.
   if(typeof weekly!=='string'||(weekly&&!/^WEEK-[0-9]{4}-[0-9]{2}@g[0-9]{1,4}$/.test(weekly)))throw Error('Invalid course of the week.');this.weekly=weekly;
@@ -118,19 +123,40 @@ export class Round{
  // rather than reshuffling itself for no reason. A golfer with no score for that
  // hole (one who joined mid-round) goes to the back rather than to the front,
  // which is where an undefined score would sort them.
+ //
+ // MATCH PLAY'S HONOUR IS THE SIDE'S (Rule 6.4a, 19 November 2026): the side
+ // that won the hole -- on the team card, so net in a handicap match -- tees
+ // off first, and on a halved hole the side that had the honour keeps it.
+ // Before this the lowest single gross score led, which a side that lost the
+ // hole on handicap strokes could hold.
  honoursOrder(){
   const previous=this.hole-1;
   const ids=this.players.map(p=>p.id);
   const base=Array.isArray(this.order)&&this.order.length===ids.length&&ids.every(id=>this.order.includes(id))?this.order.slice():ids;
   if(previous<0)return ids;
-  return base.slice().sort((a,b)=>{
-   const sa=this.cards[a]?.[previous],sb=this.cards[b]?.[previous];
-   const fa=Number.isFinite(sa),fb=Number.isFinite(sb);
-   if(fa&&fb)return sa-sb;
-   if(fa!==fb)return fa?-1:1;
-   return 0;
-  });
+  const scoreOf=id=>this.cards[id]?.[previous];
+  if(this.mode!=='match')return honours(base,scoreOf);
+  const a=this.teamCards.A?.[previous],b=this.teamCards.B?.[previous];
+  const held=this.players[base[0]]?.team;
+  const leadSide=Number.isFinite(a)&&Number.isFinite(b)&&a!==b?(a<b?'A':'B'):held;
+  return honours(base,scoreOf,{sideOf:id=>this.players[id]?.team,leadSide});
  }
+ // WHO PLAYS NEXT once a shot is over, in a round played farthest-out
+ // (play-order.js): golfers, or in a scramble the teams. -1 when everyone is in.
+ nextUp(pin){
+  const away=p=>pin&&p?Math.hypot(p.x-pin.x,p.z-pin.z):0;
+  const order=this.order||this.players.map(p=>p.id);
+  if(this.mode==='scramble'){
+   const teams=[...new Set(order.map(id=>this.players[id].team))];
+   const team=nextToPlay(teams,{done:t=>this.teamMembers(t).every(id=>this.done[id]),started:t=>this.scrambleShots[t]>0,away:t=>away(this.positions[this.teamMembers(t)[0]])});
+   return team===null?-1:this.teamMembers(team)[0];
+  }
+  const id=nextToPlay(order,{done:i=>this.done[i],started:i=>this.strokes[i]>0,away:i=>away(this.positions[i])});
+  return id===null?-1:id;
+ }
+ // Whether this round moves the turn after every shot: match play always, the
+ // other formats when the group plays farthest-out.
+ get farthestFirst(){return this.mode==='match'||this.playOrder==='farthest';}
  // The next golfer who has not holed out, IN PLAYING ORDER. -1 when everyone is
  // in, which is what tells the caller the hole is over.
  nextInOrder(){const id=(this.order||this.players.map(p=>p.id)).find(i=>!this.done[i]);return id===undefined?-1:id;}
@@ -233,15 +259,17 @@ export class Round{
   const holed=!!result.holed,complete=holed||putts>0;
   if(this.mode==='scramble'){
    this.candidates.push({player:i,position,penalty:0,holed,putts,puttStroke,distance,hazard:null});
-   if(holed){this.teamPutts[this.team]+=puttStroke;this.scrambleShots[this.team]+=1;this.finishTeam(this.team);}
+   if(holed){this.teamPutts[this.team]+=puttStroke;this.scrambleShots[this.team]+=1;this.finishTeam(this.team,pin);}
    else this.nextTeammate();
   }else{
    this.puttStrokes[i]=Math.round((this.puttStrokes[i]+puttStroke+putts)*100)/100;this.strokes[i]=Math.round((this.strokes[i]+1+putts)*100)/100;this.positions[i]=position;
    if(complete){this.done[i]=true;this.cards[i][this.hole]=this.strokes[i];this.puttCards[i][this.hole]=this.puttStrokes[i];}
    // Simulator stroke play, and skins, which is played the same way: keep the
    // same golfer until their ball is holed.
-   if(ownBall(this.mode)){if(complete)this.active=this.nextInOrder();}
-   else this.active=this.farthestOut(pin);
+   // Played farthest-out (match play always), the turn goes to whoever is
+   // away after every shot.
+   if(!this.farthestFirst){if(complete)this.active=this.nextInOrder();}
+   else this.active=this.nextUp(pin);
    if(this.done.every(Boolean))this.completeHole();
   }
   return {holed,penalty:0,putts,complete,player:i,score:this.mode==='scramble'?this.scrambleShots[this.players[i].team]:this.strokes[i],puttingTotal:this.mode==='scramble'?this.teamPutts[this.players[i].team]:this.puttStrokes[i]};
@@ -265,9 +293,10 @@ export class Round{
    this.nextTeammate();
   }else{
    this.strokes[i]=Math.round((this.strokes[i]+penalty)*100)/100;this.positions[i]=position;
-   // Stroke play keeps the same golfer; match play goes back to the farthest
-   // ball, which a drop may have changed.
-   if(this.mode==='match')this.active=this.farthestOut(pin);
+   // Hole-out order keeps the same golfer; farthest-out goes back to the
+   // farthest ball, which a drop may have changed -- and a golfer sent back to
+   // the tee plays after the others have teed off (Rule 6.4c).
+   if(this.farthestFirst)this.active=this.nextUp(pin);
   }
   return {penalty,player:i,position};
  }
@@ -276,19 +305,19 @@ export class Round{
   const remaining=this.teamMembers(this.team).filter(id=>!this.candidates.some(c=>c.player===id));
   if(remaining.length)this.active=remaining[0];else this.scrambleSelection=true;
  }
- // Best-ball match play is farthest-from-the-pin, shot by shot. Ties are broken
- // by PLAYING ORDER rather than by player index, so on the tee -- where every
- // ball is the same distance away -- honours decides who hits first.
- farthestOut(pin){const next=this.order.filter(id=>!this.done[id]).sort((a,b)=>Math.hypot(this.positions[b].x-pin.x,this.positions[b].z-pin.z)-Math.hypot(this.positions[a].x-pin.x,this.positions[a].z-pin.z));return next[0]??-1;}
- chooseScramble(index){
+ // A SCRAMBLE'S CHOSEN BALL. Hole-out order keeps the team on it to the cup;
+ // farthest-out passes the turn to whichever team is away (`pin` is needed for
+ // that; without it the team plays on, as before).
+ chooseScramble(index,pin){
   if(!this.scrambleSelection||!this.candidates[index])throw Error('Select a valid team shot.');
   const c=this.candidates[index],team=this.players[c.player].team;
   this.teamPutts[team]=Math.round((this.teamPutts[team]+(c.puttStroke||0)+(c.putts||0))*100)/100;this.scrambleShots[team]=Math.round((this.scrambleShots[team]+1+c.penalty+(c.putts||0))*100)/100;
-  if(c.putts>0){this.finishTeam(team);return;}
+  if(c.putts>0){this.finishTeam(team,pin);return;}
   for(const id of this.teamMembers(team))this.positions[id]={...c.position};
   this.candidates=[];this.scrambleSelection=false;this.active=this.teamMembers(team)[0];
+  if(this.playOrder==='farthest'&&pin)this.active=this.nextUp(pin);
  }
- finishTeam(team){for(const id of this.teamMembers(team)){this.done[id]=true;this.cards[id][this.hole]=this.scrambleShots[team];this.puttCards[id][this.hole]=this.teamPutts[team];}this.teamCards[team][this.hole]=this.scrambleShots[team];this.candidates=[];this.scrambleSelection=false;this.active=this.nextInOrder();if(this.active<0)this.completeHole();}
+ finishTeam(team,pin){for(const id of this.teamMembers(team)){this.done[id]=true;this.cards[id][this.hole]=this.scrambleShots[team];this.puttCards[id][this.hole]=this.teamPutts[team];}this.teamCards[team][this.hole]=this.scrambleShots[team];this.candidates=[];this.scrambleSelection=false;this.active=this.playOrder==='farthest'&&pin?this.nextUp(pin):this.nextInOrder();if(this.active<0)this.completeHole();}
  // The handicap strokes a golfer gets on a hole (0 in a gross round).
  strokesOn(seat,hole=this.hole){return this.net?.strokes?.[seat]?.[hole]||0;}
  // Set or clear the handicap strokes (net.js roundStrokes): {strokes, team}.
@@ -324,7 +353,8 @@ export class Round{
  simDrop(position){if(this.relief)throw Error('Choose where to take relief first.');if(this.holeComplete||this.finished||this.scrambleSelection)throw Error('Finish the current team selection or start the next hole before dropping.');if(!Number.isFinite(position.x)||!Number.isFinite(position.z))throw Error('Choose a valid drop position.');const ids=this.mode==='scramble'?this.teamMembers(this.team):[this.active];if(this.mode==='scramble'&&this.candidates.length)throw Error('Choose the team lie before taking a drop.');for(const i of ids)this.positions[i]={x:position.x,z:position.z};}
  toJSON(){return {...this};}
  static restore(data,withHistory=true){
-  data=upgradeSave(data);const r=new Round(data);r.teePlaced=data.teePlaced!==false;if(!Number.isInteger(data.hole)||data.hole<0||(!r.endless&&data.hole>=r.holes)||data.hole>9999)throw Error('Invalid saved hole.');
+  // A save from before the order of play was a choice was played hole-out.
+  data=upgradeSave(data);const r=new Round({...data,playOrder:data.playOrder===undefined?'holeOut':data.playOrder});r.teePlaced=data.teePlaced!==false;if(!Number.isInteger(data.hole)||data.hole<0||(!r.endless&&data.hole>=r.holes)||data.hole>9999)throw Error('Invalid saved hole.');
   for(const key of ['cards','positions','strokes','done'])if(!Array.isArray(data[key])||data[key].length!==r.players.length)throw Error('Invalid saved round.');
   const integer=v=>Number.isInteger(v)&&v>=0&&v<=999,score=v=>Number.isFinite(v)&&v>=0&&v<=999&&Math.abs(v*100-Math.round(v*100))<1e-6;
   // A HOLE NOBODY SCORED. A golfer who joins mid-round has no score for the
