@@ -78,6 +78,9 @@ wrong, unfinished, or owed a check.
   (the phone's *Half a second at a new hole* below). `placeShotCard`'s
   layout read is worth taking out either way. Measure with
   `tools/frame-round.mjs --tier ultra --rounds 12`, every load counted.
+  Whether a person playing feels them: `node tools/phone-probe.mjs --script
+  tools/probe-frames.js` writes each frame over 50 ms with whose strike came
+  before it and how long before (the owner's own rounds; not yet played).
 
 - [ ] **The grass should be darker on every landscape** (the owner, 15
   November 2026, looking at the painted ground on the iPhone: "overall
