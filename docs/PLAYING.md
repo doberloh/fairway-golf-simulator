@@ -238,7 +238,7 @@ On a bigger screen the **golfer cards** in the top right do this job (see *The p
 
 **Any golfer can be removed from a round in progress**, including the one whose turn it is and including the first name in the list. The Apply button names who is leaving and asks for a second press — their scorecard goes with them and there is no undo. Whoever is left keeps their own card, their own strokes and their own ball; the turn passes on if the golfer who was up has gone.
 
-**Order of play** (Format & tees, kept for every round after, like the out-of-bounds rule) is one of two:
+**Order of play** (first of the house rules on Play's **Rules** step, and on **Golfers & rules** during a round; kept for every round after, like the out-of-bounds rule) is one of two:
 - **Hole out in turn** (the default): in stroke play, skins and Stableford each golfer plays the hole out before the next one starts, and in a scramble each team does.
 - **Rules of golf**: everyone tees off in honour order, then **the ball farthest from the hole is played next**, whoever's it is -- so with computer golfers you play alongside them rather than waiting for each to finish the hole. In a scramble the teams take turns the same way, the team farther away playing its next shot. A golfer sent back to the tee (out of bounds, or a ball in water played again from the tee) plays after the others have teed off. Changed mid-hole, it takes over from the next shot.
 

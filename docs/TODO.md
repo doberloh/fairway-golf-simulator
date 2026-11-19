@@ -57,7 +57,11 @@ wrong, unfinished, or owed a check.
   answers and the order of work are local: docs/studies/fairway-tour/
   (SPEC.md, GOAL.md, SUMMARY.md). Large.
   - **Order of play, built and not seen in the game** (the owner, 19
-    November 2026, on the same branch). Format & tees, *Order of play*:
+    November 2026, on the same branch). Play's Rules step, *Order of play*
+    (it was drawn on the old panel only, which Play hides, until the owner
+    could not find it; Scoring, Caddie and the computer golfers' two
+    settings had the same fault and were placed with it; the `relief`
+    smoke journey's new check for them has not run yet):
     *Rules of golf* (honours, then the ball farthest from the hole) or
     *Hole out in turn* (the default). Tested in tests/play-order.test.mjs
     and the round matrix, every format with both orders; every smoke

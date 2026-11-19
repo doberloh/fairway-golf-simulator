@@ -1807,6 +1807,11 @@ const JOURNEYS = [
     await t.chrome();await t.page.getByRole('button', {name: 'Golfers & rules'}).first().click();
     await t.until(() => t.drawerOpen(), 'the round panel', 5 * SLOW);
     // The house rules are on the Golfers & rules screen itself (21 October 2026).
+    // Every rule is ON it, not left in the put-away old sections: the order of
+    // play and the fairway-tour goal's caddie and computer-golfer settings were
+    // drawn and never shown until the owner looked (19 November 2026).
+    const hidden = await t.page.evaluate(() => ['roundOB', 'roundOrder', 'roundCaddie', 'roundCpuWatch', 'roundCpuChat'].filter(id => { const el = document.getElementById(id); return !el || !!el.closest('.sx-emptied') || !el.closest('.lb-pick'); }));
+    if (hidden.length) throw new Error(`not on the Golfers & rules screen: ${hidden.join(', ')}`);
     await t.page.selectOption('#roundOB', 'e5');
     await t.closeDrawer();
     if ((await saved()).outOfBounds !== 'e5') throw new Error('the round did not take the rule');
