@@ -1671,7 +1671,7 @@ h3 small{font-weight:400;color:var(--ink-faint);font-size:11px;margin-left:6px}
 #drawer .online-knocks button{width:auto;flex:0 0 auto;min-width:9em;margin:0}
 /* An iPhone zooms the page into a typing box whose letters are under 16 px
    (RULES_HISTORY, *Measure on the owner's phone*); a phone guest types the code. */
-#drawer #onlineCode,#drawer #onlineRelay{font-size:16px}
+#drawer #onlineCode{font-size:16px}
 #drawer #onlineCode{letter-spacing:.08em;text-transform:uppercase}
 .online-knock{position:fixed;z-index:400;left:50%;transform:translateX(-50%);top:calc(92px + env(safe-area-inset-top,0px));display:flex;flex-wrap:wrap;align-items:center;gap:10px;max-width:calc(100vw - 32px);padding:10px 14px;border-left:4px solid #e7b14a;background:var(--panel,rgba(12,24,17,.94));color:#fff;font-weight:700;box-shadow:0 6px 24px rgba(0,0,0,.4)}
 .online-knock button{width:auto;margin:0;padding:6px 14px}

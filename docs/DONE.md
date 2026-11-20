@@ -25,6 +25,58 @@ kept whole: *The open list before the 11 November 2026 prune* and *The open
 list before the 16 October prune*, each with a table of what became of every
 entry.
 
+## Online play with friends in other houses (branch `online-play`, from 19 November 2026; not merged)
+
+From TODO's *Next feature* entry, finished on the branch on 20 November 2026:
+
+- [x] **Deploy the relay** -- the owner made the Cloudflare account and
+  deployed `relay/cloudflare/` on 20 November 2026, then renamed the
+  account's `workers.dev` subdomain to `fairwaygolfsim` so the address no
+  longer carried their name (Cloudflare: Workers & Pages -> *Your
+  subdomain* -> Change; the old address stops working). The owner reported
+  `node tools/relay-check.mjs wss://fairway-relay.fairwaygolfsim.workers.dev`
+  passing; run here as well, it passed, and the Node rounds of every format
+  played to one card through it (RESEARCH, *As built and measured*). The
+  owner asked for the domain the website uses instead; what that would take
+  (a Netlify support ticket before the DNS could move to Cloudflare) was
+  found and the owner kept `workers.dev` -- "lets not move the DNS thats
+  fine. and dont mark it for later" (RESEARCH, *The relay on the owner's own
+  domain*).
+- [x] **Whether a release carries the relay's address** -- built in, and
+  never shown (the owner: "Build the relay into the game. The only thing
+  users should have to type in is the join code, they should not see the
+  relay address in the game at all"). `src/online/relay-address.js`; the
+  Relay box and its stored address are gone (the stored key is removed at
+  load); smoke points its pages at its own relay with `lab.relay`. The
+  built game opened a room and let a guest in through the deployed relay
+  with only the code typed.
+- [x] **A guest can miss the hole's scorecard** -- the owner: "host waits
+  until everyone has seen their card". Each guest sends `seen` when its
+  card opens, and the host's 8-second countdown starts only when every
+  guest still connected has (`HostSession.unseen`, main.js
+  `onlineCardCheck`); the host's card says *Waiting for …* meanwhile, and a
+  guest's says the host moves everyone on. A lost guest is not waited for
+  (PLACED). Rejected: a guest's card before its XP, a longer fixed
+  countdown (RESEARCH). Smoke `online` now requires the guest's card before
+  anyone moves on, and passes.
+
+From *Known wrong*, the same day:
+
+- [x] **A computer golfer can lose its record when Play keeps a group across
+  steps** (seen in the code on 19 November 2026) -- confirmed and fixed. Play
+  redrawn from the group being set up (choosing the game again, importing a
+  code, a friend's challenge, Surprise me's reroll) rebuilt each row without
+  its `cpu` record, so groupEditor took the computer golfer for a new person
+  of that name: the row lost its COMPUTER label and level, and starting the
+  round would have made it a profile. Now one `draftStart()` builds the rows
+  for both redraws, carrying `cpu` and `online`. Smoke `cpu-group` chooses
+  the game again after making a level-10 computer golfer and checks it is
+  still one, at level 10; passing.
+
+The gate's 15% line, which read Soulbound at about 10% on 19 November
+(RULES_HISTORY, *The same evening the gate missed a game*), stays as it is:
+the owner, 20 November 2026, "leave it as is".
+
 ## The Fairway Tour and computer golfers (branch `fairway-tour`, 17-19 November 2026; released as 0.9.19)
 
 **Merged at the owner's word, 19 November 2026** ("go ahead and mark the AI

@@ -314,6 +314,33 @@ test('a move the host cannot read is answered, not left hanging', async () => {
  } finally { close(); await relay.close(); }
 });
 
+// The owner, 20 November 2026: the host waits until everyone has seen their
+// card. `unseen(hole)` is who the host's countdown still waits for.
+test('the host waits for every connected guest\'s card, not a lost one\'s', async () => {
+ const relay = await relayForTest();
+ const {host, guests, close} = await room(relay, ['Ann', 'Bo']);
+ try {
+  host.start({settings: {}, round: {players: []}});
+  const names = h => host.unseen(h).map(m => m.name).sort();
+  assert.deepEqual(names(0), ['Ann', 'Bo']);
+  let heard = 0;
+  host.on('seen', () => heard++);
+  guests[0].seen(0);
+  await until(() => heard === 1);
+  assert.deepEqual(names(0), ['Bo']);
+  assert.deepEqual(names(1), ['Ann', 'Bo'], 'each hole its own card');
+  // A card shown before anyone has joined counts for nothing: only a member
+  // let in, from its own socket, is heard.
+  assert.equal(readMessage({t: 'seen', member: guests[1].member, hole: -1}), null);
+  // Bo's connection lost: not waited for.
+  guests[1].link.close();
+  await until(() => host.unseen(0).length === 0);
+  // A new round starts a new count (Bo still lost, so not counted).
+  host.start({settings: {}, round: {players: []}});
+  assert.deepEqual(names(0), ['Ann']);
+ } finally { close(); await relay.close(); }
+});
+
 test('a shot out of turn is refused and nothing moves', async () => {
  const relay = await relayForTest();
  const {host, guests, close} = await room(relay, ['Ann']);

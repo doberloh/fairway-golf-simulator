@@ -7,9 +7,10 @@ import {showRoomCode} from './online/room-code.js';
 
 const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-export const STATUS_WORDS = {idle: 'Not connected', connecting: 'Connecting to the relay…', open: 'Connected', retrying: 'Connection lost · trying again…', closed: 'Closed'};
+export const STATUS_WORDS = {idle: 'Not connected', connecting: 'Connecting…', open: 'Connected', retrying: 'Connection lost · trying again…', closed: 'Closed'};
 
-// `s`: {stage: 'start'|'host'|'knocking'|'guest', relay, code, golfers:
+// No relay address anywhere: it is built in (online/relay-address.js).
+// `s`: {stage: 'start'|'host'|'knocking'|'guest', code, golfers:
 // [{id, name}], who, input, knocks: [{member, name}], members: [{member, name,
 // state}], hostName, status, error, note, course}
 export function onlineSheet(s) {
@@ -26,7 +27,7 @@ export function onlineSheet(s) {
   ${error}
   <button class="primary" id="onlineChoose"${s.members?.length ? '' : ' disabled'}>Choose the course and start <i data-lucide="arrow-right"></i></button>
   <button class="secondary" id="onlineClose">Close the room</button>
-  <p class="note">The room is private: the code is its key, the relay only passes sealed messages it cannot read, and nobody plays without your say. Everyone needs the same version of Fairway.</p>`;
+  <p class="note">The room is private: the code is its key, the online service only passes sealed messages it cannot read, and nobody plays without your say. Everyone needs the same version of Fairway.</p>`;
  }
  if (s.stage === 'knocking') {
   return `<p>Knocking on room <b>${esc(showRoomCode(s.code))}</b>. The host lets you in by name.</p>${status}${error}
@@ -48,7 +49,5 @@ export function onlineSheet(s) {
   <label class="field">Room code<input id="onlineCode" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="24" placeholder="K7Q2-M9XD-4RTP-8WNB" value="${esc(s.typed || '')}"></label>
   <button class="primary" id="onlineJoin">Join the room <i data-lucide="arrow-right"></i></button>
   ${error}
-  <h3>Relay</h3>
-  <label class="field">Relay address<input id="onlineRelay" autocomplete="off" spellcheck="false" placeholder="wss://…" value="${esc(s.relay || '')}"></label>
-  <p class="note">The relay passes sealed messages between the players of a room; it cannot read them and keeps nothing. Everyone in a room uses the same relay.</p>`;
+  <p class="note">Rooms pass through Fairway’s online service, which only carries sealed messages between the players of a room: it cannot read them and keeps nothing.</p>`;
 }

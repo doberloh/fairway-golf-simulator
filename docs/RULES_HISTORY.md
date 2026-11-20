@@ -706,4 +706,5 @@ while the branch's final checks ran, read 9.6 to 10% by itself -- under the
 15% that makes a program "a game" -- with the card at 11.5 to 12% in all. The
 rule now rests on that line alone. The checks were run one job at a time
 anyway, by the program's name; whether the line moves (or a list of known
-games joins it) is the owner's call, told at the hand-over.
+games joins it) was put to the owner at the hand-over. **The owner, 20
+November 2026: "leave it as is".** The line stays at 15%, with no list.

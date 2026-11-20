@@ -56,7 +56,7 @@ private and safe rooms, a free relay). What a player sees is in PLAYING.md,
   public keys), which was weighed and left for later (RESEARCH, *Online
   play*).
 
-## The relay on Cloudflare (the owner's step)
+## The relay on Cloudflare
 
 The owner chose Cloudflare's free Workers plan (RESEARCH, *Online play: where
 the relay can live*). One Durable Object per room holds its sockets, with the
@@ -64,36 +64,39 @@ hibernation API so an idle room costs nothing; the rules are `relay/core.js`,
 shared with the Node twin. The free plan allows 100,000 requests a day; a
 round uses a few hundred.
 
-1. Make a free account at https://dash.cloudflare.com/sign-up.
-2. In `relay/cloudflare/`, with Node 20 or newer:
+**It is deployed, and built into the game** (the owner, 20 November 2026:
+"Build the relay into the game. The only thing users should have to type in
+is the join code, they should not see the relay address in the game at
+all"). The address is `wss://fairway-relay.fairwaygolfsim.workers.dev`, in
+`src/online/relay-address.js`; the owner renamed the account's `workers.dev`
+subdomain to `fairwaygolfsim` the same day so it names the game, not them,
+and made it public by building it in. Nothing in the game shows it, and
+there is no box to type one (the address a player could type before then,
+kept in their browser, is forgotten on the next load).
 
-   ```
-   npx wrangler login
-   npx wrangler deploy
-   ```
+Deploying again after a change to `relay/` (the owner's step: it is their
+account), in `relay/cloudflare/` with Node 20 or newer:
 
-   `login` opens the browser to let wrangler use the account; `deploy`
-   prints the relay's address, `https://fairway-relay.<account>.workers.dev`.
-3. Check it: `node tools/relay-check.mjs wss://fairway-relay.<account>.workers.dev`.
-4. In the game, Play online -> Relay: that address with `wss://` in place of
-   `https://`. Everyone in a room uses the same relay.
+```
+npx wrangler login
+npx wrangler deploy
+```
 
-**The address names the owner's Cloudflare account, so it is kept out of the
-repository.** A build can carry it as the default (`FAIRWAY_RELAY=wss://...
-npm run build`, read by vite.config.js as `__FAIRWAY_RELAY__`); whether a
-release does is the owner's call.
+then `node tools/relay-check.mjs wss://fairway-relay.fairwaygolfsim.workers.dev`.
+A change to the relay's rules that an older copy of the game cannot follow
+breaks every copy already out, so `relay/core.js` changes only with care.
 
-**On the owner's own domain instead of `workers.dev`:** the domain's DNS must
-move to Cloudflare first, and a domain bought through Netlify needs a Netlify
-support ticket before its nameservers can change (RESEARCH, *The relay on the
-owner's own domain*). Then Workers -> fairway-relay -> Settings -> Domains &
-Routes -> Add a custom domain (`relay.<domain>`), and the game's Relay box
-gets `wss://relay.<domain>`.
+**Kept on `workers.dev`** (the owner, 20 November 2026): the domain the
+website uses is not moved to Cloudflare for the relay (RESEARCH, *The relay
+on the owner's own domain*, says what moving it would take).
 
-**The same relay on any machine:** `node relay/node-relay.mjs --port 8787`
-runs the same rules. A page served over https needs `wss://`, so a public
-copy needs a certificate in front of it (Caddy or nginx); on a home network
-`ws://` is enough. Oracle Cloud's free machine was the fallback (RESEARCH).
+**Another relay:** a build can name one (`FAIRWAY_RELAY=wss://... npm run
+build`, read by vite.config.js as `__FAIRWAY_RELAY__`), for a relay on any
+machine -- `node relay/node-relay.mjs --port 8787` runs the same rules (a page
+served over https needs `wss://`, so a public copy needs a certificate in
+front of it; on a home network `ws://` is enough). Every player in a room
+needs a copy built with the same one. Smoke points its pages at a relay on
+this machine with `lab.relay(url)`, a console hook no player reaches.
 
 ## What an online round does differently (PLACED)
 
@@ -103,7 +106,14 @@ copy needs a certificate in front of it (Caddy or nginx); on a home network
 - Played on a course (the week's, a saved one, Surprise me), not Endless or a
   friend's challenge. A course from the Course Builder only if every guest
   already has its file (they are told to ask for it).
-- The host moves the group to the next tee; a guest's countdown waits for it.
+- The host moves the group to the next tee, and **waits until everyone has
+  seen the hole's card** (the owner, 20 November 2026): each guest's screen
+  says when its card has opened (after its own XP pop-ups), and the host's
+  8-second countdown starts only when every guest still connected has said
+  so (*Waiting for Sam to see the card*). A guest whose connection is lost is
+  not waited for (PLACED: they are put on the next tee when they come back).
+  *Stay on scorecard* and *Next hole now* work on the host as offline; a
+  guest's card says the host moves everyone on, with neither button.
 - Relief is chosen on the machine of the golfer whose ball it is; a scramble's
   ball by the team's first golfer.
 - A guest who leaves mid-round hands their ball to the host to play or take
@@ -124,6 +134,7 @@ copy needs a certificate in front of it (Caddy or nginx); on a home network
 
 ## Files
 
+- `src/online/relay-address.js` -- the relay every copy uses.
 - `src/online/room-code.js` -- the code, the room number and the key.
 - `src/online/seal.js` -- sealing and opening a message.
 - `src/online/link.js` -- one machine's connection: sealed, paced under the
@@ -142,5 +153,6 @@ copy needs a certificate in front of it (Caddy or nginx); on a home network
 
 TESTING.md, *Online play*: the Node suites (`tests/online-*.test.mjs`,
 `tests/ui-online.test.mjs`), whole rounds of every format through the relay's
-Node twin or (`FAIRWAY_TEST_RELAY`) the Worker under `wrangler dev`, and the
-smoke journey `online`.
+Node twin or (`FAIRWAY_TEST_RELAY`) another relay -- the Worker under
+`wrangler dev`, and on 20 November 2026 the deployed one, every format to one
+card -- and the smoke journey `online`.

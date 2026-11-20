@@ -55,16 +55,12 @@ play: where the relay can live*); the owner makes the account and deploys it.
 Built and tested on the branch the same day (docs/ONLINE_PLAY.md); still owed
 before it can be called done:
 
-- [ ] **Deploy the relay** -- the owner's step (ONLINE_PLAY, *The relay on
-  Cloudflare*), then `node tools/relay-check.mjs wss://<address>` against it.
-  Run so far only under `wrangler dev`.
 - [ ] **The owner plays a round with a friend in another house**, over the
-  deployed relay: host and guest each way round, a phone on the PC's
-  `run_fairway_server` with the launch monitor armed, a ball in the water, a
-  dropped connection, a scramble. Nothing online has been played by a person.
-- [ ] **Whether a release carries the relay's address** built in
-  (`FAIRWAY_RELAY`), or players type it -- the owner's call; the address names
-  their Cloudflare account.
+  deployed relay (built in since 20 November 2026): host and guest each way
+  round, a phone on the PC's `run_fairway_server` with the launch monitor
+  armed, a ball in the water, a dropped connection, a scramble, the
+  scorecard on both screens before the next tee. Nothing online has been
+  played by a person.
 - [ ] **Three or four players in the browser.** Node plays every format with
   three; the browser journey plays two.
 - [ ] **Seen in no browser yet** (each is played by the Node rounds' rules):
@@ -73,11 +69,6 @@ before it can be called done:
   hidden host landing a guest's flight at once (its computer golfers wait
   until shown); *Play on without them*; the room open again for a second
   round.
-- [ ] **A guest can miss the hole's scorecard** (seen in the full smoke run,
-  19 November 2026): the card waits for that screen's own XP pop-ups, and
-  the host's 8-second countdown can move the group on first, which closes it
-  on the guest. Decide whether the host's countdown should wait for every
-  screen's card, or a guest's card show at once with the XP after.
 - [ ] **The source archive with `relay/`** (tools/package_release.py now
   packs it; the packager has not been run since).
 - [ ] **Safari and Firefox** as host and as guest (the smoke journeys are
@@ -88,15 +79,6 @@ DONE.md, *The Fairway Tour and computer golfers*); what it left is under
 *Play the current build by hand* and *Known wrong*.
 
 ## Known wrong
-
-- [ ] **A computer golfer can lose its record when Play keeps a group across
-  steps** (seen in the code on 19 November 2026, online-play, not seen in
-  play). Play's group, kept between steps (`lobbyKeep`), is rebuilt from the
-  draft without each computer golfer's `cpu` record (main.js, the `round`
-  sheet's `start`), so its row may come back as an ordinary golfer matched by
-  name. Check by adding a computer golfer, changing the game type on step
-  one, and reading the Golfers step. (Online play's own repaint,
-  `seatGuestsNow`, carries the record.)
 
 - [ ] **Ultra: about two more stalls a minute with three computer golfers**
   (fairway-tour, 18 November 2026; RESEARCH, *After the minimap fix*). The

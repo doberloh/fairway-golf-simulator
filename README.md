@@ -96,7 +96,9 @@ is pressed and copied to the clipboard, and it is never transmitted — the
 built file makes no network requests, verified. The one connection it can
 make is **Play online**, and only once a player starts or joins a room: a
 WebSocket to the relay that passes the room's sealed messages between the
-players' machines (docs/ONLINE_PLAY.md).
+players' machines -- built in, on Cloudflare
+(`wss://fairway-relay.fairwaygolfsim.workers.dev`), and never something a
+player types (docs/ONLINE_PLAY.md).
 
 Verification is `npm test` — a few hundred regression checks on the Node test
 runner covering physics plausibility and convergence, curvature, wind,

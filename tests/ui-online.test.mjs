@@ -6,12 +6,21 @@ import {onlineSheet, STATUS_WORDS} from '../src/ui-online.js';
 // and that nothing a guest typed reaches the page as markup.
 const golfers = [{id: 'p1', name: 'Dustin'}, {id: 'p2', name: 'Sam'}];
 
-test('the start: who you play as, host, join by code, the relay', () => {
- const html = onlineSheet({stage: 'start', golfers, who: 'p2', input: 'monitor', relay: 'wss://relay.example'});
- for (const id of ['onlineWho', 'onlineInput', 'onlineHost', 'onlineCode', 'onlineJoin', 'onlineRelay']) assert.match(html, new RegExp(`id="${id}"`), id);
+test('the start: who you play as, host, join by code, and no relay to set', () => {
+ const html = onlineSheet({stage: 'start', golfers, who: 'p2', input: 'monitor'});
+ for (const id of ['onlineWho', 'onlineInput', 'onlineHost', 'onlineCode', 'onlineJoin']) assert.match(html, new RegExp(`id="${id}"`), id);
  assert.match(html, /<option value="p2" selected>Sam/);
  assert.match(html, /value="monitor" selected/);
- assert.match(html, /value="wss:\/\/relay.example"/);
+ // The owner, 20 November 2026: the join code is the only thing typed, and
+ // the relay's address is never shown (online/relay-address.js).
+ assert.doesNotMatch(html, /onlineRelay|wss:|workers\.dev|Relay address/i);
+ const inputs = html.match(/<input\b/g) || [];
+ assert.equal(inputs.length, 1, 'one box to type in: the room code');
+});
+
+test('the relay is built in, a secure address', async () => {
+ const {RELAY} = await import('../src/online/relay-address.js');
+ assert.match(RELAY, /^wss:\/\/[a-z0-9.-]+$/);
 });
 
 test('hosting: the code in fours, each knock with Let in and Turn away, Start only with someone in', () => {

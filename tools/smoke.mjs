@@ -2918,6 +2918,23 @@ const JOURNEYS = [
     const sub = await t.page.locator('#playerRows .seat').first().textContent();
     if (!/COMPUTER/.test(sub)) throw new Error(`the first seat does not say it is a computer golfer: "${sub.trim().slice(0, 80)}"`);
     await t.page.selectOption('#level0', '10');
+   });
+   // TODO's *A computer golfer can lose its record when Play keeps a group
+   // across steps* (fixed 20 November 2026): choosing the game again redraws
+   // Play from the group being set up, and the computer golfer came back as
+   // a new person by its name.
+   await t.step('choosing the game again keeps the computer golfer one', async () => {
+    const name = (await t.page.locator('#playerRows .seat').first().textContent()).trim().slice(0, 40);
+    await t.page.locator('[aria-label="Steps"]').getByRole('button', {name: 'Game', exact: true}).click();
+    await t.page.locator('[data-game="endless"]').click();
+    await t.press('Golfers');
+    await t.until(() => t.page.locator('#playerRows .seat').first().isVisible(), 'the Golfers step', 5 * SLOW);
+    const sub = await t.page.locator('#playerRows .seat').first().textContent();
+    if (!/COMPUTER/.test(sub)) throw new Error(`after choosing the game again the first seat is "${sub.trim().slice(0, 80)}", was "${name}"`);
+    if (!(await t.page.locator('#level0').count())) throw new Error('the computer golfer\'s level is gone');
+    if ((await t.page.inputValue('#level0')) !== '10') throw new Error(`its level is ${await t.page.inputValue('#level0')}, chosen 10`);
+   });
+   await t.step('the round starts with it', async () => {
     await t.press('Start an endless run');
     await t.inPlay();
    });
@@ -3723,9 +3740,12 @@ const JOURNEYS = [
     let code = '';
     await t.step('Play online → Start a room shows a room code', async () => {
      await fromMenu(t, 'Play online');
-     await t.until(() => t.page.locator('#onlineRelay').isVisible(), 'the online sheet', 10 * SLOW);
-     await t.page.fill('#onlineRelay', relay.url);
-     await t.page.locator('#onlineRelay').dispatchEvent('change');
+     await t.until(() => t.page.locator('#onlineHost').isVisible(), 'the online sheet', 10 * SLOW);
+     // The relay is built in and never shown (the owner, 20 November 2026):
+     // nothing on the sheet names it, and this page is pointed at the local one.
+     const shown = await t.page.textContent('#drawerContent');
+     if (/wss?:\/\/|workers\.dev|relay address/i.test(shown)) throw new Error(`the sheet shows a relay: "${shown.slice(0, 200)}"`);
+     await t.page.evaluate(u => window.lab.relay(u), relay.url);
      await t.press('Start a room');
      await t.until(async () => /^[0-9A-Z]{4}(-[0-9A-Z]{4}){3}$/.test((await t.page.textContent('#onlineCodeText').catch(() => '')) || ''), 'the room code', 10 * SLOW);
      code = (await t.page.textContent('#onlineCodeText')).trim();
@@ -3745,10 +3765,9 @@ const JOURNEYS = [
     });
     await g.step('the guest joins with the code and knocks, playing with the launch monitor', async () => {
      await fromMenu(g, 'Play online');
-     await g.until(() => gpage.locator('#onlineRelay').isVisible(), 'the online sheet', 10 * SLOW);
+     await g.until(() => gpage.locator('#onlineJoin').isVisible(), 'the online sheet', 10 * SLOW);
      await gpage.evaluate(() => { const s = document.getElementById('onlineInput'); s.value = 'monitor'; s.dispatchEvent(new Event('change', {bubbles: true})); });
-     await gpage.fill('#onlineRelay', relay.url);
-     await gpage.locator('#onlineRelay').dispatchEvent('change');
+     await gpage.evaluate(u => window.lab.relay(u), relay.url);
      await gpage.fill('#onlineCode', code.toLowerCase());
      await g.press('Join the room');
      await g.until(() => gpage.locator('#onlineCancel').isVisible(), 'the knocking screen', 10 * SLOW);
@@ -3894,11 +3913,14 @@ const JOURNEYS = [
      await g.until(async () => (await turn(gpage)).holeComplete, 'the hole to be over on the guest\'s screen', 15 * SLOW);
      // Each card waits for that screen's own XP to be shown first.
      await t.until(() => t.drawerOpen(), 'the scorecard on the host\'s screen', 30 * SLOW);
-     // ...and the host's 8-second countdown can move everyone on before a
-     // guest's own XP has finished showing (a slow machine, a level-up): the
-     // guest on the next tee with the same card is the round going on.
-     try { await g.until(async () => (await g.drawerOpen()) || (await room(gpage)).hole === 1, 'the scorecard (or the next tee) on the guest\'s screen', 30 * SLOW); }
+     // ...and the host waits for every guest's card before its countdown to
+     // the next tee starts (the owner, 20 November 2026): the guest's card
+     // is shown however long its own XP takes.
+     try { await g.until(() => g.drawerOpen(), 'the scorecard on the guest\'s screen', 60 * SLOW); }
      finally { await gpage.screenshot({path: path.join(SHOTS, 'online-guest-card.png')}); }
+     if ((await room(gpage)).hole !== 0) throw new Error('the guest was moved to the next tee before seeing the card');
+     const guestLabel = await gpage.textContent('#autoAdvanceLabel').catch(() => '');
+     if (!/host moves everyone/i.test(guestLabel || '')) throw new Error(`the guest's card says "${guestLabel}"`);
      const [a, b] = [await room(t.page), await room(gpage)];
      if (JSON.stringify(a.cards) !== JSON.stringify(b.cards)) throw new Error(`host ${JSON.stringify(a.cards)}, guest ${JSON.stringify(b.cards)}`);
     });

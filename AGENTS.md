@@ -46,7 +46,10 @@ main's, as the cartoon overhaul's did.
 - **It lifts nothing else.** Graphics card, gaming, push, merge, release, the
   editor tools and "no secrets in commits" hold as written below -- and a
   relay's address, keys or account names are secrets until the owner says
-  otherwise.
+  otherwise. (The owner said so for one: on 20 November 2026 they had the
+  deployed relay's address, `wss://fairway-relay.fairwaygolfsim.workers.dev`,
+  built into the game -- `src/online/relay-address.js`, never shown to a
+  player. Its account's keys and login stay secret.)
 - **Full test suites only when they are really needed** (the owner). Run the
   focused tests for what changed; `npm test` whole, or every smoke journey,
   only before a hand-over or merge, or when a change reaches widely enough

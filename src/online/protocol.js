@@ -105,6 +105,9 @@ const CHECK = {
  relief: m => turnOf(m) && id(m.member) && str(m.id, 16) && num(m.back ?? 0, 0, 2000) ? {t: 'relief', member: m.member, seat: m.seat, hole: m.hole, id: m.id, back: m.back ?? 0} : null,
  pick: m => turnOf(m) && id(m.member) && int(m.index, 0, 3) ? {t: 'pick', member: m.member, seat: m.seat, hole: m.hole, index: m.index} : null,
  bye: m => id(m.member) ? {t: 'bye', member: m.member} : null,
+ // A guest's screen has shown the card for a finished hole (the host's
+ // countdown to the next tee waits for every one: session.js `unseen`).
+ seen: m => id(m.member) && int(m.hole, 0, 9999) ? {t: 'seen', member: m.member, hole: m.hole} : null,
  welcome: m => id(m.member) && id(m.host) ? {t: 'welcome', member: m.member, host: m.host} : null,
  refuse: m => id(m.member) && str(m.why, 200) ? {t: 'refuse', member: m.member, why: safeText(m.why, 200)} : null,
  room: m => id(m.host) && Array.isArray(m.members) && m.members.length <= 8 && m.members.every(x => x && id(x.member) && str(x.name, 200) && ['in', 'away'].includes(x.state)) && ['lobby', 'playing', 'done'].includes(m.phase)

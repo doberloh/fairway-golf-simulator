@@ -42,6 +42,7 @@ export class HostSession {
   this.phase = 'lobby'; this.course = '';
   this.struck = 0; this.done = 0; this.seq = 0;
   this.record = null; this.round = null;
+  this.seen = new Map(); // hole -> members whose screen has shown its card
   link.on('message', (from, raw) => this.heard(from, raw));
   link.on('left', tag => this.lost(tag));
   // Back on the relay after its own connection dropped: everyone is sent the
@@ -67,6 +68,12 @@ export class HostSession {
   if (!who || who.tag !== from) return;
   if (m.t === 'bye') { who.state = 'gone'; who.tag = null; this.emit('away', who); this.sendRoom(); return; }
   if (who.state !== 'in') return;
+  if (m.t === 'seen') {
+   if (!this.seen.has(m.hole)) this.seen.set(m.hole, new Set());
+   this.seen.get(m.hole).add(who.member);
+   this.emit('seen', m.hole, who);
+   return;
+  }
   if (m.t === 'shot' || m.t === 'relief' || m.t === 'pick') this.emit(m.t, m, who);
  }
  hello(from, m) {
@@ -122,6 +129,15 @@ export class HostSession {
   return who;
  }
  get guests() { return [...this.members.values()].filter(m => m.state === 'in' || m.state === 'away'); }
+ // EVERY SCREEN SEES THE HOLE'S CARD BEFORE THE GROUP MOVES ON (the owner,
+ // 20 November 2026): the guests still connected whose screen has not yet
+ // shown the card for `hole`. One whose connection is lost is not waited for
+ // (PLACED): they are put on the next tee when they come back, and the host
+ // may play on without them.
+ unseen(hole) {
+  const s = this.seen.get(hole);
+  return this.guests.filter(m => m.state === 'in' && !s?.has(m.member));
+ }
  roomMessage() {
   return {t: 'room', host: this.member, hostName: this.name, phase: this.phase, course: this.course,
    members: this.guests.map(m => ({member: m.member, name: m.name, state: m.state}))};
@@ -133,6 +149,7 @@ export class HostSession {
   this.record = {...record, round: roundForGuests(record.round)};
   this.round = this.record.round;
   this.struck = this.done = 0;
+  this.seen = new Map();
   this.sendRoom();
   this.send({t: 'start', record: this.record, shotNo: 0, seq: ++this.seq});
  }
@@ -186,6 +203,8 @@ export class GuestSession {
  shot(p) { return this.link.send({t: 'shot', member: this.member, ...p}); }
  relief(p) { return this.link.send({t: 'relief', member: this.member, ...p}); }
  pick(p) { return this.link.send({t: 'pick', member: this.member, ...p}); }
+ // This screen has shown the card for `hole`.
+ seen(hole) { return this.link.send({t: 'seen', member: this.member, hole}); }
  leave() { this.link.send({t: 'bye', member: this.member}); this.state = 'left'; this.link.close(); }
 }
 

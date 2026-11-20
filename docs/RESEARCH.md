@@ -17256,9 +17256,13 @@ address and a few lines, not a rewrite; the relay itself stays small enough
 (it only passes sealed messages between the sockets of one room) to run on
 Node on Oracle as well.
 
-**The relay on the owner's own domain (asked 20 November 2026, not done).**
-The relay was deployed to a `workers.dev` address the same day; the owner
-then asked for it on the domain bought through Netlify. Searched, not built:
+**The relay on the owner's own domain (asked and decided against, 20
+November 2026).** The relay was deployed to a `workers.dev` address the same
+day; the owner asked for it on the domain bought through Netlify, read what
+it would take (below), and kept `workers.dev`, renaming the account's
+subdomain to `fairwaygolfsim` so the address names the game rather than
+them ("lets not move the DNS thats fine. and dont mark it for later"). What
+was found:
 a Worker *custom domain* or *route* needs the domain's DNS zone on Cloudflare
 -- Cloudflare's custom-domains page says one cannot be made on a zone you do
 not own or on a hostname with an existing CNAME
@@ -17275,7 +17279,7 @@ July 2025); a moved registrar is barred for 60 days after registration by
 ICANN. So the path is: a Netlify support ticket -> the domain at Name.com ->
 its nameservers set to Cloudflare -> the website's records recreated in
 Cloudflare (Netlify's external-DNS records for the apex and `www`) -> a custom
-domain such as `relay.<domain>` on the Worker -> the game's Relay box changed.
+domain such as `relay.<domain>` on the Worker -> the built-in address changed.
 The website is down for anyone whose lookup lands between the last two DNS
 steps if a record is missed. Each step is the owner's (accounts and DNS).
 
@@ -17332,6 +17336,23 @@ way, so the relay never sees it.
   `FAIRWAY_TEST_RELAY`). The hibernation calls it uses (`acceptWebSocket`,
   `serializeAttachment`, `setWebSocketAutoResponse`) were written from
   memory of Cloudflare's documentation and seen working there; not fetched.
+- **Deployed (the owner, 20 November 2026) and built in:** against
+  `wss://fairway-relay.fairwaygolfsim.workers.dev`, tools/relay-check.mjs
+  passed every check, tests/online-session.test.mjs played whole rounds of
+  all five formats, host and two guests, to one card through it over the
+  internet (each 4.5 to 5.7 seconds, against about 1 on the Node twin on
+  this machine), and the built game opened a room and let a guest in with
+  only the code typed (bench/shots/online-real-relay.mjs, local).
+- **Every screen sees the card** (the owner, 20 November 2026). The full
+  smoke run of 19 November found a guest moved to the next tee before its
+  card opened: the card waits for that screen's own XP pop-ups (a level-up
+  there), and the host's 8-second countdown started on the host's card.
+  Rejected: showing a guest's card before its XP (it would put the XP back
+  over the card, which the 14 October rule moved it out from under); a
+  fixed longer countdown (a slow phone has no fixed length). Built: a `seen`
+  message from each guest when its card opens, and the host's countdown
+  waits for every guest still connected (`HostSession.unseen`). A lost
+  guest is not waited for (PLACED), so a dead phone cannot hold the group.
 - **The code is the whole lock** (left for later, with the owner told):
   anyone holding it can read a room and knock, and could pose as the host to
   the guests while the real host is disconnected. A key per player (public
