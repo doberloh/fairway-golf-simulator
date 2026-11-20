@@ -26,6 +26,9 @@ export function reliefGround(course) {
  return {
   area,
   surface: (x, z) => course.surface(x, z),
+  // The ground's height, so a drop is never on ground too steep to hold a
+  // ball (relief.js MAX_DROP_SLOPE).
+  height: (x, z) => course.height(x, z),
   // What the hole itself calls fairway or fringe, before the landscape is
   // composed: Local Rule E-5 only counts the fairway of the hole being played.
   ownFairway: (x, z) => ['fairway', 'fringe'].includes(localSurface(course, x, z)),

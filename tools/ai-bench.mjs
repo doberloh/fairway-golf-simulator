@@ -38,7 +38,7 @@ async function play({settings, handicap, rounds, seed}) {
  const key = JSON.stringify(settings);
  if (!globalThis.__aiWorld.has(key)) globalThis.__aiWorld.set(key, generateWorld(settings));
  const w = globalThis.__aiWorld.get(key);
- const out = {rounds: [], drives: [], approach: [], short: [], sand: [], firstPutts: [], awful: 0, penalties: 0, stuck: 0, holes: 0, fairways: [0, 0], gir: [0, 0], putts: 0};
+ const out = {rounds: [], drives: [], approach: [], short: [], sand: [], firstPutts: [], awful: 0, penalties: 0, pickups: 0, stuck: 0, holes: 0, fairways: [0, 0], gir: [0, 0], putts: 0};
  for (let k = 0; k < rounds; k++) {
   const g = computerGolfer({handicap, seed: `${seed}-${k}`, settings});
   // The tee a golfer of this handicap plays: the set nearest 6,900 yd less
@@ -54,6 +54,8 @@ async function play({settings, handicap, rounds, seed}) {
    let strokes = 0, firstPutt = null, puttsHere = 0, onGreenAt = null, teeShot = true;
    const res = playHole(r, h, [g], {onTurn: t => {
     if (t.kind === 'relief') { out.penalties++; return; }
+    // Five over par it picks up and drops by the green (ai/play.js).
+    if (t.kind === 'pickup') { out.pickups++; return; }
     const {shot, from, lie} = t, end = shot.result.end, holed = shot.result.holed, hazard = shot.result.hazard;
     strokes++;
     const d0 = Math.hypot(h.pin.x - from.x, h.pin.z - from.z), d1 = Math.hypot(h.pin.x - end.x, h.pin.z - end.z);
@@ -169,7 +171,7 @@ if (!isMainThread) {
    check('two putts on average from (ft)', twoPuttAt(fp), lerp(TARGETS.twoPutt, hcp), .2, true),
    check('awful shots a round', sum('awful') / nRounds, lerp(TARGETS.awful, hcp), 1),
   ];
-  const info = {avgOverPar: avg, fairways: fw[0] / fw[1], putts: sum('putts') / nRounds, penalties: sum('penalties') / nRounds, stuck: sum('stuck'), n: {rounds: nRounds, drives: drives.length, approach: all('approach').length, short: all('short').length, sand: all('sand').length, putts: fp.length}};
+  const info = {avgOverPar: avg, fairways: fw[0] / fw[1], putts: sum('putts') / nRounds, penalties: sum('penalties') / nRounds, pickups: sum('pickups') / nRounds, stuck: sum('stuck'), n: {rounds: nRounds, drives: drives.length, approach: all('approach').length, short: all('short').length, sand: all('sand').length, putts: fp.length}};
   if (info.stuck) { broken++; console.log(`INVARIANT: ${info.stuck} holes left unfinished at handicap ${hcp}`); }
   if (prevScores.length && avg < prevScores[prevScores.length - 1].avg - .5) { broken++; console.log(`INVARIANT: handicap ${hcp} averages ${avg.toFixed(1)} over par, better than handicap ${prevScores[prevScores.length - 1].h} (${prevScores[prevScores.length - 1].avg.toFixed(1)})`); }
   prevScores.push({h: hcp, avg});
@@ -178,7 +180,7 @@ if (!isMainThread) {
  }
  const f = v => !Number.isFinite(v) ? '  --  ' : Math.abs(v) < 1 ? v.toFixed(3) : v.toFixed(1);
  for (const [hcp, info, checks] of rows) {
-  console.log(`\nHandicap ${hcp}: ${info.n.rounds} rounds, ${f(info.avgOverPar)} over par on average, ${f(info.putts)} putts, ${(info.fairways * 100).toFixed(0)}% fairways, ${f(info.penalties)} penalties a round`);
+  console.log(`\nHandicap ${hcp}: ${info.n.rounds} rounds, ${f(info.avgOverPar)} over par on average, ${f(info.putts)} putts, ${(info.fairways * 100).toFixed(0)}% fairways, ${f(info.penalties)} penalties a round, ${f(info.pickups)} holes picked up`);
   for (const c of checks) console.log(`  ${c.ok ? 'ok  ' : 'MISS'} ${c.name.padEnd(36)} ${f(c.got).padStart(7)}  want ${f(c.want)}`);
  }
  const misses = rows.reduce((s, [, , c]) => s + c.filter(x => !x.ok).length, 0), total = rows.reduce((s, [, , c]) => s + c.length, 0);

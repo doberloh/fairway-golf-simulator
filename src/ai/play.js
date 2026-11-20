@@ -17,10 +17,38 @@ export const shotKey = (round, seat, roundKey = '') => `${roundKey || round.seed
 // same water twice plays away from it.
 const avoidance = new WeakMap();
 
+// A COMPUTER GOLFER PICKS UP (19 November 2026). Five over par on a hole
+// (PICK_UP_OVER, PLACED), with no relief waiting, it stops trying and drops
+// by the green -- the game's own penalty-free sim drop, Round.simDrop -- and
+// putts out, as a casual golfer picks up. It is the guarantee that a hole
+// ends: an Endless coast hole held drops a ball could not be played from (a
+// cliff, fixed in relief.js; a beach where every sand shot rolled back into
+// the sea), and a 10 handicap took 16, or went on until the bench's limit.
+// The score is what it took, plus the putts.
+export const PICK_UP_OVER = 5;
+// Never once the ball is on the green: from there it putts out.
+export const shouldPickUp = (round, hole, seat = round.active) => {
+ if (round.relief || round.holeComplete || round.mode === 'scramble' || !Number.isFinite(hole?.par)) return false;
+ if ((round.strokes?.[seat] ?? 0) < hole.par + PICK_UP_OVER) return false;
+ const p = round.positions?.[seat];
+ return !p || hole.surface(p.x, p.z) !== 'green';
+};
+// Where it drops: on the green, the nearest spot to the hole at least a metre
+// and a half out, searched in rings; the hole itself if the green has none.
+export function pickUpSpot(hole) {
+ const pin = hole.pin;
+ for (let r = 1.5; r <= 12; r += .5) for (let a = 0; a < 360; a += 15) {
+  const p = {x: pin.x - Math.sin(a * Math.PI / 180) * r, z: pin.z - Math.cos(a * Math.PI / 180) * r};
+  if (hole.surface(p.x, p.z) === 'green') return p;
+ }
+ return {x: pin.x, z: pin.z - 1.5};
+}
+
 // ONE TURN for the golfer whose turn it is: relief if a ball waits for it,
 // else a shot. Returns what happened: {kind: 'relief', option} or
-// {kind: 'shot', shot, outcome}.
+// {kind: 'shot', shot, outcome}, or {kind: 'pickup', spot}.
 export function takeTurn(round, hole, golfer, {roundKey = '', pressure = 0, outRule = round.outOfBounds} = {}) {
+ if (shouldPickUp(round, hole)) { const spot = pickUpSpot(hole); round.simDrop(spot); return {kind: 'pickup', spot, seat: round.active}; }
  const seat = round.relief ? round.relief.player : round.active;
  let marks = avoidance.get(golfer);
  if (!marks) { marks = []; avoidance.set(golfer, marks); }

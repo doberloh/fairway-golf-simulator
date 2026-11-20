@@ -16784,6 +16784,43 @@ and 0 for a hole not holed out (the text read). Individual Stableford is
   rival's handicap half a stroke (top ten better, bottom quarter worse),
   never more than three from the roster's figure.
 
+### A hole always ends (19 November 2026, measured)
+
+The release smoke run's cpu-group journey failed: a 10-handicap computer
+golfer took 16 on an Endless coast hole (seed ASHFORD-9855-1, Coast Road
+Vista, par 4, 441 yd). Played 200 times in Node from the same hole, that
+golfer **did not finish 50 times** (the bench's 60-action limit), mean 6.27
+for the rest. Three causes:
+- **A drop on a cliff.** Lateral relief chose semi-rough 2 m from the sea on
+  ground rising 2.4-2.5 m a metre (about 68 degrees); every test shot from it
+  -- four directions, two speeds -- carried 0.1 m and rolled into the water,
+  and stroke and distance sent the ball back to it. relief.js now refuses a
+  drop steeper than MAX_DROP_SLOPE, 0.6 over a metre (about 31 degrees;
+  PLACED -- the Rules ask that a dropped ball come to rest in the relief
+  area, 14.3c and 14.2e, and none rests on that).
+- **Driver off the ground, never learnt from.** From the semi-rough at 196 yd
+  the golfer chose driver to the pin twenty times running. Its memory of
+  trouble counted only shots from the same spot to 0.5 m, a drop moves the
+  ball, and the game never passed it in. Now driver is for the tee only, a
+  club that found trouble within 30 m costs 1.5 strokes in the choice each
+  time, three troubles from here mean the safe shot out, and the relief
+  choice counts the trouble at each spot (all PLACED).
+- **A ball creeping through a bunker** a metre a time, 7-iron after 7-iron:
+  "stuck" compared the new spot with where the last shot was struck. It now
+  compares with where it finished, for a non-putt that got no nearer.
+
+And a guarantee, ai/play.js `PICK_UP_OVER`: **five over par it picks up**
+and drops by the green (penalty-free, Round.simDrop) and putts out
+(PLACED: a casual golfer's habit; Rule 21.2's maximum score is a
+committee's number, often double par). On that hole after the fixes: 200
+rounds each, 0 unfinished for handicaps 0, 10 and 25; picked up 3, 36 and
+57 times (it is a very hard hole: water left and right, cliffs, a beach);
+means 5.20, 7.33 and 8.44. tools/ai-bench.mjs, every band, six courses: 0
+invariants broken, 55 of 70 checks (the baseline of 18 November: 58 of 70
+on 36 rounds a band against today's 24); average over par per band 4.2,
+10.4, 13.7, 16.4, 21.0, 22.0, 26.6 against the baseline's 4.3, 10.9, 13.3,
+16.2, 21.1, 21.7, 26.7; holes picked up 0 to 0.04 a round.
+
 ### Frame rate with computer golfers (18 November 2026, measured)
 
 **Drawing a course: level with 0.9.18 on every tier measured.**

@@ -162,7 +162,7 @@ Other round suites pin one behaviour each with a hand-written card:
 sim drops), `putting-gimme` (the gimme circle: one putt inside, none outside,
 the edge inside, off the green never; its size checked; an old save without
 one loads at 3 ft; a scramble lie given; the one ring drawn), `honours` (playing order, golfers added, removed and reordered),
-`relief` (water and out of bounds under the Rules), `skins`, `mixed-groups`
+`relief` (water and out of bounds under the Rules), `cpu-trouble` (no drop on ground too steep to hold a ball; a computer golfer five over par picks up once and drops on the green), `skins`, `mixed-groups`
 (monitor and Swing Meter golfers together), `endless`, `round-library` and
 `course-library` (saving), `weekly`, `challenges`, `rival` (a friend's
 challenge: the code made and read, refused when cut short, altered or from

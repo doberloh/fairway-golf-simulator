@@ -69,6 +69,9 @@ const SAMPLES = (() => {
 // A plan in steps (a generator), run to its end at once: its answer.
 export function runSteps(it) { let r; while (!(r = it.next()).done); return r.value; }
 
+// TROUBLE REMEMBERED (planSteps): how near counts as "here", what a club that
+// found trouble from here costs, and how many penalties before the safe shot.
+const TROUBLE_REACH = 30, TROUBLE_COST = 1.5, TROUBLE_GIVE_UP = 3;
 export function computerGolfer({handicap = 15, traits = {}, seed = 'golfer', settings = {}, name = '', bag: ownBag = null} = {}) {
  const skill = skillFor(handicap, traits), bag = ownBag || golferBag(skill), clubs = bagClubs(bag);
  const turf = turfConfig(settings.turf), wind = h => localWind(settings, h.rotation || 0);
@@ -150,15 +153,27 @@ export function computerGolfer({handicap = 15, traits = {}, seed = 'golfer', set
  // more than one flight, which is what a person's own swing costs. Run to
  // the end at once (`runSteps`) they are the same calls in the same order,
  // so every shot is what it was.
- function* planSteps(h, from, lie, {avoid = 0, stuck = 0} = {}) {
+ // TROUBLE REMEMBERED (19 November 2026): `burned` maps a club to how many of
+ // its shots from near here (TROUBLE_REACH) found water or went out of
+ // bounds. Each one counts TROUBLE_COST strokes against that club, so the
+ // golfer reaches for another; after TROUBLE_GIVE_UP of them from here it
+ // plays the safe shot out to the fairway, as a stuck ball does. Found by the
+ // cpu-group smoke journey on an Endless coast hole: a 10 handicap dropped
+ // in the semi-rough 196 yd out took driver off the ground into the sea
+ // twenty times running -- the old memory counted only shots from the very
+ // same spot, a drop moves the ball, and the game never passed it in.
+ // PLACED: 30 m, 1.5 strokes, three.
+ function* planSteps(h, from, lie, {avoid = 0, stuck = 0, burned = null} = {}) {
   const pin = h.pin, toPin = Math.hypot(pin.x - from.x, pin.z - from.z), yds = toPin / YARD;
   const rise = h.height(pin.x, pin.z) - h.height(from.x, from.z), sand = lieClass(lie) === 'sand';
   const options = [];
+  const burnt = id => burned?.get(id) || 0;
+  const troubles = burned ? [...burned.values()].reduce((a, b) => a + b, 0) : 0;
   const consider = (id, target, spread) => {
-   options.push({id, target, ev: judge(h, from, target, spread) + avoid * (lieAt(h, target.x, target.z) === 'water' ? 1 : 0)});
+   options.push({id, target, ev: judge(h, from, target, spread) + avoid * (lieAt(h, target.x, target.z) === 'water' ? 1 : 0) + TROUBLE_COST * burnt(id)});
   };
   const wedges = list.filter(([, c]) => shortGame(c, yds));
-  if (stuck >= 1) {
+  if (stuck >= 1 || troubles >= TROUBLE_GIVE_UP) {
    // Out sideways to the fairway, short of the hole (a golfer who could not
    // get out takes the safe way).
    const [id] = wedges.length ? wedges[wedges.length - 1] : list[list.length - 1];
@@ -171,6 +186,10 @@ export function computerGolfer({handicap = 15, traits = {}, seed = 'golfer', set
   } else {
    for (const [id, c] of list) {
     if (sand && c.carry > (clubs.iron7?.carry ?? 155)) continue;
+    // DRIVER FROM THE TEE ONLY (19 November 2026): off the ground it was
+    // chosen from the rough at 196 yd and went 30 m into the sea, again and
+    // again. Few golfers hit it off the deck; the fairway woods are for that.
+    if (c.kind === 'driver' && lie !== 'tee') continue;
     const carry = c.carry * YARD, need = toPin + Math.max(0, rise) * 1.2;
     if (carry >= need * .92 && carry <= need * 1.35 + 15) {
      consider(id, {...pin}, fullSpread(c));
@@ -189,7 +208,7 @@ export function computerGolfer({handicap = 15, traits = {}, seed = 'golfer', set
   }
   // Nothing reaches by the ball model (uphill into wind): the longest club
   // allowed from here, down the line.
-  const [id] = sand ? list.filter(([, c]) => c.carry <= (clubs.iron7?.carry ?? 155))[0] || list[list.length - 1] : list[0];
+  const [id] = sand ? list.filter(([, c]) => c.carry <= (clubs.iron7?.carry ?? 155))[0] || list[list.length - 1] : list.find(([, c]) => lie === 'tee' || c.kind !== 'driver') || list[0];
   return {id, target: fairwayAim(h, from, clubs[id].carry * YARD), ev: Infinity};
  }
 
@@ -232,6 +251,15 @@ export function computerGolfer({handicap = 15, traits = {}, seed = 'golfer', set
  // A SHOT THAT WENT NOWHERE: the last one from (almost) here, if it finished
  // within 4 m of where it started, makes the next a way out.
  let last = null, stuck = 0;
+ // Shots of this golfer's that found trouble: {h, x, z, club}, newest last
+ // (TROUBLE REMEMBERED, above planSteps). Only the last few dozen are kept.
+ const trouble = [];
+ const remember = (h, from, club, hazard) => { if (!hazard) return; trouble.push({h, x: from.x, z: from.z, club}); if (trouble.length > 40) trouble.shift(); };
+ const burnedFrom = (h, from) => {
+  const m = new Map();
+  for (const t of trouble) if (t.h === h && Math.hypot(t.x - from.x, t.z - from.z) < TROUBLE_REACH) m.set(t.club, (m.get(t.club) || 0) + 1);
+  return m;
+ };
  // The putter from off the green (PLACED): from the fringe within 25 m, and
  // from the fairway within 12 m, as most golfers would.
  const putts = (lie, toPin) => lie === 'green' || lie === 'fringe' && toPin < 25 || (lie === 'fairway' || lie === 'apron') && toPin < 12;
@@ -244,15 +272,31 @@ export function computerGolfer({handicap = 15, traits = {}, seed = 'golfer', set
  function* shotSteps({hole: h, from, key = '', pressure = 0, avoid = 0, fly = true}) {
   const rnd = seeded(`${seed}|${key}`), lie = lieAt(h, from.x, from.z);
   const nerves = 1 + .25 * (1 - skill.nerve) * Math.min(1, Math.max(0, pressure));
-  const wasStuck = last && last.h === h && Math.hypot(from.x - last.from.x, from.z - last.from.z) < 1 && last.end && Math.hypot(last.end.x - last.from.x, last.end.z - last.from.z) < 4 ? stuck + 1 : 0;
-  const out = yield* shotFrom(h, from, lie, rnd, nerves, avoid, fly, wasStuck);
+  // The ball is played from where the last shot finished (or from where it
+  // was struck, replayed) and that shot went under 4 m. It compared the new
+  // spot with where the last shot was STRUCK, so a ball creeping a metre or
+  // two a time through a bunker was never stuck, and a 7-iron was hit from
+  // it for ever (19 November 2026, the same coast hole).
+  // Only a shot that got no nearer the hole counts (a short putt that ran
+  // two metres up to the cup is not stuck), and never a putt.
+  const near = p => p && Math.hypot(from.x - p.x, from.z - p.z) < 1;
+  const toPin = p => Math.hypot(h.pin.x - p.x, h.pin.z - p.z);
+  const wasStuck = last && last.h === h && last.end && last.club !== 'putter' && (near(last.end) || near(last.from)) && Math.hypot(last.end.x - last.from.x, last.end.z - last.from.z) < 4 && toPin(last.end) > toPin(last.from) - 2 ? stuck + 1 : 0;
+  const out = yield* shotFrom(h, from, lie, rnd, nerves, avoid, fly, wasStuck, burnedFrom(h, from));
   stuck = wasStuck;
-  last = {h, from: {...from}, end: out.result ? {x: out.result.end.x, z: out.result.end.z} : null};
+  last = {h, from: {...from}, end: out.result ? {x: out.result.end.x, z: out.result.end.z} : null, club: out.club, told: false};
+  if (out.result) { remember(h, from, out.club, out.result.hazard); last.told = true; }
   return out;
  }
  const shot = o => runSteps(shotSteps(o));
- function landed(h, from, end) { if (last && last.h === h && Math.hypot(last.from.x - from.x, last.from.z - from.z) < .01) last.end = {x: end.x, z: end.z}; }
- function* shotFrom(h, from, lie, rnd, nerves, avoid, fly, stuck) {
+ // Where a shot the game flew finished, and whether it found trouble (main.js
+ // afterComputerShot): the golfer did not fly it, so this is how it learns.
+ function landed(h, from, end, hazard = null) {
+  if (!last || last.h !== h || Math.hypot(last.from.x - from.x, last.from.z - from.z) >= .01) return;
+  last.end = {x: end.x, z: end.z};
+  if (!last.told) { remember(h, from, last.club, hazard); last.told = true; }
+ }
+ function* shotFrom(h, from, lie, rnd, nerves, avoid, fly, stuck, burned = null) {
   if (putts(lie, Math.hypot(h.pin.x - from.x, h.pin.z - from.z)) && !stuck) {
    const read = yield* readPutt(h, from, lie);
    const aim = read.straight + (read.aim - read.straight) * skill.read + normal(rnd) * skill.puttLine * nerves;
@@ -262,7 +306,7 @@ export function computerGolfer({handicap = 15, traits = {}, seed = 'golfer', set
    const result = fly ? simulateShot({origin: {...from}, aim, ...launch}, h, {...air(h), turf, flagsticks: {current: false}}) : null;
    return {result, club: 'putter', kind: 'putter', launch, before: launch.speed, aim, target: {...h.pin}, plan: 'putt'};
   }
-  const p = yield* planSteps(h, from, lie, {avoid, stuck});
+  const p = yield* planSteps(h, from, lie, {avoid, stuck, burned});
   const c = clubs[p.id], toPin = Math.hypot(h.pin.x - from.x, h.pin.z - from.z);
   const short = shortGame(c, toPin / YARD), sand = lieClass(lie) === 'sand';
   // The swing's carry: a full shot is asked for the target; a short shot is
@@ -310,10 +354,15 @@ export function computerGolfer({handicap = 15, traits = {}, seed = 'golfer', set
 
  // THE BEST RELIEF from the options relief.js offers (each {spot, penalty}):
  // the fewest strokes from there, penalty included.
+ // A spot this golfer has already found trouble from counts that trouble
+ // against it (TROUBLE_COST each): on the coast hole every shot from one
+ // drop -- driver, wood, wedge -- ran a few metres into the sea, and stroke
+ // and distance kept sending the ball back there.
  function relief(h, options) {
   let best = null;
   for (const o of options) {
-   const v = o.penalty + E(lieAt(h, o.spot.x, o.spot.z), Math.hypot(h.pin.x - o.spot.x, h.pin.z - o.spot.z));
+   const burnt = [...burnedFrom(h, o.spot).values()].reduce((a, b) => a + b, 0);
+   const v = o.penalty + E(lieAt(h, o.spot.x, o.spot.z), Math.hypot(h.pin.x - o.spot.x, h.pin.z - o.spot.z)) + TROUBLE_COST * burnt;
    if (!best || v < best.v) best = {...o, v};
   }
   return best;

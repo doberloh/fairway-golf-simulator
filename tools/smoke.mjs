@@ -700,7 +700,14 @@ async function coursePoint(t, pullPx) {
 async function openPad(t, {touch = false} = {}) {
  const shown = () => t.page.evaluate(() => document.getElementById('swingPad')?.hidden === false);
  if (await shown()) return;
- if (touch) await t.page.locator('#shotButton').tap(); else await t.page.click('#shotButton');
+ const press = () => touch ? t.page.locator('#shotButton').tap() : t.page.click('#shotButton');
+ await press();
+ // A press just as a panel finishes closing can be taken by the panel's last
+ // frame (19 November 2026, surprise-round after Help & controls): one more
+ // press, as a person would, before calling it a failure.
+ const soon = Date.now() + 1500;
+ while (Date.now() < soon && !(await shown())) await t.page.waitForTimeout(100);
+ if (!(await shown())) await press();
  await t.until(shown, 'the Swing button to open the swing pad', 5 * SLOW);
 }
 async function padPoint(t) {
@@ -1704,6 +1711,10 @@ const JOURNEYS = [
     if (await t.inFlight()) throw new Error('a lost lift hit the ball');
    });
    await t.step('a pull and push finished out to the right and high is a High Push, and the report says what was hit', async () => {
+    // A ball from an earlier step may be in water on a random course, and
+    // its relief choice covers the Swing button until taken (19 November
+    // 2026, BRAMBLE-6232-1; the same as the step above).
+    await reliefFirst(t);
     await strokeOnPad(t, .6, {follow: .6, bend: .36});
     await t.until(() => t.inFlight(), 'the pull and push to start a shot', 5 * SLOW);
     const said = await t.page.textContent('#smHint');

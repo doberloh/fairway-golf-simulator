@@ -109,7 +109,7 @@ import {reliefGround as sharedReliefGround} from './relief-ground.js';
 import {computerGolfer,golferBag} from './ai/golfer.js';
 import {skillFor} from './ai/skill.js';
 import {strokesFor} from './ai/strokes.js';
-import {shotKey} from './ai/play.js';
+import {shotKey,shouldPickUp,pickUpSpot} from './ai/play.js';
 import {isComputer,computerSeat,showShot,PRESHOT_MS,reaction,DEFAULT_WATCH,WATCH,LEVELS,levelName} from './ai/seat.js';
 import {roundStrokes,netCard} from './net.js';
 import {form as adaptForm,adaptHandicap} from './ai/adapt.js';
@@ -1546,6 +1546,9 @@ function planComputerTurn(tries=0){
   if(cpuTurnKey!==key||!isComputer(round.player)||round.active!==seat)return;
   // Something is open (a banner, a panel): try again shortly.
   if(!cpuMayPlay()||(!$('holeOut').hidden&&!$('holeOut').classList.contains('leaving'))){if(tries<400)planComputerTurn(tries+1);return;}
+  // Five over par: it picks up and drops by the green (ai/play.js
+  // shouldPickUp), so a hole always ends; then it putts out from there.
+  if(shouldPickUp(round,course,seat)){try{const spot=pickUpSpot(course);round.simDrop(spot);toast(`${round.player.name} picks up and drops by the green.`);save();updateHUD();setUpTurn();}catch(e){console.warn('computer golfer pick-up:',e.message);}return;}
   const g=cpuGolferFor(seat),from={...round.position},hole=course;
   let it;try{it=g.shotSteps({hole,from,key:shotKey(round,seat,round.uid),fly:false});}catch(e){console.warn('computer golfer:',e.message);toast(`${round.player.name} could not play that shot.`);return;}
   // Thought over the next few frames (stepPlan), then shown and swung.
@@ -1583,7 +1586,7 @@ function cpuCard(s){
 // shot that went nowhere is noticed) and, now and then, a word.
 function afterComputerShot(result){
  const s=cpuShooting;cpuShooting=null;if(!s)return;
- const g=cpuGolferFor(s.seat);g.landed?.(course,s.from,result.end);
+ const g=cpuGolferFor(s.seat);g.landed?.(course,s.from,result.end,result.hazard||null);
  if(!cpuChat)return;
  const after=Math.hypot(course.pin.x-result.end.x,course.pin.z-result.end.z);
  const toEnd=(result.end.x-s.from.x)*(course.pin.x-s.from.x)+(result.end.z-s.from.z)*(course.pin.z-s.from.z);
