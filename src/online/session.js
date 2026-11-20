@@ -44,13 +44,23 @@ export class HostSession {
   this.record = null; this.round = null;
   link.on('message', (from, raw) => this.heard(from, raw));
   link.on('left', tag => this.lost(tag));
-  link.on('open', () => this.sendRoom());
+  // Back on the relay after its own connection dropped: everyone is sent the
+  // room and, mid-round, the round whole, since what was sent while it was
+  // gone went nowhere.
+  link.on('open', () => { this.sendRoom(); if (this.record) this.resync(); });
  }
+ resync() { this.send({t: 'start', record: {...this.record, round: this.round ?? this.record.round}, shotNo: this.done, seq: ++this.seq}); }
  byTag(tag) { for (const m of this.members.values()) if (m.tag === tag) return m; return null; }
  send(msg) { return this.link.send(msg); }
  heard(from, raw) {
   const m = readMessage(raw);
-  if (!m) return;
+  if (!m) {
+   // A player's move that does not read is answered, so their screen does
+   // not wait for ever on a ball the host will never fly.
+   const who = this.byTag(from);
+   if (who?.state === 'in' && ['shot', 'relief', 'pick'].includes(raw?.t)) this.send({t: 'nope', member: who.member, why: 'The host could not read that. Try again.'});
+   return;
+  }
   if (m.t === 'hello') return this.hello(from, m);
   const who = this.members.get(m.member);
   // Only from the socket the member came in on, and only once let in.
@@ -67,7 +77,7 @@ export class HostSession {
    known.tag = from; known.state = 'in';
    this.send({t: 'welcome', member: m.member, host: this.member});
    this.sendRoom();
-   if (this.record) this.send({t: 'start', record: {...this.record, round: this.round ?? this.record.round}, shotNo: this.done, seq: ++this.seq});
+   if (this.record) this.resync();
    this.emit('back', known);
    return;
   }
@@ -186,11 +196,17 @@ export class Follower {
  restart(seq) { this.queue = []; this.busy = false; this.own = null; this.seq = seq; this.afterShot = false; }
  heard(m) {
   if (m.t === 'state' && m.seq <= this.seq) return;
+  if (m.t === 'flown' && this.own && Follower.key(m) === this.own) this.ownEchoed = true;
   this.queue.push(m);
   this.pump();
  }
- // The guest struck its own ball: it is in the air already.
- ownStrike(key) { this.own = key; this.busy = true; this.afterShot = true; }
+ // Something from the host waits behind the shot on screen (main.js hurries
+ // a watched ball then, so a guest never falls further behind).
+ // (The host's copy of the guest's own ball is not something waiting.)
+ get behind() { return this.busy && this.queue.some(m => !(m.t === 'flown' && this.own && Follower.key(m) === this.own)); }
+ // The guest struck its own ball: it is in the air already. `ownEchoed` says
+ // whether the host has taken it (its copy came back), for a time limit.
+ ownStrike(key) { this.own = key; this.ownEchoed = false; this.busy = true; this.afterShot = true; }
  // The host would not take it (`nope`): the ball comes down, and the next
  // state puts things right.
  ownRefused() { this.own = null; this.busy = false; this.afterShot = false; this.pump(); }

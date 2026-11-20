@@ -60,7 +60,12 @@ import {spawn} from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
+import os from 'node:os';
+import {randomBytes} from 'node:crypto';
 import {startRelay} from '../relay/node-relay.mjs';
+import {createLink} from '../src/online/link.js';
+import {GuestSession} from '../src/online/session.js';
+import {readRoomCode} from '../src/online/room-code.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = path.join(ROOT, 'dist', 'index.html');
@@ -3646,11 +3651,26 @@ const JOURNEYS = [
  // relay, and only once a room is opened.
  {
   name: 'online',
-  what: 'a host and a guest in two browsers through a local relay: knock, let in, tee off, a shot each, the same ball on both screens',
+  what: 'a host (file from disk) and a guest (served over plain http, with a launch monitor) through a local relay: knock, let in, a late knock, tee off, a shot each, the same ball on both screens, the guest cut off and back',
   async run(t) {
    const relay = await startRelay({port: 0});
    const sockets = [], guestSockets = [];
    t.page.on('websocket', ws => sockets.push(ws.url()));
+   // THE OWNER'S CASE (19 November 2026): a phone that loaded the game from
+   // run_fairway_server on a PC, over plain http on the home network, with
+   // the launch monitor on that PC's bridge. Served here from this machine's
+   // own network address, which a browser does not count as secure.
+   const lan = Object.values(os.networkInterfaces()).flat().find(i => i && i.family === 'IPv4' && !i.internal)?.address || '127.0.0.1';
+   const dir = path.dirname(FILE ? path.resolve(FILE) : DIST);
+   const served = createServer((req, res) => {
+    const name = decodeURIComponent(new URL(req.url, 'http://x').pathname).replace(/^\/+/, '') || 'index.html';
+    const file = path.join(dir, name);
+    if (!file.startsWith(dir) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); res.end(); return; }
+    res.writeHead(200, {'Content-Type': {'.html': 'text/html; charset=utf-8', '.png': 'image/png', '.webmanifest': 'application/manifest+json', '.json': 'application/json'}[path.extname(file)] || 'application/octet-stream'});
+    fs.createReadStream(file).pipe(res);
+   });
+   await new Promise(r => served.listen(0, lan, r));
+   const guestHome = `http://${lan}:${served.address().port}/`;
    const gctx = await t.page.context().browser().newContext({viewport: {width: 1440, height: 900}});
    await gctx.addInitScript(() => {
     try { localStorage.setItem('fairway-graphics-v1', JSON.stringify({quality: 'low', frameCap: 0})); } catch {}
@@ -3659,7 +3679,15 @@ const JOURNEYS = [
    const gpage = await gctx.newPage();
    gpage.setDefaultTimeout(30000 * SLOW);
    gpage.on('websocket', ws => guestSockets.push(ws.url()));
-   const g = new Trip(gpage, 'online-guest', t.home);
+   // The PC's bridge, answered here as the `monitor` journey answers it.
+   let bridge = null;
+   const acks = [];
+   await gpage.routeWebSocket(u => String(u).startsWith(`ws://${lan}:${served.address().port}`) || /^ws:\/\/127\.0\.0\.1:1922/.test(String(u)), ws => {
+    bridge = ws;
+    ws.onMessage(m => { try { const d = JSON.parse(m); if (d.type === 'ack') acks.push(d); } catch {} });
+    ws.send(monitorStatus('green'));
+   });
+   const g = new Trip(gpage, 'online-guest', guestHome);
    const turn = p => p.evaluate(() => window.lab.state().turn);
    try {
     await menuReady(t);
@@ -3681,11 +3709,18 @@ const JOURNEYS = [
      if (!sockets.some(u => u.startsWith(relay.url + '/room/'))) throw new Error(`no socket to the relay: ${sockets.join(', ')}`);
      if (sockets.some(u => u.toUpperCase().includes(code.replace(/-/g, '').slice(0, 8)))) throw new Error('the code is in the relay address');
     });
-    await gpage.goto(t.home);
+    await gpage.goto(guestHome);
     await menuReady(g);
-    await g.step('the guest joins with the code and knocks', async () => {
+    await g.step('the guest\'s page is not a secure one, and has no browser encryption', async () => {
+     const sec = await gpage.evaluate(() => ({secure: isSecureContext, subtle: !!globalThis.crypto?.subtle, random: typeof globalThis.crypto?.getRandomValues}));
+     if (lan !== '127.0.0.1' && (sec.secure || sec.subtle)) throw new Error(`served from ${guestHome} the page is secure (${JSON.stringify(sec)}): this is not the phone's case`);
+     if (sec.random !== 'function') throw new Error('no getRandomValues on a plain-http page');
+     if (lan === '127.0.0.1') console.log('       (no network address on this machine: served from 127.0.0.1, which counts as secure)');
+    });
+    await g.step('the guest joins with the code and knocks, playing with the launch monitor', async () => {
      await fromMenu(g, 'Play online');
      await g.until(() => gpage.locator('#onlineRelay').isVisible(), 'the online sheet', 10 * SLOW);
+     await gpage.evaluate(() => { const s = document.getElementById('onlineInput'); s.value = 'monitor'; s.dispatchEvent(new Event('change', {bubbles: true})); });
      await gpage.fill('#onlineRelay', relay.url);
      await gpage.locator('#onlineRelay').dispatchEvent('change');
      await gpage.fill('#onlineCode', code.toLowerCase());
@@ -3710,6 +3745,22 @@ const JOURNEYS = [
      if (!seated.includes('Guest')) throw new Error(`the guest has no seat: ${JSON.stringify(seated)}`);
      // On the Rules step, which a player would open; set where it lies.
      await t.page.evaluate(() => { const s = document.getElementById('roundOrder'); s.value = 'farthest'; s.dispatchEvent(new Event('change', {bubbles: true})); });
+    });
+    await t.step('a late knock while Play is open: the new guest\'s seat appears and the choices made stay', async () => {
+     const version = await t.page.evaluate(() => window.lab.version || 'unstamped');
+     const late = new GuestSession({link: createLink({relay: relay.url, code: readRoomCode(code), random: n => new Uint8Array(randomBytes(n))}), member: 'smokelate1', golfer: {name: 'Late'}, game: version});
+     try {
+      await t.until(() => t.page.locator('#onlineKnock [data-admit]').isVisible(), 'the knock bar over Play', 10 * SLOW);
+      await t.page.screenshot({path: path.join(SHOTS, 'online-late-knock.png')});
+      await t.page.locator('#onlineKnock [data-admit]').click();
+      await t.until(async () => (await t.page.evaluate(() => [...document.querySelectorAll('#playerRows .online-seat-name')].map(e => e.textContent))).includes('Late'), 'the late guest\'s seat', 10 * SLOW);
+      const order = await t.page.evaluate(() => document.getElementById('roundOrder').value);
+      if (order !== 'farthest') throw new Error(`the order of play went back to "${order}" when the seats were drawn again`);
+      // The late guest is only passing through: taken out of the group again.
+      await t.page.locator('#playerRows .player-row', {hasText: 'Late'}).locator('[data-drop]').click();
+     } finally { late.link.close(); }
+    });
+    await t.step('Surprise me → Tee off', async () => {
      await t.press('Tee off on the surprise course');
      await t.inPlay(120 * SLOW);
     });
@@ -3720,6 +3771,13 @@ const JOURNEYS = [
      const s = await turn(gpage);
      if (s.active !== 0) throw new Error(`the guest's round has seat ${s.active} up, not the host`);
      if (await gpage.evaluate(() => window.lab.state().canSwing)) throw new Error('the guest can swing on the host\'s turn');
+    });
+    await g.step('the guest connects their PC\'s bridge and arms the monitor while the host is up', async () => {
+     await g.settings('monitor');
+     await g.press('Connect bridge');
+     await g.until(() => gpage.evaluate(() => !!document.getElementById('monArm')), 'the monitor controls', 5 * SLOW);
+     await gpage.getByLabel(/Arm monitor/).check();
+     await g.leaveMonitor();
     });
     await t.step('the host swings; the ONLINE chip is up', async () => {
      if (!await t.page.evaluate(() => document.getElementById('onlineChip')?.hidden === false)) throw new Error('no online chip in the round');
@@ -3734,10 +3792,13 @@ const JOURNEYS = [
     await t.step('the host cannot swing on the guest\'s turn', async () => {
      if (await t.page.evaluate(() => window.lab.state().canSwing)) throw new Error('the host can swing for the guest');
     });
-    await g.step('the guest swings from their own screen', async () => {
-     await g.until(() => gpage.evaluate(() => window.lab.state().canSwing), 'the guest\'s swing to be allowed', 10 * SLOW);
-     await g.swing();
-     await g.until(() => g.inFlight(), 'the guest\'s shot to fly', 5 * SLOW);
+    await g.step('the guest hits a ball into the launch monitor at their house', async () => {
+     await g.until(async () => (await turn(gpage)).active === 1 && !(await g.inFlight()), 'the guest\'s turn', 10 * SLOW);
+     bridge.send(JSON.stringify({type: 'shot', requestId: 'online-1', payload: {DeviceID: 'Smoke', Units: 'Yards', ShotNumber: 1, APIversion: '1',
+      BallData: {Speed: 141.2, VLA: 13.1, HLA: -1.4, TotalSpin: 2980, SpinAxis: 4.2}, ShotDataOptions: {ContainsBallData: true, ContainsClubData: false}}}));
+     await g.until(() => g.inFlight(), 'the guest\'s monitor shot to fly', 5 * SLOW);
+     if (!acks.some(a => a.requestId === 'online-1' && a.accepted)) await g.until(() => acks.some(a => a.requestId === 'online-1'), 'the bridge\'s answer', 5 * SLOW);
+     if (!acks.find(a => a.requestId === 'online-1').accepted) throw new Error(`the guest's game refused the monitor shot: ${JSON.stringify(acks)}`);
      await gpage.screenshot({path: path.join(SHOTS, 'online-guest-shot.png')});
     });
     await t.step('the host flies the guest\'s ball, and both rounds agree', async () => {
@@ -3749,12 +3810,28 @@ const JOURNEYS = [
      if (Math.hypot(both[0].ball.x - both[1].ball.x, both[0].ball.z - both[1].ball.z) > 0.01) throw new Error(`the ball up lies in two places: ${JSON.stringify(both)}`);
      await t.page.screenshot({path: path.join(SHOTS, 'online-host-round.png')});
     });
-    await g.step('the guest\'s connection only ever went to the relay', async () => {
-     if (!guestSockets.length || guestSockets.some(u => !u.startsWith(relay.url + '/room/'))) throw new Error(`guest sockets: ${guestSockets.join(', ')}`);
+    await g.step('the guest is cut off at the relay and comes back to the same round', async () => {
+     // The relay keeps a room's sockets in the order they came: the host's
+     // first. Every other one is cut, as a phone's Wi-Fi drops.
+     let cut = 0;
+     for (const r of relay.rooms.values()) for (const p of [...r.values()].slice(1)) { p.ws.terminate(); cut++; }
+     if (!cut) throw new Error('nothing to cut at the relay');
+     await g.until(async () => (await gpage.evaluate(() => window.lab.online()?.status)) !== 'open', 'the guest to notice', 5 * SLOW).catch(() => {});
+     await g.until(async () => (await gpage.evaluate(() => window.lab.online()?.status)) === 'open', 'the guest to reconnect', 20 * SLOW);
+     await gpage.waitForTimeout(1500);
+     const seats = await t.page.evaluate(() => window.lab.online()?.seats);
+     if (!seats?.[1]) throw new Error(`the guest's seat was lost: ${JSON.stringify(seats)}`);
+     const both = await Promise.all([t.page, gpage].map(p => p.evaluate(() => ({turn: window.lab.state().turn, ball: window.lab.state().ballAt, online: window.lab.online()}))));
+     if (both[1].online.phase !== 'playing') throw new Error(`the guest is ${both[1].online.phase}, not playing`);
+     if (JSON.stringify(both[0].turn.strokes) !== JSON.stringify(both[1].turn.strokes)) throw new Error(`host ${JSON.stringify(both[0].turn)}, guest ${JSON.stringify(both[1].turn)}`);
+    });
+    await g.step('the guest\'s only other connection was to the relay (and their own bridge)', async () => {
+     if (!guestSockets.length || guestSockets.some(u => !u.startsWith(relay.url + '/room/') && !u.startsWith(`ws://${lan}:${served.address().port}`))) throw new Error(`guest sockets: ${guestSockets.join(', ')}`);
     });
    } finally {
     await gctx.close().catch(() => {});
     await relay.close();
+    served.close();
    }
   },
  }

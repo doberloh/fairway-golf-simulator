@@ -3,7 +3,7 @@
 # in and deploys to your own workers.dev address.
 name = "fairway-relay"
 main = "worker.js"
-compatibility_date = "2026-11-01"
+compatibility_date = "2025-09-01"
 
 [[durable_objects.bindings]]
 name = "ROOMS"

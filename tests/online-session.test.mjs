@@ -17,6 +17,11 @@ import {startRelay} from '../relay/node-relay.mjs';
 // the pin, with one ball in the water each round so relief travels too.
 const random = n => new Uint8Array(randomBytes(n));
 const GAME = 'test-1.0';
+// FAIRWAY_TEST_RELAY=ws://127.0.0.1:8799 plays the rounds through another
+// relay -- the Worker under `wrangler dev` -- instead of the Node twin; the
+// tests that cut a socket at the relay need the twin and are skipped.
+const EXTERNAL = process.env.FAIRWAY_TEST_RELAY || '';
+const relayForTest = () => EXTERNAL ? {url: EXTERNAL, rooms: new Map(), close: async () => {}} : startRelay({port: 0});
 const pinOf = hole => ({x: 0, z: 160 + hole * 15});
 const TEES = {blue: {x: 0, z: 0}};
 const until = async (f, ms = 8000) => { const t = Date.now(); while (!f()) { if (Date.now() - t > ms) throw Error('timed out'); await new Promise(r => setTimeout(r, 2)); } };
@@ -136,6 +141,24 @@ test('protocol: a message that does not check is dropped whole', () => {
  assert.ok(!('history' in sent) && sent.players.every(p => !('profile' in p)) && sent.players[1].online === 'abcdefgh');
 });
 
+test('protocol: text from another machine carries no markup', () => {
+ const evil = '<img src=x onerror=alert(1)>';
+ const h = readMessage({t: 'hello', v: PROTOCOL, game: GAME, member: 'abcdef', golfer: {name: evil}});
+ assert.ok(!/[<>"]/.test(h.golfer.name), h.golfer.name);
+ const s = readMessage({t: 'shot', member: 'abcdef', seat: 0, hole: 0, stroke: 1, club: {kind: 'iron', code: '7I', label: evil + '7 Iron'}, shot: {...shotFrom({positions: [{x: 0, z: 0}]}, 0), extra: {club: evil, speed: 90}}});
+ assert.ok(!/[<>"]/.test(s.club.label)); assert.deepEqual(s.shot.extra, {speed: 90}, 'only numbers ride in a monitor\'s extras');
+ assert.equal(readMessage({t: 'shot', member: 'abcdef', seat: 0, hole: 0, stroke: 1, club: {kind: 'iron', code: '<b>', label: '7'}, shot: shotFrom({positions: [{x: 0, z: 0}]}, 0)}), null, 'a club code is letters and numbers');
+ const json = new Round({players: [{name: 'A', team: 'A'}, {name: 'B', team: 'B'}]}).toJSON();
+ json.players[1].name = evil;
+ const st = readMessage({t: 'state', round: json, shotNo: 1, seq: 2, event: {holed: true, score: 3, player: 1, html: evil}});
+ assert.ok(!/[<>"]/.test(st.round.players[1].name));
+ assert.deepEqual(Object.keys(st.event).sort(), ['complete', 'holed', 'penalty', 'player', 'puttingTotal', 'putts', 'relief', 'score']);
+ const start = readMessage({t: 'start', record: {settings: {courseName: evil + 'Pines'}, round: json}, shotNo: 0, seq: 1});
+ assert.equal(start.record.settings.courseName, 'img src=x onerror=alert(1)Pines');
+ const room = readMessage({t: 'room', host: 'abcdef', hostName: evil, phase: 'lobby', members: [{member: 'ghijkl', name: evil, state: 'in'}]});
+ assert.ok(!/[<>"]/.test(room.hostName + room.members[0].name));
+});
+
 test('the door: another version, a full room, and a round already started are refused', () => {
  const members = new Map([['a', {state: 'in'}], ['b', {state: 'in'}], ['c', {state: 'away'}]]);
  assert.match(doorProblem({v: PROTOCOL, game: 'other'}, {game: GAME, members: new Map(), maxGuests: 3}), /same version/);
@@ -159,7 +182,7 @@ test('the referee: only your seat, on its turn, from your ball', () => {
 });
 
 test('a guest knocks, the host lets one in and turns one away', async () => {
- const relay = await startRelay({port: 0});
+ const relay = await relayForTest();
  const code = newRoomCode(random), links = [];
  try {
   const mk = () => { const l = createLink({relay: relay.url, code, random}); links.push(l); return l; };
@@ -185,7 +208,7 @@ test('a guest knocks, the host lets one in and turns one away', async () => {
 
 for (const mode of FORMATS) {
  test(`a whole ${mode} round between a host and two guests ends with one card`, async () => {
-  const relay = await startRelay({port: 0});
+  const relay = await relayForTest();
   const {host, guests, close} = await room(relay);
   try {
    const team = i => mode === 'stroke' || mode === 'skins' || mode === 'stableford' ? 'A' : ['A', 'B', 'A'][i];
@@ -209,8 +232,8 @@ for (const mode of FORMATS) {
  });
 }
 
-test('a guest whose connection drops comes back to the same seat and the round as it stands', async () => {
- const relay = await startRelay({port: 0});
+test('a guest whose connection drops comes back to the same seat and the round as it stands', {skip: !!EXTERNAL}, async () => {
+ const relay = await relayForTest();
  const {host, guests, close} = await room(relay, ['Ann']);
  try {
   const ann = guests[0];
@@ -232,8 +255,41 @@ test('a guest whose connection drops comes back to the same seat and the round a
  } finally { close(); await relay.close(); }
 });
 
+test('the host\'s own connection drops mid-round: back on the relay, it sends everyone the round whole', {skip: !!EXTERNAL}, async () => {
+ const relay = await relayForTest();
+ const {host, guests, close} = await room(relay, ['Ann']);
+ try {
+  const ann = guests[0];
+  const round = new Round({players: [{name: 'Host', team: 'A'}, {name: 'Ann', team: 'A', online: ann.member}], mode: 'stroke', holes: 3});
+  round.placeTee(TEES);
+  const hg = hostGame(host, round), g = guestGame(ann);
+  let starts = 0;
+  ann.on('start', () => starts++);
+  host.start({version: 2, settings: {}, round: round.toJSON()});
+  hg.next();
+  await until(() => g.applied >= 3);
+  for (const r of relay.rooms.values()) for (const p of r.values()) if (p.tag === host.link.you) p.ws.terminate();
+  await until(() => starts >= 2, 10000);
+  await hg.done;
+  await until(() => g.round && JSON.stringify(g.round.cards) === JSON.stringify(round.cards));
+  assert.ok(round.finished);
+ } finally { close(); await relay.close(); }
+});
+
+test('a move the host cannot read is answered, not left hanging', async () => {
+ const relay = await relayForTest();
+ const {host, guests, close} = await room(relay, ['Ann']);
+ try {
+  let nope = '';
+  guests[0].on('nope', m => nope = m.why);
+  guests[0].link.send({t: 'shot', member: guests[0].member, seat: 1, hole: 0, stroke: 1, club: CLUB, shot: {origin: {x: 0, z: 0}, aim: 'left'}});
+  await until(() => nope);
+  assert.match(nope, /could not read/);
+ } finally { close(); await relay.close(); }
+});
+
 test('a shot out of turn is refused and nothing moves', async () => {
- const relay = await startRelay({port: 0});
+ const relay = await relayForTest();
  const {host, guests, close} = await room(relay, ['Ann']);
  try {
   const ann = guests[0];

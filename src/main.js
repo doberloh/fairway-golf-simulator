@@ -1437,7 +1437,10 @@ function ensureNet(){
  if(!round.handicaps||!world?.holes?.length||round.endless)return;
  if(round.net&&round.net.strokes.length===round.players.length&&round.net.strokes.every(r=>r.length))return;
  const holes=world.holes.slice(0,round.holes).map(h=>{const t=h.tees?.[teeFor(round.tee,Object.keys(h.tees||{}))];return {par:h.par,yards:Math.round(t?.yards||h.length/YARD||0)};});
- const players=round.players.map(p=>{if(isComputer(p))return {index:p.cpu.handicap,team:p.team};const q=profileOf(p);return {index:q?playingIndex(q,profileSummary(q).handicap?.index):null,team:p.team};});
+ // An online guest's index is the one their own device worked out and
+ // brought with them (online/protocol.js cleanGolfer): the host has no
+ // profile of theirs to read it from.
+ const players=round.players.map(p=>{if(isComputer(p))return {index:p.cpu.handicap,team:p.team};if(p.online){const g=online?.role==='host'?online.session.members.get(p.online)?.golfer:null;return {index:Number.isFinite(g?.index)?g.index:null,team:p.team};}const q=profileOf(p);return {index:q?playingIndex(q,profileSummary(q).handicap?.index):null,team:p.team};});
  round.setNet(roundStrokes({mode:round.mode,players,holes}));
 }
 // ADAPTIVE COMPUTER GOLFERS (src/ai/adapt.js): at the start of each hole, an
@@ -1681,8 +1684,39 @@ function renderOnline(content){
  on('onlineCancel',()=>{onlineClose('Stopped knocking.');});
  on('onlineLeave',()=>{onlineClose('You left the room.');});
 }
-// The sheet, if it is open, and the round's chip.
-function drawOnline(){if(panel==='online')renderOnline($('drawerContent'));if(panel==='round'&&online?.role==='host'&&online.phase==='lobby'){lobbyKeep=true;openPanel('round');}drawOnlineChip();}
+// The sheet, if it is open, the knock bar and the round's chip.
+function drawOnline(){if(panel==='online')renderOnline($('drawerContent'));drawKnockBar();drawOnlineChip();}
+// SOMEONE KNOCKING, WHEREVER THE HOST IS (the Play sheet while choosing the
+// course, the menu): their name with Let in and Turn away, over everything,
+// so the host need not leave what they are doing to answer. The Online
+// sheet lists knocks itself.
+function drawKnockBar(){
+ let el=$('onlineKnock');
+ const k=online?.role==='host'&&panel!=='online'?online.knocks?.[0]:null;
+ if(!k){if(el)el.hidden=true;return;}
+ if(!el){el=document.createElement('div');el.id='onlineKnock';el.className='online-knock';el.setAttribute('role','alertdialog');el.setAttribute('aria-label','Someone is knocking');document.body.append(el);}
+ el.innerHTML=`<span><b>${escape(k.name)}</b> is knocking${online.knocks.length>1?` <small>(and ${online.knocks.length-1} more)</small>`:''}</span><button class="primary" data-admit="${escape(k.member)}">Let in</button><button class="secondary" data-refuse="${escape(k.member)}">Turn away</button>`;
+ el.querySelector('[data-admit]').onclick=()=>{online.session.admit(k.member);online.knocks=online.knocks.filter(x=>x.member!==k.member);drawOnline();};
+ el.querySelector('[data-refuse]').onclick=()=>{online.session.refuse(k.member);online.knocks=online.knocks.filter(x=>x.member!==k.member);drawOnline();};
+ el.hidden=false;
+}
+// Every guest let in, seated in a group being set up (`start` rows, as
+// groupEditor takes them), as far as four golfers go.
+function seatGuests(start){
+ if(online?.role!=='host'||online.phase!=='lobby')return start;
+ for(const g of online.session.guests){
+  if(start.length>=4||start.some(p=>p.online===g.member))continue;
+  start.push({name:g.name,team:start.length%2?'B':'A',hand:g.golfer.hand,input:g.golfer.input,...(isTee(g.golfer.tee)?{tee:g.golfer.tee}:{}),online:g.member,id:undefined});
+ }
+ return start;
+}
+// A guest let in while Play is open: their seat appears, and nothing else on
+// the sheet (format, order, rules) is drawn again.
+function seatGuestsNow(){
+ if(panel!=='round'||!$('playerRows')||!groupDraft)return;
+ const start=groupDraft.map(p=>({profile:p.profile,name:p.name,team:p.team,hand:p.hand,input:p.input,tee:p.tee,id:p.seat,...(p.cpu?{cpu:p.cpu}:{}),...(p.online?{online:p.online}:{})}));
+ groupEditor('playerRows',seatGuests(start),groupEditor.onChange);
+}
 function drawOnlineChip(){
  let el=$('onlineChip');
  if(!online||online.phase!=='playing'||appMode!=='play'){if(el)el.hidden=true;return;}
@@ -1706,9 +1740,10 @@ function startHosting(){
   const code=newRoomCode(onlineRandom),member=memberId(onlineRandom),{golfer}=onlineGolfer(),link=onlineLink(code);
   const session=new HostSession({link,member,name:golfer.name,game:GAME_VERSION||'unstamped'});
   online={role:'host',code,member,link,session,phase:'lobby',knocks:[]};
-  session.on('knock',w=>{online.knocks=online.knocks.filter(k=>k.member!==w.member).concat([w]);toast(`${w.name} is knocking.`);drawOnline();});
+  // Said by the knock bar (or the sheet's list), not a toast as well.
+  session.on('knock',w=>{online.knocks=online.knocks.filter(k=>k.member!==w.member).concat([w]);drawOnline();});
   session.on('withdrawn',w=>{online.knocks=online.knocks.filter(k=>k.member!==w.member);drawOnline();});
-  session.on('admitted',()=>drawOnline());session.on('removed',()=>drawOnline());
+  session.on('admitted',()=>{drawOnline();seatGuestsNow();});session.on('removed',()=>drawOnline());
   session.on('away',w=>{if(w.state==='gone'&&online.phase==='playing')onlineGuestGone(w);else toast(`${w.name} lost their connection. Their turn waits for them.`);drawOnline();});
   session.on('back',w=>{toast(`${w.name} is back.`);drawOnline();});
   session.on('shot',onlineHostShot);session.on('relief',onlineHostRelief);session.on('pick',onlineHostPick);
@@ -1734,8 +1769,12 @@ function joinRoom(typed){
    drawOnline();
   });
   session.on('start',m=>{onlineGuestStart(m).catch(e=>{toast(e.message);onlineClose(e.message);});});
-  session.on('flown',m=>{if(online?.phase==='playing')online.follower.heard(m);});
-  session.on('state',m=>{if(online?.phase==='playing')online.follower.heard(m);});
+  // Behind the host (a ball still flying here when the next has been struck
+  // there, the host having skipped to the end): this one flies three times
+  // as fast.
+  const hurry=()=>{if(online?.follower.behind&&flight&&!flight.replay)flight.rate=Math.max(flight.rate||1,3);};
+  session.on('flown',m=>{if(online?.phase==='playing'){online.follower.heard(m);hurry();}});
+  session.on('state',m=>{if(online?.phase==='playing'){online.follower.heard(m);hurry();}});
   session.on('nope',m=>onlineOwnRefused(m.why));
   session.on('end',()=>{onlineEnded('The host closed the room.');});
   session.on('host-away',()=>{online.hostAway=true;toast('The host lost their connection. Waiting for them…');drawOnlineChip();});
@@ -1797,8 +1836,17 @@ function onlineSaved(){
 function onlineStruck({shot,club,typed,remote}){
  if(online?.phase!=='playing')return;
  const p={seat:round.active,hole:round.hole,stroke:round.stroke,club:{kind:String(club.kind||'iron'),code:String(club.code||''),label:String(club.label||'')},shot,typed:!!typed};
+ p.club.label=p.club.label.slice(0,24);p.club.code=/^[A-Z0-9]{0,4}$/.test(p.club.code)?p.club.code:'';p.club.kind=/^[a-z]{1,12}$/.test(p.club.kind)?p.club.kind:'iron';
  if(online.role==='host')online.session.flown(p);
- else if(!remote){online.session.shot(p);online.follower.ownStrike(`${p.hole}:${p.seat}:${p.stroke}`);}
+ else if(!remote){
+  const key=`${p.hole}:${p.seat}:${p.stroke}`;
+  online.session.shot(p);online.follower.ownStrike(key);
+  // NO ANSWER IN TEN SECONDS (the host's connection gone, a message lost):
+  // the ball comes down and the turn is the guest's again, rather than a
+  // screen waiting for ever. The host takes a shot the moment it reads it.
+  clearTimeout(online.ownTimer);
+  online.ownTimer=setTimeout(()=>{if(online?.role==='guest'&&online.follower.own===key&&!online.follower.ownEchoed)onlineOwnRefused('The host did not answer that shot. Play it again.');},10000);
+ }
 }
 // A GUEST'S SHOT, ruled on (online/referee.js) and played.
 function onlineHostShot(m,who){
@@ -1809,9 +1857,13 @@ function onlineHostShot(m,who){
   if(dropState)cancelDrop();
   if(view.config.mode==='free')cameraMode('player');
   if(!takeShot(null,{remote:{shot:m.shot,club:m.club,typed:m.typed}}))why='The host could not play that shot just now. Try again.';
+  // A HIDDEN HOST DRAWS NO FRAMES, and a flight ends in a frame: its result is
+  // known already, so it lands now and the guests are not kept waiting.
+  else if(document.hidden&&flight)finishShot();
  }
  if(why)online.session.nope(who.member,why);
 }
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&online?.role==='host'&&online.phase==='playing'&&flight&&!flight.replay)finishShot();});
 function onlineHostRelief(m,who){
  if(online?.phase!=='playing')return;
  const why=reliefProblem(round,m);if(why){online.session.nope(who.member,why);return;}
@@ -1833,17 +1885,30 @@ async function onlineGuestStart(m){
  for(const p of next.players)if(p.online===online.member&&online.profile)p.profile=online.profile;
  online.follower.restart(m.seq);
  // Back after a lost connection, on the same round: no rebuild, just the round.
- if(appMode==='play'&&online.phase==='playing'&&round?.uid===next.uid){round=next;online.landing=null;if(flight&&!flight.replay){flight=null;view.trackingBall=false;}onlineSettle(null,true);return;}
- online.phase='playing';online.note='';
- await whileGenerating('Building the host’s course…',async report=>{
-  leaveBackdrop();pendingRound=null;staleGenerator=false;
-  lightsOffForRound();clockForRound();
-  challenge=null;round=next;settings={...DEFAULT_COURSE,...d.settings,clubYardages:mine};shotLog={uid:next.uid,list:[]};
-  applyPlaySettings();closePanel();
-  await prepareWorld(report);
-  loadCourse();setMode('play');
- });
- arriveAtHole();drawOnlineChip();
+ if(appMode==='play'&&online.phase==='playing'&&round?.uid===next.uid){
+  const was=round;round=next;online.landing=null;clearTimeout(online.ownTimer);
+  if(flight&&!flight.replay){flight=null;view.trackingBall=false;view.setTrail([]);}
+  // The group may have moved to another tee while this guest was away.
+  if(was.hole!==next.hole){cancelAdvance();endHoleSummary();endRelief();endPick();closePanel();loadCourse();arriveAtHole();drawOnlineChip();return;}
+  onlineSettle(null,true);return;}
+ const build=async()=>{
+  if(!online||online.role!=='guest')return;
+  online.phase='playing';online.note='';
+  await whileGenerating('Building the host’s course…',async report=>{
+   leaveBackdrop();pendingRound=null;staleGenerator=false;
+   lightsOffForRound();clockForRound();
+   challenge=null;round=next;settings={...DEFAULT_COURSE,...d.settings,clubYardages:mine};shotLog={uid:next.uid,list:[]};
+   applyPlaySettings();closePanel();
+   await prepareWorld(report);
+   loadCourse();setMode('play');
+  });
+  arriveAtHole();drawOnlineChip();
+ };
+ // A guest in the studio or a round of their own is asked first, as any
+ // round's start asks (startRoundOn); the host's round waits for them.
+ if(appMode==='studio')return new Promise(r=>guardStudio(()=>build().then(r)));
+ if(appMode==='play'&&!menuBackdrop)return new Promise(r=>guardRound(()=>build().then(r)));
+ return build();
 }
 // A BALL STRUCK ON ANOTHER MACHINE, flown here.
 function onlineWatch(f){
@@ -5855,6 +5920,8 @@ function syncTeeSelect(tees){
 const bridgeSeen=()=>{if(monitorConnected)return true;try{return !!localStorage.getItem(BRIDGE_KEY);}catch{return false;}};
 function groupEditor(hostId,start,onChange){
  const host=$(hostId);if(!host)return null;
+ // Kept so the seats can be drawn again alone (seatGuestsNow, online play).
+ if(hostId==='playerRows')groupEditor.onChange=onChange;
  // `seat` is the id this golfer already holds in the round. It rides through the
  // editor so that removing a row removes THAT golfer's card rather than the last
  // one in the list. A row added here has none, which is what marks it as new.
@@ -7832,10 +7899,7 @@ function renderPanel(name,content){
   const start=lobbyKeep&&groupDraft?.length?groupDraft.map(p=>({profile:p.profile,name:p.name,team:p.team,hand:p.hand,input:p.input,tee:p.tee,id:p.seat,...(p.online?{online:p.online}:{})})):round.players.slice();lobbyKeep=false;
   // EVERY GUEST LET INTO THE HOST'S ROOM takes a seat (online play), as far
   // as four golfers go; the host may take one out again here.
-  if(online?.role==='host'&&online.phase==='lobby'&&!playingNow)for(const g of online.session.guests){
-   if(start.length>=4||start.some(p=>p.online===g.member))continue;
-   start.push({name:g.name,team:start.length%2?'B':'A',hand:g.golfer.hand,input:g.golfer.input,...(isTee(g.golfer.tee)?{tee:g.golfer.tee}:{}),online:g.member,id:undefined});
-  }
+  if(!playingNow)seatGuests(start);
   groupEditor('playerRows',start,()=>{formatNote?.();disarmApply();});
   if(lobbyKind==='friend')wireFriendStep();
   $('roundStudio').onclick=()=>enterStudio();
@@ -8837,6 +8901,8 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
  window.lab={
   // The version a friend's challenge must match (smoke journey friend-challenge).
   version:GAME_VERSION,
+  // The online room as the smoke journey `online` reads it.
+  online:()=>online?{role:online.role,phase:online.phase,status:online.link?.status,knocks:(online.knocks||[]).map(k=>k.name),seats:round?.players?.map(p=>p.online||null)}:null,
   // THE BENCH IS THE DRIVING RANGE. The lab used to be its own mode with its own
   // flat green; that mode is gone and the range does the job -- it is flat, its
   // green moves to a stated number, and Lab tools sets its firmness and speed.

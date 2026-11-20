@@ -59,7 +59,7 @@ export function pickProblem(round, m) {
  if (!round.scrambleSelection) return 'There is no ball to choose.';
  if (m.hole !== round.hole) return 'That choice was for another hole.';
  const seat = pickerSeat(round);
- if (seat < 0 || m.seat !== seat || seatOwner(round, seat) !== m.member) return 'The team\'s first golfer chooses its ball.';
+ if (seat < 0 || m.seat !== seat || seatOwner(round, seat) !== m.member) return 'The team’s first golfer chooses its ball.';
  if (!round.candidates[m.index]) return 'There is no such ball.';
  return '';
 }
