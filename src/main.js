@@ -16,7 +16,7 @@ import {aimTarget,localWind} from './shot-visuals.js';
 import {playsLike} from './plays-like.js';
 import {mapPosition,mapPoint,zoomAbout,panBy,MAP_NAV_NONE,MAP_ZOOM_MIN} from './course-map.js';
 import {planCourse,planScorecard,playCameraMode,aimDelta} from './course-plan.js';
-import {TEE_ORDER,GENERATED_TEES,courseSets,teeFor,teeOn,teeName} from './tees.js';
+import {TEE_ORDER,GENERATED_TEES,courseSets,teeFor,teeOn,teeName,isTee} from './tees.js';
 import {listRounds,findRound,saveRound,deleteRound,renameRound,suggestName,MAX_ROUNDS} from './round-library.js';
 import {turfConfig,rollDeceleration,FIRMNESS,FIRMNESS_NAMES,FIRMNESS_LABELS,FIRMNESS_LINES,firmnessValue,firmnessName,CONDITION_PRESETS,presetOf,STIMP_RANGE,stimpWord} from './turf.js';
 import './style.css';
@@ -130,6 +130,11 @@ import {loadGraphics,saveGraphics,needsRebuild,greenCues,QUALITY,QUALITY_LABELS,
 import {createAutoResolution} from './auto-resolution.js';
 import {createGameAudio,canopyContacts,nearestWater} from './audio.js';
 import {surpriseSettings,BIOME_KEYS} from './settings-schema.js';
+import {newRoomCode,readRoomCode,showRoomCode} from './online/room-code.js';
+import {createLink} from './online/link.js';
+import {HostSession,GuestSession,Follower,memberId} from './online/session.js';
+import {shotProblem,reliefProblem,pickProblem,pickerSeat,playsHere} from './online/referee.js';
+import {onlineSheet} from './ui-online.js';
 const $=id=>document.getElementById(id),escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const icon=()=>createIcons({icons});
 // BUILT COURSES (Fairway Course Builder; docs/COURSE_BUILDER.md): their files
@@ -576,7 +581,11 @@ function toast(message){{const t=$('toast'),over=!$('drawer').hidden;const home=
 // nothing*): the error was swallowed and Continue quietly stopped following the
 // round. Now the player is told, once until a save works again.
 let saveWarned=false;
-function save(){if(menuBackdrop||challenge||challengeStarting)return;try{localStorage.setItem('fairway-round-v1',JSON.stringify(saveRecord()));saveWarned=false;}catch{if(!saveWarned){saveWarned=true;toast('This browser has no room left to save the round. Delete saved rounds or courses to make room.');}}syncProfile();}
+// AN ONLINE ROUND IS NOT SAVED HERE (online play, PLACED): it cannot be
+// carried on alone, and a round left mid-way is offered to the saved rounds
+// as any other (guardRound). The host's save sends the round to its guests
+// instead (`onlineSaved`).
+function save(){if(menuBackdrop||challenge||challengeStarting)return;if(online?.phase==='playing'){onlineSaved();syncProfile();return;}try{localStorage.setItem('fairway-round-v1',JSON.stringify(saveRecord()));saveWarned=false;}catch{if(!saveWarned){saveWarned=true;toast('This browser has no room left to save the round. Delete saved rounds or courses to make room.');}}syncProfile();}
 // WHICH PROFILE A GOLFER IS. By the id the group editor gave them; a golfer
 // with none -- a save from before profiles -- by name, ignoring case. Null on
 // the menu's showcase hole, which is nobody's round.
@@ -1412,7 +1421,7 @@ function distance(){return Math.hypot(round.position.x-course.pin.x,round.positi
 // golfer set to the meter, `armed` is the switch, exactly as before.
 function syncArmed(){
  const was=armed;
- armed=armSwitch&&monitorConnected&&playsWith(round?.player)==='monitor';
+ armed=armSwitch&&monitorConnected&&playsWith(round?.player)==='monitor'&&seatHere(round?.active);
  if(was!==armed&&armed)cancelSwing();
  return was!==armed;
 }
@@ -1482,7 +1491,8 @@ function setUpTurn(){
  // keeps it while the player aims (GolfView.setReadingHeading).
  view.setBall(p);updateAim();view.setReadingHeading(p,aim);view.setCamera(p,aim);updateHUD();sendPlayer();
  flashTurn();
- if(isComputer(round.player))planComputerTurn();
+ // Online, a computer golfer is the host's to play; a guest watches it.
+ if(isComputer(round.player)&&online?.role!=='guest')planComputerTurn();
  showCaddie();
 }
 // The caddie's hint for the golfer up (caddie.js): the club and where to aim
@@ -1495,7 +1505,7 @@ function showCaddie(){
  const p=round?.player,on=caddieMode==='on'||(caddieMode==='auto'&&playsWith(p)==='meter');
  const hide=()=>{if(el)el.hidden=true;};
  hide();caddieTurn='';
- if(!on||!p||isComputer(p)||rangeMode||challenge||round.holeComplete||round.relief||round.scrambleSelection||!course)return;
+ if(!on||!p||isComputer(p)||!seatHere(round.active)||rangeMode||challenge||round.holeComplete||round.relief||round.scrambleSelection||!course)return;
  const q=profileOf(p),turn=caddieTurn=`${round.uid}:${round.hole}:${round.active}:${round.strokes?.[round.active]??0}`,hole=course;
  let it;try{it=suggestSteps({hole,from:{...round.position},bag:bagFor(p),handicap:q?playingIndex(q,profileSummary(q).handicap?.index)??20:20,settings});}catch{return;}
  stepPlan(it,()=>caddieTurn===turn&&course===hole&&!flight,s=>{
@@ -1601,13 +1611,13 @@ function afterComputerShot(result){
 // A computer team's scramble pick and a computer golfer's relief are chosen
 // for them, by the strokes each choice leaves (src/ai/strokes.js).
 function computerChoosesRelief(){
- const r=round.relief;if(!r||!isComputer(round.players[r.player]))return false;
+ const r=round.relief;if(!r||!isComputer(round.players[r.player])||online?.role==='guest')return false;
  const g=cpuGolferFor(r.player),best=g.relief(course,reliefList);if(!best)return false;
  setTimeout(()=>{if(round.relief===r)takeReliefOption(reliefList.find(o=>o.id===best.id)||best,`${round.players[r.player].name}: ${best.label}, ${best.penalty} penalty stroke${best.penalty===1?'':'s'}.`);},700);
  return true;
 }
 function computerPicks(){
- if(!round.scrambleSelection||!round.candidates.length)return false;
+ if(!round.scrambleSelection||!round.candidates.length||online?.role==='guest')return false;
  const team=round.players[round.candidates[0].player]?.team,members=round.players.filter(p=>p.team===team);
  if(!members.length||!members.every(isComputer))return false;
  const hcp=Math.min(...members.map(p=>p.cpu.handicap)),list=pickList();
@@ -1615,6 +1625,270 @@ function computerPicks(){
  let best=0;list.forEach((c,i)=>{if(cost(c)<cost(list[best]))best=i;});
  setTimeout(()=>{if(!round.scrambleSelection)return;pickIndex=best;try{const carded=cardedSeats();round.chooseScramble(pickIndex,course.pin);announceHoleOut(carded);afterSelection();}catch(e){toast(e.message);}},900);
  return true;
+}
+
+// ONLINE PLAY (19 November 2026; src/online/, docs/studies PLAN.md, RESEARCH
+// *Online play*). A room is a code; the relay passes sealed messages between
+// the machines in it. THE HOST'S GAME IS THE REFEREE: it plays the round as
+// any round, a guest's golfer being a seat (`online`, game.js) whose shots
+// come as messages and go through takeShot like a computer golfer's. Every
+// ball struck is sent to the guests (`flown`), and the round after every
+// change (`state`, from save()). A GUEST'S GAME flies each shot from the same
+// numbers, then takes the host's round in place of its own (onlineApply), in
+// order (session.js Follower). `var`, as the boot reads `online` before this
+// line has run (save(), seatHere).
+var online=null,onlineShotDone=false,onlineShotEvent=null,onlineSendQueued=false;
+const RELAY_KEY='fairway-relay-v1',ONLINE_KEY='fairway-online-v1';
+// eslint-disable-next-line no-undef
+const BUILT_RELAY=typeof __FAIRWAY_RELAY__==='string'?__FAIRWAY_RELAY__:'';
+const onlineRandom=n=>crypto.getRandomValues(new Uint8Array(n));
+function relayAddress(){try{return localStorage.getItem(RELAY_KEY)||BUILT_RELAY;}catch{return BUILT_RELAY;}}
+function setRelayAddress(v){const s=String(v||'').trim();try{if(s&&s!==BUILT_RELAY)localStorage.setItem(RELAY_KEY,s);else localStorage.removeItem(RELAY_KEY);}catch{}}
+// Whether this machine plays a seat: everything, offline.
+function seatHere(seat){return !online||online.phase!=='playing'||!round?.players?.[seat]||playsHere(round,seat,online.role==='guest'?online.member:null);}
+// Who this device plays as in a room, and with what (kept for next time).
+function onlinePrefs(){try{return JSON.parse(localStorage.getItem(ONLINE_KEY)||'{}')||{};}catch{return {};}}
+function onlineGolfer(){
+ const pref=onlinePrefs(),q=findProfile(profiles,pref.who)||mainProfile(profiles);
+ const idx=q?playingIndex(q,profileSummary(q).handicap?.index):null;
+ return {profile:q?.id??null,golfer:{name:(q?.name||'Golfer').slice(0,24),hand:q?.hand==='LH'?'LH':'RH',input:pref.input==='monitor'?'monitor':'meter',...(q?.tee&&isTee(q.tee)?{tee:q.tee}:{}),...(Number.isFinite(idx)?{index:idx}:{})}};
+}
+function onlineSheetState(){
+ const pref=onlinePrefs(),everyone=profiles?[mainProfile(profiles),...profiles.profiles.filter(p=>p.id!==profiles.main)].filter(Boolean):[];
+ const base={relay:relayAddress(),golfers:everyone.map(p=>({id:p.id,name:p.name})),who:(findProfile(profiles,pref.who)||mainProfile(profiles))?.id,input:pref.input,error:onlineError,typed:onlineTyped};
+ if(!online)return {...base,stage:'start'};
+ const status=online.link?.status||'connecting';
+ if(online.role==='host')return {...base,stage:'host',code:online.code,status,knocks:online.knocks,members:online.session.guests.map(m=>({member:m.member,name:m.name,state:m.state})),hostName:online.session.name};
+ if(online.phase==='knocking')return {...base,stage:'knocking',code:online.code,status};
+ const r=online.session.room;
+ return {...base,stage:'guest',code:online.code,status,hostName:r?.hostName,course:r?.course,members:r?.members||[],note:online.note};
+}
+let onlineError='',onlineTyped='';
+function renderOnline(content){
+ content.innerHTML=onlineSheet(onlineSheetState());icon();
+ const on=(id,f)=>{const el=$(id);if(el)el.onclick=f;};
+ if($('onlineRelay'))$('onlineRelay').onchange=e=>setRelayAddress(e.target.value);
+ const keep=()=>{try{localStorage.setItem(ONLINE_KEY,JSON.stringify({who:$('onlineWho')?.value,input:$('onlineInput')?.value}));}catch{}};
+ if($('onlineWho'))$('onlineWho').onchange=keep;if($('onlineInput'))$('onlineInput').onchange=keep;
+ if($('onlineCode'))$('onlineCode').oninput=e=>{onlineTyped=e.target.value;};
+ on('onlineHost',()=>{keep();setRelayAddress($('onlineRelay')?.value);startHosting();});
+ on('onlineJoin',()=>{keep();setRelayAddress($('onlineRelay')?.value);joinRoom($('onlineCode')?.value);});
+ on('onlineCopy',async()=>{const t=showRoomCode(online.code);try{await navigator.clipboard.writeText(t);toast('Room code copied.');}catch{const el=$('onlineCodeText');const r=document.createRange();r.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(r);toast('Selected: copy it with your keyboard.');}});
+ content.querySelectorAll('[data-admit]').forEach(b=>b.onclick=()=>{online.session.admit(b.dataset.admit);online.knocks=online.knocks.filter(k=>k.member!==b.dataset.admit);drawOnline();});
+ content.querySelectorAll('[data-refuse]').forEach(b=>b.onclick=()=>{online.session.refuse(b.dataset.refuse);online.knocks=online.knocks.filter(k=>k.member!==b.dataset.refuse);drawOnline();});
+ on('onlineChoose',()=>openPlayOn('weekly',0));
+ on('onlineClose',()=>{onlineClose('You closed the room.');});
+ on('onlineCancel',()=>{onlineClose('Stopped knocking.');});
+ on('onlineLeave',()=>{onlineClose('You left the room.');});
+}
+// The sheet, if it is open, and the round's chip.
+function drawOnline(){if(panel==='online')renderOnline($('drawerContent'));if(panel==='round'&&online?.role==='host'&&online.phase==='lobby'){lobbyKeep=true;openPanel('round');}drawOnlineChip();}
+function drawOnlineChip(){
+ let el=$('onlineChip');
+ if(!online||online.phase!=='playing'||appMode!=='play'){if(el)el.hidden=true;return;}
+ if(!el){el=document.createElement('div');el.id='onlineChip';el.className='online-chip';el.setAttribute('role','status');$('world')?.append(el);}
+ const st=online.link?.status,away=online.role==='host'?online.session.guests.filter(g=>g.state==='away').map(g=>g.name):online.hostAway?[online.session.room?.hostName||'The host']:[];
+ el.dataset.state=st!=='open'?'lost':away.length?'away':'ok';
+ el.textContent=st!=='open'?'ONLINE · RECONNECTING…':away.length?`ONLINE · ${away.join(', ').toUpperCase()} LOST`:`ONLINE · ${showRoomCode(online.code)}`;
+ el.hidden=false;
+}
+function onlineLink(code){
+ const relay=relayAddress();
+ if(!relay)throw Error('Set the relay address below first (the host gives it to you).');
+ if(!/^wss?:\/\//i.test(relay))throw Error('A relay address starts with wss:// (or ws:// on a home network).');
+ const link=createLink({relay,code,random:onlineRandom});
+ link.on('status',()=>{drawOnline();});
+ return link;
+}
+function startHosting(){
+ onlineError='';
+ try{
+  const code=newRoomCode(onlineRandom),member=memberId(onlineRandom),{golfer}=onlineGolfer(),link=onlineLink(code);
+  const session=new HostSession({link,member,name:golfer.name,game:GAME_VERSION||'unstamped'});
+  online={role:'host',code,member,link,session,phase:'lobby',knocks:[]};
+  session.on('knock',w=>{online.knocks=online.knocks.filter(k=>k.member!==w.member).concat([w]);toast(`${w.name} is knocking.`);drawOnline();});
+  session.on('withdrawn',w=>{online.knocks=online.knocks.filter(k=>k.member!==w.member);drawOnline();});
+  session.on('admitted',()=>drawOnline());session.on('removed',()=>drawOnline());
+  session.on('away',w=>{if(w.state==='gone'&&online.phase==='playing')onlineGuestGone(w);else toast(`${w.name} lost their connection. Their turn waits for them.`);drawOnline();});
+  session.on('back',w=>{toast(`${w.name} is back.`);drawOnline();});
+  session.on('shot',onlineHostShot);session.on('relief',onlineHostRelief);session.on('pick',onlineHostPick);
+ }catch(e){onlineError=e.message;online=null;}
+ drawOnline();
+}
+function joinRoom(typed){
+ onlineError='';
+ const code=readRoomCode(typed);
+ if(!code){onlineError='That is not a room code: check it with the host (sixteen letters and numbers).';drawOnline();return;}
+ try{
+  // The same member id on a reload of the same room, so the host keeps the seat.
+  let member=null;try{const s=JSON.parse(sessionStorage.getItem(ONLINE_KEY)||'null');if(s?.code===code)member=s.member;}catch{}
+  member||=memberId(onlineRandom);try{sessionStorage.setItem(ONLINE_KEY,JSON.stringify({code,member}));}catch{}
+  const {golfer,profile}=onlineGolfer(),link=onlineLink(code);
+  const session=new GuestSession({link,member,golfer,game:GAME_VERSION||'unstamped'});
+  const follower=new Follower({play:onlineWatch,apply:onlineApply});
+  online={role:'guest',code,member,link,session,phase:'knocking',profile,follower,landing:null};
+  session.on('welcome',()=>{online.phase='lobby';toast('You are in.');drawOnline();});
+  session.on('refused',why=>{onlineError=why;online=null;drawOnline();});
+  session.on('room',m=>{
+   if(m.phase==='lobby'&&online.phase==='playing'){online.phase='lobby';online.note='The round is over; the host is choosing the next.';toast('The host has left the round.');returnToMenu().then(()=>openPanel('online'));return;}
+   drawOnline();
+  });
+  session.on('start',m=>{onlineGuestStart(m).catch(e=>{toast(e.message);onlineClose(e.message);});});
+  session.on('flown',m=>{if(online?.phase==='playing')online.follower.heard(m);});
+  session.on('state',m=>{if(online?.phase==='playing')online.follower.heard(m);});
+  session.on('nope',m=>onlineOwnRefused(m.why));
+  session.on('end',()=>{onlineEnded('The host closed the room.');});
+  session.on('host-away',()=>{online.hostAway=true;toast('The host lost their connection. Waiting for them…');drawOnlineChip();});
+  session.on('host-back',()=>{online.hostAway=false;toast('The host is back.');drawOnlineChip();});
+ }catch(e){onlineError=e.message;online=null;}
+ drawOnline();
+}
+// Closing the room (host) or leaving it (guest), from the sheet.
+function onlineClose(message){
+ if(!online)return;
+ try{if(online.role==='host')online.session.close();else online.session.leave();}catch{}
+ online=null;onlineError='';toast(message);drawOnline();
+}
+// Out of the round by the menu. The host's round over: the room stays, back
+// in its lobby, for the next one. Mid-round the host's leaving ends the room;
+// a guest's leaves the group to play on without them.
+function onlineLeaveRound(){
+ if(!online)return;
+ if(online.role==='host'&&round.finished){online.phase='lobby';online.session.phase='lobby';online.session.record=null;online.session.sendRoom();toast('The room stays open for another round.');return;}
+ onlineClose(online.role==='host'?'You closed the room: the round is over for everyone.':'You left the online round.');
+}
+function onlineEnded(message){
+ if(!online)return;
+ const playing=online.phase==='playing';online=null;
+ toast(message);drawOnline();drawOnlineChip();
+ if(playing&&appMode==='play')returnToMenu();
+}
+// A guest who said goodbye mid-round: their golfer is the host's to play on
+// or take out (Golfers & rules), rather than a turn that waits for ever.
+function onlineGuestGone(w){
+ for(const p of round.players)if(p.online===w.member)delete p.online;
+ toast(`${w.name} left the round. Their ball is yours to play, or take them out in Golfers & rules.`);
+ save();
+ if(!flight&&!round.holeComplete)setUpTurn();
+}
+// THE HOST TEES OFF.
+function onlineHostStart(){
+ online.phase='playing';online.session.course=settings.courseName||'';
+ online.session.start(saveRecord());
+ drawOnlineChip();
+ toast('Teeing off: the round is on every screen.');
+}
+// THE ROUND AS IT STANDS, to every guest: once per change, however many
+// saves the change made (they come in one go).
+function onlineSaved(){
+ if(online?.role!=='host'||online.phase!=='playing'||onlineSendQueued)return;
+ onlineSendQueued=true;
+ queueMicrotask(()=>{
+  onlineSendQueued=false;
+  if(online?.role!=='host'||online.phase!=='playing')return;
+  const shot=onlineShotDone,event=onlineShotEvent;onlineShotDone=false;onlineShotEvent=null;
+  online.session.state(round.toJSON(),{shot,event});
+  if(round.finished)online.session.finish();
+ });
+}
+// A ball struck on this machine: the host sends every ball (its own, a
+// computer golfer's, a guest's) for the guests to fly; a guest sends its own
+// to the host to be ruled on, and flies it at once.
+function onlineStruck({shot,club,typed,remote}){
+ if(online?.phase!=='playing')return;
+ const p={seat:round.active,hole:round.hole,stroke:round.stroke,club:{kind:String(club.kind||'iron'),code:String(club.code||''),label:String(club.label||'')},shot,typed:!!typed};
+ if(online.role==='host')online.session.flown(p);
+ else if(!remote){online.session.shot(p);online.follower.ownStrike(`${p.hole}:${p.seat}:${p.stroke}`);}
+}
+// A GUEST'S SHOT, ruled on (online/referee.js) and played.
+function onlineHostShot(m,who){
+ if(online?.phase!=='playing')return;
+ let why=appMode!=='play'?'The host is not on the course.':shotProblem(round,m,{busy:!!flight&&!flight.replay});
+ if(!why){
+  if(flight?.replay)finishShot();
+  if(dropState)cancelDrop();
+  if(view.config.mode==='free')cameraMode('player');
+  if(!takeShot(null,{remote:{shot:m.shot,club:m.club,typed:m.typed}}))why='The host could not play that shot just now. Try again.';
+ }
+ if(why)online.session.nope(who.member,why);
+}
+function onlineHostRelief(m,who){
+ if(online?.phase!=='playing')return;
+ const why=reliefProblem(round,m);if(why){online.session.nope(who.member,why);return;}
+ const o=reliefOptions(reliefGround(),round.relief,course.pin,{outRule:round.outOfBounds,back:m.back}).find(x=>x.id===m.id);
+ if(!o){online.session.nope(who.member,'That relief is not there to take.');return;}
+ takeReliefOption(o,`${who.name}: ${o.label}, ${o.penalty} penalty stroke${o.penalty===1?'':'s'}.`);
+}
+function onlineHostPick(m,who){
+ if(online?.phase!=='playing')return;
+ const why=pickProblem(round,m);if(why){online.session.nope(who.member,why);return;}
+ try{pickIndex=m.index;const carded=cardedSeats();round.chooseScramble(pickIndex,course.pin);announceHoleOut(carded);afterSelection();}catch(e){online.session.nope(who.member,e.message);}
+}
+// A GUEST BUILDS THE HOST'S ROUND, from the round as a save holds it.
+async function onlineGuestStart(m){
+ const d=JSON.parse(JSON.stringify(m.record)),mine=settings.clubYardages;
+ validateSave(d);
+ if(d.settings.built&&!await builtStore.load(d.settings.built))throw Error('This round is on a course built in the course builder that is not on this device. Ask the host for its .fairway file, open it in Saved courses, and join again.');
+ const next=Round.restore(d.round,false);
+ for(const p of next.players)if(p.online===online.member&&online.profile)p.profile=online.profile;
+ online.follower.restart(m.seq);
+ // Back after a lost connection, on the same round: no rebuild, just the round.
+ if(appMode==='play'&&online.phase==='playing'&&round?.uid===next.uid){round=next;online.landing=null;if(flight&&!flight.replay){flight=null;view.trackingBall=false;}onlineSettle(null,true);return;}
+ online.phase='playing';online.note='';
+ await whileGenerating('Building the host’s course…',async report=>{
+  leaveBackdrop();pendingRound=null;staleGenerator=false;
+  lightsOffForRound();clockForRound();
+  challenge=null;round=next;settings={...DEFAULT_COURSE,...d.settings,clubYardages:mine};shotLog={uid:next.uid,list:[]};
+  applyPlaySettings();closePanel();
+  await prepareWorld(report);
+  loadCourse();setMode('play');
+ });
+ arriveAtHole();drawOnlineChip();
+}
+// A BALL STRUCK ON ANOTHER MACHINE, flown here.
+function onlineWatch(f){
+ if(appMode!=='play'||!course||round.hole!==f.hole){online.follower.landed();return;}
+ if(flight?.replay)finishShot();
+ if(dropState)cancelDrop();
+ if(view.config.mode==='free')cameraMode('player');
+ if(!takeShot(null,{remote:{shot:f.shot,club:f.club,typed:f.typed}}))online.follower.landed();
+}
+// The host would not take this guest's own shot: the ball comes down and
+// the turn is set up again from the round as the host has it.
+function onlineOwnRefused(why){
+ if(online?.role!=='guest')return;
+ toast(why||'The host did not take that shot.');
+ if(flight&&!flight.replay){flight=null;view.trackingBall=false;view.setTrail([]);}
+ online.landing=null;online.follower.ownRefused();
+ if(!round.holeComplete&&!round.relief&&!round.scrambleSelection)setUpTurn();
+}
+// THE HOST'S ROUND, TAKEN. After a ball has landed here, the rest of what
+// finishShot does for a landing is done with the host's answer.
+function onlineApply(s,{afterShot}){
+ if(online?.role!=='guest')return;
+ let next;try{next=Round.restore(s.round,false);}catch(e){console.warn('online round:',e.message);return;}
+ for(const p of next.players)if(p.online===online.member&&online.profile)p.profile=online.profile;
+ const was=round,landed=afterShot?online.landing:null;online.landing=null;
+ round=next;
+ if(was.uid!==round.uid||was.hole!==round.hole){cancelAdvance();endHoleSummary();endRelief();endPick();closePanel();loadCourse();arriveAtHole();return;}
+ if(landed){
+  announceHoleOut(landed.carded,{chipIn:!!landed.result.holed&&!landed.result.hazard&&landed.before.lie!=='green'&&landed.before.stroke>1});
+  if(seatHere(landed.before.seat))recordProfileShot(landed.result,landed.before);
+  view.aimLine.visible=true;view.trackingBall=false;viewShot=null;drawShotViews();
+  if(s.event)renderResult(s.event);
+ }
+ onlineSettle(landed,!!landed||!was.holeComplete);
+}
+function onlineSettle(landed,fresh){
+ // The guest's own golfer's holes, XP and history, from the host's card
+ // (syncProfile pays each hole once, by its key).
+ syncProfile();
+ updateHUD();drawOnlineChip();
+ if(round.holeComplete){if(fresh)showHoleCompletion();return;}
+ if(round.scrambleSelection){beginPick();return;}
+ setUpTurn();
+ if(landed?.fromReview)view.flyCamera(round.position,aim,{from:landed.fromReview});
+ sendPlayer();
 }
 
 // THE FAIRWAY TOUR (the fairway-tour goal; src/tour.js, src/tournament.js,
@@ -2052,7 +2326,9 @@ function updateAim(){const c=clubs[$('club').value];
 // updateAim, so this is the one place that needs it.
 // A function and a `var`, not a const and a let: the map and updateAim can
 // run while the module is still being read, before this line is reached.
-function computerUp(){return appMode==='play'&&!rangeMode&&!challenge&&!!round&&isComputer(round.player);}
+// A golfer playing on another machine is not aiming here either, so their
+// turn shows no aim line on this screen (online play).
+function computerUp(){return appMode==='play'&&!rangeMode&&!challenge&&!!round&&(isComputer(round.player)||!seatHere(round.active));}
 var aimHiddenForComputer=false;
 function hideComputerAim(){
  if(computerUp()){view.aimLine.visible=false;view.aimRing.visible=false;aimHiddenForComputer=true;}
@@ -2091,7 +2367,7 @@ function swingContext(){const c=clubs[$('club').value],short=isShortGame(),putt=
  const zoom=!c||putt?1:swingZoom(fullCarry(c,shapedLaunch(c,shotShape,{short})),aimRange??c.carry*YARD);
  return {club:c,shape:{...shotShape},short,lie:currentLie(),difficulty:golferDifficulty(),turf:settings.turf,zoom,
   ...(putt?{puttRange:puttRange(c,settings.turf,aimRange??distance())}:{})};}
-function canSwing(){return appMode==='play'&&!tour&&!flight&&!dropState&&view.config.mode!=='free'&&!round.holeComplete&&!round.scrambleSelection&&!round.relief&&!round.finished&&$('versionNotice').hidden&&!armed&&!isComputer(round.player);}
+function canSwing(){return appMode==='play'&&!tour&&!flight&&!dropState&&view.config.mode!=='free'&&!round.holeComplete&&!round.scrambleSelection&&!round.relief&&!round.finished&&$('versionNotice').hidden&&!armed&&!isComputer(round.player)&&seatHere(round.active);}
 // The stroke struck: hand it to the shot.
 function releaseSwing(){
  const sw=swing;endPadStroke();
@@ -2938,18 +3214,26 @@ function preflyComputerShot(s,key){
 }
 function takeShot(data=null,struck=null){
  if(appMode!=='play'||tour||flight||dropState||view.config.mode==='free'||round.holeComplete||round.scrambleSelection||round.relief||round.finished||!$('versionNotice').hidden)return false;
+ // A SHOT FROM ANOTHER MACHINE (online play): {shot, club, typed}, already on
+ // the grid and flown exactly as it was there -- a guest's on the host, which
+ // the referee has ruled on (onlineHostShot), and any golfer's on a guest
+ // (onlineWatch). Nothing of this machine's swing, monitor or bag goes into it.
+ const remote=struck?.remote||null;
+ // Online, only the seats this machine plays are struck from it.
+ if(!remote&&!seatHere(round.active))return false;
  // SPACE and the gamepad still reach this while the lab is open, and the lab's
  // controls are hidden -- so a manual shot would fire from a club, aim and power
  // the user cannot see. `data` is the launch-monitor path and stays open,
  // because that is a real ball and the lab exists to watch real balls.
- if(!data&&armed){toast('The launch monitor is armed. Disarm it to use manual controls.');return false;}
+ if(!data&&!remote&&armed){toast('The launch monitor is armed. Disarm it to use manual controls.');return false;}
  // A manual shot comes only from a struck pull and push (`releaseSwing`).
  if(!data&&!struck)return false;
  // A computer golfer's turn is its own: no swing or monitor ball of a
  // person's is taken for it, and its own shot only on its turn.
- if(isComputer(round.player)!==!!struck?.cpu)return false;
+ if(!remote&&isComputer(round.player)!==!!struck?.cpu)return false;
  if($('caddieLine'))$('caddieLine').hidden=true;
- closePanel();const c=clubs[$('club').value],lie=course.surface(round.position.x,round.position.z);
+ if(remote)aim=remote.shot.aim;
+ closePanel();const c=remote?remote.club:clubs[$('club').value],from=remote?remote.shot.origin:round.position,lie=course.surface(from.x,from.z);
  // THE LIE: rough, semi-rough and sand cost ball speed, and grass costs a
  // high-spinning shot spin (the flyer), by one table, for every golfer. The Swing Meter has already taken
  // it off its swing (swing-meter.js). A MONITOR'S MEASURED BALL SPEED is
@@ -2966,12 +3250,14 @@ function takeShot(data=null,struck=null){
  // 1 rpm, 1 mm -- so a friend's challenge can carry the shot exactly and fly it
  // again. Far finer than a monitor reports (0.1 mph is 0.045 m/s), so nothing
  // shown changes and no ball data is invented.
- const shot=gridShot({origin:{...round.position},aim,...launch,...(lieRecord?{lie:lieRecord}:{})});
+ const shot=remote?remote.shot:gridShot({origin:{...round.position},aim,...launch,...(lieRecord?{lie:lieRecord}:{})});
  // A computer golfer's flight, flown ahead in its pre-shot moment
  // (`preflyComputerShot`), is this one only if it is this exact shot.
  const pre=struck?.flown,ahead=pre?.result&&pre.course===course&&pre.floodlit===!!view.floodlit&&JSON.stringify(pre.shot)===JSON.stringify(shot);
  const result=ahead?pre.result:flyShot(shot,lie,c);result.puttStroke=lie==='green';if(struck?.cpu)cpuFlownAhead[ahead?0:1]++;
- latest={shot,result,player:round.player.name,typed:!!data};priorShot=lastShot;lastShot={...latest,hole:round.hole,putting:lie==='green',aim,club:c.label,kind:c.kind,aimAt:aimPoint?{x:aimPoint.x,z:aimPoint.z}:null,aimDist:aimRange};shotInputs.set(`${round.uid}:${round.hole}:${round.active}`,data?'monitor':'meter');flight={result,elapsed:0,index:0,origin:shot.origin,record:lastShot,tv:ahead&&pre.tv?pre.tv:shotCameraPlan(result,course)};view.hitEffects(shot.origin,aim,lie,shot.speed);gameAudio?.strike({kind:c.kind,ballMs:shot.speed,monitor:!!data});lastShot.pinOut=lie==='green'||c.code==='PT';lastShot.poles=!!view.floodlit;showLiveResult();view.setTrail([]);view.aimLine.visible=false;view.aimRing.visible=false;updateHUD();return true;
+ latest={shot,result,player:round.player.name,typed:!!data};priorShot=lastShot;lastShot={...latest,hole:round.hole,putting:lie==='green',aim,club:c.label,kind:c.kind,aimAt:aimPoint?{x:aimPoint.x,z:aimPoint.z}:null,aimDist:aimRange};shotInputs.set(`${round.uid}:${round.hole}:${round.active}`,data||remote?.typed?'monitor':'meter');flight={result,elapsed:0,index:0,origin:shot.origin,record:lastShot,tv:ahead&&pre.tv?pre.tv:shotCameraPlan(result,course)};view.hitEffects(shot.origin,aim,lie,shot.speed);gameAudio?.strike({kind:c.kind,ballMs:shot.speed,monitor:!!data});lastShot.pinOut=lie==='green'||c.code==='PT';lastShot.poles=!!view.floodlit;showLiveResult();view.setTrail([]);view.aimLine.visible=false;view.aimRing.visible=false;updateHUD();
+ onlineStruck({shot,club:c,typed:!!data||!!remote?.typed,remote});
+ return true;
 }
 function finishShot(){
  if(!flight)return;if(flight.replay){const replay=flight;flight=null;Object.assign(view.config,replay.camera);view.setHole(worldHole(round.hole),true);view.setPutting(round.putting);view.setBall(round.position);view.aimLine.visible=true;view.trackingBall=false;view.config.mode=playCameraMode(view.config.mode,course,round.position);updateAim();view.setCamera(round.position,aim,true);showStandingResult();updateExplorer();updateHUD();
@@ -3022,7 +3308,13 @@ function finishShot(){
  // never crossed the boundary line; the house is the edge, and it is where it
  // stopped.
  if(result.hazard)result.cross=crossingPoint(result.points,result.hazard==='Water'?(p=>course.surface(p.x,p.z)==='water'):(p=>outOfBounds(course,p.x,p.z)))||{x:result.end.x,z:result.end.z};
- result.onGreen=!result.hazard&&course.surface(result.end.x,result.end.z)==='green'&&greenDistance(course,result.end.x,result.end.z)<=0;const carded=cardedSeats(),event=round.takeShot(result,course.pin);takePathRelief(result);announceHoleOut(carded,{chipIn:!!result.holed&&!result.hazard&&before.lie!=='green'&&before.stroke>1});recordProfileShot(result,before);save();updateHUD();view.aimLine.visible=true;view.trackingBall=false;view.aimRing.visible=armed||$('club').value!=='putter';
+ result.onGreen=!result.hazard&&course.surface(result.end.x,result.end.z)==='green'&&greenDistance(course,result.end.x,result.end.z)<=0;
+ // A GUEST'S BALL HAS LANDED ON ITS OWN SCREEN, and the host's round says
+ // what it counted for (onlineApply, when the host's state comes): never
+ // this machine's own reading of the same ball, which a lip or a mast seen
+ // differently could change.
+ if(online?.role==='guest'&&online.phase==='playing'){online.landing={result,before,fromReview,carded:cardedSeats()};view.trackingBall=false;online.follower.landed();return;}
+ const carded=cardedSeats(),event=round.takeShot(result,course.pin);if(online?.role==='host'){onlineShotDone=true;onlineShotEvent=event;}takePathRelief(result);announceHoleOut(carded,{chipIn:!!result.holed&&!result.hazard&&before.lie!=='green'&&before.stroke>1});recordProfileShot(result,before);save();updateHUD();view.aimLine.visible=true;view.trackingBall=false;view.aimRing.visible=armed||$('club').value!=='putter';
  if(rangeMode)try{const R0=latest.result;
   // An approach is read by its carry and its run, not by a hop: `hopMm` is a
   // putting figure and on a 155 yard shot it reports the flight apex, which
@@ -3301,6 +3593,9 @@ function holeNameOf(hole){
  return courseHoleNames[worldHole(hole)]||'';
 }
 function advanceHole(){
+ // Online, the host moves the group to the next tee; a guest goes with it
+ // when the host's round says so (onlineApply).
+ if(online?.role==='guest'&&online.phase==='playing')return;
  cancelAdvance();endHoleSummary();
  // Growing the next hole is real work that can fail, and this is reached from a
  // timer as often as from a button -- an unhandled rejection here would leave
@@ -3987,6 +4282,9 @@ function openPlaySettings(name,content){
  }
 }
 function beginDrop(){
+ // A free drop moves a ball by hand, which a shared round cannot check
+ // (online play, PLACED).
+ if(online?.phase==='playing'){toast('No free drops online: play it where it lies, or take relief.');return;}
  // A ball waiting for penalty relief is the golfer's choice to make, not one a
  // free drop should make for them.
  if(round.relief){toast('Choose where to take relief first.');return;}
@@ -4016,6 +4314,14 @@ function beginRelief(){
  if(!round.relief)return;
  endPick();reliefBack=0;
  reliefList=reliefOptions(reliefGround(),round.relief,course.pin,{outRule:round.outOfBounds,back:reliefBack});
+ // ONLINE, THE CHOICE IS THE BALL'S OWNER'S, and the round the host's: a
+ // guest waits for the host to apply an option that is no choice, and for
+ // anyone else's choice; the host waits for a guest's (onlineHostRelief).
+ if(online?.phase==='playing'){
+  const r=round.relief,mine=seatHere(r.player),who=round.players[r.player]?.name||'Player';
+  if(online.role==='guest'&&(reliefList.length===1||!mine)){endRelief();if(!mine)toast(`${who} is taking relief.`);return;}
+  if(online.role==='host'&&!mine&&reliefList.length>1){endRelief();toast(`${who} is choosing their relief.`);return;}
+ }
  // ONE OPTION IS NOT A CHOICE. Out of bounds under the Rules of Golf is stroke
  // and distance and nothing else, and water with no dry ground in reach leaves
  // only that too: it is applied, and said, rather than offered as a menu of one.
@@ -4062,6 +4368,8 @@ function moveReliefBack(by){
 }
 function endRelief(){$('reliefBar').hidden=true;reliefList=[];}
 function takeReliefOption(o,message){
+ // A guest's choice goes to the host, whose round takes it and comes back.
+ if(online?.role==='guest'&&online.phase==='playing'&&round.relief){online.session.relief({seat:round.relief.player,hole:round.hole,id:o.id,back:o.id==='line'?reliefBack:0});endRelief();toast(`${o.label}: sent.`);return;}
  try{round.takeRelief(o,course.pin);}catch(e){toast(e.message);return;}
  endRelief();save();
  toast(message||`${o.label}: ${o.penalty} penalty stroke${o.penalty===1?'':'s'}.`);
@@ -4451,6 +4759,9 @@ async function buildRoundOn(courseSettings,group,name){
   await prepareWorld(report);
   loadCourse();setMode('play');
  });
+ // THE HOST TEES OFF: every guest seated is sent the round whole, as a save
+ // holds it, and builds the same course from it (onlineGuestStart).
+ if(online?.role==='host'&&online.phase==='lobby'&&round===fresh&&round.players.some(p=>p.online))onlineHostStart();
 }
 // A single showcase hole, grown fresh each time the menu opens. It is never the
 // player's course: generation settings, the saved round and the library are all
@@ -5303,6 +5614,9 @@ function guardRound(next){
  // Skipping to where it stops (Enter does the same) counts the shot, so the
  // round is worth saving and the question is asked.
  if(flight)finishShot();
+ // Leaving an online round leaves the room too (onlineLeaveRound); the round
+ // as it stands can still be kept below, and played on alone.
+ if(online?.phase==='playing')onlineLeaveRound();
  if(!roundWorthSaving())return next(false);
  // `next` hears whether the round was saved: leaving for the menu keeps a saved
  // one behind Continue (returnToMenu).
@@ -5551,7 +5865,10 @@ function groupEditor(hostId,start,onChange){
  // name, and becomes a new player if nobody on this device has that name.
  // A COMPUTER GOLFER'S ROW keeps its `cpu` record and has no profile (the
  // fairway-tour goal; src/ai/seat.js).
+ // AN ONLINE GUEST'S ROW (online play) is their golfer as they brought it:
+ // no profile here, never matched to one by name.
  const draft=start.map(p=>{if(isComputer(p))return {profile:null,name:p.name,team:p.team,hand:'RH',input:'cpu',cpu:p.cpu,tee:p.tee||null,seat:p.id};
+  if(p.online)return {profile:null,name:p.name,team:p.team,hand:p.hand||'RH',input:p.input==='monitor'?'monitor':'meter',tee:p.tee||null,online:p.online,seat:p.id};
   const prof=findProfile(profiles,p.profile)||profileByName(profiles,p.name);
   return {profile:prof?.id??null,name:prof?.name??p.name,team:p.team,hand:p.hand||prof?.hand||'RH',input:p.input||prof?.input||'monitor',tee:p.tee||prof?.tee||null,seat:p.id};});
  groupDraft=draft;
@@ -5576,6 +5893,13 @@ function groupEditor(hostId,start,onChange){
   const teeOf=p=>p.tee||round.tee||'blue',tees=setupTees();
   const seatPick=(label,id,aria,opts,value)=>`<div class="seat-pick"><span class="seat-k">${label}</span><span class="seat-line"><button type="button" class="seat-arrow" data-step="-1" tabindex="-1" aria-hidden="true">◀</button><span class="seat-val"><b>${escape((opts.find(o=>o[0]===value)||opts[0])[1].toUpperCase())}</b><select id="${id}" aria-label="${aria}">${opts.map(([v,t])=>`<option value="${v}" ${v===value?"selected":""}>${t}</option>`).join("")}</select></span><button type="button" class="seat-arrow" data-step="1" tabindex="-1" aria-hidden="true">▶</button></span></div>`;
   host.innerHTML=draft.map((p,i)=>{const q=p.profile&&findProfile(profiles,p.profile),lv=q?levelOf(q.xp).level:0,hc=q?profileSummary(q).handicap?.index:null;
+   if(p.online){const away=online?.session?.members?.get(p.online)?.state==='away';
+    return `<div class="player-row seat online-seat" data-seat="${i}"><span class="player-mark"><span class="player-dot" style="background:${playerColour(i)}" aria-hidden="true"></span><span class="seat-guest" aria-hidden="true">⇄</span></span>`
+    +`<div class="player-who ${nameSize(p.name)}"><strong class="online-seat-name">${escape(p.name)}</strong><span class="player-sub">ONLINE · ${away?'CONNECTION LOST':p.input==='monitor'?'LAUNCH MONITOR':'SWING PAD'}</span></div>`
+    +`<span class="seat-tees" role="group" aria-label="${escape(p.name)} tee">${tees.map(t=>`<button type="button" class="seat-tee" data-seat-tee="${t}" aria-pressed="${teeFor(teeOf(p),tees)===t}" aria-label="${teeName(t)} tees" title="${teeName(t)} tees"><i style="background:${TEE_DOT[t]}"></i>${teeLetter(t,tees)}</button>`).join('')}</span>`
+    +`<select id="team${i}" aria-label="${escape(p.name)} team"><option value="A" ${p.team==='A'?'selected':''}>Team A</option><option value="B" ${p.team==='B'?'selected':''}>Team B</option></select>`
+    +(draft.length>1?`<button class="small-icon drop-player" data-drop="${i}" aria-label="Remove ${escape(p.name)}"><i data-lucide="trash-2"></i></button>`:`<span class="drop-spacer" aria-hidden="true"></span>`)
+    +`</div>`;}
    return `<div class="player-row seat${bridgeSeen()?' play':''}" data-seat="${i}">`
    +`<span class="player-mark"><span class="player-dot" style="background:${playerColour(i)}" aria-hidden="true"></span>${q?ballAvatar(q,'tiny'):'<span class="seat-guest" aria-hidden="true">+</span>'}</span>`
    +`<div class="player-who ${nameSize(q?q.name:(p.name||"New player"))}"><select id="who${i}" aria-label="Player ${i+1}">`
@@ -5609,6 +5933,7 @@ function groupEditor(hostId,start,onChange){
    +(draft.length<4?`<button class="secondary add-player" data-add><i data-lucide="plus"></i> Add player</button><button class="secondary add-player" data-add-cpu><i data-lucide="bot"></i> Add computer golfer <span class="beta-tag">BETA</span></button>`:'');
   icon();
   draft.forEach((p,i)=>{
+   if(p.online){$('team'+i).onchange=e=>{p.team=e.target.value;onChange?.();};return;}
    $('who'+i).onchange=e=>{
     const v=e.target.value;
     if(v===CPU){if(!p.cpu)makeComputer(p);}
@@ -5647,16 +5972,18 @@ function groupEditor(hostId,start,onChange){
 function readDraft(){
  const rows=(groupDraft||[]).map((p,i)=>{
   if(p.input==='cpu'&&p.cpu)return {...p,computer:true};
+  if(p.online)return {...p,remote:true};
   if(p.profile&&findProfile(profiles,p.profile))return {...p,prof:findProfile(profiles,p.profile)};
   const name=(p.name||'').trim();
   if(!name)throw Error(`Give player ${i+1} a name, or pick someone from the list.`);
   return {...p,typed:name,prof:profileByName(profiles,name)};
  });
  const seen=new Set();
- for(const r of rows){const key=r.computer?'cpu:'+(r.cpu.id||r.name):r.prof?.id??r.typed.toLowerCase();if(seen.has(key))throw Error(`${r.prof?.name??r.typed??r.name} is in the group twice.`);seen.add(key);}
+ for(const r of rows){const key=r.computer?'cpu:'+(r.cpu.id||r.name):r.remote?'online:'+r.online:r.prof?.id??r.typed.toLowerCase();if(seen.has(key))throw Error(`${r.prof?.name??r.typed??r.name} is in the group twice.`);seen.add(key);}
  if(rows.length&&rows.every(r=>r.computer))throw Error('Add at least one person to the group: computer golfers play with you, not on their own.');
  return rows.map(r=>{
   if(r.computer)return {name:r.name.slice(0,24),team:r.team,hand:'RH',input:'cpu',cpu:r.cpu,...(r.tee?{tee:r.tee}:{}),seat:r.seat};
+  if(r.remote)return {name:String(r.name).slice(0,24),team:r.team,hand:r.hand==='LH'?'LH':'RH',input:r.input==='monitor'?'monitor':'meter',online:r.online,...(isTee(r.tee)?{tee:r.tee}:{}),seat:r.seat};
   let prof=r.prof;
   if(!prof){const made=addProfile(profiles,r.typed);profiles=made.store;prof=made.profile;useMainProfile();}
   // Remembered for the next group this golfer joins.
@@ -6628,7 +6955,7 @@ function focusSheetStart(){
 // forms, and a wide sheet that takes the whole screen is right for those.
 const TOOL_PANELS=new Set(['camera','graphics','sound','bag','flight','putting','shot','range','lab','views','shotdata']);
 const POPUP_SIZE={camera:{width:344,height:382},graphics:{width:352,height:300},sound:{width:330,height:360},bag:{width:372,height:430},flight:{width:360,height:430},putting:{width:344,height:330},shot:{width:344,height:520},range:{width:720,height:560},lab:{width:352,height:470},views:{width:392,height:412},shotdata:{width:360,height:470}};
-const PANEL_TITLES={tour:'Fairway Tour',challenge:'Challenge',profile:'My profile',course:'Course studio',round:'Play',camera:'Camera & bay',monitor:'Launch monitor',score:'The scorecard',shot:'Swing',help:'Keys & help',bag:'Bag',flight:'Turf settings',lab:'Lab tools',views:'Shot views',range:'Range controls',putting:'Putting options',library:'Saved courses',graphics:'Graphics & performance',sound:'Sound',shotdata:'Shot data'};
+const PANEL_TITLES={online:'Play online',tour:'Fairway Tour',challenge:'Challenge',profile:'My profile',course:'Course studio',round:'Play',camera:'Camera & bay',monitor:'Launch monitor',score:'The scorecard',shot:'Swing',help:'Keys & help',bag:'Bag',flight:'Turf settings',lab:'Lab tools',views:'Shot views',range:'Range controls',putting:'Putting options',library:'Saved courses',graphics:'Graphics & performance',sound:'Sound',shotdata:'Shot data'};
 // One panel key, three variants -- a round, a practice ground and an endless
 // run -- so the heading has to follow the variant, not the key. All three used
 // to read "Your next round", which is wrong on two of them.
@@ -7013,6 +7340,7 @@ function renderPanel(name,content){
  if(name==='profile'){renderProfile(content);return;}
  if(name==='challenge'){renderChallengeResult(content);return;}
  if(name==='tour'){renderTourHub(content);return;}
+ if(name==='online'){renderOnline(content);return;}
  if(name==='library'){
   // The box is pre-filled with the name this course is ALREADY going by on the
   // card, so saving it keeps calling it the same thing. It used to offer the
@@ -7501,7 +7829,13 @@ function renderPanel(name,content){
   // Alex has been added back, and the next press does something else entirely.
   const disarmApply=()=>{const el=$('applyGroup');if(!el||!el.dataset.armed)return;
    delete el.dataset.armed;el.textContent='Apply to this round';};
-  const start=lobbyKeep&&groupDraft?.length?groupDraft.map(p=>({profile:p.profile,name:p.name,team:p.team,hand:p.hand,input:p.input,tee:p.tee,id:p.seat})):round.players;lobbyKeep=false;
+  const start=lobbyKeep&&groupDraft?.length?groupDraft.map(p=>({profile:p.profile,name:p.name,team:p.team,hand:p.hand,input:p.input,tee:p.tee,id:p.seat,...(p.online?{online:p.online}:{})})):round.players.slice();lobbyKeep=false;
+  // EVERY GUEST LET INTO THE HOST'S ROOM takes a seat (online play), as far
+  // as four golfers go; the host may take one out again here.
+  if(online?.role==='host'&&online.phase==='lobby'&&!playingNow)for(const g of online.session.guests){
+   if(start.length>=4||start.some(p=>p.online===g.member))continue;
+   start.push({name:g.name,team:start.length%2?'B':'A',hand:g.golfer.hand,input:g.golfer.input,...(isTee(g.golfer.tee)?{tee:g.golfer.tee}:{}),online:g.member,id:undefined});
+  }
   groupEditor('playerRows',start,()=>{formatNote?.();disarmApply();});
   if(lobbyKind==='friend')wireFriendStep();
   $('roundStudio').onclick=()=>enterStudio();
@@ -7532,6 +7866,7 @@ function renderPanel(name,content){
   // true. One who leaves takes their card with them, so this asks first.
   if($('applyGroup'))$('applyGroup').onclick=()=>{
    if(flight){toast('Finish the current shot first.');return;}
+   if(online?.phase==='playing'){toast('An online group is fixed once the round starts.');return;}
    let players;
    try{players=readDraft();}catch(e){$('roundError').textContent=e.message;toast(e.message);return;}
    // WHO IS ACTUALLY LEAVING: the golfers whose seat is no longer in the draft.
@@ -7581,6 +7916,9 @@ function renderPanel(name,content){
   if($('startRound'))$('startRound').onclick=async()=>{
    if(flight){toast('Finish the current shot first.');return;}
    const kind=$('roundCourse').value;
+   // An online round is played on a course every guest can grow the same:
+   // not an endless run (grown hole by hole) or a friend's challenge.
+   if(online?.role==='host'&&online.phase==='lobby'&&(kind==='endless'||kind==='friend')){$('roundError').textContent='An online round is played on a course: the course of the week, a saved course, or Surprise me.';return;}
    // What Play again will start next time (last-play.js); a friend's
    // challenge is not kept.
    {const k=['weekly','endless','friend','surprise'].includes(kind)?kind:'saved';rememberPlay(localStorage,{kind:k,courseId:k==='saved'?kind:null,group:readGroup()});}
@@ -8365,6 +8703,7 @@ function bind(){
  $('menuStudio').onclick=()=>openStudioSetup();
  $('menuCourses').onclick=()=>openPanel('library');
  // The Fairway Tour's hub: the active tour, or the ways to start one.
+ if($('menuOnline'))$('menuOnline').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}onlineError='';openPanel('online');};
  if($('menuTour'))$('menuTour').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}tourView=fwTour()?'hub':'start';openPanel('tour');};
  $('menuProfile').onclick=()=>{renamingProfile=false;viewingProfile=profiles?.main??null;openPanel('profile');};
  $('menuHelp').onclick=()=>openPanel('help');
@@ -8449,6 +8788,8 @@ function bind(){
  $('mulligan').onclick=()=>{
   if(flight||dropState)return;
   if(challenge){toast('No mulligans in a challenge: every ball counts.');return;}
+  // A shared round is taken back for nobody (online play, PLACED).
+  if(online?.phase==='playing'){toast('No mulligans online: every ball counts for the whole group.');return;}
   cancelAdvance();
   const keptTrails=holeTrails.slice(0,-1),keptShots=Math.max(0,practiceShots-1);
   if(!round.mulligan())return;
@@ -8483,7 +8824,13 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   else return;
   e.preventDefault();e.stopImmediatePropagation();
  },true);
- $('pickAccept').onclick=()=>{if(!round.scrambleSelection)return endPick();try{const carded=cardedSeats();round.chooseScramble(pickIndex,course.pin);announceHoleOut(carded);afterSelection();}catch(e){toast(e.message);}};
+ $('pickAccept').onclick=()=>{if(!round.scrambleSelection)return endPick();
+  // ONLINE, THE TEAM'S FIRST GOLFER CHOOSES (online/referee.js pickerSeat),
+  // on whichever machine plays them; a guest's choice goes to the host.
+  if(online?.phase==='playing'){const s=pickerSeat(round);
+   if(!seatHere(s)){toast(`${round.players[s]?.name||'The team'} chooses the team’s ball.`);return;}
+   if(online.role==='guest'){online.session.pick({seat:s,hole:round.hole,index:pickIndex});endPick();toast('Ball chosen: sent.');return;}}
+  try{const carded=cardedSeats();round.chooseScramble(pickIndex,course.pin);announceHoleOut(carded);afterSelection();}catch(e){toast(e.message);}};
  $('simDrop').onclick=beginDrop;$('confirmDrop').onclick=confirmDrop;$('cancelDrop').onclick=cancelDrop;$('dropAtGreen').onclick=()=>previewDrop({x:course.pin.x+2*YARD,z:course.pin.z});for(const id of ['dropX','dropZ'])$(id).oninput=()=>previewDrop({x:dropState.origin.x+Number($('dropX').value)*YARD,z:dropState.origin.z+Number($('dropZ').value)*YARD},false);$('resetLayout').onclick=()=>{resetTilePlaces();resetHudPlaces();toast('The map and the shot numbers are back where they started.');};$('menuRange').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}guardRound(()=>openRangePanel());};
  // The lab is driven from the console. Everything it does goes through the same
  // shot path the game uses, so anything watched here is the real behaviour.

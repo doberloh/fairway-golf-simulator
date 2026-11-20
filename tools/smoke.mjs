@@ -60,6 +60,7 @@ import {spawn} from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
+import {startRelay} from '../relay/node-relay.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = path.join(ROOT, 'dist', 'index.html');
@@ -3635,6 +3636,127 @@ const JOURNEYS = [
   name: 'server-program',
   what: 'run_fairway_server, the program in the download: it serves the game, takes a connector, and a shot flies',
   bridge: 'program',
+ },
+ // ONLINE PLAY (19 November 2026; src/online/): two players in two browsers,
+ // each opened from the file as a player opens it, through the relay's Node
+ // twin on this machine. The host starts a room, the guest knocks with the
+ // code and is let in, the host tees off on a course both build, each swings
+ // on their own turn and the other screen flies the same ball and lands in
+ // the same place. A WebSocket is the one connection allowed, and only to the
+ // relay, and only once a room is opened.
+ {
+  name: 'online',
+  what: 'a host and a guest in two browsers through a local relay: knock, let in, tee off, a shot each, the same ball on both screens',
+  async run(t) {
+   const relay = await startRelay({port: 0});
+   const sockets = [], guestSockets = [];
+   t.page.on('websocket', ws => sockets.push(ws.url()));
+   const gctx = await t.page.context().browser().newContext({viewport: {width: 1440, height: 900}});
+   await gctx.addInitScript(() => {
+    try { localStorage.setItem('fairway-graphics-v1', JSON.stringify({quality: 'low', frameCap: 0})); } catch {}
+    try { if (!localStorage.getItem('fairway-profiles-v1')) localStorage.setItem('fairway-profiles-v1', JSON.stringify({version: 2, main: 'pguest', profiles: [{id: 'pguest', name: 'Guest', created: Date.now(), counters: {}, bests: {}, rounds: []}]})); } catch {}
+   });
+   const gpage = await gctx.newPage();
+   gpage.setDefaultTimeout(30000 * SLOW);
+   gpage.on('websocket', ws => guestSockets.push(ws.url()));
+   const g = new Trip(gpage, 'online-guest', t.home);
+   const turn = p => p.evaluate(() => window.lab.state().turn);
+   try {
+    await menuReady(t);
+    await t.step('no connection is made before a room is opened', async () => {
+     if (sockets.length) throw new Error(`a socket opened at the menu: ${sockets[0]}`);
+    });
+    let code = '';
+    await t.step('Play online → Start a room shows a room code', async () => {
+     await fromMenu(t, 'Play online');
+     await t.until(() => t.page.locator('#onlineRelay').isVisible(), 'the online sheet', 10 * SLOW);
+     await t.page.fill('#onlineRelay', relay.url);
+     await t.page.locator('#onlineRelay').dispatchEvent('change');
+     await t.press('Start a room');
+     await t.until(async () => /^[0-9A-Z]{4}(-[0-9A-Z]{4}){3}$/.test((await t.page.textContent('#onlineCodeText').catch(() => '')) || ''), 'the room code', 10 * SLOW);
+     code = (await t.page.textContent('#onlineCodeText')).trim();
+     await t.until(() => t.page.evaluate(() => document.querySelector('.online-status')?.dataset.state === 'open'), 'the host to reach the relay', 10 * SLOW);
+    });
+    await t.step('the relay is told the room number, never the code', async () => {
+     if (!sockets.some(u => u.startsWith(relay.url + '/room/'))) throw new Error(`no socket to the relay: ${sockets.join(', ')}`);
+     if (sockets.some(u => u.toUpperCase().includes(code.replace(/-/g, '').slice(0, 8)))) throw new Error('the code is in the relay address');
+    });
+    await gpage.goto(t.home);
+    await menuReady(g);
+    await g.step('the guest joins with the code and knocks', async () => {
+     await fromMenu(g, 'Play online');
+     await g.until(() => gpage.locator('#onlineRelay').isVisible(), 'the online sheet', 10 * SLOW);
+     await gpage.fill('#onlineRelay', relay.url);
+     await gpage.locator('#onlineRelay').dispatchEvent('change');
+     await gpage.fill('#onlineCode', code.toLowerCase());
+     await g.press('Join the room');
+     await g.until(() => gpage.locator('#onlineCancel').isVisible(), 'the knocking screen', 10 * SLOW);
+    });
+    await t.step('the host sees the knock and lets the guest in', async () => {
+     await t.until(() => t.page.locator('[data-admit]').first().isVisible(), 'the knock', 10 * SLOW);
+     await t.page.screenshot({path: path.join(SHOTS, 'online-host-knock.png')});
+     await t.page.locator('[data-admit]').first().click();
+     await t.until(async () => /Guest/.test(await t.page.textContent('.online-people') || ''), 'the guest in the room list', 10 * SLOW);
+    });
+    await g.step('the guest is in the room, waiting for the host', async () => {
+     await g.until(() => gpage.locator('#onlineLeave').isVisible(), 'the room screen', 10 * SLOW);
+     await gpage.screenshot({path: path.join(SHOTS, 'online-guest-room.png')});
+    });
+    await t.step('Choose the course: the guest has a seat; Rules of golf order; Surprise me → Tee off', async () => {
+     await t.press('Choose the course and start');
+     await t.until(() => t.page.locator('#drawer .sx-card').first().isVisible().catch(() => false), 'Play', 10 * SLOW);
+     await t.page.locator('#drawer .sx-card[aria-label^="Surprise me"]').first().click();
+     const seated = await t.page.evaluate(() => [...document.querySelectorAll('#playerRows .online-seat-name')].map(e => e.textContent));
+     if (!seated.includes('Guest')) throw new Error(`the guest has no seat: ${JSON.stringify(seated)}`);
+     // On the Rules step, which a player would open; set where it lies.
+     await t.page.evaluate(() => { const s = document.getElementById('roundOrder'); s.value = 'farthest'; s.dispatchEvent(new Event('change', {bubbles: true})); });
+     await t.press('Tee off on the surprise course');
+     await t.inPlay(120 * SLOW);
+    });
+    await g.step('the guest\'s screen builds the same course and joins the round', async () => {
+     await g.inPlay(120 * SLOW);
+     const [a, b] = [await whereAmI(t.page), await whereAmI(gpage)];
+     if (a.seed !== b.seed || a.hole !== b.hole) throw new Error(`host ${JSON.stringify(a)}, guest ${JSON.stringify(b)}`);
+     const s = await turn(gpage);
+     if (s.active !== 0) throw new Error(`the guest's round has seat ${s.active} up, not the host`);
+     if (await gpage.evaluate(() => window.lab.state().canSwing)) throw new Error('the guest can swing on the host\'s turn');
+    });
+    await t.step('the host swings; the ONLINE chip is up', async () => {
+     if (!await t.page.evaluate(() => document.getElementById('onlineChip')?.hidden === false)) throw new Error('no online chip in the round');
+     await t.shot();
+    });
+    await g.step('the guest\'s screen flies it and lands where the host\'s did', async () => {
+     await g.until(async () => (await turn(gpage)).strokes?.[0] === 1, 'the host\'s stroke on the guest\'s card', 30 * SLOW);
+     const [a, b] = await Promise.all([t.page, gpage].map(p => p.evaluate(() => window.lab.state().turn)));
+     if (JSON.stringify(a.strokes) !== JSON.stringify(b.strokes) || a.active !== b.active) throw new Error(`host ${JSON.stringify(a)}, guest ${JSON.stringify(b)}`);
+     if (b.active !== 1) throw new Error(`after the honour, seat ${b.active} is up rather than the guest`);
+    });
+    await t.step('the host cannot swing on the guest\'s turn', async () => {
+     if (await t.page.evaluate(() => window.lab.state().canSwing)) throw new Error('the host can swing for the guest');
+    });
+    await g.step('the guest swings from their own screen', async () => {
+     await g.until(() => gpage.evaluate(() => window.lab.state().canSwing), 'the guest\'s swing to be allowed', 10 * SLOW);
+     await g.swing();
+     await g.until(() => g.inFlight(), 'the guest\'s shot to fly', 5 * SLOW);
+     await gpage.screenshot({path: path.join(SHOTS, 'online-guest-shot.png')});
+    });
+    await t.step('the host flies the guest\'s ball, and both rounds agree', async () => {
+     await t.until(async () => (await turn(t.page)).strokes?.[1] === 1, 'the guest\'s stroke on the host\'s card', 30 * SLOW);
+     await t.until(async () => !(await t.inFlight()), 'the guest\'s ball to land on the host\'s screen', 30 * SLOW);
+     await g.until(async () => !(await g.inFlight()) && (await turn(gpage)).strokes?.[1] === 1, 'the guest\'s own card', 30 * SLOW);
+     const both = await Promise.all([t.page, gpage].map(p => p.evaluate(() => ({turn: window.lab.state().turn, ball: window.lab.state().ballAt}))));
+     if (JSON.stringify(both[0].turn.strokes) !== JSON.stringify(both[1].turn.strokes) || both[0].turn.active !== both[1].turn.active) throw new Error(`host ${JSON.stringify(both[0])}, guest ${JSON.stringify(both[1])}`);
+     if (Math.hypot(both[0].ball.x - both[1].ball.x, both[0].ball.z - both[1].ball.z) > 0.01) throw new Error(`the ball up lies in two places: ${JSON.stringify(both)}`);
+     await t.page.screenshot({path: path.join(SHOTS, 'online-host-round.png')});
+    });
+    await g.step('the guest\'s connection only ever went to the relay', async () => {
+     if (!guestSockets.length || guestSockets.some(u => !u.startsWith(relay.url + '/room/'))) throw new Error(`guest sockets: ${guestSockets.join(', ')}`);
+    });
+   } finally {
+    await gctx.close().catch(() => {});
+    await relay.close();
+   }
+  },
  }
 ];
 
