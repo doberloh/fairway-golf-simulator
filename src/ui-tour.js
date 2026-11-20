@@ -86,7 +86,7 @@ export function seasonEndHtml(tour) {
 // NO TOUR YET: what a tour is, and the ways to start one (SPEC 6).
 export function startHtml({tours = [], active = null} = {}) {
  const list = tours.length ? `<h4>Your tours</h4><ul class="tour-list">${tours.map(t => `<li><b>${esc(t.name)}</b> <small>season ${t.season} · ${t.results.length} of ${t.events.length} played</small> <button class="secondary" data-tour="open" data-id="${esc(t.id)}">${t.id === active ? 'Back to it' : 'Play'}</button> <button class="small-icon" data-tour="delete" data-id="${esc(t.id)}" aria-label="Delete ${esc(t.name)}">✕</button></li>`).join('')}</ul>` : '';
- return `<div class="tour-hub"><header class="tour-head"><h2>The Fairway Tour</h2><small>A SEASON OF TOURNAMENTS AGAINST A FIELD OF COMPUTER GOLFERS</small></header>`
+ return `<div class="tour-hub"><header class="tour-head"><h2>The Fairway Tour <span class="beta-tag">BETA</span></h2><small>A SEASON OF TOURNAMENTS AGAINST A FIELD OF COMPUTER GOLFERS</small></header>`
   + `<p>Play a season of events against 150 invented golfers, each with a handicap and a game of their own. You play every shot with your group, three of them beside you; the rest of the field is out on the course with you, on the leaderboard. Make the cut, win events, take the season on points.</p>`
   + `<div class="tour-starts">`
   + `<button class="sx-card tour-card" data-tour="shipped"><strong>${esc(SHIPPED.name)}</strong><span>Fifteen events, one on every landscape, four majors.</span></button>`

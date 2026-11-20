@@ -1754,7 +1754,7 @@ function gainedRoundHtml(){
   const holes=(q.rounds.find(e=>e.id===round.uid)?.card||[]).map(h=>h?.sg).filter(Boolean);if(!holes.length)return '';
   const g=addGained(holes);
   return `<li><b>${escape(p.name)}</b> ${GAINED_PARTS.map(k=>`${escape(GAINED_NAMES[k])} ${gainedText(g[k])}`).join(' · ')} · <b>Total ${gainedText(g.total)}</b></li>`;}).filter(Boolean);
- return lines.length?`<section class="rh-res-gained"><small>STROKES GAINED AGAINST A SCRATCH GOLFER</small><ul>${lines.join('')}</ul></section>`:'';
+ return lines.length?`<section class="rh-res-gained"><small>STROKES GAINED AGAINST A SCRATCH GOLFER · BETA</small><ul>${lines.join('')}</ul></section>`:'';
 }
 // Round complete in a tour event: where the person stands, and the way on.
 function eventResultHtml(){
@@ -5578,10 +5578,10 @@ function groupEditor(hostId,start,onChange){
    +`<div class="player-who ${nameSize(q?q.name:(p.name||"New player"))}"><select id="who${i}" aria-label="Player ${i+1}">`
    +everyone.filter(o=>!taken(i).has(o.id)).map(o=>`<option value="${o.id}" ${o.id===p.profile?'selected':''}>${escape(o.name)}</option>`).join('')
    +`<option value="${NEW}" ${p.profile||p.cpu?'':'selected'}>New player…</option>`
-   +`<option value="${CPU}" ${p.cpu?'selected':''}>${p.cpu?escape(p.name):'Computer golfer'}</option></select>`
+   +`<option value="${CPU}" ${p.cpu?'selected':''}>${p.cpu?escape(p.name):'Computer golfer (beta)'}</option></select>`
    +(p.profile||p.cpu?'':`<input aria-label="Player ${i+1}'s name" id="name${i}" maxlength="${MAX_PLAYER_NAME}" placeholder="New player's name" value="${escape(p.name||'')}">`)
    // Round 14: the title on its own line (ending in ... if it must), then level and handicap.
-   +(p.cpu?`<span class="player-sub">COMPUTER${p.cpu.nation?' · '+escape(p.cpu.nation):''}${p.cpu.level==='adaptive'?' · ADAPTIVE':''}</span><span class="player-hcp">HCP ${escape(String(p.cpu.handicap))}</span>`
+   +(p.cpu?`<span class="player-sub">COMPUTER · BETA${p.cpu.nation?' · '+escape(p.cpu.nation):''}${p.cpu.level==='adaptive'?' · ADAPTIVE':''}</span><span class="player-hcp">HCP ${escape(String(p.cpu.handicap))}</span>`
     :q?`<span class="player-sub">${escape((titleName(looksOf(q).title)||badgeName(lv)).toUpperCase())}</span><span class="player-hcp">LV ${lv} · HCP ${Number.isFinite(hc)?hc.toFixed(1)
      // No sim handicap yet (fewer than three rounds): one the golfer knows,
      // for net rounds until the game has its own (the fairway-tour goal, Q8).
@@ -5603,7 +5603,7 @@ function groupEditor(hostId,start,onChange){
    +(draft.length>1?`<button class="small-icon drop-player" data-drop="${i}" aria-label="Remove ${escape(p.name||'player '+(i+1))}"><i data-lucide="trash-2"></i></button>`
       :`<span class="drop-spacer" aria-hidden="true"></span>`)
    +`</div>`;}).join('')
-   +(draft.length<4?`<button class="secondary add-player" data-add><i data-lucide="plus"></i> Add player</button><button class="secondary add-player" data-add-cpu><i data-lucide="bot"></i> Add computer golfer</button>`:'');
+   +(draft.length<4?`<button class="secondary add-player" data-add><i data-lucide="plus"></i> Add player</button><button class="secondary add-player" data-add-cpu><i data-lucide="bot"></i> Add computer golfer <span class="beta-tag">BETA</span></button>`:'');
   icon();
   draft.forEach((p,i)=>{
    $('who'+i).onchange=e=>{
@@ -6771,17 +6771,17 @@ function lookPicker(profile){
 function tourCabinet(profile){
  if(profile?.id!==mainProfile(profiles)?.id)return '';
  const rec=tourRecord(fwStore().tours);
- if(!rec.events)return `<h3>Fairway Tour</h3><p class="note">No tour events played yet. Fairway Tour on the main menu starts a season.</p>`;
- return `<h3>Fairway Tour <small>${rec.events} event${rec.events===1?'':'s'}</small></h3><p>${rec.wins} win${rec.wins===1?'':'s'} · ${rec.majors} major${rec.majors===1?'':'s'} · ${rec.titles} season title${rec.titles===1?'':'s'} · ${rec.top10} top ten${rec.top10===1?'':'s'} · ${rec.cuts} cuts made${rec.best?` · best finish ${escape(rec.best)}`:''}</p>`
+ if(!rec.events)return `<h3>Fairway Tour <span class="beta-tag">BETA</span></h3><p class="note">No tour events played yet. Fairway Tour on the main menu starts a season.</p>`;
+ return `<h3>Fairway Tour <span class="beta-tag">BETA</span> <small>${rec.events} event${rec.events===1?'':'s'}</small></h3><p>${rec.wins} win${rec.wins===1?'':'s'} · ${rec.majors} major${rec.majors===1?'':'s'} · ${rec.titles} season title${rec.titles===1?'':'s'} · ${rec.top10} top ten${rec.top10===1?'':'s'} · ${rec.cuts} cuts made${rec.best?` · best finish ${escape(rec.best)}`:''}</p>`
   +(rec.trophies.length?`<ul class="achievement-list">${rec.trophies.map(x=>`<li class="achievement earned"><b>${escape(x.name)}</b><span>${escape(x.tour)} · season ${x.season}${x.major?' · a major':''}</span></li>`).join('')}</ul>`:'');
 }
 // STROKES GAINED ON MY PROFILE: every hole that kept them, a round's worth
 // (eighteen holes) at a time, so the part of the game costing most shows.
 function gainedProfileHtml(profile){
  const g=gainedSummary(profile);
- if(!g.holes)return `<h3>Strokes gained</h3><p class="note">Played from now on, each round is measured shot by shot against a scratch golfer: off the tee, approach, around the green and putting.</p>`;
+ if(!g.holes)return `<h3>Strokes gained <span class="beta-tag">BETA</span></h3><p class="note">Played from now on, each round is measured shot by shot against a scratch golfer: off the tee, approach, around the green and putting.</p>`;
  const per=k=>g[k]*18/g.holes,worst=GAINED_PARTS.reduce((w,k)=>per(k)<per(w)?k:w,GAINED_PARTS[0]);
- return `<h3>Strokes gained <small>${(g.holes/18).toFixed(1)} rounds' worth</small></h3><p>${GAINED_PARTS.map(k=>`${escape(GAINED_NAMES[k])} <b>${gainedText(per(k))}</b>`).join(' · ')} · a round, against a scratch golfer. Total ${gainedText(per('total'))}.</p><p class="note">${escape(GAINED_NAMES[worst])} costs you the most.</p>`;
+ return `<h3>Strokes gained <span class="beta-tag">BETA</span> <small>${(g.holes/18).toFixed(1)} rounds' worth</small></h3><p>${GAINED_PARTS.map(k=>`${escape(GAINED_NAMES[k])} <b>${gainedText(per(k))}</b>`).join(' · ')} · a round, against a scratch golfer. Total ${gainedText(per('total'))}.</p><p class="note">${escape(GAINED_NAMES[worst])} costs you the most.</p>`;
 }
 function achievementList(profile){
  const e=profile.achievements||{};

@@ -146,12 +146,14 @@ export function rulesColumn(doc, q) {
  if (ob) rules.append(picker(doc, ob, 'OUT OF BOUNDS'));
  if (lie) rules.append(picker(doc, lie, 'LIE PENALTY'));
  const caddie = q('roundCaddie');
- if (caddie) rules.append(picker(doc, caddie, 'CADDIE'));
+ // The computer golfers' features are beta (the owner, 19 November 2026,
+ // at the merge): the caddie's suggestion comes from their model.
+ if (caddie) rules.append(picker(doc, caddie, 'CADDIE · BETA'));
  // The computer golfers (the fairway-tour goal): how their shots are shown
  // and whether they speak.
  const cpu = [['roundCpuWatch', 'THEIR SHOTS'], ['roundCpuChat', 'THEIR WORDS']].filter(([id]) => q(id));
  if (cpu.length) {
-  rules.append(make(doc, 'h3', 'sx-head', 'COMPUTER GOLFERS'));
+  rules.append(make(doc, 'h3', 'sx-head', 'COMPUTER GOLFERS · BETA'));
   for (const [id, label] of cpu) rules.append(picker(doc, q(id), label));
  }
  // The course as it plays today (turf.js): a preset, then the three settings.

@@ -249,6 +249,15 @@ wrong, unfinished, or owed a check.
   not what a player gets. Every frame comparison needs four loads a build
   until it is understood. docs/history/SURROUNDINGS.md, *A load runs in one
   of two modes*.
+- [ ] **The `phone-portrait` smoke journey failed once** (19 November 2026,
+  the full run on the camera build): "one tap further moved the target 0.30
+  yd, not 1" -- the aim pad steps a foot inside 20 yd, so the tap on the
+  course before it had landed near the ball. Run again alone on the same
+  course (`--endless-seed DRIFT-3902-1`) it passed. Where the tap lands
+  depends on the camera at that moment; a step that waits for the camera to
+  settle, or taps far enough out, would end it. bench/ab/smoke-camera.txt
+  (local).
+
 - [ ] **The `look` smoke journey failed once** (fairway-tour's final build,
   18 November 2026, 12:36 run): "six putts from two yards and the ball never
   dropped", on an Endless hole (seed WINDROW-5141-2, hole 2). Passed 4 of 4

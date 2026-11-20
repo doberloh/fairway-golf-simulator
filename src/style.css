@@ -1653,3 +1653,8 @@ h3 small{font-weight:400;color:var(--ink-faint);font-size:11px;margin-left:6px}
 .rival-status{margin:6px 0;font-weight:700;color:var(--ink)}.score-table .rival-row td{font-style:italic;opacity:.85}.hole-summary-rival{color:var(--ink-faint)}
 
 .swing-coach[hidden]{display:none}.swing-coach{display:none}
+
+/* BETA: the computer golfers' features (the owner, 19 November 2026, at the
+   merge) -- the Fairway Tour, computer golfers, the caddie, strokes gained.
+   The aim line's blaze orange, so it reads on any panel. */
+.beta-tag{display:inline-block;margin-left:.35em;padding:.12em .4em;border-radius:3px;background:#ff5a14;color:#fff;font-size:.6em;font-style:normal;font-weight:800;letter-spacing:.08em;line-height:1.2;vertical-align:middle;text-transform:uppercase}
