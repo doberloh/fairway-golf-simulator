@@ -1704,7 +1704,7 @@ function drawOnline(){if(panel==='online')renderOnline($('drawerContent'));drawK
 function onlineAdmit(member,play){
  online.session.admit(member);online.knocks=online.knocks.filter(k=>k.member!==member);
  if(play)onlineSeatFromNextTee(member);
- else if(online.phase==='playing'){const g=online.session.members.get(member);if(g?.state==='in')toast(`${g.name} is watching. The ONLINE chip at the top seats them from the next tee.`);}
+ else if(online.phase==='playing'){const g=online.session.members.get(member);if(g?.state==='in')toast(`${g.name} is watching. Menu → Online room seats them from the next tee.`);}
  drawOnline();
 }
 function onlineRefuse(member){online.session.refuse(member);online.knocks=online.knocks.filter(k=>k.member!==member);drawOnline();}
@@ -1793,18 +1793,18 @@ function draftStart(){
 function drawOnlineChip(){
  let el=$('onlineChip');
  if(!online||online.phase!=='playing'||appMode!=='play'){if(el)el.hidden=true;return;}
- if(!el){el=document.createElement('div');el.id='onlineChip';el.className='online-chip';el.setAttribute('role','status');$('world')?.append(el);
-  // The host's way to the room mid-round: who is in, watching, or seated
-  // from the next tee (the Online sheet).
-  el.onclick=()=>{if(online?.role==='host')openPanel('online');};}
+ // NO CODE ON THE ROUND SCREEN (the owner, 20 November 2026: "the join code
+ // should only show in the pause menu"): the chip says online and who is
+ // lost or watching; the code, and the host's way to the room, are the pause
+ // list's *Online room* (drawPauseInfo).
+ if(!el){el=document.createElement('div');el.id='onlineChip';el.className='online-chip';el.setAttribute('role','status');$('world')?.append(el);}
  // A lost connection worth saying is a golfer's (their turn waits) or the
  // host's; a watcher's is not.
  const st=online.link?.status,away=online.role==='host'?online.session.guests.filter(g=>g.state==='away'&&round.players.some(p=>p.online===g.member)).map(g=>g.name):online.hostAway?[online.session.room?.hostName||'The host']:[];
  const host=online.role==='host',watching=host?online.session.guests.filter(g=>g.state==='in'&&!round.players.some(p=>p.online===g.member)).length:0;
  const watcher=!host&&!round?.players?.some(p=>p.online===online.member);
- el.dataset.state=st!=='open'?'lost':away.length?'away':'ok';el.dataset.host=host?'1':'';
- el.title=host?'The room: who is in, watching or joining':'';
- el.textContent=st!=='open'?'ONLINE · RECONNECTING…':away.length?`ONLINE · ${away.join(', ').toUpperCase()} LOST`:`ONLINE · ${watcher?'WATCHING · ':''}${showRoomCode(online.code)}${watching?` · ${watching} WATCHING`:''}`;
+ el.dataset.state=st!=='open'?'lost':away.length?'away':'ok';
+ el.textContent=st!=='open'?'ONLINE · RECONNECTING…':away.length?`ONLINE · ${away.join(', ').toUpperCase()} LOST`:`ONLINE${watcher?' · WATCHING':''}${watching?` · ${watching} WATCHING`:''}`;
  el.hidden=false;
 }
 function onlineLink(code){
@@ -1884,11 +1884,24 @@ function onlineLeaveRound(){
  if(online.role==='host'&&round.finished){online.phase='lobby';online.session.phase='lobby';online.session.record=null;online.session.sendRoom();toast('The room stays open for another round.');return;}
  onlineClose(online.role==='host'?'You closed the room: the round is over for everyone.':'You left the online round.');
 }
+// THE HOST CLOSED THE ROOM. Mid-round a guest is told so plainly, in a box
+// over the menu, and taken there without being asked to save the round (the
+// owner, 20 November 2026: "when the host leaves it asks joined players to
+// save the round too ... need to tell joined players that the host left").
+// The round was the host's; the guest's own holes, shots and XP are on their
+// profile already (syncProfile, hole by hole). PLACED: no "play on alone"
+// either -- the others' golfers would be this screen's to play.
 function onlineEnded(message){
  if(!online)return;
- const playing=online.phase==='playing';online=null;
- toast(message);drawOnline();drawOnlineChip();
- if(playing&&appMode==='play')returnToMenu();
+ const playing=online.phase==='playing'&&appMode==='play',host=online.session.room?.hostName||'The host';
+ online=null;drawOnline();drawOnlineChip();
+ if(!playing){toast(message);return;}
+ returnToMenu({ask:false}).then(()=>{
+  const box=$('onlineEnded');if(!box)return;
+  $('onlineEndedTitle').textContent=`${host} has left`;
+  $('onlineEndedBody').textContent=`${host} closed the room, so this online round is over. Your own holes, shots and XP are kept on your profile.`;
+  box.hidden=false;$('onlineEndedOk').onclick=()=>{box.hidden=true;};$('onlineEndedOk').focus();
+ });
 }
 // A guest who said goodbye mid-round: their golfer is the host's to play on
 // rather than a turn that waits for ever -- and theirs again from the next tee
@@ -2017,7 +2030,15 @@ function onlineWatch(f){
  if(flight?.replay)finishShot();
  if(dropState)cancelDrop();
  if(view.config.mode==='free')cameraMode('player');
- if(!takeShot(null,{remote:{shot:f.shot,club:f.club,typed:f.typed}}))online.follower.landed();
+ if(!takeShot(null,{remote:{shot:f.shot,club:f.club,typed:f.typed}})){online.follower.landed();return;}
+ // A COMPUTER GOLFER'S BALL IS SHOWN AS THIS SCREEN'S OWN SHOT VIEWS SAY
+ // (Golfers & rules: every shot, near the green, results only; seat.js
+ // showShot), as the host's own screen shows it (planComputerTurn) -- the
+ // owner, 20 November 2026: "results only" worked on the host alone.
+ if(flight&&isComputer(round.players[f.seat])){
+  const how=showShot(cpuWatch,{putt:f.club.kind==='putter'||f.club.code==='PT',toPinMetres:Math.hypot(course.pin.x-f.shot.origin.x,course.pin.z-f.shot.origin.z)});
+  if(how==='skip')finishShot();else if(how==='quick')flight.rate=Math.max(flight.rate||1,3);
+ }
 }
 // The host would not take this guest's own shot: the ball comes down and
 // the turn is set up again from the round as the host has it.
@@ -5843,7 +5864,9 @@ function guardRound(next){
 // showcase hole. That is what keeps the two modes from sharing a world: before
 // this, leaving the studio for play simply flipped a flag and the landscape you
 // were shaping silently became the course you played.
-async function returnToMenu(){
+// `ask: false`: out of a round without the question whether to keep it (an
+// online guest whose host has left: onlineEnded).
+async function returnToMenu({ask=true}={}){
  const leave=()=>{
   stopTour();closePanel();cancelAdvance();popups?.closeAll();rangeMode=false;closeRangeBox();restoreCourse();timeScale=1;view.config.freeFloor=1.2;
   
@@ -5857,7 +5880,9 @@ async function returnToMenu(){
  // A saved round waits behind Continue exactly as a reloaded one does: as the
  // pending round, on the settings it was played on (the menu's showcase hole
  // has its own and leaves them alone).
- if(appMode==='play')return guardRound(async kept=>{const back=kept&&!rangeMode?round:null;leave();pendingRound=back;await growBackdrop();});
+ const out=async kept=>{const back=kept&&!rangeMode?round:null;leave();pendingRound=back;await growBackdrop();};
+ // (A ball still in the air is dropped, not landed: there is no round to count it on.)
+ if(appMode==='play'){if(!ask){if(flight){flight=null;view.trackingBall=false;view.setTrail([]);}return out(false);}return guardRound(out);}
  leave();openMenu();
 }
 
@@ -6929,6 +6954,11 @@ function drawPauseInfo(){
  // a range's or an endless run's).
  if($('pauseBook'))$('pauseBook').hidden=rangeMode||!(world&&!world.built&&!round?.endless);
  $('pauseConditions').textContent=`${settings.wind} mph wind · ${Math.round(course.bio.temperature*9/5+32)}° · ${$('clockLabel')?.textContent||''}`;
+ // THE ROOM CODE IS SHOWN HERE ONLY in a round (the owner, 20 November 2026):
+ // the host's row opens the room (who is in, watching, seated from the next
+ // tee); a guest's copies the code.
+ const room=$('pauseRoom');
+ if(room){const on=online?.phase==='playing';room.hidden=!on;if(on)$('pauseRoomCode').textContent=showRoomCode(online.code);}
 }
 // The yardage book of the course on screen, as a PDF (a page a hole:
 // yardage-book.js), from the round's menu or the studio.
@@ -9610,6 +9640,12 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   if(c==='player')cameraMode('player');else if(c==='full')toggleFullscreen();else if(c==='flyover'){if(tour)stopTour();else startTour();}
   else cameraMode(m===c?'player':c);};
  $('pauseResume').onclick=()=>setPause(false);
+ $('pauseRoom').onclick=async()=>{
+  closeMenuDrop();
+  if(!online)return;
+  if(online.role==='host'){setPause(false);openPanel('online');return;}
+  try{await navigator.clipboard.writeText(showRoomCode(online.code));toast('Room code copied. The host lets each friend in.');}catch{toast('Copy the code from here: your browser would not.');}
+ };
  $('shotChoice').onclick=cycleShotChoice;
  document.querySelector('.topbar').addEventListener('click',e=>{
   if(!$('app').classList.contains('rh-paused'))return;

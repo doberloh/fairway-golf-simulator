@@ -76,6 +76,11 @@ before it can be called done:
   until shown); *Play on without them*; the room open again for a second
   round; a watcher in a browser seated and then playing shots, and a
   browser guest leaving and coming back to their own golfer.
+- [ ] **The owner's three of 20 November, fixed, seen in smoke only**: the
+  room code on the pause list's *Online room* and nowhere else (not seen
+  on a phone, where it is under the top bar's Menu); *Results only* for a
+  computer golfer on a guest's screen; a guest told when the host leaves,
+  and not asked to save.
 - [ ] **The source archive with `relay/`** (tools/package_release.py now
   packs it; the packager has not been run since).
 - [ ] **Safari and Firefox** as host and as guest (the smoke journeys are

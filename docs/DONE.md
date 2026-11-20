@@ -93,6 +93,27 @@ become a player at the host's say -- "Yes, build both"):
   played by a person, and no browser watcher has been seated and then
   played shots.
 
+From the owner's own first look at the branch the same evening (20 November
+2026, the server running for them):
+
+- [x] **"The join code should only show in the pause menu."** The ONLINE chip
+  says only ONLINE, RECONNECTING…, who is lost or watching; the pause list
+  has *Online room* with the code (the host's opens the room sheet, where
+  watchers are seated; a guest's copies the code). It had briefly been a
+  row in the pause list's right-hand column, which a wide screen hides:
+  found by smoke, and moved among Scorecard, Settings and the rest.
+- [x] **"The computer player on the non host computer is not following its
+  shot view settings."** A guest flew every computer golfer's ball in full,
+  because the host's ball arrives as an ordinary remote shot; now the guest
+  applies its own Golfers & rules choice to a computer golfer's seat
+  (`onlineWatch`, seat.js `showShot`). Smoke `online-host-leaves`: a guest on
+  *Results only* never sees that ball in the air.
+- [x] **"When the host leaves it asks joined players to save the round too
+  ... need to tell joined players that the host left."** A guest is taken
+  to the menu without the question and told in a box (*Sam has left*: the
+  room closed, the round over, their own holes and XP kept). PLACED: no
+  *play on alone* for them. Smoke `online-host-leaves`.
+
 The gate's 15% line, which read Soulbound at about 10% on 19 November
 (RULES_HISTORY, *The same evening the gate missed a game*), stays as it is:
 the owner, 20 November 2026, "leave it as is".

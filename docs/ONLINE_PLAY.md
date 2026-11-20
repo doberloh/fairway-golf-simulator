@@ -104,7 +104,24 @@ this machine with `lab.relay(url)`, a console hook no player reaches.
 - No mulligans, free drops or group changes once it starts -- except
   dropping in, below.
 - Not autosaved: a round of several machines cannot be carried on alone.
-  Leaving offers to keep it, as any round; kept, it plays on alone.
+  Leaving offers to keep it, as any round; kept, it plays on alone. **A
+  guest whose host leaves mid-round is not asked** (the owner, 20 November
+  2026: "when the host leaves it asks joined players to save the round too
+  ... need to tell joined players that the host left"): they are taken to
+  the menu and a box says *Sam has left* -- the room is closed, the round
+  over, and their own holes, shots and XP are kept on their profile
+  (`onlineEnded`, `returnToMenu({ask: false})`). PLACED: no *play on alone*
+  for them, since the others' golfers would be theirs to play.
+- **The room code is shown only in the pause list** in a round (the owner,
+  20 November 2026: "the join code should only show in the pause menu"):
+  its *Online room* row carries the code; the host's opens the room sheet,
+  a guest's copies the code. The ONLINE chip on the round screen says only
+  ONLINE, RECONNECTING…, who is lost, or who is watching.
+- **A computer golfer's ball is shown as each screen's own Shot views say**
+  (Golfers & rules: every shot, near the green, results only): a guest who
+  chose *Results only* sees the host's computer golfers' balls land without
+  flying (`onlineWatch`, seat.js `showShot`), as the host's own screen does.
+  Before 20 November only the host's setting was followed, and only there.
 - Played on a course (the week's, a saved one, Surprise me), not Endless or a
   friend's challenge. A course from the Course Builder only if every guest
   already has its file (they are told to ask for it).
@@ -133,7 +150,7 @@ this machine with `lab.relay(url)`, a console hook no player reaches.
   offers *Let in to play* (when there is a seat, or their own golfer is
   waiting for them) and *Let in to watch*. A watcher sees every shot and card
   but swings for nobody, and their profile counts nothing; their chip says
-  WATCHING. The host's ONLINE chip opens the room, where each guest is
+  WATCHING. The pause list's *Online room* opens the room for the host, where each guest is
   PLAYING, WATCHING or FROM THE NEXT TEE, and *Seat from the next tee* /
   *Keep watching* change it. **Every seat change happens at the next tee**
   (PLACED: a hole is played by the group that started it, and nobody's ball

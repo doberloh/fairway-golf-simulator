@@ -3884,7 +3884,7 @@ const JOURNEYS = [
     const dropStarts = [];
     drop.on('start', m => dropStarts.push(m));
     drop.on('state', m => { if (m.round?.holeComplete && !m.round.finished) drop.seen(m.round.hole); });
-    await t.step('a friend knocks mid-round: let in to watch, sent the round alone, seated from the next tee', async () => {
+    await t.step('a friend knocks mid-round: let in to watch, sent the round alone, seated from the pause list\'s Online room', async () => {
      await t.until(() => t.page.locator('#onlineKnock [data-admit-play]').isVisible(), 'the knock bar with Let in to play', 15 * SLOW);
      await t.page.screenshot({path: path.join(SHOTS, 'online-drop-knock.png')});
      await t.page.locator('#onlineKnock [data-admit]').click();
@@ -3892,7 +3892,15 @@ const JOURNEYS = [
      if (dropStarts[0].to !== 'smokedrop1') throw new Error(`the round was not sent to the watcher alone: ${JSON.stringify({to: dropStarts[0].to})}`);
      try { await t.until(async () => /WATCHING/.test(await t.page.textContent('#onlineChip') || ''), 'WATCHING on the host\'s chip', 5 * SLOW); }
      catch (e) { console.log('       host:', JSON.stringify(await room(t.page)), await t.page.textContent('#onlineChip')); throw e; }
-     await t.page.click('#onlineChip');
+     // The code is on the pause list only (the owner, 20 November 2026), and
+     // the host reaches the room from there.
+     const chip = await t.page.textContent('#onlineChip');
+     if (chip.replace(/-/g, '').includes(code.replace(/-/g, ''))) throw new Error(`the room code is on the round screen: "${chip}"`);
+     await t.chrome();
+     const row = await t.page.textContent('#pauseRoom');
+     if (!row.includes(code)) throw new Error(`the pause list's Online room row says "${row}", not the code`);
+     await t.page.screenshot({path: path.join(SHOTS, 'online-pause-room.png')});
+     await t.page.click('#pauseRoom');
      await t.until(() => t.page.locator('[data-seat="smokedrop1"]').isVisible(), 'the watcher on the Online sheet', 5 * SLOW);
      await t.page.locator('[data-seat="smokedrop1"]').click();
      await t.until(async () => /FROM THE NEXT TEE/.test(await t.page.textContent('.online-people') || ''), 'the watcher seated from the next tee', 5 * SLOW);
@@ -3995,6 +4003,102 @@ const JOURNEYS = [
     await gctx.close().catch(() => {});
     await relay.close();
     served.close();
+   }
+  },
+ },
+ // THE HOST LEAVES MID-ROUND (the owner, 20 November 2026: "when the host
+ // leaves it asks joined players to save the round too ... need to tell joined
+ // players that the host left"). Two screens, both from the file; the host
+ // tees off, swings, and leaves for the menu: the guest is told in a box over
+ // the menu, and never asked to keep a round that was the host's.
+ {
+  name: 'online-host-leaves',
+  what: 'an online round with the host\'s computer golfer, shown on the guest\'s screen as the guest\'s own Shot views say (results only); then the host leaves mid-hole: the guest is taken to the menu and told, with no question about saving the round',
+  async run(t) {
+   const relay = await startRelay({port: 0, log: s => { if (/refused|\((?!1000\b|1005\b)\d+/.test(s)) console.log(`       relay: ${s}`); }});
+   const gctx = await t.page.context().browser().newContext({viewport: {width: 1440, height: 900}});
+   await gctx.addInitScript(() => {
+    try { localStorage.setItem('fairway-graphics-v1', JSON.stringify({quality: 'low', frameCap: 0})); } catch {}
+    // The guest watches computer golfers' shots as results only.
+    try { localStorage.setItem('fairway-rules-v1', JSON.stringify({cpuWatch: 'results'})); } catch {}
+    try { if (!localStorage.getItem('fairway-profiles-v1')) localStorage.setItem('fairway-profiles-v1', JSON.stringify({version: 2, main: 'pguest', profiles: [{id: 'pguest', name: 'Guest', created: Date.now(), counters: {}, bests: {}, rounds: []}]})); } catch {}
+   });
+   const gpage = await gctx.newPage();
+   gpage.setDefaultTimeout(30000 * SLOW);
+   const g = new Trip(gpage, 'online-host-leaves-guest', t.page.url());
+   try {
+    await menuReady(t);
+    let code = '';
+    await t.step('the host starts a room; the guest knocks and is let in', async () => {
+     await fromMenu(t, 'Play online');
+     await t.until(() => t.page.locator('#onlineHost').isVisible(), 'the online sheet', 10 * SLOW);
+     await t.page.evaluate(u => window.lab.relay(u), relay.url);
+     await t.press('Start a room');
+     await t.until(() => t.page.evaluate(() => document.querySelector('.online-status')?.dataset.state === 'open'), 'the host to reach the relay', 10 * SLOW);
+     code = (await t.page.textContent('#onlineCodeText')).trim();
+     await gpage.goto(t.page.url());
+     await menuReady(g);
+     await fromMenu(g, 'Play online');
+     await g.until(() => gpage.locator('#onlineJoin').isVisible(), 'the online sheet', 10 * SLOW);
+     await gpage.evaluate(u => window.lab.relay(u), relay.url);
+     await gpage.fill('#onlineCode', code);
+     await g.press('Join the room');
+     await t.until(() => t.page.locator('[data-admit]').first().isVisible(), 'the knock', 10 * SLOW);
+     await t.page.locator('[data-admit]').first().click();
+     await g.until(() => gpage.locator('#onlineLeave').isVisible(), 'the room screen', 10 * SLOW);
+    });
+    await t.step('Surprise me with a computer golfer → Tee off, on both screens; the host swings, then the guest', async () => {
+     await t.press('Choose the course and start');
+     await t.until(() => t.page.locator('#drawer .sx-card').first().isVisible().catch(() => false), 'Play', 10 * SLOW);
+     await t.page.locator('#drawer .sx-card[aria-label^="Surprise me"]').first().click();
+     await t.press('Add player');
+     const who = t.page.locator('#playerRows select[id^="who"]').last();
+     await who.selectOption('__cpu');
+     await t.until(async () => /COMPUTER/.test(await t.page.locator('#playerRows .seat').last().textContent()), 'the computer golfer\'s seat', 5 * SLOW);
+     // Farthest out plays first, so the turn goes round the group off the tee
+     // (in seat order each golfer would play the hole out first).
+     await t.page.evaluate(() => { const s = document.getElementById('roundOrder'); s.value = 'farthest'; s.dispatchEvent(new Event('change', {bubbles: true})); });
+     await t.press('Tee off on the surprise course');
+     await t.inPlay(120 * SLOW);
+     await g.inPlay(120 * SLOW);
+     const seats = await t.page.evaluate(() => window.lab.online().seats);
+     if (seats.length !== 3 || !seats[1] || seats[2]) throw new Error(`the group is not host, guest, computer: ${JSON.stringify(seats)}`);
+     // Every flight on the guest's screen while the computer golfer is up.
+     await gpage.evaluate(() => { window.__cpuFlights = 0; setInterval(() => { const s = window.lab.state(); if (s.inFlight && s.turn?.computer) window.__cpuFlights++; }, 25); });
+     await t.shot();
+     await g.until(async () => (await gpage.evaluate(() => window.lab.state().turn?.strokes?.[0])) === 1, 'the host\'s stroke on the guest\'s card', 30 * SLOW);
+     try { await g.until(async () => (await gpage.evaluate(() => window.lab.state().turn?.active)) === 1 && !(await g.inFlight()), 'the guest\'s turn', 30 * SLOW); }
+     catch (e) {
+      for (const [who, p] of [['host', t.page], ['guest', gpage]]) console.log(`       ${who}:`, JSON.stringify(await p.evaluate(() => ({turn: window.lab.state().turn, inFlight: window.lab.state().inFlight, online: window.lab.online(), chip: document.getElementById('onlineChip')?.textContent}))));
+      throw e;
+     }
+     await g.shot();
+    });
+    await g.step('the computer golfer\'s drive lands on the guest\'s screen without flying (the guest\'s own Results only)', async () => {
+     await t.until(async () => (await t.page.evaluate(() => window.lab.state().turn?.strokes?.[2])) === 1, 'the computer golfer\'s drive on the host', 60 * SLOW);
+     await g.until(async () => (await gpage.evaluate(() => window.lab.state().turn?.strokes?.[2])) === 1 && !(await g.inFlight()), 'the computer golfer\'s drive on the guest\'s card', 30 * SLOW);
+     const n = await gpage.evaluate(() => window.__cpuFlights);
+     if (n > 2) throw new Error(`the guest's screen flew the computer golfer's ball (${n} looks in the air) though its Shot views say results only`);
+     await t.until(async () => !(await t.inFlight()), 'the host\'s screen to settle', 30 * SLOW);
+    });
+    await t.step('the host leaves for the menu', async () => {
+     await t.menuItem('Main menu');
+     if (await t.page.waitForSelector('#leaveNotice:not([hidden])', {timeout: 5000 * SLOW}).then(() => true, () => false)) await t.page.click('#leaveDiscard');
+     await t.until(() => t.page.evaluate(() => document.getElementById('app').dataset.mode === 'menu'), 'the host\'s menu', 60 * SLOW);
+    });
+    await g.step('the guest is taken to the menu and told the host has left, and asked nothing', async () => {
+     await g.until(() => gpage.evaluate(() => document.getElementById('onlineEnded')?.hidden === false), 'the host-left box', 60 * SLOW);
+     if (await gpage.evaluate(() => document.getElementById('leaveNotice')?.hidden === false)) throw new Error('the guest was asked whether to keep the round');
+     const said = await gpage.textContent('#onlineEnded');
+     if (!/Smoke has left/.test(said)) throw new Error(`the box says "${said.trim().slice(0, 160)}"`);
+     if (await gpage.evaluate(() => document.getElementById('app').dataset.mode) !== 'menu') throw new Error('the guest is not on the menu');
+     await gpage.screenshot({path: path.join(SHOTS, 'online-host-left.png')});
+     await gpage.click('#onlineEndedOk');
+     if (await gpage.evaluate(() => window.lab.online())) throw new Error('the guest is still in a room');
+    });
+   } finally {
+    await gctx.close().catch(() => {});
+    await relay.close();
    }
   },
  }
