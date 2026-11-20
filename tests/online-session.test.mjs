@@ -159,6 +159,32 @@ test('protocol: text from another machine carries no markup', () => {
  assert.ok(!/[<>"]/.test(room.hostName + room.members[0].name));
 });
 
+test('a guest takes the state that ends a shot by its number, not whichever comes next', () => {
+ const played = [], applied = [];
+ let land = null;
+ const f = new Follower({play: (m, done) => { played.push(m.shotNo); land = done; }, apply: (s, o) => applied.push({seq: s.seq, no: s.shotNo, after: o.afterShot})});
+ f.restart(1);
+ f.heard({t: 'flown', shotNo: 1, hole: 0, seat: 0, stroke: 1});
+ // The host saved something while the ball was in the air: a state from before it landed.
+ f.heard({t: 'state', seq: 2, shotNo: 0});
+ f.heard({t: 'state', seq: 3, shotNo: 1});
+ land();
+ assert.deepEqual(played, [1]);
+ assert.deepEqual(applied, [{seq: 3, no: 1, after: true}], 'the stray state passed over, the landing taken as the landing');
+ // The guest's own ball: its number comes with the host's copy.
+ f.ownStrike('0:1:1');
+ f.heard({t: 'state', seq: 4, shotNo: 1});
+ f.heard({t: 'flown', shotNo: 2, hole: 0, seat: 1, stroke: 1});
+ f.heard({t: 'state', seq: 5, shotNo: 2});
+ f.landed();
+ assert.deepEqual(played, [1], 'one\'s own ball is not flown twice');
+ assert.deepEqual(applied.at(-1), {seq: 5, no: 2, after: true});
+ assert.equal(applied.length, 2);
+ // A state with nothing in the air is taken as it is.
+ f.heard({t: 'state', seq: 6, shotNo: 2});
+ assert.deepEqual(applied.at(-1), {seq: 6, no: 2, after: false});
+});
+
 test('the door: another version, a full room, and a round already started are refused', () => {
  const members = new Map([['a', {state: 'in'}], ['b', {state: 'in'}], ['c', {state: 'away'}]]);
  assert.match(doorProblem({v: PROTOCOL, game: 'other'}, {game: GAME, members: new Map(), maxGuests: 3}), /same version/);

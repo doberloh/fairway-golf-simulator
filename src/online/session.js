@@ -112,6 +112,15 @@ export class HostSession {
   this.send({t: 'refuse', member, why});
   if (who) { this.members.delete(member); this.emit('removed', who); this.sendRoom(); }
  }
+ // The host plays on without a guest whose connection is gone: they are out
+ // of the room, and back only by knocking again (refused mid-round).
+ drop(member) {
+  const who = this.members.get(member);
+  if (!who) return null;
+  who.state = 'gone'; who.tag = null;
+  this.sendRoom();
+  return who;
+ }
  get guests() { return [...this.members.values()].filter(m => m.state === 'in' || m.state === 'away'); }
  roomMessage() {
   return {t: 'room', host: this.member, hostName: this.name, phase: this.phase, course: this.course,
@@ -187,16 +196,23 @@ export class GuestSession {
 // while still in the air. A guest's own shot is flown the moment it is
 // struck (`ownStrike`), and the host's copy of it is not flown twice. A
 // start or a resync (`restart`) clears everything queued.
+//
+// THE STATE THAT ENDS A SHOT IS MATCHED BY NUMBER: a `flown` carries its
+// shot's number, a `state` how many shots the host has finished, and only a
+// state that has reached the shot on screen ends it (`waitFor`). A state the
+// host sent while that ball was still in the air (anything that saves
+// mid-flight) is passed over: every state is the whole round, and the
+// landing's own comes after it.
 export class Follower {
  constructor({play, apply}) {
   this.play = play; this.apply = apply;
-  this.queue = []; this.busy = false; this.own = null; this.seq = 0; this.flownKey = null; this.afterShot = false;
+  this.queue = []; this.busy = false; this.own = null; this.seq = 0; this.waitFor = null;
  }
  static key(f) { return `${f.hole}:${f.seat}:${f.stroke}`; }
- restart(seq) { this.queue = []; this.busy = false; this.own = null; this.seq = seq; this.afterShot = false; }
+ restart(seq) { this.queue = []; this.busy = false; this.own = null; this.seq = seq; this.waitFor = null; }
  heard(m) {
   if (m.t === 'state' && m.seq <= this.seq) return;
-  if (m.t === 'flown' && this.own && Follower.key(m) === this.own) this.ownEchoed = true;
+  if (m.t === 'flown' && this.own && Follower.key(m) === this.own) { this.ownEchoed = true; this.waitFor = m.shotNo; }
   this.queue.push(m);
   this.pump();
  }
@@ -206,25 +222,25 @@ export class Follower {
  get behind() { return this.busy && this.queue.some(m => !(m.t === 'flown' && this.own && Follower.key(m) === this.own)); }
  // The guest struck its own ball: it is in the air already. `ownEchoed` says
  // whether the host has taken it (its copy came back), for a time limit.
- ownStrike(key) { this.own = key; this.ownEchoed = false; this.busy = true; this.afterShot = true; }
+ // Its number is not known until the host's copy comes back.
+ ownStrike(key) { this.own = key; this.ownEchoed = false; this.busy = true; this.waitFor = Infinity; }
  // The host would not take it (`nope`): the ball comes down, and the next
  // state puts things right.
- ownRefused() { this.own = null; this.busy = false; this.afterShot = false; this.pump(); }
+ ownRefused() { this.own = null; this.busy = false; this.waitFor = null; this.pump(); }
  landed() { this.busy = false; this.pump(); }
  pump() {
   while (!this.busy && this.queue.length) {
    const m = this.queue.shift();
    if (m.t === 'flown') {
     if (this.own && Follower.key(m) === this.own) { this.own = null; continue; }
-    this.busy = true; this.afterShot = true;
+    this.busy = true; this.waitFor = m.shotNo;
     this.play(m, () => this.landed());
    } else if (m.t === 'state') {
     if (m.seq <= this.seq) continue;
-    // The state after one's own shot can come before its 'flown' echo only if
-    // the host flew it first; either way it ends the shot.
-    if (this.own) this.own = null;
     this.seq = m.seq;
-    const afterShot = this.afterShot; this.afterShot = false;
+    if (this.waitFor !== null && m.shotNo < this.waitFor) continue;
+    const afterShot = this.waitFor !== null;
+    this.waitFor = null; this.own = null;
     this.apply(m, {afterShot});
    }
   }

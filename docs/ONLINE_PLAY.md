@@ -102,6 +102,12 @@ copy needs a certificate in front of it (Caddy or nginx); on a home network
 - A guest who leaves mid-round hands their ball to the host to play or take
   out; a host who leaves mid-round closes the room; after the last hole the
   room stays open for the next round.
+- A guest whose connection is lost (a closed tab, a phone that died) keeps
+  their turn waiting; after 20 seconds the host is offered *Play on without
+  them* or *Wait*. Played on without, their ball is the host's, and they are
+  out of the room (a knock mid-round is refused).
+- A seat is an online guest's only while that guest is in the room open now:
+  a group remembered from an earlier room (Play again) seats ordinary golfers.
 - A computer golfer is the host's, and plays as it does offline.
 - A host whose page is hidden (a tab in the background, a phone asleep) lands
   each flight at once rather than leaving the guests waiting; its computer

@@ -700,3 +700,10 @@ frame measurements waiting for a quiet card (a game skews them, which is a
 fact about measuring, not permission), leaving nothing running at the end of
 a turn, and the card watcher beside long graphics work. The rule went in on
 the online-play branch, so main carries it from that branch's merge.
+
+**The same evening the gate missed a game.** Soulbound, open on the card
+while the branch's final checks ran, read 9.6 to 10% by itself -- under the
+15% that makes a program "a game" -- with the card at 11.5 to 12% in all. The
+rule now rests on that line alone. The checks were run one job at a time
+anyway, by the program's name; whether the line moves (or a list of known
+games joins it) is the owner's call, told at the hand-over.

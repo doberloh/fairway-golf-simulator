@@ -67,6 +67,14 @@ before it can be called done:
   their Cloudflare account.
 - [ ] **Three or four players in the browser.** Node plays every format with
   three; the browser journey plays two.
+- [ ] **Seen in no browser yet** (each is played by the Node rounds' rules):
+  a scramble's ball chosen by a guest; a net round's strokes for a guest
+  (their own index, from their device); the course of the week online; a
+  hidden host landing a guest's flight at once (its computer golfers wait
+  until shown); *Play on without them*; the room open again for a second
+  round.
+- [ ] **The source archive with `relay/`** (tools/package_release.py now
+  packs it; the packager has not been run since).
 - [ ] **Safari and Firefox** as host and as guest (the smoke journeys are
   Chromium).
 

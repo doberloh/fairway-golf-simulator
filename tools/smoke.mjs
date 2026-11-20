@@ -143,6 +143,17 @@ class Trip {
    if (own && u.startsWith(own + '/')) return;
    this.requests.push(u);
   });
+  // A WEBSOCKET IS NOT A REQUEST to Playwright, so it is watched apart (online
+  // play, 19 November 2026): the bridge and a relay on this machine, or the
+  // page's own server, and nothing anywhere else -- no journey reaches the
+  // internet.
+  page.on('websocket', ws => {
+   let host = '';
+   try { host = new URL(ws.url()).host; } catch {}
+   const name = host.replace(/:\d+$/, '');
+   if (name === '127.0.0.1' || name === 'localhost' || (own && host === new URL(own).host)) return;
+   this.requests.push(ws.url());
+  });
  }
 
  // A step is a named thing a player does. It fails if it throws, OR if the
@@ -3839,6 +3850,74 @@ const JOURNEYS = [
      const both = await Promise.all([t.page, gpage].map(p => p.evaluate(() => ({turn: window.lab.state().turn, ball: window.lab.state().ballAt, online: window.lab.online()}))));
      if (both[1].online.phase !== 'playing') throw new Error(`the guest is ${both[1].online.phase}, not playing`);
      if (JSON.stringify(both[0].turn.strokes) !== JSON.stringify(both[1].turn.strokes)) throw new Error(`host ${JSON.stringify(both[0].turn)}, guest ${JSON.stringify(both[1].turn)}`);
+    });
+    const room = p => p.evaluate(() => window.lab.online());
+    const settle = async () => {
+     await t.until(async () => !(await t.inFlight()), 'the host\'s ball to land', 30 * SLOW);
+     await g.until(async () => !(await g.inFlight()), 'the guest\'s ball to land', 30 * SLOW);
+     await g.until(async () => JSON.stringify((await turn(gpage)).strokes) === JSON.stringify((await turn(t.page)).strokes), 'both cards to agree', 15 * SLOW);
+    };
+    await t.step('a ball in the water: its golfer chooses the relief on their own screen, the other waits', async () => {
+     await settle();
+     const up = (await turn(t.page)).active, owner = up === 0 ? t : g, other = up === 0 ? g : t;
+     const into = await t.page.evaluate(() => window.lab.trouble('water'));
+     if (!into) { console.log('       (no water in reach on this hole: skipped)'); return; }
+     await owner.until(() => owner.page.evaluate(() => document.getElementById('reliefBar')?.hidden === false), `the relief choice on ${up === 0 ? 'the host' : 'the guest'}'s screen`, 15 * SLOW);
+     await owner.page.waitForTimeout(500);
+     if (await other.page.evaluate(() => document.getElementById('reliefBar')?.hidden === false)) throw new Error('the relief choice showed on the screen whose ball it is not');
+     await owner.page.click('#reliefTake');
+     await t.until(async () => (await room(t.page)).relief === null, 'the host\'s round to take the relief', 10 * SLOW);
+     await g.until(async () => (await room(gpage)).relief === null, 'the guest\'s round to take the relief', 10 * SLOW);
+     await settle();
+    });
+    // Each golfer up, on their own screen, putts from beside the pin until
+    // the hole is over.
+    const holeOut = async () => {
+     await t.page.evaluate(() => { window.lab.nearPin(0, .3); window.lab.nearPin(1, .3); });
+     for (let i = 0; i < 8; i++) {
+      await settle();
+      if ((await turn(t.page)).holeComplete) return;
+      const up = (await turn(t.page)).active, who = up === 0 ? t : g;
+      await who.until(() => who.page.evaluate(() => window.lab.state().canSwing), `seat ${up}'s putt to be allowed`, 15 * SLOW);
+      await who.putt();
+     }
+     throw new Error('eight putts from a foot and the hole is not over');
+    };
+    await g.step('the guest disarms the monitor to putt on the swing pad', async () => {
+     await settle();
+     await g.settings('monitor');
+     await gpage.getByLabel(/Arm monitor/).uncheck();
+     await g.leaveMonitor();
+    });
+    await t.step('both hole out from beside the pin: the scorecard on both screens', async () => {
+     await holeOut();
+     await g.until(async () => (await turn(gpage)).holeComplete, 'the hole to be over on the guest\'s screen', 15 * SLOW);
+     // Each card waits for that screen's own XP to be shown first.
+     await t.until(() => t.drawerOpen(), 'the scorecard on the host\'s screen', 30 * SLOW);
+     try { await g.until(() => g.drawerOpen(), 'the scorecard on the guest\'s screen', 30 * SLOW); }
+     finally { await gpage.screenshot({path: path.join(SHOTS, 'online-guest-card.png')}); }
+     const [a, b] = [await room(t.page), await room(gpage)];
+     if (JSON.stringify(a.cards) !== JSON.stringify(b.cards)) throw new Error(`host ${JSON.stringify(a.cards)}, guest ${JSON.stringify(b.cards)}`);
+    });
+    await g.step('the host moves the group on: the guest arrives on the next tee', async () => {
+     await t.until(async () => (await room(t.page)).hole === 1, 'the host\'s next hole', 20 * SLOW);
+     await g.until(async () => (await room(gpage)).hole === 1, 'the guest\'s next hole', 20 * SLOW);
+     await g.inPlay(60 * SLOW);
+     const [a, b] = [await whereAmI(t.page), await whereAmI(gpage)];
+     if (a.hole !== b.hole) throw new Error(`host on ${a.hole}, guest on ${b.hole}`);
+    });
+    await t.step('the last hole: the round ends on both screens', async () => {
+     await settle();
+     await t.page.evaluate(() => window.lab.hole(8));
+     await g.until(async () => (await room(gpage)).hole === 8, 'the guest on the last hole', 30 * SLOW);
+     await g.inPlay(60 * SLOW);
+     await holeOut();
+     await t.until(async () => (await room(t.page)).finished, 'the host\'s round to finish', 15 * SLOW);
+     await g.until(async () => (await room(gpage)).finished, 'the guest\'s round to finish', 15 * SLOW);
+     // The card waits for the guest's own XP for the round to be shown
+     // (main.js showHoleCompletion: the XP and any level-up first).
+     try { await g.until(() => g.drawerOpen(), 'round complete on the guest\'s screen', 30 * SLOW); }
+     finally { await gpage.screenshot({path: path.join(SHOTS, 'online-guest-finished.png')}); }
     });
     await g.step('the guest\'s only other connection was to the relay (and their own bridge)', async () => {
      if (!guestSockets.length || guestSockets.some(u => !u.startsWith(relay.url + '/room/') && !u.startsWith(`ws://${lan}:${served.address().port}`))) throw new Error(`guest sockets: ${guestSockets.join(', ')}`);
