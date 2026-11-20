@@ -17,6 +17,11 @@ import {roomId, roomKey} from './room-code.js';
 
 export const PING_MS = 25000;
 export const RETRY_MS = [1000, 2000, 4000, 8000, 15000];
+// PACED UNDER THE RELAY'S LIMIT (relay/core.js: 60 at once, 10 a second): a
+// message the relay calls too fast is dropped there, so it is held here
+// instead and sent in order as the allowance comes back. A little inside the
+// relay's figures, for the clocks' disagreement.
+export const PACE = {burst: 50, perSecond: 8};
 
 export function relayRoomUrl(relay, code) {
  const base = String(relay || '').trim().replace(/\/+$/, '');
@@ -29,6 +34,15 @@ export function createLink({relay, code, random, WebSocketImpl = globalThis.WebS
  const emit = (type, ...a) => { for (const f of handlers.get(type) ?? []) f(...a); };
  const last = new Map();
  let ws = null, you = null, peers = new Set(), count = 0, closed = false, tries = 0, pinger = null, retry = null, status = 'idle';
+ let outbox = [], tokens = PACE.burst, filled = Date.now(), flushTimer = null;
+ function flush() {
+  flushTimer = null;
+  if (!ws || ws.readyState !== 1 || !you) { outbox = []; return; }
+  const now = Date.now();
+  tokens = Math.min(PACE.burst, tokens + (now - filled) / 1000 * PACE.perSecond); filled = now;
+  while (outbox.length && tokens >= 1) { tokens -= 1; ws.send(seal(key, room, {...outbox.shift(), me: you, n: ++count}, random)); }
+  if (outbox.length) flushTimer = setTimer(flush, Math.ceil((1 - tokens) / PACE.perSecond * 1000) + 5);
+ }
  const setStatus = s => { if (s !== status) { status = s; emit('status', s); } };
 
  function connect() {
@@ -84,15 +98,22 @@ export function createLink({relay, code, random, WebSocketImpl = globalThis.WebS
   get status() { return status; },
   get url() { return url; },
   on(type, f) { if (!handlers.has(type)) handlers.set(type, []); handlers.get(type).push(f); return link; },
-  // Sealed and sent to every other socket in the room; false if not connected.
+  // Sealed and sent to every other socket in the room, in order and paced;
+  // false if not connected (nothing is kept for a later connection: the host
+  // sends the round whole to anyone who comes back).
   send(msg) {
    if (!ws || ws.readyState !== 1 || !you) return false;
-   ws.send(seal(key, room, {...msg, me: you, n: ++count}, random));
+   outbox.push(msg);
+   if (!flushTimer) flush();
    return true;
   },
+  // Messages still waiting for the relay's allowance.
+  get waiting() { return outbox.length; },
   close() {
    closed = true;
    if (retry) clearTimer(retry);
+   if (flushTimer) clearTimer(flushTimer);
+   outbox = [];
    clearInterval(pinger);
    if (ws) try { ws.close(1000, 'bye'); } catch {}
    if (!ws) setStatus('closed');

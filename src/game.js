@@ -44,6 +44,10 @@ function cleanNet(net,seats){
 }
 // A golfer's tee, when they carry one, is one of the six sets (tees.js).
 const validTee=p=>p.tee===undefined||p.tee===null||isTee(p.tee);
+// AN ONLINE GUEST'S SEAT (online play, 19 November 2026; src/online/): the
+// guest's member id, which the host's game waits on for that seat's shots.
+// A seat without one is played on the machine the round is on.
+export const onlineSeat=v=>typeof v==='string'&&/^[a-z0-9]{6,24}$/.test(v);
 export class Round{
  // The golfer a round starts with when nobody has been chosen. main.js sets it
  // to the main profile -- name and profile id -- so a new group starts with the
@@ -61,7 +65,7 @@ export class Round{
  constructor({players=[{...Round.defaultPlayer}],mode='stroke',holes=9,gimme=0,putting,tee='blue',endless=false,seed='',uid,outOfBounds=Round.defaultOutOfBounds,monitorLie=Round.defaultMonitorLie,playOrder=Round.defaultPlayOrder,weekly='',goal='',rival='',pinSeed='',net=null,handicaps=false,event=''}={}){
   if(!Array.isArray(players)||players.length<1||players.length>4)throw Error('Choose 1–4 players.');
   if(!FORMATS.includes(mode)||![3,9,18].includes(holes)||!Number.isFinite(gimme)||gimme<0||gimme>3)throw Error('Invalid round settings.');
-  if(!players.every(p=>p&&typeof p.name==='string'&&p.name.length<=24&&['A','B'].includes(p.team)&&validTee(p)))throw Error('Invalid player.');
+  if(!players.every(p=>p&&typeof p.name==='string'&&p.name.length<=24&&['A','B'].includes(p.team)&&validTee(p)&&(p.online===undefined||onlineSeat(p.online))))throw Error('Invalid player.');
   // A computer golfer's record is cleaned as it comes in (a save, a tour file);
   // one that cannot be read leaves an ordinary golfer in the seat.
   players=players.map(p=>{if(p.input!=='cpu'&&!p.cpu)return p;const cpu=cleanCpu(p.cpu);return cpu?{...p,input:'cpu',cpu}:{...p,input:'monitor',cpu:undefined};});
@@ -213,7 +217,9 @@ export class Round{
   // `input` is how this golfer plays (playsWith, below): it rides through a
   // group change mid-round, so switching a golfer to the Swing Meter or back
   // to the monitor is just applying the group again.
-  this.players=next.map((p,i)=>({name:p.name,team:p.team,hand:p.hand||'RH',...(typeof p.profile==='string'?{profile:p.profile}:{}),...(INPUTS.includes(p.input)?{input:p.input}:{}),...(p.tee?{tee:p.tee}:{}),id:i}));
+  // `online` is which guest of an online room plays this seat (src/online/):
+  // it follows its golfer like `profile` does.
+  this.players=next.map((p,i)=>({name:p.name,team:p.team,hand:p.hand||'RH',...(typeof p.profile==='string'?{profile:p.profile}:{}),...(INPUTS.includes(p.input)?{input:p.input}:{}),...(p.tee?{tee:p.tee}:{}),...(onlineSeat(p.online)?{online:p.online}:{}),id:i}));
   // The playing order is a per-player array like the rest, but it holds ids
   // rather than values, so it is remapped rather than resized. A golfer who
   // left takes their place in it with them; one who joined goes to the back,
