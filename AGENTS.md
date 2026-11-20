@@ -27,8 +27,9 @@ is not permission to widen an unrelated task.
 
 The owner, 19 November 2026: live matches with friends in other houses, no
 accounts, everything kept on each player's own machine and shared when they
-join, sessions private and safe; a free relay if one holds up, otherwise a
-small server of the owner's on Oracle Cloud. The plan, log and status page
+join, sessions private and safe. **The relay is Cloudflare's** (Workers with
+Durable Objects, free plan; the owner's choice the same day), and the
+security design in the plan is signed off. The plan, log and status page
 are in `docs/studies/online-play/` (local and ignored, inside the worktree:
 copy them to the main checkout before the worktree goes). **These terms are
 the branch's own and end when it is merged**; what they decided becomes
@@ -50,9 +51,15 @@ main's, as the cartoon overhaul's did.
   focused tests for what changed; `npm test` whole, or every smoke journey,
   only before a hand-over or merge, or when a change reaches widely enough
   that nothing narrower would catch it -- and say which was run.
-- **The branch keeps a status page**, with screenshots as they come. Taking a
-  screenshot of the game uses the graphics card, so it is asked for like any
-  other capture unless the owner gives this branch other terms.
+- **The branch keeps a status page**, with screenshots as they come (captures
+  follow *One job at a time while the owner games; otherwise no limit*).
+- **Every way of running the game must play together** (the owner, 19
+  November 2026): the file from disk, the website's demo, a phone that loaded
+  the game from `run_fairway_server` over plain http -- with a launch monitor on
+  that PC's bridge -- in any mix in one room. Anyone with a launch monitor is
+  on a bridge. So nothing may lean on what only a secure page has
+  (`crypto.subtle`); the sealing is the game's own code (`@noble/ciphers`,
+  RESEARCH *Online play*).
 - **Accounts, deploys and anything that costs money are the owner's steps**:
   creating a Cloudflare or Oracle account, deploying a relay, buying a domain.
 
@@ -72,10 +79,9 @@ and the graphics card used without asking. **Both ended with the merge.**
   the painted trees' far twins on High and Ultra, the tee surround measured on
   the open scatter. Each is listed, with how to undo it, in
   docs/CARTOON_OVERHAUL.md, *Rules set aside*. Nothing else is set aside.
-- **The graphics card is asked for again** (*Nothing runs on the graphics
-  card unless the owner asks*). Once asked, run the job through
-  `tools/gpu-run.mjs --goal <the request's name>`, which reads the card first
-  and logs the run.
+- **The graphics card follows the permanent rule** (*One job at a time while
+  the owner games; otherwise no limit*). `tools/gpu-run.mjs --goal <name>`
+  still reads the card first and logs a run, for jobs worth a record.
 - **Frame rate matters on every tier and every device** (the owner, 9
   November 2026, withdrawing the 26 October acceptance of the High and Ultra
   gap: "Large courses in the builder can tank framerates even on this PC").
@@ -317,93 +323,59 @@ file is indistinguishable from a forgotten one. What each holds:
 ## Leave no processes running
 
 Run whatever verification needs inside a turn -- skipping verification to avoid
-starting a process is the wrong trade, **except on the graphics card** (next
-section). **Shut down everything you started before
+starting a process is the wrong trade (while the owner games, one at a time:
+next section). **Shut down everything you started before
 the turn ends**, and check the port is actually free (a wrapper like `npx` can
 leave its child running). Never end a turn with a server up and an offer to stop
 it later.
 
-## Nothing runs on the graphics card unless the owner asks
+## One job at a time while the owner games; otherwise no limit
 
-The owner plays games on this machine, and test runs on its GPU have crashed it
-twice while they did. **Nothing that draws on the graphics card runs unless the
-owner asks in that turn**: `npm run smoke`, Playwright captures, the game in the
-browser pane, `npm run profile`. Earlier permission does not carry over -- the
-exceptions are Blender (below) and a `/goal` that says so (next section).
-The cartoon-overhaul branch's no-ask terms ended when it was merged (*The
-cartoon look is main's*), and the frame-rate-all-tiers branch's when it was
-merged (9 November 2026; RULES_HISTORY.md). The surroundings-rework branch's ended when it
-was merged (14 November 2026; docs/SURROUNDINGS.md).
-The builder-ux branch's ended
-when it was merged (10 November 2026), and the fairway-tour branch's (one
-job at a time while the owner games, multithreaded when not) when it was
-merged (19 November 2026).
+**Permanent** (the owner, 19 November 2026: "for the gpu usage rules. Only
+single test or game running while I'm gaming. Else let it rip. Codify that in
+the rules. And make it permanent."). It replaces every earlier rule that made
+graphics work wait for the owner's word -- asking before smoke, captures, the
+game in the browser pane or a profile; the "GPU allowed" `/goal` limits; each
+branch's own no-ask terms -- and the 13 November "nothing at all while the
+owner plays". RULES_HISTORY.md, *One job while gaming, otherwise let it rip*.
+It holds in every turn, goal and branch, and needs no asking.
 
-- **If a game is on the card, the owner is using the machine**: do not start,
-  even with permission; say so and wait. **That means everything, not only
-  graphics**: no tests, builds or benches beside a game either (13 November
-  2026: two test files on the processor, the machine down;
-  RULES_HISTORY.md, *Nothing at all while the owner plays*). `node tools/gpu-gate.mjs` says what
-  the card is really doing: each program's share of it by Windows' own
-  counters, and one program taking 15% or more by itself is a game. **Not
+- **Read the card before starting work and between long jobs**: `node
+  tools/gpu-gate.mjs` shows each program's share of the card by Windows' own
+  counters; **one program taking 15% or more by itself is a game**. **Not
   `nvidia-smi`'s busy figure**: this card idles at a third of its clock, where
-  a launcher and a chat window read 18 to 50% (13 November 2026;
-  RULES_HISTORY.md, *The gate read an idle card as busy*).
-- **Blender may use the graphics card without asking**, in any turn or goal
-  (the owner, 23 October 2026: keeping it off the GPU would make it worthless).
-  It is asset work, not the game, so the crashes above do not describe it --
-  but keep their lessons: read the card first (`node tools/gpu-gate.mjs`) and do
-  not start while a game is running (one program taking 15% of the card or more,
-  or its real work above about 30% -- PLACED); one Blender process at a time, each
-  job minutes rather than a long batch; and close Blender before the turn ends.
-  Smoke, captures, the pane game and profiles are unchanged.
-- **When the game cannot be driven,** run the CPU checks (`npm test`, `npm run
-  build`, the fingerprint, the bench) and say so (next-but-one section).
+  a launcher and a chat window read 18 to 50% (RULES_HISTORY.md, *The gate
+  read an idle card as busy*).
+- **While a game runs: one job at a time, graphics or not.** A single test
+  file or test run (`npm test -- --test-concurrency=1`), one smoke run with its
+  journeys one after another, one capture, one profile group, one build, one
+  bench, one Blender job, or the game in the browser pane -- never two at once,
+  and no subagents running jobs beside it. A game that starts mid-run: let the
+  current job finish, then carry on one at a time.
+- **No game: let it rip.** Smoke, captures, the pane game, profiles, benches,
+  Blender, parallel test runs and parallel agents run without asking, as many
+  at once as the work needs.
+- **Still true either way:** leave nothing running when the turn ends
+  (browsers, pane tabs, servers, Blender; check the ports), and say which runs
+  were made. Run `node tools/gpu-watch.mjs` beside long graphics work so a lost
+  card leaves a record; **if the card drops** (17 hard reboots in 30 days up
+  to 14 November, each within seconds of a program starting or ending work on
+  it), stop graphics work, save what is open, and tell the owner.
 
-## A `/goal` that says "GPU allowed" is the owner asking
-
-A `/goal` keeps working through turns the owner did not start, so the rule
-above would stop it. **When the owner's goal text says "GPU allowed", short
-profile runs need no asking, for as long as that goal lasts** -- within these
-limits, which the goal cannot widen. Without those words, or outside `/goal`,
-ask as above.
-
-- **Only `node tools/profile.mjs --only <group>`**, about a minute each. Never a full
-  sweep, never the software `weak` group, never `npm run smoke`, Playwright
-  captures or the game in the browser pane -- those are still asked for.
-- **Before every run, read the card for about 30 seconds** (the gate does, by
-  Windows' counters of real work, not `nvidia-smi`'s figure): start only if its
-  work stays under 10%, no one program takes 15%, and the card is below 60 °C
-  (idle here is about 6% and 44 °C). If not, do not start; pause the goal and
-  say so -- a busy card is the owner playing.
-- **One run at a time, at least 5 minutes apart, at most 6 per goal** unless
-  the owner names another number when starting it (the 22 October frame-rate
-  goal: 40). Past the cap, stop and ask.
-- **Any trouble ends GPU use for the goal**: a hung run, a driver or WebGL
-  error, the temperature jumping. Write down what happened; do not retry.
-- **After every run, leave nothing on the card**: browsers closed, built-in
-  browser tabs closed, no profile process left (check).
-- **Log every run** in the goal's notes: time, group, the card's readings
-  before, the result.
-- The realistic-graphics goal (24 October 2026) has its own GPU limits, in its
-  goal text.
-- The cartoon-overhaul goals (25-27 October 2026) had their own GPU limits,
-  which ended with the branch's merge (*The cartoon look is main's*).
-
-## Ask before a graphics profile; never just run one
+## Graphics profiles
 
 `npm run profile` is minutes of a machine at full load, and meaningless while
-anything else uses the GPU. **Ask first, quoting the cost** (a "GPU allowed"
-`/goal` is the only exception, above): about 10 minutes
-for a full sweep, about a minute for one group (`--only tiers`, `views`,
-`biomes`, `ablation`, `pixels`, `water`, `sun`, `weak` or `built` -- a seeded
-course against its frozen copy on Low).
+anything else uses the GPU -- so not beside a game, even as the one job; run
+it when the card is free. About 10 minutes for a full sweep, about a minute
+for one group (`--only tiers`, `views`, `biomes`, `ablation`, `pixels`,
+`water`, `sun`, `weak` or `built` -- a seeded course against its frozen copy
+on Low).
 
-- **Ask whenever a change could move a frame:** `renderer.js`, `graphics.js`,
+- **Profile whenever a change could move a frame:** `renderer.js`, `graphics.js`,
   `vegetation.js`, `textures.js`, shaders, materials; a render pass, post
   effect, shadow or reflection; how much geometry exists or how it is batched;
   tier definitions.
-- **Do not ask** for settings layout, menu text, docs, tests, tooling, scoring
+- **Not needed** for settings layout, menu text, docs, tests, tooling, scoring
   or generation (generation has `bench.mjs`).
 - **Compare with `--since`** against `bench/profile-baseline.json`; re-save the
   baseline only for figures that should be defended from now on. Say which arm
@@ -416,10 +388,10 @@ course against its frozen copy on Low).
 
 `npm test` cannot see the interface; **`npm run smoke` plays the built file in a
 real browser** and fails on any uncaught error, `console.error` or network
-request. **Ask to run it after any change to `main.js`, `index.html`, `style.css`,
+request. **Run it after any change to `main.js`, `index.html`, `style.css`,
 `renderer.js`, `popups.js`, `layout.js`, or anything the frame loop calls**
-(about a minute for the journeys touched, 5 for all) -- it uses the graphics
-card, so the rule above decides when. It proves it works, not that it looks right -- look too. **When it
+(about a minute for the journeys touched, 5 for all; one job at a time while
+the owner games, above). It proves it works, not that it looks right -- look too. **When it
 fails, find out whether the game or the harness is wrong before changing
 anything**; the screenshot in `bench/shots/smoke/` usually tells. Every journey
 should be green, including `hud-reachable`, `phone-portrait` and
@@ -445,8 +417,8 @@ job easier and then i dont need to copy paste things back to you."
   network requests of its own, and smoke fails if it does.
 - **The readings stay on this machine** (`bench/probe/` is ignored). They can
   hold the player's name from the screen.
-- **It runs on the device, not this computer's graphics card**, so it needs no
-  asking. The rules for this computer still hold: no build beside a game.
+- **It runs on the device, not this computer's graphics card.** The server
+  itself counts as the one job while the owner games.
 - **Stop it before the turn ends.** It also stops by itself after
   `--minutes` (30 by default). Check that the port is free.
 

@@ -175,7 +175,7 @@ async function play(file, tag) {
  return out;
 }
 
-const gate = gpuGate({goal: flag('goal', null), cap: Number(flag('cap', 6))});
+const gate = gpuGate({goal: flag('goal', null), cap: Number(flag('cap', Infinity))});
 const started = Date.now();
 let failed = null, a, b;
 try { a = await play(A, 'A'); b = await play(B, 'B'); }

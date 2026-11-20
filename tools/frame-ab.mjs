@@ -29,8 +29,8 @@
 //   - reports draws and triangles too, which are exact and need no repeats;
 //   - with --shots, the share of pixels that changed between A and B beside the
 //     same share between two runs of one build, which is the noise floor.
-// Every run goes through tools/gpu-gate.mjs first (AGENTS.md, *A `/goal` that
-// says "GPU allowed"*) and is logged to bench/ab/gpu-runs.jsonl.
+// Every run waits at tools/gpu-gate.mjs for a quiet card (a game would skew
+// the timings) and is logged to bench/ab/gpu-runs.jsonl.
 import {chromium} from 'playwright';
 import {createServer} from 'node:http';
 import fs from 'node:fs';
@@ -269,7 +269,7 @@ for (let r = 0; r < ROUNDS; r++) order.push(...(r % 2 ? [...builds].reverse() : 
 const goal = flag('goal', null);
 // The gate's limits from the command line, as frame-variants takes them (the
 // polish goal: a remote-desktop session held the card at 30-40%).
-const gate = gpuGate({goal, cap: Number(flag('cap', 6)), utilMax: Number(flag('util', 10)), tempMax: Number(flag('temp', 60)), restMin: Number(flag('rest', 5))});
+const gate = gpuGate({goal, cap: Number(flag('cap', Infinity)), utilMax: Number(flag('util', 10)), tempMax: Number(flag('temp', 60)), restMin: Number(flag('rest', 0))});
 const results = {A: [], B: []};
 const started = Date.now();
 let failed = null;

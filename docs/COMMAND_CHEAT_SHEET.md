@@ -86,7 +86,7 @@ Environment settings it reads: `FAIRWAY_TCP_PORT`, `FAIRWAY_HTTP_PORT`,
 
 ## Pictures and clips of the game
 
-Saved under `bench/shots/media/` (not committed), or wherever `MEDIA_OUT` points. Heavy on the graphics card: ask the owner first, and run small batches. **docs/CAPTURE.md** has the whole story (quality, batches, traps).
+Saved under `bench/shots/media/` (not committed), or wherever `MEDIA_OUT` points. Heavy on the graphics card: one command at a time while the owner games (AGENTS.md). **docs/CAPTURE.md** has the whole story (quality, batches, traps).
 
 | Command | What it does |
 | --- | --- |

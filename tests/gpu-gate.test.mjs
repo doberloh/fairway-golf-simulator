@@ -48,6 +48,20 @@ test('a game refuses the run whatever limit the run asked for', () => {
  assert.equal(mayStart({load: busy, smi: 40, temp: 50, utilMax: 50, tempMax: 75}).ok, true);
 });
 
+// THE OWNER'S PERMANENT RULE (19 November 2026): one job at a time while
+// gaming, otherwise no limit. A job that only needs to run ('alone') starts
+// beside a game when nothing else of ours is on the card, and starts beside
+// other jobs when no game is running; heat and a busy total do not hold it.
+test('one job may run beside a game, never two; with no game, any number', () => {
+ const quiet = loadFrom(idle, names), playing = loadFrom([...idle, '1|pid_777_x_engtype_3D|40'], names);
+ assert.deepEqual(mayStart({load: playing, smi: 90, temp: 70, utilMax: 10, tempMax: 60, whileGaming: 'alone'}), {ok: true}, 'the one job, beside a game');
+ const two = mayStart({load: playing, smi: 90, temp: 70, utilMax: 10, tempMax: 60, others: 1, whileGaming: 'alone'});
+ assert.equal(two.ok, false); assert.match(two.why, /one at a time while the owner games/);
+ assert.deepEqual(mayStart({load: quiet, smi: 30, temp: 50, utilMax: 10, tempMax: 60, others: 3, whileGaming: 'alone'}), {ok: true}, 'no game: let it rip');
+ // The default stays a measurement's: a game still holds a frame timing back.
+ assert.equal(mayStart({load: playing, smi: 90, temp: 50, utilMax: 100, tempMax: 75}).ok, false);
+});
+
 test('heat, another job, and a card that cannot be read each hold a run back', () => {
  const load = loadFrom(idle, names);
  assert.match(mayStart({load, smi: 5, temp: 76, utilMax: 30, tempMax: 75}).why, /76 °C/);

@@ -48,10 +48,10 @@ private repository (AGENTS.md, *The website is not in this repository*).
 | `npm run dev` | The game at http://127.0.0.1:5173 |
 | `npm test` | Every regression suite (`tools/test.mjs`: each file its own process, longest first); must pass before committing. `npm run test:changed` / `test:fast` while working (TESTING.md) |
 | `npm run build` | `dist/index.html`, the single-file game, `dist/builder.html`, the course builder, plus the bridge bundle |
-| `npm run smoke` | Builds, then plays the built file in a real browser; after any interface change, **only when the owner asks** (it uses the graphics card) |
+| `npm run smoke` | Builds, then plays the built file in a real browser; after any interface change (graphics card: one job at a time while the owner games; AGENTS.md) |
 | `node tools/biome-fingerprint.mjs --check` | Did generated ground move? If yes, `GENERATOR_VERSION` must go up |
 | `node tools/bench.mjs --tier quick` | Measures the generator over many courses; `--since` compares with the baseline |
-| `npm run profile` | Frame cost. Minutes of full GPU load: ask the owner first (a "GPU allowed" `/goal` may run single `--only` groups; AGENTS.md) |
+| `npm run profile` | Frame cost. Minutes of full GPU load; only on a quiet card, never beside a game (AGENTS.md, *Graphics profiles*) |
 | `npm run release` | Builds everything, cuts and verifies the zips into `release/` |
 
 Every command is in COMMAND_CHEAT_SHEET.md.

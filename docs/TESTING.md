@@ -20,12 +20,13 @@ changes what it covers.
 | **Presses into each mode** | `node tools/ui-flows.mjs` (UI_POLISH.md) | **the graphics card**, about two minutes | from the main menu to a swing ready, per mode: clicks, and arrows plus Enter by the game's own focus rule, actually pressed; a path the keys cannot finish fails | whether the screens look right |
 | **Frame comparison** | `node tools/frame-ab.mjs --goal <name>` (two builds, alternately; use `--rounds 4` and its *best load* line: a load of either build runs card-bound or held up on the processor's side, SURROUNDINGS *A load runs in one of two modes*; `--cpuprofile` saves the main thread's time by function; `--season` for a season's costs; spots `menu`, `lobby`, `courses`, `studio` measure the menus, and every run reports the wait from start to the main menu, and `page ms`: the browser's whole main-thread time per frame, which the probe's CPU figure misses -- styles, layout, painting, timers), `node tools/frame-variants.mjs` (ideas live in one page); `node tools/frame-round.mjs --goal <name> --a <page> --b <page> --tier <t> --rounds 4` (a round being played, not a spot: every frame for `--seconds` from the first tee, A's group the person alone, B's `--b-cpu` computer golfers out first with every shot watched, the person swinging on the pad on their turns, with Next hole pressed; per-load and best-load lines, the mean of each 30 s, every frame over 50 ms laid against what happened in the second before it and the three longest named; `--cpuprofile` adds the functions inside those three, read on an unminified build, `vite build --minify false`; `--chat 0` turns the golfers' words off; keep loads to 60 s, since a person alone reaches the green, a cheap view, sooner than three golfers do); `--built <x.fairway>` on frame-ab, frame-variants, frame-look and frame-motion plays a built course from its file, frame-ab's `--scene` lists what the scene holds and `fly1`/`flyhigh` fly the camera; `node tools/builder-frames.mjs` times the Course Builder opening a course and its Game view, and measures their frames (`--editor-only`: the editor alone, about 40 s a run, for repeated comparisons -- the card's timer drops a whole page on some runs) | **the graphics card**, about a minute a run, through `tools/gpu-gate.mjs` | a change's frame time, draws and triangles against noise; pixels changed against two loads of one build; with `--device`, a phone or laptop's screen and processor and an ESTIMATE of its graphics; `tools/frame-look.mjs`: two hooked builds with the renderer's clock stopped, so wind, clouds and water stand still and every changed pixel is the code, plus the pin label, wind arrows, map and page errors; `tools/frame-motion.mjs`: the same round in both builds on a virtual clock (a driver, the TV cameras, the overview, free flight), each frame read inside the frame it shows, both rounds on one pin seed (a built course cuts new cups every round), the drawn camera recorded beside each picture | whether a person would notice; real devices; the menus and panels (the smoke test's job) |
 
-**The graphics card rule** (AGENTS.md): the smoke test and the profile run only
-when the owner asks in that turn, and never while `nvidia-smi` shows the card
-busy. The one exception: a `/goal` whose text says "GPU allowed" may run single
-profile groups (`--only`) without asking, within AGENTS.md's limits (*A `/goal`
-that says "GPU allowed"*); smoke runs are still asked for. The Node tests and
-generator checks can run any time.
+**The graphics card rule** (AGENTS.md, *One job at a time while the owner
+games; otherwise no limit*; permanent since 19 November 2026): nothing is asked
+for. While a game is on the card (`node tools/gpu-gate.mjs`: one program at
+15% or more), one job at a time -- one test run, one smoke run, one capture --
+graphics or not; otherwise smoke, captures, profiles and parallel test runs go
+ahead freely. Frame measurements (`frame-ab` and the other frame tools, the
+profile) still wait for a quiet card, because a game skews their timings.
 
 **GitHub** runs `npm test`, the ground check, and three smoke journeys (`boot`,
 `range`, `endless-round`) under a software renderer on every push
@@ -456,7 +457,8 @@ touches the real API.
 `tools/smoke.mjs` plays the built file in Chromium and fails on any uncaught
 error, `console.error` or network request; a failed journey leaves a
 screenshot in `bench/shots/smoke/`. `--only a,b` runs some; `--software` runs
-without the graphics card (much slower; it once crashed this machine -- ask).
+without the graphics card (much slower; it once crashed this machine, so never
+beside a game).
 `--endless-seed HARROW-4021` makes every fresh Endless run take that seed
 (the game's `lab.pinRun`; the journeys still press Start an endless run), so
 a run that failed can be played again on the same holes; the journey checks

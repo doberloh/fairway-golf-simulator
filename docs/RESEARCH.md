@@ -17201,8 +17201,8 @@ private rooms, and a free relay if one holds up, else a small server of their
 own on Oracle Cloud. This reverses *Challenge a friend: codes, shots flown
 again, and no servers* above on one point only: a relay is now allowed. That
 section's Netlify finding still stands (Netlify cannot hold a lasting
-connection). Sources in REFERENCES, *Online play*. **Nothing is chosen; the
-owner picks and makes the account.**
+connection). Sources in REFERENCES, *Online play*. **Decided by the owner the
+same day: Cloudflare** (below, *Decided*); the owner makes the account.
 
 **What the game needs from it is tiny.** The September study's figures: a shot
 is about 200 bytes, a whole round's state about 600 bytes, a four-ball's 18
@@ -17224,9 +17224,9 @@ upkeep, safety and how long the free terms last, not on size.
   page.** It exists on the https demo, on localhost and (in Chrome and
   Firefox) on a file opened from disk, but NOT on a phone that loaded the game
   from `run_fairway_server` over the home network (`http://192.168.x.x`), which
-  is not a secure context. So either such a phone joins through the website, or
-  the game carries a small encryption routine of its own. To decide in the
-  design; recalled from the Web Crypto rules, not tested here.
+  is not a secure context. The owner ruled out joining through the website, so
+  the game carries its own (below, *Sealing in the game's own code*). Recalled
+  from the Web Crypto rules, not tested here.
 
 **The options, as found:**
 
@@ -17245,13 +17245,31 @@ that reclamation applies only to unpaid accounts (so upgrading to a
 pay-as-you-go account, still at no charge inside the allowance, is said to
 stop it).
 
-**Leaning, not decided:** Cloudflare's Durable Objects. It is the only option
-with no machine to look after, its certificate comes with it, and a room
-object is exactly the shape a turn-based match needs. Oracle's free machine
-would be reclaimed for idling unless the account is upgraded, and adds a
-domain and certificate to keep. Peer to peer saves almost nothing at this
-traffic and adds two services nobody here controls. Whichever is picked, the
-game talks to it through one small module, so moving from one to another is
-a change of address and a few lines, not a rewrite; the relay itself stays
-small enough (it only passes sealed messages between the sockets of one room)
-to run on Node on Oracle as well.
+**Decided (the owner, 19 November 2026): Cloudflare's Durable Objects.** It
+is the only option with no machine to look after, its certificate comes with
+it, and a room object is exactly the shape a turn-based match needs. Oracle's
+free machine would be reclaimed for idling unless the account is upgraded,
+and adds a domain and certificate to keep. Peer to peer saves almost nothing
+at this traffic and adds two services nobody here controls. The game talks to
+the relay through one small module, so moving to another is a change of
+address and a few lines, not a rewrite; the relay itself stays small enough
+(it only passes sealed messages between the sockets of one room) to run on
+Node on Oracle as well.
+
+**Sealing in the game's own code, because every copy must play together.**
+The owner, the same day: a phone that loaded the game from
+`run_fairway_server` over plain http, with a launch monitor on that PC's
+bridge, must join from the phone, not through the website -- any mix of
+copies in one room. Such a page has no `crypto.subtle`, so the game carries
+its own: `@noble/ciphers` (XChaCha20-Poly1305; MIT; Cure53 audit of v1.0.0,
+September 2024, per its README, fetched; about 3 KB gzipped for ChaCha, the
+README's figure) and `@noble/hashes` (SHA-256 and HKDF; MIT), version 2.4.0 of
+each on npm. Rejected: TweetNaCl (Unlicense, audited 2017, but unchanged since
+2023), and two code paths (the browser's own where it exists) -- one path is
+one thing to test, in Node. Random numbers come from `crypto.getRandomValues`,
+which a plain-http page does have (recalled from the Web Crypto rules; to be
+seen on the owner's phone). **The room code is the secret**: 16 characters
+from a 32-letter alphabet without look-alikes, 80 bits (PLACED: far past any
+online guessing, with the relay's rate limits and the host letting each player
+in); the relay's room number and the sealing key are both made from it, one
+way, so the relay never sees it.

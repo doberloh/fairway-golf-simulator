@@ -677,3 +677,26 @@ The owner then asked for this to be the way: "Im totally fine with test
 builds passing network traffic back to the server in the form of debug
 info! That makes my job easier and then i dont need to copy paste things
 back to you." The scratch script became `tools/phone-probe.mjs`.
+
+## One job while gaming, otherwise let it rip (19 November 2026)
+
+From 5 October the graphics card was asked for every time, after test runs
+crashed the machine while the owner played; branches and goals then carried
+their own no-ask terms one at a time (the cartoon overhaul, frame rate on
+every tier, the surroundings rework, the builder, the Fairway Tour), each
+ending at its merge, and on 13 November nothing at all could run beside a
+game. Each new journey started by asking again. Starting the online-play
+branch, the owner settled it for good: "for the gpu usage rules. Only single
+test or game running while I'm gaming. Else let it rip. Codify that in the
+rules. And make it permanent."
+
+So AGENTS.md's *Nothing runs on the graphics card unless the owner asks*, *A
+`/goal` that says "GPU allowed"* and *Ask before a graphics profile* became
+*One job at a time while the owner games; otherwise no limit* and *Graphics
+profiles*. The gate (`tools/gpu-gate.mjs`) no longer caps or spaces runs by
+default, and `tools/gpu-run.mjs` starts a job beside a game when it is the
+only one. What stayed: the gate's reading of a game (one program at 15%),
+frame measurements waiting for a quiet card (a game skews them, which is a
+fact about measuring, not permission), leaving nothing running at the end of
+a turn, and the card watcher beside long graphics work. The rule went in on
+the online-play branch, so main carries it from that branch's merge.

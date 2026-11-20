@@ -50,9 +50,8 @@ had turned networked multiplayer down). Live matches, no accounts, each
 player's profile kept on their own machine and shared on joining, private
 rooms. Its terms are in AGENTS.md, *This branch: online play with friends*;
 its plan, log and status page in the worktree's `docs/studies/online-play/`
-(local). Open
-before any code: **where the relay lives** (RESEARCH, *Online play: where the
-relay can live*) -- the owner picks, and makes the account.
+(local). Decided 19 November: the relay is Cloudflare's (RESEARCH, *Online
+play: where the relay can live*); the owner makes the account and deploys it.
 
 The Fairway Tour goal merged and was released as 0.9.19 (19 November 2026;
 DONE.md, *The Fairway Tour and computer golfers*); what it left is under

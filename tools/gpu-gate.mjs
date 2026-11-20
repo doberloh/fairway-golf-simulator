@@ -1,19 +1,22 @@
-// The graphics card's gate for unattended runs (AGENTS.md, *A `/goal` that
-// says "GPU allowed"*). Every GPU run a goal starts goes through `gpuGate`
+// The graphics card's gate (AGENTS.md, *One job at a time while the owner
+// games; otherwise no limit*). A GPU run a tool starts goes through `gpuGate`
 // first, and `logRun` afterwards.
 //
-// WHY: this machine has crashed four times around GPU work (RULES_HISTORY.md,
-// *The graphics card*), twice while the owner was gaming. A busy card is how a
-// script can tell the owner is playing, so a run starts only on an idle, cool
-// card; runs are spaced and capped because the 18 October crash came from
-// volume, not from any single run.
+// WHY: a busy card is how a script can tell the owner is playing. Since 19
+// November 2026 the owner's rule is permanent: one job at a time while a game
+// runs, otherwise no limit and no asking. So the gate no longer caps or spaces
+// runs by default (it did, from the October crashes; RULES_HISTORY.md).
 //
-// The limits are AGENTS.md's, placed rather than measured: under 10% of real
-// work for the whole 30-second look (`look` says what "work" is and why it is
-// not nvidia-smi's figure), no one program taking 15% (a game), below 60 °C, 5 minutes since the last run ended,
-// and a cap per goal (6 unless the owner named another; the 22 October
-// frame-rate goal: 40). Busy: wait a minute and look again (the owner's
-// instruction for that goal), for at most an hour, then give up.
+// Two kinds of caller:
+// - a job that only needs to run (`whileGaming: 'alone'`, tools/gpu-run.mjs):
+//   a game on the card lets it start when no other graphics job is running;
+// - a job that MEASURES frames (frame-ab and the other frame tools; the
+//   default, `'refuse'`): a game would skew every timing, so it waits for the
+//   card to be quiet -- under `utilMax` of real work for the whole look
+//   (`look` says what "work" is and why it is not nvidia-smi's figure), no one
+//   program taking 15% (a game), below `tempMax`. Busy: wait a minute and look
+//   again, for at most an hour, then give up.
+// `cap` and `restMin` remain for a caller that wants them; both default off.
 import {execSync} from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -74,7 +77,13 @@ export function loadFrom(lines, names = {}) {
  return {util: Math.round(util * 10) / 10, top: {...top, util: Math.round(top.util * 10) / 10}, samples: samples.size};
 }
 // May a run start? `load`: loadFrom's answer, or null where only nvidia-smi could be read (`smi`, its figure).
-export function mayStart({load, smi, temp, utilMax, tempMax, others = 0}) {
+// `whileGaming`: 'refuse' (a measurement: wait for a quiet card) or 'alone' (the
+// owner's rule: one job may run beside a game, never two).
+export function mayStart({load, smi, temp, utilMax, tempMax, others = 0, whileGaming = 'refuse'}) {
+ if (whileGaming === 'alone') {
+  const gaming = load ? load.top.util >= GAME : smi >= utilMax;
+  return gaming && others ? {ok: false, why: 'a game is on the card and another graphics job is running: one at a time while the owner games'} : {ok: true};
+ }
  if (others) return {ok: false, why: 'another graphics job is on the card'};
  if (temp >= tempMax) return {ok: false, why: `the card is at ${temp} °C (limit ${tempMax})`};
  if (!load) return smi < utilMax ? {ok: true} : {ok: false, why: `nvidia-smi reads ${smi}% busy (limit ${utilMax}; the real counters could not be read)`};
@@ -132,10 +141,10 @@ export function runs() {
  catch { return []; }
 }
 
-export function gpuGate({goal, cap = 6, restMin = 5, utilMax = 10, tempMax = 60, giveUpMin = 60, lookSeconds = 30} = {}) {
+export function gpuGate({goal, cap = Infinity, restMin = 0, utilMax = 10, tempMax = 60, giveUpMin = 60, lookSeconds = 30, whileGaming = 'refuse'} = {}) {
  if (!goal) throw Error('gpuGate needs the goal this run belongs to (--goal).');
  const mine = runs().filter(r => r.goal === goal);
- if (mine.length >= cap) throw Error(`This goal has used its ${cap} GPU runs; stop and ask the owner.`);
+ if (mine.length >= cap) throw Error(`This goal has used the ${cap} GPU runs its caller allowed.`);
  const last = mine.at(-1)?.ended;
  if (last) {
   const wait = restMin * 60000 - (Date.now() - Date.parse(last));
@@ -147,7 +156,7 @@ export function gpuGate({goal, cap = 6, restMin = 5, utilMax = 10, tempMax = 60,
  const started = Date.now();
  for (;;) {
   const r = look(lookSeconds), others = foreignJobs();
-  const verdict = mayStart({load: r.load, smi: r.smi, temp: r.temp, utilMax, tempMax, others: others.length});
+  const verdict = mayStart({load: r.load, smi: r.smi, temp: r.temp, utilMax, tempMax, others: others.length, whileGaming});
   const reading = r.load ? `card doing ${r.load.util}% (busiest: ${r.load.top.name ?? '?'} ${r.load.top.util}%; nvidia-smi ${r.smi}%)` : `card ${r.smi}% busy by nvidia-smi`;
   if (verdict.ok) {
    console.log(`gate: ${reading}, ${r.temp} °C over ${lookSeconds} s -- starting (run ${mine.length + 1} of ${cap})`);
@@ -171,5 +180,5 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.join(ROOT, 'tools'
  const r = look(Number(process.argv[2]) || 10);
  console.log(r.load ? `the card is doing ${r.load.util}% (busiest: ${r.load.top.name ?? '?'} ${r.load.top.util}%); nvidia-smi calls it ${r.smi}% busy; ${r.temp} °C` : `nvidia-smi: ${r.smi}% busy, ${r.temp} °C (the real counters could not be read)`);
  const said = mayStart({load: r.load, smi: r.smi, temp: r.temp, utilMax: 10, tempMax: 60, others: foreignJobs().length});
- console.log(said.ok ? 'a run may start under the strictest limits (10%, 60 °C)' : 'a run would wait: ' + said.why);
+ console.log(said.ok ? 'quiet: no game, so no limit (and a measurement may start under the strictest limits, 10%, 60 °C)' : 'a measurement would wait: ' + said.why + ' -- one job at a time while the owner games');
 }

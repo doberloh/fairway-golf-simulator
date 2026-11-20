@@ -964,7 +964,9 @@ tables, the pages that could not be fetched, and the sources read and not used.
 
 ## Online play (19 November 2026, the online-play branch)
 
-Read for RESEARCH.md, *Online play: where the relay can live*. Nothing chosen yet.
+Read for RESEARCH.md, *Online play: where the relay can live*. The owner chose Cloudflare (19 November 2026).
+
+- noble-ciphers -- https://github.com/paulmillr/noble-ciphers -- README fetched. Taken: XChaCha20-Poly1305 among its AEADs; Cure53's audit of v1.0.0 (September 2024); "3KB (gzipped) ChaCha"; randomness from `crypto.getRandomValues`; no need for `crypto.subtle`. npm (`npm view`): `@noble/ciphers` and `@noble/hashes` 2.4.0, MIT; `tweetnacl` 1.0.3, Unlicense, last changed April 2023 (rejected).
 
 - Cloudflare, Durable Objects pricing -- https://developers.cloudflare.com/durable-objects/platform/pricing/ -- fetched. Taken: the free plan's 100,000 requests and 13,000 GB-s a day, reset at 00:00 UTC, failing past them; SQLite-backed objects only; incoming WebSocket messages billed 20 to 1, outgoing and pings free.
 - Oracle, Always Free Resources -- https://docs.oracle.com/en-us/iaas/Content/FreeTier/resourceref.htm -- fetched. Taken: A1 1,500 OCPU-hours and 9,000 GB-hours a month (2 OCPUs, 12 GB), two E2.1.Micro VMs, 10 TB a month out, and the idle-reclaim rule (7 days; CPU p95, network and A1 memory each under 20%).
