@@ -17273,3 +17273,45 @@ from a 32-letter alphabet without look-alikes, 80 bits (PLACED: far past any
 online guessing, with the relay's rate limits and the host letting each player
 in); the relay's room number and the sealing key are both made from it, one
 way, so the relay never sees it.
+
+**As built and measured (19 November 2026; docs/ONLINE_PLAY.md).**
+
+- **Messages, sealed** (measured on a four-golfer round 17 holes in):
+  the round after a shot, 2,064 characters (1,478 before sealing: the
+  nonce, the tag and base64 add about 40%); a ball struck, 484 (295). Per
+  shot the host sends one of each, so a four-ball's 18 holes of about 360
+  shots is roughly 0.9 MB sent by the host and 2.7 MB delivered to three
+  guests -- and, on Cloudflare's billing (incoming messages at 20 to 1),
+  about 40 requests, against 100,000 a day.
+- **The relay's limits, PLACED:** 8 sockets a room, 48 KB a message, a
+  bucket of 60 messages refilled at 10 a second per socket. **The game paces
+  itself under them** (link.js: 50 at once, 8 a second). Found by the first
+  whole-round test: shots a millisecond apart ran the host past the relay's
+  burst, the relay dropped the excess as it should, and the round hung on a
+  lost state. A person's round never comes near the limit; the pacing is so
+  that nothing is ever lost to it.
+- **A copied message was the first hole found.** Each message carries a
+  count, and a count not above the last from that socket is dropped; but a
+  copy sent from another socket started a new count and passed. The sender's
+  own tag is now sealed inside every message and must match the socket the
+  relay says it came from.
+- **A guest's own shot has 10 seconds** for the host's answer (PLACED); the
+  host answers in a few milliseconds when connected.
+- **A watched ball flies three times as fast** while something from the host
+  waits behind it (PLACED: the host skipping a flight left a guest 15 seconds
+  behind in the first browser run).
+- **The build grows by about 60 KB** (60,644,747 bytes on main, 60,704,331
+  with online play, before the last fixes): noble's ChaCha and SHA-256, the
+  online modules and the sheet.
+- **The Worker was run, not deployed:** under `wrangler dev` 4.165.0
+  (Cloudflare's local runtime, workerd), it passed tools/relay-check.mjs and
+  whole rounds of every format (tests/online-session.test.mjs with
+  `FAIRWAY_TEST_RELAY`). The hibernation calls it uses (`acceptWebSocket`,
+  `serializeAttachment`, `setWebSocketAutoResponse`) were written from
+  memory of Cloudflare's documentation and seen working there; not fetched.
+- **The code is the whole lock** (left for later, with the owner told):
+  anyone holding it can read a room and knock, and could pose as the host to
+  the guests while the real host is disconnected. A key per player (public
+  keys exchanged, the host's pinned) would close both; it was weighed
+  against @noble/curves' size (tens of KB) and the friends-only rooms the
+  owner asked for, and not built.

@@ -55,7 +55,7 @@ export default defineConfig({
   // `version` is package.json's: a friend's challenge (rival.js) is only played
   // on the version it was made on, so a release must bump it.
   // `__FAIRWAY_RELAY__`: the online relay a build offers by default
-  // (relay/cloudflare/README.md), from FAIRWAY_RELAY at build time, else none:
+  // (docs/ONLINE_PLAY.md), from FAIRWAY_RELAY at build time, else none:
   // the address names the owner's Cloudflare account, so it is never in the
   // repository, and whether a release carries it is the owner's call.
   define: {__FAIRWAY_BUILD__: JSON.stringify({commit, built: new Date().toISOString(), version: pkg.version}), __FAIRWAY_RELAY__: JSON.stringify(process.env.FAIRWAY_RELAY || '')},

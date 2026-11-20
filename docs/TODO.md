@@ -52,6 +52,23 @@ rooms. Its terms are in AGENTS.md, *This branch: online play with friends*;
 its plan, log and status page in the worktree's `docs/studies/online-play/`
 (local). Decided 19 November: the relay is Cloudflare's (RESEARCH, *Online
 play: where the relay can live*); the owner makes the account and deploys it.
+Built and tested on the branch the same day (docs/ONLINE_PLAY.md); still owed
+before it can be called done:
+
+- [ ] **Deploy the relay** -- the owner's step (ONLINE_PLAY, *The relay on
+  Cloudflare*), then `node tools/relay-check.mjs wss://<address>` against it.
+  Run so far only under `wrangler dev`.
+- [ ] **The owner plays a round with a friend in another house**, over the
+  deployed relay: host and guest each way round, a phone on the PC's
+  `run_fairway_server` with the launch monitor armed, a ball in the water, a
+  dropped connection, a scramble. Nothing online has been played by a person.
+- [ ] **Whether a release carries the relay's address** built in
+  (`FAIRWAY_RELAY`), or players type it -- the owner's call; the address names
+  their Cloudflare account.
+- [ ] **Three or four players in the browser.** Node plays every format with
+  three; the browser journey plays two.
+- [ ] **Safari and Firefox** as host and as guest (the smoke journeys are
+  Chromium).
 
 The Fairway Tour goal merged and was released as 0.9.19 (19 November 2026;
 DONE.md, *The Fairway Tour and computer golfers*); what it left is under
@@ -59,6 +76,14 @@ DONE.md, *The Fairway Tour and computer golfers*); what it left is under
 
 ## Known wrong
 
+- [ ] **A computer golfer can lose its record when Play keeps a group across
+  steps** (seen in the code on 19 November 2026, online-play, not seen in
+  play). Play's group, kept between steps (`lobbyKeep`), is rebuilt from the
+  draft without each computer golfer's `cpu` record (main.js, the `round`
+  sheet's `start`), so its row may come back as an ordinary golfer matched by
+  name. Check by adding a computer golfer, changing the game type on step
+  one, and reading the Golfers step. (Online play's own repaint,
+  `seatGuestsNow`, carries the record.)
 
 - [ ] **Ultra: about two more stalls a minute with three computer golfers**
   (fairway-tour, 18 November 2026; RESEARCH, *After the minimap fix*). The

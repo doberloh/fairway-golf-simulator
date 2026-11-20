@@ -136,7 +136,7 @@ The bridge tests bind temporary local ports; restricted environments may block t
 
 ## Phones, tablets and shared-network access
 
-This route serves the built app to another browser. Each browser runs its **own** course/round; this is not synchronized multiplayer or a remote control for the desktop. Up to four golfers share one app session through the game’s player settings.
+This route serves the built app to another browser. Each browser runs its **own** course/round; it is not a remote control for the desktop. Up to four golfers share one app session through the game’s player settings. To play one round **together** across machines -- in this house or another -- use **Play online** (docs/ONLINE_PLAY.md): a phone that loaded the game this way joins a room like any other copy, with its launch monitor on this computer's bridge.
 
 ### On an iPhone or iPad: host it, then add it to the home screen
 
@@ -185,7 +185,8 @@ phone without one, Fairway is touch play: an aim pad for fine adjustment, a map 
 and pinches to zoom, and controls sized for a thumb.
 
 The portable file is unchanged by any of this. Opened from disk, it links no
-manifest and makes no network requests.
+manifest and makes no network requests (Play online's relay connection
+aside, opened only in a room: docs/ONLINE_PLAY.md).
 
 ### Serve from a desktop on the same network
 

@@ -414,7 +414,9 @@ job easier and then i dont need to copy paste things back to you."
   printed. Give the owner the address it prints.
 - **Only the test copy reports.** The script is added as the page is served;
   never put it in `src/`, `dist/` or a release. The real game makes no
-  network requests of its own, and smoke fails if it does.
+  network requests of its own, and smoke fails if it does -- its one
+  connection is Play online's relay, opened only in a room
+  (docs/ONLINE_PLAY.md).
 - **The readings stay on this machine** (`bench/probe/` is ignored). They can
   hold the player's name from the screen.
 - **It runs on the device, not this computer's graphics card.** The server

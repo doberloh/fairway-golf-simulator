@@ -1,4 +1,4 @@
-# The Fairway relay on Cloudflare Workers (relay/cloudflare/README.md).
+# The Fairway relay on Cloudflare Workers (docs/ONLINE_PLAY.md).
 # No account id or route is kept here: `npx wrangler deploy` asks you to log
 # in and deploys to your own workers.dev address.
 name = "fairway-relay"

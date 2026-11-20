@@ -93,7 +93,10 @@ Anything a player hits can be reported back: **Help & controls → Report a
 problem** copies a block carrying the build, the device, the GPU, the frame
 rate, the last few errors and the course code. It is assembled when the button
 is pressed and copied to the clipboard, and it is never transmitted — the
-built file makes no network requests at all, verified.
+built file makes no network requests, verified. The one connection it can
+make is **Play online**, and only once a player starts or joins a room: a
+WebSocket to the relay that passes the room's sealed messages between the
+players' machines (docs/ONLINE_PLAY.md).
 
 Verification is `npm test` — a few hundred regression checks on the Node test
 runner covering physics plausibility and convergence, curvature, wind,
@@ -114,6 +117,7 @@ checked by hand.
 | `tests/` | Regression suites for the Node test runner. `npm test` |
 | `tools/` | Measurement, asset ingest, profiling, release packaging, capturing pictures and clips of the game (`tools/capture/`), and the synthesised sounds being designed for it (`tools/sound-lab/`) |
 | `bridge/` | The local TCP/WebSocket bridge a launch monitor talks to. `npm run build` bundles it into `dist/fairway-bridge.mjs`; `npm run server` compiles that into `run_fairway_server` for each platform (into `release/`, not committed) |
+| `relay/` | Play online's relay: its rules (`core.js`), the Cloudflare Worker the owner deploys (`cloudflare/`), and the same rules on Node (`node-relay.mjs`) for the tests and anyone's own machine. [docs/ONLINE_PLAY.md](docs/ONLINE_PLAY.md) |
 | `bench/` | Saved baselines the measurement harnesses compare against |
 | `vendor/` | The models built in Blender by `tools/blender/cartoon_*.py` (and the Redwood Coast's trees from Meshy, `blender-meshy_redwood/`), one `blender-cartoon_<pack>/` folder per pack, that the tree, plant, rock and house geometry is ingested from; what ships from them is already in `src/asset-meshes.js` |
 | `preview/` | Developer pages: the asset contact sheet and model gallery |

@@ -2226,3 +2226,25 @@ builder's 10 smoke journeys 10 of 10 (its Worthington test round 91 against par 
 and a Mac mini through the test copy before the last changes; the rest is
 listed in TODO, *Play the current build by hand*.
 
+## Branch note, 19 November 2026: online-play (not released)
+
+**The offline file gains one connection, and only when asked.** Play online
+(docs/ONLINE_PLAY.md) opens a WebSocket to a relay once a player starts or
+joins a room, and at no other time: the smoke journey `online` checks that no
+socket opens at the menu, that the guest's only connections are the relay
+and its own bridge, and that the relay is given the room's number and never
+its code. Every other journey still fails on any network request (Playwright
+counts no WebSocket as a request, and none of them opens one). The file still
+opens from disk and plays offline as before; a room needs the relay.
+
+**Two dependencies ship in the page:** @noble/ciphers and @noble/hashes 2.4.0
+(MIT; notices in THIRD_PARTY_NOTICES.txt and ATTRIBUTION.md), the game's own
+sealing so a page without `crypto.subtle` (a phone on plain http from
+run_fairway_server) seals the same as any. **The page grows about 60 KB**
+(60,704,331 bytes against main's 60,644,747, measured before the last fixes).
+The relay (`relay/`) is not in the page or the zips; it runs on the owner's
+Cloudflare account, and its address is not in the repository: a build
+carries one only if FAIRWAY_RELAY is set when it is made (the owner's call
+for a release). Generator, schema and built versions are unchanged: no course
+or save moves. Not released; not played by a person.
+

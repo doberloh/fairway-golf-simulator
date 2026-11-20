@@ -8,7 +8,7 @@
 // (serializeAttachment), because a woken object has lost its memory. "ping"
 // is answered by Cloudflare without waking the object.
 //
-// Deploying is the owner's step (relay/cloudflare/README.md).
+// Deploying is the owner's step (docs/ONLINE_PLAY.md, *The relay on Cloudflare*).
 import {join, leave, message, newTag, roomFromPath, LIMITS} from '../core.js';
 
 const random = n => crypto.getRandomValues(new Uint8Array(n));

@@ -421,6 +421,22 @@ The ones that count up show how far along you are. An achievement shows in the X
 
 **Both of you need the same version of Fairway.** Shots are flown again on your machine, and a different version can fly them somewhere else, so a code from another version is refused with both versions named. Every new release ends the challenges made on the one before.
 
+## Play online
+
+A round live with friends in other houses: everyone on their own screen, taking turns, watching each other's shots fly. **Play online** on the main menu.
+
+**You.** *Play as* is which of your golfers you bring (their name, hand, tee and handicap go with you; their bag, history and stats stay on your device and count your own shots there); *Plays with* is the swing pad or your launch monitor (through the bridge, as offline). *Relay address* is where the room's messages pass: everyone in a room uses the same one (docs/ONLINE_PLAY.md says how one is set up).
+
+**Host.** *Start a room* shows a code in four groups of four (`K7Q2-M9XD-4RTP-8WNB`) and *Copy*. Read it out or text it. A friend who knocks appears by name with *Let in* and *Turn away* -- on the Online screen, or in a bar at the top of whatever you have open. Then *Choose the course and start*: Play opens with each guest already in a seat (marked ONLINE, with their tee and team; take one out with the bin). Pick the course of the week, a saved course or Surprise me, the format and the rules as usual, and tee off: the round starts on every screen.
+
+**Join.** Type the code under *Join a friend* (case, dashes and spaces do not matter, and a mistyped code is refused at once) and *Join the room*. You see *Knocking* until the host lets you in, then the room until they tee off; the course builds on your screen.
+
+**Playing.** Whose turn it is follows the order of play. On your turn you swing as always, or hit into your launch monitor; on anyone else's you watch the same ball fly and land in the same place. Another golfer's aim line is not shown. Relief from water or out of bounds is chosen by the golfer whose ball it is, and a scramble's ball by the team's first golfer. The host moves everyone to the next tee. An **ONLINE** chip under the wind shows the room's code, or *RECONNECTING…*, or who has lost their connection; a turn waits for someone who has, and they come back to their seat when their connection does.
+
+**Different online** (decided for a round on several screens): no mulligans, free drops or group changes; Endless and a friend's challenge cannot be played online; a course from the Course Builder only if everyone already has its file. The round is not saved as you go; leaving offers to keep it, and a kept round plays on alone. A guest who leaves hands their ball to the host; a host who leaves mid-round ends it for everyone; after the last hole the room stays open for another round.
+
+**Private.** The code is the room's key: the relay only ever sees a number made from it and messages sealed with it, which it cannot read, and it keeps nothing. Nobody plays without the host's yes. Anyone you give the code to could read the room, so keep it among the group, and start a new room if it gets out. **Everyone needs the same version of Fairway** -- the door says so to anyone on another.
+
 ## Your profile
 
 **The first time Fairway opens in a browser, it asks your name.** That makes
@@ -1064,9 +1080,11 @@ the frame rate, and the last few errors if anything went wrong. When you are
 playing a saved-shaped course it also carries the course code, which is enough
 to rebuild the exact landscape you were looking at.
 
-**Nothing is sent anywhere.** Fairway makes no network requests at all, and
-this is no exception -- the text goes to your clipboard and stops there. What
-happens to it afterwards is your decision.
+**Nothing is sent anywhere.** Fairway makes no network requests, and this is
+no exception -- the text goes to your clipboard and stops there. What
+happens to it afterwards is your decision. (The one connection the game can
+make is Play online, and only while you are in a room you started or joined:
+*Play online*, below.)
 
 The frame rate is reported as a median and a worst frame rather than an
 average, because an average hides the thing worth reporting: a run that mostly

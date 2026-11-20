@@ -58,6 +58,11 @@ the change that made it stale, not a follow-up.
   share. The owner's decisions, the file format, the stages and what each was
   measured against, the test course. Read it first when working on the
   builder.
+- **[ONLINE_PLAY.md](ONLINE_PLAY.md)** — Play online (branch `online-play`,
+  begun 19 November 2026): rooms by code, the relay, the host as referee,
+  privacy and its one known limit, deploying the relay on Cloudflare (the
+  owner's step), what an online round does differently, the files and
+  tests. Read it first when working on anything online.
 - **[SURROUNDINGS.md](SURROUNDINGS.md)** — the surroundings rework, merged
   14 November 2026 and released in 0.9.15: what the owner asked for, the plan, the
   earlier decisions it reversed, and what still governs the land past the
@@ -181,8 +186,10 @@ The list below is what exists locally.
   one change that made no difference. Screenshots in
   [reports/tee-screenshots/](reports/tee-screenshots/).
 - **[reports/MULTIPLAYER_FEASIBILITY.md](reports/MULTIPLAYER_FEASIBILITY.md)**
-  — what networked play would cost. A study, not a plan; nothing in the code
-  depends on it.
+  — what networked play would cost (September 2026). A study, not a plan;
+  nothing in the code depends on it. Online play was built on 19 November
+  2026 against its shape C over the internet (one host, others join), with a
+  relay rather than its LAN-first advice: ONLINE_PLAY.md.
 - **[studies/](studies/)** — comparison pages built to settle one visual
   question, kept because RESEARCH.md cites them as the evidence.
 
