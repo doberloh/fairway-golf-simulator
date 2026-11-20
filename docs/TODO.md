@@ -73,6 +73,11 @@ before it can be called done:
   hidden host landing a guest's flight at once (its computer golfers wait
   until shown); *Play on without them*; the room open again for a second
   round.
+- [ ] **A guest can miss the hole's scorecard** (seen in the full smoke run,
+  19 November 2026): the card waits for that screen's own XP pop-ups, and
+  the host's 8-second countdown can move the group on first, which closes it
+  on the guest. Decide whether the host's countdown should wait for every
+  screen's card, or a guest's card show at once with the XP after.
 - [ ] **The source archive with `relay/`** (tools/package_release.py now
   packs it; the packager has not been run since).
 - [ ] **Safari and Firefox** as host and as guest (the smoke journeys are

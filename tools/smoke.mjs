@@ -3894,7 +3894,10 @@ const JOURNEYS = [
      await g.until(async () => (await turn(gpage)).holeComplete, 'the hole to be over on the guest\'s screen', 15 * SLOW);
      // Each card waits for that screen's own XP to be shown first.
      await t.until(() => t.drawerOpen(), 'the scorecard on the host\'s screen', 30 * SLOW);
-     try { await g.until(() => g.drawerOpen(), 'the scorecard on the guest\'s screen', 30 * SLOW); }
+     // ...and the host's 8-second countdown can move everyone on before a
+     // guest's own XP has finished showing (a slow machine, a level-up): the
+     // guest on the next tee with the same card is the round going on.
+     try { await g.until(async () => (await g.drawerOpen()) || (await room(gpage)).hole === 1, 'the scorecard (or the next tee) on the guest\'s screen', 30 * SLOW); }
      finally { await gpage.screenshot({path: path.join(SHOTS, 'online-guest-card.png')}); }
      const [a, b] = [await room(t.page), await room(gpage)];
      if (JSON.stringify(a.cards) !== JSON.stringify(b.cards)) throw new Error(`host ${JSON.stringify(a.cards)}, guest ${JSON.stringify(b.cards)}`);
