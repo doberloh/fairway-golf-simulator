@@ -17256,6 +17256,29 @@ address and a few lines, not a rewrite; the relay itself stays small enough
 (it only passes sealed messages between the sockets of one room) to run on
 Node on Oracle as well.
 
+**The relay on the owner's own domain (asked 20 November 2026, not done).**
+The relay was deployed to a `workers.dev` address the same day; the owner
+then asked for it on the domain bought through Netlify. Searched, not built:
+a Worker *custom domain* or *route* needs the domain's DNS zone on Cloudflare
+-- Cloudflare's custom-domains page says one cannot be made on a zone you do
+not own or on a hostname with an existing CNAME
+(https://developers.cloudflare.com/workers/configuration/routing/custom-domains/),
+so a CNAME from Netlify's DNS to `workers.dev` is not a supported route (a
+third-party guide claims it works; not tried). Delegating only a subdomain to
+Cloudflare, and the partial (CNAME) setup, are paid plans (community reports,
+not checked against Cloudflare's price list). And a domain bought through
+Netlify cannot have its nameservers changed by the owner: Netlify resells
+Name.com registrations, and its staff answer is a support ticket that first
+moves the registration to Name.com, free
+(https://answers.netlify.com/t/move-only-dns-management-to-cloudflare-keep-netlify-as-registrar/154154,
+July 2025); a moved registrar is barred for 60 days after registration by
+ICANN. So the path is: a Netlify support ticket -> the domain at Name.com ->
+its nameservers set to Cloudflare -> the website's records recreated in
+Cloudflare (Netlify's external-DNS records for the apex and `www`) -> a custom
+domain such as `relay.<domain>` on the Worker -> the game's Relay box changed.
+The website is down for anyone whose lookup lands between the last two DNS
+steps if a record is missed. Each step is the owner's (accounts and DNS).
+
 **Sealing in the game's own code, because every copy must play together.**
 The owner, the same day: a phone that loaded the game from
 `run_fairway_server` over plain http, with a launch monitor on that PC's

@@ -83,6 +83,13 @@ repository.** A build can carry it as the default (`FAIRWAY_RELAY=wss://...
 npm run build`, read by vite.config.js as `__FAIRWAY_RELAY__`); whether a
 release does is the owner's call.
 
+**On the owner's own domain instead of `workers.dev`:** the domain's DNS must
+move to Cloudflare first, and a domain bought through Netlify needs a Netlify
+support ticket before its nameservers can change (RESEARCH, *The relay on the
+owner's own domain*). Then Workers -> fairway-relay -> Settings -> Domains &
+Routes -> Add a custom domain (`relay.<domain>`), and the game's Relay box
+gets `wss://relay.<domain>`.
+
 **The same relay on any machine:** `node relay/node-relay.mjs --port 8787`
 runs the same rules. A page served over https needs `wss://`, so a public
 copy needs a certificate in front of it (Caddy or nginx); on a home network
