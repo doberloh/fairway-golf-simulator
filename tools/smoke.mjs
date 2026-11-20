@@ -706,7 +706,22 @@ async function coursePoint(t, pullPx) {
 async function openPad(t, {touch = false} = {}) {
  const shown = () => t.page.evaluate(() => document.getElementById('swingPad')?.hidden === false);
  if (await shown()) return;
- const press = () => touch ? t.page.locator('#shotButton').tap() : t.page.click('#shotButton');
+ // A ball that has just found water on a random Endless course puts its
+ // relief choice over the Swing button, sometimes between a step's own check
+ // and this press (19 November 2026, PELICAN-2683-1): relief is taken first,
+ // and once more if the press is blocked.
+ const relief = () => reliefFirst(t, sel => touch ? t.page.locator(sel).tap() : t.page.click(sel));
+ // Short tries, relief taken between them, for as long as a ball can fly: the
+ // button is not pressable while one is in the air, and relief can come up at
+ // any moment of that wait.
+ const press = async () => {
+  const go = timeout => touch ? t.page.locator('#shotButton').tap({timeout}) : t.page.click('#shotButton', {timeout});
+  const until = Date.now() + 40000 * SLOW;
+  for (;;) {
+   await relief();
+   try { await go(2000 * SLOW); return; } catch (e) { if (Date.now() > until) throw e; }
+  }
+ };
  await press();
  // A press just as a panel finishes closing can be taken by the panel's last
  // frame (19 November 2026, surprise-round after Help & controls): one more
