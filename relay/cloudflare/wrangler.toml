@@ -1,0 +1,16 @@
+# The Fairway relay on Cloudflare Workers (relay/cloudflare/README.md).
+# No account id or route is kept here: `npx wrangler deploy` asks you to log
+# in and deploys to your own workers.dev address.
+name = "fairway-relay"
+main = "worker.js"
+compatibility_date = "2026-11-01"
+
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "Room"
+
+# The free plan offers SQLite-backed Durable Objects only; this relay stores
+# nothing, but the class must still be declared that way.
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Room"]
