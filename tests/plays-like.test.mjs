@@ -34,6 +34,28 @@ test('nothing sensible to say gives nothing, not a number', () => {
  assert.equal(playsLike({distance: D}), null);
 });
 
+test('a flight stopped at its first landing (untilLanding) gives the full flight\'s carry and crossing', async () => {
+ // The searches that read only the flight -- the swing meter's carry and the
+ // plays-like crossing -- stop it just past touchdown since 18 November 2026,
+ // to keep a computer golfer's plan steps short. Nothing they read may move.
+ const {crossing} = await import('../src/plays-like.js');
+ const {simulateShot} = await import('../src/physics.js');
+ const open = {height: (x, z) => Math.hypot(x, z) < 2 ? 0 : -120, surface: () => 'fairway', bounds: {x: 1e5, minZ: -1e5, maxZ: 1e5}, trees: []};
+ const flat = {height: () => 0, surface: () => 'fairway', bounds: {x: 5000, minZ: -5000, maxZ: 5000}, trees: [], homes: []};
+ let checked = 0;
+ for (const club of Object.values(CLUBS).filter(c => c.vla > 2)) for (const k of [.4, .7, 1, 1.15]) for (const wind of [[0, 0, 0], [3, 0, -6], [-4, 0, 5]]) {
+  const shot = {origin: {x: 0, z: 0}, aim: 0, speed: club.speed * k, vla: club.vla, hla: 0, spin: club.spin * k, spinAxis: 4};
+  const full = simulateShot(shot, open, {wind}), cut = simulateShot(shot, open, {wind, untilLanding: true});
+  assert.ok(cut.points.length < full.points.length, 'the cut flight is shorter');
+  assert.equal(cut.carry, full.carry);
+  for (const level of [-60, -25, -8, 0, 4, 12, 30]) assert.equal(crossing(cut.points, level, 0), crossing(full.points, level, 0), `${club.code} ${k} at ${level} m`);
+  const fFull = simulateShot(shot, flat, {dt: 1 / 120}), fCut = simulateShot(shot, flat, {dt: 1 / 120, untilLanding: true});
+  assert.equal(fCut.carry, fFull.carry);
+  checked++;
+ }
+ assert.ok(checked > 50);
+});
+
 test('the crossing is read off the flight where the ball falls through the height', async () => {
  const {crossing} = await import('../src/plays-like.js');
  // Up to 10 m over 20 m of ground and down again, along +z.

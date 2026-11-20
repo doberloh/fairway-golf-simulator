@@ -737,6 +737,8 @@
  #drawer .sx-golfers .seat .player-who>select option{font:15px var(--font-ui);color:#111;background:#fff;text-transform:none}
  #drawer .sx-golfers .seat .player-who>input{width:100%;height:36px;border:0;background:rgba(0,0,0,.35);color:#fff;font:700 20px "Saira Condensed",var(--font-ui),sans-serif;text-align:center}
  #drawer .sx-golfers .seat :is(.player-sub,.player-hcp){font-size:14px;letter-spacing:.14em;font-weight:700;color:var(--soft)}
+ /* A handicap typed in the seat (the fairway-tour goal): small, in the line. */
+ #drawer .seat .seat-hcp{width:4.2em;padding:0 4px;font:inherit;letter-spacing:0;background:transparent;color:var(--ink,#fff);border:0;border-bottom:1px solid var(--soft);border-radius:0}
  #drawer .seat-tees{display:flex;gap:6px;flex-wrap:wrap}
  /* Four to six sets (a built course): tighter, so a seat stays one row where it can. */
  #drawer .seat-tees:has(>.seat-tee:nth-child(4)){gap:3px}
@@ -1031,6 +1033,48 @@
  .rh-results h3{margin:6px 0 4px;font-size:14px;letter-spacing:.16em;color:var(--soft);font-weight:700;text-transform:uppercase}
  /* Across the card (audit 3: at 820 px the rows left its right half empty). */
  .rh-res-stand{display:grid;gap:8px}
+ /* Strokes gained on round complete (the fairway-tour goal). */
+ .rh-res-gained{display:grid;gap:6px;padding:10px 0}
+ .rh-res-gained small{letter-spacing:.14em;color:var(--soft);font-weight:700}
+ .rh-res-gained ul{list-style:none;margin:0;padding:0;display:grid;gap:4px;font-variant-numeric:tabular-nums}
+ /* A tour event's line on round complete (the fairway-tour goal). */
+ .rh-res-event{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;padding:12px 0;border-top:2px solid var(--a1,#7bd389)}
+ .rh-res-event strong{font:800 italic 20px/1.2 "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase}
+ /* THE TOUR HUB (ui-tour.js). */
+ .tour-hub{display:grid;gap:18px;max-width:1100px}
+ .tour-head h2{margin:0;font:800 italic 34px/1 "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase}
+ .tour-head small,.tour-next small{letter-spacing:.14em;color:var(--soft);font-weight:700}
+ .tour-next{display:grid;gap:8px;padding:14px 18px;background:rgba(255,255,255,.05);border-top:4px solid var(--a1,#7bd389)}
+ .tour-next h3{margin:0;font:800 italic 28px/1.05 "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase}
+ .tour-next p,.tour-me p{margin:0}
+ .tour-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:18px}
+ .tour-cols>div{min-width:0}
+ .tour-board{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+ .tour-board th{text-align:left;font-size:12px;letter-spacing:.12em;color:var(--soft);padding:4px 6px}
+ .tour-board td{padding:5px 6px;border-top:1px solid rgba(255,255,255,.08)}
+ .tour-board tr.you td{background:color-mix(in srgb,var(--a1,#7bd389) 22%,transparent);font-weight:700}
+ .tour-board tr.mc td{opacity:.55}
+ .tour-board tr.gap td{text-align:center;color:var(--soft)}
+ .tour-board small{color:var(--soft);font-size:11px}
+ .tour-cal{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+ .tour-cal li{display:grid;grid-template-columns:4.2em 1fr auto;gap:10px;padding:4px 6px;border-top:1px solid rgba(255,255,255,.08)}
+ .tour-cal li.now{background:rgba(255,255,255,.08)}
+ .tour-cal li.done em{color:var(--soft)}
+ .tour-cal i{font-style:normal;font-size:11px;letter-spacing:.12em;color:var(--a1,#7bd389)}
+ .tour-actions{display:flex;flex-wrap:wrap;gap:10px}
+ .tour-actions>button{width:auto;flex:0 0 auto}
+ .tour-starts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:12px}
+ .tour-card{display:grid;gap:6px;text-align:left;padding:14px 16px;min-height:96px}
+ .tour-card strong{font:800 italic 20px/1.1 "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase}
+ .tour-list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+ .tour-list li{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+ .tour-edit{display:grid;gap:10px;max-width:1000px}
+ .tour-events{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+ .tour-events li{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px;background:rgba(255,255,255,.04)}
+ .tour-events li.locked{opacity:.6}
+ .tour-events .ev-name{flex:1 1 200px;min-width:0}
+ .tour-events .ev-week{width:4.5em}
+ .tour-events select{width:auto;max-width:100%}
  .rh-res-row{position:relative;isolation:isolate;display:flex;align-items:center;gap:18px;min-height:64px;padding:8px 26px}
  .rh-res-row::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--panel);transform:none}
  .rh-res-row.win{min-height:80px;color:var(--on-hot)}

@@ -23,7 +23,7 @@ test("the course panel reads the course drop-down's option", () => {
  assert.deepEqual(courseFacts('No saved courses yet'), {name: 'No saved courses yet', holes: '', biome: ''});
 });
 
-test('the four format tiles are the four formats', async () => {
+test('the format tiles are the formats (five since Stableford, 17 November 2026)', async () => {
  const {FORMATS} = await import('../src/game.js');
  assert.deepEqual(Object.keys(FORMAT_TILE).sort(), [...FORMATS].sort());
 });

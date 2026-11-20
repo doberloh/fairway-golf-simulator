@@ -41,12 +41,13 @@ export function optionWords(text) {
 
 // The format cards, in the mockup's order and words.
 const FORMAT_ORDER = ['stroke', 'match', 'scramble', 'skins'];
-export const FORMAT_TILE = {stroke: 'STROKE PLAY', match: 'MATCH PLAY', scramble: 'SCRAMBLE', skins: 'SKINS'};
+export const FORMAT_TILE = {stroke: 'STROKE PLAY', match: 'MATCH PLAY', scramble: 'SCRAMBLE', skins: 'SKINS', stableford: 'STABLEFORD'};
 export const FORMAT_CARD = {
  stroke: ['Every shot counts. Lowest total wins.', 'ANY GROUP'],
  match: ['Win holes, not strokes. Singles or best-ball teams.', '2 TO 4 GOLFERS'],
  scramble: ['Everyone hits, the team picks the best ball.', 'TEAMS OF 1 TO 4'],
  skins: ['Each hole is worth a skin. Ties carry.', '2 TO 4 GOLFERS'],
+ stableford: ['Points per hole: two for par. A bad hole costs nothing past zero.', 'ANY GROUP'],
 };
 // Formats played in teams: the teams show under the cards for these.
 export const TEAM_FORMATS = new Set(['match', 'scramble']);
@@ -134,10 +135,27 @@ export function rulesColumn(doc, q) {
  const rules = make(doc, 'div', 'sx-rules-col');
  rules.append(make(doc, 'h3', 'sx-head', 'HOUSE RULES'));
  const putting = q('roundPuttingMode'), ob = q('roundOB'), lie = q('roundMonLie');
+ // WHO PLAYS NEXT (play-order.js, 19 November 2026). Every control main.js's
+ // formatFields draws needs a place here or on another step, or it is put
+ // away with the old sections and nobody sees it -- which is what happened to
+ // this one and to the fairway-tour goal's four below until the owner looked.
+ const order = q('roundOrder');
+ if (order) rules.append(picker(doc, order, 'ORDER OF PLAY'));
  if (putting) rules.append(picker(doc, putting, 'PUTTING'));
  const dist = q('roundPutting-distances'); if (dist) rules.append(dist);
  if (ob) rules.append(picker(doc, ob, 'OUT OF BOUNDS'));
  if (lie) rules.append(picker(doc, lie, 'LIE PENALTY'));
+ const caddie = q('roundCaddie');
+ // The computer golfers' features are beta (the owner, 19 November 2026,
+ // at the merge): the caddie's suggestion comes from their model.
+ if (caddie) rules.append(picker(doc, caddie, 'CADDIE · BETA'));
+ // The computer golfers (the fairway-tour goal): how their shots are shown
+ // and whether they speak.
+ const cpu = [['roundCpuWatch', 'THEIR SHOTS'], ['roundCpuChat', 'THEIR WORDS']].filter(([id]) => q(id));
+ if (cpu.length) {
+  rules.append(make(doc, 'h3', 'sx-head', 'COMPUTER GOLFERS · BETA'));
+  for (const [id, label] of cpu) rules.append(picker(doc, q(id), label));
+ }
  // The course as it plays today (turf.js): a preset, then the three settings.
  const cond = [['roundConditions', 'COURSE'], ['roundStimp', 'GREEN SPEED'], ['roundGreens', 'GREENS'], ['roundFairways', 'FAIRWAYS']].filter(([id]) => q(id));
  if (cond.length) {
@@ -363,6 +381,9 @@ export function buildLobby(root, opts = {}, doc = globalThis.document) {
   fixedNote.textContent = course.value === 'friend' ? 'A friend’s challenge is stroke play: their card is strokes.' : 'The course of the week is stroke play: everyone plays the same 18 holes, so every card compares.';
  };
  p3.append(make(doc, 'h3', 'sx-head', 'HOW ARE YOU PLAYING'), tiles, fixedNote);
+ // Gross or net (net.js, the fairway-tour goal): with the format, which it scores.
+ const net = q('roundNet');
+ if (net) p3.append(picker(doc, net, 'SCORING'));
  if (note) p3.append(note);
  lockFormat();
  p3.append(teams, mode);

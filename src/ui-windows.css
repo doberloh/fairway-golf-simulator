@@ -324,6 +324,7 @@
  #world .turn-flash strong{font:800 italic 30px/1 "Saira Condensed",var(--font-ui),sans-serif;text-transform:uppercase}
  #world .turn-flash b{border-radius:0;background:none;padding:0;font:800 italic 22px/1 "Saira Condensed",var(--font-ui),sans-serif}
  #world .turn-flash-row>span{font-size:14px;letter-spacing:.12em;color:var(--soft);text-transform:uppercase}
+ #world .turn-flash-cpu{font-size:15px;letter-spacing:.12em;color:var(--soft)}
 }
 
 /* THE START SPLASH (round 14, frame c-splash). Drawn from the course of the

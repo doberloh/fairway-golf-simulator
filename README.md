@@ -7,7 +7,9 @@ network. Every course is generated from a seed: nine or eighteen holes routed
 through one continuous landscape, with its own terrain, water, weather,
 vegetation and light. Ball flight is integrated from real launch numbers, and
 a launch monitor can drive it through `run_fairway_server`, the program in
-each platform's download -- nothing to install.
+each platform's download -- nothing to install. Play alone, with up to three
+friends or computer golfers who miss the way real golfers of their handicap
+miss, gross or net, or through a season of events on the Fairway Tour.
 
 The built file is about 17.6 MB (7.2 MB gzipped) and contains the renderer,
 the controls, the physics and every asset. It needs WebGL 2 and hardware

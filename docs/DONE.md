@@ -25,6 +25,70 @@ kept whole: *The open list before the 11 November 2026 prune* and *The open
 list before the 16 October prune*, each with a table of what became of every
 entry.
 
+## The Fairway Tour and computer golfers (branch `fairway-tour`, 17-19 November 2026; released as 0.9.19)
+
+**Merged at the owner's word, 19 November 2026** ("go ahead and mark the AI
+features all as beta features in game. perform any more tests that need to
+be done. Then merge this all in to main. Cut a patch release, push to github
+as well as the live website demo"). The goal was cleared by the owner on 18
+November with one miss reported (Ultra's long frames, open in TODO *Known
+wrong*); the owner then played the branch on an iPhone and a Mac mini
+through tools/phone-probe.mjs and asked for the last four changes below.
+
+**What was built** (RESEARCH and PLAYING have each part; the design, the
+owner's answers and the goal's log are local, docs/studies/fairway-tour/):
+computer golfers who miss the way a golfer of their handicap misses, in any
+seat of any round (src/ai/), Matched and Adaptive opponents; gross or net
+rounds (net.js) and Stableford (stableford.js); a tournament against a field
+with a leaderboard, a cut and a playoff (tournament.js); a season on built
+and generated courses (tour.js, tour-store.js); a tour shared as one file
+with its built courses (tour-file.js); the caddie's club suggestion
+(caddie.js); strokes gained (strokes-gained.js); course ratings from the
+computer golfers; tour achievements and XP; relief-ground.js shared by the
+game and the golfers; a ball-model fix for a touchdown on a steep bank. Then,
+at the owner's asks on 19 November: the **order of play** (play-order.js:
+hole out in turn, or the Rules of Golf's honours and farthest-out; match
+play's honour the side's); the **round settings shown on Play's steps**
+(the order of play, Scoring, Caddie and the computer golfers' settings had
+been drawn only on the old panel Play hides); **bold putting rings** that
+light pink round the rolling ball, a **blaze-orange aim line**, and no aim
+for a computer golfer; **follow the flight** again as the default shot
+camera, on a bearing fixed at the strike, with a putt camera that follows
+from behind and stops 2 m from the cup (Television kept as a setting); and
+the computer golfers' features **marked BETA** in the game. Also fixed on
+the way: the minimap's background redrawn at every tee shot; the late
+shader on Ultra (the green reading out of the sun mask); a pull-push smoke
+step that met water relief on a random course. **Found by the release's
+own smoke run** and fixed before the merge: a computer golfer stuck on an
+Endless coast hole (a drop on a cliff, driver off the ground into the sea,
+a ball creeping through a bunker), now with a pick-up at five over par
+(RESEARCH, *A hole always ends*).
+
+### The open entry as it stood at the merge
+
+- [x] **The Fairway Tour and computer golfers: the goal on branch
+  `fairway-tour`** (the owner, 17 November 2026; planned with the owner the
+  same day, which closes *Plan the Fairway Tour with the owner, before any
+  code*). Computer golfers who miss the way a golfer of their handicap
+  misses, in any round; gross or net rounds and Stableford; opponents that
+  adapt; a tournament against a field with a leaderboard and a cut; a
+  season the player sets up on built and generated courses; a tour shared
+  as one file with its built courses; the caddie's club suggestion,
+  strokes gained and course ratings from the computer golfers (the last
+  three and Stableford left IDEAS.md for it). The design, the owner's
+  answers and the order of work are local: docs/studies/fairway-tour/
+  (SPEC.md, GOAL.md, SUMMARY.md). Large. Its three sub-items of 19
+  November (the order of play, follow the flight, the rings and the aim
+  line) moved to TODO *Play the current build by hand*, being built and
+  not looked at item by item.
+
+### Release 0.9.19 (19 November 2026)
+
+docs/releases/v0.9.19.md; DISTRIBUTION_REVIEW, *Addendum, 19 November
+2026: v0.9.19*. The branch-only AGENTS.md section (*On the fairway-tour
+branch, the computer is free under the goal's terms*) was deleted in the
+merge, as it said.
+
 ## The surroundings rework: the look (branch `surroundings-rework`, 12-13 November 2026)
 
 **Signed off by the owner, 13 November 2026**, after round 11: "Mark all
@@ -502,6 +566,28 @@ designed yet; the first job is a plan for the owner to approve.
   field is and how its scores are made without playing every shot, whether
   built courses can host events, and what the season rewards. Large. (Claude,
   from the owner's pick, 9 November 2026.)
+- **Planned with the owner, 17 November 2026.** The owner asked for every
+  AI idea at once: computer golfers who feel like real players, gross or
+  net rounds, opponents that adapt to the player, a season the player sets
+  up on built and generated courses (four rounds an event or one), and a
+  tour shared as one ZIP with its built courses. Claude drafted a spec and
+  a goal; the owner answered its thirteen questions the same day: no golfer
+  figures on the course (and not to be offered later), a fourball in a
+  field of 60, adaptive never inside an event (a tour's field may be Auto
+  between events), tours single player, points decide a season and prize
+  money is for show, a shared tour carries no results, a shipped season,
+  a typed handicap until the sim handicap has one, invented names, course
+  ratings from the computer golfers, and the caddie's club suggestion,
+  Stableford and strokes gained pulled in from IDEAS.md. The owner also
+  overruled the tour file's 100 MB cap: no cap of the game's own, at least
+  a full season of built courses. The questions' answers: how a computer
+  golfer's miss is anchored -- sourced handicap statistics and a bench; a
+  field's scores -- the player's group flown, the rest drawn from a hole
+  model learned by the computer golfers or flown in a worker, whichever
+  the timing allows; built courses host events; a season pays points,
+  trophies, XP and achievements. The goal runs on branch `fairway-tour`
+  (TODO *The Fairway Tour and computer golfers*); the design is local, in
+  docs/studies/fairway-tour/.
 
 ### Release 0.9.12 (10 November 2026)
 
@@ -8563,3 +8649,100 @@ the iPhone between 15 and 17 November and sent back points after each. On
   - `tools/phone-probe.mjs` with its AGENTS.md rule.
 
 What stayed open is in TODO under the same heading.
+
+## A computer golfer's plan runs on the frame loop (18 November 2026; branch fairway-tour)
+
+From TODO, *Only the owner can check* (the Fairway Tour branch's owed
+items), and the goal's own test: "the frame rate on Low, Phone and Ultra is
+no worse in a round with three computer golfers than main's with one
+person". Drawing a course had been measured level at fixed spots, but that
+is not a round being played, so `tools/frame-round.mjs` was written to play
+one on both builds and time every frame. Average frames were level from the
+start; long frames on the Phone setting were not. Three causes were found by
+laying each long frame against what had just happened and profiling the
+worst on an unminified build, and each was fixed:
+
+- **The plan, run whole at the start of a turn** (up to 36 ms on the
+  owner's PC, three times that on a phone): `planSteps`, `readPutt` and
+  `shotSteps` in src/ai/golfer.js are generators that pause after each
+  flight of the ball, and main.js `stepPlan` runs about 4 ms of one a frame;
+  the caddie's line (`suggestSteps`) the same. Run whole they are the same
+  calls in the same order, so the bench and every saved shot are unchanged
+  (a test holds a stepped plan equal to a whole one, and a plan dropped half
+  way changing nothing).
+- **Making a golfer at its first turn** (its bag's carries flown,
+  110-135 ms here; the round's worst frame, 283 ms on Phone): every golfer
+  in the group is now made in `loadCourse`, under the loading screen.
+- **A golfer's reaction in the landing's frame** (the landing 234-268 ms on
+  Phone, against a person's 110-140): the reaction now comes 900 ms after
+  the ball stops, as a golfer reacts.
+
+Then, from TODO *A few long frames with computer golfers* (opened and
+closed the same day), two more, after eight loads a build showed Ultra
+still at twice the long frames:
+
+- **A step could be a whole swing-strength search**: the searches are
+  stepped too (`targetShareSteps`, `speedForCarrySteps`, `swingLaunchSteps`,
+  `playsLikeSteps`, each with a whole twin the person's code calls), their
+  flights stopped at the first landing (physics.js `untilLanding`, tested to
+  give the full flight's numbers). A step is now at most about 14 ms here.
+  On its own it did not move Ultra's count.
+- **The strike's frame flew the ball and planned the shot camera**, costlier
+  for a wild golfer among trees: the ball is now flown in the golfer's
+  pre-shot moment and the camera planned the frame after
+  (`preflyComputerShot`), used only when takeShot's own shot is exactly the
+  one flown. Over ten undisturbed Ultra loads a build: 80 frames over 50 ms
+  against 72 for the person alone on 0.9.18, inside 0.9.18's own spread;
+  Phone 35 against 36, Low 15 against 19.
+
+Leaving loads out after seeing them was not clean, so the next runs were
+judged on rules written down first (GOAL.md's log), every load counted.
+Ultra read level at 13:35 (114 against 116). A sixth cause was then found by
+splitting the long frames' profile by the moment they came in:
+
+- **The minimap redrew its whole background at every tee shot** (about
+  60 ms here, at the strike and again at the landing, a person's shot
+  too): the shot's origin, rounded to the grid as it is struck, moved the
+  map's framing by a fraction of a millimetre, and the background's key
+  held it exactly. The key now rounds the framing (renderer.js `drawMap`;
+  PROJECT_HANDOFF *The map's still layer is keyed on its framing
+  rounded*).
+
+The last run (15:20-16:33; Ultra twelve loads, Phone eight, Low four):
+Phone 23 frames over 50 ms against 38 for the person alone, Low 10
+against 24, both met. **Ultra missed**: 108 against 85, worst 253 against
+216 ms, though its mean and p99 are better. Profiled unminified, those
+frames are the renderer setting up programs and uniforms and the shot
+card's layout read, as after the person's strike, with no golfer code;
+why they come more often after a computer strike is not known. Open in TODO, *Ultra: about two more stalls a minute with
+three computer golfers*.
+
+Dead ends: a Web Worker for the plan (the hole is generated geometry with
+functions, not data a worker can take); a stop at the first sample under the
+ground for the aim correction's flight (`curveCompensation`), added and taken
+out again: a computer golfer's straight shape never flies it; reading the long Phone loads as the
+golfers' cost (a lone person on 0.9.18 reaches the green, a cheap view, after
+a minute, while three golfers are still up the fairway). The figures, before
+and after, are in RESEARCH *Frame rate with computer golfers*, *In a round
+being played*.
+
+## One shader is still built after an Ultra course appears (18 November 2026; branch fairway-tour)
+
+From TODO, *Known wrong* (found 17 November by `no-late-shaders`, in main
+and 0.9.17 too). Turning a full circle on Ultra built one more program about
+10 s in, `MeshBasicMaterial` with `USE_FOG USE_SHADOWMAP OPAQUE`, on about one
+course in two or three that Surprise me drew (it failed the goal's last full
+smoke run, 45 of 46). The journey only named the material, and the material
+was the god rays' black override (godrays.js), which holds no program of its
+own to look up, so the journey now notes the object being drawn (every
+object's before-draw hook, on the capture build) and names it beside a late
+program. It was the green reading's grid surface (green-reading.js: position,
+slope, fall and inside, no normals): a kind of object the mask's black
+material needs its own program for, hidden when the loading screen warms the
+mask, and drawn into it the first time the reading showed with the sun in
+view. **Fix:** the grid surface and the heat map carry `noSunMask`, as the
+far trees do: each lies a hair over the green, which already blocks the sun
+in the mask, so nothing about the rays changes. The journey passed 6 of 6
+after (it had failed 2 in 4 and 1 in 3 just before). The other way, warming
+the overlay's mask program behind the loading screen, was not taken: it
+would draw an overlay into the mask that has no reason to be there.

@@ -328,7 +328,7 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
  const holeList = el('ul');
  const checkList = el('ul'), roundList = el('ul');
  async function runTest() {
-  roundList.replaceChildren(el('li', {}, 'The virtual golfers are playing\u2026'));
+  roundList.replaceChildren(el('li', {}, 'A scratch golfer and a bogey golfer are playing\u2026'));
   const lines = [];
   try {
    const r = await testRound(editor.toDoc(), {onHole: h => { lines.push(el('li', {onclick: () => h.stuck && view.controls.target.set(h.stuck.x, editor.height(h.stuck.x, h.stuck.z), h.stuck.z)}, `Hole ${h.number} (par ${h.par}): ${h.strokes.join(' and ')}${h.stuck ? ` -- stuck on ${h.stuck.on}` : ''}`)); roundList.replaceChildren(...lines); }, pause: () => new Promise(res => setTimeout(res, 0))});

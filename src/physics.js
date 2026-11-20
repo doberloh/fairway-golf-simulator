@@ -289,10 +289,19 @@ export function simulateShot(shot,course,options={}){
    touch(surface,hypot(...v));
    if(surface==='water'){hazard='Water';break;}
    const n=normalAt(p[0],p[2]);
-   const out=bounce(v,om,n,turfOf(surface,turf));
-   v=out.v;om=out.w;bounces++;
-   // Too little left to leave the ground: it is on it.
-   if(v[0]*n[0]+v[1]*n[1]+v[2]*n[2]<SETTLE_SPEED)land(n);
+   // A BALL ALREADY LEAVING THE SLOPE IS NOT AN IMPACT (17 November 2026, the
+   // fairway-tour goal's bench): struck from a steep bank along it, the ball
+   // is under the rising ground a step later while moving away from the
+   // slope's face. bounce() is an impact and cannot take a ball going out of
+   // the ground -- it returned NaN, and the flight threw (a computer driver
+   // from 36-degree rough on a prairie course). Such a ball is stood on the
+   // ground and flies on; nothing that moves into the ground changes.
+   if(v[0]*n[0]+v[1]*n[1]+v[2]*n[2]<0){
+    const out=bounce(v,om,n,turfOf(surface,turf));
+    v=out.v;om=out.w;bounces++;
+    // Too little left to leave the ground: it is on it.
+    if(v[0]*n[0]+v[1]*n[1]+v[2]*n[2]<SETTLE_SPEED)land(n);
+   }
   }
   if(rolling&&surface==='water'){touch('water',hypot(...v));hazard='Water';break;}
   if(outOfBounds(course,p[0],p[2])){hazard='Out of bounds';break;}
@@ -343,6 +352,13 @@ export function simulateShot(shot,course,options={}){
   apex=Math.max(apex,p[1]-start[1]);
   const detailed=pin&&hypot(p[0]-pin.x,p[2]-pin.z)<.5;
   if(detailed||step%4===0)points.push({x:p[0],y:p[1],z:p[2],t,v:hypot(v[0],v[1],v[2]),w:rpm()});
+  // `untilLanding`: stop at the first sample at or after the first touchdown.
+  // For the searches that read only the flight -- the carry (taken at
+  // touchdown) and where the falling ball passes a height (plays-like.js) --
+  // every number they read is the full flight's, at a fraction of the cost:
+  // the bounces and roll are most of a long shot's steps (18 November 2026,
+  // the computer golfers' plan; RESEARCH *Frame rate with computer golfers*).
+  if(options.untilLanding&&carry!==null&&(detailed||step%4===0))break;
  }
  points.push({x:p[0],y:p[1],z:p[2],t});
  return {points,end:{x:p[0],y:p[1],z:p[2]},carry:carry??0,hang:hang??0,total:hypot(p[0]-start[0],p[2]-start[2]),apex,time:t,landingSpeed,descentAngle,landingSpin,bounces,skid:skidTotal.value,holed,lipped,hazard,treeHits,homeHits,flagHits,contacts,onGreen:course.surface(p[0],p[2])==='green'};

@@ -148,7 +148,7 @@ here is **placed**, chosen by feel, and RESEARCH.md *The Swing Meter* says so.
 | `LIE_SPIN` (`lieSpin`) | **the flyer**: grass takes spin from a lofted shot. `from` (16 degrees of launch) is where it starts, `full` (28) where the whole `loss` is reached: rough 0.45, semi-rough 0.20. Raise `loss.rough` and wedges out of the rough run further; raise `from` and fewer clubs are touched. Sand has no loss |
 | `SWING_RANGES`, `swingZoom` | a short full shot's pull: half or quarter of the club's full carry, the shortest that holds the circle with a quarter to spare |
 | `PUTT_RANGES` | how far a putt's pull reaches: a thirty-second of the putter's roll (so a tap-in is still a real pull, 16 November 2026) up to six times it, so a putt can cross any green at any Stimp; `puttSpeedFor`'s cap (3x the putter's speed) has to allow the longest |
-| `targetShare` | the blue stop: the circle's distance through `playsLike` (slope and air always, wind only where the difficulty's `wind` is true -- Easy), then the share of a pull for that carry with the lie's lost speed made up |
+| `targetShare` | the blue stop: the circle's distance through `playsLike` (slope and air always, wind only where the difficulty's `wind` is true -- Easy), then the share of a pull for that carry with the lie's lost speed made up. Its flights (and `speedForCarry`'s, `fullCarry`'s) stop at the first landing (physics.js `untilLanding`), which changes no number: not a knob |
 
 ## The pull-and-push swing — `src/swing-stroke.js`
 

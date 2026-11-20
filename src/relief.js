@@ -64,13 +64,31 @@ export function crossingPoint(points, inside) {
 }
 
 // A spot a ball can be dropped on: dry, in bounds, not inside a trunk or a
-// house, and clear of the water by the margin all round.
+// house, clear of the water by the margin all round -- and NOT TOO STEEP TO
+// HOLD A BALL (19 November 2026). A dropped ball must come to rest in the
+// relief area (Rules 14.3c and 14.2e; a ball that will not stay is placed,
+// and where it cannot stay either, the nearest spot where it will). On an
+// Endless coast hole lateral relief chose a cliff above the sea rising 2.5 m
+// a metre (about 68 degrees); every stroke from it, any club, hit the slope
+// and rolled into the water, and stroke and distance sent the ball back to
+// it -- a computer golfer took 16 there, and could have gone on for ever.
+// MAX_DROP_SLOPE is the steepest ground a drop may sit on, measured over a
+// metre each way when `ground.height` is known. PLACED: 0.6 (about 31
+// degrees; the generator's playing ground is far gentler, and a ball rolls
+// on slopes much over that).
+export const MAX_DROP_SLOPE = 0.6;
+function tooSteep(ground, p) {
+ if (!ground.height) return false;
+ const h = (x, z) => ground.height(x, z);
+ const gx = (h(p.x + .5, p.z) - h(p.x - .5, p.z)), gz = (h(p.x, p.z + .5) - h(p.x, p.z - .5));
+ return Math.hypot(gx, gz) > MAX_DROP_SLOPE;
+}
 function playable(ground, p) {
  if (!Number.isFinite(p.x) || !Number.isFinite(p.z)) return false;
  if (ground.out(p.x, p.z) || ground.blocked?.(p.x, p.z)) return false;
  for (const [dx, dz] of [[0, 0], [MARGIN, 0], [-MARGIN, 0], [0, MARGIN], [0, -MARGIN]])
   if (ground.surface(p.x + dx, p.z + dz) === 'water') return false;
- return true;
+ return !tooSteep(ground, p);
 }
 
 // BACK ON THE LINE (Rule 17.1d(2)). Keep the crossing point between the hole

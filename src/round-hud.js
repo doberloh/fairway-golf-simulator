@@ -216,7 +216,8 @@ export function handicapLine(before, after, needed = 0) {
 // a tie read "ALEX · WINS" and "SAM · WINS", and a skins round ranked by
 // strokes while its own line said nobody won a skin. Now the headline and the
 // order follow what the format counts.
-//   mode     'stroke' | 'scramble' | 'skins' | 'match'
+//   mode     'stroke' | 'scramble' | 'skins' | 'match' | 'stableford'
+//            (a net round passes net totals as `total`; main.js)
 //   entries  [{name, total, seat, team?}] -- golfers, or teams for a scramble
 //   skinsWon [per entry] for skins; match {A, B, holesLeft} for match play
 // Returns {headline, line, rows: [{...entry, place, win, tie, measure}]}.
@@ -240,6 +241,18 @@ export function roundResult({mode = 'stroke', entries = [], skinsWon = null, car
   if (!win) return {headline: 'ALL SQUARE', line: 'THE MATCH IS HALVED', rows};
   const margin = match.holesLeft ? `${Math.abs(diff)} & ${match.holesLeft}` : `${Math.abs(diff)} UP`;
   return {headline: `TEAM ${win} WINS`, line: margin, rows};
+ }
+ // STABLEFORD (the fairway-tour goal): the most points wins; `points` on each
+ // entry. A golfer with no points counted goes last.
+ if (mode === 'stableford') {
+  const has = entries.filter(e => Number.isFinite(e.points)), none = entries.filter(e => !Number.isFinite(e.points));
+  const sorted = [...has].sort((a, b) => b.points - a.points);
+  const top = sorted.filter(r => r.points === sorted[0]?.points);
+  const rows = [...sorted.map(r => ({...r, place: 1 + sorted.findIndex(x => x.points === r.points), win: top.length === 1 && r === top[0], tie: top.length > 1 && top.includes(r), measure: `${r.points} PTS`})),
+   ...none.map(r => ({...r, place: null, win: false, tie: false, measure: '—'}))];
+  if (!top.length) return {headline: 'ROUND COMPLETE', line: '', rows};
+  if (top.length === 1) return {headline: `${String(top[0].name).toUpperCase()} WINS`, line: `${top[0].points} POINTS`, rows};
+  return {headline: `${top.map(r => String(r.name).toUpperCase()).join(' AND ')} TIE`, line: `${top[0].points} POINTS EACH`, rows};
  }
  const st = standings(entries);
  const top = st.filter(r => r.place === 1);

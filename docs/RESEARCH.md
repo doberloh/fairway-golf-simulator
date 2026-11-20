@@ -16569,3 +16569,627 @@ figures a later attempt needs:
   9 to 15 for a full rewrite, and two front ends to keep alike from then on.
 - **What came back to the game**: the course's woods carried past its line
   (above), found by looking at the Godot pictures.
+
+## How a golfer of each handicap misses (17 November 2026, the fairway-tour goal)
+
+The computer golfers (branch `fairway-tour`; the design is local,
+docs/studies/fairway-tour/SPEC.md) must miss the way a real golfer of their
+handicap misses, and score what such a golfer scores. These are the figures
+they are held to, by `tools/ai-bench.mjs`. Every source is in REFERENCES.md
+under the same heading; copies of the two papers are kept locally under
+docs/sources/fairway-tour/ (with their text, pulled out because the PDFs
+would not convert any other way).
+
+### The primary source: Broadie's Golfmetrics (2008)
+
+Mark Broadie, *Assessing Golfer Performance Using Golfmetrics*, Science and
+Golf V (2008). About 40,000 shots, 500 rounds, 130 golfers, six courses,
+mostly 2005-2007, every shot's start and end placed on a map. Five groups by
+18-hole score: Pro1 (PGA Tour, 64-71), Pro2 (PGA Tour, 72-79), Am1 (70-83),
+Am2 (84-97), Am3 (97-120). Taken, as published:
+
+| Group | 50% one-putt distance (ft) | Average two-putt distance (ft) | Sand save (%) | Sand median FRL (%) | Drive, 75th percentile (yd) | Drive direction, standard deviation (deg) |
+| --- | --- | --- | --- | --- | --- | --- |
+| Pro (64-79) | 8.2 | 30 | 50 | 16 | 297 | 4.0 |
+| Am1 (70-83) | 5.8 | 25 | 26 | 30 | 248 | 5.4 |
+| Am2 (84-97) | 5.1 | 19 | 17 | 40 | 237 | 6.4 |
+| Am3 (97-120) | 3.8 | 12 | 7 | 49 | 216 | 8.1 |
+
+FRL is the "fractional remaining length": the distance left to the target
+after the shot, divided by the distance before it; the median is the
+group's typical shot.
+
+| Group | 20-60 yd: on green, fairway / rough (%) | 20-60 yd: distance error / direction error | 20-60 yd median FRL, fairway / rough (%) | 100-150 yd: on green, fairway / rough (%) | 100-150 yd median FRL, fairway / rough (%) |
+| --- | --- | --- | --- | --- | --- |
+| Pro1 | 96 / 87 | 1.5 | 7.3 / 12.9 | 85 / 63 | 5.4 / 11.1 |
+| Pro2 | 95 / 80 | 1.6 | 9.4 / 15.3 | 77 / 46 | 5.8 / 12.8 |
+| Am1 | 93 / 86 | 3.2 | 13.8 / 15.4 | 63 / 53 | 8.7 / 10.4 |
+| Am2 | 81 / 72 | 3.3 | 16.9 / 21.0 | 46 / 34 | 12.0 / 13.5 |
+| Am3 | 75 / 64 | 3.1 | 20.3 / 25.6 | 25 / 25 | 17.3 / 18.4 |
+
+And, from the same paper:
+
+- **Longer hitters are straighter**, across golfers: direction standard
+  deviation (deg) = -0.0315 x (75th-percentile drive, yd) + 13.223. Taken
+  as the link between a computer golfer's Power and Accuracy before its own
+  variation is added.
+- **An amateur's short-game miss is about three times as long as it is
+  wide** (the 20-60 yd ratio above, and greenside sand alike); a pro's is
+  1.5. Taken: a chip or pitch errs mostly in distance.
+- **Awful shots** (worth 0.8 of a stroke or more against a scratch golfer:
+  out of bounds, most water, a chip into a bunker, a two-foot putt missed):
+  0.1, 0.6, 1.9, 4.1, 9.3 a round for Pro1, Pro2, Am1, Am2, Am3; across
+  golfers, awful shots = 0.24 x score - 17.1 (one at 75, six at 95). Taken
+  as the target for the Mishits rating.
+- **Where the strokes go**, against a scratch golfer, a round: putting -0.8,
+  -2.3, -5.1; long game (over 100 yd) -2.2, -9.3, -17.5; short game -0.8,
+  -3.4, -7.3; sand -0.2, -0.6, -1.1 for Am1, Am2, Am3. The long game is most
+  of the difference at every level. Taken as the shape of the four parts of
+  strokes gained, and a check that a computer golfer loses its strokes in
+  the right places.
+- **The high handicapper's putts**: Am3 loses 2.4 of its 5.1 putting strokes
+  from 3-6 ft, misses 60% of those on the low side, and leaves them short.
+  Taken: a weak putter's read under-plays the break.
+
+### The tour's own baseline: Broadie (2012)
+
+Mark Broadie, *Assessing Golfer Performance on the PGA TOUR*, Interfaces
+42(2) 146-165 (2012). Table B.1, the average strokes for PGA Tour golfers to
+hole out from tee, fairway, rough, sand and recovery positions, 10 to 600
+yd, from over eight million ShotLink shots 2003-2010; kept whole in the
+local copy. Taken as the shape of the strokes-to-hole-out table the computer
+golfer plans with and strokes gained scores against (a tour baseline,
+shifted for each handicap by the bench, below). Also: a 90-golfer (Am2)
+one-putts half the time from about 5 ft, averages two putts from 19 ft and
+three-putts about 2.3 times a round; a tour golfer 0.55.
+
+### Handicap bands: Shot Scope and Arccos, through magazines
+
+The tracking companies publish their averages through golf magazines, not
+in pages that could be fetched here (MyGolfSpy refused every request; the
+Arccos 2026 report's PDF has its text in a font that does not convert).
+What was read, and is used as a check rather than a fit:
+
+| Handicap | Greens in regulation (Shot Scope 2026) | Drive, all drives (Shot Scope 2026, men, yd) | Fairways (Arccos) | Up and down (Shot Scope) |
+| --- | --- | --- | --- | --- |
+| 0 | 59% | 285 | about 50% (0-4.9) | 54% |
+| 5 | 41% | 261 | | |
+| 10 | 32% | 259 | about 45% (10-14.9) | 39% |
+| 15 | 21% | 236 | | |
+| 20 | 14% | 225 | | 31% |
+| 25+ | 9% | 204 | about 40% (30+) | |
+
+**Where the sources disagree, and what is followed:**
+
+- **Driving distance.** Shot Scope's 2026 averages (285 for scratch) are
+  well above Arccos's older ones (250 for under 5, 224.7 for 10-14.9) and
+  Broadie's 75th percentile (248 for Am1). Arccos's 2026 report, as quoted,
+  contradicts itself for 30+ (181 and 145 yd in two tables). **Followed:
+  Broadie and the older Arccos**, the two that agree, for the bag a
+  computer golfer carries at its handicap; Shot Scope's are used only to
+  rank the bands. The game's own stock bag (clubs.js) stays what a person
+  is given.
+- **Greens in regulation.** Shot Scope 2026 (59% scratch, 41% at 5, 21% at
+  15) and an older Shot Scope table (52, 37, 23) differ by a few points;
+  Today's Golfer's table (69% scratch, 62% at 5) is far above both and is
+  **rejected** as an outlier with no stated method. Followed: Shot Scope
+  2026, with a band of about 5 points either way.
+- **Putts a round**: 32.1 for a 15 (Golf Monthly), 31.2 for a 10 and 33.4
+  for a 20 (MyGolfSpy, quoted in a search summary; the page refused a
+  direct read). Used as a check only, since greens hit decide most of it.
+
+### What a handicap means for the score
+
+A Handicap Index is the average of a golfer's best 8 differentials of their
+last 20, so a golfer's ordinary round is worse than their index. The USGA
+is quoted (GolfNow, secondary; the USGA's own pages refused a direct read)
+as expecting a golfer to play to their handicap 15-20% of the time and 2-4
+strokes above it otherwise; MyGolfSpy, quoted in a search summary, finds
+low handicappers averaging 4-5 over their index and high handicappers 6-8.
+
+**Not taken as a number.** The bench checks the thing these numbers come
+from instead: a computer golfer of rating *i* plays 20 rounds on a course,
+the game's own sim handicap (handicap.js, the WHS's best 8 of 20 as
+published) works out its index, and that index must come back within a
+stroke of *i* (PLACED tolerance). The gap between its average score and its
+index then falls out of how spread its rounds are, as a real golfer's does.
+
+### Allowances, Stableford
+
+The WHS's recommended allowances (Rules of Handicapping, Appendix C) are a
+table drawn as a picture on both the USGA's and the R&A's pages; the text
+around it was read at the R&A, and the figures are quoted by the USGA's
+FAQ and the SCGA. Taken: individual stroke play 95% (C/1, a medium field;
+100% "could be considered" under 30 players); four-ball stroke play 85%;
+singles match play 100% of the difference, the lowest playing handicap
+playing off zero; four-ball match play 90%; foursomes 50% of the combined
+difference; scramble, four players 25 / 20 / 15 / 10% from the lowest
+handicap and two players 35 / 15% (quoted by secondary sites, not read in
+the table itself). Stableford: the points table of Rule 21.1b is also a
+picture; taken as the Rules have long stated it -- 0 for two over the
+target or worse, 1 for one over, 2 for the target (par, or net par with
+strokes applied before the points), 3 one under, 4 two under, 5 three under,
+and 0 for a hole not holed out (the text read). Individual Stableford is
+95% as stroke play is (Appendix C, as quoted).
+
+### Placed, for the owner to overrule
+
+- **Which handicaps Broadie's groups are**: Am1 (scores 70-83) is taken as
+  about a 3, Am2 (84-97) about a 15, Am3 (97-120) about a 32, by their
+  middle scores less par 72 less the 3-4 strokes an ordinary round runs
+  over the index (above). The figures in between are joined in straight
+  lines by handicap, and held outside them (Pro below 0, Am3 above 32).
+- **What the bench must hit, and how closely**: each band's greens in
+  regulation within 6 points of Shot Scope 2026; drive direction spread
+  within 1 degree of the Broadie line; one-putt and two-putt distances
+  within a fifth; awful shots within one a round of Broadie's line; the
+  sim handicap of 20 rounds within a stroke of the rating. Wider than the
+  sources' own noise, because the game's courses, greens and bag are not
+  theirs.
+- **The tee each band plays in the bench**: the set nearest 6,900 yd less
+  35 yd a stroke (scratch about 6,900, a 15 about 6,375, a 30 about 5,850),
+  on 7,000-yd eighteens.
+
+### Net rounds, Stableford and the course rating: what was placed
+
+- **Skins with handicaps** take 95%, as individual stroke play (Appendix C
+  names no skins allowance). **A three-golfer scramble** takes 30 / 20 /
+  10% from the lowest (between the two- and four-golfer rows). **One
+  golfer alone in a scramble team** plays off their own course handicap.
+- **Stableford is played out**: no picking up once no points are left
+  (stableford.js `noPointsLeft` says when; nothing uses it yet).
+- **A net match hole below zero** (an ace with two strokes) is decided as
+  it is and written on the team card as 0.
+- **No handicaps in Endless or the course of the week** (no set of holes
+  to give strokes on; the week's bests are gross strokes).
+- **The course rating from computer golfers** (src/ai/rating.js): a
+  scratch golfer and a 20 (the USGA's bogey golfer, about a 20 for men)
+  play the course; the ratings are their averages less what each averages
+  over a course's rating on ordinary ground -- scratch 3.5 (the first fit:
+  +4.2 over par on 7,000-yd courses whose yardage rating is 72.7) and the
+  20 4.5 (PLACED, not yet fitted); slope is 5.381 x (bogey - course).
+  Two rounds each by default: the rating of one course moves a stroke or
+  so between runs at that sample (to be measured).
+
+### A tournament's field, and a season: measured and placed
+
+- **Measured: why the field is drawn.** One computer golfer's eighteen
+  through the ball model took about 2.5 s on the owner's PC (the bench,
+  one thread, 17 November 2026): a field of 60 flown ball by ball would
+  take about two and a half minutes a round. So only the person's group
+  is flown; the rest is drawn from a hole model.
+- **The hole model** (tournament.js): each hole's mean for a handicap from
+  the strokes table by its length from the tee, scaled so the course comes
+  to what a scratch and a bogey computer golfer scored on it (rating.js),
+  joined in a line between 0 and 20 and on past them (PLACED). Spread per
+  hole 0.75 strokes for scratch plus 0.02 a stroke of handicap, and a day's
+  form of about 1.1 strokes a round (PLACED, from round spreads of about 3
+  for tour golfers and 4-5 for club golfers). Not yet checked against the
+  computer golfers' own rounds hole by hole (owed: the bench).
+- **The event** (PLACED): groups ten minutes apart from 7:30 and thirteen
+  minutes a hole, for the leaderboard's "thru"; the cut after round two of
+  four (after round one of three), the top 45% and ties (scaled from the
+  professional tours' top 65 and ties of about 144); a last group of one
+  joins the group before; points 500 to the winner (majors double), the
+  rest by the professional tours' shape (`POINT_SHARE`); a purse of
+  2,000,000 (4,000,000 for a major) split 18% to the winner and on down
+  (`PURSE_SHARE`, from the usual professional split, from memory); tied
+  places share the points and money of the places they cover.
+- **A season** (PLACED): Quick season is eight events on eight landscapes,
+  the fourth and last majors; the shipped season is fifteen, one a
+  landscape, four majors; a tour's members are 100 roster golfers; Auto
+  strength centres the next field a stroke tougher after a top ten and a
+  stroke easier after a missed cut or the bottom quarter; the scoring
+  average needs half the season's rounds; the next season moves each
+  rival's handicap half a stroke (top ten better, bottom quarter worse),
+  never more than three from the roster's figure.
+
+### A hole always ends (19 November 2026, measured)
+
+The release smoke run's cpu-group journey failed: a 10-handicap computer
+golfer took 16 on an Endless coast hole (seed ASHFORD-9855-1, Coast Road
+Vista, par 4, 441 yd). Played 200 times in Node from the same hole, that
+golfer **did not finish 50 times** (the bench's 60-action limit), mean 6.27
+for the rest. Three causes:
+- **A drop on a cliff.** Lateral relief chose semi-rough 2 m from the sea on
+  ground rising 2.4-2.5 m a metre (about 68 degrees); every test shot from it
+  -- four directions, two speeds -- carried 0.1 m and rolled into the water,
+  and stroke and distance sent the ball back to it. relief.js now refuses a
+  drop steeper than MAX_DROP_SLOPE, 0.6 over a metre (about 31 degrees;
+  PLACED -- the Rules ask that a dropped ball come to rest in the relief
+  area, 14.3c and 14.2e, and none rests on that).
+- **Driver off the ground, never learnt from.** From the semi-rough at 196 yd
+  the golfer chose driver to the pin twenty times running. Its memory of
+  trouble counted only shots from the same spot to 0.5 m, a drop moves the
+  ball, and the game never passed it in. Now driver is for the tee only, a
+  club that found trouble within 30 m costs 1.5 strokes in the choice each
+  time, three troubles from here mean the safe shot out, and the relief
+  choice counts the trouble at each spot (all PLACED).
+- **A ball creeping through a bunker** a metre a time, 7-iron after 7-iron:
+  "stuck" compared the new spot with where the last shot was struck. It now
+  compares with where it finished, for a non-putt that got no nearer.
+
+And a guarantee, ai/play.js `PICK_UP_OVER`: **five over par it picks up**
+and drops by the green (penalty-free, Round.simDrop) and putts out
+(PLACED: a casual golfer's habit; Rule 21.2's maximum score is a
+committee's number, often double par). On that hole after the fixes: 200
+rounds each, 0 unfinished for handicaps 0, 10 and 25; picked up 3, 36 and
+57 times (it is a very hard hole: water left and right, cliffs, a beach);
+means 5.20, 7.33 and 8.44. tools/ai-bench.mjs, every band, six courses: 0
+invariants broken, 55 of 70 checks (the baseline of 18 November: 58 of 70
+on 36 rounds a band against today's 24); average over par per band 4.2,
+10.4, 13.7, 16.4, 21.0, 22.0, 26.6 against the baseline's 4.3, 10.9, 13.3,
+16.2, 21.1, 21.7, 26.7; holes picked up 0 to 0.04 a round.
+
+### Frame rate with computer golfers (18 November 2026, measured)
+
+**Drawing a course: level with 0.9.18 on every tier measured.**
+`tools/frame-ab.mjs`, the 0.9.18 page from its release zip (A) against the
+branch's build at step 10 (B), alternated, tees 1, 5 and 9 on the
+profile course, through the card's gate:
+
+| Tier | Rounds | Frame, mean of spots, A / B | Card at full clock |
+| --- | --- | --- | --- |
+| Ultra (desktop) | 2 | 2.88 / 2.86 ms (-0.8%) | level within 2% |
+| Low (desktop) | 4 | 1.57 / 1.57 ms (0.0%) | level within 1% |
+| Phone (iPhone 13 stand-in, `--tier phone`) | 4 | 2.13 / 2.10 ms (-1.6%) | -- |
+
+Low's first two-round run read B 8.5% slower; with four loads a build it is
+level (the two load modes, docs/history/SURROUNDINGS.md). Load times the
+same (course load 13.9 / 14.0 s on Ultra).
+
+**What a computer golfer adds is its plan** (measured before it was spread
+over frames; see *In a round being played* below for what was done about
+it), on the frame loop's thread at the start of its turn: every shot of three
+18-hole rounds (scratch, 15, 30) on a 7,000-yd course, timed in Node on the
+owner's PC: putts median 3.9 ms, 95% 28.9 ms, worst 35 ms; full shots
+median 7.2 ms, 95% 21.4 ms, worst 35.8 ms; short shots under 10 ms. (The
+first shots of a session are slower while the engine compiles: one putt
+read 230 ms and one chip 305 ms in a cold run.) Before the change below the
+warm worst was 55 ms. **So a computer golfer's turn can cost a frame or two
+on this PC, and on a phone about three or four times that** (not measured
+on a phone). Trial rolls of a putt over 3 m now step at 120 a second; the
+early stop once a trial finished within 30 cm was tried and dropped
+(scratch's short putts got worse). The plan is now spread over frames
+(below); a worker given the hole was not tried (the hole is generated
+geometry with functions, not data a worker can be handed).
+
+**In a round being played** (18 November 2026). Drawing a course at fixed
+spots is not playing one, so `tools/frame-round.mjs` plays the same seeded
+nine (Pacific Northwest, FRAMEROUND) on both builds, alternated, and times
+every frame for 60 s from the first tee: on 0.9.18 the person alone,
+swinging on the pad whenever it is their turn and watching every flight;
+on the branch three computer golfers (handicaps 6, 13, 20) out first with
+every shot watched (`cpuWatch: 'all'`, reactions on), then the person. The
+card's gate before every run (2-8%, 42-51 °C; Steam open and idle), the
+card watcher on throughout.
+
+*The first readings, and two that misled.* Ultra and Low read level from the
+start (mean +1.0% and +4.0% over two loads). Phone read 64% and then 25%
+slower over 90-120 s loads and level over 60 s loads. The long loads were
+not like for like: laid out by 30 s, 0.9.18's frames dropped from 3.7-4.0 ms
+to 1.5-2.0 ms after the first minute -- the lone person had reached the
+green, a cheap view -- while the three computer golfers were still on their
+first shots up the fairway. With the person alone on both builds Phone read
+level (+0.4%, best loads); with the branch against itself, computer golfers
+or not, level (-2.6%). The frames' cost was what was on screen, not the
+golfers; 60 s loads keep both builds on the first hole's long shots.
+
+*What the golfers did cost: long frames.* In every Phone run the branch had
+more frames over 50 ms (45 against 26 in four minutes) and a worse worst
+frame (289-321 ms against 177-196). Each long frame was laid against what had
+happened in the second before it (state read ten times a second in the
+page), and the worst ones profiled on an unminified build. Three causes,
+each fixed:
+
+| Cause | Cost on the Phone setting | Fix |
+| --- | --- | --- |
+| The plan, run whole at the start of a turn | about 1 more frame over 50 ms a computer shot | spread over frames: about 4 ms a frame, at least one flight of the ball (`stepPlan`); the caddie's line too |
+| Making a golfer at its first turn (its bag's carries flown: 110-135 ms on this PC, Node) | the round's worst frame, 283 ms, as a new golfer's turn started | every golfer in the group made in `loadCourse`, under the loading screen |
+| A golfer's reaction shown in the landing's frame (the message's layout) | the landing frame 234-268 ms, against a person's landing 110-140 | the reaction 900 ms after the ball stops; with reactions off the landing was 91-127 ms |
+
+What is left in the longest frames is the same on both builds: the card's
+programs set up the first time a view is drawn (`setProgram`, about half of
+a 160 ms frame) and the ball's flight worked out as a shot is struck --
+0.9.18's own worst, 176-192 ms, is the person's first shot.
+
+*After the three fixes* (Phone, two loads a build): mean -2.1%, p95 -1.9%,
+p99 -1.1%, worst 168 against 192 ms, over 50 ms 12 against 12, over 33 ms
+29 against 26.
+
+*The final build, every setting, four loads a build, 60 s each* (07:15-07:50;
+0.9.18 with the person alone against the branch with three computer golfers
+then the person; ms a frame):
+
+| Setting | Mean A / B | p95 | p99 | Frames over 50 ms | Worst frame |
+| --- | --- | --- | --- | --- | --- |
+| Phone (iPhone 13 stand-in) | 3.52 / 3.33 (-5.5%) | 5.40 / 5.00 | 9.60 / 9.30 | 25 / 30 | 176 / 268 |
+| Low | 2.68 / 2.48 (-7.2%) | 4.30 / 3.80 | 8.30 / 8.00 | 19 / 22 | 123 / 109 |
+| Ultra | 4.06 / 3.75 (-7.7%) | 6.70 / 6.10 | 10.90 / 9.90 | 25 / 38 | 213 / 223 |
+
+That table was not the end: frames over 50 ms were still more with the
+golfers, and over eight loads a build on Ultra twice as many (107 against
+53; 0.9.18 steady at 6-8 a load, the branch 7-27). Four loads cannot tell a
+gap from chance in this count -- a load with the person alone read 47 in one
+run, all the driver stalling on uniform uploads -- so the rest was judged on
+eight. Two more causes, each fixed with every shot unchanged:
+
+- **A step could still be a whole swing-strength search** (two or more
+  flights of the ball, 20-36 ms here). The searches are stepped too
+  (`targetShareSteps`, `speedForCarrySteps`, `swingLaunchSteps`,
+  `playsLikeSteps`), and their flights stop at the first landing (physics.js
+  `untilLanding`; the carry is taken at touchdown and the plays-like
+  crossing comes on the way down, so the numbers are the full flight's,
+  tested over the bag, winds and heights). Steps in Node, as the game runs
+  them, over 27 golfer-holes: median 0.4 ms, 99% under 8.7, worst 14.4 (a
+  putt's trial roll); whole plans under 45 ms. This alone did not move
+  Ultra's count (107 against 53 again).
+- **The strike's frame flew the ball and planned the shot camera** -- the
+  two largest things in the golfers' long frames by an unminified profile of
+  the branch against itself (`takeShot`, `shotCameraPlan`, `clearest`,
+  `blocked`, `canopyTop`), and costlier for a wild golfer's ball among trees
+  than for the harness's person, who swings straight down the middle. A
+  computer golfer's ball is now flown in its pre-shot moment and the camera
+  planned the frame after (`preflyComputerShot`); takeShot uses that flight
+  only when its own shot is exactly the one flown. Every computer strike
+  measured since used it (5 of 5 a load).
+
+*The final build* (12:00-12:35; four or eight loads a build, 60 s each):
+
+| Setting | Mean A / B | p99 A / B | Frames over 50 ms, A / B | Worst A / B |
+| --- | --- | --- | --- | --- |
+| Phone (8 loads) | 2.58 / 2.62 | 6.6 / 7.0 | 36 / 35 | 137 / 125 |
+| Low (4 loads) | 2.31 / 2.34 | 7.5 / 7.7 | 19 / 15 | 134 / 109 |
+| Ultra (8 loads, then 4 more) | 3.94 / 3.77; 4.30 / 4.07 | 11.2 / 12.1; 11.5 / 10.5 | 60 / 113; 27 / 32 | 289 / 246; 249 / 205 |
+
+Ultra's eight-load run was level for its first twelve loads (45 against 48)
+and then two branch loads in a row read 31 and 34: in one the whole picture
+ran at 14 ms a frame for its last 30 s, in the other 32 of 34 long frames
+came with nothing happening in the round, and the owner's Remote Desktop was
+on the card at the next run's gate. Four more loads a build read 7, 7, 7, 6
+against 8, 8, 9, 7. **Over the ten undisturbed Ultra loads a build: 72
+against 80 frames over 50 ms**, about one more a minute, inside the 6-9
+0.9.18 itself moves between loads; mean and p99 level or better on every
+setting. Remaining in the long frames on both builds: the card's programs
+set up the first time a view is drawn (`setProgram`, `upload`).
+
+**That leaving-out was not clean**, and the goal's check said so: two loads
+dropped after they were seen. So a rule was written down before the next run
+(GOAL.md's log, 13:35): Ultra, twelve loads a build, every load counted. It
+came out **level**: frames over 50 ms 114 (0.9.18, the person alone) against
+116 (the branch, three golfers); mean 3.78 against 3.79 ms; p99 10.5 against
+10.7; worst 253 against 250. Load by load the middle 0.9.18 load had 8 and
+the middle branch load 10, and one 0.9.18 load of 32 is what evens the
+totals -- the same disturbance as the branch's two, landing on the other
+build. Long-frame counts on this machine move by that much from load to
+load; the totals are the figure the rule names.
+
+*After the minimap fix* (the map's background had been redrawn at every
+tee shot, PROJECT_HANDOFF *The map's still layer is keyed on its framing
+rounded*), a second rule written before the run (GOAL.md, 15:19): Ultra
+twelve loads a build, Phone eight, Low four, every load counted
+(15:20-16:33; 0.9.18 with the person alone against the branch with three
+golfers; ms a frame):
+
+| Setting | Mean A / B | p99 A / B | Frames over 50 ms, A / B | Worst A / B |
+| --- | --- | --- | --- | --- |
+| Phone (8 loads) | 2.80 / 2.69 | 7.2 / 7.2 | 38 / 23 | 140 / 124 |
+| Low (4 loads) | 2.00 / 1.99 | 6.6 / 6.7 | 24 / 10 | 127 / 72 |
+| Ultra (12 loads) | 3.79 / 3.59 | 11.2 / 10.1 | **85 / 108** | **216 / 253** |
+
+**Ultra missed on long frames**: about two more a minute with the golfers
+(0.9.18 6-8 a load, the branch 6-11), and a worse worst frame; its mean and
+p99 are better. 44 of the branch's 108 came 150-270 ms after a computer
+strike; 0.9.18 has the same kind of frame after the person's strike (its
+worst load by load, 163-216 ms, 200-340 ms after it), but about 13 over 48
+strikes against 44 over about 50 computer ones.
+
+Profiled twice. The minified build (two loads a build, which read 28
+against 16 the other way) showed the renderer's uniform uploads in the
+strike frames, with some app functions it could not name. So the branch
+was built unminified (`MINIFY=0 tools/capture/build-hooked.mjs`) and
+profiled against itself, the person alone against three golfers, three
+loads each (17:15-17:24): **21 against 21 frames over 50 ms**, mean 3.88
+against 3.35 ms. Inside the golfers' long frames: `setProgram` and
+`upload` (the renderer setting up programs and their uniforms) and
+`placeShotCard`'s `getBoundingClientRect` (the shot card's layout read,
+27-76 ms); no planning, no flight, no camera search. The person's own
+strike frames hold `flyShot` and `shotCameraPlan` (20-34 ms), which a
+golfer's strike no longer does. **Why those renderer frames come more
+often after a computer strike is not established.** A guess, not tested:
+its camera follows a ball to views the harness's straight-hitting person
+never shows. Left open in TODO.
+
+*A person playing it* (19 November 2026; tools/probe-frames.js through
+tools/phone-probe.mjs, every frame over 50 ms with the strike before it).
+The owner on a Mac mini (Apple M4, Chrome 157 through ANGLE Metal, Ultra,
+uncapped on a 60 Hz screen, 1920x870 window), one Endless round with
+computer golfers, about five minutes: "It went pretty smoothly". In play
+the mean frame was 16.8-17.5 ms (the screen's 16.7), frames over 50 ms 2,
+0 and 7 in the three minutes after the first shot, and none 150-270 ms
+after a computer strike (the nearest 67 ms, 1.35 s after). The longest
+frames were elsewhere: 1,733, 533 and 467 ms while the course loaded,
+1,232 ms before the first shot, 900 ms at the change to the second hole.
+On a 60 Hz screen a frame is a whole number of 16.7 ms, so 50-83 ms is
+three to five refreshes. One machine and one short round: the harness's
+Ultra gap is not obvious to a player there, which is not evidence it is
+gone on this PC's card.
+
+### Follow the flight again, without the circling (19 November 2026)
+
+The owner went back to the follow camera from the television pair, and
+asked that the camera stop "circling around the ball while its showing a
+shot"; for putts, to "follow once the ball starts moving at a comfortable
+viewing distance from behind the ball and then stop once its close the
+hole". The chase keeps its old numbers (24 m back and 11 m up, closing to
+13 and 6.5 m as the ball nears the pin, 1.45 and 0.6 m at the cup; 25
+degrees off the shoulder; held 1.5 s after the strike) and trails one
+bearing fixed at the strike, strike to rest, instead of the line to the
+hole. The putt follow is the aim view moved with the ball -- 6.5 m back,
+2.2 m up, looking 2.5 m past the cup (6-30 m ahead) -- and stops 2 m from
+the cup. **PLACED:** the fixed bearing being strike-to-rest rather than the
+first metres of flight (a slice then shows as the ball crossing the frame);
+the 2 m stop (inside it a putt is watched from where it was aimed); the
+review fly-up kept after a followed shot (it was the television camera's,
+and is its own setting). The frame-rate figures above were taken with the
+television camera; none were retaken.
+
+### The rings and the aim line, made readable (19 November 2026)
+
+The owner: the gimme circles should be "more visible. Thicker bold lines,
+and make the line change color when the ball passes inside its edges"; the
+aim lines need "a color that is more readable against our more pale
+greens"; and a computer golfer's aim line should not show ("It makes it
+look like they are aiming to miss when they do"). All PLACED, from no
+outside source:
+- **Ring width 5 screen pixels** (putting.js `RING_WIDTH`), drawn as fat
+  lines; it was 1, the only width WebGL draws a plain line at. The aim line
+  is 3.5.
+- **The first ring white** (#ffffff), was pale yellow (#f7f6ae). The paler
+  greens run to about #b3cc86 (biomes.js), whose lightness the pale yellow
+  nearly matched; white is the lightest there is, and the line is now bold.
+- **The lit ring hot pink** (#ff3d9a, `RING_INSIDE`): near the opposite of
+  the greens' yellow-green on the colour wheel (the greens sit about 80-95
+  degrees, the pink about 330), and unlike every other ring colour and the
+  aim line.
+- **The aim line blaze orange** (#ff5a14, renderer.js `AIM_COLOUR`), was
+  cream (#fff5d2), opacity .82 to .95. Blaze orange is the colour worn to
+  be seen against vegetation; it is 20 degrees round from the golfers' gold
+  (43) and far from their cyan, indigo and magenta. Its lightness is about
+  half the palest greens', so it reads by colour and by shade at once. Not
+  measured on screen: chosen, then shown to the owner.
+
+### The order of play (src/play-order.js, 19 November 2026)
+
+The owner, after a round with three computer golfers: "finishing the hole
+and then watching the AI play the hole by itself for 3 players is not
+enjoyable", asking for "the regular rules of golf for who plays first and
+Honors on the following tee", across every format. Taken from the R&A's
+Rules of Golf (2023), read 19 November 2026; usga.org's Rule 6 page
+answered 403 to a fetch:
+
+- **Rule 6.4a, match play** (https://www.randa.org/en/rog/the-rules-of-golf/rule-6):
+  "The player who wins a hole has the honour at the next teeing area";
+  "If the hole was tied, the player with the honour at the previous teeing
+  area keeps it"; after both have started, "The ball that is farther from
+  the hole is to be played first."
+- **Rule 6.4b, stroke play**: "The player in the group with the lowest gross
+  score at a hole has the honour at the next teeing area"; "The honour is
+  based on gross scores, even in a handicap competition"; a tie plays "in
+  the same order as at the previous teeing area"; then "The ball that is
+  farthest from the hole should be played first", equal distances "by
+  agreement or by using a random method". Ready golf is "allowed and
+  encouraged" -- not modelled.
+- **Rule 6.4c**: a player playing again from the tee waits for "all other
+  players in the group to make their first stroke on the hole".
+- **Rule 23.6, four-ball** (https://www.randa.org/en/rog/the-rules-of-golf/rule-23):
+  "Partners may play in the order the side considers best."
+- **Rule 21** (Stableford, https://www.randa.org/en/rog/the-rules-of-golf/rule-21)
+  says nothing of the honour: Stableford follows 6.4b, gross.
+
+What the game does: honours as 6.4b in every format but match play, which
+takes the side's honour of 6.4a (net on the team card when handicaps are
+on, since a handicap match's hole is won on net). Under the Rules order,
+anyone yet to strike plays first in honour order, then the ball farthest
+from the hole. **PLACED:** an equal distance goes to the honour order, not a
+lot; partners in a match side play by their gross score on the last hole
+(23.6 leaves it to the side); a scramble is played as teams taking turns
+by the team ball's distance (no Rule covers a scramble; it is a format,
+not a Rule of Golf); **the default stays hole-out in turn**, how every
+round here was played before, with the choice remembered once made.
+
+### Opponents that adapt: all placed (src/ai/adapt.js)
+
+The person's form is their strokes over par plus their handicap strokes
+plus 3 over eighteen (an ordinary round's gap over the index, above),
+scaled to eighteen holes; the opponent's handicap follows 80% of it,
+weighted by the share of the round played (early form is noisy), moves at
+most 1.5 a hole, and stays within 4 of its base over eighteen holes (2
+over nine). None of these has a source: they are judgements meant to keep
+a match close without the opponent's play turning on a hole. Its shots
+still come from its spreads; only the spreads move.
+
+### The first fit (17 November 2026, branch fairway-tour)
+
+Fitted on one thread while the owner was gaming: bands 0, 15 and 30, four
+courses (Puget Sound, Prairie, Seaside, Classic Parkland), six rounds each
+-- 24 rounds a band. 22 of 30 checks within tolerance; both invariants
+zero.
+
+| | Scratch | 15 | 30 |
+| --- | --- | --- | --- |
+| Sim handicap from its last 20 rounds | 0.3 | 13.3 | 28.4 |
+| Average over par (par 72, its tee) | +4.2 | +15.0 | +26.7 |
+| Greens in regulation (want) | 52.5% (59) | 24.3% (21) | 13.4% (7.7) |
+| Drive spread, deg (want) | 4.3 (4.8) | 5.9 (6.4) | 8.7 (7.9) |
+| Drive, 75th percentile, yd (want) | 273 (269) | 239 (237) | 222 (219) |
+| Approach 100-150 yd, median left (want) | .098 (.074) | .140 (.120) | .206 (.167) |
+| Half one-putted from, ft (want) | 8.1 (6.8) | 5.6 (5.1) | 4.0 (4.0) |
+| Two putts on average from, ft (want) | 36.5 (27.1) | 20.1 (19.0) | 8.3 (12.8) |
+| Awful shots a round (want) | 1.2 (1.1) | 3.2 (4.1) | 6.7 (8.7) |
+| Putts a round | 30.2 | 32.8 | 38.3 |
+
+**What fitting found:**
+
+- **The courses were too short.** The starting course's settings asked for
+  18 holes kept its nine's 3,240-yd length (4,831 yd from the back), and
+  every band hit far too many greens (a 15 hit 53%). On 7,000-yd eighteens
+  from the right tee the 15 came in at 22% (Shot Scope: 21%) with nothing
+  else changed. The bench now builds full-length courses.
+- **The game's ground adds spread.** An approach struck with Broadie's
+  median finished 1.25-1.5 times wider (slopes, roll, lies, wind), so the
+  struck spread is scaled down to land on his figure (`CAL.approachScale`),
+  and the short game's and sand's likewise.
+- **An iron keeps its share of the distance**; only the driver, woods and
+  hybrids (by club, not by carry) take the tee shot's wider spread.
+  Ramping by carry gave a 30's short driver an iron's spread.
+- **Putting was right; the measure was wrong.** In isolation, a 15 averages
+  two putts from about 19 ft, as Broadie's Am2. The bench first took the
+  first 2-ft bin that crossed two putts, which noise made far too short;
+  it now fits a line through every first putt.
+- **A bug in the ball model**, found here and fixed (BALL_PHYSICS, *A
+  touchdown is an impact only when the ball moves into the ground*).
+
+### The second fit (18 November 2026, branch fairway-tour, 31 threads)
+
+Every band 0 to 30 by fives, six courses (the four above, Florida Palms and
+Desert Mountain), six rounds each: 36 rounds a band, two minutes. Three
+passes; the last: **58 of 70 checks within tolerance, both invariants zero**.
+
+| Band | Sim handicap (last 20 rounds) | Over par | Putts | Greens (want) | Awful a round (want) |
+| --- | --- | --- | --- | --- | --- |
+| 0 | -0.6 | +4.3 | 32.1 | in tolerance | in tolerance |
+| 5 | 6.0 | +10.9 | 33.0 | 34% (41) | in tolerance |
+| 10 | 11.4 | +13.3 | 33.2 | in tolerance | in tolerance |
+| 15 | 13.8 | +16.2 | 32.5 | in tolerance | in tolerance |
+| 20 | 19.1 | +21.1 | 33.8 | in tolerance | in tolerance |
+| 25 | 23.8 | +21.7 | 35.3 | 17.6% (9) | 6.0 (7.2) |
+| 30 | 27.8 | +26.7 | 35.8 | in tolerance | in tolerance |
+
+(Over par is each band from its own tee: the 25s and 30s play the red tees,
+about 5,700 yd, which is why the 25 is not much over the 20.)
+
+What the passes changed (skill.js `CAL`): more proper mishits at every
+amateur level (awful shots ran at two thirds of Broadie's), the high
+handicaps' driver carry down and their start line tighter (their drives
+were long and wide), scratch's sand and lag putting worse and the 30's lag
+better (two-putt distances), the 15's sand better.
+
+**Found, and left:**
+
+- **A floor under the good player's approach.** Scratch's median from
+  100-150 yd stays about 10% of the distance (Broadie: 7.4%) however tight
+  the struck spread: at half the spread it moved by a thousandth. The
+  game's green slopes and the ball's run after landing set it. Not chased.
+- **The 20s to 30s still drive wider than Broadie's line** (8.5-8.8 degrees
+  against 6.9-7.4), the mishits' wide misses counted in. Their score is
+  right; their greens hit too high on the red tees (the 25: 17.6% against
+  Shot Scope's 9%).
+- **The sim handicap's noise**: twenty rounds give an index that moves a
+  stroke and more between runs of the same golfers, so a band within 1.5
+  is as close as this sample can show; the 30 sits 2.2 better.
+
+**Left for the next fit, from the first:** the 20-round sim handicap moves a stroke or more between
+runs at this sample size, so the tolerance cannot be judged yet; scratch's
+lag putting (too good) and the 30's (too poor) pull the same two numbers
+opposite ways; the 30 has too few awful shots and too many greens.

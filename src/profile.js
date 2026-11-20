@@ -145,6 +145,9 @@ export function normaliseProfile(d) {
  if (['RH', 'LH'].includes(d.hand)) play.hand = d.hand;
  if (['monitor', 'meter'].includes(d.input)) play.input = d.input;
  if (isTee(d.tee)) play.tee = d.tee;
+ // A handicap the golfer typed (the fairway-tour goal, Q8): used for net
+ // rounds until the sim handicap has one of its own.
+ if (Number.isFinite(d.typedIndex) && d.typedIndex >= -6 && d.typedIndex <= 54) play.typedIndex = Math.round(d.typedIndex * 10) / 10;
  // XP (Phase 4): the total, the ledger of recent awards a mulligan can take
  // back (progression.js `award`), the last day the daily bonus was given, the
  // range's daily trickle, and whether the 'XP is new' note is still to show.
@@ -272,10 +275,15 @@ export function setProfileMeter(store, id, difficulty) {
  return p;
 }
 // A golfer's hand and way of playing, saved when a group is started or changed.
-export function setProfilePlay(store, id, {hand, input, tee} = {}) {
+// The index a golfer plays a net round off: the sim handicap's, else the one
+// they typed, else none (scratch).
+export const playingIndex = (p, simIndex) => Number.isFinite(simIndex) ? simIndex : Number.isFinite(p?.typedIndex) ? p.typedIndex : null;
+export function setProfilePlay(store, id, {hand, input, tee, typedIndex} = {}) {
  const p = findProfile(store, id);
  if (!p) return null;
  if (['RH', 'LH'].includes(hand)) p.hand = hand;
+ if (typedIndex === null) delete p.typedIndex;
+ else if (Number.isFinite(typedIndex) && typedIndex >= -6 && typedIndex <= 54) p.typedIndex = Math.round(typedIndex * 10) / 10;
  if (['monitor', 'meter'].includes(input)) p.input = input;
  // The golfer's own tee (round 13), remembered for the next group they join.
  if (isTee(tee)) p.tee = tee;
@@ -374,14 +382,27 @@ export function tallyMulligan(p) { p.counters.mulligans = (p.counters.mulligans 
 
 // The hole as the scorecard has it. Called whenever the round is saved, so a
 // mulligan that un-holes a putt takes the score back off as well.
-export function syncHole(p, meta, {index, par, yards, score, putts}, now = Date.now()) {
+// `gained` (strokes-gained.js, the fairway-tour goal): the hole's strokes
+// gained against scratch by part, kept with the hole for My profile's
+// totals; a hole from before has none and is left out of them.
+export function syncHole(p, meta, {index, par, yards, score, putts, gained = null}, now = Date.now()) {
  const e = p.rounds.find(r => r.id === meta.id);
  if ((!e && !Number.isFinite(score)) || p.removed?.includes(meta.id)) return p;
  const h = holeRecord(entryFor(p, meta, now), index);
  h.par = par; h.yards = yards;
  if (Number.isFinite(score)) { h.score = score; h.putts = Number.isFinite(putts) ? putts : null; }
  else { delete h.score; delete h.putts; }
+ if (gained && Number.isFinite(score)) h.sg = Object.fromEntries(['tee', 'approach', 'short', 'putting'].map(k => [k, Math.round((gained[k] || 0) * 100) / 100]));
+ else if (!Number.isFinite(score)) delete h.sg;
  return p;
+}
+// Strokes gained over every hole that has them: the four parts and the
+// total, and how many rounds' worth (eighteen holes a round).
+export function gainedSummary(p) {
+ const out = {tee: 0, approach: 0, short: 0, putting: 0, holes: 0};
+ for (const r of p?.rounds || []) for (const h of r.card || []) if (h?.sg) { for (const k of ['tee', 'approach', 'short', 'putting']) out[k] += Number(h.sg[k]) || 0; out.holes++; }
+ out.total = out.tee + out.approach + out.short + out.putting;
+ return out;
 }
 // REMOVING A ROUND FROM THE HISTORY. Its scores leave the scoring totals and
 // the sim handicap; the running totals keep the balls that were hit, because a

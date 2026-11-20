@@ -67,11 +67,19 @@ export function crossing(points, level, bearing) {
 // vector main.js already hands the physics; `launch` the club in hand at full
 // power ({speed, vla, spin, spinAxis}). Returns metres, or null when there is
 // nothing sensible to say (no distance, a putt, a hole above the ball's reach).
-export function playsLike({distance, rise = 0, bearing = 0, wind = [0, 0, 0], altitude = 0, temperature, launch}) {
+// `playsLikeSteps` is the same in two steps, a pause (`yield`) after the
+// first flight, for a computer golfer's plan spread over frames (golfer.js
+// `planSteps`); `playsLike` runs it whole.
+export function playsLike(o) { const it = playsLikeSteps(o); let r; while (!(r = it.next()).done); return r.value; }
+export function* playsLikeSteps({distance, rise = 0, bearing = 0, wind = [0, 0, 0], altitude = 0, temperature, launch}) {
  if (!(distance > 1) || !launch || !(launch.speed > 0) || !(launch.vla > 2)) return null;
  const shot = {...launch, hla: 0, spinAxis: 0, origin: {x: 0, z: 0}, aim: bearing * 180 / Math.PI};
- const today = crossing(simulateShot(shot, openGround, {wind, altitude, temperature}).points, rise, bearing);
- const reference = crossing(simulateShot(shot, openGround, {}).points, 0, bearing);
+ // Flown only to the first sample past touchdown (physics.js `untilLanding`):
+ // the ground past the tee is 120 m down, so the fall through any real rise
+ // is long over by then, and the crossing is the full flight's.
+ const today = crossing(simulateShot(shot, openGround, {wind, altitude, temperature, untilLanding: true}).points, rise, bearing);
+ yield;
+ const reference = crossing(simulateShot(shot, openGround, {untilLanding: true}).points, 0, bearing);
  if (!(today > 1) || !(reference > 1)) return null;
  return distance * reference / today;
 }

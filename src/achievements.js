@@ -43,6 +43,15 @@ export const ACHIEVEMENTS = [
  {id: 'all-rounder', name: 'All-Rounder', how: 'Win a medal in every challenge.', xp: 250, title: 'All-Rounder', progress: 'medals', goal: CHALLENGES.filter(c => c.medals).length},
  {id: 'weekly-regular', name: 'Weekly Regular', how: 'Play the challenge of the week four weeks running.', xp: 150, progress: 'chalStreak', goal: 4},
  {id: 'head-of-the-table', name: 'Head of the Table', how: 'Win ten head-to-head challenges.', xp: 100, progress: 'versusWins', goal: 10},
+ // THE FAIRWAY TOUR (the fairway-tour goal, 17 November 2026; tour-rewards.js).
+ // Names and amounts PLACED.
+ {id: 'made-the-cut', name: 'Made the Cut', how: 'Make the cut in a Fairway Tour event.', xp: 75},
+ {id: 'top-ten', name: 'Top Ten', how: 'Finish in the top ten of a Fairway Tour event.', xp: 100},
+ {id: 'tour-winner', name: 'Tour Winner', how: 'Win a Fairway Tour event.', xp: 250, title: 'Tour Winner'},
+ {id: 'major-champion', name: 'Major Champion', how: 'Win a major on the Fairway Tour.', xp: 400, title: 'Major Champion'},
+ {id: 'season-champion', name: 'Season Champion', how: 'Win a Fairway Tour season on points.', xp: 600, title: 'Champion Golfer'},
+ {id: 'playoff-winner', name: 'Sudden Death', how: 'Win a playoff on the Fairway Tour.', xp: 100},
+ {id: 'head-to-head', name: 'Head to Head', how: 'Beat all three of your playing partners in a round of a Fairway Tour event.', xp: 75},
 ];
 export const achievement = id => ACHIEVEMENTS.find(a => a.id === id) || null;
 export const LANDSCAPES = 9;

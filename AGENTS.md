@@ -302,7 +302,9 @@ cartoon look is main's*), and the frame-rate-all-tiers branch's when it was
 merged (9 November 2026; RULES_HISTORY.md). The surroundings-rework branch's ended when it
 was merged (14 November 2026; docs/SURROUNDINGS.md).
 The builder-ux branch's ended
-when it was merged (10 November 2026).
+when it was merged (10 November 2026), and the fairway-tour branch's (one
+job at a time while the owner games, multithreaded when not) when it was
+merged (19 November 2026).
 
 - **If a game is on the card, the owner is using the machine**: do not start,
   even with permission; say so and wait. **That means everything, not only

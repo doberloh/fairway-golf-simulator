@@ -38,11 +38,6 @@ open list before the 11 November 2026 prune*.
   provisional (18.3), yellow penalty areas, and choosing the drop spot by hand.
   RESEARCH *Penalty relief* lists what was left out and why. Medium. (from
   TODO, 11 November 2026; was: same heading)
-- **Rate courses by more than their length.** The sim handicap rates on
-  yardage alone; the generator knows the water, sand, trees and slopes, and
-  the USGA's obstacle factors would make a hard course rate hard. The placed
-  bogey-rating formula wants checking against the Course Rating manual too.
-  Medium. (from TODO, 11 November 2026; was: same heading)
 - **WHS soft and hard caps, and exceptional scores**, once profiles carry a
   year of history. Small. (from TODO, 11 November 2026; was: same heading)
 - **A friend's challenge, the leftovers**: a row for the friend's card in the
@@ -50,11 +45,11 @@ open list before the 11 November 2026 prune*.
   of the week counting as the course of the week; a way to delete a kept
   challenge (the 20 newest are kept). Small each. (from TODO, 11 November
   2026; was: *Leftovers, if wanted*)
-- **Stableford, foursomes and net scoring.** Stableford (points per hole, so a
-  blow-up hole costs little), foursomes (alternate shot) and net scores off the
-  sim handicap the game already keeps. Match play has no handicaps today.
-  Rules go in a pure module beside `scoring.js` with Node tests. Small to
-  medium. (Claude, 16 October 2026)
+- **Foursomes** (alternate shot): two golfers, one ball, taking turns. Rules
+  go in a pure module beside `scoring.js` with Node tests, and the format
+  joins the round matrix. Small to medium. (Claude, 16 October 2026; this
+  entry held Stableford and net scoring too until the owner picked those
+  for the Fairway Tour goal, 17 November 2026)
 - **Tees per golfer.** Each golfer plays their own tee, with mixed-tee scoring
   and the CSVs to match. Medium. (was: *Per-player tee choice*)
 - **A course built for your game.** The generator lays out holes around the
@@ -84,9 +79,6 @@ open list before the 11 November 2026 prune*.
 - **The range's session averages as tiles**, so average carry and spread can
   be ticked on like any other field. Small. (was: *The range's own session
   summary is still its own thing*)
-- **Strokes gained.** The profile already counts fairways, greens in
-  regulation and putts; strokes gained says which part of the game costs the
-  most shots. Pure module with tests. Medium. (Claude, 16 October 2026)
 
 ## Around a round
 
@@ -104,9 +96,6 @@ open list before the 11 November 2026 prune*.
   settings. Already there: arrows and a controller through the menus, reduced
   motion on the cards, Text size, and the nine-size reach check. Medium.
   (from TODO, 11 November 2026; was: *Accessibility*)
-- **A caddie's club suggestion.** "Plays like" already works out what the shot
-  plays like; matching that against the golfer's own bag distances suggests a
-  club. Small. (Claude, 16 October 2026)
 - **Share a shot as a clip.** Record the last shot from the canvas as a short
   video to save and share -- an ace, a long putt. Good for word of mouth.
   Small to medium; check the cost on a weak machine. (Claude, 16 October 2026)

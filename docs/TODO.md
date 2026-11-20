@@ -44,32 +44,44 @@ wrong, unfinished, or owed a check.
 
 ## Next feature
 
-- [ ] **Plan the Fairway Tour with the owner, before any code** (the owner, 9
-  November 2026: "Fairway tour is going to be our next feature"). Three steps,
-  each worth shipping alone: computer opponents who miss the way a golfer of
-  their handicap misses; a tournament weekend of four rounds against a field,
-  with a leaderboard and a cut; a season across the landscapes, kept offline in
-  the profile. To settle first: how a computer golfer's miss is modelled and
-  anchored, how a field's scores are made without playing every shot, whether
-  built courses host events, what a season rewards. Rules in pure modules with
-  Node tests; any new format joins the round matrix. Large. (was: same heading)
+Nothing chosen. The Fairway Tour goal merged and was released as 0.9.19 (19
+November 2026; DONE.md, *The Fairway Tour and computer golfers*); what it
+left is under *Play the current build by hand* and *Known wrong*. The
+candidates are in IDEAS.md.
 
 ## Known wrong
 
 
-- [ ] **One shader is still built after an Ultra course appears** (found
-  17 November 2026 by `npm run smoke`'s `no-late-shaders`). Turning a full
-  circle builds one more, about 10 s in: a `MeshBasicMaterial` with fog and
-  shadow maps (`USE_FOG USE_SHADOWMAP OPAQUE`). A player sees it as a hitch
-  on the first turn. **It is in main and in 0.9.17 too**: main's own build,
-  run on its own, fails the same way, so it came before the pull-push-swing
-  branch and not from it. Which material it is was not looked for. A
-  suspect is anything built since 0.9.14, the last release whose every
-  journey passed: the surroundings rework (0.9.15), phone performance
-  (0.9.16) or the woods past the line (0.9.17). Where: the journey's report
-  names the material's defines. Find the one material with those defines
-  that is made or first drawn late, and warm it in the loading screen's
-  compile pass.
+- [ ] **Ultra: about two more stalls a minute with three computer golfers**
+  (fairway-tour, 18 November 2026; RESEARCH, *After the minimap fix*). The
+  goal asked for a round with three golfers to be no worse than 0.9.18 with
+  one person, on Low, Phone and Ultra. Phone and Low met it; Ultra's mean and
+  p99 are better but frames over 50 ms read 108 against 85 over twelve
+  minutes, and the worst frame 253 against 216 ms. The extra ones come
+  150-270 ms after a computer strike. An unminified profile of them holds
+  the renderer setting up programs and uniforms (`setProgram`, `upload`)
+  and the shot card's layout read (`placeShotCard`), the same work as
+  after the person's strike, and no golfer code; the branch against itself
+  read 21 against 21 over three loads. **Why it comes more often after a
+  computer strike is not known.** A guess, untested: its camera follows a
+  ball to views not drawn before. If so, a way in is to draw the landing
+  area once, off screen, in the pre-shot moment (`preflyComputerShot`
+  already flies the ball there), or set up a hole's programs at its start
+  (the phone's *Half a second at a new hole* below). `placeShotCard`'s
+  layout read is worth taking out either way. Measure with
+  `tools/frame-round.mjs --tier ultra --rounds 12`, every load counted.
+  Whether a person playing feels them: `node tools/phone-probe.mjs --script
+  tools/probe-frames.js` writes each frame over 50 ms with whose strike came
+  before it and how long before. First played 19 November 2026, the owner
+  on a Mac mini (Apple M4, Chrome, Ultra, 60 Hz screen), one Endless round
+  with computer golfers, about five minutes ("It went pretty smoothly"):
+  mean 16.8-17.5 ms in play, one minute with no frame over 50 ms, and **no
+  stall 150-270 ms after a computer strike** (the nearest, 67 ms at 1.35 s).
+  What it did show: 0.5-1.7 s while the course loaded, one of 1.2 s before
+  the first shot, and 0.9 s at the move to the second hole (the phone's
+  *Half a second at a new hole* below, on a Mac too). One machine, one
+  short round: it says the harness's Ultra gap is not obvious to a player
+  there, not that it is gone.
 
 - [ ] **The grass should be darker on every landscape** (the owner, 15
   November 2026, looking at the painted ground on the iPhone: "overall
@@ -93,8 +105,16 @@ wrong, unfinished, or owed a check.
     the bands between cost 0-1 ms; not the painting, not the mipmaps. Not
     known why. The cheap way round without the cause: repaint less often,
     and when the player will not notice (the ball at rest, a hole's change).
+    Seen again 19 November 2026 (tools/probe-frames.js, the owner's iPhone,
+    Safari, a hole with computer golfers on the fairway-tour build): about
+    three a shot, for the person's shots and the computers' alike -- 85-120
+    ms on the strike's own frame, 130-190 ms 4-10 s after it, a smaller one
+    soon after -- and 500-610 ms at the move to the second hole; mean frame
+    17-18 ms.
   - **Half a second at a new hole** (programs built then: the recorder names
-    ShaderMaterial, MeshToonMaterial, Far ground).
+    ShaderMaterial, MeshToonMaterial, Far ground). Not the phone alone: a
+    Mac mini (M4, Ultra) showed 0.9 s at the move to a second hole (19
+    November 2026, tools/probe-frames.js).
   - **Hiding the graphics options on a phone** (the owner's idea of 14
     November, held "until its figures are good"; they are now).
   - **45 a second sustained** (the owner's first target) needs about half
@@ -183,6 +203,24 @@ wrong, unfinished, or owed a check.
   not what a player gets. Every frame comparison needs four loads a build
   until it is understood. docs/history/SURROUNDINGS.md, *A load runs in one
   of two modes*.
+- [ ] **The `phone-portrait` smoke journey failed once** (19 November 2026,
+  the full run on the camera build): "one tap further moved the target 0.30
+  yd, not 1" -- the aim pad steps a foot inside 20 yd, so the tap on the
+  course before it had landed near the ball. Run again alone on the same
+  course (`--endless-seed DRIFT-3902-1`) it passed. Where the tap lands
+  depends on the camera at that moment; a step that waits for the camera to
+  settle, or taps far enough out, would end it. bench/ab/smoke-camera.txt
+  (local).
+
+- [ ] **The `look` smoke journey failed once** (fairway-tour's final build,
+  18 November 2026, 12:36 run): "six putts from two yards and the ball never
+  dropped", on an Endless hole (seed WINDROW-5141-2, hole 2). Passed 4 of 4
+  alone straight after, and in the full runs before and after (46 of 46,
+  13:16). The step putts straight at the cup with a fixed pull, so a steep
+  green can beat it; not shown, as the screenshot was overwritten by the
+  passing reruns (the journey writes one file name). A person's putt runs no
+  code the branch changed that day. Where: tools/smoke.mjs, *holing out
+  plays a flourish over the cup*.
 - [ ] **The `no-late-shaders` smoke journey failed once** on round F3's build
   (Ultra, a drawn Lowcountry nine, seed HOLLOW-1812: one lit shader built 142
   ms after the course appeared), passed ten times alone, and passed in the
@@ -241,9 +279,69 @@ here is a claim of support until it is done.
     flight's end waited on something.
   - `lab.state().lastStroke` holds the last reading, with its sample count.
 
-- [ ] **Play the current build by hand** (0.9.18, 17 November 2026). What has
+- [ ] **Play the current build by hand** (0.9.19, 19 November 2026). What has
   been built and seen only in captures, measurements or smoke runs, and still
   exists in the game. The archive has each item's full list.
+  - **Release 0.9.19** (19 November 2026: the Fairway Tour merged; the
+    computer golfers' features marked BETA). Every smoke journey on the
+    release build is in DISTRIBUTION_REVIEW's addendum. The owner played
+    on the branch on the phone and a Mac mini (the order of play "works
+    flawlessly"; the rings, the orange line and the hidden computer aim
+    liked); none of what follows was looked at item by item.
+  - **Order of play** (0.9.19). Play's Rules step, *Order of play*: *Rules
+    of golf* (honours, then the ball farthest from the hole) or *Hole out
+    in turn* (the default). Tested in tests/play-order.test.mjs and the
+    round matrix, every format with both orders; the `relief` smoke
+    journey checks the setting is on screen; no journey plays the *Rules
+    of golf* order. To check by hand: a scramble of two teams taking
+    turns; a ball out of bounds off the tee waiting for the others; the
+    choice kept for the next round. Other golfers' balls are not drawn
+    while they wait (as in match play), which may read oddly with turns
+    passing every shot.
+  - **Follow the flight again, and a putt camera that stops** (0.9.19).
+    Camera settings, *Shot camera*: *Follow the flight* (default) or
+    *Television*. Tested in tests/chase-camera.test.mjs. To check by hand:
+    a drive, a curving shot and a pitch past the pin -- the camera trails
+    and never swings round; a long putt -- the camera glides after the
+    ball and stops 2 m short, then only turns; a short putt -- no move;
+    Television as before; the review fly-up after a full shot with either.
+    Frame figures in RESEARCH were taken with the television camera.
+  - **Bold putting rings, a blaze-orange aim line, no aim line for a
+    computer golfer** (0.9.19; the owner liked them on the phone). Tested:
+    which ring lights (tests/putting-rings.test.mjs). Not looked at item by
+    item: Dartboard's three rings, only the inner one round the ball lit;
+    no map aim mark on a computer golfer's turn. The fat rings are a
+    renderer change on every tier: frame cost not measured (a profile
+    needs the owner's word).
+  - **The Fairway Tour and computer golfers, by hand** (0.9.19, BETA in the game; built 17-18 November 2026;
+    PLAYING *Computer golfers*, *Handicaps and Stableford*, *The caddie and
+    strokes gained*, *The Fairway Tour*). **Seen in smoke journeys, not by a
+    person** (cpu-group, tour-event, net-stableford, tour-file; their
+    pictures in bench/shots/smoke): a computer golfer made in the seat
+    editor playing its hole out and handing the turn over, its turn card
+    and flight; a Quick season's hub, an event started, the field made
+    ready, the group of four, the leaderboard line, the first shot; Play
+    offering Stableford and Net, a net Stableford round with its strokes,
+    the caddie's line; the editor, a tour shared and opened again.
+    **Not seen at all**: whether computer golfers feel like real players
+    over a whole round (their pace, the three watch settings, their words);
+    Adaptive in a round; their relief and a computer team's scramble pick
+    on screen; a reload mid-hole replaying a computer golfer's shot; a whole
+    event -- four rounds, the cut, round complete's event block, the next
+    event, a season's end and the next season; the XP popup and the tour
+    achievements; My profile's Fairway Tour and Strokes gained sections;
+    round complete's strokes gained and net ranking; the typed handicap
+    box; the builder's test round with its new golfers (about 11 s for a
+    nine, slower than before); a built course in a tour file.
+  - **The Fairway Tour, not built** (0.9.19; each written up in RESEARCH or
+    PLAYING): your playoff is drawn, not played on the course; the
+    scorecard's stroke dots and net row (round complete shows net totals;
+    the card is gross); net skins during the round (the mid-round skins line
+    counts gross; round complete's is net); pictures for the event cards in
+    a tour file; a full 3.2 GB tour file written and read in a browser (the
+    ZIP64 path is tested on a small file); the hole model checked against
+    the computer golfers' own rounds hole by hole; the bogey golfer's
+    rating offset fitted (rating.js `OVER.bogey`, placed).
   - **The swing report's last change** (0.9.18; the owner swung the pad on
     the iPhone and the PC and signed it off on 17 November, DONE *The
     pull-and-push swing, on the owner's iPhone*): the Carry and Total chips

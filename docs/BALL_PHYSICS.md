@@ -418,6 +418,15 @@ stops over the hole falls in.
 The result now also carries `landingSpin` (rpm at first touchdown) and
 `bounces`.
 
+**A touchdown is an impact only when the ball moves into the ground** (17
+November 2026, found by the computer golfers' bench). A ball struck along a
+steep bank -- a driver from 36-degree rough on a prairie course -- is below
+the rising ground a step later while already moving away from the slope's
+face. `bounce` cannot take a ball leaving the ground and returned NaN, which
+threw the whole flight; such a ball is now stood on the ground and flies on.
+Every shot that moves into the ground is unchanged, and `ball-bench.mjs`
+passes as before (148 of 148).
+
 ## Things the model does not do
 
 - **Grain.** Putting with or against the grain moves a Stimpmeter roll by

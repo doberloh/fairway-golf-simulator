@@ -23,7 +23,7 @@
 import {simulateShot, YARD, R, clamp} from './physics.js';
 import {spinForPower} from './clubs.js';
 import {launchForDistance, struckDistance} from './turf.js';
-import {playsLike} from './plays-like.js';
+import {playsLikeSteps} from './plays-like.js';
 import {GROUNDS} from './grounds.js';
 
 // THE LIE costs a shot ball speed and, out of grass, spin. One rule for every
@@ -228,11 +228,14 @@ export function strikeEffect(error, {zone, perfect}, {putt = false} = {}) {
 
 // LEVEL GROUND, STILL AIR: the reference every number on the bar is drawn in.
 const FLAT = {height: () => 0, surface: () => 'fairway', bounds: {x: 5000, minZ: -5000, maxZ: 5000}, trees: [], homes: []};
-const FLAT_OPTIONS = {dt: 1 / 120};
-function fly(club, launch, speed, hla = 0) {
+const FLAT_OPTIONS = {dt: 1 / 120}, CARRY_OPTIONS = {dt: 1 / 120, untilLanding: true};
+function fly(club, launch, speed, hla = 0, options = FLAT_OPTIONS) {
  const spin = launch.spin * spinForPower(clamp(speed / club.speed, 0, 1.2));
- return simulateShot({origin: {x: 0, z: 0}, aim: 0, speed, vla: launch.vla, hla, spin, spinAxis: launch.axis}, FLAT, FLAT_OPTIONS);
+ return simulateShot({origin: {x: 0, z: 0}, aim: 0, speed, vla: launch.vla, hla, spin, spinAxis: launch.axis}, FLAT, options);
 }
+// The carry alone: flown only to its first touchdown, where the carry is taken
+// (physics.js `untilLanding`), so the same number for a fraction of the steps.
+const flyCarry = (club, launch, speed) => fly(club, launch, speed, 0, CARRY_OPTIONS).carry;
 // Where the ball first comes down, in the aim-0 frame: the last airborne sample.
 function landing(r) {
  const pts = r.points;let apex = 0;
@@ -245,23 +248,28 @@ const keyOf = (club, launch) => [club.speed.toFixed(4), launch.vla.toFixed(3), l
 // The carry, in metres, of this club and shape at a full swing.
 export function fullCarry(club, launch) {
  const key = 'full:' + keyOf(club, launch);
- if (!cache.has(key)) cache.set(key, fly(club, launch, club.speed).carry);
+ if (!cache.has(key)) cache.set(key, flyCarry(club, launch, club.speed));
  return cache.get(key);
 }
 // How far this club and shape carries at a given ball speed.
 export function carryAtSpeed(club, launch, speed) {
  const key = 'at:' + keyOf(club, launch) + ':' + speed.toFixed(3);
- if (!cache.has(key)) cache.set(key, fly(club, launch, speed).carry);
+ if (!cache.has(key)) cache.set(key, flyCarry(club, launch, speed));
  return cache.get(key);
 }
 // The ball speed that carries `metres` with this club and shape. Bisected
 // against the ball model; cached per club, shape and yard.
-export function speedForCarry(club, launch, metres) {
+// Run a stepped search (a generator) to its end at once: its answer.
+const whole = it => { let r; while (!(r = it.next()).done); return r.value; };
+export function speedForCarry(club, launch, metres) { return whole(speedForCarrySteps(club, launch, metres)); }
+// The same, a pause after every third flight (a computer golfer's plan,
+// spread over frames; golfer.js `planSteps`).
+export function* speedForCarrySteps(club, launch, metres) {
  if (metres <= 0) return 0;
  const key = keyOf(club, launch) + ':' + Math.round(metres / YARD * 4);
  if (cache.has(key)) return cache.get(key);
  let lo = 0, hi = club.speed * 1.25;
- for (let i = 0; i < 18; i++) { const mid = (lo + hi) / 2; if (fly(club, launch, mid).carry < metres) lo = mid; else hi = mid; }
+ for (let i = 0; i < 18; i++) { const mid = (lo + hi) / 2; if (flyCarry(club, launch, mid) < metres) lo = mid; else hi = mid; if (i % 3 === 2) yield; }
  const speed = (lo + hi) / 2;
  if (cache.size > 4000) cache.clear();
  cache.set(key, speed);
@@ -339,12 +347,16 @@ export function puttSpeedFor(putter, turf, metres) { return Math.min(putter.spee
 // Returns {share, out}: `share` in bar lengths (0 to 1; the overswing zone is
 // never suggested), `out` when even a full swing falls short, or the circle is
 // above where this shot can climb.
-export function targetShare({club, shape, short = false, lie, difficulty, metres, rise = 0, bearing = 0, wind = [0, 0, 0], altitude = 0, temperature}) {
+export function targetShare(o) { return whole(targetShareSteps(o)); }
+// The same in steps: a pause after each flight or few (`playsLikeSteps`,
+// `speedForCarrySteps`), for a computer golfer's plan spread over frames.
+export function* targetShareSteps({club, shape, short = false, lie, difficulty, metres, rise = 0, bearing = 0, wind = [0, 0, 0], altitude = 0, temperature}) {
  if (!club || club.code === 'PT' || !(metres > 0)) return null;
  const launch = shapedLaunch(club, shape, {short});
  const full = fullCarry(club, launch);
- const level = playsLike({distance: metres, rise, bearing, wind: difficultyOf(difficulty).wind ? wind : [0, 0, 0], altitude, temperature,
+ const level = yield* playsLikeSteps({distance: metres, rise, bearing, wind: difficultyOf(difficulty).wind ? wind : [0, 0, 0], altitude, temperature,
   launch: {speed: club.speed, vla: launch.vla, spin: launch.spin, spinAxis: 0}});
+ yield;
  if (level == null) return {share: 1, out: true};
  const f = lieFactor(lie);
  // The carry the bar must ask for: on a clean lie the level carry itself; from
@@ -352,7 +364,7 @@ export function targetShare({club, shape, short = false, lie, difficulty, metres
  // The grass takes spin as well, so the speed is the one that carries the
  // distance with the spin the lie leaves.
  const lying = {...launch, spin: launch.spin * lieSpin(lie, launch.vla)};
- const asked = f < 1 ? carryAtSpeed(club, launch, Math.min(club.speed * 1.3, speedForCarry(club, lying, level) / f)) : level;
+ const asked = f < 1 ? carryAtSpeed(club, launch, Math.min(club.speed * 1.3, (yield* speedForCarrySteps(club, lying, level)) / f)) : level;
  const share = asked / full;
  return share > 1 + 1e-6 ? {share: 1, out: true} : {share: Math.max(0, share), out: false};
 }
@@ -378,7 +390,11 @@ export function longestReach(fits, max, {floor = 5, steps = 10} = {}) {
 // THE WHOLE STRIKE: a finished swing, the club, the shot chosen and the lie,
 // into the numbers the ball leaves with. `lie` is the surface the ball sits on;
 // its speed share is taken off the speed the bar asked for.
-export function swingLaunch(sw, {club, shape, short = false, lie, difficulty, turf, puttRange: range = null, zoom = 1}) {
+export function swingLaunch(sw, o) { return whole(swingLaunchSteps(sw, o)); }
+// The same in steps: a pause after every few flights of the speed search and
+// before the aim correction's flight, for a computer golfer's plan spread over
+// frames (golfer.js `shotSteps`). Run whole, the same numbers.
+export function* swingLaunchSteps(sw, {club, shape, short = false, lie, difficulty, turf, puttRange: range = null, zoom = 1}) {
  const putt = club.code === 'PT';
  const launch = shapedLaunch(club, shape, {short});
  const power = sw.power ?? 0, share = (putt ? 1 : zoom) * carryShare(power);
@@ -391,9 +407,10 @@ export function swingLaunch(sw, {club, shape, short = false, lie, difficulty, tu
   const speed = puttSpeedFor(club, turf, share * (range ?? puttFullRoll(club, turf)));
   return {shot: {speed: speed * fx.speed * factor, vla: 0, hla: fx.hla, spin: 0, spinAxis: 0}, before: speed * fx.speed, factor, power, share, strike: fx, zones};
  }
- const speed = speedForCarry(club, launch, share * fullCarry(club, launch)) * fx.speed;
+ const speed = (yield* speedForCarrySteps(club, launch, share * fullCarry(club, launch))) * fx.speed;
  // A chosen Push or Pull starts the ball off the aim by the club's own angle.
  const side = fx.start === 'push' ? 1 : fx.start === 'pull' ? -1 : 0;
+ yield;
  const comp = curveCompensation(club, launch, speed) + (side ? side * pushStart(club, launch, speed) : 0);
  const spin = launch.spin * lieSpin(lie, launch.vla) * spinForPower(clamp(speed / club.speed, 0, 1.2));
  return {shot: {speed: speed * factor, vla: clamp(launch.vla + (fx.vla ?? 0), 3, 60), hla: comp + fx.hla, spin, spinAxis: launch.axis + (launch.side ?? 0) + fx.axis}, before: speed, factor, power, share, strike: fx, zones};

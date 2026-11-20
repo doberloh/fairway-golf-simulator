@@ -700,7 +700,14 @@ async function coursePoint(t, pullPx) {
 async function openPad(t, {touch = false} = {}) {
  const shown = () => t.page.evaluate(() => document.getElementById('swingPad')?.hidden === false);
  if (await shown()) return;
- if (touch) await t.page.locator('#shotButton').tap(); else await t.page.click('#shotButton');
+ const press = () => touch ? t.page.locator('#shotButton').tap() : t.page.click('#shotButton');
+ await press();
+ // A press just as a panel finishes closing can be taken by the panel's last
+ // frame (19 November 2026, surprise-round after Help & controls): one more
+ // press, as a person would, before calling it a failure.
+ const soon = Date.now() + 1500;
+ while (Date.now() < soon && !(await shown())) await t.page.waitForTimeout(100);
+ if (!(await shown())) await press();
  await t.until(shown, 'the Swing button to open the swing pad', 5 * SLOW);
 }
 async function padPoint(t) {
@@ -1115,6 +1122,8 @@ const JOURNEYS = [
       const text = (parts.get(program) || []).map(s => src.get(s) || '').join('\n');
       const type = (text.match(/#define SHADER_TYPE (\w+)/) || [])[1];
       const at = {type: type || 'ShaderMaterial', after: Math.round(performance.now() - window.__shownAt), marks: [...new Set((text.match(/#define (USE_[A-Z_0-9]+|[A-Z_]*INSTANC[A-Z_]*|DOUBLE_SIDED|FLAT_SHADED|ALPHATEST|OPAQUE)/g) || []).map(d => d.slice(8)))].join(' ') + ' | ' + ['farNormals', 'vThin', 'thinLvl', 'windTime', 'treeRoot', 'flex', 'vMistWorld', 'groundPoint', 'mirrorMap', 'aFoot', 'floodlit', 'snow'].filter(n => text.includes(n)).join(',')};
+      // The object being drawn (capture build only: `__naming`, below).
+      if (window.__drawing) at.who = window.__drawing();
       window.__lateAny.push(at);
       if (/^Mesh(Toon|Standard|Physical|Lambert|Phong)Material$/.test(type)) window.__lateLit.push(at);
      }
@@ -1163,12 +1172,29 @@ const JOURNEYS = [
    await t.step('turning a full circle, toward the sun and away, builds no shader of any kind', async () => {
     // From above the first fairway, looking up a little: the sun is in shot
     // for part of the turn whatever the hour and the course's heading.
+    // On the capture build (`--file bench/shots/dist-exp/index.html`, which
+    // has window.__view), every object's before-draw hook notes the object,
+    // so a late program names what it was drawn for -- an override material
+    // (the god rays' black mask) holds no program of its own to look up.
+    await t.page.evaluate(() => {
+     const v = window.__view;
+     if (!v) return;
+     const proto = Object.getPrototypeOf(Object.getPrototypeOf(v.scene)), was = proto.onBeforeRender;
+     let cur = null;
+     proto.onBeforeRender = function (...a) { cur = this; return was.apply(this, a); };
+     window.__drawing = () => {
+      if (!cur) return '(nothing noted)';
+      const path = []; for (let q = cur; q && q !== v.scene; q = q.parent) path.push(q.name || q.type);
+      const g = cur.geometry?.attributes || {};
+      return `${path.join(' < ')} | ${cur.isInstancedMesh ? 'instanced ' + cur.count : cur.type} | ${g.position?.count} verts | attributes ${Object.keys(g).join(',')} | material ${[].concat(cur.material || []).map(m => m.type).join(',')} | in scene ${!!cur.parent} | mask override ${v.scene.overrideMaterial ? v.scene.overrideMaterial.type : 'none'} | userData ${JSON.stringify(cur.userData).slice(0, 80)}`;
+     };
+    });
     for (let yaw = 0; yaw < 360; yaw += 30) {
      await t.page.evaluate(y => window.lab.camera({hole: 0, along: 60, height: 25, look: y, pitch: 25}), yaw);
      await t.page.waitForTimeout(300);
     }
     const late = await t.page.evaluate(() => window.__lateAny);
-    if (late.length) throw new Error(`${late.length} shader(s) built after the course appeared: ${late.map(l => `${l.type} at ${l.after} ms${l.marks ? ' [' + l.marks + ']' : ''}`).join(', ')}`);
+    if (late.length) throw new Error(`${late.length} shader(s) built after the course appeared: ${late.map(l => `${l.type} at ${l.after} ms${l.marks ? ' [' + l.marks + ']' : ''}${l.who ? ' -- drawn for ' + l.who : ''}`).join(', ')}`);
    });
   },
  },
@@ -1685,6 +1711,10 @@ const JOURNEYS = [
     if (await t.inFlight()) throw new Error('a lost lift hit the ball');
    });
    await t.step('a pull and push finished out to the right and high is a High Push, and the report says what was hit', async () => {
+    // A ball from an earlier step may be in water on a random course, and
+    // its relief choice covers the Swing button until taken (19 November
+    // 2026, BRAMBLE-6232-1; the same as the step above).
+    await reliefFirst(t);
     await strokeOnPad(t, .6, {follow: .6, bend: .36});
     await t.until(() => t.inFlight(), 'the pull and push to start a shot', 5 * SLOW);
     const said = await t.page.textContent('#smHint');
@@ -1700,6 +1730,10 @@ const JOURNEYS = [
     // The pad shuts a second after the shot (the owner, 16 November 2026);
     // opened again, it still has the path, its finish in the High Push cell.
     await t.until(() => t.page.evaluate(() => document.getElementById('swingPad').hidden), 'the pad to shut after the shot', 4 * SLOW);
+    // Endless draws a new course each run: a push can find water, and its
+    // relief choice covers the Swing button until it is taken (18 November
+    // 2026, MARROWOOD-4146-1). The path is the last stroke's, kept through it.
+    await reliefFirst(t);
     await openPad(t);
     if (!await t.page.evaluate(() => !!document.querySelector('#strokePad .sp-ghost') && !!document.querySelector('#strokePad .sp-cell.push.high.lit'))) throw new Error('the pad did not keep the path and its cell');
     await t.page.screenshot({path: path.join(SHOTS, 'pull-push-path.png')});
@@ -1784,6 +1818,11 @@ const JOURNEYS = [
     await t.chrome();await t.page.getByRole('button', {name: 'Golfers & rules'}).first().click();
     await t.until(() => t.drawerOpen(), 'the round panel', 5 * SLOW);
     // The house rules are on the Golfers & rules screen itself (21 October 2026).
+    // Every rule is ON it, not left in the put-away old sections: the order of
+    // play and the fairway-tour goal's caddie and computer-golfer settings were
+    // drawn and never shown until the owner looked (19 November 2026).
+    const hidden = await t.page.evaluate(() => ['roundOB', 'roundOrder', 'roundCaddie', 'roundCpuWatch', 'roundCpuChat'].filter(id => { const el = document.getElementById(id); return !el || !!el.closest('.sx-emptied') || !el.closest('.lb-pick'); }));
+    if (hidden.length) throw new Error(`not on the Golfers & rules screen: ${hidden.join(', ')}`);
     await t.page.selectOption('#roundOB', 'e5');
     await t.closeDrawer();
     if ((await saved()).outOfBounds !== 'e5') throw new Error('the round did not take the rule');
@@ -2823,6 +2862,179 @@ const JOURNEYS = [
     const first = store?.profiles?.find(p => p.id === store.main), second = store?.profiles?.find(p => p.name === 'Second');
     if (first?.input !== 'meter' || first?.hand !== 'LH') throw new Error(`the first golfer's profile reads ${JSON.stringify({input: first?.input, hand: first?.hand})}`);
     if (second?.input !== 'monitor') throw new Error(`the second golfer's profile reads ${JSON.stringify({input: second?.input})}`);
+   });
+  },
+ },
+ // A COMPUTER GOLFER IN THE GROUP (the fairway-tour goal, 17 November 2026):
+ // the seat editor makes one, the round starts with it up first, and it
+ // plays its own hole -- the turn card names its club, its balls fly, the
+ // person's swing is refused on its turn -- and hands the turn over.
+ {
+  name: 'cpu-group',
+  what: 'a computer golfer in the group: made in the seat editor, it plays its hole out by itself (its card, its flights, its score) and the turn comes to the person',
+  context: {viewport: {width: 1366, height: 768}},
+  async run(t) {
+   const state = () => t.page.evaluate(() => window.lab.state().turn);
+   await menuReady(t);
+   await t.step('a group of two: a computer golfer first, then a new player', async () => {
+    await fromMenu(t, 'Endless');
+    await t.press('Golfers');
+    await t.page.selectOption('#who0', '__cpu');
+    await t.until(() => t.page.locator('#level0').count().then(n => n > 0), 'the computer golfer\'s level', 5 * SLOW);
+    await t.press('Add player');
+    if (await t.page.locator('#name1').count()) await t.page.fill('#name1', 'Person');
+    const sub = await t.page.locator('#playerRows .seat').first().textContent();
+    if (!/COMPUTER/.test(sub)) throw new Error(`the first seat does not say it is a computer golfer: "${sub.trim().slice(0, 80)}"`);
+    await t.page.selectOption('#level0', '10');
+    await t.press('Start an endless run');
+    await t.inPlay();
+   });
+   await t.step('the computer golfer is up, its card names a club, and its ball flies', async () => {
+    const s = await state();
+    if (!s?.computer || s.active !== 0) throw new Error(`the first turn is not the computer golfer's: ${JSON.stringify(s)}`);
+    await t.until(async () => /yd to the hole/.test(await t.page.textContent('#turnFlash').catch(() => '')), 'the computer golfer\'s turn card', 20 * SLOW);
+    await t.page.locator('#turnFlash').screenshot({path: path.join(SHOTS, 'cpu-turn-card.png')}).catch(() => {});
+    await t.until(() => t.inFlight(), 'the computer golfer\'s first ball in the air', 20 * SLOW);
+    await t.page.screenshot({path: path.join(SHOTS, 'cpu-flight.png')});
+   });
+   await t.step('a swing of the person\'s is not taken on the computer golfer\'s turn', async () => {
+    const ok = await t.page.evaluate(() => window.lab.state().canSwing);
+    const s = await state();
+    if (s.computer && ok) throw new Error('the swing is offered on the computer golfer\'s turn');
+   });
+   await t.step('it plays the hole out by itself and the turn comes to the person', async () => {
+    await t.until(async () => { const s = await state(); return s && (s.active === 1 || s.holeComplete); }, 'the computer golfer to hole out', 240 * SLOW);
+    const s = await state();
+    const score = s.cards[0][s.hole];
+    if (!(score >= 1 && score < 15)) throw new Error(`the computer golfer's card for hole ${s.hole + 1} says ${score}`);
+    await t.page.screenshot({path: path.join(SHOTS, 'cpu-handed-over.png')});
+   });
+  },
+ },
+ // A TOUR EVENT'S FIRST TEE (the fairway-tour goal): a Quick season from the
+ // main menu, its first event started, round one begun -- the field made
+ // ready, the person's group of four with three computer golfers, the
+ // leaderboard's line on the round screen -- and the first shot struck.
+ {
+  name: 'tour-event',
+  what: 'a Quick season from the main menu: its hub, the first event started, round one with three computer golfers in the group, the field ready and the leaderboard line on the round screen, the first shot',
+  context: {viewport: {width: 1366, height: 768}},
+  async run(t) {
+   await menuReady(t);
+   await t.step('the Fairway Tour from the main menu: a Quick season', async () => {
+    await t.page.locator('#mainMenu').getByRole('button', {name: /Fairway Tour/}).first().click();
+    await t.until(() => t.page.locator('[data-tour="quick"]').isVisible().catch(() => false), 'the tour\'s start screen', 10 * SLOW);
+    await t.page.screenshot({path: path.join(SHOTS, 'tour-start.png')});
+    await t.page.click('[data-tour="quick"]');
+    await t.until(() => t.page.locator('[data-tour="start"]').isVisible().catch(() => false), 'the hub', 10 * SLOW);
+    await t.page.screenshot({path: path.join(SHOTS, 'tour-hub.png')});
+   });
+   await t.step('the first event started; round one begins on its course', async () => {
+    await t.page.click('[data-tour="start"]');
+    await t.until(() => t.page.locator('[data-tour="play"]').isVisible().catch(() => false), 'Play round 1', 10 * SLOW);
+    await t.page.click('[data-tour="play"]');
+    await t.inPlay(180 * SLOW);
+   });
+   await t.step('the field ready: the leaderboard line, a group of four with three computer golfers', async () => {
+    await t.until(() => t.page.locator('#eventTicker').isVisible().catch(() => false), 'the leaderboard line', 120 * SLOW);
+    const text = await t.page.textContent('#eventTicker');
+    // Before anyone has a score it names the event and the field; when the
+    // person's group is not first out, the groups ahead are already on the
+    // course and it names the leader and the person's place (ui-tour.js).
+    if (!/ROUND 1 OF \d · \d+ GOLFERS|YOU (T?\d+|LEAD)/.test(text)) throw new Error(`the leaderboard line says "${text}"`);
+    const s = await t.page.evaluate(() => window.lab.state().turn);
+    if (!s || s.cards.length !== 4) throw new Error(`the group is ${s?.cards.length} golfers, not four`);
+    if (s.computer) throw new Error('a computer golfer is up first; the person is seat one');
+    await t.page.screenshot({path: path.join(SHOTS, 'tour-first-tee.png')});
+   });
+   await t.step('the first shot', () => t.shot());
+  },
+ },
+ // NET STABLEFORD WITH A COMPUTER GOLFER, AND THE CADDIE (the fairway-tour
+ // goal): Play offers Stableford and the Scoring choice; a net Stableford
+ // round with a computer golfer starts with each golfer's strokes worked out;
+ // a swing pad golfer's turn shows the caddie's line, gone after the swing.
+ {
+  name: 'net-stableford',
+  what: 'Play offers Stableford and net scoring; a net Stableford round with a computer golfer starts with the strokes worked out; the caddie\'s line on a swing pad turn, gone after the swing',
+  context: {viewport: {width: 1366, height: 768}},
+  async run(t) {
+   await menuReady(t);
+   await t.step('Play: Stableford with its note, and Scoring with Net', async () => {
+    await fromMenu(t, 'Play');
+    await t.page.waitForSelector('#roundMode', {state: 'attached', timeout: 10000 * SLOW});
+    const r = await t.page.evaluate(() => {
+     const sel = document.getElementById('roundMode');
+     if (![...sel.options].some(o => o.value === 'stableford')) return null;
+     sel.value = 'stableford'; sel.dispatchEvent(new Event('change'));
+     return {note: document.getElementById('formatNote').textContent, net: [...(document.getElementById('roundNet')?.options || [])].map(o => o.value)};
+    });
+    if (!r) throw new Error('Format has no Stableford choice');
+    if (!/points/i.test(r.note)) throw new Error(`the Stableford note reads: ${r.note}`);
+    if (!r.net.includes('net')) throw new Error('Scoring has no Net choice');
+   });
+   await t.step('a net Stableford round with a computer golfer, the strokes worked out', async () => {
+    await t.page.evaluate(() => window.lab.course({holes: 9}, {players: [{name: 'Ann', team: 'A', hand: 'RH', input: 'meter'}, {name: 'Calum Lennox', team: 'A', hand: 'RH', input: 'cpu', cpu: {id: 'g050', handicap: 12}}], mode: 'stableford', tee: 'blue', handicaps: true}));
+    await t.inPlay(120 * SLOW);
+    const saved = await t.page.evaluate(() => JSON.parse(localStorage.getItem('fairway-round-v1') || 'null')?.round);
+    if (saved?.mode !== 'stableford' || !saved?.handicaps) throw new Error(`the saved round is ${saved?.mode}, handicaps ${saved?.handicaps}`);
+    if (!saved.net || saved.net.strokes.length !== 2 || saved.net.strokes[1].reduce((s, v) => s + v, 0) < 1) throw new Error(`the strokes are ${JSON.stringify(saved.net?.strokes)}`);
+   });
+   await t.step('the caddie\'s line on the swing pad golfer\'s turn, gone after the swing', async () => {
+    await t.until(() => t.page.locator('#caddieLine').isVisible().catch(() => false), 'the caddie\'s line', 20 * SLOW);
+    const line = await t.page.textContent('#caddieLine');
+    if (!/^CADDIE · .+ yd$/.test(line)) throw new Error(`the caddie says "${line}"`);
+    await t.page.screenshot({path: path.join(SHOTS, 'caddie-line.png')});
+    // After the swing the golfer plays on from where the ball stopped (stroke
+    // play's order): the line, if up, is a new suggestion from the new spot.
+    await t.shot();
+    const after = await t.page.locator('#caddieLine').isVisible().catch(() => false) ? await t.page.textContent('#caddieLine') : '';
+    if (after === line) throw new Error(`the caddie's line did not change after the swing: "${line}"`);
+   });
+  },
+ },
+ // THE TOUR EDITOR AND A TOUR FILE (the fairway-tour goal): a tour built in
+ // the editor and saved; shared as a .fairway-tour; opened again, its
+ // contents shown before Add tour, and added.
+ {
+  name: 'tour-file',
+  what: 'Build your own: the editor names a tour, sets one round a weekend and adds an event; saved, it is the hub; shared as a .fairway-tour and opened again, shown before Add tour, and added',
+  context: {viewport: {width: 1366, height: 768}, acceptDownloads: true},
+  async run(t) {
+   await menuReady(t);
+   let bytes = null;
+   await t.step('the editor: a name, one round a weekend, a second event, saved', async () => {
+    await t.page.locator('#mainMenu').getByRole('button', {name: /Fairway Tour/}).first().click();
+    await t.until(() => t.page.locator('[data-tour="blank"]').isVisible().catch(() => false), 'the tour\'s start screen', 10 * SLOW);
+    await t.page.click('[data-tour="blank"]');
+    await t.until(() => t.page.locator('#tourName').isVisible().catch(() => false), 'the editor', 10 * SLOW);
+    await t.page.fill('#tourName', 'Smoke Tour');
+    await t.page.selectOption('#tourRounds', '1');
+    await t.page.click('[data-tour="add"]');
+    await t.until(async () => (await t.page.locator('.tour-events li').count()) === 2, 'a second event', 5 * SLOW);
+    await t.page.screenshot({path: path.join(SHOTS, 'tour-editor.png')});
+    await t.page.click('[data-tour="save"]');
+    await t.until(async () => /Smoke Tour/.test(await t.page.textContent('#drawerContent')) && await t.page.locator('[data-tour="start"]').isVisible().catch(() => false), 'the hub of the saved tour', 10 * SLOW);
+    if (!/one round/.test(await t.page.textContent('#drawerContent'))) throw new Error('the hub does not say one round');
+   });
+   await t.step('shared as one .fairway-tour file', async () => {
+    const [download] = await Promise.all([t.page.waitForEvent('download'), t.page.click('[data-tour="share"]')]);
+    if (!/\.fairway-tour$/.test(download.suggestedFilename())) throw new Error(`the file is called ${download.suggestedFilename()}`);
+    bytes = await (await import('node:fs/promises')).readFile(await download.path());
+    if (bytes[0] !== 0x50 || bytes[1] !== 0x4b) throw new Error('the file is not a ZIP');
+   });
+   await t.step('opened again: shown before Add tour, then added', async () => {
+    await t.page.click('[data-tour="switch"]');
+    await t.until(() => t.page.locator('[data-tour="import"]').isVisible().catch(() => false), 'the start screen', 5 * SLOW);
+    const [chooser] = await Promise.all([t.page.waitForEvent('filechooser'), t.page.click('[data-tour="import"]')]);
+    await chooser.setFiles({name: 'Smoke Tour.fairway-tour', mimeType: 'application/zip', buffer: bytes});
+    await t.until(() => t.page.locator('[data-tour="addimport"]').isVisible().catch(() => false), 'the file\'s contents and Add tour', 10 * SLOW);
+    if (!/2 events/.test(await t.page.textContent('#drawerContent'))) throw new Error('the preview does not say two events');
+    await t.page.screenshot({path: path.join(SHOTS, 'tour-import.png')});
+    await t.page.click('[data-tour="addimport"]');
+    await t.until(() => t.page.locator('[data-tour="start"]').isVisible().catch(() => false), 'the added tour\'s hub', 10 * SLOW);
+    const n = await t.page.evaluate(() => JSON.parse(localStorage.getItem('fairway-tours-v1')).tours.length);
+    if (n !== 2) throw new Error(`${n} tours kept, not two`);
    });
   },
  },

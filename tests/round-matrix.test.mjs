@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {Round, FORMATS} from '../src/game.js';
+import {PLAY_ORDERS} from '../src/play-order.js';
 import {awardedPutts, PUTTING_MODES} from '../src/putting.js';
 import {skins, decidedHoles, skinsWinner} from '../src/skins.js';
 import {goalStatus} from '../src/round-goals.js';
@@ -61,6 +62,10 @@ const PLAYED = {
  match: {teams: true, fewest: 2},
  scramble: {teams: true, fewest: 1},
  skins: {teams: false, fewest: 2},
+ // Stableford (the fairway-tour goal, 17 November 2026): turns as stroke
+ // play; the points are checked against the course's pars on the generated
+ // course below.
+ stableford: {teams: false, fewest: 1},
 };
 const PLAYED_FORMATS = Object.keys(PLAYED);
 
@@ -97,19 +102,52 @@ function shotFrom(at, rand) {
 // changes and their seat number moves.
 function scorer(round) {
  const golfers = round.players.map(p => ({name: p.name, team: p.team, card: [], putts: []}));
- return {golfers, order: golfers.slice(), match: {A: 0, B: 0}, teamCards: {A: [], B: []}};
+ return {golfers, order: golfers.slice(), match: {A: 0, B: 0}, teamCards: {A: [], B: []}, mode: round.mode, playOrder: round.playOrder};
 }
+
+// WHO SHOULD BE UP, played farthest-out (match play always; the others when
+// the group chose the Rules of Golf order): anyone yet to strike on this hole,
+// in honour order; then the ball farthest from the hole, a tie to the honour.
+// In a scramble the team is up, not a golfer. Worked out here, not borrowed.
+function expectedUp(r, ref) {
+ const away = i => far(r.positions[i]);
+ if (ref.mode === 'scramble') {
+  const teams = [...new Set(ref.order.map(g => g.team))].filter(t => !ref.teams[t].done);
+  const first = t => ref.golfers.findIndex(g => g.team === t);
+  const fresh = teams.find(t => ref.teams[t].strokes === 0);
+  if (fresh) return {team: fresh};
+  let best = null, d = -Infinity;
+  for (const t of teams) if (away(first(t)) > d + 1e-9) { d = away(first(t)); best = t; }
+  return {team: best};
+ }
+ const left = ref.order.filter(g => !g.done);
+ const fresh = left.find(g => g.strokes === 0);
+ if (fresh) return {golfer: fresh};
+ let best = null, d = -Infinity;
+ for (const g of left) { const x = away(seatOf(ref, g)); if (x > d + 1e-9) { d = x; best = g; } }
+ return {golfer: best};
+}
+const farthestFirst = ref => ref.mode === 'match' || ref.playOrder === 'farthest';
 
 function beginHole(ref, hole) {
  // Honours: lowest score on the last hole first, ties keeping their order, a
  // golfer with no score there at the back.
  if (hole > 0) {
   const s = g => g.card[hole - 1];
+  // Match play: the side that won the hole tees off first, and keeps the
+  // honour on a halved hole (Rule 6.4a). Who had it is the side first on
+  // the last tee, before the scores reorder anyone.
+  const held = ref.order[0]?.team;
   ref.order = ref.order.slice().sort((a, b) => {
    const fa = Number.isFinite(s(a)), fb = Number.isFinite(s(b));
    if (fa && fb) return s(a) - s(b);
    return fa === fb ? 0 : fa ? -1 : 1;
   });
+  if (ref.mode === 'match') {
+   const a = ref.teamCards.A[hole - 1], b = ref.teamCards.B[hole - 1];
+   const lead = Number.isFinite(a) && Number.isFinite(b) && a !== b ? (a < b ? 'A' : 'B') : held;
+   ref.order.sort((x, y) => (x.team === lead ? 0 : 1) - (y.team === lead ? 0 : 1));
+  }
  }
  for (const g of ref.golfers) Object.assign(g, {strokes: 0, holePutts: 0, done: false});
  ref.teams = {A: {strokes: 0, putts: 0, candidates: [], done: false}, B: {strokes: 0, putts: 0, candidates: [], done: false}};
@@ -141,9 +179,12 @@ function checkTurn(r, ref, why, dropped) {
  assert.equal(r.done[r.active], false, `${why}: the golfer up has not holed out`);
  assert.equal(g.done, false, `${why}: the scorer agrees they have not holed out`);
  // A sim drop leaves the golfer who dropped up to play it, nearest or not.
- if (r.mode === 'match' && !dropped) {
-  const out = ref.golfers.map((x, i) => x.done ? -1 : far(r.positions[i]));
-  assert.ok(Math.abs(out[r.active] - Math.max(...out)) < 1e-9, `${why}: match play plays the ball farthest from the hole`);
+ // In a scramble the team is checked as its turn starts (no ball yet on its
+ // list); its teammates then play in seat order.
+ if (farthestFirst(ref) && !dropped && !(r.mode === 'scramble' && r.candidates.length)) {
+  const up = expectedUp(r, ref);
+  if (up.team) assert.equal(g.team, up.team, `${why}: team ${up.team} is up (honours on the tee, then the ball farthest out)`);
+  else assert.equal(g, up.golfer, `${why}: ${up.golfer?.name} is up (honours on the tee, then the ball farthest out)`);
  }
  if (r.mode === 'scramble') {
   assert.ok(!r.candidates.some(c => c.player === r.active), `${why}: a teammate plays once per team shot`);
@@ -181,7 +222,7 @@ function playHole(r, ref, rand, cfg, why) {
    const g = ref.golfers[r.active], t = ref.teams[g.team];
    assert.equal(r.candidates.length, t.candidates.length, `${why}: every teammate's ball is offered`);
    const k = Math.floor(rand() * t.candidates.length), c = t.candidates[k];
-   r.chooseScramble(k);
+   r.chooseScramble(k, PIN);
    t.strokes += 1 + c.penalty + c.putts;
    t.putts += (c.puttStroke ? 1 : 0) + c.putts;
    t.candidates = [];
@@ -225,7 +266,7 @@ function playHole(r, ref, rand, cfg, why) {
    g.strokes += 1 + putts;
    g.holePutts += (shot.puttStroke ? 1 : 0) + putts;
    if (shot.holed || putts > 0) finishGolfer(ref, g, hole);
-   else if (r.mode === 'stroke' || r.mode === 'skins') assert.equal(r.active, i, `${why}: stroke play keeps the golfer up until they hole out`);
+   else if (!farthestFirst(ref)) assert.equal(r.active, i, `${why}: hole-out order keeps the golfer up until they hole out`);
   }
  }
  // The hole is over: every card as the scorer has it.
@@ -290,10 +331,13 @@ function expectedSkins(golfers, decided) {
 
 function playRound(cfg, seed) {
  const rand = random(seed);
- const players = cfg.teams.map((team, i) => ({name: NAMES[i], team}));
- let r = new Round({players, mode: cfg.mode, holes: cfg.holes, gimme: 0, putting: {mode: cfg.putting}, endless: cfg.endless, outOfBounds: cfg.outOfBounds, goal: cfg.goal || '', weekly: cfg.weekly || '', rival: cfg.rival || ''});
+ // `cfg.cpu`: which seats are computer golfers (the fairway-tour goal). A
+ // computer seat is the same golfer to the rules; nothing may score it
+ // differently.
+ const players = cfg.teams.map((team, i) => cfg.cpu?.[i] ? {name: NAMES[i], team, input: 'cpu', cpu: {handicap: 4 + 6 * i, id: `g00${i + 1}`}} : {name: NAMES[i], team});
+ let r = new Round({players, mode: cfg.mode, holes: cfg.holes, gimme: 0, putting: {mode: cfg.putting}, endless: cfg.endless, outOfBounds: cfg.outOfBounds, playOrder: cfg.playOrder || 'holeOut', goal: cfg.goal || '', weekly: cfg.weekly || '', rival: cfg.rival || ''});
  const ref = scorer(r);
- const why = `${cfg.mode}${cfg.endless ? ' (endless)' : ''}, ${cfg.teams.join('')}, ${cfg.holes} holes, ${cfg.putting} putting, seed ${seed}`;
+ const why = `${cfg.mode}${cfg.endless ? ' (endless)' : ''}, ${cfg.teams.join('')}, ${cfg.holes} holes, ${cfg.putting} putting, ${cfg.playOrder || 'holeOut'} order, seed ${seed}`;
  const holes = cfg.endless ? cfg.holes + 2 : cfg.holes;
  for (let h = 0; h < holes; h++) {
   // A round with a goal (round-goals.js) is told its par, as main.js does.
@@ -337,7 +381,9 @@ function configs({holes = 3, changes = false} = {}) {
     for (const endless of [false, true])
      if (allowed(mode, teams, endless))
       for (const putting of PUTTING_MODES)
-       out.push({mode, teams, endless, putting, holes, changes, outOfBounds: out.length % 2 ? 'e5' : 'stroke'});
+       // Both orders of play (play-order.js), alternating in pairs so they
+       // do not follow the out-of-bounds rule's alternation.
+       out.push({mode, teams, endless, putting, holes, changes, outOfBounds: out.length % 2 ? 'e5' : 'stroke', playOrder: Math.floor(out.length / 2) % 2 ? 'farthest' : 'holeOut'});
  return out;
 }
 
@@ -367,6 +413,18 @@ test('golfers come and go between holes in every format and group size', () => {
   for (const seed of [11, 12]) playRound(cfg, seed);
 });
 
+test('computer golfers in the seats change nothing about the rules, in every format and group', () => {
+ // Every other seat a computer golfer, then every seat but the first: the
+ // same rounds, the same scorer, and the seats still computer golfers after
+ // the saves and restores the matrix takes along the way.
+ for (const pattern of [i => i % 2 === 1, i => i > 0])
+  for (const cfg of configs().filter(c => c.putting === 'holeout' && c.teams.length > 1)) {
+   const cpu = cfg.teams.map((_, i) => pattern(i));
+   const r = playRound({...cfg, cpu}, 21);
+   r.players.forEach((p, i) => assert.equal(p.input === 'cpu', cpu[i], `${cfg.mode} ${cfg.teams.join('')}: seat ${i + 1} kept`));
+  }
+});
+
 test('the matrix reaches every format, every group size and both team splits', () => {
  const list = configs();
  for (const mode of PLAYED_FORMATS)
@@ -379,6 +437,10 @@ test('the matrix reaches every format, every group size and both team splits', (
  // November 2026) is played in every format.
  for (const putting of PUTTING_MODES) for (const mode of PLAYED_FORMATS)
   assert.ok(list.some(c => c.mode === mode && c.putting === putting), `${mode} with ${putting} putting`);
+ // Both orders of play (play-order.js, 19 November 2026) in every format and
+ // every group size of two or more, where the order means anything.
+ for (const playOrder of PLAY_ORDERS) for (const mode of PLAYED_FORMATS) for (let n = Math.max(2, PLAYED[mode].fewest); n <= 4; n++)
+  assert.ok(list.some(c => c.mode === mode && c.teams.length === n && c.playOrder === playOrder), `${mode} with ${n} golfers, ${playOrder} order`);
 });
 
 test('groups a format cannot take are refused at the start', () => {
@@ -544,6 +606,13 @@ test('every format plays a round on a generated course', async () => {
     const expect = card.slice(0, 9).reduce((s, v, h) => s + (Number.isFinite(v) ? v - pars[h] : 0), 0);
     assert.equal(rel, Math.round(expect * 100) / 100, `${designer}, ${cfg.mode} ${cfg.teams.join('')}: golfer ${i + 1} to par`);
     assert.equal(played, card.slice(0, 9).filter(Number.isFinite).length);
+    // Stableford: two points for par, one less a stroke more, none past
+    // double bogey -- counted here by hand, not by stableford.js.
+    if (r.mode === 'stableford') {
+     const {pointsTotal} = await import('../src/stableford.js');
+     const byHand = card.slice(0, 9).reduce((s, v, h) => s + (Number.isFinite(v) ? Math.max(0, 2 + pars[h] - v) : 0), 0);
+     assert.equal(pointsTotal(card.slice(0, 9), pars), byHand, `stableford ${cfg.teams.join('')}: golfer ${i + 1}'s points`);
+    }
    }
   }
  }
