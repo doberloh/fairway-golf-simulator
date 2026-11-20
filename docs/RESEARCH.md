@@ -17193,3 +17193,65 @@ better (two-putt distances), the 15's sand better.
 runs at this sample size, so the tolerance cannot be judged yet; scratch's
 lag putting (too good) and the 30's (too poor) pull the same two numbers
 opposite ways; the 30 has too few awful shots and too many greens.
+
+## Online play: where the relay can live (19 November 2026, the online-play branch)
+
+The owner wants live matches with friends in other houses, no accounts,
+private rooms, and a free relay if one holds up, else a small server of their
+own on Oracle Cloud. This reverses *Challenge a friend: codes, shots flown
+again, and no servers* above on one point only: a relay is now allowed. That
+section's Netlify finding still stands (Netlify cannot hold a lasting
+connection). Sources in REFERENCES, *Online play*. **Nothing is chosen; the
+owner picks and makes the account.**
+
+**What the game needs from it is tiny.** The September study's figures: a shot
+is about 200 bytes, a whole round's state about 600 bytes, a four-ball's 18
+holes on the order of 100 KB. Messages come a few a minute. So any relay's
+free allowance is far beyond one friend group's use, and the choice turns on
+upkeep, safety and how long the free terms last, not on size.
+
+**Constraints the relay must meet, whoever runs it:**
+
+- **A secure connection with a real certificate (`wss://`).** The website's
+  demo is an https page, and a browser refuses a plain `ws://` from one.
+  On a rented machine that means a domain name and keeping a certificate
+  renewed; on a hosted platform it comes with the address.
+- **Privacy cannot rest on where a page comes from.** A game opened from disk
+  sends its origin as `null`, so an allow-list of sites proves nothing. The
+  room must be protected by a secret only the players hold, and the relay
+  treated as untrusted (it carries sealed messages it cannot read).
+- **The browser's own encryption (`crypto.subtle`) is missing on a plain-http
+  page.** It exists on the https demo, on localhost and (in Chrome and
+  Firefox) on a file opened from disk, but NOT on a phone that loaded the game
+  from `run_fairway_server` over the home network (`http://192.168.x.x`), which
+  is not a secure context. So either such a phone joins through the website, or
+  the game carries a small encryption routine of its own. To decide in the
+  design; recalled from the Web Crypto rules, not tested here.
+
+**The options, as found:**
+
+| where | free allowance | upkeep | catch |
+| --- | --- | --- | --- |
+| Cloudflare Workers + Durable Objects (one room = one object holding the sockets) | 100,000 requests a day; incoming WebSocket messages billed at 20 to 1 (100 messages = 5 requests); outgoing messages free; 13,000 GB-s a day; SQLite-backed objects only on the free plan | none: no machine, certificate included on a `workers.dev` address | an account on the owner's name; over the daily allowance further requests fail until 00:00 UTC |
+| Oracle Cloud Always Free VM | A1 Arm: 1,500 OCPU-hours and 9,000 GB-hours a month (2 OCPUs, 12 GB); or two AMD micro VMs (1/8 OCPU, 1 GB); 10 TB a month out | a whole machine: updates, firewall, a domain and its certificate, restarts | **idle Always Free instances may be reclaimed**: idle means, over 7 days, 95th-percentile CPU under 20%, network under 20% and (A1) memory under 20% -- which a golf relay used a few evenings a week always is |
+| Peer to peer (WebRTC) with a free meeting service (PeerJS cloud, Metered) and a free relay for the connections that cannot meet directly (Cloudflare TURN 1,000 GB a month; Metered Open Relay 20 GB; ExpressTURN 1 TB) | as listed | none, but two outside services | free meeting services are best-effort (PeerJS's own maintainers stopped their free TURN); Metered caps free signalling at 100 connections and 100,000 messages a month; a third-party library to ship |
+
+Fetched: Cloudflare's Durable Objects pricing page and Oracle's Always Free
+resources page (both 19 November 2026). Search summaries only, not fetched:
+Cloudflare TURN's 1,000 GB (several Cloudflare pages agreed), PeerJS, Metered,
+ExpressTURN, the reports that Oracle halved its A1 allowance in mid-2026
+(the fetched page shows the halved figures, with no date), and the reports
+that reclamation applies only to unpaid accounts (so upgrading to a
+pay-as-you-go account, still at no charge inside the allowance, is said to
+stop it).
+
+**Leaning, not decided:** Cloudflare's Durable Objects. It is the only option
+with no machine to look after, its certificate comes with it, and a room
+object is exactly the shape a turn-based match needs. Oracle's free machine
+would be reclaimed for idling unless the account is upgraded, and adds a
+domain and certificate to keep. Peer to peer saves almost nothing at this
+traffic and adds two services nobody here controls. Whichever is picked, the
+game talks to it through one small module, so moving from one to another is
+a change of address and a few lines, not a rewrite; the relay itself stays
+small enough (it only passes sealed messages between the sockets of one room)
+to run on Node on Oracle as well.

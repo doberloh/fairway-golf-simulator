@@ -23,6 +23,39 @@ tests, look at visual changes in the browser, and build before updating
 archives. Physical launch-monitor testing waits until requested. A TODO entry
 is not permission to widen an unrelated task.
 
+## This branch: online play with friends (branch `online-play`, from 19 November 2026)
+
+The owner, 19 November 2026: live matches with friends in other houses, no
+accounts, everything kept on each player's own machine and shared when they
+join, sessions private and safe; a free relay if one holds up, otherwise a
+small server of the owner's on Oracle Cloud. The plan, log and status page
+are in `docs/studies/online-play/` (local and ignored, inside the worktree:
+copy them to the main checkout before the worktree goes). **These terms are
+the branch's own and end when it is merged**; what they decided becomes
+main's, as the cartoon overhaul's did.
+
+- **Earlier decisions about multiplayer, servers and network traffic may be
+  overwritten or removed here** (the owner: "previous decisions about
+  multiplayer. Network traffic. Etc. can be overwritten or removed"). That
+  covers the 20 October "no servers" choice and IDEAS' turned-down entry,
+  "the real game makes no network requests of its own" and smoke failing on
+  any request, the September study's LAN-first advice, and the challenge
+  codes' design. When one goes, the doc sweep still applies: grep for the old
+  claim, edit it, and write down what replaced it and why.
+- **It lifts nothing else.** Graphics card, gaming, push, merge, release, the
+  editor tools and "no secrets in commits" hold as written below -- and a
+  relay's address, keys or account names are secrets until the owner says
+  otherwise.
+- **Full test suites only when they are really needed** (the owner). Run the
+  focused tests for what changed; `npm test` whole, or every smoke journey,
+  only before a hand-over or merge, or when a change reaches widely enough
+  that nothing narrower would catch it -- and say which was run.
+- **The branch keeps a status page**, with screenshots as they come. Taking a
+  screenshot of the game uses the graphics card, so it is asked for like any
+  other capture unless the owner gives this branch other terms.
+- **Accounts, deploys and anything that costs money are the owner's steps**:
+  creating a Cloudflare or Oracle account, deploying a relay, buying a domain.
+
 ## The cartoon look is main's (merged 27 October 2026)
 
 The cartoon overhaul (25-27 October 2026; its rules are in
