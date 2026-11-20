@@ -16,7 +16,8 @@ private and safe rooms, a free relay). What a player sees is in PLAYING.md,
   (`src/online/room-code.js`).
 - **A relay carries the messages** between the machines of a room
   (`relay/`). It is trusted with nothing: it sees a room number and sealed
-  boxes it cannot open, stores nothing, and holds 8 sockets a room.
+  boxes it cannot open, stores nothing, and holds 8 sockets a room (the host,
+  up to three more golfers, and watchers).
 - **The host's game is the referee.** It plays the round as any round; a
   guest's golfer is a seat (`online` on the seat, `src/game.js`) whose shots
   arrive as messages and go through the same `takeShot` a computer golfer's
@@ -100,7 +101,8 @@ this machine with `lab.relay(url)`, a console hook no player reaches.
 
 ## What an online round does differently (PLACED)
 
-- No mulligans, free drops or group changes once it starts.
+- No mulligans, free drops or group changes once it starts -- except
+  dropping in, below.
 - Not autosaved: a round of several machines cannot be carried on alone.
   Leaving offers to keep it, as any round; kept, it plays on alone.
 - Played on a course (the week's, a saved one, Surprise me), not Endless or a
@@ -116,13 +118,36 @@ this machine with `lab.relay(url)`, a console hook no player reaches.
   guest's card says the host moves everyone on, with neither button.
 - Relief is chosen on the machine of the golfer whose ball it is; a scramble's
   ball by the team's first golfer.
-- A guest who leaves mid-round hands their ball to the host to play or take
-  out; a host who leaves mid-round closes the room; after the last hole the
-  room stays open for the next round.
+- A guest who leaves mid-round hands their ball to the host to play; a host
+  who leaves mid-round closes the room; after the last hole the room stays
+  open for the next round.
 - A guest whose connection is lost (a closed tab, a phone that died) keeps
   their turn waiting; after 20 seconds the host is offered *Play on without
   them* or *Wait*. Played on without, their ball is the host's, and they are
-  out of the room (a knock mid-round is refused).
+  out of the room until they knock again.
+- **Dropping in, dropping out, and watching** (the owner, 20 November 2026,
+  asked whether a player can drop in and out, whether someone who did not
+  start the round can, and whether a spectator can become a player at the
+  host's say: "Yes, build both"). A room holds eight screens, four golfers
+  and the rest watching. **Anyone let in mid-round watches**: the knock bar
+  offers *Let in to play* (when there is a seat, or their own golfer is
+  waiting for them) and *Let in to watch*. A watcher sees every shot and card
+  but swings for nobody, and their profile counts nothing; their chip says
+  WATCHING. The host's ONLINE chip opens the room, where each guest is
+  PLAYING, WATCHING or FROM THE NEXT TEE, and *Seat from the next tee* /
+  *Keep watching* change it. **Every seat change happens at the next tee**
+  (PLACED: a hole is played by the group that started it, and nobody's ball
+  is taken over mid-shot; `onlineSeatNow` from `advanceHole`). A newcomer
+  takes a new seat on the smaller team, with nothing on the holes before it
+  -- the card counts the holes they played, as a golfer added offline
+  (Round.setPlayers), so in stroke play a late joiner's total is over fewer
+  holes. **Someone who left the round and comes back gets their own golfer,
+  card and all** -- matched by the member id their tab kept, or else by the
+  golfer's name -- after the host played their ball while they were away.
+  A watcher who loses their connection holds nothing up, and is not named on
+  the chip. Rules: online/referee.js `seatsAtNextTee`, `canSeat`.
+- Someone let in or back mid-round is sent the round alone (`start` with
+  `to`); nobody else's screen starts over.
 - A seat is an online guest's only while that guest is in the room open now:
   a group remembered from an earlier room (Play again) seats ordinary golfers.
 - A computer golfer is the host's, and plays as it does offline.

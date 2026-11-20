@@ -11,7 +11,7 @@
 //
 // No game here: main.js wires these to the round. tests/online-session.test.mjs
 // plays whole matches through them over the relay's Node twin.
-import {readMessage, PROTOCOL, MAX_GOLFERS, roundForGuests} from './protocol.js';
+import {readMessage, PROTOCOL, MAX_SCREENS, roundForGuests} from './protocol.js';
 
 const emitter = () => {
  const handlers = new Map();
@@ -23,19 +23,21 @@ const emitter = () => {
 
 export const memberId = random => Array.from(random(6), b => (b % 36).toString(36)).join('') + Array.from(random(4), b => (b % 36).toString(36)).join('');
 
-// Why a guest is turned away at the door, in the words they are shown.
-export function doorProblem(hello, {game, members, maxGuests, playing}) {
+// Why a guest is turned away at the door, in the words they are shown. A
+// round under way is no reason (20 November 2026): someone let in then
+// watches, and the host may seat them from the next tee (referee.js).
+export function doorProblem(hello, {game, members, maxGuests}) {
  if (hello.v !== PROTOCOL || hello.game !== game) return `This room runs Fairway ${game}; you have ${hello.game}. Everyone needs the same version (different versions can grow different ground).`;
  const inRoom = [...members.values()].filter(m => m.state === 'in' || m.state === 'away').length;
  if (inRoom >= maxGuests) return 'This room is full.';
- if (playing) return 'This round has started. Ask the host to open a new room for the next one.';
  return '';
 }
 
 export class HostSession {
  // `game`: this build's version (diagnostic.js buildStamp). `maxGuests`: the
- // golfers besides the host's own (Round takes four in all).
- constructor({link, member, name, game, maxGuests = MAX_GOLFERS - 1}) {
+ // screens besides the host's (the relay holds 8); a round seats four golfers,
+ // and the rest watch.
+ constructor({link, member, name, game, maxGuests = MAX_SCREENS - 1}) {
   Object.assign(this, emitter());
   this.link = link; this.member = member; this.name = name; this.game = game; this.maxGuests = maxGuests;
   this.members = new Map(); // member -> {member, name, golfer, tag, state: 'knock'|'in'|'away'|'gone'}
@@ -50,7 +52,10 @@ export class HostSession {
   // gone went nowhere.
   link.on('open', () => { this.sendRoom(); if (this.record) this.resync(); });
  }
- resync() { this.send({t: 'start', record: {...this.record, round: this.round ?? this.record.round}, shotNo: this.done, seq: ++this.seq}); }
+ // The round whole, to everyone or (`to`) to one member: someone back on a
+ // new socket, or let in mid-round, is sent it alone, so nobody else's screen
+ // starts the round over under a ball in the air.
+ resync(to = null) { this.send({t: 'start', record: {...this.record, round: this.round ?? this.record.round}, shotNo: this.done, seq: ++this.seq, ...(to ? {to} : {})}); }
  byTag(tag) { for (const m of this.members.values()) if (m.tag === tag) return m; return null; }
  send(msg) { return this.link.send(msg); }
  heard(from, raw) {
@@ -84,13 +89,13 @@ export class HostSession {
    known.tag = from; known.state = 'in';
    this.send({t: 'welcome', member: m.member, host: this.member});
    this.sendRoom();
-   if (this.record) this.resync();
+   if (this.record) this.resync(m.member);
    this.emit('back', known);
    return;
   }
   if (known?.state === 'knock') { known.tag = from; return; }
   if (known?.state === 'gone') this.members.delete(m.member);
-  const why = doorProblem(m, {game: this.game, members: this.members, maxGuests: this.maxGuests, playing: this.phase !== 'lobby'});
+  const why = doorProblem(m, {game: this.game, members: this.members, maxGuests: this.maxGuests});
   if (why) { this.send({t: 'refuse', member: m.member, why}); return; }
   const who = {member: m.member, name: m.golfer.name, golfer: m.golfer, tag: from, state: 'knock'};
   this.members.set(m.member, who);
@@ -111,6 +116,8 @@ export class HostSession {
   who.state = 'in';
   this.send({t: 'welcome', member, host: this.member});
   this.sendRoom();
+  // Let in while a round is played: they are sent it, and watch.
+  if (this.record && this.phase === 'playing') this.resync(member);
   this.emit('admitted', who);
   return true;
  }
@@ -198,6 +205,7 @@ export class GuestSession {
   if (m.t === 'refuse') { this.state = 'refused'; this.emit('refused', m.why); this.link.close(); return; }
   if (m.t === 'room') { this.room = m; this.emit('room', m); return; }
   if (m.t === 'end') { this.state = 'ended'; this.emit('end'); this.link.close(); return; }
+  if (m.t === 'start' && m.to && m.to !== this.member) return;
   if (['start', 'flown', 'state', 'nope'].includes(m.t)) this.emit(m.t, m);
  }
  shot(p) { return this.link.send({t: 'shot', member: this.member, ...p}); }

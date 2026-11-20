@@ -73,6 +73,26 @@ From *Known wrong*, the same day:
   the game again after making a level-10 computer golfer and checks it is
   still one, at level 10; passing.
 
+New the same day, asked rather than listed (the owner: can a player drop in
+and out mid-round, can someone who did not start the round, can a spectator
+become a player at the host's say -- "Yes, build both"):
+
+- [x] **Dropping in, dropping out, and watching.** A room holds eight
+  screens; anyone let in mid-round watches; the knock bar offers *Let in to
+  play* and *Let in to watch*; the host's ONLINE chip opens the room, where
+  a watcher is seated from the next tee; seat changes happen only at the
+  next tee; a newcomer's card starts there; someone who left gets their own
+  golfer and card back. Someone let in or back mid-round is sent the round
+  alone, so nobody else's ball in the air is disturbed (before, a guest's
+  reconnect re-sent the round to everyone). online/referee.js
+  `seatsAtNextTee` and `canSeat`, session.js (the door, `resync(to)`),
+  main.js `onlineSeatNow` and the sheet. Node: the rule, a friend dropping
+  in and a player dropping out and back, each over the local relay and the
+  deployed one; smoke `online`: a Node friend let in to watch, seated from
+  the chip, joining at the next tee on both screens, and leaving. Not
+  played by a person, and no browser watcher has been seated and then
+  played shots.
+
 The gate's 15% line, which read Soulbound at about 10% on 19 November
 (RULES_HISTORY, *The same evening the gate missed a game*), stays as it is:
 the owner, 20 November 2026, "leave it as is".

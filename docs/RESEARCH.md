@@ -17353,6 +17353,29 @@ way, so the relay never sees it.
   message from each guest when its card opens, and the host's countdown
   waits for every guest still connected (`HostSession.unseen`). A lost
   guest is not waited for (PLACED), so a dead phone cannot hold the group.
+- **Dropping in, dropping out, watching** (the owner, 20 November 2026,
+  "Yes, build both"). Every rule here is PLACED, none from a source: eight
+  screens a room (the relay's sockets), four golfers (Round's limit), the
+  rest watching; anyone let in mid-round watches first; **seat changes only
+  at the next tee** (rejected: seating at once, which would hand someone a
+  ball mid-hole or start a newcomer from the tee while others are on the
+  green); a newcomer on the smaller team (match play and a scramble stay two
+  sides); a newcomer's card starts at the hole they join (rejected:
+  inventing scores for holes they missed, e.g. net par -- the card would
+  claim holes nobody played; this is what an offline golfer added mid-round
+  already gets, so a late joiner's stroke-play total is over fewer holes,
+  which the scorecard shows); a leaver's own golfer and card are given back,
+  matched by member id, else by golfer name (a new tab has a new id).
+  Measured: through the deployed relay, a friend let in mid-round was
+  playing from the next tee in 3.7 seconds of a three-hole test round, and a
+  leaver was back in their own golfer in 1.9.
+- **Once, both screens lost the relay together** (smoke `online`, 20
+  November 2026, one run in six): the host's chip said RECONNECTING and the
+  guest's ball never reached it, before any drop-in step. The Node relay
+  closes a socket only when a room is full or a message passes its size
+  limit, and logs neither then, so the cause is unknown; smoke now prints
+  each refused message and each socket closed other than by its own page.
+  Five runs since, none.
 - **The code is the whole lock** (left for later, with the owner told):
   anyone holding it can read a room and knock, and could pose as the host to
   the guests while the real host is disconnected. A key per player (public

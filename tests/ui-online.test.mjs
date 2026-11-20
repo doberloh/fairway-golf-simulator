@@ -37,6 +37,24 @@ test('hosting: the code in fours, each knock with Let in and Turn away, Start on
  assert.match(busy, new RegExp(STATUS_WORDS.retrying.slice(0, 15)));
 });
 
+test('hosting mid-round: a knock let in to play or to watch, watchers seated from the next tee, no Start or Close', () => {
+ const html = onlineSheet({stage: 'host', phase: 'playing', code: 'K7Q2M9XD4RTP8WNB', status: 'open',
+  knocks: [{member: 'kn0001', name: 'Kit', canPlay: true}, {member: 'kn0002', name: 'Lou', canPlay: false}],
+  members: [{member: 'pl0001', name: 'Ann', state: 'in', seat: 'playing'}, {member: 'wa0001', name: 'Cy', state: 'in', seat: 'watching', canSeat: true},
+   {member: 'nx0001', name: 'Dee', state: 'in', seat: 'next'}, {member: 'wa0002', name: 'Eve', state: 'in', seat: 'watching', canSeat: false}], hostName: 'Dustin'});
+ assert.match(html, /data-admit-play="kn0001"/);
+ assert.doesNotMatch(html, /data-admit-play="kn0002"/, 'no seat for Lou: watch only');
+ assert.match(html, /data-admit="kn0002">Let in to watch/);
+ assert.match(html, /PLAYING/); assert.match(html, /WATCHING/); assert.match(html, /FROM THE NEXT TEE/);
+ assert.match(html, /data-seat="wa0001"/);
+ assert.doesNotMatch(html, /data-seat="wa0002"/);
+ assert.match(html, /data-unseat="nx0001"/);
+ assert.doesNotMatch(html, /id="onlineChoose"|id="onlineClose"/);
+ const lobby = onlineSheet({stage: 'host', phase: 'lobby', code: 'K7Q2M9XD4RTP8WNB', knocks: [{member: 'kn0001', name: 'Kit', canPlay: false}], members: []});
+ assert.match(lobby, /data-admit="kn0001">Let in</);
+ assert.doesNotMatch(lobby, /Let in to watch|data-seat=/);
+});
+
 test('a guest\'s screens: knocking, then in the room', () => {
  assert.match(onlineSheet({stage: 'knocking', code: 'K7Q2M9XD4RTP8WNB', status: 'open'}), /id="onlineCancel"/);
  const inRoom = onlineSheet({stage: 'guest', hostName: 'Dustin', course: 'Cascade View', members: [{member: 'a1b2c3', name: 'Sam', state: 'in'}]});

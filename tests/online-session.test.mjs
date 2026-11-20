@@ -5,7 +5,7 @@ import {Round, FORMATS} from '../src/game.js';
 import {createLink} from '../src/online/link.js';
 import {newRoomCode} from '../src/online/room-code.js';
 import {HostSession, GuestSession, Follower, memberId, doorProblem} from '../src/online/session.js';
-import {shotProblem, reliefProblem, pickProblem, pickerSeat, seatOwner, playsHere} from '../src/online/referee.js';
+import {shotProblem, reliefProblem, pickProblem, pickerSeat, seatOwner, playsHere, seatsAtNextTee, canSeat} from '../src/online/referee.js';
 import {readMessage, roundForGuests, PROTOCOL} from '../src/online/protocol.js';
 import {startRelay} from '../relay/node-relay.mjs';
 
@@ -42,7 +42,9 @@ const reliefSpots = r => [{id: 'line', label: 'Back on the line', spot: {...r.fr
 
 // THE HOST'S GAME: its own seats (no `online`) it plays itself; a guest's it
 // waits for, and rules on.
-function hostGame(session, round) {
+// `between(round)`: called at each next tee, before the hole moves on (where
+// main.js advanceHole seats those the host has seated: onlineSeatNow).
+function hostGame(session, round, {between} = {}) {
  let busy = false, finished;
  const done = new Promise(r => finished = r);
  const send = shot => session.state(round.toJSON(), {shot});
@@ -59,6 +61,7 @@ function hostGame(session, round) {
   if (busy) return;
   if (round.holeComplete) {
    if (round.finished) { session.finish(); finished(); return; }
+   between?.(round);
    round.nextHole(); round.placeTee(TEES); send(false); return next();
   }
   if (round.relief) { if (!seatOwner(round, round.relief.player)) { round.takeRelief(reliefSpots(round.relief)[0], pinOf(round.hole)); send(false); next(); } return; }
@@ -185,12 +188,39 @@ test('a guest takes the state that ends a shot by its number, not whichever come
  assert.deepEqual(applied.at(-1), {seq: 6, no: 2, after: false});
 });
 
-test('the door: another version, a full room, and a round already started are refused', () => {
+test('the door: another version and a full room are refused; a round under way is not', () => {
  const members = new Map([['a', {state: 'in'}], ['b', {state: 'in'}], ['c', {state: 'away'}]]);
  assert.match(doorProblem({v: PROTOCOL, game: 'other'}, {game: GAME, members: new Map(), maxGuests: 3}), /same version/);
  assert.equal(doorProblem({v: PROTOCOL, game: GAME}, {game: GAME, members, maxGuests: 3}), 'This room is full.');
- assert.match(doorProblem({v: PROTOCOL, game: GAME}, {game: GAME, members: new Map(), maxGuests: 3, playing: true}), /started/);
- assert.equal(doorProblem({v: PROTOCOL, game: GAME}, {game: GAME, members: new Map(), maxGuests: 3}), '');
+ // 20 November 2026: someone let in mid-round watches (referee.js seatsAtNextTee).
+ assert.equal(doorProblem({v: PROTOCOL, game: GAME}, {game: GAME, members: new Map(), maxGuests: 3, playing: true}), '');
+ // Eight screens a room: the host and seven.
+ const seven = new Map(Array.from({length: 7}, (_, i) => [`m${i}`, {state: 'in'}]));
+ assert.equal(new HostSession({link: {on() {}}, member: 'host01', name: 'H', game: GAME}).maxGuests, 7);
+ assert.equal(doorProblem({v: PROTOCOL, game: GAME}, {game: GAME, members: seven, maxGuests: 7}), 'This room is full.');
+});
+
+test('seats from the next tee: a newcomer at the back, a leaver back in their own golfer, four at most', () => {
+ const members = new Map([['cy0001', {state: 'in', name: 'Cy', golfer: {name: 'Cy', hand: 'LH', input: 'monitor', tee: 'red'}}], ['dee001', {state: 'in', name: 'Dee', golfer: {name: 'Dee'}}],
+  ['ann001', {state: 'in', name: 'Ann', golfer: {name: 'Ann'}}], ['eve001', {state: 'away', name: 'Eve', golfer: {name: 'Eve'}}], ['fay001', {state: 'in', name: 'Fay', golfer: {name: 'Fay'}}]]);
+ // Ann left her golfer this round; the host played it on.
+ const players = [{name: 'Host', team: 'A'}, {name: 'Ann', team: 'B'}, {name: 'Bot', team: 'A', input: 'cpu', cpu: {id: 'g001', handicap: 12}}];
+ const former = new Map([['ann001', 'Ann']]);
+ assert.ok(canSeat(players, [], 'cy0001', {former}), 'one seat free');
+ assert.ok(!canSeat(players, ['cy0001'], 'dee001', {former}), 'and Cy has it');
+ assert.ok(canSeat(players, ['cy0001'], 'ann001', {former}), 'Ann\'s own golfer waits for her');
+ assert.ok(!canSeat(players, ['cy0001'], 'cy0001', {former}), 'already seated');
+ const {players: next, left} = seatsAtNextTee(players, ['ann001', 'cy0001', 'dee001', 'eve001'], {members, former});
+ assert.deepEqual(next.map(p => [p.name, p.online ?? null, p.seat ?? null]), [['Host', null, 0], ['Ann', 'ann001', 1], ['Bot', null, 2], ['Cy', 'cy0001', null]]);
+ assert.equal(next[3].team, 'B', 'the smaller side');
+ assert.equal(next[3].hand, 'LH'); assert.equal(next[3].input, 'monitor'); assert.equal(next[3].tee, 'red');
+ assert.deepEqual(left, ['dee001'], 'no fifth golfer; Eve, away, is passed over');
+ // Round takes the group as an offline change: Cy's earlier holes empty.
+ const r = new Round({players: players.map(({input, cpu, ...p}) => p), mode: 'stroke', holes: 3});
+ r.placeTee(TEES); r.cards = [[4], [5], [6]];
+ r.setPlayers(next, TEES);
+ assert.deepEqual(r.cards.map(c => c.length), [1, 1, 1, 0]);
+ assert.equal(r.players[1].online, 'ann001');
 });
 
 test('the referee: only your seat, on its turn, from your ball', () => {
@@ -339,6 +369,89 @@ test('the host waits for every connected guest\'s card, not a lost one\'s', asyn
   host.start({settings: {}, round: {players: []}});
   assert.deepEqual(names(0), ['Ann']);
  } finally { close(); await relay.close(); }
+});
+
+// DROPPING IN AND OUT (the owner, 20 November 2026: "Yes, build both").
+// Seats change at the next tee, as main.js advanceHole does (onlineSeatNow).
+const seatAtNextTee = (host, queue, former) => r => {
+ if (!queue.length) return;
+ const {players} = seatsAtNextTee(r.players, queue.splice(0), {members: host.members, former});
+ r.setPlayers(players, TEES);
+};
+
+test('drop in: a friend let in mid-round is sent the round alone, watches, and plays from the next tee', async () => {
+ const relay = await relayForTest();
+ const {host, guests, code, close} = await room(relay, ['Ann']);
+ let cyLink = null;
+ try {
+  // Cy knocks before the round, and is let in once it is under way.
+  cyLink = createLink({relay: relay.url, code, random});
+  const cy = new GuestSession({link: cyLink, member: memberId(random), golfer: {name: 'Cy', hand: 'LH', input: 'meter'}, game: GAME});
+  await until(() => host.members.get(cy.member)?.state === 'knock');
+  const round = new Round({players: [{name: 'Host', team: 'A'}, {name: 'Ann', team: 'A', online: guests[0].member}], mode: 'stroke', holes: 3});
+  round.placeTee(TEES);
+  const queue = [], former = new Map();
+  const hg = hostGame(host, round, {between: seatAtNextTee(host, queue, former)});
+  let annStarts = 0, cyStart = null;
+  guests[0].on('start', () => annStarts++);
+  cy.on('start', m => cyStart = m);
+  const ga = guestGame(guests[0]), gc = guestGame(cy);
+  host.start({version: 2, settings: {}, round: round.toJSON()});
+  hg.next();
+  await until(() => annStarts === 1);
+  host.admit(cy.member);
+  assert.ok(canSeat(round.players, queue, cy.member, {former}));
+  queue.push(cy.member);
+  await until(() => cyStart);
+  assert.equal(cyStart.to, cy.member, 'the round is sent to Cy alone');
+  await hg.done;
+  await until(() => [ga, gc].every(g => g.round?.finished && JSON.stringify(g.round.cards) === JSON.stringify(round.cards)));
+  assert.equal(annStarts, 1, 'Ann\'s screen was not sent the round again');
+  assert.equal(round.players.length, 3);
+  assert.equal(round.players[2].online, cy.member);
+  assert.equal(round.players[2].hand, 'LH');
+  assert.ok(!Number.isFinite(round.cards[2][0]), 'nothing on the hole Cy watched');
+  assert.ok(Number.isFinite(round.cards[2][1]) && Number.isFinite(round.cards[2][2]), 'the holes Cy played');
+  assert.ok(gc.own > 0, 'Cy played their own shots');
+  assert.equal(hg.nopes.length, 0, hg.nopes.join('; '));
+ } finally { cyLink?.close(); close(); await relay.close(); }
+});
+
+test('drop out and back: a golfer who leaves mid-round has their own golfer and card back from the next tee', async () => {
+ const relay = await relayForTest();
+ const {host, guests, code, close} = await room(relay, ['Ann']);
+ let back = null;
+ try {
+  const ann = guests[0], annMember = ann.member;
+  const round = new Round({players: [{name: 'Host', team: 'A'}, {name: 'Ann', team: 'A', online: annMember}], mode: 'stroke', holes: 3});
+  round.placeTee(TEES);
+  const queue = [], former = new Map();
+  const hg = hostGame(host, round, {between: seatAtNextTee(host, queue, former)});
+  // As main.js onlineGuestGone: the host plays her ball until she is back.
+  host.on('away', w => {
+   if (w.state !== 'gone') return;
+   for (const p of round.players) if (p.online === w.member) { former.set(w.member, p.name); delete p.online; }
+   host.state(round.toJSON()); if (!hg.busy) hg.next();
+  });
+  guestGame(ann);
+  host.start({version: 2, settings: {}, round: round.toJSON()});
+  hg.next();
+  ann.leave();
+  await until(() => former.has(annMember));
+  // Back, the same member (the same tab), knocking again: let in, seated.
+  back = new GuestSession({link: createLink({relay: relay.url, code, random}), member: annMember, golfer: {name: 'Ann'}, game: GAME});
+  const gb = guestGame(back);
+  await until(() => host.members.get(annMember)?.state === 'knock');
+  host.admit(annMember);
+  assert.ok(canSeat(round.players, queue, annMember, {former}));
+  queue.push(annMember);
+  await hg.done;
+  await until(() => gb.round?.finished && JSON.stringify(gb.round.cards) === JSON.stringify(round.cards));
+  assert.equal(round.players.length, 2, 'her own golfer, not a new one');
+  assert.equal(round.players[1].online, annMember);
+  assert.ok(round.cards[1].every(Number.isFinite), 'her card whole: the host played her ball while she was out');
+  assert.ok(gb.own > 0, 'and she played again');
+ } finally { back?.link.close(); close(); await relay.close(); }
 });
 
 test('a shot out of turn is refused and nothing moves', async () => {

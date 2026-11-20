@@ -14,6 +14,9 @@ export const MAX_NAME = 24;
 // The golfers a room can seat (Round takes 1-4) and the screens it holds
 // beside them (relay/core.js: 8 sockets).
 export const MAX_GOLFERS = 4;
+// Every screen in a room, the host's among them: the relay's 8 sockets. Those
+// without a seat watch (referee.js `seatsAtNextTee`).
+export const MAX_SCREENS = 8;
 
 const str = (v, max) => typeof v === 'string' && v.length <= max;
 // TEXT FROM ANOTHER MACHINE carries no markup and no control characters: the
@@ -115,7 +118,7 @@ const CHECK = {
  // The round as a save holds it (main.js saveRecord); main.js validates it
  // the way it validates a save before anything is built from it.
  start: m => m.record && typeof m.record === 'object' && m.record.settings && typeof m.record.settings === 'object' && int(m.shotNo, 0, 1e6) && int(m.seq, 0, 1e9)
-  ? {t: 'start', record: {...m.record, round: guestRound(m.record.round), settings: {...m.record.settings, courseName: safeText(m.record.settings.courseName, 80)}}, shotNo: m.shotNo, seq: m.seq} : null,
+  ? {t: 'start', record: {...m.record, round: guestRound(m.record.round), settings: {...m.record.settings, courseName: safeText(m.record.settings.courseName, 80)}}, shotNo: m.shotNo, seq: m.seq, ...(id(m.to) ? {to: m.to} : {})} : null,
  flown: m => {
   const shot = cleanShot(m.shot);
   const club = cleanClub(m.club);

@@ -7,7 +7,8 @@
 //
 // It serves `ws://host:port/room/<32 hex>`; a page on https needs `wss://`, so
 // a public twin sits behind something that adds the certificate. Nothing is
-// stored or logged but a count of rooms and sockets.
+// stored or logged but a count of rooms and sockets, why a socket closed (its
+// code), and the size of a message refused.
 import {createServer} from 'node:http';
 import {randomBytes} from 'node:crypto';
 import {WebSocketServer} from 'ws';
@@ -36,14 +37,15 @@ export function startRelay({port = 8787, host = '127.0.0.1', limits = LIMITS, lo
    log(`rooms ${rooms.size}, +1 socket`);
    ws.on('message', (data, binary) => {
     const r = message(peer, binary ? null : data.toString(), Date.now(), limits);
+    if (r.toSender && r.toSender !== 'pong') log(`refused ${data.length} bytes: ${r.toSender}`);
     if (r.toSender) ws.send(r.toSender);
     if (r.toOthers) for (const p of room.values()) if (p !== peer && p.ws.readyState === 1) p.ws.send(r.toOthers);
    });
-   ws.on('close', () => {
+   ws.on('close', (code, why) => {
     room.delete(tag);
     if (!room.size) rooms.delete(id);
     else for (const p of room.values()) if (p.ws.readyState === 1) p.ws.send(leave(tag));
-    log(`rooms ${rooms.size}, -1 socket`);
+    log(`rooms ${rooms.size}, -1 socket (${code}${why?.length ? ' ' + why : ''})`);
    });
    ws.on('error', () => {});
   });

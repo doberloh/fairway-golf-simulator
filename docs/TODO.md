@@ -59,8 +59,14 @@ before it can be called done:
   deployed relay (built in since 20 November 2026): host and guest each way
   round, a phone on the PC's `run_fairway_server` with the launch monitor
   armed, a ball in the water, a dropped connection, a scramble, the
-  scorecard on both screens before the next tee. Nothing online has been
+  scorecard on both screens before the next tee, and a third friend
+  dropping in mid-round (let in to watch, seated from the next tee) and a
+  player leaving and coming back to their own card. Nothing online has been
   played by a person.
+- [ ] **Both screens lost the relay at once, one smoke run in six** (20
+  November 2026; RESEARCH, *Once, both screens lost the relay together*).
+  Cause unknown; smoke now logs refused messages and unexpected closes. If
+  it comes back, read those lines before anything else.
 - [ ] **Three or four players in the browser.** Node plays every format with
   three; the browser journey plays two.
 - [ ] **Seen in no browser yet** (each is played by the Node rounds' rules):
@@ -68,7 +74,8 @@ before it can be called done:
   (their own index, from their device); the course of the week online; a
   hidden host landing a guest's flight at once (its computer golfers wait
   until shown); *Play on without them*; the room open again for a second
-  round.
+  round; a watcher in a browser seated and then playing shots, and a
+  browser guest leaving and coming back to their own golfer.
 - [ ] **The source archive with `relay/`** (tools/package_release.py now
   packs it; the packager has not been run since).
 - [ ] **Safari and Firefox** as host and as guest (the smoke journeys are

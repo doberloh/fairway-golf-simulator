@@ -3696,7 +3696,9 @@ const JOURNEYS = [
   name: 'online',
   what: 'a host (file from disk) and a guest (served over plain http, with a launch monitor) through a local relay: knock, let in, a late knock, tee off, a shot each, the same ball on both screens, the guest cut off and back',
   async run(t) {
-   const relay = await startRelay({port: 0});
+   // A refused message or a socket closed other than by its own page, said
+   // as it happens (a run on 20 November 2026 lost both screens at once).
+   const relay = await startRelay({port: 0, log: s => { if (/refused|\((?!1000\b|1005\b)\d+/.test(s)) console.log(`       relay: ${s}`); }});
    const sockets = [], guestSockets = [];
    t.page.on('websocket', ws => sockets.push(ws.url()));
    // THE OWNER'S CASE (19 November 2026): a phone that loaded the game from
@@ -3731,6 +3733,7 @@ const JOURNEYS = [
     ws.send(monitorStatus('green'));
    });
    const g = new Trip(gpage, 'online-guest', guestHome);
+   let dropLink = null;
    const turn = p => p.evaluate(() => window.lab.state().turn);
    try {
     await menuReady(t);
@@ -3871,6 +3874,34 @@ const JOURNEYS = [
      if (JSON.stringify(both[0].turn.strokes) !== JSON.stringify(both[1].turn.strokes)) throw new Error(`host ${JSON.stringify(both[0].turn)}, guest ${JSON.stringify(both[1].turn)}`);
     });
     const room = p => p.evaluate(() => window.lab.online());
+    // DROPPING IN (the owner, 20 November 2026): a friend knocks mid-round.
+    // A third screen here is the Node guest `drop`, which shows each hole's
+    // card when it has one (so the host's countdown is not kept waiting) and
+    // plays no shots: seated, it leaves again, and the host plays its ball.
+    const version = await t.page.evaluate(() => window.lab.version || 'unstamped');
+    const drop = new GuestSession({link: createLink({relay: relay.url, code: readRoomCode(code), random: n => new Uint8Array(randomBytes(n))}), member: 'smokedrop1', golfer: {name: 'Drop', input: 'meter'}, game: version});
+    dropLink = drop.link;
+    const dropStarts = [];
+    drop.on('start', m => dropStarts.push(m));
+    drop.on('state', m => { if (m.round?.holeComplete && !m.round.finished) drop.seen(m.round.hole); });
+    await t.step('a friend knocks mid-round: let in to watch, sent the round alone, seated from the next tee', async () => {
+     await t.until(() => t.page.locator('#onlineKnock [data-admit-play]').isVisible(), 'the knock bar with Let in to play', 15 * SLOW);
+     await t.page.screenshot({path: path.join(SHOTS, 'online-drop-knock.png')});
+     await t.page.locator('#onlineKnock [data-admit]').click();
+     await t.until(() => dropStarts.length > 0, 'the round sent to the watcher', 10 * SLOW);
+     if (dropStarts[0].to !== 'smokedrop1') throw new Error(`the round was not sent to the watcher alone: ${JSON.stringify({to: dropStarts[0].to})}`);
+     try { await t.until(async () => /WATCHING/.test(await t.page.textContent('#onlineChip') || ''), 'WATCHING on the host\'s chip', 5 * SLOW); }
+     catch (e) { console.log('       host:', JSON.stringify(await room(t.page)), await t.page.textContent('#onlineChip')); throw e; }
+     await t.page.click('#onlineChip');
+     await t.until(() => t.page.locator('[data-seat="smokedrop1"]').isVisible(), 'the watcher on the Online sheet', 5 * SLOW);
+     await t.page.locator('[data-seat="smokedrop1"]').click();
+     await t.until(async () => /FROM THE NEXT TEE/.test(await t.page.textContent('.online-people') || ''), 'the watcher seated from the next tee', 5 * SLOW);
+     await t.page.screenshot({path: path.join(SHOTS, 'online-drop-seated.png')});
+     const r = await room(t.page);
+     if (!r.seatNext?.includes('smokedrop1') || r.seats.includes('smokedrop1')) throw new Error(`seated before the next tee: ${JSON.stringify(r)}`);
+     await t.page.keyboard.press('Escape');
+     await t.until(async () => !(await t.drawerOpen()), 'the sheet closed', 5 * SLOW);
+    });
     const settle = async () => {
      await t.until(async () => !(await t.inFlight()), 'the host\'s ball to land', 30 * SLOW);
      await g.until(async () => !(await g.inFlight()), 'the guest\'s ball to land', 30 * SLOW);
@@ -3892,15 +3923,17 @@ const JOURNEYS = [
     // Each golfer up, on their own screen, putts from beside the pin until
     // the hole is over.
     const holeOut = async () => {
-     await t.page.evaluate(() => { window.lab.nearPin(0, .3); window.lab.nearPin(1, .3); });
-     for (let i = 0; i < 8; i++) {
+     await t.page.evaluate(() => { for (const s of [0, 1, 2, 3]) window.lab.nearPin(s, .3); });
+     for (let i = 0; i < 12; i++) {
       await settle();
       if ((await turn(t.page)).holeComplete) return;
-      const up = (await turn(t.page)).active, who = up === 0 ? t : g;
+      // The guest's seat is putted on the guest's screen; any other (the
+      // host's own, or one the host plays on) on the host's.
+      const up = (await turn(t.page)).active, who = up === 1 ? g : t;
       await who.until(() => who.page.evaluate(() => window.lab.state().canSwing), `seat ${up}'s putt to be allowed`, 15 * SLOW);
       await who.putt();
      }
-     throw new Error('eight putts from a foot and the hole is not over');
+     throw new Error('twelve putts from a foot and the hole is not over');
     };
     await g.step('the guest disarms the monitor to putt on the swing pad', async () => {
      await settle();
@@ -3931,6 +3964,16 @@ const JOURNEYS = [
      const [a, b] = [await whereAmI(t.page), await whereAmI(gpage)];
      if (a.hole !== b.hole) throw new Error(`host on ${a.hole}, guest on ${b.hole}`);
     });
+    await t.step('the watcher joins the group at this tee, on every screen, with nothing on the hole they watched', async () => {
+     const [a, b] = [await room(t.page), await room(gpage)];
+     if (a.seats[2] !== 'smokedrop1' || b.seats[2] !== 'smokedrop1') throw new Error(`host seats ${JSON.stringify(a.seats)}, guest seats ${JSON.stringify(b.seats)}`);
+     if (Number.isFinite(a.cards[2]?.[0])) throw new Error(`a score for the hole the watcher only watched: ${JSON.stringify(a.cards[2])}`);
+    });
+    await t.step('the dropped-in golfer leaves again: their ball is the host\'s to play', async () => {
+     drop.leave();
+     await t.until(async () => !(await room(t.page)).seats.includes('smokedrop1'), 'the host to take the seat over', 10 * SLOW);
+     await g.until(async () => !(await room(gpage)).seats.includes('smokedrop1'), 'the guest\'s round to say so', 10 * SLOW);
+    });
     await t.step('the last hole: the round ends on both screens', async () => {
      await settle();
      await t.page.evaluate(() => window.lab.hole(8));
@@ -3948,6 +3991,7 @@ const JOURNEYS = [
      if (!guestSockets.length || guestSockets.some(u => !u.startsWith(relay.url + '/room/') && !u.startsWith(`ws://${lan}:${served.address().port}`))) throw new Error(`guest sockets: ${guestSockets.join(', ')}`);
     });
    } finally {
+    try { dropLink?.close(); } catch {}
     await gctx.close().catch(() => {});
     await relay.close();
     served.close();

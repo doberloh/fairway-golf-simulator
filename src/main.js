@@ -134,7 +134,7 @@ import {newRoomCode,readRoomCode,showRoomCode} from './online/room-code.js';
 import {createLink} from './online/link.js';
 import {RELAY} from './online/relay-address.js';
 import {HostSession,GuestSession,Follower,memberId} from './online/session.js';
-import {shotProblem,reliefProblem,pickProblem,pickerSeat,playsHere} from './online/referee.js';
+import {shotProblem,reliefProblem,pickProblem,pickerSeat,playsHere,seatsAtNextTee,canSeat} from './online/referee.js';
 import {onlineSheet} from './ui-online.js';
 const $=id=>document.getElementById(id),escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const icon=()=>createIcons({icons});
@@ -1670,7 +1670,9 @@ function onlineSheetState(){
  const base={golfers:everyone.map(p=>({id:p.id,name:p.name})),who:(findProfile(profiles,pref.who)||mainProfile(profiles))?.id,input:pref.input,error:onlineError,typed:onlineTyped};
  if(!online)return {...base,stage:'start'};
  const status=online.link?.status||'connecting';
- if(online.role==='host')return {...base,stage:'host',code:online.code,status,knocks:online.knocks,members:online.session.guests.map(m=>({member:m.member,name:m.name,state:m.state})),hostName:online.session.name};
+ if(online.role==='host')return {...base,stage:'host',phase:online.phase,code:online.code,status,
+  knocks:online.knocks.map(k=>({...k,canPlay:onlineCanSeat(k.member)})),
+  members:online.session.guests.map(m=>({member:m.member,name:m.name,state:m.state,seat:onlineSeatState(m.member),canSeat:onlineCanSeat(m.member)})),hostName:online.session.name};
  if(online.phase==='knocking')return {...base,stage:'knocking',code:online.code,status};
  const r=online.session.room;
  return {...base,stage:'guest',code:online.code,status,hostName:r?.hostName,course:r?.course,members:r?.members||[],note:online.note};
@@ -1685,8 +1687,11 @@ function renderOnline(content){
  on('onlineHost',()=>{keep();startHosting();});
  on('onlineJoin',()=>{keep();joinRoom($('onlineCode')?.value);});
  on('onlineCopy',async()=>{const t=showRoomCode(online.code);try{await navigator.clipboard.writeText(t);toast('Room code copied.');}catch{const el=$('onlineCodeText');const r=document.createRange();r.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(r);toast('Selected: copy it with your keyboard.');}});
- content.querySelectorAll('[data-admit]').forEach(b=>b.onclick=()=>{online.session.admit(b.dataset.admit);online.knocks=online.knocks.filter(k=>k.member!==b.dataset.admit);drawOnline();});
- content.querySelectorAll('[data-refuse]').forEach(b=>b.onclick=()=>{online.session.refuse(b.dataset.refuse);online.knocks=online.knocks.filter(k=>k.member!==b.dataset.refuse);drawOnline();});
+ content.querySelectorAll('[data-admit]').forEach(b=>b.onclick=()=>onlineAdmit(b.dataset.admit,false));
+ content.querySelectorAll('[data-admit-play]').forEach(b=>b.onclick=()=>onlineAdmit(b.dataset.admitPlay,true));
+ content.querySelectorAll('[data-refuse]').forEach(b=>b.onclick=()=>onlineRefuse(b.dataset.refuse));
+ content.querySelectorAll('[data-seat]').forEach(b=>b.onclick=()=>onlineSeatFromNextTee(b.dataset.seat));
+ content.querySelectorAll('[data-unseat]').forEach(b=>b.onclick=()=>{online.seatNext=online.seatNext.filter(m=>m!==b.dataset.unseat);drawOnline();});
  on('onlineChoose',()=>openPlayOn('weekly',0));
  on('onlineClose',()=>{onlineClose('You closed the room.');});
  on('onlineCancel',()=>{onlineClose('Stopped knocking.');});
@@ -1694,6 +1699,43 @@ function renderOnline(content){
 }
 // The sheet, if it is open, the knock bar and the round's chip.
 function drawOnline(){if(panel==='online')renderOnline($('drawerContent'));drawKnockBar();drawOnlineChip();}
+// A knock answered. `play`: let in mid-round and seated from the next tee
+// (otherwise someone let in during a round watches).
+function onlineAdmit(member,play){
+ online.session.admit(member);online.knocks=online.knocks.filter(k=>k.member!==member);
+ if(play)onlineSeatFromNextTee(member);
+ else if(online.phase==='playing'){const g=online.session.members.get(member);if(g?.state==='in')toast(`${g.name} is watching. The ONLINE chip at the top seats them from the next tee.`);}
+ drawOnline();
+}
+function onlineRefuse(member){online.session.refuse(member);online.knocks=online.knocks.filter(k=>k.member!==member);drawOnline();}
+// DROPPING IN AND WATCHING (the owner, 20 November 2026; online/referee.js
+// seatsAtNextTee). Mid-round, a guest is playing, seated from the next tee,
+// or watching; the host seats a watcher, and the group takes them at the
+// next tee (onlineSeatNow, from advanceHole). `online.former`: who left a
+// golfer this round, so coming back gives it back to them.
+function onlineSeatState(member){
+ if(online?.role!=='host'||online.phase!=='playing')return null;
+ if(round?.players?.some(p=>p.online===member))return 'playing';
+ return online.seatNext.includes(member)?'next':'watching';
+}
+function onlineCanSeat(member){return online?.role==='host'&&online.phase==='playing'&&!!round&&!round.finished&&canSeat(round.players,online.seatNext,member,{former:online.former});}
+function onlineSeatFromNextTee(member){
+ if(!onlineCanSeat(member))return;
+ online.seatNext.push(member);
+ toast(`${online.session.members.get(member)?.name||'They'} plays from the next tee.`);
+ drawOnline();
+}
+function onlineSeatNow(){
+ if(online?.role!=='host'||online.phase!=='playing'||!online.seatNext.length)return;
+ const {players,left}=seatsAtNextTee(round.players,online.seatNext,{members:online.session.members,former:online.former});
+ online.seatNext=[];
+ const was=new Set(round.players.map(p=>p.online).filter(Boolean));
+ try{round.setPlayers(players,course?.tees);}catch(e){toast(e.message);return;}
+ const joined=round.players.filter(p=>p.online&&!was.has(p.online));
+ for(const p of joined)online.former.delete(p.online);
+ if(joined.length)toast(`${joined.map(p=>p.name).join(' and ')} ${joined.length>1?'join':'joins'} the group.`);
+ for(const m of left)toast(`No seat for ${online.session.members.get(m)?.name||'a watcher'}: four golfers is the most.`);
+}
 // SOMEONE KNOCKING, WHEREVER THE HOST IS (the Play sheet while choosing the
 // course, the menu): their name with Let in and Turn away, over everything,
 // so the host need not leave what they are doing to answer. The Online
@@ -1715,9 +1757,13 @@ function drawKnockBar(){
   el.hidden=false;return;
  }
  el.setAttribute('aria-label','Someone is knocking');
- el.innerHTML=`<span><b>${escape(k.name)}</b> is knocking${online.knocks.length>1?` <small>(and ${online.knocks.length-1} more)</small>`:''}</span><button class="primary" data-admit="${escape(k.member)}">Let in</button><button class="secondary" data-refuse="${escape(k.member)}">Turn away</button>`;
- el.querySelector('[data-admit]').onclick=()=>{online.session.admit(k.member);online.knocks=online.knocks.filter(x=>x.member!==k.member);drawOnline();};
- el.querySelector('[data-refuse]').onclick=()=>{online.session.refuse(k.member);online.knocks=online.knocks.filter(x=>x.member!==k.member);drawOnline();};
+ // Mid-round, someone let in watches, or (a seat free, or their own golfer
+ // waiting for them) plays from the next tee.
+ const mid=online.phase==='playing',play=mid&&onlineCanSeat(k.member);
+ el.innerHTML=`<span><b>${escape(k.name)}</b> is knocking${online.knocks.length>1?` <small>(and ${online.knocks.length-1} more)</small>`:''}</span>${play?`<button class="primary" data-admit-play="${escape(k.member)}">Let in to play</button>`:''}<button class="${play?'secondary':'primary'}" data-admit="${escape(k.member)}">${mid?'Let in to watch':'Let in'}</button><button class="secondary" data-refuse="${escape(k.member)}">Turn away</button>`;
+ el.querySelector('[data-admit]').onclick=()=>onlineAdmit(k.member,false);
+ el.querySelector('[data-admit-play]')?.addEventListener('click',()=>onlineAdmit(k.member,true));
+ el.querySelector('[data-refuse]').onclick=()=>onlineRefuse(k.member);
  el.hidden=false;
 }
 // Every guest let in, seated in a group being set up (`start` rows, as
@@ -1747,10 +1793,18 @@ function draftStart(){
 function drawOnlineChip(){
  let el=$('onlineChip');
  if(!online||online.phase!=='playing'||appMode!=='play'){if(el)el.hidden=true;return;}
- if(!el){el=document.createElement('div');el.id='onlineChip';el.className='online-chip';el.setAttribute('role','status');$('world')?.append(el);}
- const st=online.link?.status,away=online.role==='host'?online.session.guests.filter(g=>g.state==='away').map(g=>g.name):online.hostAway?[online.session.room?.hostName||'The host']:[];
- el.dataset.state=st!=='open'?'lost':away.length?'away':'ok';
- el.textContent=st!=='open'?'ONLINE · RECONNECTING…':away.length?`ONLINE · ${away.join(', ').toUpperCase()} LOST`:`ONLINE · ${showRoomCode(online.code)}`;
+ if(!el){el=document.createElement('div');el.id='onlineChip';el.className='online-chip';el.setAttribute('role','status');$('world')?.append(el);
+  // The host's way to the room mid-round: who is in, watching, or seated
+  // from the next tee (the Online sheet).
+  el.onclick=()=>{if(online?.role==='host')openPanel('online');};}
+ // A lost connection worth saying is a golfer's (their turn waits) or the
+ // host's; a watcher's is not.
+ const st=online.link?.status,away=online.role==='host'?online.session.guests.filter(g=>g.state==='away'&&round.players.some(p=>p.online===g.member)).map(g=>g.name):online.hostAway?[online.session.room?.hostName||'The host']:[];
+ const host=online.role==='host',watching=host?online.session.guests.filter(g=>g.state==='in'&&!round.players.some(p=>p.online===g.member)).length:0;
+ const watcher=!host&&!round?.players?.some(p=>p.online===online.member);
+ el.dataset.state=st!=='open'?'lost':away.length?'away':'ok';el.dataset.host=host?'1':'';
+ el.title=host?'The room: who is in, watching or joining':'';
+ el.textContent=st!=='open'?'ONLINE · RECONNECTING…':away.length?`ONLINE · ${away.join(', ').toUpperCase()} LOST`:`ONLINE · ${watcher?'WATCHING · ':''}${showRoomCode(online.code)}${watching?` · ${watching} WATCHING`:''}`;
  el.hidden=false;
 }
 function onlineLink(code){
@@ -1765,14 +1819,19 @@ function startHosting(){
  try{
   const code=newRoomCode(onlineRandom),member=memberId(onlineRandom),{golfer}=onlineGolfer(),link=onlineLink(code);
   const session=new HostSession({link,member,name:golfer.name,game:GAME_VERSION||'unstamped'});
-  online={role:'host',code,member,link,session,phase:'lobby',knocks:[]};
+  online={role:'host',code,member,link,session,phase:'lobby',knocks:[],seatNext:[],former:new Map()};
   // Said by the knock bar (or the sheet's list), not a toast as well.
-  session.on('knock',w=>{online.knocks=online.knocks.filter(k=>k.member!==w.member).concat([w]);drawOnline();});
+  // Someone who left a golfer this round knocking from another tab or device
+  // (a new member id): the golfer of the same name, left by someone no longer
+  // in the room, is theirs to come back to.
+  session.on('knock',w=>{
+   if(!online.former.has(w.member))for(const [m,name] of online.former)if(name===w.name&&!['in','away'].includes(session.members.get(m)?.state)){online.former.set(w.member,name);break;}
+   online.knocks=online.knocks.filter(k=>k.member!==w.member).concat([w]);drawOnline();});
   session.on('withdrawn',w=>{online.knocks=online.knocks.filter(k=>k.member!==w.member);drawOnline();});
   session.on('admitted',()=>{drawOnline();seatGuestsNow();});session.on('removed',()=>drawOnline());
   // A connection lost is offered to play on without only after 20 s
   // (PLACED): a phone's Wi-Fi blinking is back long before that.
-  session.on('away',w=>{if(w.state==='gone'&&online.phase==='playing')onlineGuestGone(w);else{w.awaySince=Date.now();setTimeout(()=>{if(online)drawOnline();},ONLINE_LOST_MS+50);toast(`${w.name} lost their connection. Their turn waits for them.`);}drawOnline();onlineCardCheck();});
+  session.on('away',w=>{if(w.state==='gone'&&online.phase==='playing')onlineGuestGone(w);else{w.awaySince=Date.now();setTimeout(()=>{if(online)drawOnline();},ONLINE_LOST_MS+50);toast(round?.players?.some(p=>p.online===w.member)&&online.phase==='playing'?`${w.name} lost their connection. Their turn waits for them.`:`${w.name} lost their connection.`);}drawOnline();onlineCardCheck();});
   session.on('seen',()=>onlineCardCheck());
   session.on('back',w=>{online.waiting?.delete(w.member);toast(`${w.name} is back.`);drawOnline();});
   session.on('shot',onlineHostShot);session.on('relief',onlineHostRelief);session.on('pick',onlineHostPick);
@@ -1832,16 +1891,21 @@ function onlineEnded(message){
  if(playing&&appMode==='play')returnToMenu();
 }
 // A guest who said goodbye mid-round: their golfer is the host's to play on
-// or take out (Golfers & rules), rather than a turn that waits for ever.
+// rather than a turn that waits for ever -- and theirs again from the next tee
+// if they knock and are let in to play (`former`, referee.js seatsAtNextTee).
 function onlineGuestGone(w){
- for(const p of round.players)if(p.online===w.member)delete p.online;
- toast(`${w.name} left the round. Their ball is yours to play, or take them out in Golfers & rules.`);
+ let seated=false;
+ for(const p of round.players)if(p.online===w.member){online.former.set(w.member,p.name);delete p.online;seated=true;}
+ online.seatNext=online.seatNext.filter(m=>m!==w.member);
+ if(!seated){toast(`${w.name} left the room.`);drawOnline();return;}
+ toast(`${w.name} left the round. Their ball is yours to play until they come back.`);
  save();
  if(!flight&&!round.holeComplete)setUpTurn();
 }
 // THE HOST TEES OFF.
 function onlineHostStart(){
  online.phase='playing';online.session.course=settings.courseName||'';
+ online.seatNext=[];online.former=new Map();
  online.session.start(saveRecord());
  // The first turn was set up while the room was still its lobby, when every
  // seat counted as this machine's: set up again, so a guest who has the
@@ -1936,6 +2000,10 @@ async function onlineGuestStart(m){
    loadCourse();setMode('play');
   });
   arriveAtHole();drawOnlineChip();
+  // Let in (or back) while the hole's card is up: their card shows too, and
+  // the host's countdown, waiting for it, goes on.
+  if(round.holeComplete&&!round.finished)showHoleCompletion();
+  else if(!round.players.some(p=>p.online===online.member))toast(`Watching ${online.session.room?.hostName||'the host'}’s round. The host can seat you from the next tee.`);
  };
  // A guest in the studio or a round of their own is asked first, as any
  // round's start asks (startRoundOn); the host's round waits for them.
@@ -1968,6 +2036,8 @@ function onlineApply(s,{afterShot}){
  for(const p of next.players)if(p.online===online.member&&online.profile)p.profile=online.profile;
  const was=round,landed=afterShot?online.landing:null;online.landing=null;
  round=next;
+ const mine=r=>r.players.some(p=>p.online===online.member);
+ if(was.uid===round.uid&&!mine(was)&&mine(round))toast('You are in the group from this tee.');
  if(was.uid!==round.uid||was.hole!==round.hole){cancelAdvance();endHoleSummary();endRelief();endPick();closePanel();loadCourse();arriveAtHole();return;}
  if(landed){
   announceHoleOut(landed.carded,{chipIn:!!landed.result.holed&&!landed.result.hazard&&landed.before.lie!=='green'&&landed.before.stroke>1});
@@ -3695,6 +3765,8 @@ function advanceHole(){
  // when the host's round says so (onlineApply).
  if(online?.role==='guest'&&online.phase==='playing')return;
  cancelAdvance();endHoleSummary();
+ // Online, those the host seated join the group here, at the next tee.
+ if(round.holeComplete&&!round.finished)onlineSeatNow();
  // Growing the next hole is real work that can fail, and this is reached from a
  // timer as often as from a button -- an unhandled rejection here would leave
  // the player on a finished hole with nothing happening and nothing said.
@@ -8970,7 +9042,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   // A relay on this machine for this page, until it is closed (smoke
   // `online`): players never see or set the built-in one.
   relay:url=>{testRelay=String(url||'');return relayAddress();},
-  online:()=>online?{role:online.role,phase:online.phase,status:online.link?.status,knocks:(online.knocks||[]).map(k=>k.name),seats:round?.players?.map(p=>p.online||null),hole:round?.hole,finished:!!round?.finished,relief:round?.relief?.player??null,cards:round?.cards}:null,
+  online:()=>online?{member:online.member,seatNext:online.seatNext?[...online.seatNext]:undefined,role:online.role,phase:online.phase,status:online.link?.status,knocks:(online.knocks||[]).map(k=>k.name),seats:round?.players?.map(p=>p.online||null),hole:round?.hole,finished:!!round?.finished,relief:round?.relief?.player??null,cards:round?.cards}:null,
   // A ball moved to `metres` from the pin, on its line, so a journey can hole
   // out without playing the hole (smoke `online`); saved, so an online host
   // sends it. A bench tool: no player reaches it.

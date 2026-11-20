@@ -11,23 +11,35 @@ export const STATUS_WORDS = {idle: 'Not connected', connecting: 'Connecting…',
 
 // No relay address anywhere: it is built in (online/relay-address.js).
 // `s`: {stage: 'start'|'host'|'knocking'|'guest', code, golfers:
-// [{id, name}], who, input, knocks: [{member, name}], members: [{member, name,
-// state}], hostName, status, error, note, course}
+// [{id, name}], who, input, knocks: [{member, name, canPlay}], members:
+// [{member, name, state, seat: 'playing'|'next'|'watching'|null, canSeat}],
+// phase ('lobby'|'playing', the host's), hostName, status, error, note, course}
 export function onlineSheet(s) {
  const error = `<p class="field-error" id="onlineError" role="alert">${esc(s.error || '')}</p>`;
  const status = `<p class="online-status" data-state="${esc(s.status || 'idle')}"><span class="online-light" aria-hidden="true"></span>${esc(STATUS_WORDS[s.status] || STATUS_WORDS.idle)}</p>`;
- const people = (rows, host) => `<ul class="online-people">${host ? `<li><span class="online-who">${esc(host)}</span><small>HOST</small></li>` : ''}${rows.map(m => `<li data-state="${esc(m.state)}"><span class="online-who">${esc(m.name)}</span><small>${m.state === 'away' ? 'CONNECTION LOST' : 'IN THE ROOM'}</small></li>`).join('')}</ul>`;
+ // Mid-round (`seat`, the host's view): playing, seated from the next tee, or
+ // watching, with the host's buttons to seat a watcher or think again.
+ const SEAT_WORDS = {playing: 'PLAYING', next: 'FROM THE NEXT TEE', watching: 'WATCHING'};
+ const seatButton = m => m.state !== 'in' ? ''
+  : m.seat === 'watching' && m.canSeat ? `<button class="secondary" data-seat="${esc(m.member)}">Seat from the next tee</button>`
+  : m.seat === 'next' ? `<button class="secondary" data-unseat="${esc(m.member)}">Keep watching</button>` : '';
+ const people = (rows, host) => `<ul class="online-people">${host ? `<li><span class="online-who">${esc(host)}</span><small>HOST</small></li>` : ''}${rows.map(m => `<li data-state="${esc(m.state)}"${m.seat ? ` data-seat-state="${esc(m.seat)}"` : ''}><span class="online-who">${esc(m.name)}</span><small>${m.state === 'away' ? 'CONNECTION LOST' : SEAT_WORDS[m.seat] || 'IN THE ROOM'}</small>${seatButton(m)}</li>`).join('')}</ul>`;
  if (s.stage === 'host') {
+  const playing = s.phase === 'playing';
+  const knock = k => playing
+   ? `${k.canPlay ? `<button class="primary" data-admit-play="${esc(k.member)}">Let in to play</button>` : ''}<button class="${k.canPlay ? 'secondary' : 'primary'}" data-admit="${esc(k.member)}">Let in to watch</button>`
+   : `<button class="primary" data-admit="${esc(k.member)}">Let in</button>`;
   return `<p>Read this code to your friends, or send it by text. They choose <b>Play online</b>, then <b>Join a room</b>, and type it in. You let each one in by name.</p>
   <div class="online-code" aria-label="Room code"><b id="onlineCodeText">${esc(showRoomCode(s.code))}</b><button class="secondary" id="onlineCopy"><i data-lucide="copy"></i> Copy</button></div>
   ${status}
-  ${s.knocks?.length ? `<h3>Knocking</h3><ul class="online-knocks">${s.knocks.map(k => `<li><span class="online-who">${esc(k.name)}</span><button class="primary" data-admit="${esc(k.member)}">Let in</button><button class="secondary" data-refuse="${esc(k.member)}">Turn away</button></li>`).join('')}</ul>` : ''}
+  ${s.knocks?.length ? `<h3>Knocking</h3><ul class="online-knocks">${s.knocks.map(k => `<li><span class="online-who">${esc(k.name)}</span>${knock(k)}<button class="secondary" data-refuse="${esc(k.member)}">Turn away</button></li>`).join('')}</ul>` : ''}
   <h3>In the room</h3>${people(s.members || [], s.hostName)}
-  ${s.members?.length ? '' : '<p class="note">Nobody yet. The course and format are chosen once your friends are in.</p>'}
+  ${playing ? '<p class="note">Anyone let in now watches the round. Seat a watcher and they play from the next tee, four golfers at most; someone who left the round gets their own golfer and card back. To close the room, leave the round from the menu.</p>'
+   : `${s.members?.length ? '' : '<p class="note">Nobody yet. The course and format are chosen once your friends are in.</p>'}`}
   ${error}
-  <button class="primary" id="onlineChoose"${s.members?.length ? '' : ' disabled'}>Choose the course and start <i data-lucide="arrow-right"></i></button>
-  <button class="secondary" id="onlineClose">Close the room</button>
-  <p class="note">The room is private: the code is its key, the online service only passes sealed messages it cannot read, and nobody plays without your say. Everyone needs the same version of Fairway.</p>`;
+  ${playing ? '' : `<button class="primary" id="onlineChoose"${s.members?.length ? '' : ' disabled'}>Choose the course and start <i data-lucide="arrow-right"></i></button>
+  <button class="secondary" id="onlineClose">Close the room</button>`}
+  <p class="note">The room is private: the code is its key, the online service only passes sealed messages it cannot read, and nobody plays without your say. Up to eight screens: four golfers, the rest watching. Everyone needs the same version of Fairway.</p>`;
  }
  if (s.stage === 'knocking') {
   return `<p>Knocking on room <b>${esc(showRoomCode(s.code))}</b>. The host lets you in by name.</p>${status}${error}

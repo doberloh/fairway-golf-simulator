@@ -234,7 +234,13 @@ but the smoke journey.
 - `online-link` -- two players hear each other sealed; a forged box and a copy
   passed on from another socket are dropped; a lost connection is retried.
 - `online-session` -- the protocol's checks and safe text; the door (another
-  version, a full room, a round begun); the referee; a knock let in and one
+  version, a full room of eight screens; a round under way is let in since
+  20 November 2026); the referee; seats from the next tee (`seatsAtNextTee`,
+  `canSeat`: a newcomer on the smaller team, a leaver back in their own
+  golfer, four at most); **dropping in** -- a friend let in mid-round is sent
+  the round alone, watches, is seated and plays from the next tee, the
+  holes before empty on their card -- and **dropping out and back**, their
+  own golfer and whole card returned; a knock let in and one
   turned away; **a whole round of every format, a host and two guests, to one
   card** (a stand-in ball, a ball in the water taken by a guest, a guest's
   scramble pick); a guest cut off and back to their seat; the host cut off and
@@ -247,7 +253,9 @@ but the smoke journey.
   dev` on 19 November 2026, and the deployed relay on 20 November, all
   passing.
 - `ui-online` -- the Play online sheet's stages, names and errors as text,
-  and no relay anywhere on it (one box to type in: the code).
+  no relay anywhere on it (one box to type in: the code), and the host's
+  sheet mid-round (let in to play or to watch; playing, watching, from the
+  next tee; no Start or Close).
 - `node tools/relay-check.mjs <ws(s)://address>` asks any running relay its
   rules over real sockets, in a room of its own: the Node twin, the Worker
   under `wrangler dev`, or the deployed one.
@@ -257,8 +265,10 @@ but the smoke journey.
 internet (the built game opened a room and let a guest in through the
 deployed relay on 20 November, by a scratch script: bench/shots/online-real-relay.mjs, local), a real phone, a real launch monitor, three or four players in
 the browser (Node covers the rules), Safari and Firefox; and in the browser
-(Node covers the rules of each): a scramble's ball chosen by a guest, a net
-round's strokes for a guest, the course of the week online, a hidden host
+(Node covers the rules of each): a scramble's ball chosen by a guest, a watcher
+seated in a browser and then playing shots (the smoke journey's dropped-in
+golfer is a Node guest that leaves before its turn; Node plays the rest), a
+net round's strokes for a guest, the course of the week online, a hidden host
 landing flights at once, *Play on without them*, and the room open again
 for a second round.
 
@@ -538,7 +548,7 @@ putt now waits 30 s for the card, and the journey logs how long it took.
 | `landscape-map` (the US landscapes goal, 2 November 2026) | Course studio: the map over the landscape pictures, every built US landscape live on it and a globe on every picture; a region pressed picks its landscape, a picture pressed lights its region; pictures of the sheet on a desktop and a phone (bench/shots/smoke/landscape-map*.png) |
 | `every-landscape` (the US landscapes goal) | Course studio grows every landscape a player can pick, once each, with no error: the built game has every landscape's record, models and pictures |
 | `monitor`, `monitor-phone`, `bridge-bundle`, `server-program` | launch monitor through a pretend bridge, on a phone, and the shipped programs. A bridge that is missing (a bare `vite build` does not bundle it; `npm run build` does) or will not start fails `bridge-bundle` alone and the run goes on (the 1.0 polish: it used to end the run) |
-| `online` (19 November 2026) | Play online in two browsers through the relay's Node twin (each page pointed at it by `lab.relay`; the sheet must name no relay): no socket before a room is opened, and the relay given the room number, never the code; the host (the file from disk) starts a room; the guest's page served over plain http from this machine's network address -- not a secure page, no `crypto.subtle`, the owner's phone-on-the-PC's-server case -- knocks with the code, playing with the launch monitor, and is let in; a late knock answered from the knock bar over Play keeps the order of play chosen; Surprise me teed off and built on both; the host swings, the guest's screen flies it to the same card; nobody swings on the other's turn; a monitor shot through a pretend bridge on the guest's turn, flown on the host to the same ball and card; the guest cut off at the relay and back to the same round; a ball put in the water (`lab.trouble`) whose relief is chosen on its golfer's screen only; both golfers holing out from beside the pin (`lab.nearPin`), the scorecard on both screens with the same card, the guest's shown before anyone moves on (the host waits for it since 20 November 2026; the day before, the host's countdown could close it while the guest's XP was still up); the host moving the group on and the guest arriving on the next tee; the last hole (`lab.hole`) and Round complete on both screens. Pictures in bench/shots/smoke/online-*.png |
+| `online` (19 November 2026) | Play online in two browsers through the relay's Node twin (each page pointed at it by `lab.relay`; the sheet must name no relay): no socket before a room is opened, and the relay given the room number, never the code; the host (the file from disk) starts a room; the guest's page served over plain http from this machine's network address -- not a secure page, no `crypto.subtle`, the owner's phone-on-the-PC's-server case -- knocks with the code, playing with the launch monitor, and is let in; a late knock answered from the knock bar over Play keeps the order of play chosen; Surprise me teed off and built on both; the host swings, the guest's screen flies it to the same card; nobody swings on the other's turn; a monitor shot through a pretend bridge on the guest's turn, flown on the host to the same ball and card; the guest cut off at the relay and back to the same round; **a friend dropping in** (a Node guest, 20 November 2026) -- the knock bar's *Let in to play* and *Let in to watch*, the round sent to them alone, WATCHING on the host's chip, the chip opening the room, *Seat from the next tee*, joining the group at the next tee on both screens with nothing on the hole they watched, then leaving and the host taking their ball; a ball put in the water (`lab.trouble`) whose relief is chosen on its golfer's screen only; both golfers holing out from beside the pin (`lab.nearPin`), the scorecard on both screens with the same card, the guest's shown before anyone moves on (the host waits for it since 20 November 2026; the day before, the host's countdown could close it while the guest's XP was still up); the host moving the group on and the guest arriving on the next tee; the last hole (`lab.hole`) and Round complete on both screens. Pictures in bench/shots/smoke/online-*.png |
 | `menu-panels` | (round 14) the driving range's steps are pressed by name: The range, Golfers |
 | (round 14) every journey | `press(name)` goes to an open step sheet's last step first when the button is not on screen -- the start buttons (Start an endless run, Play the course of the week) are on the Golfers step now, as a player would find them |
 | `hud-reachable`, `text-size`, `phone-portrait`, `phone-landscape`, `home-screen-hint` | layout from desktop to phone, larger text, a hole by touch (since round 13 the menu journeys on a phone open the 1.0 sheets, laid out for a phone) |
