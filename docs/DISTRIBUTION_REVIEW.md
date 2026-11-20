@@ -2196,3 +2196,33 @@ generated courses is a few kilobytes. It has no cap of its own (the owner);
 it is written into a Blob and read from a File a piece at a time, with ZIP64
 past 4 GB. Not yet measured on a real browser at full size.
 
+## Addendum, 19 November 2026: v0.9.19
+
+**v0.9.19** is published at the owner's request ("merge this all in to
+main. Cut a patch release, push to github as well as the live website
+demo"; the owner asked for a patch release, so 0.9.18 to 0.9.19), as
+"Fairway 0.9.19 (beta)", tag `v0.9.19`, not a pre-release, the same six
+files, from the merge of `fairway-tour` into `main`, notes in
+`docs/releases/v0.9.19.md`. Content: the branch note above (computer
+golfers, net and Stableford, the Fairway Tour and its tour file, the
+caddie, strokes gained), the order of play, follow-the-flight cameras, the
+bold putting rings and orange aim line, the computer golfers' features
+marked BETA in the game, and the fixes in DONE.md (*The Fairway Tour and
+computer golfers*), among them a water drop never on ground too steep to
+hold a ball and a computer golfer that picks up at five over par.
+**Generator 103, schema 47 and built 3 are unchanged** and the landscape
+fingerprints are silent: no saved round, course or code moves; a round
+saved before the order of play plays hole-out. **Still one offline file,
+no network**: nothing new is fetched and no dependency or asset was added
+(the tour file's ZIP is written by hand). The built page is 60,644,747
+bytes against 0.9.18's 60,542,342 (102 KB more). `tools/phone-probe.mjs`
+and `tools/probe-frames.js` add their scripts only to a served test copy,
+never to `src/`, `dist/` or the zips. Checked on the released code: 1,745
+Node tests (1,744 pass, one skipped, none failing); the computer golfer
+bench (0 invariants broken); the game's 46 smoke journeys 46 of 46 on the
+release build (a run before the last fixes found the computer golfer stuck
+on a coast hole -- fixed -- and two harness flakes, also fixed); the
+builder's 10 smoke journeys 10 of 10 (its Worthington test round 91 against par 71, nothing stuck). Played by the owner on an iPhone
+and a Mac mini through the test copy before the last changes; the rest is
+listed in TODO, *Play the current build by hand*.
+

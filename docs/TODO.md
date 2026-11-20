@@ -44,56 +44,10 @@ wrong, unfinished, or owed a check.
 
 ## Next feature
 
-- [ ] **The Fairway Tour and computer golfers: the goal on branch
-  `fairway-tour`** (the owner, 17 November 2026; planned with the owner the
-  same day, which closes *Plan the Fairway Tour with the owner, before any
-  code*). Computer golfers who miss the way a golfer of their handicap
-  misses, in any round; gross or net rounds and Stableford; opponents that
-  adapt; a tournament against a field with a leaderboard and a cut; a
-  season the player sets up on built and generated courses; a tour shared
-  as one file with its built courses; the caddie's club suggestion,
-  strokes gained and course ratings from the computer golfers (the last
-  three and Stableford left IDEAS.md for it). The design, the owner's
-  answers and the order of work are local: docs/studies/fairway-tour/
-  (SPEC.md, GOAL.md, SUMMARY.md). Large.
-  - **Order of play, built and not seen in the game** (the owner, 19
-    November 2026, on the same branch). Play's Rules step, *Order of play*
-    (it was drawn on the old panel only, which Play hides, until the owner
-    could not find it; Scoring, Caddie and the computer golfers' two
-    settings had the same fault and were placed with it; the `relief`
-    smoke journey's new check for them passed, 19 November 2026):
-    *Rules of golf* (honours, then the ball farthest from the hole) or
-    *Hole out in turn* (the default). Tested in tests/play-order.test.mjs
-    and the round matrix, every format with both orders; every smoke
-    journey passed on its build (46 of 46, 19 November 2026), but none
-    plays the *Rules of golf* order, and nobody has played it. To check by hand: a stroke round with three computer
-    golfers on *Rules of golf* -- all four tee off, then turns pass ball
-    to ball, the camera and the turn card following; a scramble of two
-    teams taking turns; a ball out of bounds off the tee waiting for the
-    others; the choice kept for the next round. Other golfers' balls are
-    not drawn while they wait (as in match play), which may read oddly
-    with turns passing every shot.
-  - **Follow the flight again, and a putt camera that stops: built, not
-    seen** (the owner, 19 November 2026). Camera settings, *Shot camera*:
-    *Follow the flight* (default) or *Television*. Tested in
-    tests/chase-camera.test.mjs (the camera's angle to the ball never
-    changes; a putt starts from the aim view and stops 2 m out). To check
-    by hand: a drive, a curving shot and a pitch past the pin -- the
-    camera trails and never swings round; a long putt -- the camera glides
-    after the ball and stops 2 m short, then only turns; a short putt --
-    no move; Television still as before; the review fly-up after a full
-    shot with either. Frame figures were taken with the television camera.
-  - **Bold putting rings, a blaze-orange aim line, no aim line for a
-    computer golfer: built, not seen** (the owner, 19 November 2026).
-    Tested: which ring lights (tests/putting-rings.test.mjs); every smoke
-    journey passed on its build (46 of 46), none of them looking at the
-    rings or the line's colour. To check on
-    the phone and the PC: the gimme circle bold and white, turning pink
-    as a putt rolls inside it; Dartboard's three rings, only the inner one
-    round the ball lit; the orange line readable on the palest greens; no
-    line, landing circle or map aim mark on a computer golfer's turn, and
-    yours back on your turn. The fat rings are a renderer change on every
-    tier: frame cost not measured (a profile needs the owner's word).
+Nothing chosen. The Fairway Tour goal merged and was released as 0.9.19 (19
+November 2026; DONE.md, *The Fairway Tour and computer golfers*); what it
+left is under *Play the current build by hand* and *Known wrong*. The
+candidates are in IDEAS.md.
 
 ## Known wrong
 
@@ -325,10 +279,41 @@ here is a claim of support until it is done.
     flight's end waited on something.
   - `lab.state().lastStroke` holds the last reading, with its sample count.
 
-- [ ] **Play the current build by hand** (0.9.18, 17 November 2026). What has
+- [ ] **Play the current build by hand** (0.9.19, 19 November 2026). What has
   been built and seen only in captures, measurements or smoke runs, and still
   exists in the game. The archive has each item's full list.
-  - **The Fairway Tour branch, by hand** (fairway-tour, 17-18 November 2026;
+  - **Release 0.9.19** (19 November 2026: the Fairway Tour merged; the
+    computer golfers' features marked BETA). Every smoke journey on the
+    release build is in DISTRIBUTION_REVIEW's addendum. The owner played
+    on the branch on the phone and a Mac mini (the order of play "works
+    flawlessly"; the rings, the orange line and the hidden computer aim
+    liked); none of what follows was looked at item by item.
+  - **Order of play** (0.9.19). Play's Rules step, *Order of play*: *Rules
+    of golf* (honours, then the ball farthest from the hole) or *Hole out
+    in turn* (the default). Tested in tests/play-order.test.mjs and the
+    round matrix, every format with both orders; the `relief` smoke
+    journey checks the setting is on screen; no journey plays the *Rules
+    of golf* order. To check by hand: a scramble of two teams taking
+    turns; a ball out of bounds off the tee waiting for the others; the
+    choice kept for the next round. Other golfers' balls are not drawn
+    while they wait (as in match play), which may read oddly with turns
+    passing every shot.
+  - **Follow the flight again, and a putt camera that stops** (0.9.19).
+    Camera settings, *Shot camera*: *Follow the flight* (default) or
+    *Television*. Tested in tests/chase-camera.test.mjs. To check by hand:
+    a drive, a curving shot and a pitch past the pin -- the camera trails
+    and never swings round; a long putt -- the camera glides after the
+    ball and stops 2 m short, then only turns; a short putt -- no move;
+    Television as before; the review fly-up after a full shot with either.
+    Frame figures in RESEARCH were taken with the television camera.
+  - **Bold putting rings, a blaze-orange aim line, no aim line for a
+    computer golfer** (0.9.19; the owner liked them on the phone). Tested:
+    which ring lights (tests/putting-rings.test.mjs). Not looked at item by
+    item: Dartboard's three rings, only the inner one round the ball lit;
+    no map aim mark on a computer golfer's turn. The fat rings are a
+    renderer change on every tier: frame cost not measured (a profile
+    needs the owner's word).
+  - **The Fairway Tour and computer golfers, by hand** (0.9.19, BETA in the game; built 17-18 November 2026;
     PLAYING *Computer golfers*, *Handicaps and Stableford*, *The caddie and
     strokes gained*, *The Fairway Tour*). **Seen in smoke journeys, not by a
     person** (cpu-group, tour-event, net-stableford, tour-file; their
@@ -348,7 +333,7 @@ here is a claim of support until it is done.
     round complete's strokes gained and net ranking; the typed handicap
     box; the builder's test round with its new golfers (about 11 s for a
     nine, slower than before); a built course in a tour file.
-  - **The Fairway Tour branch, not built** (each written up in RESEARCH or
+  - **The Fairway Tour, not built** (0.9.19; each written up in RESEARCH or
     PLAYING): your playoff is drawn, not played on the course; the
     scorecard's stroke dots and net row (round complete shows net totals;
     the card is gross); net skins during the round (the mid-round skins line

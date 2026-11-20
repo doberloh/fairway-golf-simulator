@@ -25,6 +25,70 @@ kept whole: *The open list before the 11 November 2026 prune* and *The open
 list before the 16 October prune*, each with a table of what became of every
 entry.
 
+## The Fairway Tour and computer golfers (branch `fairway-tour`, 17-19 November 2026; released as 0.9.19)
+
+**Merged at the owner's word, 19 November 2026** ("go ahead and mark the AI
+features all as beta features in game. perform any more tests that need to
+be done. Then merge this all in to main. Cut a patch release, push to github
+as well as the live website demo"). The goal was cleared by the owner on 18
+November with one miss reported (Ultra's long frames, open in TODO *Known
+wrong*); the owner then played the branch on an iPhone and a Mac mini
+through tools/phone-probe.mjs and asked for the last four changes below.
+
+**What was built** (RESEARCH and PLAYING have each part; the design, the
+owner's answers and the goal's log are local, docs/studies/fairway-tour/):
+computer golfers who miss the way a golfer of their handicap misses, in any
+seat of any round (src/ai/), Matched and Adaptive opponents; gross or net
+rounds (net.js) and Stableford (stableford.js); a tournament against a field
+with a leaderboard, a cut and a playoff (tournament.js); a season on built
+and generated courses (tour.js, tour-store.js); a tour shared as one file
+with its built courses (tour-file.js); the caddie's club suggestion
+(caddie.js); strokes gained (strokes-gained.js); course ratings from the
+computer golfers; tour achievements and XP; relief-ground.js shared by the
+game and the golfers; a ball-model fix for a touchdown on a steep bank. Then,
+at the owner's asks on 19 November: the **order of play** (play-order.js:
+hole out in turn, or the Rules of Golf's honours and farthest-out; match
+play's honour the side's); the **round settings shown on Play's steps**
+(the order of play, Scoring, Caddie and the computer golfers' settings had
+been drawn only on the old panel Play hides); **bold putting rings** that
+light pink round the rolling ball, a **blaze-orange aim line**, and no aim
+for a computer golfer; **follow the flight** again as the default shot
+camera, on a bearing fixed at the strike, with a putt camera that follows
+from behind and stops 2 m from the cup (Television kept as a setting); and
+the computer golfers' features **marked BETA** in the game. Also fixed on
+the way: the minimap's background redrawn at every tee shot; the late
+shader on Ultra (the green reading out of the sun mask); a pull-push smoke
+step that met water relief on a random course. **Found by the release's
+own smoke run** and fixed before the merge: a computer golfer stuck on an
+Endless coast hole (a drop on a cliff, driver off the ground into the sea,
+a ball creeping through a bunker), now with a pick-up at five over par
+(RESEARCH, *A hole always ends*).
+
+### The open entry as it stood at the merge
+
+- [x] **The Fairway Tour and computer golfers: the goal on branch
+  `fairway-tour`** (the owner, 17 November 2026; planned with the owner the
+  same day, which closes *Plan the Fairway Tour with the owner, before any
+  code*). Computer golfers who miss the way a golfer of their handicap
+  misses, in any round; gross or net rounds and Stableford; opponents that
+  adapt; a tournament against a field with a leaderboard and a cut; a
+  season the player sets up on built and generated courses; a tour shared
+  as one file with its built courses; the caddie's club suggestion,
+  strokes gained and course ratings from the computer golfers (the last
+  three and Stableford left IDEAS.md for it). The design, the owner's
+  answers and the order of work are local: docs/studies/fairway-tour/
+  (SPEC.md, GOAL.md, SUMMARY.md). Large. Its three sub-items of 19
+  November (the order of play, follow the flight, the rings and the aim
+  line) moved to TODO *Play the current build by hand*, being built and
+  not looked at item by item.
+
+### Release 0.9.19 (19 November 2026)
+
+docs/releases/v0.9.19.md; DISTRIBUTION_REVIEW, *Addendum, 19 November
+2026: v0.9.19*. The branch-only AGENTS.md section (*On the fairway-tour
+branch, the computer is free under the goal's terms*) was deleted in the
+merge, as it said.
+
 ## The surroundings rework: the look (branch `surroundings-rework`, 12-13 November 2026)
 
 **Signed off by the owner, 13 November 2026**, after round 11: "Mark all
