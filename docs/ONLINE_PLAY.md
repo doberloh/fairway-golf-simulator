@@ -175,6 +175,31 @@ this machine with `lab.relay(url)`, a console hook no player reaches.
   golfers wait until it is visible again (they think in frames).
 - A guest's own shot with no answer from the host in 10 seconds comes down
   and the turn is theirs again.
+- **Connections that drop, go quiet or cannot be made** (20 November 2026,
+  the owner: "how robust is our connection error handling and
+  reconnection?"; every figure PLACED):
+  - a dropped socket is retried after 1, 2, 4, 8, then every 15 seconds,
+    for as long as the room is open;
+  - **a socket that goes quiet is a dead one**: every 25-second ping wants
+    an answer within 10 seconds, or the socket is given up and a new one
+    opened -- so a phone that moved from Wi-Fi to mobile data, or a laptop
+    that slept, is back within about half a minute rather than whenever
+    the browser notices (link.js `DEAD_MS`);
+  - **the network back, or the page shown again** (a phone woken): a
+    connection waiting to retry tries at once, and an open one is asked
+    whether it is still alive (`nudge`);
+  - **after four failed tries** the screen says Fairway's online service
+    cannot be reached just now (the Online sheet; the chip, *NO SERVICE*),
+    still trying -- the service down, or its daily allowance spent;
+  - **a guest whose host has not come back for two minutes** (a crashed or
+    closed host takes the room with it), or who cannot reach the room for
+    two minutes, is offered *Leave the round* -- to the menu, not asked to
+    keep the round -- or *Keep waiting*, asked again two minutes on. A guest
+    back on the relay whose host does not answer within 8 seconds is told
+    the host is away (it heard nothing before);
+  - **a guest's move made between sockets** (a swing, a relief choice, a
+    scramble pick) is refused there and then with a word, and stays to be
+    made again, rather than sent nowhere.
 
 ## Files
 

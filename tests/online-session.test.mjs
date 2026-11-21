@@ -454,6 +454,59 @@ test('drop out and back: a golfer who leaves mid-round has their own golfer and 
  } finally { back?.link.close(); close(); await relay.close(); }
 });
 
+// THE HOST GONE AND BACK, AS A GUEST HEARS IT (20 November 2026). Each said
+// once, whichever socket dropped; and a guest back on the relay whose host
+// does not answer is told the host is away (before, it heard nothing).
+test('a guest is told once that the host is away, and once that it is back, whoever dropped', {skip: !!EXTERNAL}, async () => {
+ const relay = await relayForTest();
+ const code = newRoomCode(random), links = [];
+ try {
+  const mk = () => { const l = createLink({relay: relay.url, code, random, retryMs: [20]}); links.push(l); return l; };
+  const host = new HostSession({link: mk(), member: memberId(random), name: 'Host', game: GAME});
+  host.on('knock', w => host.admit(w.member));
+  const ann = new GuestSession({link: mk(), member: memberId(random), golfer: {name: 'Ann'}, game: GAME, hostAnswerMs: 150});
+  const said = [];
+  ann.on('host-away', () => said.push('away')); ann.on('host-back', () => said.push('back'));
+  await until(() => ann.state === 'in');
+  const cut = tag => { for (const r of relay.rooms.values()) r.get(tag)?.ws.terminate(); };
+  // Ann's own socket cut: back, welcomed again by the host -- nothing said.
+  cut(ann.link.you);
+  await until(() => ann.link.status === 'open' && ann.hostTag);
+  await new Promise(r => setTimeout(r, 300));
+  assert.deepEqual(said, []);
+  // The host's socket cut: away, then back when it returns.
+  cut(host.link.you);
+  await until(() => said.includes('back'));
+  assert.deepEqual(said, ['away', 'back']);
+  // The host gone for good, and Ann's socket cut too: back on the relay, no
+  // host answers, and she is not told twice.
+  host.link.close();
+  await until(() => said.length === 3);
+  cut(ann.link.you);
+  await until(() => ann.link.status === 'open');
+  await new Promise(r => setTimeout(r, 400));
+  assert.deepEqual(said, ['away', 'back', 'away']);
+ } finally { for (const l of links) l.close(); await relay.close(); }
+});
+
+test('a guest back on the relay whose host never answers is told the host is away', {skip: !!EXTERNAL}, async () => {
+ const relay = await relayForTest();
+ const code = newRoomCode(random), links = [];
+ try {
+  const mk = () => { const l = createLink({relay: relay.url, code, random, retryMs: [20]}); links.push(l); return l; };
+  const host = new HostSession({link: mk(), member: memberId(random), name: 'Host', game: GAME});
+  host.on('knock', w => host.admit(w.member));
+  const ann = new GuestSession({link: mk(), member: memberId(random), golfer: {name: 'Ann'}, game: GAME, hostAnswerMs: 150});
+  let away = 0;
+  ann.on('host-away', () => away++);
+  await until(() => ann.state === 'in');
+  // Both cut at once (the relay restarted, say): the host never comes back.
+  host.link.close();
+  for (const r of relay.rooms.values()) for (const p of r.values()) p.ws.terminate();
+  await until(() => away === 1, 3000);
+ } finally { for (const l of links) l.close(); await relay.close(); }
+});
+
 test('a shot out of turn is refused and nothing moves', async () => {
  const relay = await relayForTest();
  const {host, guests, close} = await room(relay, ['Ann']);

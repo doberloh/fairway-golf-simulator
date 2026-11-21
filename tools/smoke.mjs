@@ -4330,6 +4330,54 @@ const JOURNEYS = [
     await relay.close();
    }
   },
+ },
+ // A HOST WHO NEVER COMES BACK (20 November 2026, the owner's "how robust is
+ // our connection error handling and reconnection?"). The host is Hal, in
+ // another browser; this screen is the guest. Hal's window goes with no
+ // goodbye: the guest is told the host is away, and after the wait (two
+ // minutes in the game, shortened here by lab.onlineGiveUp) offered to
+ // leave -- to the menu, never asked to keep a round that was Hal's.
+ {
+  name: 'online-host-gone',
+  what: 'a host whose window disappears mid-round with no goodbye: the guest is told the host is away, then offered to leave, and leaves to the menu without being asked to save',
+  async run(t) {
+   const relay = await startRelay({port: 0, log: relayLog});
+   const ctxs = [];
+   try {
+    await menuReady(t);
+    let hal = null;
+    await t.step('Hal hosts from another browser; this screen knocks and is let in; Surprise me → Tee off', async () => {
+     hal = await onlineGuest(t, 'Hal', 'phal'); ctxs.push(hal.ctx);
+     const code = await onlineHostRoom(hal.trip, relay.url);
+     await onlineKnock({page: t.page, trip: t, name: 'Smoke'}, code, relay.url);
+     await hal.trip.until(() => hal.page.locator('[data-admit]').first().isVisible(), 'the knock on Hal\'s screen', 15 * SLOW);
+     await hal.page.locator('[data-admit]').first().click();
+     await t.until(() => t.page.locator('#onlineLeave').isVisible(), 'this screen in the room', 15 * SLOW);
+     await hal.trip.press('Choose the course and start');
+     await hal.trip.until(() => hal.page.locator('#drawer .sx-card').first().isVisible().catch(() => false), 'Play', 10 * SLOW);
+     await hal.page.locator('#drawer .sx-card[aria-label^="Surprise me"]').first().click();
+     await hal.trip.press('Tee off on the surprise course');
+     await hal.trip.inPlay(120 * SLOW);
+     await t.inPlay(120 * SLOW);
+    });
+    await t.step('Hal\'s window goes with no goodbye: the host is away, then this screen is offered to leave', async () => {
+     await t.page.evaluate(() => window.lab.onlineGiveUp(4000));
+     await hal.ctx.close();
+     await t.until(async () => /HAL LOST/.test(await t.page.textContent('#onlineChip') || ''), 'HAL LOST on the chip', 15 * SLOW);
+     await t.until(() => t.page.locator('#onlineKnock [data-giveup]').isVisible(), 'Leave the round', 20 * SLOW);
+     await t.page.screenshot({path: path.join(SHOTS, 'online-host-gone.png')});
+    });
+    await t.step('Leave the round: the menu, no question about saving, out of the room', async () => {
+     await t.page.locator('#onlineKnock [data-giveup]').click();
+     await t.until(() => t.page.evaluate(() => document.getElementById('app').dataset.mode === 'menu'), 'the menu', 60 * SLOW);
+     if (await t.page.evaluate(() => document.getElementById('leaveNotice')?.hidden === false)) throw new Error('asked to keep the host\'s round');
+     if (await t.page.evaluate(() => window.lab.online())) throw new Error('still in a room');
+    });
+   } finally {
+    for (const c of ctxs) await c.close().catch(() => {});
+    await relay.close();
+   }
+  },
  }
 ];
 

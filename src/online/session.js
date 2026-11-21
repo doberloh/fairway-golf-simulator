@@ -178,15 +178,27 @@ export class HostSession {
  close() { this.send({t: 'end'}); this.link.close(); }
 }
 
+// A guest back on the relay waits this long for its host to answer before
+// calling the host away (20 November 2026: back on a new socket, a guest
+// whose host had gone heard nothing at all, and was told nothing). PLACED.
+export const HOST_ANSWER_MS = 8000;
+
 export class GuestSession {
- constructor({link, member, golfer, game}) {
+ constructor({link, member, golfer, game, hostAnswerMs = HOST_ANSWER_MS}) {
   Object.assign(this, emitter());
   this.link = link; this.member = member; this.golfer = golfer; this.game = game;
   this.hostTag = null; this.host = null; this.state = 'knocking'; this.room = null;
-  link.on('open', () => { this.hostTag = null; this.hello(); });
+  this.hostTimer = null; this.hostGone = false;
+  link.on('open', () => {
+   this.hostTag = null; this.hello();
+   if (this.state === 'in') { clearTimeout(this.hostTimer); this.hostTimer = setTimeout(() => { if (this.state === 'in' && !this.hostTag) this.away(); }, hostAnswerMs); }
+  });
   link.on('message', (from, raw) => this.heard(from, raw));
-  link.on('left', tag => { if (tag === this.hostTag) { this.hostTag = null; this.emit('host-away'); } });
+  link.on('left', tag => { if (tag === this.hostTag) { this.hostTag = null; this.away(); } });
  }
+ // The host gone and back, each said once.
+ away() { if (!this.hostGone) { this.hostGone = true; this.emit('host-away'); } }
+ found(from) { this.hostTag = from; clearTimeout(this.hostTimer); if (this.hostGone) { this.hostGone = false; this.emit('host-back'); } }
  hello() { this.link.send({t: 'hello', v: PROTOCOL, game: this.game, member: this.member, golfer: this.golfer}); }
  heard(from, raw) {
   const m = readMessage(raw);
@@ -196,11 +208,11 @@ export class GuestSession {
    // The host is whoever lets us in; a room message from a new socket of the
    // same host (it reconnected) moves it there.
    if (this.host && m.host !== this.host) return;
-   this.hostTag = from; this.host = m.host;
+   this.host = m.host; this.found(from);
    if (this.state !== 'in') { this.state = 'in'; this.emit('welcome', m); }
    return;
   }
-  if (m.t === 'room' && this.host && m.host === this.host && from !== this.hostTag) { this.hostTag = from; this.emit('host-back'); }
+  if (m.t === 'room' && this.host && m.host === this.host && from !== this.hostTag) this.found(from);
   if (from !== this.hostTag && !(m.t === 'refuse' && this.state === 'knocking')) return;
   if (m.t === 'refuse') { this.state = 'refused'; this.emit('refused', m.why); this.link.close(); return; }
   if (m.t === 'room') { this.room = m; this.emit('room', m); return; }
@@ -213,7 +225,7 @@ export class GuestSession {
  pick(p) { return this.link.send({t: 'pick', member: this.member, ...p}); }
  // This screen has shown the card for `hole`.
  seen(hole) { return this.link.send({t: 'seen', member: this.member, hole}); }
- leave() { this.link.send({t: 'bye', member: this.member}); this.state = 'left'; this.link.close(); }
+ leave() { clearTimeout(this.hostTimer); this.link.send({t: 'bye', member: this.member}); this.state = 'left'; this.link.close(); }
 }
 
 // THE GUEST'S ORDER OF THINGS. Shots and states come from the host in the

@@ -23,48 +23,34 @@ tests, look at visual changes in the browser, and build before updating
 archives. Physical launch-monitor testing waits until requested. A TODO entry
 is not permission to widen an unrelated task.
 
-## This branch: online play with friends (branch `online-play`, from 19 November 2026)
+## Online play is main's (merged 21 November 2026, released as 0.9.20)
 
-The owner, 19 November 2026: live matches with friends in other houses, no
-accounts, everything kept on each player's own machine and shared when they
-join, sessions private and safe. **The relay is Cloudflare's** (Workers with
-Durable Objects, free plan; the owner's choice the same day), and the
-security design in the plan is signed off. The plan, log and status page
-are in `docs/studies/online-play/` (local and ignored, inside the worktree:
-copy them to the main checkout before the worktree goes). **These terms are
-the branch's own and end when it is merged**; what they decided becomes
-main's, as the cartoon overhaul's did.
+Live rounds with friends in other houses (docs/ONLINE_PLAY.md; BETA in the
+game), built on the `online-play` branch from 19 November 2026. **The
+branch's own terms ended with the merge**: the earlier network decisions it
+overwrote stay overwritten (the docs say what replaced them), and its
+"full test suites only when really needed" and status page were its alone.
+Its plan, log and status page are in `docs/studies/online-play/` (local).
+What it decided, and what holds from now on:
 
-- **Earlier decisions about multiplayer, servers and network traffic may be
-  overwritten or removed here** (the owner: "previous decisions about
-  multiplayer. Network traffic. Etc. can be overwritten or removed"). That
-  covers the 20 October "no servers" choice and IDEAS' turned-down entry,
-  "the real game makes no network requests of its own" and smoke failing on
-  any request, the September study's LAN-first advice, and the challenge
-  codes' design. When one goes, the doc sweep still applies: grep for the old
-  claim, edit it, and write down what replaced it and why.
-- **It lifts nothing else.** Graphics card, gaming, push, merge, release, the
-  editor tools and "no secrets in commits" hold as written below -- and a
-  relay's address, keys or account names are secrets until the owner says
-  otherwise. (The owner said so for one: on 20 November 2026 they had the
-  deployed relay's address, `wss://fairway-relay.fairwaygolfsim.workers.dev`,
-  built into the game -- `src/online/relay-address.js`, never shown to a
-  player. Its account's keys and login stay secret.)
-- **Full test suites only when they are really needed** (the owner). Run the
-  focused tests for what changed; `npm test` whole, or every smoke journey,
-  only before a hand-over or merge, or when a change reaches widely enough
-  that nothing narrower would catch it -- and say which was run.
-- **The branch keeps a status page**, with screenshots as they come (captures
-  follow *One job at a time while the owner games; otherwise no limit*).
+- **The relay is Cloudflare's, on the owner's account, and its address is
+  built into the game** (`src/online/relay-address.js`,
+  `wss://fairway-relay.fairwaygolfsim.workers.dev`: public by the owner's
+  word, 20 November 2026; never shown to a player). The account's keys and
+  login are secrets, as is any other relay's address until the owner says
+  otherwise. A change to `relay/core.js` that older copies cannot follow
+  breaks every copy already out: change it with care, and redeploying is
+  the owner's step.
 - **Every way of running the game must play together** (the owner, 19
   November 2026): the file from disk, the website's demo, a phone that loaded
   the game from `run_fairway_server` over plain http -- with a launch monitor on
-  that PC's bridge -- in any mix in one room. Anyone with a launch monitor is
-  on a bridge. So nothing may lean on what only a secure page has
-  (`crypto.subtle`); the sealing is the game's own code (`@noble/ciphers`,
-  RESEARCH *Online play*).
+  that PC's bridge -- in any mix in one room. So nothing online may lean on
+  what only a secure page has (`crypto.subtle`); the sealing is the game's
+  own code (`@noble/ciphers`, RESEARCH *Online play*).
+- **The game connects to nothing but the relay, and only in a room**; smoke
+  fails a journey on any other connection.
 - **Accounts, deploys and anything that costs money are the owner's steps**:
-  creating a Cloudflare or Oracle account, deploying a relay, buying a domain.
+  a Cloudflare account, deploying the relay, a domain.
 
 ## The cartoon look is main's (merged 27 October 2026)
 

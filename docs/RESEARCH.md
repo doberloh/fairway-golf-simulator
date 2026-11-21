@@ -17385,6 +17385,26 @@ way, so the relay never sees it.
   the game: its Chromium guest had been launched without the graphics card
   and the machine was saturated (the host, watched alone for a minute with
   a guest knocking and its 25-second pings, never dropped).
+- **Reconnection, hardened** (20 November 2026, the owner: "how robust is
+  our connection error handling and reconnection?"). Four gaps found and
+  closed; every figure PLACED, none from a source. (1) No answer to a ping
+  was never noticed: a socket a browser still calls open after the network
+  under it has gone (Wi-Fi to mobile data, a laptop asleep) can stay so for
+  minutes. Now nothing heard within 10 s of a ping ends it (`DEAD_MS`), so
+  a dead link is found within about 35 s with the 25 s ping; the relay
+  answers a ping at once, and 10 s leaves a slow phone room. The network
+  coming back, or the page shown, tries at once. (2) A host gone for good
+  left its guests waiting with no end: after 2 minutes (the owner's
+  "couple of minutes") a guest is offered to leave; and a guest back on a
+  new socket whose host did not answer heard nothing at all -- now told
+  after 8 s. (3) A guest's move made between sockets went nowhere: now
+  refused at once and left to make again (rejected: holding it to send on
+  reconnecting -- the host sends the round whole to anyone who comes back,
+  which may have moved on, so a held move could be stale). (4) A relay out
+  of reach read as "trying again" for ever: after four failed tries (about
+  15 s) it says the service cannot be reached, still trying. Tested in Node
+  with a socket stand-in (quiet, refusing) and over the relay's twin; the
+  host-gone offer in smoke (`online-host-gone`, its wait shortened).
 - **Other browser engines** (20 November 2026): WebKit (Playwright 1.63's
   build, 26.6, WebGL2 on the card) passed the online journeys as guest and as
   host -- the sealing, the flights and the cards the same as Chromium's.

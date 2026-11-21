@@ -25,7 +25,26 @@ kept whole: *The open list before the 11 November 2026 prune* and *The open
 list before the 16 October prune*, each with a table of what became of every
 entry.
 
-## Online play with friends in other houses (branch `online-play`, from 19 November 2026; not merged)
+## Online play with friends in other houses (branch `online-play`, 19-21 November 2026; released as 0.9.20)
+
+### Release 0.9.20 (21 November 2026)
+
+The owner: "once we are done with all that we can put it into a release for
+github and the demo", and named the version 0.9.20. The release's line in
+TODO's *Play the current build by hand* replaced 0.9.19's, which was:
+
+- **Release 0.9.19** (19 November 2026: the Fairway Tour merged; the
+  computer golfers' features marked BETA). Every smoke journey on the
+  release build is in DISTRIBUTION_REVIEW's addendum. The owner played on
+  the branch on the phone and a Mac mini (the order of play "works
+  flawlessly"; the rings, the orange line and the hidden computer aim
+  liked); none of what follows was looked at item by item.
+
+The branch's own entry under *Next feature*, at the merge, kept its open
+items as TODO entries: *Online play, by hand* (under *Play the current
+build by hand*), *An online screen's connection lost with no close seen at
+the relay* (*Known wrong*), *Firefox for the online journeys* (*The owner's
+calls*). The source archive with `relay/` was packed by the release build.
 
 From TODO's *Next feature* entry, finished on the branch on 20 November 2026:
 
@@ -136,6 +155,22 @@ them", while gaming: one job at a time), from TODO's *Next feature*:
   as guest and as host and `online-group` with both guests in it. Firefox
   could not be started on this PC: the open entry, *Firefox, and Safari
   itself*, says why.
+
+And before the release, the owner asked "how robust is our connection error
+handling and reconnection?", was told of four gaps, and said "Yes, fix them
+first":
+
+- [x] **A socket gone quiet is noticed** (no answer 10 s after a ping: given
+  up and remade), and the network back or the page shown retries at once.
+- [x] **A host who never comes back**: a guest is told the host is away
+  (also when back on a new socket with no host to answer) and after two
+  minutes offered to leave, to the menu, nothing to save.
+- [x] **A guest's move between sockets** is refused at once, to make again.
+- [x] **A relay out of reach** is said so after four failed tries.
+
+RESEARCH, *Reconnection, hardened*; tests in online-link, online-session
+and the smoke journey `online-host-gone`. Not tried on a real phone
+changing networks.
 
 The gate's 15% line, which read Soulbound at about 10% on 19 November
 (RULES_HISTORY, *The same evening the gate missed a game*), stays as it is:

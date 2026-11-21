@@ -7,7 +7,7 @@ import {showRoomCode} from './online/room-code.js';
 
 const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-export const STATUS_WORDS = {idle: 'Not connected', connecting: 'Connecting…', open: 'Connected', retrying: 'Connection lost · trying again…', closed: 'Closed'};
+export const STATUS_WORDS = {idle: 'Not connected', connecting: 'Connecting…', open: 'Connected', retrying: 'Connection lost · trying again…', unreachable: 'Fairway’s online service cannot be reached just now · still trying…', closed: 'Closed'};
 
 // No relay address anywhere: it is built in (online/relay-address.js).
 // `s`: {stage: 'start'|'host'|'knocking'|'guest', code, golfers:

@@ -58,9 +58,10 @@ the change that made it stale, not a follow-up.
   share. The owner's decisions, the file format, the stages and what each was
   measured against, the test course. Read it first when working on the
   builder.
-- **[ONLINE_PLAY.md](ONLINE_PLAY.md)** — Play online (branch `online-play`,
-  begun 19 November 2026): rooms by code, the relay, the host as referee,
-  privacy and its one known limit, deploying the relay on Cloudflare (the
+- **[ONLINE_PLAY.md](ONLINE_PLAY.md)** — Play online (BETA; built on the
+  `online-play` branch from 19 November 2026, released in 0.9.20): rooms by
+  code, the built-in relay, the host as referee, dropping in and watching,
+  privacy and its one known limit, redeploying the relay on Cloudflare (the
   owner's step), what an online round does differently, the files and
   tests. Read it first when working on anything online.
 - **[SURROUNDINGS.md](SURROUNDINGS.md)** — the surroundings rework, merged

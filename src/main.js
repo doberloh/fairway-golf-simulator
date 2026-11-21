@@ -1642,7 +1642,15 @@ function computerPicks(){
 // order (session.js Follower). `var`, as the boot reads `online` before this
 // line has run (save(), seatHere).
 var online=null,onlineShotDone=false,onlineShotEvent=null,onlineSendQueued=false;
+// ONLINE_GIVE_UP_MS: a guest whose host has been gone this long, or who has
+// been off the relay this long, is offered to leave the round (PLACED: two
+// minutes, the owner's "couple of minutes" reading of 20 November 2026).
 const ONLINE_KEY='fairway-online-v1',ONLINE_LOST_MS=20000;
+// (A variable so smoke can shorten it: lab.onlineGiveUp.)
+var ONLINE_GIVE_UP_MS=120000;
+// A guest's move made while this screen is between sockets is refused here
+// at once, and kept on screen to make again (20 November 2026).
+const ONLINE_NOT_SENT='Not connected to the room just now. Try again when the ONLINE chip stops saying it is reconnecting.';
 // THE RELAY IS BUILT IN (the owner, 20 November 2026): nobody types or sees
 // its address (online/relay-address.js). A build may name another
 // (FAIRWAY_RELAY); `lab.relay` points this page at a test relay until it is
@@ -1747,8 +1755,22 @@ function drawKnockBar(){
  // for them, and the host may play on without them -- their ball becomes the
  // host's to play or take out (onlineGuestGone). Asked once per loss.
  const lost=!k&&online?.role==='host'&&online.phase==='playing'?online.session.guests.find(g=>g.state==='away'&&Date.now()-(g.awaySince||0)>=ONLINE_LOST_MS&&!online.waiting?.has(g.member)&&round?.players?.some(p=>p.online===g.member)):null;
- if(!k&&!lost){if(el)el.hidden=true;return;}
+ // A GUEST WHOSE HOST HAS NOT COME BACK, or who cannot reach the room (20
+ // November 2026): after ONLINE_GIVE_UP_MS they are offered to leave rather
+ // than wait for ever, or to keep waiting (asked again as long again on).
+ const since=t=>t&&Date.now()-t>=ONLINE_GIVE_UP_MS;
+ const gone=!k&&!lost&&online?.role==='guest'&&online.phase==='playing'&&appMode==='play'
+  ?(online.hostAway&&since(online.hostAwaySince)?'host':since(online.downSince)?'self':null):null;
+ if(!k&&!lost&&!gone){if(el)el.hidden=true;return;}
  if(!el){el=document.createElement('div');el.id='onlineKnock';el.className='online-knock';el.setAttribute('role','alertdialog');document.body.append(el);}
+ if(gone){
+  const host=online.session.room?.hostName||'The host';
+  el.setAttribute('aria-label',gone==='host'?'The host has not come back':'This screen cannot reach the room');
+  el.innerHTML=`<span>${gone==='host'?`<b>${escape(host)}</b> has not come back`:'This screen cannot reach the room'}</span><button class="primary" data-giveup>Leave the round</button><button class="secondary" data-wait>Keep waiting</button>`;
+  el.querySelector('[data-giveup]').onclick=()=>onlineGiveUp();
+  el.querySelector('[data-wait]').onclick=()=>{if(gone==='host')online.hostAwaySince=Date.now();else online.downSince=Date.now();setTimeout(()=>{if(online)drawOnline();},ONLINE_GIVE_UP_MS+50);drawOnline();};
+  el.hidden=false;return;
+ }
  if(lost){
   el.setAttribute('aria-label','A player lost their connection');
   el.innerHTML=`<span><b>${escape(lost.name)}</b> has lost their connection</span><button class="primary" data-playon>Play on without them</button><button class="secondary" data-wait>Wait</button>`;
@@ -1804,16 +1826,23 @@ function drawOnlineChip(){
  const host=online.role==='host',watching=host?online.session.guests.filter(g=>g.state==='in'&&!round.players.some(p=>p.online===g.member)).length:0;
  const watcher=!host&&!round?.players?.some(p=>p.online===online.member);
  el.dataset.state=st!=='open'?'lost':away.length?'away':'ok';
- el.textContent=st!=='open'?'ONLINE · RECONNECTING…':away.length?`ONLINE · ${away.join(', ').toUpperCase()} LOST`:`ONLINE${watcher?' · WATCHING':''}${watching?` · ${watching} WATCHING`:''}`;
+ el.textContent=st==='unreachable'?'ONLINE · NO SERVICE · TRYING…':st!=='open'?'ONLINE · RECONNECTING…':away.length?`ONLINE · ${away.join(', ').toUpperCase()} LOST`:`ONLINE${watcher?' · WATCHING':''}${watching?` · ${watching} WATCHING`:''}`;
  el.hidden=false;
 }
 function onlineLink(code){
  const relay=relayAddress();
  if(!/^wss?:\/\//i.test(relay))throw Error('This copy of Fairway has no online service to reach.');
  const link=createLink({relay,code,random:onlineRandom});
- link.on('status',()=>{drawOnline();});
+ // How long this screen has been off the relay (a guest is offered to leave
+ // after ONLINE_GIVE_UP_MS: drawKnockBar).
+ link.on('status',s=>{if(online?.link===link){online.downSince=s==='open'?0:(online.downSince||Date.now());if(s!=='open')setTimeout(()=>{if(online)drawOnline();},ONLINE_GIVE_UP_MS+50);}drawOnline();});
  return link;
 }
+// THE NETWORK BACK, OR THE PAGE SHOWN AGAIN (a phone woken, a laptop opened):
+// a connection waiting to retry tries at once, an open one is asked whether
+// it is still alive (link.js `nudge`).
+window.addEventListener('online',()=>online?.link?.nudge());
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)online?.link?.nudge();});
 function startHosting(){
  onlineError='';
  try{
@@ -1865,8 +1894,8 @@ function joinRoom(typed){
   session.on('state',m=>{if(online?.phase==='playing'){online.follower.heard(m);hurry();}});
   session.on('nope',m=>onlineOwnRefused(m.why));
   session.on('end',()=>{onlineEnded('The host closed the room.');});
-  session.on('host-away',()=>{online.hostAway=true;toast('The host lost their connection. Waiting for them…');drawOnlineChip();});
-  session.on('host-back',()=>{online.hostAway=false;toast('The host is back.');drawOnlineChip();});
+  session.on('host-away',()=>{online.hostAway=true;online.hostAwaySince=Date.now();setTimeout(()=>{if(online)drawOnline();},ONLINE_GIVE_UP_MS+50);toast('The host lost their connection. Waiting for them…');drawOnline();});
+  session.on('host-back',()=>{online.hostAway=false;toast('The host is back.');drawOnline();});
  }catch(e){onlineError=e.message;online=null;}
  drawOnline();
 }
@@ -1891,6 +1920,15 @@ function onlineLeaveRound(){
 // The round was the host's; the guest's own holes, shots and XP are on their
 // profile already (syncProfile, hole by hole). PLACED: no "play on alone"
 // either -- the others' golfers would be this screen's to play.
+// A guest giving up on a host who has not come back (drawKnockBar): out of the
+// room and to the menu, not asked to keep the host's round, as when the host
+// closes it (onlineEnded).
+function onlineGiveUp(){
+ if(online?.role!=='guest')return;
+ try{online.session.leave();}catch{}
+ online=null;drawOnline();drawOnlineChip();
+ returnToMenu({ask:false}).then(()=>toast('You left the online round. Your own holes, shots and XP are kept on your profile.'));
+}
 function onlineEnded(message){
  if(!online)return;
  const playing=online.phase==='playing'&&appMode==='play',host=online.session.room?.hostName||'The host';
@@ -1950,7 +1988,10 @@ function onlineStruck({shot,club,typed,remote}){
  if(online.role==='host')online.session.flown(p);
  else if(!remote){
   const key=`${p.hole}:${p.seat}:${p.stroke}`;
-  online.session.shot(p);online.follower.ownStrike(key);
+  // NOT CONNECTED (between sockets): the ball comes straight back rather
+  // than flying for a host that will never hear of it.
+  if(!online.session.shot(p)){setTimeout(()=>onlineOwnRefused(ONLINE_NOT_SENT),0);return;}
+  online.follower.ownStrike(key);
   // NO ANSWER IN TEN SECONDS (the host's connection gone, a message lost):
   // the ball comes down and the turn is the guest's again, rather than a
   // screen waiting for ever. The host takes a shot the moment it reads it.
@@ -4587,7 +4628,7 @@ function moveReliefBack(by){
 function endRelief(){$('reliefBar').hidden=true;reliefList=[];}
 function takeReliefOption(o,message){
  // A guest's choice goes to the host, whose round takes it and comes back.
- if(online?.role==='guest'&&online.phase==='playing'&&round.relief){online.session.relief({seat:round.relief.player,hole:round.hole,id:o.id,back:o.id==='line'?reliefBack:0});endRelief();toast(`${o.label}: sent.`);return;}
+ if(online?.role==='guest'&&online.phase==='playing'&&round.relief){if(!online.session.relief({seat:round.relief.player,hole:round.hole,id:o.id,back:o.id==='line'?reliefBack:0})){toast(ONLINE_NOT_SENT);return;}endRelief();toast(`${o.label}: sent.`);return;}
  try{round.takeRelief(o,course.pin);}catch(e){toast(e.message);return;}
  endRelief();save();
  toast(message||`${o.label}: ${o.penalty} penalty stroke${o.penalty===1?'':'s'}.`);
@@ -9062,7 +9103,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   // on whichever machine plays them; a guest's choice goes to the host.
   if(online?.phase==='playing'){const s=pickerSeat(round);
    if(!seatHere(s)){toast(`${round.players[s]?.name||'The team'} chooses the team’s ball.`);return;}
-   if(online.role==='guest'){online.session.pick({seat:s,hole:round.hole,index:pickIndex});endPick();toast('Ball chosen: sent.');return;}}
+   if(online.role==='guest'){if(!online.session.pick({seat:s,hole:round.hole,index:pickIndex})){toast(ONLINE_NOT_SENT);return;}endPick();toast('Ball chosen: sent.');return;}}
   try{const carded=cardedSeats();round.chooseScramble(pickIndex,course.pin);announceHoleOut(carded);afterSelection();}catch(e){toast(e.message);}};
  $('simDrop').onclick=beginDrop;$('confirmDrop').onclick=confirmDrop;$('cancelDrop').onclick=cancelDrop;$('dropAtGreen').onclick=()=>previewDrop({x:course.pin.x+2*YARD,z:course.pin.z});for(const id of ['dropX','dropZ'])$(id).oninput=()=>previewDrop({x:dropState.origin.x+Number($('dropX').value)*YARD,z:dropState.origin.z+Number($('dropZ').value)*YARD},false);$('resetLayout').onclick=()=>{resetTilePlaces();resetHudPlaces();toast('The map and the shot numbers are back where they started.');};$('menuRange').onclick=()=>{if(flight){toast('Finish the current shot first.');return;}guardRound(()=>openRangePanel());};
  // The lab is driven from the console. Everything it does goes through the same
@@ -9074,6 +9115,9 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   // A relay on this machine for this page, until it is closed (smoke
   // `online`): players never see or set the built-in one.
   relay:url=>{testRelay=String(url||'');return relayAddress();},
+  // How long a guest waits for a lost host before being offered to leave
+  // (smoke `online-host-gone` shortens the two minutes).
+  onlineGiveUp:ms=>{if(Number.isFinite(ms)&&ms>0)ONLINE_GIVE_UP_MS=ms;return ONLINE_GIVE_UP_MS;},
   online:()=>online?{drops:online.link?.drops,lastClose:online.link?.lastClose,member:online.member,seatNext:online.seatNext?[...online.seatNext]:undefined,role:online.role,phase:online.phase,status:online.link?.status,knocks:(online.knocks||[]).map(k=>k.name),seats:round?.players?.map(p=>p.online||null),hole:round?.hole,finished:!!round?.finished,relief:round?.relief?.player??null,cards:round?.cards,net:round?.net?.strokes??null,choosing:!!round?.scrambleSelection,mode:round?.mode,teams:round?.players?.map(p=>p.team),computers:round?.players?.map(p=>isComputer(p)),picker:round?.scrambleSelection?pickerSeat(round):null}:null,
   // A ball moved to `metres` from the pin, on its line, so a journey can hole
   // out without playing the hole (smoke `online`); saved, so an online host
