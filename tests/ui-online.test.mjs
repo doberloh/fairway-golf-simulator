@@ -16,6 +16,8 @@ test('the start: who you play as, host, join by code, and no relay to set', () =
  assert.doesNotMatch(html, /onlineRelay|wss:|workers\.dev|Relay address/i);
  const inputs = html.match(/<input\b/g) || [];
  assert.equal(inputs.length, 1, 'one box to type in: the room code');
+ // BETA, as the computer golfers and the Fairway Tour are (the owner, 20 November 2026).
+ assert.match(html, /class="beta-tag">BETA</);
 });
 
 test('the relay is built in, a secure address', async () => {

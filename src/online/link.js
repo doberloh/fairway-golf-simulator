@@ -34,7 +34,7 @@ export function createLink({relay, code, random, WebSocketImpl = globalThis.WebS
  const emit = (type, ...a) => { for (const f of handlers.get(type) ?? []) f(...a); };
  const last = new Map();
  let ws = null, you = null, peers = new Set(), count = 0, closed = false, tries = 0, pinger = null, retry = null, status = 'idle';
- let outbox = [], tokens = PACE.burst, filled = Date.now(), flushTimer = null;
+ let outbox = [], tokens = PACE.burst, filled = Date.now(), flushTimer = null, lastClose = null, drops = 0;
  function flush() {
   flushTimer = null;
   if (!ws || ws.readyState !== 1 || !you) { outbox = []; return; }
@@ -77,7 +77,11 @@ export function createLink({relay, code, random, WebSocketImpl = globalThis.WebS
     emit('message', m.from, msg);
    }
   };
-  sock.onclose = () => {
+  sock.onclose = e => {
+   // Why, as the browser says it (smoke prints it: twice in a day a screen
+   // lost the relay with no close seen at the relay's end).
+   lastClose = {code: e?.code ?? null, reason: String(e?.reason ?? '').slice(0, 80), clean: !!e?.wasClean, at: Date.now(), open: ws === sock && !!you};
+   drops++;
    clearInterval(pinger); pinger = null;
    if (ws === sock) { ws = null; you = null; peers = new Set(); }
    if (closed) { setStatus('closed'); return; }
@@ -97,6 +101,9 @@ export function createLink({relay, code, random, WebSocketImpl = globalThis.WebS
   get peers() { return [...peers]; },
   get status() { return status; },
   get url() { return url; },
+  // The last socket closed (code, reason, clean, when) and how many have.
+  get lastClose() { return lastClose; },
+  get drops() { return drops; },
   on(type, f) { if (!handlers.has(type)) handlers.set(type, []); handlers.get(type).push(f); return link; },
   // Sealed and sent to every other socket in the room, in order and paced;
   // false if not connected (nothing is kept for a later connection: the host

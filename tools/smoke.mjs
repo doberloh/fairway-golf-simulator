@@ -53,7 +53,7 @@
 // arranged around that: the core round loop runs on Endless, whose first hole
 // is the menu backdrop the game has already built, and only the journeys whose
 // whole point is a nine-hole course pay for one.
-import {chromium} from 'playwright';
+import {chromium, firefox, webkit} from 'playwright';
 import {createServer} from 'node:http';
 import net from 'node:net';
 import {spawn} from 'node:child_process';
@@ -77,6 +77,15 @@ const option = name => { const i = argv.indexOf(`--${name}`); return i >= 0 ? ar
 const SOFTWARE = flag('software');
 const HEADED = flag('headed');
 const ONLY = option('only');
+// `--browser firefox|webkit` plays the journeys in another engine (WebKit is
+// Safari's); `--guest-browser` opens the online journeys' guests in one
+// (`online-group`, `online-again`), so each engine is seen as host and guest
+// (20 November 2026). Chromium is the default and the only one the rest of
+// the journeys are written for. `npx playwright install firefox webkit` once.
+const ENGINES = {chromium, firefox, webkit};
+const BROWSER = option('browser') || 'chromium';
+const GUEST_BROWSER = option('guest-browser') || null;
+let guestBrowser = null;
 // `--endless-seed HARROW-4021`: every journey's fresh Endless run takes this
 // seed (the game's lab.pinRun), so a run that failed is played again on the
 // same holes. Its journeys still press Start an endless run as a player does.
@@ -4101,8 +4110,330 @@ const JOURNEYS = [
     await relay.close();
    }
   },
+ },
+ // FOUR GOLFERS ON THREE SCREENS (20 November 2026, owed since the branch
+ // began: Node played three, the browser two). The host, Ann and Bea in
+ // browsers of their own, and the host's computer golfer. Then what had been
+ // played only in Node: a hidden host landing a guest's ball at once; a
+ // guest whose tab closes, played on without; and that guest back from a
+ // new tab, let in to play, given her own golfer and card at the next tee,
+ // and playing again.
+ {
+  name: 'online-group',
+  what: 'four golfers on three screens (host, two guests, a computer golfer): everyone tees off on their own screen; a hidden host lands a guest\'s ball at once; a guest\'s tab closes and the host plays on without her; she comes back from a new tab, is let in to play, and plays her own golfer again from the next tee',
+  async run(t) {
+   const relay = await startRelay({port: 0, log: relayLog});
+   const ctxs = [];
+   try {
+    await menuReady(t);
+    let code = '', ann = null, bea = null, table = null;
+    const guestsNow = () => [ann, bea].filter(Boolean);
+    await t.step('the host starts a room; Ann and Bea knock from their own browsers and are let in', async () => {
+     code = await onlineHostRoom(t, relay.url);
+     ann = await onlineGuest(t, 'Ann', 'pann'); ctxs.push(ann.ctx);
+     bea = await onlineGuest(t, 'Bea', 'pbea'); ctxs.push(bea.ctx);
+     for (const g of [ann, bea]) await onlineKnock(g, code, relay.url);
+     for (let i = 0; i < 2; i++) {
+      await t.until(() => t.page.locator('[data-admit]').first().isVisible(), `knock ${i + 1}`, 15 * SLOW);
+      await t.page.locator('[data-admit]').first().click();
+     }
+     for (const g of [ann, bea]) await g.trip.until(() => g.page.locator('#onlineLeave').isVisible(), `${g.name} in the room`, 15 * SLOW);
+    });
+    await t.step('four golfers -- Ann, Bea and a computer golfer with the host -- farthest out first; Surprise me → Tee off on three screens', async () => {
+     await t.press('Choose the course and start');
+     await t.until(() => t.page.locator('#drawer .sx-card').first().isVisible().catch(() => false), 'Play', 10 * SLOW);
+     await t.page.locator('#drawer .sx-card[aria-label^="Surprise me"]').first().click();
+     await t.press('Add player');
+     await t.page.locator('#playerRows select[id^="who"]').last().selectOption('__cpu');
+     await t.page.evaluate(() => { const s = document.getElementById('roundOrder'); s.value = 'farthest'; s.dispatchEvent(new Event('change', {bubbles: true})); });
+     await t.press('Tee off on the surprise course');
+     await t.inPlay(120 * SLOW);
+     for (const g of [ann, bea]) await g.trip.inPlay(120 * SLOW);
+     const seats = (await labRoom(t.page)).seats;
+     if (seats.length !== 4 || seats[0] || !seats[1] || !seats[2] || seats[3]) throw new Error(`the group is not host, Ann, Bea, computer: ${JSON.stringify(seats)}`);
+     table = onlineTable(t, [ann, bea]);
+    });
+    await t.step('everyone tees off on their own screen, and all three cards agree', async () => {
+     for (let i = 0; i < 12 && (await labTurn(t.page)).strokes.some(n => n < 1); i++) await table.play();
+     await table.settle();
+     const s = await labTurn(t.page);
+     if (s.strokes.some(n => n < 1)) throw new Error(`not everyone has teed off: ${JSON.stringify(s.strokes)}`);
+     await t.page.screenshot({path: path.join(SHOTS, 'online-group.png')});
+    });
+    await t.step('a hidden host (a tab in the background) lands a guest\'s ball at once', async () => {
+     for (let i = 0; i < 10; i++) { const s = await labTurn(t.page); if (!s.computer && (await labRoom(t.page)).seats[s.active]) break; await table.play(); }
+     await table.settle();
+     const up = (await labTurn(t.page)).active, before = (await labTurn(t.page)).strokes[up];
+     if (!(await labRoom(t.page)).seats[up]) throw new Error('no guest came up to swing');
+     await t.page.evaluate(() => {
+      Object.defineProperty(document, 'hidden', {configurable: true, get: () => true});
+      Object.defineProperty(document, 'visibilityState', {configurable: true, get: () => 'hidden'});
+      document.dispatchEvent(new Event('visibilitychange'));
+      window.__hidFlights = 0; window.__hid = setInterval(() => { if (window.lab.state().inFlight) window.__hidFlights++; }, 20);
+     });
+     const who = await table.owner(up);
+     await who.trip.until(() => who.page.evaluate(() => window.lab.state().canSwing), 'the guest\'s swing', 20 * SLOW);
+     await who.trip.shot();
+     await t.until(async () => (await labTurn(t.page)).strokes[up] > before, 'the guest\'s ball on the hidden host\'s card', 30 * SLOW);
+     const n = await t.page.evaluate(() => { clearInterval(window.__hid); delete document.hidden; delete document.visibilityState; document.dispatchEvent(new Event('visibilitychange')); return window.__hidFlights; });
+     if (n > 2) throw new Error(`the hidden host flew the guest's ball (${n} looks in the air)`);
+    });
+    await t.step('Bea\'s tab closes mid-hole: her turn waits, then after 20 seconds the host plays on without her', async () => {
+     await table.settle();
+     await bea.ctx.close(); bea = null;
+     table = onlineTable(t, guestsNow());
+     await t.until(async () => /BEA LOST/.test(await t.page.textContent('#onlineChip') || ''), 'BEA LOST on the host\'s chip', 15 * SLOW);
+     await t.until(() => t.page.locator('#onlineKnock [data-playon]').isVisible(), 'Play on without them', 45 * SLOW);
+     await t.page.screenshot({path: path.join(SHOTS, 'online-play-on.png')});
+     await t.page.locator('#onlineKnock [data-playon]').click();
+     await t.until(async () => !(await labRoom(t.page)).seats[2], 'Bea\'s seat the host\'s', 10 * SLOW);
+     await ann.trip.until(async () => !(await labRoom(ann.page)).seats[2], 'Ann\'s round to say so', 10 * SLOW);
+    });
+    await t.step('Bea comes back from a new tab: let in to play, watching until the next tee', async () => {
+     bea = await onlineGuest(t, 'Bea', 'pbea2'); ctxs.push(bea.ctx);
+     await onlineKnock(bea, code, relay.url);
+     await t.until(() => t.page.locator('#onlineKnock [data-admit-play]').isVisible(), 'Let in to play for Bea\'s own golfer', 15 * SLOW);
+     await t.page.locator('#onlineKnock [data-admit-play]').click();
+     await bea.trip.inPlay(120 * SLOW);
+     const me = (await labRoom(bea.page)).member;
+     if (!(await labRoom(t.page)).seatNext.includes(me)) throw new Error('Bea is not seated from the next tee');
+     if (!/WATCHING/.test(await bea.page.textContent('#onlineChip') || '')) throw new Error('Bea\'s chip does not say she is watching');
+     table = onlineTable(t, guestsNow());
+    });
+    await t.step('the hole is holed out; at the next tee Bea has her own golfer back, with the hole the host played for her', async () => {
+     await table.holeOut();
+     await t.until(async () => (await labRoom(t.page)).hole === 1, 'the next tee (every screen\'s card seen)', 90 * SLOW);
+     const me = (await labRoom(bea.page)).member;
+     await bea.trip.until(async () => (await labRoom(bea.page)).seats?.[2] === me, 'Bea\'s seat on her own screen', 30 * SLOW);
+     const r = await labRoom(t.page);
+     if (r.seats.length !== 4 || r.seats[2] !== me) throw new Error(`seats ${JSON.stringify(r.seats)}`);
+     if (!Number.isFinite(r.cards[2][0])) throw new Error(`Bea's first hole is empty: ${JSON.stringify(r.cards[2])}`);
+    });
+    await t.step('Bea tees off on her own screen again; all three cards agree', async () => {
+     for (let i = 0; i < 12 && (await labTurn(t.page)).strokes[2] < 1; i++) await table.play();
+     await table.settle();
+     if ((await labTurn(t.page)).strokes[2] < 1) throw new Error('Bea did not tee off');
+     const cards = JSON.stringify((await labRoom(t.page)).cards);
+     for (const g of guestsNow()) if (JSON.stringify((await labRoom(g.page)).cards) !== cards) throw new Error(`${g.name}'s card differs`);
+    });
+    for (const g of guestsNow()) await g.trip.step(`${g.name}'s screen: no errors, no connection but the relay`, async () => {});
+   } finally {
+    for (const c of ctxs) await c.close().catch(() => {});
+    await relay.close();
+   }
+  },
+ },
+ // A SCRAMBLE, THEN A SECOND ROUND IN THE SAME ROOM (20 November 2026; owed
+ // since the branch began). The first round is a scramble -- the host alone
+ // on one side, Ann and the computer golfer on the other, so that side's ball
+ // is Ann's to choose -- jumped to its last hole and finished; the host leaves
+ // it and the room stays open; the second is the course of the week (always
+ // stroke play), net, Ann's strokes from the handicap she typed on her own
+ // device.
+ {
+  name: 'online-again',
+  what: 'a scramble with a guest choosing her side\'s ball on her own screen, finished; the room kept for a second round on the course of the week, net, the guest\'s handicap strokes from her own device on both screens',
+  async run(t) {
+   // Every socket closed is said here, clean or not: a first run lost Ann
+   // between the rounds with nothing unusual logged.
+   const relay = await startRelay({port: 0, log: s => { if (/refused|-1 socket/.test(s)) console.log(`       relay: ${s}`); }});
+   const ctxs = [];
+   try {
+    await menuReady(t);
+    let code = '', ann = null;
+    await t.step('a room, Ann let in (her own handicap, 18, typed on her device)', async () => {
+     code = await onlineHostRoom(t, relay.url);
+     ann = await onlineGuest(t, 'Ann', 'pann', {typedIndex: 18}); ctxs.push(ann.ctx);
+     console.log(`       host while Ann's game loaded: ${JSON.stringify(await labRoom(t.page))}`);
+     await onlineKnock(ann, code, relay.url);
+     try { await t.until(() => t.page.locator('[data-admit]').first().isVisible(), 'the knock', 15 * SLOW); }
+     catch (e) { console.log(`       host: ${JSON.stringify(await labRoom(t.page))}\n       Ann: ${JSON.stringify(await labRoom(ann.page))}`); throw e; }
+     await t.page.locator('[data-admit]').first().click();
+     await ann.trip.until(() => ann.page.locator('#onlineLeave').isVisible(), 'Ann in the room', 15 * SLOW);
+    });
+    let tbl = null;
+    await t.step('a first round, a scramble on Surprise me: the host one side, Ann and a computer golfer the other', async () => {
+     await t.press('Choose the course and start');
+     await t.until(() => t.page.locator('#drawer .sx-card').first().isVisible().catch(() => false), 'Play', 10 * SLOW);
+     await t.page.locator('#drawer .sx-card[aria-label^="Surprise me"]').first().click();
+     await t.press('Add player');
+     await t.page.locator('#playerRows select[id^="who"]').last().selectOption('__cpu');
+     await t.page.evaluate(() => {
+      const set = (id, v) => { const s = document.getElementById(id); if (!s) throw new Error(`no ${id}`); s.value = v; s.dispatchEvent(new Event('change', {bubbles: true})); };
+      // Farthest out first, so the sides take turns (in turn, the host's
+      // side would play the whole hole before Ann's struck a ball).
+      set('team0', 'A'); set('team1', 'B'); set('team2', 'B'); set('roundMode', 'scramble'); set('roundOrder', 'farthest');
+     });
+     await t.press('Tee off on the surprise course');
+     await t.inPlay(120 * SLOW);
+     await ann.trip.inPlay(120 * SLOW);
+     const [a, b] = [await labRoom(t.page), await labRoom(ann.page)];
+     if (a.mode !== 'scramble' || b.mode !== 'scramble') throw new Error(`modes ${a.mode}, ${b.mode}`);
+     if (JSON.stringify(a.teams) !== '["A","B","B"]') throw new Error(`the sides are ${JSON.stringify(a.teams)}, not host / Ann and the computer golfer`);
+     tbl = onlineTable(t, [ann]);
+    });
+    await t.step('both sides tee off; Ann\'s side\'s ball is chosen on her screen, and both rounds agree', async () => {
+     for (let i = 0; i < 30 && !tbl.chosenOn.includes('Ann'); i++) await tbl.play();
+     if (!tbl.chosenOn.includes('Ann')) throw new Error(`Ann's side never chose its ball on her screen (chosen on: ${JSON.stringify(tbl.chosenOn)}; host ${JSON.stringify(await labRoom(t.page))})`);
+     await tbl.settle();
+    });
+    await t.step('jumped to the last hole and finished on both screens', async () => {
+     await t.page.evaluate(() => window.lab.hole(8));
+     await ann.trip.until(async () => (await labRoom(ann.page)).hole === 8, 'Ann on the last hole', 30 * SLOW);
+     await ann.trip.inPlay(60 * SLOW);
+     await tbl.holeOut();
+     await t.until(async () => (await labRoom(t.page)).finished, 'the host\'s round to finish', 20 * SLOW);
+     await ann.trip.until(async () => (await labRoom(ann.page)).finished, 'Ann\'s round to finish', 20 * SLOW);
+    });
+    await t.step('the host leaves the finished round: the room stays open, Ann back in it', async () => {
+     await t.menuItem('Main menu');
+     if (await t.page.waitForSelector('#leaveNotice:not([hidden])', {timeout: 3000 * SLOW}).then(() => true, () => false)) await t.page.click('#leaveDiscard');
+     await t.until(() => t.page.evaluate(() => document.getElementById('app').dataset.mode === 'menu'), 'the host\'s menu', 60 * SLOW);
+     if ((await labRoom(t.page))?.phase !== 'lobby') throw new Error(`the room is ${JSON.stringify(await labRoom(t.page))}`);
+     await ann.trip.until(async () => (await labRoom(ann.page))?.phase === 'lobby', 'Ann back in the room', 60 * SLOW);
+     if (await ann.page.evaluate(() => document.getElementById('leaveNotice')?.hidden === false)) throw new Error('Ann was asked to keep a finished round');
+     // Still connected, through the menu's backdrop being grown.
+     await ann.page.waitForTimeout(8000);
+     const r = await labRoom(ann.page);
+     console.log(`       Ann after 8 s: ${JSON.stringify({phase: r?.phase, status: r?.status, member: r?.member})}`);
+     if (r?.status !== 'open') throw new Error(`Ann's connection is ${r?.status}`);
+    });
+    await t.step('the second round in the same room: the course of the week, net (always stroke play), Ann seated by name', async () => {
+     await fromMenu(t, 'Play online');
+     await t.until(() => t.page.locator('#onlineChoose').isEnabled(), 'Choose the course with Ann in the room', 10 * SLOW);
+     await t.press('Choose the course and start');
+     await t.until(() => t.page.locator('#drawer .sx-card').first().isVisible().catch(() => false), 'Play', 10 * SLOW);
+     await t.page.locator('#drawer .sx-card[aria-label^="Course of the week"]').first().click();
+     // The week's card opens its own page first (Surprise me has none).
+     await t.press('Golfers');
+     const rows = await t.page.evaluate(() => [...document.querySelectorAll('#playerRows .online-seat-name')].map(e => e.textContent));
+     if (!rows.includes('Ann')) throw new Error(`Ann has no online seat in the second round: ${JSON.stringify(rows)} (${JSON.stringify(await labRoom(ann.page))})`);
+     await t.page.evaluate(() => { const s = document.getElementById('roundNet'); if (!s) throw new Error('no roundNet'); s.value = 'net'; s.dispatchEvent(new Event('change', {bubbles: true})); });
+     await t.page.locator('#drawer .sx-steps .sx-step').last().click();
+     const sum = await t.page.textContent('#drawer');
+     if (/\bGOLFER\b/.test(sum) && !/ANN/.test(sum)) throw new Error('the summary names Ann "Golfer"');
+     await t.page.getByRole('button', {name: /^Play the course of the week/i}).filter({visible: true}).first().click();
+     await t.inPlay(180 * SLOW);
+     await ann.trip.inPlay(180 * SLOW);
+     const [wa, wb] = [await whereAmI(t.page), await whereAmI(ann.page)];
+     if (!wa.seed || wa.seed !== wb.seed || wa.course !== wb.course) throw new Error(`two courses: ${JSON.stringify(wa)} / ${JSON.stringify(wb)}`);
+    });
+    await t.step('Ann\'s handicap strokes, from her own device, are on both screens', async () => {
+     const [a, b] = [await labRoom(t.page), await labRoom(ann.page)];
+     if (!a.net || JSON.stringify(a.net) !== JSON.stringify(b.net)) throw new Error(`host ${JSON.stringify(a.net)}, Ann ${JSON.stringify(b.net)}`);
+     const sum = r => (r || []).reduce((s, n) => s + (n || 0), 0);
+     if (!(sum(a.net[1]) > 0)) throw new Error(`no strokes for Ann (index 18): ${JSON.stringify(a.net)}`);
+    });
+    await ann.trip.step('Ann\'s screen: no errors, no connection but the relay', async () => {});
+   } finally {
+    for (const c of ctxs) await c.close().catch(() => {});
+    await relay.close();
+   }
+  },
  }
 ];
+
+// ------------------------------------------------- online play's helpers
+// (the journeys `online-group` and `online-again`, 20 November 2026). Every
+// screen is opened from the file, through a relay on this machine.
+const relayLog = s => { if (/refused|\((?!1000\b|1005\b)\d+/.test(s)) console.log(`       relay: ${s}`); };
+// A guest's own browser, with a profile of its own (`extra`: e.g. a typed
+// handicap), on Low; `page`, its Trip `trip`, and the context to close.
+async function onlineGuest(t, name, id, extra = {}) {
+ const engine = GUEST_BROWSER ? (guestBrowser ??= await ENGINES[GUEST_BROWSER].launch({headless: !HEADED, ...(GUEST_BROWSER === 'chromium' ? {args: ARGS} : {})})) : t.page.context().browser();
+ const ctx = await engine.newContext({viewport: {width: 1280, height: 800}});
+ await ctx.addInitScript(([name, id, extra]) => {
+  try { localStorage.setItem('fairway-graphics-v1', JSON.stringify({quality: 'low', frameCap: 0})); } catch {}
+  try { if (!localStorage.getItem('fairway-profiles-v1')) localStorage.setItem('fairway-profiles-v1', JSON.stringify({version: 2, main: id, profiles: [{id, name, created: Date.now(), counters: {}, bests: {}, rounds: [], ...extra}]})); } catch {}
+ }, [name, id, extra]);
+ const page = await ctx.newPage();
+ page.setDefaultTimeout(30000 * SLOW);
+ const trip = new Trip(page, `online-${name.toLowerCase()}`, t.page.url());
+ await page.goto(t.page.url());
+ await trip.until(() => page.evaluate(() => !!window.lab && !document.getElementById('mainMenu')?.hidden && !document.getElementById('splash')), `${name}'s menu`, 60 * SLOW);
+ return {ctx, page, trip, name};
+}
+// The host opens a room on `relay`; its code.
+async function onlineHostRoom(t, relay) {
+ await fromMenu(t, 'Play online');
+ await t.until(() => t.page.locator('#onlineHost').isVisible(), 'the online sheet', 10 * SLOW);
+ await t.page.evaluate(u => window.lab.relay(u), relay);
+ await t.press('Start a room');
+ await t.until(() => t.page.evaluate(() => document.querySelector('.online-status')?.dataset.state === 'open'), 'the host to reach the relay', 10 * SLOW);
+ return (await t.page.textContent('#onlineCodeText')).trim();
+}
+// A guest knocks with `code`.
+async function onlineKnock(g, code, relay) {
+ await fromMenu(g.trip, 'Play online');
+ await g.trip.until(() => g.page.locator('#onlineJoin').isVisible(), `${g.name}'s online sheet`, 10 * SLOW);
+ await g.page.evaluate(u => window.lab.relay(u), relay);
+ await g.page.fill('#onlineCode', code);
+ await g.trip.press('Join the room');
+}
+const labTurn = p => p.evaluate(() => window.lab.state().turn);
+const labRoom = p => p.evaluate(() => window.lab.online());
+// THE ROUND ON SEVERAL SCREENS: `screens` [{page, trip}] (the host first);
+// which screen plays a seat, by the host's seats; each ball landed and every
+// guest's card the host's.
+function onlineTable(t, guests) {
+ const all = [{page: t.page, trip: t}, ...guests], chosenOn = [];
+ const owner = async seat => {
+  const m = (await labRoom(t.page)).seats[seat];
+  if (!m) return all[0];
+  for (const g of guests) if ((await labRoom(g.page).catch(() => null))?.member === m) return g;
+  throw new Error(`no screen plays seat ${seat} (${m})`);
+ };
+ const settle = async () => {
+  for (const s of all) await s.trip.until(async () => !(await s.trip.inFlight()), 'every ball to land', 30 * SLOW);
+  await t.until(async () => { const h = JSON.stringify((await labTurn(t.page)).strokes); for (const g of guests) if (JSON.stringify((await labTurn(g.page)).strokes) !== h) return false; return true; }, 'every screen\'s card to agree', 20 * SLOW);
+ };
+ // One turn: a computer golfer plays itself; anyone else swings (or putts)
+ // on their own screen.
+ // On a failure every screen's room is printed: its connection, how many
+ // sockets it has lost, and why the browser says the last one closed.
+ const play = async (how = 'shot') => {
+  try { return await play0(how); }
+  catch (e) { for (const s of all) console.log(`       ${s.name || 'host'}: ${JSON.stringify(await labRoom(s.page).catch(() => null))}`); throw e; }
+ };
+ const play0 = async (how = 'shot') => {
+  await settle();
+  const st = await labTurn(t.page), up = st.active, room = await labRoom(t.page);
+  if (st.holeComplete) return;
+  // A scramble side's ball: chosen on whichever screen may choose it (the
+  // side's first golfer's; another screen is told who chooses).
+  if (room.choosing) {
+   // A computer golfer first on its side chooses by itself, on the host.
+   if (room.computers?.[room.picker]) { await t.until(async () => !(await labRoom(t.page)).choosing, 'the computer golfer\'s side\'s ball to be chosen', 30 * SLOW); return; }
+   const who = await owner(room.picker);
+   await who.trip.until(() => who.page.evaluate(() => document.getElementById('pickBar')?.hidden === false), `the choice on seat ${room.picker}'s own screen (${who.name || 'host'})`, 30 * SLOW);
+   if (who !== all[0]) await who.page.screenshot({path: path.join(SHOTS, 'online-scramble-pick.png')});
+   await who.page.click('#pickAccept');
+   await t.until(async () => !(await labRoom(t.page)).choosing, `${who.name || 'the host'}'s choice to be taken`, 15 * SLOW);
+   chosenOn.push(who.name || 'host');
+   return;
+  }
+  // A ball in trouble: its golfer's own screen takes the first relief.
+  if (room.relief !== null && room.relief !== undefined && !st.computer) {
+   const who = await owner(room.relief);
+   await who.trip.until(() => who.page.evaluate(() => document.getElementById('reliefBar')?.hidden === false), `the relief choice on seat ${room.relief}'s screen`, 20 * SLOW);
+   await who.page.click('#reliefTake');
+   await t.until(async () => (await labRoom(t.page)).relief === null, 'the relief to be taken', 15 * SLOW);
+   return;
+  }
+  // (In a scramble its own count stays put: its shot ends in the side's choice.)
+  if (st.computer) { await t.until(async () => { const s = await labTurn(t.page); return s.active !== up || s.holeComplete || s.strokes[up] !== st.strokes[up] || (await labRoom(t.page)).choosing; }, 'the computer golfer to play', 90 * SLOW); return; }
+  const who = await owner(up);
+  await who.trip.until(() => who.page.evaluate(() => window.lab.state().canSwing), `seat ${up}'s ${how} to be allowed on its own screen`, 20 * SLOW);
+  await who.trip[how]();
+ };
+ const holeOut = async () => {
+  await settle();
+  await t.page.evaluate(() => { for (const s of [0, 1, 2, 3]) window.lab.nearPin(s, .3); });
+  for (let i = 0; i < 16; i++) { if ((await labTurn(t.page)).holeComplete) return; await play('putt'); }
+  throw new Error('sixteen putts from a foot and the hole is not over');
+ };
+ return {owner, settle, play, holeOut, chosenOn};
+}
 
 // ------------------------------------------------------------------ runner
 if (flag('list')) {
@@ -4124,7 +4455,8 @@ const started = Date.now();
 // `npm ci` DOES NOT FETCH THE BROWSER. Playwright 1.63 has no install script,
 // so a fresh checkout has the library and no Chromium, and the launch fails
 // with a stack trace that buries the one-line fix. Say the fix instead.
-const browser = await chromium.launch({headless: !HEADED, args: ARGS}).catch(e => {
+if (!ENGINES[BROWSER] || (GUEST_BROWSER && !ENGINES[GUEST_BROWSER])) fail(`--browser and --guest-browser take chromium, firefox or webkit.`);
+const browser = await ENGINES[BROWSER].launch({headless: !HEADED, ...(BROWSER === 'chromium' ? {args: ARGS} : {})}).catch(e => {
  if (/Executable doesn't exist|browserType\.launch/i.test(e.message))
   fail('Playwright is installed but its browser is not. Run this once, then try again:\n\n  npx playwright install chromium\n');
  throw e;
@@ -4140,7 +4472,7 @@ const renderer = await (async () => {
  return r;
 })();
 if (!renderer) fail('This browser has no WebGL2 context, so the game cannot run here at all. That is the harness or the machine, not the game.');
-console.log(`Fairway smoke test · ${SOFTWARE ? 'SOFTWARE' : 'GPU'} · ${renderer}\n${url}\n`);
+console.log(`Fairway smoke test · ${BROWSER}${GUEST_BROWSER ? ` (guests in ${GUEST_BROWSER})` : ''} · ${SOFTWARE ? 'SOFTWARE' : 'GPU'} · ${renderer}\n${url}\n`);
 
 const results = [];
 for (const journey of chosen) {
@@ -4279,6 +4611,7 @@ for (const journey of chosen) {
  if (bridgeProc) { bridgeProc.kill(); await new Promise(done => bridgeProc.exitCode !== null ? done() : bridgeProc.once('exit', done)); }
 }
 await browser.close();
+await guestBrowser?.close();
 
 const failed = results.filter(r => !r.ok);
 const total = ((Date.now() - started) / 1000).toFixed(0);

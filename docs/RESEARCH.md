@@ -17375,7 +17375,22 @@ way, so the relay never sees it.
   closes a socket only when a room is full or a message passes its size
   limit, and logs neither then, so the cause is unknown; smoke now prints
   each refused message and each socket closed other than by its own page.
-  Five runs since, none.
+  Five runs since, none. **Twice more the same day** (`online-again`, a
+  Chromium host showing RECONNECTING and its guest lost, the relay -- now
+  logging every close -- seeing none): so the browser's side of the socket
+  ended while the relay's stayed open. Each screen now records its
+  browser's close code, reason and count (link.js `lastClose`, `drops`) and
+  the journeys print them on a failure; none has failed that way since. A
+  WebKit host losing its connection in a third run was the harness, not
+  the game: its Chromium guest had been launched without the graphics card
+  and the machine was saturated (the host, watched alone for a minute with
+  a guest knocking and its 25-second pings, never dropped).
+- **Other browser engines** (20 November 2026): WebKit (Playwright 1.63's
+  build, 26.6, WebGL2 on the card) passed the online journeys as guest and as
+  host -- the sealing, the flights and the cards the same as Chromium's.
+  Playwright's Firefox 1543 would not start on the owner's PC: Windows
+  reports *side-by-side configuration is incorrect*, the Visual C++ runtime
+  missing.
 - **The code is the whole lock** (left for later, with the owner told):
   anyone holding it can read a room and knock, and could pose as the host to
   the guests while the real host is disconnected. A key per player (public

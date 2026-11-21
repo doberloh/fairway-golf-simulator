@@ -63,28 +63,24 @@ before it can be called done:
   dropping in mid-round (let in to watch, seated from the next tee) and a
   player leaving and coming back to their own card. Nothing online has been
   played by a person.
-- [ ] **Both screens lost the relay at once, one smoke run in six** (20
-  November 2026; RESEARCH, *Once, both screens lost the relay together*).
-  Cause unknown; smoke now logs refused messages and unexpected closes. If
-  it comes back, read those lines before anything else.
-- [ ] **Three or four players in the browser.** Node plays every format with
-  three; the browser journey plays two.
-- [ ] **Seen in no browser yet** (each is played by the Node rounds' rules):
-  a scramble's ball chosen by a guest; a net round's strokes for a guest
-  (their own index, from their device); the course of the week online; a
-  hidden host landing a guest's flight at once (its computer golfers wait
-  until shown); *Play on without them*; the room open again for a second
-  round; a watcher in a browser seated and then playing shots, and a
-  browser guest leaving and coming back to their own golfer.
+- [ ] **A screen's connection was lost with no close seen at the relay**,
+  three times on 20 November 2026 (two Chromium runs, both screens at once;
+  RESEARCH, *Once, both screens lost the relay together*). Cause unknown. A
+  screen now keeps why its browser says its socket closed (`lab.online()`
+  `lastClose`, `drops`), and the online journeys print every screen's room
+  on a failure: if it comes back, read those first.
 - [ ] **The owner's three of 20 November, fixed, seen in smoke only**: the
   room code on the pause list's *Online room* and nowhere else (not seen
   on a phone, where it is under the top bar's Menu); *Results only* for a
   computer golfer on a guest's screen; a guest told when the host leaves,
   and not asked to save.
-- [ ] **The source archive with `relay/`** (tools/package_release.py now
-  packs it; the packager has not been run since).
-- [ ] **Safari and Firefox** as host and as guest (the smoke journeys are
-  Chromium).
+- [ ] **The source archive with `relay/`** (tools/package_release.py packs
+  it since 19 November; the packager has not been run since).
+- [ ] **Firefox, and Safari itself.** WebKit (Safari's engine, Playwright's
+  build on Windows) passed as host and as guest on 20 November; Playwright's
+  Firefox will not start on this PC (*side-by-side configuration is
+  incorrect*: the Microsoft Visual C++ runtime it needs is not installed --
+  installing it is the owner's call). Safari on a Mac or an iPhone is untried.
 
 The Fairway Tour goal merged and was released as 0.9.19 (19 November 2026;
 DONE.md, *The Fairway Tour and computer golfers*); what it left is under

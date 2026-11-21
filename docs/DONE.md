@@ -114,6 +114,29 @@ From the owner's own first look at the branch the same evening (20 November
   room closed, the round over, their own holes and XP kept). PLACED: no
   *play on alone* for them. Smoke `online-host-leaves`.
 
+Then the browser checks the owner asked for (20 November 2026, "yes start
+them", while gaming: one job at a time), from TODO's *Next feature*:
+
+- [x] **Three or four players in the browser** -- smoke `online-group`: the
+  host, Ann and Bea in browsers of their own and the host's computer golfer;
+  everyone tees off on their own screen and all three cards agree.
+- [x] **Seen in no browser yet** -- now each seen: a hidden host landing a
+  guest's ball at once, *Play on without them* after a guest's tab closes,
+  that guest back from a new tab (let in to play, her own golfer and card
+  at the next tee, playing again) -- `online-group`; a scramble side's ball
+  chosen on the guest's own screen, the room kept open for a second round,
+  the course of the week online, and a net round's strokes for a guest from
+  the handicap typed on her own device, the same on both screens --
+  `online-again`. Found on the way: Play's last step named an online guest
+  "GOLFER" (`seatLine` read only a picker or a name box), fixed; and the
+  course of the week is always stroke play, so a scramble on it is not a
+  thing to test.
+- [x] **Safari and Firefox** (in part) -- smoke takes `--browser` and
+  `--guest-browser` (chromium, firefox, webkit). WebKit passed `online-again`
+  as guest and as host and `online-group` with both guests in it. Firefox
+  could not be started on this PC: the open entry, *Firefox, and Safari
+  itself*, says why.
+
 The gate's 15% line, which read Soulbound at about 10% on 19 November
 (RULES_HISTORY, *The same evening the gate missed a game*), stays as it is:
 the owner, 20 November 2026, "leave it as is".

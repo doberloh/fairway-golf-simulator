@@ -30,6 +30,7 @@ The website has its own repository and its own commands.
 | `npm run test:times` | The whole suite, then stores each file's time for the ordering | ~3.5 min |
 | `npm run smoke` | Builds, then plays the built game in a real browser at nine screen sizes; fails on any error | ~3.5 min |
 | `node tools/smoke.mjs --only endless-round` | One smoke journey, against the current build | |
+| `node tools/smoke.mjs --only online-again --guest-browser webkit` | An online journey with the guests in WebKit (Safari's engine); `--browser webkit` puts the host there. `npx playwright install webkit` once | |
 | `node tools/smoke.mjs --list` / `--headed` | Lists the journeys / runs them in a visible window | |
 | `node tools/ui-audit.mjs` | Every screen at sixteen sizes, checked for layout bugs (overlaps, cut-off text, off-centre, two highlights, small targets, contrast, small text); pictures and a report in `bench/shots/ui-audit/<out>/`. Needs the capture build (`node tools/capture/build-hooked.mjs`); `--quick` five sizes (a round of fixes), `--sizes`, `--screens`, `--jobs` (sizes side by side, default 4), `--game`, `--out`, `--list`; a contact sheet per screen in `sheets/`. Uses the graphics card | ~14 min all, ~5 quick |
 | `node tools/ui-motion-check.mjs` / `ui-motion-frames.mjs` | The menus' animations: lengths, cheap properties, interrupted ends whole, nothing under reduced motion / each stopped at six moments and pictured | ~1 min |

@@ -423,7 +423,7 @@ The ones that count up show how far along you are. An achievement shows in the X
 
 ## Play online
 
-A round live with friends in other houses: everyone on their own screen, taking turns, watching each other's shots fly. **Play online** on the main menu.
+A round live with friends in other houses: everyone on their own screen, taking turns, watching each other's shots fly. **Play online** on the main menu. It is marked **BETA** -- on the menu, the Play online screen and each online golfer's seat (*ONLINE · BETA*) -- as the computer golfers and the Fairway Tour are: new, and not yet played much by people.
 
 **You.** *Play as* is which of your golfers you bring (their name, hand, tee and handicap go with you; their bag, history and stats stay on your device and count your own shots there); *Plays with* is the swing pad or your launch monitor (through the bridge, as offline). There is nothing else to set up: the room code is the only thing anyone types.
 

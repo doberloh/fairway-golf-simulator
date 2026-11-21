@@ -51,7 +51,9 @@ export function onlineSheet(s) {
   <button class="secondary" id="onlineLeave">Leave the room</button>`;
  }
  const golfers = s.golfers || [];
- return `<p>Play a round live with friends in other houses: everyone on their own screen, taking turns, watching each other’s shots fly. No accounts: your golfer, bag and history stay on this device.</p>
+ // BETA, as the computer golfers and the Fairway Tour are (the owner, 20
+ // November 2026): new, and not yet played much by people.
+ return `<p><span class="beta-tag">BETA</span> Play a round live with friends in other houses: everyone on their own screen, taking turns, watching each other’s shots fly. No accounts: your golfer, bag and history stay on this device. Online play is new, so expect the odd rough edge.</p>
   <h3>You</h3>
   <label class="field">Play as<select id="onlineWho">${golfers.map(g => `<option value="${esc(g.id)}"${g.id === s.who ? ' selected' : ''}>${esc(g.name)}</option>`).join('')}</select></label>
   <label class="field">Plays with<select id="onlineInput"><option value="meter"${s.input === 'monitor' ? '' : ' selected'}>Swing pad</option><option value="monitor"${s.input === 'monitor' ? ' selected' : ''}>Launch monitor (through the bridge)</option></select></label>

@@ -6124,7 +6124,7 @@ function groupEditor(hostId,start,onChange){
   host.innerHTML=draft.map((p,i)=>{const q=p.profile&&findProfile(profiles,p.profile),lv=q?levelOf(q.xp).level:0,hc=q?profileSummary(q).handicap?.index:null;
    if(p.online){const away=online?.session?.members?.get(p.online)?.state==='away';
     return `<div class="player-row seat online-seat" data-seat="${i}"><span class="player-mark"><span class="player-dot" style="background:${playerColour(i)}" aria-hidden="true"></span><span class="seat-guest" aria-hidden="true">⇄</span></span>`
-    +`<div class="player-who ${nameSize(p.name)}"><strong class="online-seat-name">${escape(p.name)}</strong><span class="player-sub">ONLINE · ${away?'CONNECTION LOST':p.input==='monitor'?'LAUNCH MONITOR':'SWING PAD'}</span></div>`
+    +`<div class="player-who ${nameSize(p.name)}"><strong class="online-seat-name">${escape(p.name)}</strong><span class="player-sub">ONLINE · BETA · ${away?'CONNECTION LOST':p.input==='monitor'?'LAUNCH MONITOR':'SWING PAD'}</span></div>`
     +`<span class="seat-tees" role="group" aria-label="${escape(p.name)} tee">${tees.map(t=>`<button type="button" class="seat-tee" data-seat-tee="${t}" aria-pressed="${teeFor(teeOf(p),tees)===t}" aria-label="${teeName(t)} tees" title="${teeName(t)} tees"><i style="background:${TEE_DOT[t]}"></i>${teeLetter(t,tees)}</button>`).join('')}</span>`
     +`<select id="team${i}" aria-label="${escape(p.name)} team"><option value="A" ${p.team==='A'?'selected':''}>Team A</option><option value="B" ${p.team==='B'?'selected':''}>Team B</option></select>`
     +(draft.length>1?`<button class="small-icon drop-player" data-drop="${i}" aria-label="Remove ${escape(p.name)}"><i data-lucide="trash-2"></i></button>`:`<span class="drop-spacer" aria-hidden="true"></span>`)
@@ -6364,7 +6364,9 @@ function weeklyPage(sec){
 }
 // A seat as a summary names it: the golfer's mark, name and tee.
 function seatLine(seat){
- const who=seat.querySelector('select[id^=who]'),typed=seat.querySelector('input[id^=name]'),name=(typed?.value||who?.options[who.selectedIndex]?.textContent||'Golfer').trim(),tee=challengeSetup?'':seat.querySelector('.seat-tee[aria-pressed=true]')?.dataset.seatTee||'';
+ // An online guest's seat has no picker, only their name (seen as "GOLFER"
+ // on Play's last step, 20 November 2026).
+ const who=seat.querySelector('select[id^=who]'),typed=seat.querySelector('input[id^=name]'),guest=seat.querySelector('.online-seat-name')?.textContent,name=(guest||typed?.value||who?.options[who.selectedIndex]?.textContent||'Golfer').trim(),tee=challengeSetup?'':seat.querySelector('.seat-tee[aria-pressed=true]')?.dataset.seatTee||'';
  return `${seat.querySelector('.player-mark')?.innerHTML||''}<strong>${escape(name.toUpperCase())}</strong><small>${escape(tee.toUpperCase())}</small>`;
 }
 async function startWeeklyRound(base){
@@ -9072,7 +9074,7 @@ $('activeTee').onchange=()=>{if(flight||dropState||round.holeComplete)return;con
   // A relay on this machine for this page, until it is closed (smoke
   // `online`): players never see or set the built-in one.
   relay:url=>{testRelay=String(url||'');return relayAddress();},
-  online:()=>online?{member:online.member,seatNext:online.seatNext?[...online.seatNext]:undefined,role:online.role,phase:online.phase,status:online.link?.status,knocks:(online.knocks||[]).map(k=>k.name),seats:round?.players?.map(p=>p.online||null),hole:round?.hole,finished:!!round?.finished,relief:round?.relief?.player??null,cards:round?.cards}:null,
+  online:()=>online?{drops:online.link?.drops,lastClose:online.link?.lastClose,member:online.member,seatNext:online.seatNext?[...online.seatNext]:undefined,role:online.role,phase:online.phase,status:online.link?.status,knocks:(online.knocks||[]).map(k=>k.name),seats:round?.players?.map(p=>p.online||null),hole:round?.hole,finished:!!round?.finished,relief:round?.relief?.player??null,cards:round?.cards,net:round?.net?.strokes??null,choosing:!!round?.scrambleSelection,mode:round?.mode,teams:round?.players?.map(p=>p.team),computers:round?.players?.map(p=>isComputer(p)),picker:round?.scrambleSelection?pickerSeat(round):null}:null,
   // A ball moved to `metres` from the pin, on its line, so a journey can hole
   // out without playing the hole (smoke `online`); saved, so an online host
   // sends it. A bench tool: no player reaches it.

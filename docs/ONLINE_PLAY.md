@@ -3,7 +3,9 @@
 Live rounds with friends in other houses, each on their own screen, taking
 turns and watching each other's shots fly. Built on the `online-play` branch
 from 19 November 2026 (the owner: friends in other houses, no accounts,
-private and safe rooms, a free relay). What a player sees is in PLAYING.md,
+private and safe rooms, a free relay). **It is marked BETA** (the owner, 20
+November 2026, "like we did with the AI stuff"): the menu tile, the Play
+online screen and an online golfer's seat say so. What a player sees is in PLAYING.md,
 *Play online*; the research and the numbers behind it in RESEARCH.md,
 *Online play*.
 
