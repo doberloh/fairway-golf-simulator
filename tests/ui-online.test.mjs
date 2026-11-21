@@ -1,0 +1,73 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {onlineSheet, STATUS_WORDS} from '../src/ui-online.js';
+
+// THE ONLINE SHEET (online play, 19 November 2026): what each stage offers,
+// and that nothing a guest typed reaches the page as markup.
+const golfers = [{id: 'p1', name: 'Dustin'}, {id: 'p2', name: 'Sam'}];
+
+test('the start: who you play as, host, join by code, and no relay to set', () => {
+ const html = onlineSheet({stage: 'start', golfers, who: 'p2', input: 'monitor'});
+ for (const id of ['onlineWho', 'onlineInput', 'onlineHost', 'onlineCode', 'onlineJoin']) assert.match(html, new RegExp(`id="${id}"`), id);
+ assert.match(html, /<option value="p2" selected>Sam/);
+ assert.match(html, /value="monitor" selected/);
+ // The owner, 20 November 2026: the join code is the only thing typed, and
+ // the relay's address is never shown (online/relay-address.js).
+ assert.doesNotMatch(html, /onlineRelay|wss:|workers\.dev|Relay address/i);
+ const inputs = html.match(/<input\b/g) || [];
+ assert.equal(inputs.length, 1, 'one box to type in: the room code');
+ // BETA, as the computer golfers and the Fairway Tour are (the owner, 20 November 2026).
+ assert.match(html, /class="beta-tag">BETA</);
+});
+
+test('the relay is built in, a secure address', async () => {
+ const {RELAY} = await import('../src/online/relay-address.js');
+ assert.match(RELAY, /^wss:\/\/[a-z0-9.-]+$/);
+});
+
+test('hosting: the code in fours, each knock with Let in and Turn away, Start only with someone in', () => {
+ const code = 'K7Q2M9XD4RTP8WNB';
+ const empty = onlineSheet({stage: 'host', code, status: 'open', knocks: [], members: [], hostName: 'Dustin'});
+ assert.match(empty, /K7Q2-M9XD-4RTP-8WNB/);
+ assert.match(empty, /id="onlineChoose" disabled/);
+ assert.match(empty, /Connected/);
+ const busy = onlineSheet({stage: 'host', code, status: 'retrying', knocks: [{member: 'abc123', name: 'Sam'}], members: [{member: 'def456', name: 'Ann', state: 'away'}], hostName: 'Dustin'});
+ assert.match(busy, /data-admit="abc123"/);
+ assert.match(busy, /data-refuse="abc123"/);
+ assert.match(busy, /CONNECTION LOST/);
+ assert.doesNotMatch(busy, /id="onlineChoose" disabled/);
+ assert.match(busy, new RegExp(STATUS_WORDS.retrying.slice(0, 15)));
+});
+
+test('hosting mid-round: a knock let in to play or to watch, watchers seated from the next tee, no Start or Close', () => {
+ const html = onlineSheet({stage: 'host', phase: 'playing', code: 'K7Q2M9XD4RTP8WNB', status: 'open',
+  knocks: [{member: 'kn0001', name: 'Kit', canPlay: true}, {member: 'kn0002', name: 'Lou', canPlay: false}],
+  members: [{member: 'pl0001', name: 'Ann', state: 'in', seat: 'playing'}, {member: 'wa0001', name: 'Cy', state: 'in', seat: 'watching', canSeat: true},
+   {member: 'nx0001', name: 'Dee', state: 'in', seat: 'next'}, {member: 'wa0002', name: 'Eve', state: 'in', seat: 'watching', canSeat: false}], hostName: 'Dustin'});
+ assert.match(html, /data-admit-play="kn0001"/);
+ assert.doesNotMatch(html, /data-admit-play="kn0002"/, 'no seat for Lou: watch only');
+ assert.match(html, /data-admit="kn0002">Let in to watch/);
+ assert.match(html, /PLAYING/); assert.match(html, /WATCHING/); assert.match(html, /FROM THE NEXT TEE/);
+ assert.match(html, /data-seat="wa0001"/);
+ assert.doesNotMatch(html, /data-seat="wa0002"/);
+ assert.match(html, /data-unseat="nx0001"/);
+ assert.doesNotMatch(html, /id="onlineChoose"|id="onlineClose"/);
+ const lobby = onlineSheet({stage: 'host', phase: 'lobby', code: 'K7Q2M9XD4RTP8WNB', knocks: [{member: 'kn0001', name: 'Kit', canPlay: false}], members: []});
+ assert.match(lobby, /data-admit="kn0001">Let in</);
+ assert.doesNotMatch(lobby, /Let in to watch|data-seat=/);
+});
+
+test('a guest\'s screens: knocking, then in the room', () => {
+ assert.match(onlineSheet({stage: 'knocking', code: 'K7Q2M9XD4RTP8WNB', status: 'open'}), /id="onlineCancel"/);
+ const inRoom = onlineSheet({stage: 'guest', hostName: 'Dustin', course: 'Cascade View', members: [{member: 'a1b2c3', name: 'Sam', state: 'in'}]});
+ assert.match(inRoom, /Dustin<\/b>’s room, on <b>Cascade View/);
+ assert.match(inRoom, /id="onlineLeave"/);
+});
+
+test('names and errors are text, never markup', () => {
+ const evil = '<img src=x onerror=alert(1)>';
+ const html = onlineSheet({stage: 'host', code: 'K7Q2M9XD4RTP8WNB', knocks: [{member: 'abc123', name: evil}], members: [{member: 'd', name: evil, state: 'in'}], hostName: evil, error: evil});
+ assert.doesNotMatch(html, /<img/);
+ assert.match(html, /&lt;img src=x/);
+ assert.doesNotMatch(onlineSheet({stage: 'start', golfers: [{id: '"><b>', name: evil}], typed: evil}), /<img|"><b>/);
+});

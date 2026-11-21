@@ -129,11 +129,12 @@ then trunk, limbs, foliage.
 
 ## Blender and the graphics card
 
-Blender may use the graphics card without asking (AGENTS.md, the Blender
-exception, 23 October 2026). The contact sheet renders with EEVEE on the GPU.
-Read `nvidia-smi` first and do not start while a game is running, run one
-Blender at a time, and make sure it has exited afterwards (`run.mjs` waits for
-it).
+Blender uses the graphics card without asking (the owner, 23 October 2026;
+since 19 November every graphics job does: AGENTS.md, *One job at a time while
+the owner games; otherwise no limit*). The contact sheet renders with EEVEE on
+the GPU. Read the card first (`node tools/gpu-gate.mjs`, not `nvidia-smi`);
+while a game is running, Blender is the one job; and make sure it has exited
+afterwards (`run.mjs` waits for it).
 
 ## Trying models from Meshy (from 5 November 2026)
 

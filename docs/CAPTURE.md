@@ -37,7 +37,7 @@ tables, for `landscape-models.mjs`. Rebuild it after any change to the game.
 | `showcase.mjs <biome> <seed> [holes]` | **A landscape's showcase for the owner** (built for Lakeshore Dunes, 23 October 2026): three views per hole at noon and golden hour, the beach and the water if it has a sea, a close look at open sand away from play, two overviews, plus its `times.mjs` stills, the Blender contact sheets and a notes fragment (`bench/shots/showcase/<biome>/notes.html`) when they exist; lists every page error and `console.error` seen while it ran. One self-contained page, `docs/reports/<biome>-showcase.html` (local, never committed) | 1600x900 at density 1; about a minute |
 | `biome-shots.mjs take [biome…] [--views a,b] [--label r1]` / `encode [--from r1]` | **The landscape pictures the game carries** (the 1.0 polish): candidate views of each landscape at Ultra, 3840x2160 PNG masters in `bench/shots/biome-shots/<label>/<biome>/`; `encode` turns the picks (`PICKS` in the script) into `src/shots/<biome>-<n>.webp` at 960 wide and checks the 3 MB budget. About 10 minutes a landscape to take | 3840x2160 masters, 960 WebP in the game |
 | `ui-polish-showcase.mjs [--before before] [--after final]` | The 1.0 polish's showcase for the owner (`docs/reports/ui-polish-showcase.html`, local): every screen the interface audit walked, before and after at a phone, a laptop and 4K, the press counts and the motion checks. Reads the audit's pictures; no capture of its own | -- |
-| `biome-shots.mjs take <biome> --review --season s --label r1` | **The set every landscape is judged by** (6 November 2026): seed FAIRWAY for all, the same five views (overview, h2-side, h3-low, h2-green, h1-low), 1280 x 720; run once for each of the four seasons, so two landscapes compare picture for picture. The same seed gives different holes on different ground; the views are placed the same way. The cards keep their own seeds | a minute or so a season, graphics card: ask |
+| `biome-shots.mjs take <biome> --review --season s --label r1` | **The set every landscape is judged by** (6 November 2026): seed FAIRWAY for all, the same five views (overview, h2-side, h3-low, h2-green, h1-low), 1280 x 720; run once for each of the four seasons, so two landscapes compare picture for picture. The same seed gives different holes on different ground; the views are placed the same way. The cards keep their own seeds | a minute or so a season, graphics card |
 | `biome-shots.mjs ... --views lot` | The streets kit seen: above the parking lot, along the drive to the clubhouse (3 November 2026) | as the other views |
 | `biome-shots.mjs ... --homes 60 [--seed s] --views street,street-high,mailbox,street-back` | The fairway homes' streets: along the street past the lanes and the mailboxes, from 30 m up, a mailbox close to, and the houses' backs from the hole's side, on the course's busiest stretch (`--homes` turns the houses on at that density; 3 November 2026) | as the other views |
 | `biome-shots.mjs ... --views sea-in` | The sea where it comes in among the holes: the spot inside the map with the most open sea round it, from 70 m off and 40 m up (the Lowcountry's tidal creeks, Monterey's shore; 3 November 2026) | as the other views |
@@ -103,11 +103,12 @@ Night is 10 PM with the floodlights on.
 
 The owner plays games on this machine, and long runs of graphics work have
 crashed it -- twice while gaming, and once while idle after long Playwright
-sweeps (AGENTS.md *Nothing runs on the graphics card unless the owner asks*;
-memory *GPU runs in small batches*).
+sweeps (memory *GPU runs in small batches*). Since 19 November 2026 the rule is
+permanent and needs no asking (AGENTS.md, *One job at a time while the owner
+games; otherwise no limit*):
 
-- **Run only when the owner has said so in that conversation**, and never while
-  `nvidia-smi` shows the card busy with something else.
+- **While a game is on the card, one capture command at a time** and nothing
+  else beside it; with no game, run as many as the work needs.
 - **Small batches**: one or two landscapes, a handful of screens, one or two
   clips per command. Every script takes names for exactly this.
 - **`gpuGate()`** runs before each item: it rests six seconds (so batches are

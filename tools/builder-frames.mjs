@@ -44,7 +44,7 @@ const GPU_ARGS = ['--use-angle=default', '--enable-gpu', '--ignore-gpu-blocklist
  '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows'];
 
 const goal = flag('goal', null);
-const gate = gpuGate({goal, cap: Number(flag('cap', 6)), utilMax: Number(flag('util', 10)), tempMax: Number(flag('temp', 60)), restMin: Number(flag('rest', 5))});
+const gate = gpuGate({goal, cap: Number(flag('cap', Infinity)), utilMax: Number(flag('util', 10)), tempMax: Number(flag('temp', 60)), restMin: Number(flag('rest', 0))});
 
 const frames = (page, n) => page.evaluate(n => new Promise(done => { let i = 0; const step = () => (++i < n ? requestAnimationFrame(step) : done()); requestAnimationFrame(step); }), n);
 const out = {label: LABEL, file: path.basename(FILE), tier: TIER, phases: [], spots: {}};

@@ -2226,3 +2226,56 @@ builder's 10 smoke journeys 10 of 10 (its Worthington test round 91 against par 
 and a Mac mini through the test copy before the last changes; the rest is
 listed in TODO, *Play the current build by hand*.
 
+## Branch note, 19 November 2026: online-play (not released)
+
+**The offline file gains one connection, and only when asked.** Play online
+(docs/ONLINE_PLAY.md) opens a WebSocket to a relay once a player starts or
+joins a room, and at no other time: the smoke journey `online` checks that no
+socket opens at the menu, that the guest's only connections are the relay
+and its own bridge, and that the relay is given the room's number and never
+its code. Every other journey still fails on any network request (Playwright
+counts no WebSocket as a request, and none of them opens one). The file still
+opens from disk and plays offline as before; a room needs the relay.
+
+**Two dependencies ship in the page:** @noble/ciphers and @noble/hashes 2.4.0
+(MIT; notices in THIRD_PARTY_NOTICES.txt and ATTRIBUTION.md), the game's own
+sealing so a page without `crypto.subtle` (a phone on plain http from
+run_fairway_server) seals the same as any. **The page grows about 60 KB**
+(60,704,331 bytes against main's 60,644,747, measured before the last fixes).
+The relay (`relay/`) is not in the page; it runs on the owner's Cloudflare
+account, and **its address is built into every page** (the owner, 20
+November 2026: `wss://fairway-relay.fairwaygolfsim.workers.dev`,
+`src/online/relay-address.js`; a build may name another with FAIRWAY_RELAY).
+A player never sees or types it, and the page opens no connection to it
+until a room is started or joined. Generator, schema and built versions are unchanged: no course
+or save moves. Not released; not played by a person.
+
+## Addendum, 21 November 2026: v0.9.20
+
+**v0.9.20** is published at the owner's request ("once we are done with all
+that we can put it into a release for github and the demo"; the owner named
+0.9.20), as "Fairway 0.9.20 (beta)", tag `v0.9.20`, not a pre-release, the
+same six files, from the merge of `online-play` into `main`, notes in
+`docs/releases/v0.9.20.md`. Content: **Play online, marked BETA** -- rooms by
+code with the relay built in (the branch note above), any mix of copies,
+dropping in and out and watching, the host waiting for every screen's
+scorecard, the room code in the pause list only, a guest told when the host
+leaves, each screen's own view of a computer golfer's shots, and the
+reconnection work of 20 November (a quiet socket remade, a host who never
+returns, moves between sockets, an unreachable service said) -- and a
+computer golfer kept one when Play is drawn again. **Generator 103, schema
+47 and built 3 are unchanged** and the landscape fingerprints are silent.
+**Still one offline file**: alone it makes no connection; in a room, one
+WebSocket to the built-in relay and nothing else, which every smoke journey
+checks. The built page is 60,717,053 bytes against 0.9.19's 60,644,747 (72
+KB more: the sealing, the online modules and the sheet). Checked on the
+released code: the whole Node suite before the last reconnection changes
+(1,786 tests, 1,783 pass, three skipped, none failing) and the online suites
+after them (34 pass); the game's 50 smoke journeys 50 of 50 on the release
+build, among them the five online ones; the builder's 9 of 9; the online
+journeys also with WebKit, Safari's engine, as host and as guests (Firefox
+would not start on the owner's PC). The relay itself, deployed by the
+owner, passed tools/relay-check.mjs and the Node rounds of every format.
+Nobody has played a round online yet; TODO, *Play the current build by
+hand*, says what to try.
+

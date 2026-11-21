@@ -73,6 +73,11 @@ preview/assets-data.js
 *.pfx
 .npmrc
 .claude/settings.local.json
+# The online relay's Cloudflare tooling (relay/cloudflare/README.md): what
+# `wrangler dev` keeps between runs, and its local secrets file. A deploy's
+# account details never go in the repository.
+relay/cloudflare/.wrangler/
+.dev.vars
 
 # Python bytecode Blender writes beside tools/blender/*.py when one
 # imports the shared helpers.

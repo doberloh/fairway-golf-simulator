@@ -17193,3 +17193,227 @@ better (two-putt distances), the 15's sand better.
 runs at this sample size, so the tolerance cannot be judged yet; scratch's
 lag putting (too good) and the 30's (too poor) pull the same two numbers
 opposite ways; the 30 has too few awful shots and too many greens.
+
+## Online play: where the relay can live (19 November 2026, the online-play branch)
+
+The owner wants live matches with friends in other houses, no accounts,
+private rooms, and a free relay if one holds up, else a small server of their
+own on Oracle Cloud. This reverses *Challenge a friend: codes, shots flown
+again, and no servers* above on one point only: a relay is now allowed. That
+section's Netlify finding still stands (Netlify cannot hold a lasting
+connection). Sources in REFERENCES, *Online play*. **Decided by the owner the
+same day: Cloudflare** (below, *Decided*); the owner makes the account.
+
+**What the game needs from it is tiny.** The September study's figures: a shot
+is about 200 bytes, a whole round's state about 600 bytes, a four-ball's 18
+holes on the order of 100 KB. Messages come a few a minute. So any relay's
+free allowance is far beyond one friend group's use, and the choice turns on
+upkeep, safety and how long the free terms last, not on size.
+
+**Constraints the relay must meet, whoever runs it:**
+
+- **A secure connection with a real certificate (`wss://`).** The website's
+  demo is an https page, and a browser refuses a plain `ws://` from one.
+  On a rented machine that means a domain name and keeping a certificate
+  renewed; on a hosted platform it comes with the address.
+- **Privacy cannot rest on where a page comes from.** A game opened from disk
+  sends its origin as `null`, so an allow-list of sites proves nothing. The
+  room must be protected by a secret only the players hold, and the relay
+  treated as untrusted (it carries sealed messages it cannot read).
+- **The browser's own encryption (`crypto.subtle`) is missing on a plain-http
+  page.** It exists on the https demo, on localhost and (in Chrome and
+  Firefox) on a file opened from disk, but NOT on a phone that loaded the game
+  from `run_fairway_server` over the home network (`http://192.168.x.x`), which
+  is not a secure context. The owner ruled out joining through the website, so
+  the game carries its own (below, *Sealing in the game's own code*). Recalled
+  from the Web Crypto rules, not tested here.
+
+**The options, as found:**
+
+| where | free allowance | upkeep | catch |
+| --- | --- | --- | --- |
+| Cloudflare Workers + Durable Objects (one room = one object holding the sockets) | 100,000 requests a day; incoming WebSocket messages billed at 20 to 1 (100 messages = 5 requests); outgoing messages free; 13,000 GB-s a day; SQLite-backed objects only on the free plan | none: no machine, certificate included on a `workers.dev` address | an account on the owner's name; over the daily allowance further requests fail until 00:00 UTC |
+| Oracle Cloud Always Free VM | A1 Arm: 1,500 OCPU-hours and 9,000 GB-hours a month (2 OCPUs, 12 GB); or two AMD micro VMs (1/8 OCPU, 1 GB); 10 TB a month out | a whole machine: updates, firewall, a domain and its certificate, restarts | **idle Always Free instances may be reclaimed**: idle means, over 7 days, 95th-percentile CPU under 20%, network under 20% and (A1) memory under 20% -- which a golf relay used a few evenings a week always is |
+| Peer to peer (WebRTC) with a free meeting service (PeerJS cloud, Metered) and a free relay for the connections that cannot meet directly (Cloudflare TURN 1,000 GB a month; Metered Open Relay 20 GB; ExpressTURN 1 TB) | as listed | none, but two outside services | free meeting services are best-effort (PeerJS's own maintainers stopped their free TURN); Metered caps free signalling at 100 connections and 100,000 messages a month; a third-party library to ship |
+
+Fetched: Cloudflare's Durable Objects pricing page and Oracle's Always Free
+resources page (both 19 November 2026). Search summaries only, not fetched:
+Cloudflare TURN's 1,000 GB (several Cloudflare pages agreed), PeerJS, Metered,
+ExpressTURN, the reports that Oracle halved its A1 allowance in mid-2026
+(the fetched page shows the halved figures, with no date), and the reports
+that reclamation applies only to unpaid accounts (so upgrading to a
+pay-as-you-go account, still at no charge inside the allowance, is said to
+stop it).
+
+**Decided (the owner, 19 November 2026): Cloudflare's Durable Objects.** It
+is the only option with no machine to look after, its certificate comes with
+it, and a room object is exactly the shape a turn-based match needs. Oracle's
+free machine would be reclaimed for idling unless the account is upgraded,
+and adds a domain and certificate to keep. Peer to peer saves almost nothing
+at this traffic and adds two services nobody here controls. The game talks to
+the relay through one small module, so moving to another is a change of
+address and a few lines, not a rewrite; the relay itself stays small enough
+(it only passes sealed messages between the sockets of one room) to run on
+Node on Oracle as well.
+
+**The relay on the owner's own domain (asked and decided against, 20
+November 2026).** The relay was deployed to a `workers.dev` address the same
+day; the owner asked for it on the domain bought through Netlify, read what
+it would take (below), and kept `workers.dev`, renaming the account's
+subdomain to `fairwaygolfsim` so the address names the game rather than
+them ("lets not move the DNS thats fine. and dont mark it for later"). What
+was found:
+a Worker *custom domain* or *route* needs the domain's DNS zone on Cloudflare
+-- Cloudflare's custom-domains page says one cannot be made on a zone you do
+not own or on a hostname with an existing CNAME
+(https://developers.cloudflare.com/workers/configuration/routing/custom-domains/),
+so a CNAME from Netlify's DNS to `workers.dev` is not a supported route (a
+third-party guide claims it works; not tried). Delegating only a subdomain to
+Cloudflare, and the partial (CNAME) setup, are paid plans (community reports,
+not checked against Cloudflare's price list). And a domain bought through
+Netlify cannot have its nameservers changed by the owner: Netlify resells
+Name.com registrations, and its staff answer is a support ticket that first
+moves the registration to Name.com, free
+(https://answers.netlify.com/t/move-only-dns-management-to-cloudflare-keep-netlify-as-registrar/154154,
+July 2025); a moved registrar is barred for 60 days after registration by
+ICANN. So the path is: a Netlify support ticket -> the domain at Name.com ->
+its nameservers set to Cloudflare -> the website's records recreated in
+Cloudflare (Netlify's external-DNS records for the apex and `www`) -> a custom
+domain such as `relay.<domain>` on the Worker -> the built-in address changed.
+The website is down for anyone whose lookup lands between the last two DNS
+steps if a record is missed. Each step is the owner's (accounts and DNS).
+
+**Sealing in the game's own code, because every copy must play together.**
+The owner, the same day: a phone that loaded the game from
+`run_fairway_server` over plain http, with a launch monitor on that PC's
+bridge, must join from the phone, not through the website -- any mix of
+copies in one room. Such a page has no `crypto.subtle`, so the game carries
+its own: `@noble/ciphers` (XChaCha20-Poly1305; MIT; Cure53 audit of v1.0.0,
+September 2024, per its README, fetched; about 3 KB gzipped for ChaCha, the
+README's figure) and `@noble/hashes` (SHA-256 and HKDF; MIT), version 2.4.0 of
+each on npm. Rejected: TweetNaCl (Unlicense, audited 2017, but unchanged since
+2023), and two code paths (the browser's own where it exists) -- one path is
+one thing to test, in Node. Random numbers come from `crypto.getRandomValues`,
+which a plain-http page does have (recalled from the Web Crypto rules; to be
+seen on the owner's phone). **The room code is the secret**: 16 characters
+from a 32-letter alphabet without look-alikes, 80 bits (PLACED: far past any
+online guessing, with the relay's rate limits and the host letting each player
+in); the relay's room number and the sealing key are both made from it, one
+way, so the relay never sees it.
+
+**As built and measured (19 November 2026; docs/ONLINE_PLAY.md).**
+
+- **Messages, sealed** (measured on a four-golfer round 17 holes in):
+  the round after a shot, 2,064 characters (1,478 before sealing: the
+  nonce, the tag and base64 add about 40%); a ball struck, 484 (295). Per
+  shot the host sends one of each, so a four-ball's 18 holes of about 360
+  shots is roughly 0.9 MB sent by the host and 2.7 MB delivered to three
+  guests -- and, on Cloudflare's billing (incoming messages at 20 to 1),
+  about 40 requests, against 100,000 a day.
+- **The relay's limits, PLACED:** 8 sockets a room, 48 KB a message, a
+  bucket of 60 messages refilled at 10 a second per socket. **The game paces
+  itself under them** (link.js: 50 at once, 8 a second). Found by the first
+  whole-round test: shots a millisecond apart ran the host past the relay's
+  burst, the relay dropped the excess as it should, and the round hung on a
+  lost state. A person's round never comes near the limit; the pacing is so
+  that nothing is ever lost to it.
+- **A copied message was the first hole found.** Each message carries a
+  count, and a count not above the last from that socket is dropped; but a
+  copy sent from another socket started a new count and passed. The sender's
+  own tag is now sealed inside every message and must match the socket the
+  relay says it came from.
+- **A guest's own shot has 10 seconds** for the host's answer (PLACED); the
+  host answers in a few milliseconds when connected.
+- **A watched ball flies three times as fast** while something from the host
+  waits behind it (PLACED: the host skipping a flight left a guest 15 seconds
+  behind in the first browser run).
+- **The build grows by about 60 KB** (60,644,747 bytes on main, 60,704,331
+  with online play, before the last fixes): noble's ChaCha and SHA-256, the
+  online modules and the sheet.
+- **The Worker was run, not deployed:** under `wrangler dev` 4.165.0
+  (Cloudflare's local runtime, workerd), it passed tools/relay-check.mjs and
+  whole rounds of every format (tests/online-session.test.mjs with
+  `FAIRWAY_TEST_RELAY`). The hibernation calls it uses (`acceptWebSocket`,
+  `serializeAttachment`, `setWebSocketAutoResponse`) were written from
+  memory of Cloudflare's documentation and seen working there; not fetched.
+- **Deployed (the owner, 20 November 2026) and built in:** against
+  `wss://fairway-relay.fairwaygolfsim.workers.dev`, tools/relay-check.mjs
+  passed every check, tests/online-session.test.mjs played whole rounds of
+  all five formats, host and two guests, to one card through it over the
+  internet (each 4.5 to 5.7 seconds, against about 1 on the Node twin on
+  this machine), and the built game opened a room and let a guest in with
+  only the code typed (bench/shots/online-real-relay.mjs, local).
+- **Every screen sees the card** (the owner, 20 November 2026). The full
+  smoke run of 19 November found a guest moved to the next tee before its
+  card opened: the card waits for that screen's own XP pop-ups (a level-up
+  there), and the host's 8-second countdown started on the host's card.
+  Rejected: showing a guest's card before its XP (it would put the XP back
+  over the card, which the 14 October rule moved it out from under); a
+  fixed longer countdown (a slow phone has no fixed length). Built: a `seen`
+  message from each guest when its card opens, and the host's countdown
+  waits for every guest still connected (`HostSession.unseen`). A lost
+  guest is not waited for (PLACED), so a dead phone cannot hold the group.
+- **Dropping in, dropping out, watching** (the owner, 20 November 2026,
+  "Yes, build both"). Every rule here is PLACED, none from a source: eight
+  screens a room (the relay's sockets), four golfers (Round's limit), the
+  rest watching; anyone let in mid-round watches first; **seat changes only
+  at the next tee** (rejected: seating at once, which would hand someone a
+  ball mid-hole or start a newcomer from the tee while others are on the
+  green); a newcomer on the smaller team (match play and a scramble stay two
+  sides); a newcomer's card starts at the hole they join (rejected:
+  inventing scores for holes they missed, e.g. net par -- the card would
+  claim holes nobody played; this is what an offline golfer added mid-round
+  already gets, so a late joiner's stroke-play total is over fewer holes,
+  which the scorecard shows); a leaver's own golfer and card are given back,
+  matched by member id, else by golfer name (a new tab has a new id).
+  Measured: through the deployed relay, a friend let in mid-round was
+  playing from the next tee in 3.7 seconds of a three-hole test round, and a
+  leaver was back in their own golfer in 1.9.
+- **Once, both screens lost the relay together** (smoke `online`, 20
+  November 2026, one run in six): the host's chip said RECONNECTING and the
+  guest's ball never reached it, before any drop-in step. The Node relay
+  closes a socket only when a room is full or a message passes its size
+  limit, and logs neither then, so the cause is unknown; smoke now prints
+  each refused message and each socket closed other than by its own page.
+  Five runs since, none. **Twice more the same day** (`online-again`, a
+  Chromium host showing RECONNECTING and its guest lost, the relay -- now
+  logging every close -- seeing none): so the browser's side of the socket
+  ended while the relay's stayed open. Each screen now records its
+  browser's close code, reason and count (link.js `lastClose`, `drops`) and
+  the journeys print them on a failure; none has failed that way since. A
+  WebKit host losing its connection in a third run was the harness, not
+  the game: its Chromium guest had been launched without the graphics card
+  and the machine was saturated (the host, watched alone for a minute with
+  a guest knocking and its 25-second pings, never dropped).
+- **Reconnection, hardened** (20 November 2026, the owner: "how robust is
+  our connection error handling and reconnection?"). Four gaps found and
+  closed; every figure PLACED, none from a source. (1) No answer to a ping
+  was never noticed: a socket a browser still calls open after the network
+  under it has gone (Wi-Fi to mobile data, a laptop asleep) can stay so for
+  minutes. Now nothing heard within 10 s of a ping ends it (`DEAD_MS`), so
+  a dead link is found within about 35 s with the 25 s ping; the relay
+  answers a ping at once, and 10 s leaves a slow phone room. The network
+  coming back, or the page shown, tries at once. (2) A host gone for good
+  left its guests waiting with no end: after 2 minutes (the owner's
+  "couple of minutes") a guest is offered to leave; and a guest back on a
+  new socket whose host did not answer heard nothing at all -- now told
+  after 8 s. (3) A guest's move made between sockets went nowhere: now
+  refused at once and left to make again (rejected: holding it to send on
+  reconnecting -- the host sends the round whole to anyone who comes back,
+  which may have moved on, so a held move could be stale). (4) A relay out
+  of reach read as "trying again" for ever: after four failed tries (about
+  15 s) it says the service cannot be reached, still trying. Tested in Node
+  with a socket stand-in (quiet, refusing) and over the relay's twin; the
+  host-gone offer in smoke (`online-host-gone`, its wait shortened).
+- **Other browser engines** (20 November 2026): WebKit (Playwright 1.63's
+  build, 26.6, WebGL2 on the card) passed the online journeys as guest and as
+  host -- the sealing, the flights and the cards the same as Chromium's.
+  Playwright's Firefox 1543 would not start on the owner's PC: Windows
+  reports *side-by-side configuration is incorrect*, the Visual C++ runtime
+  missing.
+- **The code is the whole lock** (left for later, with the owner told):
+  anyone holding it can read a room and knock, and could pose as the host to
+  the guests while the real host is disconnected. A key per player (public
+  keys exchanged, the host's pinned) would close both; it was weighed
+  against @noble/curves' size (tens of KB) and the friends-only rooms the
+  owner asked for, and not built.

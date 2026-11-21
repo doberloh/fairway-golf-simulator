@@ -54,7 +54,10 @@ export default defineConfig({
   plugins: [versions, splash, viteSingleFile()],
   // `version` is package.json's: a friend's challenge (rival.js) is only played
   // on the version it was made on, so a release must bump it.
-  define: {__FAIRWAY_BUILD__: JSON.stringify({commit, built: new Date().toISOString(), version: pkg.version})},
+  // `__FAIRWAY_RELAY__`: another online relay for this build
+  // (docs/ONLINE_PLAY.md), from FAIRWAY_RELAY at build time; empty means the
+  // built-in one, src/online/relay-address.js (the owner, 20 November 2026).
+  define: {__FAIRWAY_BUILD__: JSON.stringify({commit, built: new Date().toISOString(), version: pkg.version}), __FAIRWAY_RELAY__: JSON.stringify(process.env.FAIRWAY_RELAY || '')},
   build: {target: 'es2022', assetsInlineLimit: 10000000},
   server: {port: 5173},
 });

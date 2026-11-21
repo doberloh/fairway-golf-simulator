@@ -1657,4 +1657,31 @@ h3 small{font-weight:400;color:var(--ink-faint);font-size:11px;margin-left:6px}
 /* BETA: the computer golfers' features (the owner, 19 November 2026, at the
    merge) -- the Fairway Tour, computer golfers, the caddie, strokes gained.
    The aim line's blaze orange, so it reads on any panel. */
+/* ONLINE PLAY (19 November 2026): the room code, who is knocking and who is in
+   (ui-online.js), and the round's chip (main.js drawOnlineChip). */
+.online-code{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:10px 0}
+.online-code b{font:800 clamp(26px,6vw,40px)/1 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.08em;color:var(--a2-text,#fff);user-select:all}
+.online-status{display:flex;align-items:center;gap:8px;margin:6px 0;font-weight:700}
+.online-light{width:10px;height:10px;border-radius:50%;background:#8a968c}
+.online-status[data-state=open] .online-light{background:#4cc27c}
+.online-status[data-state=connecting] .online-light,.online-status[data-state=retrying] .online-light{background:#e7b14a}
+.online-knocks,.online-people{list-style:none;margin:6px 0 12px;padding:0}
+.online-knocks li,.online-people li{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:8px 0;border-top:1px solid rgba(255,255,255,.12)}
+.online-who{font-weight:700;min-width:0;flex:1 1 8em;overflow-wrap:anywhere}
+#drawer .online-knocks button,#drawer .online-people button{width:auto;flex:0 0 auto;min-width:9em;margin:0}
+.online-people li[data-seat-state=next] small{color:#4cc27c;opacity:1}
+/* The pause list's Online room row: the code beside its name (the only place a round shows it). */
+.pause-room-code{margin-left:auto;padding-left:12px;letter-spacing:.08em;opacity:.8;white-space:nowrap}
+/* An iPhone zooms the page into a typing box whose letters are under 16 px
+   (RULES_HISTORY, *Measure on the owner's phone*); a phone guest types the code. */
+#drawer #onlineCode{font-size:16px}
+#drawer #onlineCode{letter-spacing:.08em;text-transform:uppercase}
+.online-knock{position:fixed;z-index:400;left:50%;transform:translateX(-50%);top:calc(92px + env(safe-area-inset-top,0px));display:flex;flex-wrap:wrap;align-items:center;gap:10px;max-width:calc(100vw - 32px);padding:10px 14px;border-left:4px solid #e7b14a;background:var(--panel,rgba(12,24,17,.94));color:#fff;font-weight:700;box-shadow:0 6px 24px rgba(0,0,0,.4)}
+.online-knock button{width:auto;margin:0;padding:6px 14px}
+.online-people small{letter-spacing:.08em;opacity:.75}
+.online-people li[data-state=away] small{color:#e7b14a;opacity:1}
+.online-seat-name{display:block}
+.online-chip{position:absolute;z-index:32;left:50%;transform:translateX(-50%);top:calc(78px + env(safe-area-inset-top,0px));padding:5px 12px;border-bottom:3px solid #4cc27c;white-space:nowrap;background:var(--panel,rgba(12,24,17,.86));color:#fff;font:700 14px/1.25 "Saira Condensed",var(--font-ui),sans-serif;letter-spacing:.08em;pointer-events:none}
+.online-chip[data-state=away]{border-bottom-color:#e7b14a}
+.online-chip[data-state=lost]{border-bottom-color:#ff5a14}
 .beta-tag{display:inline-block;margin-left:.35em;padding:.12em .4em;border-radius:3px;background:#ff5a14;color:#fff;font-size:.6em;font-style:normal;font-weight:800;letter-spacing:.08em;line-height:1.2;vertical-align:middle;text-transform:uppercase}

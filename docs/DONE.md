@@ -25,6 +25,157 @@ kept whole: *The open list before the 11 November 2026 prune* and *The open
 list before the 16 October prune*, each with a table of what became of every
 entry.
 
+## Online play with friends in other houses (branch `online-play`, 19-21 November 2026; released as 0.9.20)
+
+### Release 0.9.20 (21 November 2026)
+
+The owner: "once we are done with all that we can put it into a release for
+github and the demo", and named the version 0.9.20. The release's line in
+TODO's *Play the current build by hand* replaced 0.9.19's, which was:
+
+- **Release 0.9.19** (19 November 2026: the Fairway Tour merged; the
+  computer golfers' features marked BETA). Every smoke journey on the
+  release build is in DISTRIBUTION_REVIEW's addendum. The owner played on
+  the branch on the phone and a Mac mini (the order of play "works
+  flawlessly"; the rings, the orange line and the hidden computer aim
+  liked); none of what follows was looked at item by item.
+
+The branch's own entry under *Next feature*, at the merge, kept its open
+items as TODO entries: *Online play, by hand* (under *Play the current
+build by hand*), *An online screen's connection lost with no close seen at
+the relay* (*Known wrong*), *Firefox for the online journeys* (*The owner's
+calls*). The source archive with `relay/` was packed by the release build.
+
+From TODO's *Next feature* entry, finished on the branch on 20 November 2026:
+
+- [x] **Deploy the relay** -- the owner made the Cloudflare account and
+  deployed `relay/cloudflare/` on 20 November 2026, then renamed the
+  account's `workers.dev` subdomain to `fairwaygolfsim` so the address no
+  longer carried their name (Cloudflare: Workers & Pages -> *Your
+  subdomain* -> Change; the old address stops working). The owner reported
+  `node tools/relay-check.mjs wss://fairway-relay.fairwaygolfsim.workers.dev`
+  passing; run here as well, it passed, and the Node rounds of every format
+  played to one card through it (RESEARCH, *As built and measured*). The
+  owner asked for the domain the website uses instead; what that would take
+  (a Netlify support ticket before the DNS could move to Cloudflare) was
+  found and the owner kept `workers.dev` -- "lets not move the DNS thats
+  fine. and dont mark it for later" (RESEARCH, *The relay on the owner's own
+  domain*).
+- [x] **Whether a release carries the relay's address** -- built in, and
+  never shown (the owner: "Build the relay into the game. The only thing
+  users should have to type in is the join code, they should not see the
+  relay address in the game at all"). `src/online/relay-address.js`; the
+  Relay box and its stored address are gone (the stored key is removed at
+  load); smoke points its pages at its own relay with `lab.relay`. The
+  built game opened a room and let a guest in through the deployed relay
+  with only the code typed.
+- [x] **A guest can miss the hole's scorecard** -- the owner: "host waits
+  until everyone has seen their card". Each guest sends `seen` when its
+  card opens, and the host's 8-second countdown starts only when every
+  guest still connected has (`HostSession.unseen`, main.js
+  `onlineCardCheck`); the host's card says *Waiting for …* meanwhile, and a
+  guest's says the host moves everyone on. A lost guest is not waited for
+  (PLACED). Rejected: a guest's card before its XP, a longer fixed
+  countdown (RESEARCH). Smoke `online` now requires the guest's card before
+  anyone moves on, and passes.
+
+From *Known wrong*, the same day:
+
+- [x] **A computer golfer can lose its record when Play keeps a group across
+  steps** (seen in the code on 19 November 2026) -- confirmed and fixed. Play
+  redrawn from the group being set up (choosing the game again, importing a
+  code, a friend's challenge, Surprise me's reroll) rebuilt each row without
+  its `cpu` record, so groupEditor took the computer golfer for a new person
+  of that name: the row lost its COMPUTER label and level, and starting the
+  round would have made it a profile. Now one `draftStart()` builds the rows
+  for both redraws, carrying `cpu` and `online`. Smoke `cpu-group` chooses
+  the game again after making a level-10 computer golfer and checks it is
+  still one, at level 10; passing.
+
+New the same day, asked rather than listed (the owner: can a player drop in
+and out mid-round, can someone who did not start the round, can a spectator
+become a player at the host's say -- "Yes, build both"):
+
+- [x] **Dropping in, dropping out, and watching.** A room holds eight
+  screens; anyone let in mid-round watches; the knock bar offers *Let in to
+  play* and *Let in to watch*; the host's ONLINE chip opens the room, where
+  a watcher is seated from the next tee; seat changes happen only at the
+  next tee; a newcomer's card starts there; someone who left gets their own
+  golfer and card back. Someone let in or back mid-round is sent the round
+  alone, so nobody else's ball in the air is disturbed (before, a guest's
+  reconnect re-sent the round to everyone). online/referee.js
+  `seatsAtNextTee` and `canSeat`, session.js (the door, `resync(to)`),
+  main.js `onlineSeatNow` and the sheet. Node: the rule, a friend dropping
+  in and a player dropping out and back, each over the local relay and the
+  deployed one; smoke `online`: a Node friend let in to watch, seated from
+  the chip, joining at the next tee on both screens, and leaving. Not
+  played by a person, and no browser watcher has been seated and then
+  played shots.
+
+From the owner's own first look at the branch the same evening (20 November
+2026, the server running for them):
+
+- [x] **"The join code should only show in the pause menu."** The ONLINE chip
+  says only ONLINE, RECONNECTING…, who is lost or watching; the pause list
+  has *Online room* with the code (the host's opens the room sheet, where
+  watchers are seated; a guest's copies the code). It had briefly been a
+  row in the pause list's right-hand column, which a wide screen hides:
+  found by smoke, and moved among Scorecard, Settings and the rest.
+- [x] **"The computer player on the non host computer is not following its
+  shot view settings."** A guest flew every computer golfer's ball in full,
+  because the host's ball arrives as an ordinary remote shot; now the guest
+  applies its own Golfers & rules choice to a computer golfer's seat
+  (`onlineWatch`, seat.js `showShot`). Smoke `online-host-leaves`: a guest on
+  *Results only* never sees that ball in the air.
+- [x] **"When the host leaves it asks joined players to save the round too
+  ... need to tell joined players that the host left."** A guest is taken
+  to the menu without the question and told in a box (*Sam has left*: the
+  room closed, the round over, their own holes and XP kept). PLACED: no
+  *play on alone* for them. Smoke `online-host-leaves`.
+
+Then the browser checks the owner asked for (20 November 2026, "yes start
+them", while gaming: one job at a time), from TODO's *Next feature*:
+
+- [x] **Three or four players in the browser** -- smoke `online-group`: the
+  host, Ann and Bea in browsers of their own and the host's computer golfer;
+  everyone tees off on their own screen and all three cards agree.
+- [x] **Seen in no browser yet** -- now each seen: a hidden host landing a
+  guest's ball at once, *Play on without them* after a guest's tab closes,
+  that guest back from a new tab (let in to play, her own golfer and card
+  at the next tee, playing again) -- `online-group`; a scramble side's ball
+  chosen on the guest's own screen, the room kept open for a second round,
+  the course of the week online, and a net round's strokes for a guest from
+  the handicap typed on her own device, the same on both screens --
+  `online-again`. Found on the way: Play's last step named an online guest
+  "GOLFER" (`seatLine` read only a picker or a name box), fixed; and the
+  course of the week is always stroke play, so a scramble on it is not a
+  thing to test.
+- [x] **Safari and Firefox** (in part) -- smoke takes `--browser` and
+  `--guest-browser` (chromium, firefox, webkit). WebKit passed `online-again`
+  as guest and as host and `online-group` with both guests in it. Firefox
+  could not be started on this PC: the open entry, *Firefox, and Safari
+  itself*, says why.
+
+And before the release, the owner asked "how robust is our connection error
+handling and reconnection?", was told of four gaps, and said "Yes, fix them
+first":
+
+- [x] **A socket gone quiet is noticed** (no answer 10 s after a ping: given
+  up and remade), and the network back or the page shown retries at once.
+- [x] **A host who never comes back**: a guest is told the host is away
+  (also when back on a new socket with no host to answer) and after two
+  minutes offered to leave, to the menu, nothing to save.
+- [x] **A guest's move between sockets** is refused at once, to make again.
+- [x] **A relay out of reach** is said so after four failed tries.
+
+RESEARCH, *Reconnection, hardened*; tests in online-link, online-session
+and the smoke journey `online-host-gone`. Not tried on a real phone
+changing networks.
+
+The gate's 15% line, which read Soulbound at about 10% on 19 November
+(RULES_HISTORY, *The same evening the gate missed a game*), stays as it is:
+the owner, 20 November 2026, "leave it as is".
+
 ## The Fairway Tour and computer golfers (branch `fairway-tour`, 17-19 November 2026; released as 0.9.19)
 
 **Merged at the owner's word, 19 November 2026** ("go ahead and mark the AI

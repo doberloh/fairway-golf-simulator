@@ -12,8 +12,8 @@
 // a player opens it, and a journey FAILS on any uncaught error, any
 // console.error, or ANY network request -- the builder promises none, like
 // the game. Each journey a fresh page. It uses the graphics card (the
-// builder draws the land), so main's rules decide when it runs; on the
-// course-builder branch it runs without asking, through tools/gpu-run.mjs.
+// builder draws the land): one job at a time while the owner games, else
+// freely (AGENTS.md).
 //
 // Journeys that need a course file make it with the game's own code in Node
 // first (tools/builder-fixtures.mjs), so a journey never depends on another.

@@ -110,7 +110,7 @@ async function shoot(file, tag, tier) {
  return out;
 }
 
-const gate = gpuGate({goal: flag('goal', null), cap: Number(flag('cap', 6))});
+const gate = gpuGate({goal: flag('goal', null), cap: Number(flag('cap', Infinity))});
 const started = Date.now(), report = {};
 let failed = null;
 try {

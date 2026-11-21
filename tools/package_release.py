@@ -108,7 +108,11 @@ DIRECTORIES = {'src': {'.js', '.css'}, 'tests': {'.mjs'}, 'bridge': {'.mjs'},
                'tools': {'.py', '.mjs', '.js'}, 'public': {'.png', '.webmanifest'},
                # The builder guide's pictures, and the old-files test's fixture
                # (the builder-ux goal): a build or a test from the source needs them.
-               'docs/builder-guide': {'.webp'}, 'tests/fixtures': {'.fairway', '.json'}}
+               'docs/builder-guide': {'.webp'}, 'tests/fixtures': {'.fairway', '.json'},
+               # Online play's relay (19 November 2026): its rules are what the
+               # tests and the smoke journey run, and the Worker is how a relay of
+               # one's own is deployed (docs/ONLINE_PLAY.md).
+               'relay': {'.js', '.mjs', '.toml'}}
 
 
 # WHAT COUNTS AS SOURCE IS WHAT GIT TRACKS, not whatever sits on disk.

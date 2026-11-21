@@ -26,7 +26,9 @@ full explanation in PROJECT_HANDOFF.md and one line here.
 ## What Fairway is
 
 A golf simulator that runs as **one HTML file** in a WebGL 2 browser, offline,
-with no account, backend, telemetry or fetched fonts. An optional local bridge
+with no account, backend, telemetry or fetched fonts; **Play online** (from
+19 November 2026; docs/ONLINE_PLAY.md) opens one connection, to a relay that
+passes a room's sealed messages, and only in a room. An optional local bridge
 (a separate Node program, shipped compiled as `run_fairway_server`) connects a
 launch monitor. Every course is **generated from a seed**: one continuous
 landscape holding 9 or 18 holes, in one of fifteen landscapes (the work on 15 real golf looks, branch `us-golf-courses`: Classic Parkland has replaced six, Southern Pines three, Lowcountry and Gulf three, Florida Palms two, Hawaiian Resort one, Desert Resort two, Pacific Northwest (`pacnw`) Puget Sound, California Coast (`calcoast`) three, Seaside Links (`seaside`) three, Desert Mountain (`dmountain`) four and Mountain (`mountains`) seven and Prairie & Sand Hills (`prairie`) four, their keys kept in `OLD_KEYS`; the Badlands and Northern Woods keep their keys with new trees; no cart paths, clubhouse, road or lot on a generated course since 8 November 2026, course.js `facilities` [No facilities for now]; the Redwood Coast keeps its key with new trees), first of nine: (the regions of the USA, plus Scottish Links: Puget Sound, Sonoran, Rockies, Scottish Links, Heartland, Keys, Redwood Coast, New England, Lake Dunes -- renamed from their old keys on 2 November 2026, when Haunted Hollow was removed; the US landscapes goal grows the list to forty, TODO *US landscapes*), Cartoon art style only.
@@ -48,10 +50,10 @@ private repository (AGENTS.md, *The website is not in this repository*).
 | `npm run dev` | The game at http://127.0.0.1:5173 |
 | `npm test` | Every regression suite (`tools/test.mjs`: each file its own process, longest first); must pass before committing. `npm run test:changed` / `test:fast` while working (TESTING.md) |
 | `npm run build` | `dist/index.html`, the single-file game, `dist/builder.html`, the course builder, plus the bridge bundle |
-| `npm run smoke` | Builds, then plays the built file in a real browser; after any interface change, **only when the owner asks** (it uses the graphics card) |
+| `npm run smoke` | Builds, then plays the built file in a real browser; after any interface change (graphics card: one job at a time while the owner games; AGENTS.md) |
 | `node tools/biome-fingerprint.mjs --check` | Did generated ground move? If yes, `GENERATOR_VERSION` must go up |
 | `node tools/bench.mjs --tier quick` | Measures the generator over many courses; `--since` compares with the baseline |
-| `npm run profile` | Frame cost. Minutes of full GPU load: ask the owner first (a "GPU allowed" `/goal` may run single `--only` groups; AGENTS.md) |
+| `npm run profile` | Frame cost. Minutes of full GPU load; only on a quiet card, never beside a game (AGENTS.md, *Graphics profiles*) |
 | `npm run release` | Builds everything, cuts and verifies the zips into `release/` |
 
 Every command is in COMMAND_CHEAT_SHEET.md.
@@ -106,6 +108,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `src/skins.js` -- the skins format: who won each hole, the carry, the winner, its banner and scorecard lines
 - `src/range.js` -- the driving range (a hand-built hole): its greens as a list (centre, six targets, short game), their slopes and cups, chip and putt spots; `src/endless.js` -- endless runs
 - `src/range-report.js`, `src/pdf.js` -- the range session as a CSV and a PDF report; a hand-written PDF, no dependency
+- `src/online/` -- online play (19 November 2026; docs/ONLINE_PLAY.md): `relay-address.js` (the deployed relay, built in and never shown: PROJECT_HANDOFF *The relay is built in*), `room-code.js` (the code, the relay's room number, the sealing key), `seal.js` (XChaCha20-Poly1305 from @noble/ciphers, the game's own so a plain-http phone seals too), `link.js` (one machine's connection: sealed, paced, replays dropped, retried), `protocol.js` (what each message may say; `safeText`), `session.js` (`HostSession`, `GuestSession`, `Follower`: the guest's order of shots and states), `referee.js` (the host's rulings, and who joins the group at the next tee: PROJECT_HANDOFF *Seats change only at the next tee*); `src/ui-online.js` -- the Play online sheet; tests/online-*.test.mjs play whole rounds through the relay's Node twin
 - `src/round-library.js`, `src/course-library.js` -- saved rounds, saved courses and course codes; `src/rival.js` -- a friend's challenge: the shot grid, the round's shot log, the challenge code, the card comparison
 - `src/profile.js`, `src/handicap.js`, `src/player-colours.js` -- players, the sim handicap, a colour per seat
 - `src/progression.js` -- XP and levels: what earns XP, the level curve, and the ledger a mulligan takes back from
@@ -179,6 +182,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `tools/builder-smoke.mjs` -- the builder's page driven in a real browser by file://, failing on any error or network request (journeys in `tools/builder-journeys/`); `tools/build-courses.mjs` -- every course in bench/lidar built as door 2 builds one (OpenStreetMap refined with the LIDAR), to bench/courses/; `tools/play-built.mjs` -- each opened in the built game and a tee shot played; `tools/builder-look.mjs` -- a course file opened in the editor and a green photographed from a few heights, with the close-up sheet's numbers; `tools/freeze-compare.mjs` -- a generated course against its frozen copy (surfaces, ground, holes, trees, virtual-golfer strokes); `tools/freeze-capture.mjs` -- the two photographed from the same poses in the built game
 
 **Outside the game**
+- `relay/` -- online play's relay: `core.js` (its rules: 8 sockets a room, 48 KB a message, a paced bucket; it passes sealed boxes and stores nothing), `cloudflare/` (the Worker and Durable Object the owner deploys, docs/ONLINE_PLAY.md), `node-relay.mjs` (the same rules on Node: the tests and smoke use it); `tools/relay-check.mjs` asks any running relay its rules
 - `bridge/server.mjs` -- the launch-monitor bridge (and `/lidar`, which fetches USGS rockyweb tiles for the builder's page, USGS hosts and local pages only); `tools/build-server.mjs` compiles it per platform
 - `tools/package_release.py`, `tools/release.mjs` -- the zips; `public/` -- icons and manifest copied beside the page
 - `tools/test.mjs` -- the Node suite's runner: longest first by `bench/test-times.json`, `--changed`, `--fast`, `--save-times`; `tests/worlds.mjs` -- the course cache and `measured` (many courses built on worker threads, `tests/measure-worker.mjs`, measured by a module under `tests/measure/`)
@@ -400,7 +404,8 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - No club sound with a launch monitor; nothing audible before the first input; one bird at a time; never schedule a sound in the past -- Web Audio plays it whole, late. [WHEN THE GAME MAKES A SOUND]
 
 **Packaging and the outside world**
-- The built page makes no network requests, by design and by test; the manifest is linked by script, only over http(s). [A hosted copy installs]
+- The built page makes no network requests, by design and by test; the manifest is linked by script, only over http(s). [A hosted copy installs] The one exception is Play online's WebSocket to the relay, opened only in a room (smoke `online` checks none opens before). [ONLINE: THE HOST IS THE REFEREE]
+- Online, a remote shot goes through `takeShot` as `struck.remote` and a guest takes the host's round after each ball lands (`onlineApply`); the host's `save()` is what sends the round; `online` is a `var` because the boot calls `save()` before its line runs. [ONLINE: THE HOST IS THE REFEREE]
 - The built page opens with a `fairway-versions` tag the website reads; do not remove it. [THE BUILT PAGE STATES ITS VERSIONS]
 - The packager ships only files git tracks and refuses stale builds. [Start and build]
 

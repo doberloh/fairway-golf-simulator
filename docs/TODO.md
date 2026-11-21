@@ -44,13 +44,21 @@ wrong, unfinished, or owed a check.
 
 ## Next feature
 
-Nothing chosen. The Fairway Tour goal merged and was released as 0.9.19 (19
-November 2026; DONE.md, *The Fairway Tour and computer golfers*); what it
-left is under *Play the current build by hand* and *Known wrong*. The
-candidates are in IDEAS.md.
+None chosen. Online play merged and was released as 0.9.20 (21 November
+2026; DONE.md, *Online play with friends in other houses*; docs/ONLINE_PLAY.md);
+what it left is under *Play the current build by hand*, *Known wrong* and
+*The owner's calls*. The Fairway Tour before it, 0.9.19 (DONE.md, *The
+Fairway Tour and computer golfers*).
 
 ## Known wrong
 
+- [ ] **An online screen's connection lost with no close seen at the relay**
+  (three smoke runs on 20 November 2026, Chromium; RESEARCH, *Once, both
+  screens lost the relay together*). It reconnects and carries on (and since
+  the same day a socket gone quiet is given up within about 35 s, so even a
+  hidden failure of this kind recovers), but the cause is unknown. A screen keeps why its browser says its socket closed
+  (`lab.online()` `lastClose`, `drops`), and the online journeys print every
+  screen's room on a failure: if it comes back, read those first.
 
 - [ ] **Ultra: about two more stalls a minute with three computer golfers**
   (fairway-tour, 18 November 2026; RESEARCH, *After the minimap fix*). The
@@ -229,6 +237,11 @@ candidates are in IDEAS.md.
 
 ## The owner's calls
 
+- [ ] **Firefox for the online journeys.** Smoke can open guests or the host
+  in Firefox (`--guest-browser firefox`), but Playwright's Firefox will not
+  start on the owner's PC: *side-by-side configuration is incorrect*, the
+  Microsoft Visual C++ runtime it needs not installed. Installing it changes
+  the PC (online play, 20 November 2026). WebKit, Safari's engine, passed.
 - [ ] **Cart paths, the clubhouse, the road and the lot are off on generated
   courses** (the owner, 8 November 2026; course.js `facilities`; generator
   102). Bring them back, or take the code out. To bring them back the public
@@ -279,15 +292,33 @@ here is a claim of support until it is done.
     flight's end waited on something.
   - `lab.state().lastStroke` holds the last reading, with its sample count.
 
-- [ ] **Play the current build by hand** (0.9.19, 19 November 2026). What has
+- [ ] **Play the current build by hand** (0.9.20, 21 November 2026). What has
   been built and seen only in captures, measurements or smoke runs, and still
   exists in the game. The archive has each item's full list.
-  - **Release 0.9.19** (19 November 2026: the Fairway Tour merged; the
-    computer golfers' features marked BETA). Every smoke journey on the
-    release build is in DISTRIBUTION_REVIEW's addendum. The owner played
-    on the branch on the phone and a Mac mini (the order of play "works
-    flawlessly"; the rings, the orange line and the hidden computer aim
-    liked); none of what follows was looked at item by item.
+  - **Release 0.9.20** (21 November 2026: online play merged, marked BETA).
+    Every smoke journey on the release build is in DISTRIBUTION_REVIEW's
+    addendum. The owner looked round the online screens on the branch
+    the evening before (three changes came of it, below); nobody has played
+    a round online.
+  - **Online play, by hand** (0.9.20, BETA; docs/ONLINE_PLAY.md). A round
+    with a friend in another house over the built-in relay: host and guest
+    each way round; a phone that opened the game from `run_fairway_server`
+    with the launch monitor armed on the PC's bridge; the website's demo
+    in the same room; a ball in the water; a dropped connection; a
+    scramble; the scorecard on every screen before the next tee; a third
+    friend dropping in (let in to watch, seated from the next tee); a
+    player leaving and coming back to their own card; a phone moving from
+    Wi-Fi to mobile data mid-round (back within about half a minute?); a
+    host closing their window (guests offered to leave after two minutes). Smoke plays all of
+    these between browsers on one PC, through a relay on that PC; the
+    deployed relay was checked by Node rounds and one room opened from the
+    built game. The owner's three of 20 November, seen in smoke only: the
+    room code in the pause list's *Online room* and nowhere else (not seen
+    on a phone, where it is under the top bar's Menu); *Results only* for a
+    computer golfer on a guest's screen; a guest told when the host leaves.
+    Safari on a Mac or an iPhone is untried (its engine passed in smoke).
+    The ONLINE chip sits over the left end of the scramble's *Choose the
+    team's ball* box (seen in a smoke picture): move one?
   - **Order of play** (0.9.19). Play's Rules step, *Order of play*: *Rules
     of golf* (honours, then the ball farthest from the hole) or *Hole out
     in turn* (the default). Tested in tests/play-order.test.mjs and the
