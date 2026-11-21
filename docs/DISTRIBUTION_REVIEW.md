@@ -2250,3 +2250,32 @@ A player never sees or types it, and the page opens no connection to it
 until a room is started or joined. Generator, schema and built versions are unchanged: no course
 or save moves. Not released; not played by a person.
 
+## Addendum, 21 November 2026: v0.9.20
+
+**v0.9.20** is published at the owner's request ("once we are done with all
+that we can put it into a release for github and the demo"; the owner named
+0.9.20), as "Fairway 0.9.20 (beta)", tag `v0.9.20`, not a pre-release, the
+same six files, from the merge of `online-play` into `main`, notes in
+`docs/releases/v0.9.20.md`. Content: **Play online, marked BETA** -- rooms by
+code with the relay built in (the branch note above), any mix of copies,
+dropping in and out and watching, the host waiting for every screen's
+scorecard, the room code in the pause list only, a guest told when the host
+leaves, each screen's own view of a computer golfer's shots, and the
+reconnection work of 20 November (a quiet socket remade, a host who never
+returns, moves between sockets, an unreachable service said) -- and a
+computer golfer kept one when Play is drawn again. **Generator 103, schema
+47 and built 3 are unchanged** and the landscape fingerprints are silent.
+**Still one offline file**: alone it makes no connection; in a room, one
+WebSocket to the built-in relay and nothing else, which every smoke journey
+checks. The built page is 60,717,053 bytes against 0.9.19's 60,644,747 (72
+KB more: the sealing, the online modules and the sheet). Checked on the
+released code: the whole Node suite before the last reconnection changes
+(1,786 tests, 1,783 pass, three skipped, none failing) and the online suites
+after them (34 pass); the game's 50 smoke journeys 50 of 50 on the release
+build, among them the five online ones; the builder's 9 of 9; the online
+journeys also with WebKit, Safari's engine, as host and as guests (Firefox
+would not start on the owner's PC). The relay itself, deployed by the
+owner, passed tools/relay-check.mjs and the Node rounds of every format.
+Nobody has played a round online yet; TODO, *Play the current build by
+hand*, says what to try.
+
