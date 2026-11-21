@@ -1,6 +1,6 @@
 {
- "reviewed": "2026-10-31",
- "note": "Lockfile metadata, not a legal certification or proof every module ships. Embedded subcomponents are described in DISTRIBUTION_REVIEW.md and THIRD_PARTY_NOTICES.txt. Build-scope packages are installed separately and are not shipped in either archive. Bun (build-scope) compiles run_fairway_server; the Bun runtime is INSIDE that program, so its notices, including the LGPL for the JavaScriptCore it links, ship in THIRD_PARTY_NOTICES.txt. laz-perf (runtime) ships inside the course builder's page only (Fairway Builder.html), its WebAssembly inlined; the game's page does not carry it.",
+ "reviewed": "2026-11-21",
+ "note": "Lockfile metadata, not a legal certification or proof every module ships. Embedded subcomponents are described in DISTRIBUTION_REVIEW.md and THIRD_PARTY_NOTICES.txt. Build-scope packages are installed separately and are not shipped in either archive. Bun (build-scope) compiles run_fairway_server; the Bun runtime is INSIDE that program, so its notices, including the LGPL for the JavaScriptCore it links, ship in THIRD_PARTY_NOTICES.txt. laz-perf (runtime) ships inside the course builder's page only (Fairway Builder.html), its WebAssembly inlined; the game's page does not carry it. @noble/ciphers and @noble/hashes (runtime, online play's sealing) ship inside the game's page.",
  "packages": [
   {
    "path": "node_modules/@oven/bun-darwin-aarch64",
@@ -371,6 +371,26 @@
    "optional": false,
    "integrity": "sha512-2xRqm/f/2UqDS5qqkjOyDb6uVIjkVw6SGmQlMoTQliVWkZhPfIbUJTubUl3mTloaWqKcjlS/urmP1CYoxelsEg==",
    "resolved": "https://registry.npmjs.org/laz-perf/-/laz-perf-0.0.7.tgz"
+  },
+  {
+   "path": "node_modules/@noble/ciphers",
+   "name": "@noble/ciphers",
+   "version": "2.4.0",
+   "declaredLicense": "MIT",
+   "scope": "runtime",
+   "optional": false,
+   "integrity": "sha512-AnjFn0Jv92laAkvMrghlFZq4qQCIN/4DxFV/eooqtC2YTjB7kBeLMS2T9KJX4Dn+ZVXLOwK0lSgqDtx9gvxtiw==",
+   "resolved": "https://registry.npmjs.org/@noble/ciphers/-/ciphers-2.4.0.tgz"
+  },
+  {
+   "path": "node_modules/@noble/hashes",
+   "name": "@noble/hashes",
+   "version": "2.4.0",
+   "declaredLicense": "MIT",
+   "scope": "runtime",
+   "optional": false,
+   "integrity": "sha512-X5XaVWZIBCT7HHZGm5I7ZQXDwLG+bGXuSrMQAW+7Zvl87h1kmc1ZB1VSRJcpUfoUrGQp4Fkoxm5kZ+Ms+aW+eA==",
+   "resolved": "https://registry.npmjs.org/@noble/hashes/-/hashes-2.4.0.tgz"
   },
   {
    "path": "node_modules/lightningcss",

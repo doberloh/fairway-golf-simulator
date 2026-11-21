@@ -2268,7 +2268,10 @@ computer golfer kept one when Play is drawn again. **Generator 103, schema
 **Still one offline file**: alone it makes no connection; in a room, one
 WebSocket to the built-in relay and nothing else, which every smoke journey
 checks. The built page is 60,717,053 bytes against 0.9.19's 60,644,747 (72
-KB more: the sealing, the online modules and the sheet). Checked on the
+KB more: the sealing, the online modules and the sheet).
+`DEPENDENCY_INVENTORY.json` follows the lockfile again (68 packages: the
+two @noble libraries added, which the packager caught as stale on the
+first release build). Checked on the
 released code: the whole Node suite before the last reconnection changes
 (1,786 tests, 1,783 pass, three skipped, none failing) and the online suites
 after them (34 pass); the game's 50 smoke journeys 50 of 50 on the release
