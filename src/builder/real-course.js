@@ -349,7 +349,14 @@ export function docFromLand({land, traced = null, holes, trees = [], homes = [],
 // the 1.5 m blend), the 1 cm that counts as changed, and patches carrying
 // under 5 mm of detail left out. Merged where they overlap; the smallest first
 // up to the file's limit (course-doc.js LIMITS.patchSamples).
-export const PATCH_MARGIN = {green: 8, tee: 5, sand: 4}, PATCH_MOST = 250000;
+// THE NOISE FLOOR (23 November 2026): on the owner's Alpine Lake survey only
+// half the half-metre cells had two ground returns, and of the detail laid
+// 22% was under 3 cm, 6% 3 to 10 cm, none over 10 -- mostly a two-return
+// mean's noise, not shape. Each difference is moved PATCH_FLOOR towards nought
+// (PLACED: 2 cm, about a two-return mean's noise on a 3DEP survey), so noise
+// goes and a real lip keeps its shape less 2 cm, with no step at the floor.
+export const PATCH_MARGIN = {green: 8, tee: 5, sand: 4}, PATCH_MOST = 250000, PATCH_FLOOR = .02;
+const floored = d => Math.sign(d) * Math.max(0, Math.abs(d) - PATCH_FLOOR);
 function finePatches(land, ground, smoothR, surfaces) {
  const {nx, nz, cell, halfX, halfZ, fine} = land, F = fine, N = nx * nz;
  const keep = new Float32Array(N);
@@ -382,7 +389,7 @@ function finePatches(land, ground, smoothR, surfaces) {
   const pnx = i1 - i0 + 1, pnz = j1 - j0 + 1; if (pnx < 3 || pnz < 3 || pnx * pnz > budget) continue;
   const heights = new Float32Array(pnx * pnz); let most = 0;
   for (let j = 0; j < pnz; j++) for (let i = 0; i < pnx; i++) {
-   const x = F.x0 + (i0 + i) * F.cell, z = F.z0 + (j0 + j) * F.cell, d = F.detail[(j0 + j) * F.nx + i0 + i], add = d === FINE_NONE ? 0 : read(keep, x, z) * d / 1000;
+   const x = F.x0 + (i0 + i) * F.cell, z = F.z0 + (j0 + j) * F.cell, d = F.detail[(j0 + j) * F.nx + i0 + i], add = d === FINE_NONE ? 0 : read(keep, x, z) * floored(d / 1000);
    heights[j * pnx + i] = read(ground, x, z) + add; most = Math.max(most, Math.abs(add));
   }
   if (most < .005) continue;

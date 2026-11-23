@@ -1585,7 +1585,10 @@ What was built:
   pits a putt cannot climb out of. So the half-metre detail is bunkers' lips
   and faces, tees' banks, greens' banks and false fronts, and swales in the
   rough round them. Land already at half a metre (a property to 2.25 km²)
-  gets no patches: it has the detail.
+  gets no patches: it has the detail. Each difference is moved 2 cm towards
+  nought first (23 November: on Alpine Lake 94% of the detail laid was under
+  3 cm, mostly noise of a two-return mean). Measured: no frame cost on any
+  tier, 1 MB on the file.
 - Rejected: one land grid finer everywhere inside the outline (one grid has
   one cell; two would change the file and the game); 0.25 m patches (one or
   two returns a cell on these surveys: noise); thinning by the course boundary

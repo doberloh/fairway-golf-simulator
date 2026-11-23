@@ -46,8 +46,9 @@ Fill outside's wood sized from the survey; every button and panel reworded
 
 Tested: lidar-detail, builder-outline, lidar-coverage, real-course, zip and
 draft Node tests; every builder journey; Alpine Lake measured in Node
-(RESEARCH, *Full detail inside the course, less outside*). Still owed: the
-owner's own look, the choice outside the outline, and the frame rate (TODO).
+(RESEARCH, *Full detail inside the course, less outside*); the frame rate
+with patches on every tier (no cost). Still owed: the owner's own look and
+the choice outside the outline (TODO).
 
 ## A big LIDAR ZIP in the builder (branch `builder-big-zips`, 22 November 2026; not merged)
 

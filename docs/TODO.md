@@ -527,10 +527,11 @@ here is a claim of support until it is done.
   is fetched at about 2 points a square metre (a sixteenth of Alpine
   Lake's), which leaves 58% of the ground there filled in and breaks the
   woods into more, smaller trees; the next step up (8 a cell) keeps the
-  outside nearly as it was and saves little time. The frame rate on every
-  tier with patches is owed: Alpine Lake's two files are in
-  bench/courses/alpine (`frame-ab --built` each, the card free); the mesh
-  differs by 81 refined cells of 593,000, so no change is expected.
+  outside nearly as it was and saves little time. (The frame rate with
+  patches was measured on every tier on 23 November: no cost.) On Alpine
+  Lake the half-metre detail is small (a 2 cm noise floor leaves little):
+  it pays on a denser survey, which no real course over 2.25 km² has been
+  built from yet.
 
 - [ ] **A real course's doglegs, checked by a person.** Since 10 November 2026
   door 2 finds a dogleg's bend from the traced fairway (**Add dogleg aim points**;

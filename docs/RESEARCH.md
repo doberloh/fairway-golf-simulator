@@ -11266,9 +11266,36 @@ outline), with the patches and without:
 
 The mesh is already half a metre within 3 m of sand, tees and greens, and
 refines wherever it misses the land by 6 cm, so the patches added 81
-refined cells and no triangles worth counting: no frame cost is expected.
-**The frame rate itself is not measured** (the owner was gaming on the card
-the whole time: TODO). The stuck ball is there with or without patches.
+refined cells and no triangles worth counting. The stuck ball is there with
+or without patches.
+
+**Frame rate** (23 November 2026, the card idle; `frame-ab --built` on each
+file, one build, two rounds, tees 1 and 9; the graphics card's milliseconds
+at full clock, patches / plain):
+
+| Tier | Tee 1 | Tee 9 | Triangles |
+|---|---|---|---|
+| Low | 0.56 / 0.52 | 0.67 / 0.61 | within 0.1% |
+| Medium | 1.16 / 1.23 | 1.46 / 1.48 | within 0.2% |
+| High | 2.42 / 2.51 | 2.68 / 2.67 | within 0.6% |
+| Ultra | 3.48 / 3.39 | 3.66 / 3.93 | within 0.2% |
+
+The differences go both ways and are inside a run's noise: no frame cost on
+any tier. (These are the files before the noise floor below, with more
+patches than now: the dearer case.)
+
+**The detail is mostly noise on this survey.** Of the heights in Alpine
+Lake's patches, before the floor: 72% no detail, 22% under 3 cm, 6% 3 to
+10 cm, none over 10 cm. A two-return mean on a 3DEP survey is noisy by a
+centimetre or two, so most of it was noise, not shape. Since 23 November
+every difference is moved 2 cm towards nought (real-course.js PATCH_FLOOR,
+PLACED): noise goes, and a lip keeps its shape less 2 cm with no step at the
+floor (tests/real-course.test.mjs: a 1.5 cm ripple laid on nowhere, the sheer
+lip still within 5 cm). With the floor, Alpine Lake's patches: 91% no
+detail, 6% under 3 cm, 2% 3 to 10 cm; the file still 9 MB against 8, 35
+more refined cells. The test round (93 and 131 with patches, 94 and 134
+without) moves as much between two runs of the same file (99 and 130 the
+run before): the computer golfers cannot tell a difference this small.
 
 PLACED with it: BUFFER 30 m round the outline (a rough outline drawn by hand
 on a 2 m map); the fine grid at most 40 million cells; patch margins green
