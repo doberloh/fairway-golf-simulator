@@ -349,7 +349,7 @@ export function docFromLand({land, traced = null, holes, trees = [], homes = [],
 // the 1.5 m blend), the 1 cm that counts as changed, and patches carrying
 // under 5 mm of detail left out. Merged where they overlap; the smallest first
 // up to the file's limit (course-doc.js LIMITS.patchSamples).
-export const PATCH_MARGIN = {green: 8, tee: 5, sand: 4};
+export const PATCH_MARGIN = {green: 8, tee: 5, sand: 4}, PATCH_MOST = 250000;
 function finePatches(land, ground, smoothR, surfaces) {
  const {nx, nz, cell, halfX, halfZ, fine} = land, F = fine, N = nx * nz;
  const keep = new Float32Array(N);
@@ -364,11 +364,15 @@ function finePatches(land, ground, smoothR, surfaces) {
   const b = [Math.max(F.x0, Math.min(...xs) - m), Math.max(F.z0, Math.min(...zs) - m), Math.min(fx1, Math.max(...xs) + m), Math.min(fz1, Math.max(...zs) + m)];
   if (b[2] - b[0] >= 2 * F.cell && b[3] - b[1] >= 2 * F.cell) boxes.push(b);
  }
+ // Merged while the union stays under PATCH_MOST heights: merging runs on
+ // from box to box, and on a compact course one box could grow past the
+ // file's limit and be left out whole. Overlapping patches are harmless.
+ const heightsIn = b => ((b[2] - b[0]) / F.cell + 1) * ((b[3] - b[1]) / F.cell + 1);
  for (let merged = true; merged;) {
   merged = false;
   for (let i = 0; i < boxes.length && !merged; i++) for (let j = i + 1; j < boxes.length; j++) {
-   const a = boxes[i], b = boxes[j];
-   if (a[0] <= b[2] && b[0] <= a[2] && a[1] <= b[3] && b[1] <= a[3]) { boxes[i] = [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[2], b[2]), Math.max(a[3], b[3])]; boxes.splice(j, 1); merged = true; break; }
+   const a = boxes[i], b = boxes[j], u = [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[2], b[2]), Math.max(a[3], b[3])];
+   if (a[0] <= b[2] && b[0] <= a[2] && a[1] <= b[3] && b[1] <= a[3] && heightsIn(u) <= PATCH_MOST) { boxes[i] = u; boxes.splice(j, 1); merged = true; break; }
   }
  }
  const out = []; let budget = LIMITS.patchSamples;

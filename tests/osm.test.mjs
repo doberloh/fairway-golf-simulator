@@ -3,7 +3,7 @@
 // markers -- against a hand-made answer, never the network.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {osmFeatures, layOsm, overpassQuery, fetchOsm, osmBoundary, homeOfFootprint, mergeTrees} from '../src/builder/osm.js';
+import {osmFeatures, layOsm, overpassQuery, fetchOsm, osmBoundary, homeOfFootprint, mergeTrees, courseOutline} from '../src/builder/osm.js';
 import {osmHoles} from '../src/builder/osm-course.js';
 import {createTrace} from '../src/builder/trace-edit.js';
 
@@ -67,6 +67,22 @@ test('the course boundary: a relation\'s outer ways joined end to end, the large
  assert.equal(ring.length, 5, JSON.stringify(ring));
  const xs = ring.map(p => p[0]); assert.equal(Math.max(...xs), 200); assert.equal(Math.min(...xs), 0);
  assert.equal(osmBoundary({elements: []}, toLocal), null);
+});
+
+// BUILD AUTOMATICALLY'S OUTLINE (22 November 2026): the course found, not the
+// largest -- a big neighbour reaching into the box must not win.
+test('the LIDAR step\'s outline from the map: the course round the place found, else the one covering most of the box', async () => {
+ const P = (lat, lon) => ({lat, lon}), sq = (lat, lon, d) => [P(lat, lon), P(lat, lon + d), P(lat + d, lon + d), P(lat + d, lon), P(lat, lon)];
+ const answer = {elements: [{type: 'way', id: 1, tags: {leisure: 'golf_course'}, geometry: sq(43.60, -95.62, .010)}, {type: 'way', id: 2, tags: {leisure: 'golf_course', name: 'The big neighbour'}, geometry: sq(43.585, -95.66, .05)}]};
+ const get = async (url, o) => { assert.match(decodeURIComponent(o.body), /leisure"="golf_course/); return {ok: true, json: async () => answer}; };
+ const box = [-95.625, 43.595, -95.605, 43.615];
+ const found = await courseOutline(box, get, {at: {lon: -95.615, lat: 43.605}});
+ assert.equal(found.length, 4, 'closed ring without its repeated corner');
+ assert.ok(Math.max(...found.map(p => p[0])) < -95.60, 'the small course round the place, not the larger neighbour');
+ const most = await courseOutline(box, get);
+ assert.ok(Math.max(...most.map(p => p[0])) < -95.60, 'with no place: the one covering most of the box');
+ assert.equal(await courseOutline(box, async () => ({ok: true, json: async () => ({elements: []})})), null);
+ await assert.rejects(courseOutline(box, async () => ({ok: false, status: 502})), /502/);
 });
 
 test('a building becomes a house: its smallest rectangle, turned to face the course; a shed is left out', () => {

@@ -82,7 +82,9 @@ export function osmFeatures(json, toLocal) {
 // THE COURSE'S BOUNDARY as OpenStreetMap draws it (leisure=golf_course): a
 // closed way, or a relation whose outer ways are joined end to end into
 // rings. The largest ring, in local metres, or null when the course has none.
-export function osmBoundary(json, toLocal) {
+export const osmBoundary = (json, toLocal) => osmBoundaries(json, toLocal)[0] ?? null;
+// Every course boundary's outer ring, largest first.
+export function osmBoundaries(json, toLocal) {
  const rings = [], key = p => `${p.lat},${p.lon}`;
  for (const e of json?.elements || []) {
   if (e.tags?.leisure !== 'golf_course') continue;
@@ -105,21 +107,30 @@ export function osmBoundary(json, toLocal) {
  }
  const local = rings.map(r => r.map(p => { const q = toLocal(p.lat, p.lon); return [q.x, q.z]; }));
  const area = r => { let a = 0; for (let i = 0, j = r.length - 1; i < r.length; j = i++) a += r[j][0] * r[i][1] - r[i][0] * r[j][1]; return Math.abs(a) / 2; };
- return local.sort((a, b) => area(b) - area(a))[0] ?? null;
+ return local.sort((a, b) => area(b) - area(a));
 }
 
 // THE COURSE'S ROUGH OUTLINE FROM THE MAP (22 November 2026): Build
 // automatically draws the LIDAR step's outline from OpenStreetMap's
 // leisure=golf_course before anything is downloaded -- a small question
 // (that tag alone over the box, [lon0, lat0, lon1, lat1]), asked with
-// `signal` to give up after a while. The largest outline, as [[lon, lat]],
-// or null when the map has none there.
-export async function courseOutline([lon0, lat0, lon1, lat1], get = fetch, {signal = null} = {}) {
+// `signal` to give up after a while. WHICH COURSE: the one round `at` (the
+// place found, {lon, lat}), else the one covering most of the box -- never
+// simply the largest, which can be a neighbour reaching into the box (and
+// would leave the course wanted with the thin layer). As [[lon, lat]], or
+// null when the map has none there.
+export async function courseOutline([lon0, lat0, lon1, lat1], get = fetch, {signal = null, at = null} = {}) {
  const b = `${lat0},${lon0},${lat1},${lon1}`, q = `[out:json][timeout:25];(way["leisure"="golf_course"](${b});relation["leisure"="golf_course"](${b}););out geom;`;
  const r = await get('https://overpass-api.de/api/interpreter', {method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, body: 'data=' + encodeURIComponent(q), signal});
  if (!r.ok) throw Error(`OpenStreetMap's server said ${r.status}`);
- const ring = osmBoundary(await r.json(), (lat, lon) => ({x: lon, z: lat}));
- return ring ? ring.slice(0, ring.length > 3 && ring[0][0] === ring.at(-1)[0] && ring[0][1] === ring.at(-1)[1] ? -1 : undefined) : null;
+ const rings = osmBoundaries(await r.json(), (lat, lon) => ({x: lon, z: lat})).map(ring => ring.slice(0, ring.length > 3 && ring[0][0] === ring.at(-1)[0] && ring[0][1] === ring.at(-1)[1] ? -1 : undefined));
+ if (!rings.length) return null;
+ const inside = (ring, x, z) => { let c = false; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) { const [ax, az] = ring[j], [bx, bz] = ring[i]; if ((bz > z) !== (az > z) && x < (ax - bx) * (z - bz) / (az - bz) + bx) c = !c; } return c; };
+ const round = at && rings.find(ring => inside(ring, at.lon, at.lat));
+ if (round) return round;
+ // How much of the box each covers, on a 20 x 20 sample.
+ const share = ring => { let n = 0; for (let i = 0; i < 20; i++) for (let j = 0; j < 20; j++) if (inside(ring, lon0 + (i + .5) / 20 * (lon1 - lon0), lat0 + (j + .5) / 20 * (lat1 - lat0))) n++; return n; };
+ return rings.map(ring => ({ring, n: share(ring)})).sort((a, b) => b.n - a.n)[0].ring;
 }
 
 // A building's footprint as a house (trace-edit.js `homes`): the smallest

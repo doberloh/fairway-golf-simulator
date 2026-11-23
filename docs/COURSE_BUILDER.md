@@ -1556,8 +1556,11 @@ What was built:
   survey's own map units where it states no grid), in the draft, and apart
   from the course boundary of the trace step, which is unchanged. **Build
   automatically** takes OpenStreetMap's `leisure=golf_course` for it first,
-  asked alone and given 20 s; with none on the map it stops and asks for one
-  drawn; with no answer it carries on with the whole survey and says so.
+  asked alone and given 20 s -- the course round the place found, else the
+  one covering most of the box (never simply the largest: a big neighbour
+  reaching into the box would win, and the course wanted get the thin
+  layer); with none on the map it stops and asks for one drawn; with no
+  answer it carries on with the whole survey and says so.
 - **The download** (lidar/detail.js, lidar-search.js): every Entwine depth
   under the outline (grown 30 m), and outside only the depths that reach
   70% of 2 points a land cell (PLACED). A kept square now records which pieces

@@ -1353,7 +1353,7 @@ export function open(draft = null) {
   if (!st.detailRing) {
    setBusy('Asking OpenStreetMap for the course outline…');
    try {
-    const ring = await courseOutline([box.lon0, box.lat0, box.lon1, box.lat1], fetch, {signal: AbortSignal.timeout(20000)});
+    const ring = await courseOutline([box.lon0, box.lat0, box.lon1, box.lat1], fetch, {signal: AbortSignal.timeout(20000), at: {lon: place.lon, lat: place.lat}});
     setBusy('');
     if (!ring) { go(0); return say('OpenStreetMap has no outline for this course. Press Draw outline and click round the course, then Build automatically again.', true); }
     st.detailRing = ring; st.detailMap = false; go(0); log(`Course outline from OpenStreetMap: ${ringHectares(ring).toFixed(0)} ha (${took()}).`);

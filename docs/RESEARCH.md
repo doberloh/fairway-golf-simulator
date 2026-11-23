@@ -11273,7 +11273,9 @@ the whole time: TODO). The stuck ball is there with or without patches.
 PLACED with it: BUFFER 30 m round the outline (a rough outline drawn by hand
 on a 2 m map); the fine grid at most 40 million cells; patch margins green
 8 m, tee 5 m, bunker 4 m; 1 cm of change marks the ground as changed on
-purpose; patches carrying under 5 mm of detail left out. Putting surfaces
+purpose; patches carrying under 5 mm of detail left out; patches merged
+only while under 250,000 heights (about 250 m square), so a compact course's
+boxes never run together past the file's limit and drop out. Putting surfaces
 keep their 5 m smoothing (*Greens a putt can hold*): the patches carry no
 detail there.
 

@@ -115,6 +115,14 @@ if (out) {
   const doc = validateDoc(docFromLand({land: l, traced: {layers: model.state.layers}, holes, trees: r.trees, name: `Alpine Lake (${label})`, landscape: 'heartland'}));
   const bytes = await writeBuiltFile(doc, BUILT_VERSION), file = path.join(out, `alpine-lake-${label}.fairway`); fs.writeFileSync(file, bytes);
   const samples = doc.patches.reduce((s, p) => s + p.nx * p.nz, 0);
+  // How large the detail laid is: each patch height against the 1 m land read
+  // there. Mostly under 3 cm is survey noise more than shape.
+  if (doc.patches.length) {
+   const {gridSampler} = await import('../src/built-world.js'), base = gridSampler(doc.land), bins = [0, 0, 0, 0];
+   for (const p of doc.patches) for (let j = 0; j < p.nz; j++) for (let i = 0; i < p.nx; i++) { const d = Math.abs(p.heights[j * p.nx + i] - base(p.x0 + i * p.cell, p.z0 + j * p.cell)); bins[d < .005 ? 0 : d < .03 ? 1 : d < .1 ? 2 : 3]++; }
+   const pc = n => `${(100 * n / samples).toFixed(0)}%`;
+   say(`${label}: detail laid -- none ${pc(bins[0])}, under 3 cm ${pc(bins[1])}, 3-10 cm ${pc(bins[2])}, over 10 cm ${pc(bins[3])}`);
+  }
   const t1 = performance.now(), w = worldFromDoc(doc), tw = performance.now() - t1;
   const cells = w.groundGrid.cells.size, tris = w.groundGrid.indices.length / 3;
   say(`${label}: ${MB(bytes.length)} file, ${doc.patches.length} patches (${(samples / 1e6).toFixed(2)} M heights); the game's ground ${cells.toLocaleString()} refined cells, ${(tris / 1e6).toFixed(2)} M triangles, built in ${(tw / 1000).toFixed(1)} s`);
