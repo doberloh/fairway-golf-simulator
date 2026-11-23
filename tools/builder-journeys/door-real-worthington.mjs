@@ -20,6 +20,7 @@ import {compareBuilt} from '../built-compare.mjs';
 import {playOneShot} from './door-generate.mjs';
 import {worthingtonDir} from '../lidar-home.mjs';
 import {colourOf} from '../../src/tees.js';
+import {drawOutline} from './door-real.mjs';
 
 export default function ({journey, ROOT, SHOTS}) {
  const dir = worthingtonDir(), data = path.join(ROOT, 'bench', 'shots', 'lidar');
@@ -49,6 +50,9 @@ export default function ({journey, ROOT, SHOTS}) {
   await page.mouse.move(ax, ay); await page.mouse.down(); await page.mouse.move(bx, by, {steps: 10}); await page.mouse.up();
   const boxNow = await page.evaluate(() => window.fairwayBuilder.door2.box);
   if (!(boxNow.x1 - boxNow.x0 > 700 && boxNow.x1 - boxNow.x0 < 1000)) throw Error(`the property box is ${JSON.stringify(boxNow)}`);
+  // The course's outline, 40 m inside the outer limit (required since 23 November 2026).
+  const inner = await page.evaluate(() => { const st = window.fairwayBuilder.door2, g = st.preview.gridder, b = st.box, a = g.local(b.x0, b.y1), c = g.local(b.x1, b.y0); return [[a.x + 40, a.z + 40], [c.x - 40, a.z + 40], [c.x - 40, c.z - 40], [a.x + 40, c.z - 40]]; });
+  await drawOutline(page, inner);
   await page.getByRole('button', {name: 'Next: build land'}).click();
   // 2. The land.
   // (Next starts the build at once.)

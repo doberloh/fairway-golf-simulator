@@ -50,27 +50,28 @@ zoomed in -- click it to go there.
 
 ## A real course: find it, box it, build it
 
-![The map round Worthington Country Club, a box dragged round the course](builder-guide/map-box.webp)
+![The map round Worthington Country Club, the outer limit dragged round the course](builder-guide/map-box.webp)
 
-Under **Find the course**, type the course's name (add its town if the name is
-common) and press **Find course**. A golf course on the map is taken at once, even
-over a town of the same name; if the search finds several places, click the
-one you mean. The builder shows the aerial map of the ground round it, 5 km
-across (**Map 3 km** or **8 km** if the course is not on it). Drag a box round
-the course with the left button -- up to 3 x 3 km. That box is the property:
-only it, and 150 m past it for the land beyond the course, is downloaded and
-built.
+Step 1's panel runs in four parts, in order:
 
-**Course outline** (optional). Press **Draw outline** and click round the
-course, roughly, corner by corner; click the first corner or press Enter to
-finish. Drag a corner to move it. Inside the outline the LIDAR is used in full
-detail, and on a large property the ground round greens, tees and bunkers is
-built at half a metre; outside it a lighter layer is used, which downloads
-faster and uses less memory. **Build automatically** takes the outline from
-OpenStreetMap if you have not drawn one. Putting surfaces are always smoothed,
-so a putt holds its line.
-
-Then choose how to build it.
+1. **Find the course.** Type the course's name (add its town if the name is
+   common) and press **Find course**. A golf course on the map is taken at
+   once, even over a town of the same name; if the search finds several
+   places, click the one you mean. The aerial map comes up round it, 5 km
+   across (**Map 3 km** or **8 km** if the course is not on it).
+2. **Outer limit.** A box round the whole course: nothing outside it is
+   downloaded or built (150 m round it is built as scenery). To draw it, point
+   at one corner of the course on the map, hold the left mouse button, drag
+   to the opposite corner and let go. Up to 3 x 3 km; drag again to replace it.
+3. **Course outline** (required). Press **Draw outline** and click round the
+   edge of the course, one corner at a time; it can be rough. Click the first
+   corner again (or press Enter) to finish; drag a corner to move it. Inside
+   the outline the LIDAR is used in full detail, and on a large property the
+   ground round greens, tees and bunkers is built at half a metre; outside it
+   less is used. **Build automatically** draws it from OpenStreetMap when the
+   course is mapped. Putting surfaces are always smoothed, so a putt holds its
+   line.
+4. **Build the course**: one of the two ways below.
 
 ### Build automatically
 

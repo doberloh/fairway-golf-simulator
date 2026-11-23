@@ -11,7 +11,7 @@
 // Registered by tools/builder-smoke.mjs.
 import path from 'node:path';
 import fs from 'node:fs';
-import {surveyLas} from './door-real.mjs';
+import {surveyLas, drawOutline} from './door-real.mjs';
 import {playOneShot} from './door-generate.mjs';
 import {writeZip} from '../../src/zip.js';
 
@@ -75,6 +75,9 @@ export default function ({journey, SHOTS}) {
    const listed = await page.locator('li', {hasText: 'door-2-osm-survey.zip / door-2-osm-survey.las'}).textContent({timeout: 5000});
    if (!/LAS, [0-9,]+ points/.test(listed)) throw Error(`the survey read from its ZIP should be listed with its points: ${listed}`);
   }
+  // The course's outline is required: Next waits for it (23 November 2026).
+  if (!/cb-wait/.test(await page.getByRole('button', {name: 'Next: build land'}).getAttribute('class'))) throw Error('Next: build land should wait for the course outline');
+  await drawOutline(page, [[-150, -100], [150, -100], [150, 100], [-150, 100]]);
   await page.getByRole('button', {name: 'Next: build land'}).click();
   // (Next starts the build at once.)
   await page.waitForFunction(() => window.fairwayBuilder.door2.land, null, {timeout: 120000}); await idle();

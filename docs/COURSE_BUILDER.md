@@ -1600,6 +1600,20 @@ What was built:
 Measured on the owner's Alpine Lake square: RESEARCH, *Full detail inside the
 course, less outside*. Not yet used by the owner in the builder.
 
+**Required, and the box is the outer limit** (23 November 2026; the owner:
+"The course boundary is not optional, then also, we need to indicate that
+the box in the LIDAR step is the 'outer limit' and how its drawn in simple
+terms"). No download (Download box, Download all tiles) and no land (Next:
+build land, Build land) without an outline; Next waits with "Draw the course
+outline"; Clear outline went (Redraw replaces it). Land already built, in an
+older draft, stays reachable. Step 1's panel is four numbered parts in the
+order they are done -- 1 Find the course, 2 Outer limit (what the box is,
+and "point at one corner of the course, hold the left mouse button, drag to
+the opposite corner, let go"), 3 Course outline, 4 Build the course (the two
+buttons) -- and the box is labelled *Outer limit* on the map, the relief, the
+status line and the messages. Build automatically still takes OpenStreetMap's
+outline, or stops and asks for one.
+
 ### Buttons that say what they do; panels that read like a manual (22 November 2026)
 
 The owner: "please make the buttons that have text on them just say what

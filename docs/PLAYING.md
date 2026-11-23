@@ -576,18 +576,20 @@ changes, newest first, each with **Undo to here**.
      golf courses first). The aerial map of the
      ground round it comes up on the plan, 5 km across (**Map 3 km**, **5 km**
      or **8 km across** beside **Reload map**, if the course is not
-     on it), with a gold pin where the name was found. **Drag a box round the
-     course** on the map with the left button (up to 3 x 3 km; it shows its
-     size, and another drag replaces it). **Course outline** (optional, under
-     it): **Draw outline**, click round the course corner by corner, roughly,
-     and click the first corner or press Enter to finish (Esc cancels,
-     Backspace takes the last corner off; drag a corner to move it after).
-     Inside the outline the LIDAR is downloaded and used in full detail, and
-     on a course over 2.25 km² the ground round greens, tees and bunkers is
-     built at half a metre; outside it a lighter layer is used -- a faster
-     download and less memory. Draw it before downloading; **Clear outline**
-     uses the whole survey. Then one of two buttons, both waiting
-     for the box:
+     on it), with a gold pin where the name was found. **Outer limit**: a box
+     round the whole course -- nothing outside it is downloaded or built (150
+     m round it is built as scenery). Point at one corner of the course, hold
+     the left mouse button, drag to the opposite corner and let go (up to 3 x
+     3 km; it shows its size, and another drag replaces it). **Course
+     outline** (required): **Draw outline**, click round the edge of the
+     course one corner at a time, roughly, and click the first corner or
+     press Enter to finish (Esc cancels, Backspace takes the last corner off;
+     drag a corner to move it after). Inside the outline the LIDAR is
+     downloaded and used in full detail, and on a course over 2.25 km² the
+     ground round greens, tees and bunkers is built at half a metre; outside
+     it less is used. No LIDAR is downloaded and no land built without it.
+     Then **Build the course**: one of two buttons, both waiting
+     for the outer limit:
      **Build automatically** takes the course outline from OpenStreetMap
      when none is drawn (if the map has none it asks you to draw one; if the
      map does not answer it uses the whole survey), and first warns that the result may be wrong
@@ -650,8 +652,8 @@ changes, newest first, each with **Undo to here**.
      XYZ/TXT/CSV points, height grids (GeoTIFF, ASCII grid, float grid with
      its .hdr, BIL, SRTM HGT), or a ZIP of them (a portal's download, of any size: it is read a file at a time). **zLAS** files (`.zlas`, Esri's own compressed LIDAR, which West Virginia's download tool hands out) cannot be read: the list says so, and that Esri's free LAS Optimizer turns them into LAS, or that searching the map fetches USGS LIDAR for the place instead. A file the browser cannot read is said so in the list, with its size when it is too big to read in one piece. Several tiles at once; a .prj or .hdr beside a
      file is read with it. Where the files reach shows **yellow** over the
-     relief, each file's box outlined yellow with its name; the property box
-     is white. Each file is listed with its form, its size, its map
+     relief, each file's box outlined yellow with its name; the outer limit
+     is white, the course outline cyan and dashed. Each file is listed with its form, its size, its map
      grid and its units (feet are converted to metres). Surveys in US State
      Plane (Lambert or transverse Mercator, in feet or metres), UTM, the
      British grid, the Swiss grid (to about a metre) and the like are placed for imagery and OpenStreetMap by
@@ -660,9 +662,10 @@ changes, newest first, each with **Undo to here**.
      (https://apps.nationalmap.gov/downloader/, *Elevation Source Data*), of
      England from the Environment Agency, and of many other countries from
      their mapping agencies. With files of your own (no map was drawn on),
-     **drag a box round the course** on the relief with the left button (up
-     to 3 x 3 km); after a search, the box from the map is already there, and
-     a drag on the relief changes it.
+     **drag the outer limit** round the course on the relief with the left
+     button (up to 3 x 3 km) and **draw the course outline** on it; after a
+     search, the outer limit from the map is already there, and a drag on
+     the relief changes it.
   2. **Land**: **Next: build land** starts building the land at once --
      the box is already the property, so there is nothing more to press.
      After the box is changed, **Build it again** (pressing Next does it too

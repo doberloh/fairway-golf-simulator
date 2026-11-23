@@ -59,6 +59,17 @@ export function tilePng(rgb) {
  return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', head), chunk('IDAT', zlib.deflateSync(raw)), chunk('IEND', Buffer.alloc(0))]);
 }
 
+// THE COURSE'S OUTLINE, drawn by clicking (required since 23 November 2026):
+// Draw outline, each corner in the plan's local metres, the first again.
+export async function drawOutline(page, corners) {
+ const plan = page.locator('canvas.cb-plan');
+ const at = async (x, z) => { const box = await plan.boundingBox(), [cx, cy] = await page.evaluate(([x, z]) => window.fairwayBuilder.door2.toCanvas(x, z), [x, z]), r = await plan.evaluate(c => c.width / c.getBoundingClientRect().width); return [box.x + cx / r, box.y + cy / r]; };
+ await page.locator('[data-outline="draw"]').click();
+ for (const [x, z] of [...corners, corners[0]]) { const [px, py] = await at(x, z); await page.mouse.click(px, py); }
+ const n = await page.evaluate(() => window.fairwayBuilder.door2.detailRing?.length ?? 0);
+ if (n !== corners.length) throw Error(`the outline should have ${corners.length} corners, not ${n}`);
+}
+
 export default function ({journey, SHOTS}) {
  journey('builder-door-2', 'door 2 in order: LIDAR and the property boxed, land, place searched and imagery fetched and dragged, auto trace corrected by hand, nine holes with an aim point, name, the painted review, editor, saved; the game plays the file', async t => {
   const {page} = t;
@@ -383,7 +394,10 @@ export default function ({journey, SHOTS}) {
   await page.locator('[data-mark="red"]').click();
   { const [px, py] = await at(HOLES[0].x, HOLES[0].tee - 20); await page.mouse.click(px, py); }
   const dot = (x, z) => page.evaluate(([x, z]) => { const c = document.querySelector('canvas.cb-plan'), [cx, cy] = window.fairwayBuilder.door2.toCanvas(x, z); return [...c.getContext('2d').getImageData(Math.round(cx), Math.round(cy), 1, 1).data.slice(0, 3)]; }, [x, z]);
-  const blue = await dot(HOLES[0].x, HOLES[0].tee), red = await dot(HOLES[0].x, HOLES[0].tee - 20);
+  // Read once the plan has drawn the new tee (a frame or two after the click:
+  // read at once, it was sometimes the ground).
+  let blue, red;
+  for (let k = 0; k < 20; k++) { blue = await dot(HOLES[0].x, HOLES[0].tee); red = await dot(HOLES[0].x, HOLES[0].tee - 20); if (red[0] > red[2] + 60) break; await page.waitForTimeout(100); }
   if (!(blue[2] > blue[0] + 60) || !(red[0] > red[2] + 60)) throw Error(`the blue tee should be drawn blue and the red tee red: ${JSON.stringify({blue, red})}`);
   // The red tee taken off again (and the step drawn anew by picking the blue).
   await page.evaluate(() => { const h = window.fairwayBuilder.door2.holes[0]; h.tees = h.tees.filter(t => t.set !== 'red'); });

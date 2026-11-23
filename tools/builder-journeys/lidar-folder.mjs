@@ -11,7 +11,7 @@
 // (showDirectoryPicker is a dialog a script cannot answer), so the browser
 // remembering it between visits (IndexedDB) is not driven here.
 // Registered by tools/builder-smoke.mjs.
-import {tilePng} from './door-real.mjs';
+import {tilePng, drawOutline} from './door-real.mjs';
 
 const GEO = {lat: 43.63, lon: -95.62}, R = 6378137;
 const merc = (lon, lat) => ({x: lon * Math.PI / 180 * R, y: R * Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360))});
@@ -79,6 +79,8 @@ export default function ({journey}) {
    const here = await page.evaluate(() => { const s = window.fairwayBuilder.door2; return s.map.toLocal(s.find.lon, s.find.lat); });
    const [ax, ay] = await at(here.x - 750, here.z - 750), [bx, by] = await at(here.x + 750, here.z + 750);
    await page.mouse.move(ax, ay); await page.mouse.down(); await page.mouse.move(bx, by, {steps: 6}); await page.mouse.up();
+   // The course's outline on the map (required before downloading, 23 November 2026).
+   await drawOutline(page, [[here.x - 500, here.z - 500], [here.x + 500, here.z - 500], [here.x + 500, here.z + 500], [here.x - 500, here.z + 500]]);
    await page.getByRole('button', {name: 'Search for LIDAR'}).click();
    await page.waitForSelector('[data-download="MN_TEST_1_B21"]', {timeout: 30000});
   }
