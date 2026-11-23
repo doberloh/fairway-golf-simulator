@@ -525,6 +525,17 @@ here is a claim of support until it is done.
   assume the old defaults), the guide pictures, and a look at the dark paths
   in the game.
 
+- [ ] **No first look at the land: the LIDAR stays on the map, untested**
+  (branch `builder-big-zips`, 23 November 2026; COURSE_BUILDER.md, *No first
+  look at the land*). Built and the builder page builds; no Node test or
+  journey run (the owner's word above). Owed: the builder journeys --
+  lidar-folder (rewritten to expect the map kept and the LIDAR's reach in
+  yellow on it), build-for-me, door-2 and door-2-osm (their surveys state no
+  map grid, so they still take the relief) and, locally, Worthington
+  (rewritten to drag on the map round its files); files opened with no
+  course found, in the builder by hand (the map round them, the outer limit
+  the middle 3 x 3 km); and how much wait it saves (not timed).
+
 - [ ] **The course's outline and the half-metre ground, by hand** (branch
   `builder-big-zips`, 22-23 November 2026; COURSE_BUILDER.md, *The course's
   outline*). Built and tested in Node and in the builder journeys (an outline

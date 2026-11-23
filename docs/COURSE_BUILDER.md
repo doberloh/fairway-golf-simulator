@@ -1536,6 +1536,41 @@ the yards and the scorecard when it lands. In the 3D editor, **Drag markers** do
 the same for tees, bends and greens (14 pixels, PLACED), one undo a drag; door 2's
 step has no undo, and never had. Not seen on screen.
 
+### No first look at the land (23 November 2026)
+
+The owner asked what "a first look at the land" did that "build the land"
+did not, and then: "lets just remove 'a first look at the land' because we
+have the colored map being loaded now. for the user to draw boundaries."
+
+**What it was.** Every LIDAR loaded in step 1 was read thinly (up to 4
+million points, on a 2 m grid or coarser) into a grey relief that took the
+aerial map's place, for the outer limit and the course outline to be drawn
+on. Build the land then read the LIDAR again, in full. Since the map came
+first (10 November) and the outline was drawn on it (22 November), the
+relief only repeated what was already drawn, and Build automatically paid
+for it too.
+
+**Now** (door-real.js `placeSources`): the map stays when the LIDAR comes
+in; each file's box is outlined yellow on it (`st.lidarDeg`, in degrees);
+the outer limit drawn is the property (`boxFromFind`, clipped to the
+LIDAR), and dragging a new one on the map changes it; nothing is read until
+Build the land. LIDAR files opened with no course found bring up the map
+round themselves (`mapForFiles`, the smallest of 3, 5 or 8 km that holds
+them), the outer limit starting as their middle 3 x 3 km. An outer limit
+the LIDAR does not reach is replaced by that middle, and said. Back on step
+1 after the land is built, the outer limit is dragged on the land (it was
+the relief's before).
+
+**Kept, and why** (rejected: removing the relief outright): a survey that
+does not say where it lies has no place on any map, and a place no free map
+covers (outside the US without a Google or Bing key) has no map to show.
+Both still get the relief (`previewLand`), now said as "No map here:
+reading the LIDAR for a relief to draw on". The builder journeys' own
+surveys (door-2, door-2-osm) state no map grid, so they still take this
+way.
+
+Not tested yet (TODO).
+
 ### Clean up, Add layer around, Outside the course, darker cart paths (23 November 2026)
 
 The owner, on the trace step's panel: the extrapolate "drop down and
@@ -1943,8 +1978,10 @@ owner can overrule them:
   where the canopy falls under half, its height the highest raw canopy within
   its window, peaks found on the canopy smoothed once (3 x 3).
 - Door 2: the land's cell never finer than the survey's point spacing,
-  rounded up to the half metre; a first look at the land from at most 4
-  million points; filled ground relaxed 40 passes; a traced pond's level 15 cm
+  rounded up to the half metre; where no map can be shown, a relief to draw
+  on from at most 4 million points (the first look at every LIDAR loaded
+  until 23 November 2026); files opened with no course found, a map up to 8
+  km across round them; filled ground relaxed 40 passes; a traced pond's level 15 cm
   under its lowest tenth of shore and its floor a metre under that; greens and
   tees averaged over 2.5 m and fairways over 1.5 m; par from length (to 250
   yards a three, to 470 a four); a tree a conifer when its crown is under a

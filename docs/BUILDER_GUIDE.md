@@ -99,12 +99,15 @@ hole over before you play it.
 Press **Search for LIDAR**: every source of LIDAR over the box is listed, with
 how much of the box each survey covers. Download one (or open a state portal's
 page, and put what it gives you in your LIDAR folder). When the LIDAR is in,
-the map gives way to the relief, and the box you drew is the property -- drag
-another on the relief to change it. **Next: build land** builds the land
-at once; then the trace, the holes, the name and the review, each by hand.
+the map stays, with where the LIDAR reaches outlined yellow; the outer limit
+and outline you drew are kept, and you can drag either again. **Next: build
+land** builds the land at once; then the trace, the holes, the name and the
+review, each by hand.
 
 If you already have LIDAR files, **Open LIDAR files** or **List folder
-files** skip the map: the relief shows, and you drag the box on it.
+files** bring up the aerial map round them: drag the outer limit and draw
+the outline on it. (Only where no map covers the files, or they do not say
+where they lie, a grey relief of the LIDAR shows to draw on instead.)
 
 ## Hole checks
 

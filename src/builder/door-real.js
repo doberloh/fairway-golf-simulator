@@ -346,7 +346,7 @@ export function open(draft = null) {
  function showHint() {
   const k = LABEL(st.kind).toLowerCase(), r = st.size, view = 'Right-drag or Space-drag moves the view; the wheel zooms.', corners = n => `${n} node${n === 1 ? '' : 's'}: click to add more${n >= 3 ? ', click the first node to close' : ''}; Enter fills, Backspace takes the last off, Esc drops it.`;
   let t = '';
-  if (st.step === 0) t = st.ringDraw ? `Click round the edge of the course, one corner at a time; click the first corner or press Enter to finish. ${view}` : st.map ? `Outer limit: hold the left button at one corner of the course and drag to the opposite corner. ${view}` : st.preview ? `Outer limit: hold the left button at one corner of the course on the relief and drag to the opposite corner. ${view}` : '';
+  if (st.step === 0) t = st.ringDraw ? `Click round the edge of the course, one corner at a time; click the first corner or press Enter to finish. ${view}` : st.map ? `Outer limit: hold the left button at one corner of the course and drag to the opposite corner. ${view}` : st.preview || st.land ? `Outer limit: hold the left button at one corner of the course on the relief and drag to the opposite corner. ${view}` : '';
   else if (st.step === 3) t = `Hole ${st.hole + 1}: click to place its ${markName(st.mark)}, or drag any mark to move it. ${view}`;
   else if (st.step === 2 && !st.model && st.tool !== 'align') t = st.land ? 'To start: press Download OpenStreetMap or Trace by hand.' : '';
   else if (st.step === 2) {
@@ -401,12 +401,14 @@ export function open(draft = null) {
     ctx.font = `600 ${12 * px}px system-ui`; const w = ctx.measureText(words).width;
     ctx.fillStyle = 'rgba(0,0,0,.65)'; ctx.fillRect(x0, y0 - 20 * px, w + 10 * px, 18 * px); ctx.fillStyle = '#ffffff'; ctx.fillText(words, x0 + 5 * px, y0 - 6 * px);
    }
+   // Where the LIDAR loaded reaches, each file's box in yellow.
+   if (st.lidarDeg) { ctx.strokeStyle = 'rgba(253,224,71,.95)'; ctx.lineWidth = 1.5 * px; for (const r of st.lidarDeg) { ctx.beginPath(); r.forEach(([lon, lat], q) => { const l = st.map.toLocal(lon, lat), [x, y] = p.toScreen(l.x, l.z); q ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.closePath(); ctx.stroke(); } }
    if (st.map.credit) { ctx.font = `${11 * px}px system-ui`; ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.fillText(st.map.credit, 8 * px, ctx.canvas.height - 8 * px); }
    drawRing(ctx, p, px);
    return;
   }
   if (st.vec && st.smoothView && st.traceOn && st.step < 5 && st.land && !st.compareSkin) drawVec(ctx, p);
-  if (st.step === 0 && st.preview) {
+  if (st.step === 0 && (st.preview || st.land)) {
    // Each file's box in yellow with its name, the property in white.
    const g = st.land ? st.gridder : st.preview.gridder, rect = b => { const a = g.local(b.x0, b.y1), c = g.local(b.x1, b.y0), [ax, ay] = p.toScreen(a.x, a.z), [cx, cy] = p.toScreen(c.x, c.z); return [ax, ay, cx - ax, cy - ay]; };
    ctx.strokeStyle = 'rgba(253,224,71,.95)'; ctx.fillStyle = '#fde047'; ctx.lineWidth = 1.5 * px; ctx.font = `600 ${11 * px}px system-ui`;
@@ -540,11 +542,11 @@ export function open(draft = null) {
    }
    plan.draw(); return;
   }
-  if (st.step === 0 && st.preview) {
+  if (st.step === 0 && (st.preview || st.land)) {
    if (ringPointer(type, p)) return;
    if (type === 'down') dragFrom = p;
    if ((type === 'drag' || type === 'up') && dragFrom) {
-    const g = st.preview.gridder, u = toMetres(crsOfSources(st.sources)).h, cap = MAX_PROPERTY / u;
+    const g = st.land ? st.gridder : st.preview.gridder, u = toMetres(crsOfSources(st.sources)).h, cap = MAX_PROPERTY / u;
     const m0 = g.map(Math.min(dragFrom.x, p.x), Math.min(dragFrom.z, p.z)), m1 = g.map(Math.max(dragFrom.x, p.x), Math.max(dragFrom.z, p.z));
     st.box = {x0: m0.x, x1: Math.min(m1.x, m0.x + cap), y0: Math.max(m1.y, m0.y - cap), y1: m0.y}; boxInfo();
     if (type === 'up') dragFrom = null;
@@ -807,7 +809,11 @@ export function open(draft = null) {
  // The course's outline is required (the owner, 23 November 2026: "The
  // course boundary is not optional"): no land is built without one, but land
  // already built (an older draft) stays reachable.
- const can = n => n === 0 || (n === 1 && (!!st.land || (!!st.preview && !!st.detailRing))) || (n >= 2 && !!st.land && (n < 3 || !!st.model) && (n < 4 || st.holes.slice(0, st.holesN).every(h => h?.green && h.tees.length)) && (n !== 2 || true));
+ // The LIDAR is in once it has a property box (since 23 November 2026 on the
+ // map, with no first look at the land; the relief only where no map can be
+ // shown).
+ const lidarIn = () => st.sources.length > 0 && !st.sources.some(s => s.restored) && !!st.box;
+ const can = n => n === 0 || (n === 1 && (!!st.land || (lidarIn() && !!st.detailRing))) || (n >= 2 && !!st.land && (n < 3 || !!st.model) && (n < 4 || st.holes.slice(0, st.holesN).every(h => h?.green && h.tees.length)) && (n !== 2 || true));
  function go(n) {
   if (!can(n)) return;
   // The map before the LIDAR is step 1's alone: past it, the plan is the land.
@@ -838,7 +844,7 @@ export function open(draft = null) {
  // goal; the owner: "We might need different UI elements to help guide the
  // player").
  const INTRO = [
-  'Find the course, drag the outer limit (a box round it), and draw the course outline. Then press Build automatically, or Search for LIDAR to do each step yourself. Already have LIDAR files? Open them and do the same on the relief.',
+  'Find the course, drag the outer limit (a box round it), and draw the course outline. Then press Build automatically, or Search for LIDAR to do each step yourself. Already have LIDAR files? Open them and do the same on the map that comes up.',
   'Builds the ground heights, trees and water from the LIDAR. Takes a few seconds to a minute.',
   'Trace the course over the photo. Download OpenStreetMap if the club is mapped and fix it with the tools on the left, or trace it by hand.',
   'For each hole: pick a tee set, click the tee, click any bends (aim points), then click the green. The next hole comes up by itself. The scorecard fills in below.',
@@ -858,7 +864,7 @@ export function open(draft = null) {
  const NEXT = ['Next: build land', 'Next: trace course', 'Next: mark holes', 'Next: name course', 'Next: review course', null];
  const BLOCKED = ['', 'Load LIDAR and draw the course outline first', 'Build the land first', 'Start tracing first', 'Every hole needs a tee and a green first', 'Every hole needs a tee and a green first'];
  function needs(n) {
-  if (n === 0) return st.map && !st.findBox ? 'Drag the outer limit: a box round the course on the map.' : st.map ? (st.detailRing ? 'Press Build automatically or Search for LIDAR.' : 'Draw the course outline, or press Build automatically to take it from OpenStreetMap.') : !st.preview && !st.land ? 'Find the course, or open LIDAR files.' : !st.box && !st.land ? 'Drag the outer limit: a box round the course on the relief.' : !st.detailRing && !st.land ? 'Draw the course outline (Draw outline).' : '';
+  if (n === 0) return st.map && !st.findBox ? 'Drag the outer limit: a box round the course on the map.' : st.map && lidarIn() ? (st.detailRing ? 'Press Next: build land.' : 'Draw the course outline (Draw outline).') : st.map ? (st.detailRing ? 'Press Build automatically or Search for LIDAR.' : 'Draw the course outline, or press Build automatically to take it from OpenStreetMap.') : !st.preview && !st.land ? 'Find the course, or open LIDAR files.' : !st.box && !st.land ? 'Drag the outer limit: a box round the course on the relief.' : !st.detailRing && !st.land ? 'Draw the course outline (Draw outline).' : '';
   if (n === 1) return st.land ? '' : 'Build the land from the LIDAR.';
   if (n === 2) return st.model ? '' : 'Download OpenStreetMap, or trace by hand.';
   if (n === 3) {
@@ -1065,7 +1071,7 @@ export function open(draft = null) {
  }
  function boxWords() {
   const b = st.mapBox;
-  mapText.textContent = !st.find ? 'Find the course first.' : b ? `Outer limit: ${(b.x1 - b.x0).toFixed(0)} x ${(b.z1 - b.z0).toFixed(0)} m.` : st.findBox ? 'Outer limit: kept from before.' : st.map ? 'No outer limit yet. (Wheel: zoom. Right-drag or Space: move the map.)' : '';
+  mapText.textContent = !st.find && !st.map ? 'Find the course first.' : b ? `Outer limit: ${(b.x1 - b.x0).toFixed(0)} x ${(b.z1 - b.z0).toFixed(0)} m.` : st.findBox ? 'Outer limit: kept from before.' : st.map ? 'No outer limit yet. (Wheel: zoom. Right-drag or Space: move the map.)' : '';
  }
  async function findPlace(text) {
   if (!text.trim()) return;
@@ -1090,20 +1096,35 @@ export function open(draft = null) {
  // before.
  async function fetchMap() {
   const f = st.find; if (!f) return;
+  const size = st.mapSize ?? 5000, label = f.label.split(',')[0];
+  try {
+   const got = await loadMap(f.lon, f.lat, size, label);
+   if (!got) {
+    st.findBox = squareAround(f.lon, f.lat, 1500); st.mapBox = null; boxWords(); go(0);
+    return say(`No aerial map covers ${label} without a key, so the box is a 1.5 km square round it. Press Build automatically or Search for LIDAR. (With a Google key, entered in the trace step, the map shows here.)`);
+   }
+   boxWords(); go(0);
+   say(`The map round ${label} (${got.name}, ${size / 1000} km across${got.missing ? `, ${got.missing} pieces missing` : ''}). Drag the outer limit: a box round the whole course.${st.mapBox ? ' Your outer limit is kept.' : ''}`);
+  } catch (e) {
+   st.findBox ??= squareAround(f.lon, f.lat, 1500); boxWords(); go(0);
+   say(`The map did not come (${e.message}), so the box is a 1.5 km square round the place. Press Build automatically or Search for LIDAR.`, true);
+  }
+ }
+ // The aerial map of a square `size` metres across round lon, lat, laid as
+ // step 1's plan. Null where no source covers it without a key; throws where
+ // the map does not come.
+ async function loadMap(lon, lat, size, label) {
   let keys = {}; try { keys = JSON.parse(localStorage.getItem(KEYS) || '{}'); } catch { /* private window */ }
   // A tile cache first: at 2 m a pixel the USGS tiles are the same NAIP as the
   // sharpest service, and come at once -- the sharpest, which draws each block
   // when asked, took 32 s for Worthington's 5 km map (10 November 2026).
-  const here = providersAt(f.lon, f.lat).filter(k => PROVIDERS[k].free || keys[k]), key = here.find(k => PROVIDERS[k].free && !PROVIDERS[k].block) ?? here[0];
-  if (!key) {
-   st.findBox = squareAround(f.lon, f.lat, 1500); st.mapBox = null; boxWords(); go(0);
-   return say(`No aerial map covers ${f.label.split(',')[0]} without a key, so the box is a 1.5 km square round it. Press Build automatically or Search for LIDAR. (With a Google key, entered in the trace step, the map shows here.)`);
-  }
-  const p = PROVIDERS[key], size = st.mapSize ?? 5000, box = squareAround(f.lon, f.lat, size);
+  const here = providersAt(lon, lat).filter(k => PROVIDERS[k].free || keys[k]), key = here.find(k => PROVIDERS[k].free && !PROVIDERS[k].block) ?? here[0];
+  if (!key) return null;
+  const p = PROVIDERS[key], box = squareAround(lon, lat, size);
   const cacheKey = `map:${key}:${[box.lon0, box.lon1, box.lat0, box.lat1].map(v => v.toFixed(5)).join(',')}`;
-  setBusy(`Fetching the map round ${f.label.split(',')[0]}…`);
+  setBusy(`Fetching the map round ${label}…`);
   try {
-   const pic = IMAGERY.get(cacheKey) ?? await mosaic(await p.start(keys[key]), box, {want: 2, maxTiles: 160, onProgress: q => setBusy(`Fetching the map round ${f.label.split(',')[0]}… ${Math.round(q * 100)}%`)});
+   const pic = IMAGERY.get(cacheKey) ?? await mosaic(await p.start(keys[key]), box, {want: 2, maxTiles: 160, onProgress: q => setBusy(`Fetching the map round ${label}… ${Math.round(q * 100)}%`)});
    IMAGERY.set(cacheKey, pic);
    const frame = mapFrame(pic), canvas = document.createElement('canvas'); canvas.width = pic.width; canvas.height = pic.height;
    const g = canvas.getContext('2d'), img = g.createImageData(pic.width, pic.height), d = img.data;
@@ -1113,19 +1134,19 @@ export function open(draft = null) {
    // A box already drawn for this place stays, laid on the new map.
    st.mapBox = st.findBox ? boxLocal(st.map, st.findBox) : null;
    plan.setLand(frame.land); plan.setLayerCanvas('picture', canvas, frame.land.cell); plan.setFilter('picture', null); plan.setAlpha('picture', 1);
-   const here = frame.toLocal(f.lon, f.lat); plan.look(here.x, here.z, plan.view.scale);
-   boxWords(); go(0);
-   say(`The map round ${f.label.split(',')[0]} (${p.name}, ${size / 1000} km across${pic.missing ? `, ${pic.missing} pieces missing` : ''}). Drag the outer limit: a box round the whole course.${st.mapBox ? ' Your outer limit is kept.' : ''}`);
-  } catch (e) {
-   st.findBox ??= squareAround(f.lon, f.lat, 1500); boxWords(); go(0);
-   say(`The map did not come (${e.message}), so the box is a 1.5 km square round the place. Press Build automatically or Search for LIDAR.`, true);
+   const at = frame.toLocal(lon, lat); plan.look(at.x, at.z, plan.view.scale);
+   return {name: p.name, missing: pic.missing};
   } finally { setBusy(''); }
  }
  // The box drawn: the search is over it from now on, and an earlier search's
  // list (over another box) goes.
  function boxChosen() {
-  st.findBox = boxDegrees(st.map, st.mapBox); findOut.replaceChildren(); boxWords(); go(0);
-  say(`Outer limit: ${(st.mapBox.x1 - st.mapBox.x0).toFixed(0)} x ${(st.mapBox.z1 - st.mapBox.z0).toFixed(0)} m. Next: draw the course outline (or press Build automatically). Drag again to replace the outer limit.`);
+  st.findBox = boxDegrees(st.map, st.mapBox); findOut.replaceChildren();
+  // With the LIDAR in, the property follows the box drawn on the map.
+  const loaded = st.sources.length > 0 && !st.sources.some(s => s.restored);
+  if (loaded) boxFromFind();
+  boxWords(); go(0);
+  say(`Outer limit: ${(st.mapBox.x1 - st.mapBox.x0).toFixed(0)} x ${(st.mapBox.z1 - st.mapBox.z0).toFixed(0)} m. ${loaded ? (st.detailRing ? 'Press Next: build land.' : 'Next: draw the course outline.') : 'Next: draw the course outline (or press Build automatically).'} Drag again to replace the outer limit.`);
  }
  // Leaving the map (another step, or the LIDAR come): the plan shows the land
  // again, or the relief, or nothing yet.
@@ -1269,7 +1290,7 @@ export function open(draft = null) {
    const got = await downloadLidar(found, wide, {lazModule, detail: detailNow(), kept: name => fileIn(dir, name), list: async () => dir ? (await listIn(dir, 0)).map(e => e.name) : [], onProgress: (f, what) => setBusy(`Downloading the LIDAR… ${what} (${Math.round(f * 100)}%)`)});
    const names = await keepAll(got, dir);
    for (const src of got) { st.sources.push(src); fileList.append(el('li', {}, `${src.name}: ${src.kept ? `read from your LIDAR folder (${src.keptAs}), nothing downloaded` : src.reused ? `${src.fetched} piece${src.fetched === 1 ? '' : 's'} downloaded, ${src.reused} already saved, combined` : 'downloaded'}, ${src.count.toLocaleString()} points${src.bytes ? `, ${(src.bytes / 1e6).toFixed(0)} MB` : ''}`)); }
-   await previewLand(st.findBox);
+   await placeSources();
    say(`${keptSaid(names, dir)}${got.every(s => s.kept) ? 'Read from your LIDAR folder: nothing downloaded. ' : ''}${nextWords()}`);
   } catch (e) { say('Could not download it: ' + e.message, true); }
   finally { setBusy(''); }
@@ -1311,7 +1332,7 @@ export function open(draft = null) {
   setBusy('Looking for Fairway\'s bridge…');
   try {
    const names = await viaBridge(missing, dir);
-   if (names) { setBusy(''); if (inFolder.size) await readFiles([...inFolder.values()]); else await previewLand(st.findBox); return say(`${keptSaid(names, dir)}${nextWords()}`); }
+   if (names) { setBusy(''); if (inFolder.size) await readFiles([...inFolder.values()]); else await placeSources(); return say(`${keptSaid(names, dir)}${nextWords()}`); }
   } catch (e) { setBusy(''); return say(e.message, true); }
   setBusy('');
   for (const [q, t] of missing.entries()) {
@@ -1442,7 +1463,7 @@ export function open(draft = null) {
  });
  function stepLidar() {
   return [recoverBox, findField(), limitField(), outlineField(), buildField(), folderField(), el('div', {class: 'cb-field'}, el('label', {}, 'LIDAR files'),
-   el('small', {}, 'Already have LIDAR files? Open them here instead of steps 1 and 4: the relief shows, and you drag the outer limit and draw the outline on it. Point clouds: LAS, LAZ, COPC, E57, PLY, PTS, PTX, XYZ/TXT/CSV. Height grids: GeoTIFF, ASCII grid, FLT with .hdr, BIL, HGT. Or a ZIP of these. Coverage shows yellow.'),
+   el('small', {}, 'Already have LIDAR files? Open them here instead of steps 1 and 4: the aerial map comes up round them, and you drag the outer limit and draw the outline on it (on a grey relief where no map covers them). Point clouds: LAS, LAZ, COPC, E57, PLY, PTS, PTX, XYZ/TXT/CSV. Height grids: GeoTIFF, ASCII grid, FLT with .hdr, BIL, HGT. Or a ZIP of these. Coverage shows yellow.'),
    el('button', {class: 'cb-btn cb-hot', type: 'button', title: 'Pick LIDAR files from anywhere on this computer', onclick: chooseLand}, 'Open LIDAR files'), fileList),
   next(1)];
  }
@@ -1510,7 +1531,7 @@ export function open(draft = null) {
      fileList.append(el('li', {}, `${f.zip ? f.zip + ' / ' : ''}${f.name}: ${src.form.toUpperCase()}, ${src.kind === 'points' ? src.count.toLocaleString() + ' points' : `${src.raster.width} x ${src.raster.height} heights`}, ${crs.epsg ? 'EPSG ' + crs.epsg : 'no map grid stated'}, ${crs.units.h === 'metre' && crs.units.v === 'metre' ? 'metres' : `${crs.units.h} across, ${crs.units.v} up (converted to metres)`}`));
     } catch (e) { fileList.append(el('li', {class: 'cb-err'}, `${f.zip ? f.zip + ' / ' : ''}${f.name}: ${readProblem(e, f)}`)); }
    }
-   if (st.sources.length) await previewLand(st.findBox);
+   if (st.sources.length) await placeSources();
   } catch (e) {
    // Never an uncaught promise from a click with nothing on screen (the
    // owner's NotReadableError of 21 November 2026): said in the file list.
@@ -1598,29 +1619,80 @@ export function open(draft = null) {
     el('button', {class: 'cb-btn' + (st.detailRing ? '' : ' cb-hot'), type: 'button', 'data-outline': 'draw', disabled: !can, title: can ? 'Click round the course on the map or the relief' : 'Find the course or open LIDAR files first', onclick: startRing}, st.detailRing ? 'Redraw outline' : 'Draw outline')));
  }
  // What to do once the LIDAR is in: the box from the map is the property already.
- const nextWords = () => `${st.boxFromMap ? 'The outer limit from the map is used (drag a new one on the relief to change it).' : 'Drag the outer limit round the course on the relief.'} ${st.detailRing ? 'Then press Next: build land.' : 'Then draw the course outline and press Next: build land.'}`;
- // `degrees`: the box searched for ({lon0, lat0, lon1, lat1}), made the property.
+ const nextWords = () => st.map
+  ? `The LIDAR is in: yellow on the map shows where it reaches. ${st.limitMoved ? 'It does not reach the outer limit drawn, so the outer limit is now the middle of the LIDAR. ' : ''}${st.detailRing ? 'Change the outer limit or the outline if needed, then press Next: build land.' : 'Draw the course outline, then press Next: build land.'}`
+  : `Drag the outer limit round the course on the relief. ${st.detailRing ? 'Then press Next: build land.' : 'Then draw the course outline and press Next: build land.'}`;
+ // THE LIDAR IN (the owner, 23 November 2026: remove "a first look at the
+ // land", as the colour map is there to draw the boundaries on). Until then
+ // every LIDAR loaded was first read thinly (up to 4 million points, a 2 m
+ // grid or coarser) into a grey relief that took the map's place, to draw
+ // the outer limit and the outline on; Build the land then read it again in
+ // full. Now the map stays: the LIDAR's reach is drawn on it, the outer limit
+ // and outline already drawn are kept, and nothing is read until Build the
+ // land. LIDAR files opened without a course found bring the map round
+ // themselves. Only a survey that does not say where it lies, or a place no
+ // map covers without a key, still gets the relief (previewLand).
+ async function placeSources() {
+  const crs = crsOfSources(st.sources);
+  let toDeg = null;
+  if (crs?.epsg || crs?.wkt) { try { toDeg = converter(crs, {epsg: 4326, geographic: true}); } catch { toDeg = null; } }
+  if (toDeg && !st.map) await mapForFiles(toDeg);
+  if (!toDeg || !st.map) return previewLand(st.findBox);
+  st.preview = null;
+  const had = !!st.findBox, boxed = boxFromFind();
+  st.limitMoved = had && !boxed;
+  // No outer limit drawn, or one the LIDAR does not reach: the property box
+  // (the middle 3 x 3 km of the LIDAR) shown as the outer limit.
+  if (!boxed) {
+   const b = st.box, c = [[b.x0, b.y0], [b.x1, b.y0], [b.x0, b.y1], [b.x1, b.y1]].map(([x, y]) => toDeg(x, y)), lons = c.map(q => q.x), lats = c.map(q => q.y);
+   st.findBox = {lon0: Math.min(...lons), lat0: Math.min(...lats), lon1: Math.max(...lons), lat1: Math.max(...lats)};
+   st.mapBox = boxLocal(st.map, st.findBox);
+  }
+  st.lidarDeg = st.sources.filter(s => s.bounds || s.raster).map(s => { const b = sourceBox(s); return [[b.x0, b.y0], [b.x1, b.y0], [b.x1, b.y1], [b.x0, b.y1]].map(([x, y]) => { const q = toDeg(x, y); return [q.x, q.y]; }); });
+  boxWords(); boxInfo(); go(0);
+  say(nextWords());
+ }
+ // LIDAR FILES OPENED WITHOUT A COURSE FOUND: the aerial map round them, wide
+ // enough for the whole of them (up to 8 km), to draw on.
+ async function mapForFiles(toDeg) {
+  const b = sourcesBox(st.sources), u = toMetres(crsOfSources(st.sources)).h, mid = toDeg((b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2);
+  const reach = Math.max(b.x1 - b.x0, b.y1 - b.y0) * u + 1000, size = MAP_SIZES.find(m => m >= reach) ?? MAP_SIZES.at(-1);
+  try { return !!await loadMap(mid.x, mid.y, size, 'the LIDAR files'); } catch { return false; }
+ }
+ // THE PROPERTY IN THE SURVEY'S OWN UNITS (st.box): the outer limit drawn on
+ // the map, as far as the LIDAR reaches; with none, or none the LIDAR
+ // reaches, the middle 3 x 3 km of the LIDAR (false).
+ function boxFromFind() {
+  const box = sourcesBox(st.sources), crs = crsOfSources(st.sources), unit = toMetres(crs);
+  const cap = MAX_PROPERTY / unit.h, cx = (box.x0 + box.x1) / 2, cy = (box.y0 + box.y1) / 2;
+  st.box = {x0: Math.max(box.x0, cx - cap / 2), x1: Math.min(box.x1, cx + cap / 2), y0: Math.max(box.y0, cy - cap / 2), y1: Math.min(box.y1, cy + cap / 2)};
+  const d = st.findBox;
+  let conv = null;
+  if (d && (crs?.epsg || crs?.wkt)) { try { conv = converter({epsg: 4326, geographic: true}, crs); } catch { conv = null; } }
+  if (!conv) return false;
+  const c = [[d.lon0, d.lat0], [d.lon1, d.lat0], [d.lon0, d.lat1], [d.lon1, d.lat1]].map(([x, y]) => conv(x, y)), xs = c.map(q => q.x), ys = c.map(q => q.y);
+  const sq = {x0: Math.max(box.x0, Math.min(...xs)), x1: Math.min(box.x1, Math.max(...xs)), y0: Math.max(box.y0, Math.min(...ys)), y1: Math.min(box.y1, Math.max(...ys))};
+  if (!(sq.x1 > sq.x0 && sq.y1 > sq.y0)) return false;
+  st.box = sq;
+  return true;
+ }
+ // THE RELIEF, only where no map can be shown (a survey that does not say
+ // where it lies, or a place no map covers without a key): the LIDAR read
+ // thinly, up to 4 million points on a 2 m grid or coarser, to draw the outer
+ // limit and the outline on. `degrees`: the box searched for, made the
+ // property.
  async function previewLand(degrees = null) {
   const box = sourcesBox(st.sources), unit = toMetres(crsOfSources(st.sources));
   const w = (box.x1 - box.x0) * unit.h, h = (box.y1 - box.y0) * unit.h, cell = Math.max(2, Math.sqrt(w * h / 6e5));
   const g = createGridder({box, cell, unit}), total = st.sources.reduce((s, x) => s + (x.count || 0), 0), every = Math.max(1, Math.floor(total / 4e6));
   for (const s of st.sources) {
-   if (s.kind === 'points') await s.each(p => g.add(p), {every, pause: frame, onProgress: f => setBusy(`A first look at the land… ${Math.round(f * 100)}%`)});
+   if (s.kind === 'points') await s.each(p => g.add(p), {every, pause: frame, onProgress: f => setBusy(`No map here: reading the LIDAR for a relief to draw on… ${Math.round(f * 100)}%`)});
    else g.addRaster(s.raster, {rasterUnit: toMetres(s.raster.crs)});
   }
   st.preview = {land: g.finish(), gridder: g};
-  const cap = MAX_PROPERTY / unit.h, cx = (box.x0 + box.x1) / 2, cy = (box.y0 + box.y1) / 2;
-  st.box = {x0: Math.max(box.x0, cx - cap / 2), x1: Math.min(box.x1, cx + cap / 2), y0: Math.max(box.y0, cy - cap / 2), y1: Math.min(box.y1, cy + cap / 2)};
-  let boxed = false;
-  const conv = degrees ? converter({epsg: 4326, geographic: true}, crsOfSources(st.sources)) : null;
-  if (conv) {
-   const c = [[degrees.lon0, degrees.lat0], [degrees.lon1, degrees.lat0], [degrees.lon0, degrees.lat1], [degrees.lon1, degrees.lat1]].map(([x, y]) => conv(x, y)), xs = c.map(q => q.x), ys = c.map(q => q.y);
-   const sq = {x0: Math.max(box.x0, Math.min(...xs)), x1: Math.min(box.x1, Math.max(...xs)), y0: Math.max(box.y0, Math.min(...ys)), y1: Math.min(box.y1, Math.max(...ys))};
-   if (sq.x1 > sq.x0 && sq.y1 > sq.y0) { st.box = sq; boxed = true; }
-  }
-  // The LIDAR is here: the relief takes the map's place, and the box drawn on
-  // the map is the property (drawn again on the relief to change it).
-  st.boxFromMap = !!st.map && boxed;
+  if (degrees !== st.findBox) st.findBox = degrees;
+  boxFromFind();
+  st.lidarDeg = null; st.limitMoved = false;
   if (st.map) { st.map = null; lookPicture(); }
   paintRelief(); boxInfo(); go(0);
   say(nextWords());
@@ -1647,6 +1719,9 @@ export function open(draft = null) {
    const detail = detailNow(); let missing = 0;
    const sources = st.sources.map(s => { if (!detail || !s.choose) return s; const c = s.choose(detail); missing += c.missing; return c.source; });
    const r = await landFromSources(sources, st.box, {outline: ringInMap(), pause: frame, onStep: (what, f) => setBusy(`Building the land… ${what} ${Math.round(f * 100)}%`)});
+   // Built from step 1 (Build automatically), the map stays up while it
+   // builds and gives way to the land now.
+   if (st.map) leaveMap();
    // The pictures stay (the owner, 1 November 2026: keep the imagery when
    // the mode changes): placed by position, they lie on new land as on old;
    // one lined up by matched points was matched to the old land, and goes.

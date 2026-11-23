@@ -37,8 +37,12 @@ export default function ({journey, ROOT, SHOTS}) {
   const tiles = fs.readdirSync(path.join(dir, 'raw')).filter(f => /\.laz$/i.test(f)).map(f => path.join(dir, 'raw', f));
   const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.getByRole('button', {name: 'Open LIDAR files'}).click()]);
   await chooser.setFiles(tiles);
-  await page.waitForFunction(() => window.fairwayBuilder.door2?.preview, null, {timeout: 600000}); await idle();
-  say(`tiles read and previewed: ${secs()}`);
+  // The aerial map round the files comes up to draw on (23 November 2026: no
+  // first look at the land); the relief only if the map does not come.
+  t.allow.push(/^https:\/\/basemap\.nationalmap\.gov\//);
+  await page.waitForFunction(() => { const s = window.fairwayBuilder.door2; return s?.box && (s.map || s.preview); }, null, {timeout: 600000}); await idle();
+  const onMap = await page.evaluate(() => !!window.fairwayBuilder.door2.map);
+  say(`tiles read, ${onMap ? 'the map round them' : 'the relief (no map came)'}: ${secs()}`);
   // 2. The property: the club's box and 30 m, dragged on the plan.
   const epsg = await page.evaluate(() => { const s = window.fairwayBuilder.door2.sources[0]; return s.crs.epsg; }), zone = utmOfEpsg(epsg).zone;
   const [lon0, lat0, lon1, lat1] = course.bbox_lonlat, a = toUtm(lat1, lon0, zone), b = toUtm(lat0, lon1, zone);
@@ -46,12 +50,15 @@ export default function ({journey, ROOT, SHOTS}) {
   // Canvas pixels to the page's (the plan is drawn at the screen's density).
   const onPage = async ([cx, cy]) => { const box = await plan.boundingBox(), r = await plan.evaluate(c => c.width / c.getBoundingClientRect().width); return [box.x + cx / r, box.y + cy / r]; };
   const toPlan = async (mx, my) => onPage(await page.evaluate(([mx, my]) => { const st = window.fairwayBuilder.door2, g = st.land ? st.gridder : st.preview.gridder, p = g.local(mx, my); return st.toCanvas(p.x, p.z); }, [mx, my]));
-  const [ax, ay] = await toPlan(a.x - 30, a.y + 30), [bx, by] = await toPlan(b.x + 30, b.y - 30);
+  // On the map, the club's box in degrees and about 30 m round it.
+  const toMap = async (lon, lat) => onPage(await page.evaluate(([lon, lat]) => { const st = window.fairwayBuilder.door2, p = st.map.toLocal(lon, lat); return st.toCanvas(p.x, p.z); }, [lon, lat]));
+  const dLat = 30 / 111320, dLon = dLat / Math.cos((lat0 + lat1) / 2 * Math.PI / 180);
+  const [ax, ay] = onMap ? await toMap(lon0 - dLon, lat1 + dLat) : await toPlan(a.x - 30, a.y + 30), [bx, by] = onMap ? await toMap(lon1 + dLon, lat0 - dLat) : await toPlan(b.x + 30, b.y - 30);
   await page.mouse.move(ax, ay); await page.mouse.down(); await page.mouse.move(bx, by, {steps: 10}); await page.mouse.up();
   const boxNow = await page.evaluate(() => window.fairwayBuilder.door2.box);
   if (!(boxNow.x1 - boxNow.x0 > 700 && boxNow.x1 - boxNow.x0 < 1000)) throw Error(`the property box is ${JSON.stringify(boxNow)}`);
   // The course's outline, 40 m inside the outer limit (required since 23 November 2026).
-  const inner = await page.evaluate(() => { const st = window.fairwayBuilder.door2, g = st.preview.gridder, b = st.box, a = g.local(b.x0, b.y1), c = g.local(b.x1, b.y0); return [[a.x + 40, a.z + 40], [c.x - 40, a.z + 40], [c.x - 40, c.z - 40], [a.x + 40, c.z - 40]]; });
+  const inner = await page.evaluate(() => { const st = window.fairwayBuilder.door2; let a, c; if (st.map) { a = {x: st.mapBox.x0, z: st.mapBox.z0}; c = {x: st.mapBox.x1, z: st.mapBox.z1}; } else { const g = st.preview.gridder, b = st.box; a = g.local(b.x0, b.y1); c = g.local(b.x1, b.y0); } return [[a.x + 40, a.z + 40], [c.x - 40, a.z + 40], [c.x - 40, c.z - 40], [a.x + 40, c.z - 40]]; });
   await drawOutline(page, inner);
   await page.getByRole('button', {name: 'Next: build land'}).click();
   // 2. The land.

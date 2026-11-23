@@ -614,8 +614,10 @@ changes, newest first, each with **Undo to here**.
      3DEP** (the United States), **IGN LiDAR HD** (France) and **swisstopo** (Switzerland) download right
      there: **Download the box here** takes just the survey over the
      box and 150 m past it (USGS's copy on Amazon's open data; a 400 m
-     square of Worthington is about 17 MB). When it is in, the relief takes
-     the map's place and the box you drew is the property. Where no free
+     square of Worthington is about 17 MB). When it is in, the map stays:
+     where the LIDAR reaches is outlined yellow on it, and the outer limit
+     and outline you drew are kept (drag either again to change them).
+     Nothing is read from the LIDAR until **Next: build land**. Where no free
      map covers the place (and no Google or Bing key has been given), the
      box is a 1.5 km square round it. **Download all tiles** gets
      USGS's own tiles: through Fairway's bridge if it is running (the
@@ -651,9 +653,13 @@ changes, newest first, each with **Undo to here**.
      Or choose LIDAR files -- LAS, LAZ, COPC, E57, PLY, PTS, PTX,
      XYZ/TXT/CSV points, height grids (GeoTIFF, ASCII grid, float grid with
      its .hdr, BIL, SRTM HGT), or a ZIP of them (a portal's download, of any size: it is read a file at a time). **zLAS** files (`.zlas`, Esri's own compressed LIDAR, which West Virginia's download tool hands out) cannot be read: the list says so, and that Esri's free LAS Optimizer turns them into LAS, or that searching the map fetches USGS LIDAR for the place instead. A file the browser cannot read is said so in the list, with its size when it is too big to read in one piece. Several tiles at once; a .prj or .hdr beside a
-     file is read with it. Where the files reach shows **yellow** over the
-     relief, each file's box outlined yellow with its name; the outer limit
-     is white, the course outline cyan and dashed. Each file is listed with its form, its size, its map
+     file is read with it. Files opened without a course found bring up the
+     aerial map round themselves (up to 8 km across), each file's box
+     outlined **yellow** on it, the outer limit white (the middle 3 x 3 km
+     of the files to start with), the course outline cyan and dashed. Only
+     where no map can be shown -- a survey that does not say where it lies,
+     or a place no free map covers -- is the LIDAR read thinly into a grey
+     **relief** to draw on instead, where the files reach shown yellow. Each file is listed with its form, its size, its map
      grid and its units (feet are converted to metres). Surveys in US State
      Plane (Lambert or transverse Mercator, in feet or metres), UTM, the
      British grid, the Swiss grid (to about a metre) and the like are placed for imagery and OpenStreetMap by
@@ -661,11 +667,10 @@ changes, newest first, each with **Undo to here**.
      United States is free from the USGS National Map
      (https://apps.nationalmap.gov/downloader/, *Elevation Source Data*), of
      England from the Environment Agency, and of many other countries from
-     their mapping agencies. With files of your own (no map was drawn on),
-     **drag the outer limit** round the course on the relief with the left
-     button (up to 3 x 3 km) and **draw the course outline** on it; after a
-     search, the outer limit from the map is already there, and a drag on
-     the relief changes it.
+     their mapping agencies. With files of your own, **drag the outer limit**
+     round the course on the map (or the relief) with the left button (up
+     to 3 x 3 km) and **draw the course outline** on it; after a search, the
+     outer limit and outline drawn on the map are already there.
   2. **Land**: **Next: build land** starts building the land at once --
      the box is already the property, so there is nothing more to press.
      After the box is changed, **Build it again** (pressing Next does it too
