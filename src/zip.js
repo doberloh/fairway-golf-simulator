@@ -89,6 +89,61 @@ export async function writeZip(entries) {
  return out;
 }
 
+// A ZIP WRITTEN A PART AT A TIME (22 November 2026): a kept USGS square
+// (lidar-search.js) was written by `writeZip`, which copies every part into
+// one array -- a second full copy of up to gigabytes beside the parts
+// themselves -- and wraps past 4 GB. Here every part is stored as it is, read
+// only when its turn comes (`read()`, or `data`), and handed on in pieces;
+// past 4 GB the directory is ZIP64, which readZipFile reads. `entries`:
+// [{name, size, data?: Uint8Array | string, read?: () => Promise<Uint8Array>}]
+// -- every size known first, so the whole length is. Returns {size, chunks()},
+// chunks an async iterator of Uint8Array. writeZip, whose bytes are a course
+// file's identity, is unchanged.
+// `far`: the offset past which the 8-byte records are used (4 GB; a test
+// lowers it to try them without writing 4 GB).
+export function zipStream(entries, {far: FAR = MAX32} = {}) {
+ const names = entries.map(e => utf8.encode(e.name)), sizes = entries.map(e => typeof e.data === 'string' ? utf8.encode(e.data).length : e.data?.length ?? e.size);
+ let at = 0; const offsets = entries.map((e, i) => { const o = at; at += 30 + names[i].length + sizes[i]; return o; });
+ const dirAt = at, big = dirAt > FAR || entries.length > 0xFFFF;
+ const cen = entries.map((e, i) => 46 + names[i].length + (offsets[i] > FAR ? 12 : 0)).reduce((s, n) => s + n, 0);
+ const size = dirAt + cen + (big ? 56 + 20 : 0) + 22;
+ async function* chunks() {
+  const crcs = [];
+  for (const [i, e] of entries.entries()) {
+   const raw = typeof e.data === 'string' ? utf8.encode(e.data) : e.data ?? await e.read();
+   if (raw.length !== sizes[i]) throw Error(`${e.name} is not the size it was listed at.`);
+   const crc = crc32(raw); crcs.push(crc);
+   const head = new DataView(new ArrayBuffer(30));
+   head.setUint32(0, 0x04034b50, true); head.setUint16(4, 20, true); head.setUint16(6, 0x0800, true); head.setUint16(10, DOS_TIME, true); head.setUint16(12, DOS_DATE, true);
+   head.setUint32(14, crc, true); head.setUint32(18, raw.length, true); head.setUint32(22, raw.length, true); head.setUint16(26, names[i].length, true);
+   yield new Uint8Array(head.buffer); yield names[i]; yield raw;
+  }
+  for (const [i] of entries.entries()) {
+   const far = offsets[i] > FAR, c = new DataView(new ArrayBuffer(46));
+   c.setUint32(0, 0x02014b50, true); c.setUint16(4, far ? 45 : 20, true); c.setUint16(6, far ? 45 : 20, true); c.setUint16(8, 0x0800, true);
+   c.setUint16(12, DOS_TIME, true); c.setUint16(14, DOS_DATE, true); c.setUint32(16, crcs[i], true); c.setUint32(20, sizes[i], true); c.setUint32(24, sizes[i], true);
+   c.setUint16(28, names[i].length, true); c.setUint16(30, far ? 12 : 0, true); c.setUint32(42, far ? MAX32 : offsets[i], true);
+   yield new Uint8Array(c.buffer); yield names[i];
+   if (far) { const x = new DataView(new ArrayBuffer(12)); x.setUint16(0, 1, true); x.setUint16(2, 8, true); x.setBigUint64(4, BigInt(offsets[i]), true); yield new Uint8Array(x.buffer); }
+  }
+  const n = entries.length;
+  if (big) {
+   const r = new DataView(new ArrayBuffer(56));
+   r.setUint32(0, 0x06064b50, true); r.setBigUint64(4, 44n, true); r.setUint16(12, 45, true); r.setUint16(14, 45, true);
+   r.setBigUint64(24, BigInt(n), true); r.setBigUint64(32, BigInt(n), true); r.setBigUint64(40, BigInt(cen), true); r.setBigUint64(48, BigInt(dirAt), true);
+   const l = new DataView(new ArrayBuffer(20)); l.setUint32(0, 0x07064b50, true); l.setBigUint64(8, BigInt(dirAt + cen), true); l.setUint32(16, 1, true);
+   yield new Uint8Array(r.buffer); yield new Uint8Array(l.buffer);
+  }
+  const end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true); end.setUint16(8, Math.min(n, 0xFFFF), true); end.setUint16(10, Math.min(n, 0xFFFF), true);
+  end.setUint32(12, big ? MAX32 : cen, true); end.setUint32(16, big ? MAX32 : dirAt, true);
+  yield new Uint8Array(end.buffer);
+ }
+ return {size, chunks};
+}
+// A streamed ZIP gathered into one array (small ones, and tests).
+export async function zipBytes(z) { const out = new Uint8Array(z.size); let at = 0; for await (const c of z.chunks()) { out.set(c, at); at += c.length; } if (at !== z.size) throw Error('The ZIP came out a different size from its listing.'); return out; }
+
 export const isZip = bytes => bytes?.length >= 4 && bytes[0] === 0x50 && bytes[1] === 0x4b && bytes[2] === 3 && bytes[3] === 4;
 
 // A ZIP's parts: Map of name -> Uint8Array. Refused in plain words when it is

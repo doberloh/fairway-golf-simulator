@@ -118,6 +118,21 @@ export default function ({journey, SHOTS}) {
   await page.mouse.move(x0, y0); await page.mouse.down(); await page.mouse.move(x1, y1, {steps: 6}); await page.mouse.up();
   const box = await page.evaluate(() => window.fairwayBuilder.door2.box);
   if (Math.abs(box.x1 - box.x0 - 380) > 6 || Math.abs(box.y1 - box.y0 - 280) > 6) throw Error(`the dragged property should be about 380 x 280 m, not ${JSON.stringify(box)}`);
+  // THE COURSE'S OUTLINE (22 November 2026): Draw outline, four clicks round
+  // the course on the relief, a click on the first corner to close it; a
+  // corner dragged 20 m; the box stays as it was (a click while outlining
+  // draws no box). This survey states no map grid: the outline is kept in
+  // its own map units.
+  await page.locator('[data-outline="draw"]').click();
+  const corners = [[-150, -110], [150, -110], [150, 110], [-150, 110]];
+  for (const [x, z] of corners) { const [px, py] = await at(x, z); await page.mouse.click(px, py); }
+  { const [px, py] = await at(-150, -110); await page.mouse.click(px, py); }
+  const ring = await page.evaluate(() => ({n: window.fairwayBuilder.door2.detailRing?.length ?? 0, drawing: !!window.fairwayBuilder.door2.ringDraw, said: document.querySelector('.cb-outlinesaid')?.textContent ?? '', box: window.fairwayBuilder.door2.box}));
+  if (ring.n !== 4 || ring.drawing || !/Outline: [0-9]+ ha/.test(ring.said) || JSON.stringify(ring.box) !== JSON.stringify(box)) throw Error(`four clicks and the first corner again should make a four-cornered outline and leave the box: ${JSON.stringify(ring)}`);
+  { const [ax, ay] = await at(150, 110), [bx, by] = await at(170, 130); await page.mouse.move(ax, ay); await page.mouse.down(); await page.mouse.move(bx, by, {steps: 4}); await page.mouse.up(); }
+  const moved = await page.evaluate(() => { const st = window.fairwayBuilder.door2, g = st.preview.gridder, [mx, my] = st.detailRing[2]; return g.local(mx, my); });
+  if (Math.abs(moved.x - 170) > 3 || Math.abs(moved.z - 130) > 3) throw Error(`dragging a corner should move it: ${JSON.stringify(moved)}`);
+  await t.shot('outline');
   await page.getByRole('button', {name: 'Next: build land'}).click();
   // 2. The land.
   // Next starts the build at once: the box is set, no second press (the owner, 10 November 2026).

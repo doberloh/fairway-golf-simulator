@@ -108,6 +108,20 @@ export function osmBoundary(json, toLocal) {
  return local.sort((a, b) => area(b) - area(a))[0] ?? null;
 }
 
+// THE COURSE'S ROUGH OUTLINE FROM THE MAP (22 November 2026): Build
+// automatically draws the LIDAR step's outline from OpenStreetMap's
+// leisure=golf_course before anything is downloaded -- a small question
+// (that tag alone over the box, [lon0, lat0, lon1, lat1]), asked with
+// `signal` to give up after a while. The largest outline, as [[lon, lat]],
+// or null when the map has none there.
+export async function courseOutline([lon0, lat0, lon1, lat1], get = fetch, {signal = null} = {}) {
+ const b = `${lat0},${lon0},${lat1},${lon1}`, q = `[out:json][timeout:25];(way["leisure"="golf_course"](${b});relation["leisure"="golf_course"](${b}););out geom;`;
+ const r = await get('https://overpass-api.de/api/interpreter', {method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, body: 'data=' + encodeURIComponent(q), signal});
+ if (!r.ok) throw Error(`OpenStreetMap's server said ${r.status}`);
+ const ring = osmBoundary(await r.json(), (lat, lon) => ({x: lon, z: lat}));
+ return ring ? ring.slice(0, ring.length > 3 && ring[0][0] === ring.at(-1)[0] && ring[0][1] === ring.at(-1)[1] ? -1 : undefined) : null;
+}
+
 // A building's footprint as a house (trace-edit.js `homes`): the smallest
 // rectangle round its outline, tried along each of its edges, turned to face
 // the nearest mown ground (`facing(x, z)`, a bearing) among its four sides.

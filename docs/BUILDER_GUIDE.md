@@ -61,6 +61,15 @@ the course with the left button -- up to 3 x 3 km. That box is the property:
 only it, and 150 m past it for the land beyond the course, is downloaded and
 built.
 
+**Course outline** (optional). Press **Draw outline** and click round the
+course, roughly, corner by corner; click the first corner or press Enter to
+finish. Drag a corner to move it. Inside the outline the LIDAR is used in full
+detail, and on a large property the ground round greens, tees and bunkers is
+built at half a metre; outside it a lighter layer is used, which downloads
+faster and uses less memory. **Build automatically** takes the outline from
+OpenStreetMap if you have not drawn one. Putting surfaces are always smoothed,
+so a putt holds its line.
+
 Then choose how to build it.
 
 ### Build automatically

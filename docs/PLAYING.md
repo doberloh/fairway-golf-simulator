@@ -575,12 +575,22 @@ changes, newest first, each with **Undo to here**.
      click the place you mean in the list (each is a button marked **Use**,
      golf courses first). The aerial map of the
      ground round it comes up on the plan, 5 km across (**Map 3 km**, **5 km**
-     or **8 km across** beside **Fetch the map again**, if the course is not
+     or **8 km across** beside **Reload map**, if the course is not
      on it), with a gold pin where the name was found. **Drag a box round the
      course** on the map with the left button (up to 3 x 3 km; it shows its
-     size, and another drag replaces it). Then one of two buttons, both waiting
+     size, and another drag replaces it). **Course outline** (optional, under
+     it): **Draw outline**, click round the course corner by corner, roughly,
+     and click the first corner or press Enter to finish (Esc cancels,
+     Backspace takes the last corner off; drag a corner to move it after).
+     Inside the outline the LIDAR is downloaded and used in full detail, and
+     on a course over 2.25 km² the ground round greens, tees and bunkers is
+     built at half a metre; outside it a lighter layer is used -- a faster
+     download and less memory. Draw it before downloading; **Clear outline**
+     uses the whole survey. Then one of two buttons, both waiting
      for the box:
-     **Build automatically** first warns that the result may be wrong
+     **Build automatically** takes the course outline from OpenStreetMap
+     when none is drawn (if the map has none it asks you to draw one; if the
+     map does not answer it uses the whole survey), and first warns that the result may be wrong
      (OpenStreetMap's map of a course can be wrong or missing: a hole pointing
      the wrong way, a green or tee missing, a bunker off its place -- look
      every hole over before playing it); **Start building** there runs the steps

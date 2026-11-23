@@ -3,7 +3,9 @@
 // holes and trees made into a course the game's world contract accepts.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {affineFromPairs, pictureOnLand, docFromLand, parFor, cellFor, lidarTexels, coverage, LIDAR_VIEWS} from '../src/builder/real-course.js';
+import {affineFromPairs, pictureOnLand, docFromLand, parFor, cellFor, lidarTexels, coverage, LIDAR_VIEWS, landFromSources} from '../src/builder/real-course.js';
+import {landSampler} from '../src/built-world.js';
+import {writeDraft, readDraft} from '../src/builder/draft.js';
 import {createGridder} from '../src/lidar/land.js';
 import {TRACE} from '../src/lidar/trace.js';
 import {validateDoc, writeBuiltFile, readBuiltFile} from '../src/course-doc.js';
@@ -107,4 +109,43 @@ test('where the files reach: every cell within 10 m of one a point landed in, a 
  const on = coverage({nx, nz, cell, noReturns});
  assert.equal(on[20 * nx + 20], 1, 'between the points: covered'); assert.equal(on[42 * nx + 30], 1, '10 m past the last row'); assert.equal(on[43 * nx + 30], 0, '11 m past it: not');
  assert.equal(on[60 * nx + 90], 0, 'the far corner: not'); assert.equal(on[20 * nx + 60], 0, '12 m past the last column: not');
+});
+
+// THE HALF-METRE PATCHES (22 November 2026). A 200 m field at 100 m, surveyed
+// every quarter metre, with a bunker 4 m square and 1 m deep with sheer sides
+// at local (10..14, 10..14), and a 0.3 m bump on a green at (-30, 0). The land
+// is built at a metre; the course's outline covers the middle.
+test('inside the outline the land keeps its half-metre detail: a bunker\'s lip sharp, a green still smoothed', async () => {
+ const cx = 1100, cy = 5100, truth = (x, z) => x >= 10 && x <= 14 && z >= 10 && z <= 14 ? 99 : Math.hypot(x + 30, z) < .6 ? 100.3 : 100;
+ const box = {x0: 1000, x1: 1200, y0: 5000, y1: 5200}, crs = {epsg: 32615, units: {h: 'metre', v: 'metre'}};
+ const src = {kind: 'points', form: 'las', name: 'made.las', crs, count: 640000, bounds: {minX: 1000, maxX: 1200, minY: 5000, maxY: 5200, minZ: 99, maxZ: 101},
+  async each(f) { for (let my = 5000.125; my < 5200; my += .25) for (let mx = 1000.125; mx < 1200; mx += .25) { const x = mx - cx, z = -(my - cy); f({x: mx, y: my, z: truth(x, z), cls: 2, intensity: 100, returns: 1}); } }};
+ const outline = [[1050, 5050], [1150, 5050], [1150, 5150], [1050, 5150]];
+ const {land} = await landFromSources([src], box, {cell: 1, outline});
+ assert.ok(land.fine, 'the fine ground is gathered'); assert.equal(land.fine.cell, .5);
+ const plain = await landFromSources([src], box, {cell: 1});
+ assert.equal(plain.land.fine, undefined, 'no outline, no fine ground');
+ // The trace: the bunker as sand, a green round the bump, one hole.
+ const {nx, nz, halfX, halfZ} = land, codes = new Uint8Array(nx * nz);
+ for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) { const x = -halfX + i, z = -halfZ + j; if (x >= 10 && x <= 14 && z >= 10 && z <= 14) codes[j * nx + i] = TRACE.indexOf('sand'); else if (Math.hypot(x + 30, z) < 10) codes[j * nx + i] = TRACE.indexOf('green'); }
+ const holes = [{number: 1, tees: [{x: -30, z: 60, set: 'blue'}], green: {x: -30, z: 0}}, ...Array.from({length: 8}, (_, n) => ({number: n + 2, tees: [{x: -80 + n * 20, z: 80, set: 'blue'}], green: {x: -80 + n * 20, z: -80}}))];
+ const doc = validateDoc(docFromLand({land, traced: {codes}, holes, trees: []}));
+ assert.ok(doc.patches.length >= 1, 'patches round the bunker');
+ const fineAt = landSampler(doc), coarseAt = landSampler(validateDoc(docFromLand({land: plain.land, traced: {codes}, holes, trees: []})));
+ // Just outside the lip, on the rough: the true ground is 100.
+ const lip = (at, x, z) => Math.abs(at(x, z) - 100);
+ assert.ok(lip(fineAt, 14.5, 12) < .05, `the lip half a metre out: ${fineAt(14.5, 12)}`);
+ assert.ok(lip(coarseAt, 14.5, 12) > .2, `at a metre it is rounded off: ${coarseAt(14.5, 12)}`);
+ // The green's bump stays smoothed away (a putt must hold).
+ assert.ok(Math.abs(fineAt(-30, 0) - coarseAt(-30, 0)) < .01, 'no detail laid on a green');
+ // The course file keeps the patches, and a draft keeps the fine ground.
+ const back = await readBuiltFile(await writeBuiltFile(doc, BUILT_VERSION));
+ assert.equal(back.patches.length, doc.patches.length);
+ assert.ok(Math.abs(landSampler(back)(14.5, 12) - fineAt(14.5, 12)) < .011, 'to the centimetre');
+ // What the ball meets (the game's ground mesh, half a metre round sand).
+ const w = worldFromDoc(back), wc = worldFromDoc(await readBuiltFile(await writeBuiltFile(validateDoc(docFromLand({land: plain.land, traced: {codes}, holes, trees: []})), BUILT_VERSION)));
+ assert.ok(Math.abs(w.height(14.5, 12) - 100) < Math.abs(wc.height(14.5, 12) - 100) - .1, `the ball meets the sharper lip: ${w.height(14.5, 12)} against ${wc.height(14.5, 12)}`);
+ const d = await readDraft(await writeDraft({step: 2, name: 'T', landscape: 'heartland', holes: [], holesN: 9, land, detailRing: [[-95.6, 43.6], [-95.5, 43.6], [-95.5, 43.7]]}));
+ assert.deepEqual([...d.land.fine.detail], [...land.fine.detail]); assert.equal(d.land.fine.cell, .5);
+ assert.deepEqual(d.detailRing, [[-95.6, 43.6], [-95.5, 43.6], [-95.5, 43.7]]);
 });

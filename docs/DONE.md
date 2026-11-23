@@ -25,6 +25,30 @@ kept whole: *The open list before the 11 November 2026 prune* and *The open
 list before the 16 October prune*, each with a table of what became of every
 entry.
 
+## Large courses in the builder: the outline, the half-metre ground, the memory (branch `builder-big-zips`, 22-23 November 2026; not merged)
+
+The owner, the builder hanging on a 3 km square: "I think we have
+optimizations that need to happen on large courses maybe", then the rough
+outline in the LIDAR step, and half-metre ground "include bunkers". Same
+branch, same days: tees in their colours and the next hole after a green;
+Fill outside's wood sized from the survey; every button and panel reworded
+(COURSE_BUILDER.md, the 22 November sections).
+
+- [x] **The course's outline** drawn in step 1 (or OpenStreetMap's, for
+  Build automatically): every depth of a USGS survey inside it, a thin layer
+  outside; kept squares record what they hold for which outline.
+- [x] **Memory**: a kept square read a piece at a time and written a piece at a
+  time (ZIP64 past 4 GB); the gridder's sums freed. Alpine Lake's peak 3.1 GB
+  to 1.45 GB with no outline at all.
+- [x] **Half-metre patches** round bunkers, tees and greens inside the outline,
+  only where the ground is still the survey's own; putting surfaces stay
+  smoothed.
+
+Tested: lidar-detail, builder-outline, lidar-coverage, real-course, zip and
+draft Node tests; every builder journey; Alpine Lake measured in Node
+(RESEARCH, *Full detail inside the course, less outside*). Still owed: the
+owner's own look, the choice outside the outline, and the frame rate (TODO).
+
 ## A big LIDAR ZIP in the builder (branch `builder-big-zips`, 22 November 2026; not merged)
 
 The owner, trying the builder: "Im getting these errors trying to load

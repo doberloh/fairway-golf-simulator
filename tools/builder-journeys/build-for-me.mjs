@@ -91,7 +91,11 @@ export default function ({journey}) {
   const sets = await page.evaluate(() => [...new Set(window.fairwayBuilder.door2.holes.flatMap(h => h?.tees.map(t => t.set) ?? []))]);
   if (!sets.length || sets.some(s => !['black', 'blue', 'white', 'silver', 'gold', 'red'].includes(s))) throw Error(`every tee should be one of the six sets: ${sets}`);
   console.log(`       tee sets from the map: ${sets.join(', ')}`);
-  if (asked.place !== 1 || !asked.pieces || !asked.picture || asked.osm !== 1 || !maps) throw Error(`each service asked once (the picture in blocks, the map in tiles): ${JSON.stringify({...asked, maps})}`);
+  // OpenStreetMap twice since 22 November 2026: the course's outline before
+  // the LIDAR (so the survey is fetched whole only inside it), then the course.
+  if (asked.place !== 1 || !asked.pieces || !asked.picture || asked.osm !== 2 || !maps) throw Error(`each service asked once, OpenStreetMap twice (the picture in blocks, the map in tiles): ${JSON.stringify({...asked, maps})}`);
+  const ring = await page.evaluate(() => window.fairwayBuilder.door2.detailRing?.length ?? 0);
+  if (ring < 4) throw Error(`the course's outline should come from the map's golf course: ${ring} corners`);
   // The box drawn on the map is the property built (1.5 km, a little more in
   // the survey's grid, turned about 1.8 degrees from north here).
   const prop = await page.evaluate(() => { const b = window.fairwayBuilder.door2.box; return {w: b.x1 - b.x0, h: b.y1 - b.y0}; });

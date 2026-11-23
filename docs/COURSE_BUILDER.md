@@ -1536,6 +1536,63 @@ the yards and the scorecard when it lands. In the 3D editor, **Drag markers** do
 the same for tees, bends and greens (14 pixels, PLACED), one undo a drag; door 2's
 step has no undo, and never had. Not seen on screen.
 
+### The course's outline: full detail inside, less outside (22-23 November 2026)
+
+The owner, after the builder hung on a 3 x 3.2 km Alpine Lake square (the
+page at 2.8 GB of its 3.76 GB): "During the LIDAR phase, lets make the user
+roughly trace the course manually. Then we can use higher precision inside
+that boundary, and lower precision outside of it. That would be different
+than the course boundaries that can be traced later." Then: "for detail
+inside building at a 1 meter detail would still lose a ton of data
+right???" -- and, offered half-metre ground on greens, tees and bunkers
+inside the outline: "yes go ahead, include bunkers".
+
+What was built:
+
+- **Course outline**, in step 1 under Find the course: **Draw outline**, click
+  round the course on the map (or the relief), click the first corner or
+  press Enter to finish, Esc to cancel, Backspace for the last corner; drag a
+  corner after. Drawn cyan and dashed in steps 1 and 2. Kept in degrees (the
+  survey's own map units where it states no grid), in the draft, and apart
+  from the course boundary of the trace step, which is unchanged. **Build
+  automatically** takes OpenStreetMap's `leisure=golf_course` for it first,
+  asked alone and given 20 s; with none on the map it stops and asks for one
+  drawn; with no answer it carries on with the whole survey and says so.
+- **The download** (lidar/detail.js, lidar-search.js): every Entwine depth
+  under the outline (grown 30 m), and outside only the depths that reach
+  70% of 2 points a land cell (PLACED). A kept square now records which pieces
+  it holds for which outline, and every node over its box with its count; the
+  same box and outline reads from the folder, a wider outline downloads only
+  what it adds, and a kept square opened from disk is read only as far as the
+  outline asks. **A square kept before this has no such record**: opened
+  from disk it is read whole; downloaded again (Download box), USGS's index
+  says which pieces the outline wants and nothing new is fetched.
+- **Memory**: a kept square's pieces are read one at a time from its file,
+  never all at once; a download is written to the folder a piece at a time
+  (zip.js `zipStream`, ZIP64 past 4 GB -- writeZip wrapped there, and copied
+  everything into one array); the source then reads from the written file,
+  so the downloaded pieces leave memory; and land.js frees the gridder's sums
+  once the land is made (door 2 kept the gridder, and its 40 bytes a cell).
+- **The half-metre ground** (land.js `fine`, real-course.js `finePatches`):
+  inside the outline the ground returns are gathered again at 0.5 m, kept as
+  the difference from the 1 m land, and laid back as the course file's
+  patches round every bunker (4 m out), tee (5 m) and green (8 m) -- only
+  where the 1 m ground is still the survey's own. **Putting surfaces stay
+  smoothed** (5 m, *Greens a putt can hold*): the detail would bring back
+  pits a putt cannot climb out of. So the half-metre detail is bunkers' lips
+  and faces, tees' banks, greens' banks and false fronts, and swales in the
+  rough round them. Land already at half a metre (a property to 2.25 km²)
+  gets no patches: it has the detail.
+- Rejected: one land grid finer everywhere inside the outline (one grid has
+  one cell; two would change the file and the game); 0.25 m patches (one or
+  two returns a cell on these surveys: noise); thinning by the course boundary
+  of step 3 (the owner chose the rough outline in step 1, before anything is
+  downloaded -- the boundary instead sizes Fill outside's wood from the
+  survey, above).
+
+Measured on the owner's Alpine Lake square: RESEARCH, *Full detail inside the
+course, less outside*. Not yet used by the owner in the builder.
+
 ### Buttons that say what they do; panels that read like a manual (22 November 2026)
 
 The owner: "please make the buttons that have text on them just say what

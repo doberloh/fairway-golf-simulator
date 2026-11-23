@@ -5,7 +5,26 @@ import {execFileSync} from 'node:child_process';
 import {mkdtempSync, writeFileSync, rmSync} from 'node:fs';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
-import {writeZip, readZip, readZipFile, crc32, isZip} from '../src/zip.js';
+import {writeZip, readZip, readZipFile, crc32, isZip, zipStream, zipBytes} from '../src/zip.js';
+
+test('a ZIP written a part at a time: each part read only in its turn, its length known first, read back the same', async () => {
+ const a = Uint8Array.from({length: 300}, (_, i) => i % 251), b = Uint8Array.from({length: 40}, (_, i) => 255 - i), read = [];
+ const entries = [{name: 'fairway-ept.json', data: '{"box":1}'}, {name: 'ept-data/1-0-0-0.laz', size: a.length, read: async () => { read.push('a'); return a; }}, {name: 'ept-data/2-1-0-0.laz', size: b.length, read: async () => { read.push('b'); return b; }}];
+ for (const far of [undefined, 100]) {
+  read.length = 0;
+  const z = zipStream(entries, far ? {far} : {});
+  const it = z.chunks(); await it.next();
+  assert.deepEqual(read, [], 'nothing read before its turn');
+  const bytes = await zipBytes(zipStream(entries, far ? {far} : {}));
+  assert.equal(bytes.length, z.size);
+  const parts = await readZipFile(new Blob([bytes]));
+  assert.deepEqual(parts.map(p => p.name), entries.map(e => e.name));
+  assert.deepEqual(new Uint8Array(await (await parts[1].blob()).arrayBuffer()), a, far ? 'past the 8-byte limit (ZIP64)' : 'plain');
+  assert.deepEqual(new Uint8Array(await (await parts[2].blob()).arrayBuffer()), b);
+  if (!far) assert.equal((await readZip(bytes)).size, 3, 'the whole-file reader too, below 4 GB');
+ }
+ await assert.rejects(zipBytes(zipStream([{name: 'x', size: 5, read: async () => new Uint8Array(4)}])), /not the size/);
+});
 
 test('crc32 matches the standard check value', () => {
  assert.equal(crc32(new TextEncoder().encode('123456789')), 0xCBF43926);

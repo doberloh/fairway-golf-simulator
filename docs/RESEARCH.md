@@ -11214,6 +11214,75 @@ the parts are barely compressed). Two causes:
   real file read it through plain file reads instead. Browsers report the
   size right.
 
+## Full detail inside the course, less outside (22-23 November 2026)
+
+The owner's Alpine Lake square (USGS 3DEP WV_FEMAR3_Southcentral_B2_2018,
+kept as a 1.6 GB `.ept.zip`, 268,979,492 points in 4,800 Entwine pieces over
+3 x 3.2 km with the margin) hung the builder: the page at 2.8 GB of a 3.76 GB
+limit, 1.7 GB of it the survey held in memory. Measured in Node by
+`tools/lidar-detail.mjs`, which reads the square and builds its land exactly
+as door 2 does (one job at a time; the card idle for the timings below):
+
+| Run | Points read | Reading the survey | Peak memory (process) | Ground filled in | Trees |
+|---|---|---|---|---|---|
+| Before (every piece read into memory first) | 269 M, 1.6 GB | 3.7 min | 3.1 GB | 10.7% | 44,459 |
+| Pieces read in turn, gridder freed, no outline | 269 M | 4.1 min | 1.45 GB | 10.7% | 44,314 |
+| Outline (OpenStreetMap's, 1.4 x 1.0 km), 2 a cell outside | 67 M, 441 MB | 1.2 min | 1.66 GB | 4.0% in, 57.7% out | 1,448 in, 50,137 out |
+| The same, 8 a cell outside | 205 M, 1.2 GB | 3.2 min | 1.5 GB | 4.0% in, 16.2% out | 1,448 in, 43,121 out |
+
+So: **memory** is fixed by reading pieces in their turn and freeing the
+gridder's sums (40 bytes a cell, about 400 MB here), outline or not; the
+outline's gain is **time** (2.5 times quicker at 2 a cell) and **download**
+(a quarter of the pieces). Its cost is the ground outside: at about 1.9
+points a square metre (the depth reaching 70% of 2 a cell -- Entwine's
+depths step by four times, so "about" needs that slack; PLACED) more than
+half the 1 m cells get no ground return and are filled from their
+neighbours, and the canopy from sparse tops breaks into more, smaller
+crowns (+16% trees outside). At 8 a cell the outside is nearly as before and
+the time saved small. Kept at 2 (the owner asked for less outside); the
+choice is open in TODO.
+
+**The half-metre ground inside the outline**: 50% of the half-metre cells
+inside Alpine Lake's outline got the two ground returns FINE_LEAST asks
+(PLACED: one is a centimetre or two of noise). The survey's ground returns are
+thinner than its 23 points a square metre suggest (about a third of them
+are ground here): where a cell has fewer, the patch keeps the 1 m ground. A
+made survey (tests/real-course.test.mjs, 16 ground points a square metre, a
+sheer 1 m bunker) shows the gain where returns are dense: half a metre outside
+the lip the ground is within 5 cm with patches and over 20 cm low at 1 m, in
+the game's ground mesh as in the sampler.
+
+**The course built on it** (`--course`: OpenStreetMap's 18 holes, 19 greens,
+37 tees and 20 bunkers laid as door 2 lays them, the land at 1 m with the
+outline), with the patches and without:
+
+| | With patches | Without |
+|---|---|---|
+| Course file | 9 MB | 8 MB |
+| Patches | 52, 0.20 M heights | 0 |
+| The game's ground mesh | 593,290 refined cells, 20.90 M triangles | 593,209 cells, 20.90 M triangles |
+| Test round (scratch and bogey computer golfers) | 97 and 127 | 99 and 130 |
+| Holes where a ball stuck | 1 | 1 (the same hole) |
+
+The mesh is already half a metre within 3 m of sand, tees and greens, and
+refines wherever it misses the land by 6 cm, so the patches added 81
+refined cells and no triangles worth counting: no frame cost is expected.
+**The frame rate itself is not measured** (the owner was gaming on the card
+the whole time: TODO). The stuck ball is there with or without patches.
+
+PLACED with it: BUFFER 30 m round the outline (a rough outline drawn by hand
+on a 2 m map); the fine grid at most 40 million cells; patch margins green
+8 m, tee 5 m, bunker 4 m; 1 cm of change marks the ground as changed on
+purpose; patches carrying under 5 mm of detail left out. Putting surfaces
+keep their 5 m smoothing (*Greens a putt can hold*): the patches carry no
+detail there.
+
+**Sources**: Entwine Point Tile format (entwine.io, *Entwine Point Tile*: the
+octree's depths, each node's points a sample of its cube) -- already in
+REFERENCES under *Finding LIDAR from the builder*; OpenStreetMap's
+`leisure=golf_course` for Alpine Lake Resort Golf Course (way 299070913,
+ODbL), asked through Overpass on 22 November 2026.
+
 ## Free aerial imagery for the builder (31 October 2026)
 
 The owner asked for free imagery beside Google's. What a golf course needs:

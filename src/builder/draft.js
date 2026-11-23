@@ -46,7 +46,15 @@ export async function writeDraft(d) {
   json.land = {nx: land.nx, nz: land.nz, cell: land.cell, halfX: land.halfX, halfZ: land.halfZ, center: land.center, unit: land.unit, method: land.method, points: land.points ?? 0, rgb: !!land.rgb, grids: [...F32, ...U8].filter(k => land[k])};
   for (const k of json.land.grids) parts.push({name: `land/${k}.bin`, data: bytesOf(land[k])});
   if (land.rgb) parts.push({name: 'land/rgb.bin', data: land.rgb});
+  // THE FINE GROUND (22 November 2026; land.js `fine`): the half-metre detail
+  // inside the course's outline, which the patches are made from. A draft
+  // without it reads as before (still version 3: an older builder reading a
+  // newer draft leaves the part alone and builds without patches).
+  if (land.fine) { const {detail, ...f} = land.fine; json.land.fine = f; parts.push({name: 'land/fine.bin', data: bytesOf(detail)}); }
  }
+ // The course's rough outline (door-real.js): [lon, lat] corners, or the
+ // survey's own map units where it does not say where it lies (`detailMap`).
+ json.detailRing = d.detailRing ?? null; json.detailMap = !!d.detailMap;
  if (d.osm?.codes) parts.push({name: 'osm/codes.bin', data: d.osm.codes});
  if (d.osm?.raw) parts.push({name: 'osm/raw.json', data: typeof d.osm.raw === 'string' ? d.osm.raw : JSON.stringify(d.osm.raw)});
  (d.pics ?? []).forEach((p, i) => {
@@ -73,7 +81,8 @@ export async function readDraft(bytes) {
  let land = null;
  if (j.land) {
   const {nx, nz} = j.land, N = nx * nz;
-  land = {...j.land}; delete land.grids;
+  land = {...j.land}; delete land.grids; delete land.fine;
+  if (j.land.fine) { const f = j.land.fine, b = part('land/fine.bin', f.nx * f.nz * 2); land.fine = {...f, detail: new Int16Array(b.slice().buffer)}; }
   for (const k of j.land.grids) { const b = part(`land/${k}.bin`, F32.includes(k) ? N * 4 : N); land[k] = F32.includes(k) ? new Float32Array(b.slice().buffer) : b.slice(); }
   land.rgb = j.land.rgb ? part('land/rgb.bin', N * 3).slice() : null;
   land.surface = Float32Array.from(land.ground, (g, k) => g + (land.canopy?.[k] ?? 0));

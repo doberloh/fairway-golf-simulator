@@ -6,7 +6,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {saveIn, fileIn, bytesIn, listIn, overPlace, LIDAR_FILE} from '../src/builder/lidar-folder.js';
-import {downloadLidar, squareName, squareAround, gridByName, isEptZip} from '../src/builder/lidar-search.js';
+import {downloadLidar, squareName, squareAround, gridByName, isEptZip, keepBytes} from '../src/builder/lidar-search.js';
 import {lonLatToMerc} from '../src/lidar/ept.js';
 import {parseHeader} from '../src/lidar/las.js';
 import {converter} from '../src/lidar/geo.js';
@@ -62,8 +62,8 @@ test('a USGS square is downloaded once: kept as a ZIP of its pieces, read back f
  const found = {source: 'usgs', id: 'MN_Test_2021', title: 'MN Test 2021', ept: 'https://x/ept.json'}, folder = fakeFolder();
  const [first] = await downloadLidar(found, box, {get, kept: n => bytesIn(folder, n)});
  assert.equal(first.keep.name, squareName(found, box)); assert.match(first.keep.name, /^MN_Test_2021_43\.6200_-95\.6000_400m\.ept\.zip$/);
- assert.ok(isEptZip(await readZip(first.keep.bytes)), 'a ZIP with the square in it');
- await saveIn(folder, first.keep.name, first.keep.bytes);
+ assert.ok(isEptZip(await readZip((await keepBytes(first.keep)))), 'a ZIP with the square in it');
+ await saveIn(folder, first.keep.name, (await keepBytes(first.keep)));
  const before = asked.length, [again] = await downloadLidar(found, box, {get, kept: n => bytesIn(folder, n)});
  assert.equal(asked.length, before, 'nothing asked of USGS the second time');
  assert.equal(again.kept, true); assert.equal(again.keep, undefined);

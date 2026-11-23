@@ -513,6 +513,25 @@ here is a claim of support until it is done.
   out now says why (no land yet, land still building, the survey not placed
   on the globe, anything thrown): ask the owner what the button says now.
 
+- [ ] **The course's outline and the half-metre ground, by hand** (branch
+  `builder-big-zips`, 22-23 November 2026; COURSE_BUILDER.md, *The course's
+  outline*). Built and tested in Node and in the builder journeys (an outline
+  drawn and dragged on the relief; Build automatically taking OpenStreetMap's),
+  and measured on the owner's Alpine Lake square in Node (RESEARCH, *Full
+  detail inside the course, less outside*). Not seen by the owner: draw an
+  outline in step 1, download, build the land (the status line names the
+  half-metre ground), and look at a bunker's lip in the 3D editor and in
+  the game; and load the old Alpine Lake square with an outline (an older
+  kept square is read whole when opened from the folder: Download box
+  thins it). **Open choice for the owner**: outside the outline the survey
+  is fetched at about 2 points a square metre (a sixteenth of Alpine
+  Lake's), which leaves 58% of the ground there filled in and breaks the
+  woods into more, smaller trees; the next step up (8 a cell) keeps the
+  outside nearly as it was and saves little time. The frame rate on every
+  tier with patches is owed: Alpine Lake's two files are in
+  bench/courses/alpine (`frame-ab --built` each, the card free); the mesh
+  differs by 81 refined cells of 593,000, so no change is expected.
+
 - [ ] **A real course's doglegs, checked by a person.** Since 10 November 2026
   door 2 finds a dogleg's bend from the traced fairway (**Add dogleg aim points**;
   map-checks.js `bendFor`). Not played, and Worthington's yards against its

@@ -9,7 +9,7 @@
 //   docFromLand      the land, the trace (lidar/trace.js), the holes marked
 //                    and the trees found, as a built course document
 // Local metres throughout: x east of the property's middle, z south of it.
-import {createGridder, findTrees} from '../lidar/land.js';
+import {createGridder, findTrees, gridFrame, FINE_NONE} from '../lidar/land.js';
 import {toMetres} from '../lidar/las.js';
 import {TREE_HAND} from '../built-world.js';
 import {maskRings, simplify, smoothRing, relaxRing} from '../contour.js';
@@ -20,7 +20,8 @@ import {GRID_MARGIN, builtLine} from '../built-world.js';
 // The longest tee set's yards (built-world.js builtLine: its first name).
 const backYards = L => L.yards[L.names[0]];
 import {digBed, levelFrom, shoreOf, digBowl, creekStations, carveCreek} from './water-bed.js';
-import {CREEK_FIELDS} from '../course-doc.js';
+import {CREEK_FIELDS, LIMITS} from '../course-doc.js';
+import {DETAIL} from '../lidar/detail.js';
 
 // The finest the land is gathered at for a property this size (PLACED: half
 // a metre to 2.25 km², else a metre -- memory for a 3 x 3 km course).
@@ -42,9 +43,30 @@ export function sourcesBox(sources) {
 }
 export const crsOfSources = sources => sources[0]?.kind === 'points' ? sources[0].crs : sources[0]?.raster.crs;
 
+// THE FINE GROUND INSIDE THE COURSE'S OUTLINE (22 November 2026): with
+// `outline` (a ring in the sources' map units) and land coarser than
+// FINE_CELL, the ground inside the outline's box (and DETAIL.buffer past it)
+// is gathered at FINE_CELL too (land.js `fine`), for the half-metre patches
+// docFromLand lays on greens' banks, tees' banks and bunkers. PLACED:
+// FINE_CELL half a metre -- about seven returns a cell on a 30-point survey,
+// steady; a quarter metre would be one or two, and noisy -- and at most
+// FINE_MOST cells (40 million, 240 MB while gathering: a 3 x 3 km outline).
+export const FINE_CELL = .5, FINE_MOST = 40e6;
+// `frame`: land.js gridFrame of the land to be built.
+export function fineExtent(frame, outline, buffer = DETAIL.buffer) {
+ if (!outline?.length || frame.cell <= FINE_CELL) return null;
+ const pts = outline.map(([x, y]) => frame.local(x, y)), xs = pts.map(p => p.x), zs = pts.map(p => p.z), {halfX, halfZ, cell} = frame;
+ const lo = (v, half) => -half + Math.max(0, Math.floor((v - buffer + half) / FINE_CELL)) * FINE_CELL, hi = (v, half) => Math.min(half, v + buffer);
+ const x0 = lo(Math.min(...xs), halfX), z0 = lo(Math.min(...zs), halfZ), x1 = hi(Math.max(...xs), halfX), z1 = hi(Math.max(...zs), halfZ);
+ if (x1 <= x0 || z1 <= z0) return null;
+ const nx = Math.floor((x1 - x0) / FINE_CELL) + 1, nz = Math.floor((z1 - z0) / FINE_CELL) + 1;
+ return nx * nz > FINE_MOST || !(cell > FINE_CELL) ? null : {x0, z0, nx, nz, cell: FINE_CELL};
+}
+
 // The land over `box` (map units of the sources) and GRID_MARGIN metres past
-// it. `pause` lets a page paint between chunks. Returns {land, gridder, trees}.
-export async function landFromSources(sources, box, {cell = null, onStep = () => {}, pause = null} = {}) {
+// it. `pause` lets a page paint between chunks. `outline`: the course's rough
+// outline in the same units, for the fine ground. Returns {land, gridder, trees}.
+export async function landFromSources(sources, box, {cell = null, onStep = () => {}, pause = null, outline = null} = {}) {
  const crs = crsOfSources(sources), unit = toMetres(crs), m = GRID_MARGIN / unit.h;
  const wide = {x0: box.x0 - m, x1: box.x1 + m, y0: box.y0 - m, y1: box.y1 + m};
  // The cell: half a metre, or a metre for a large property -- and never finer
@@ -53,7 +75,8 @@ export async function landFromSources(sources, box, {cell = null, onStep = () =>
   const pts = sources.filter(s => s.kind === 'points'), area = pts.reduce((a, s) => a + Math.max(1, (s.bounds.maxX - s.bounds.minX) * (s.bounds.maxY - s.bounds.minY) * unit.h * unit.h), 0);
   const spacing = pts.length ? Math.sqrt(area / Math.max(1, pts.reduce((a, s) => a + (s.count || 0), 0))) : 0;
   const c = cell ?? Math.max(cellFor((box.x1 - box.x0) * unit.h, (box.y1 - box.y0) * unit.h), Math.ceil(spacing * 2 - 1e-9) / 2);
- const gridder = createGridder({box: wide, cell: c, unit});
+ const fine = fineExtent(gridFrame({box: wide, cell: c, unit}), outline);
+ const gridder = createGridder({box: wide, cell: c, unit, fine});
  let done = 0;
  for (const s of sources) {
   onStep(`Reading ${s.name ?? s.form}`, done / sources.length);
@@ -231,7 +254,7 @@ export function docFromLand({land, traced = null, holes, trees = [], homes = [],
  if (surveyed) {
   const isGreen = Uint8Array.from({length: nx * nz}, (_, k) => codes ? (PALETTE[codes[k]] === 'green' ? 1 : 0) : (greenAt(-halfX + (k % nx) * cell, -halfZ + Math.floor(k / nx) * cell) ? 1 : 0));
   const out = distanceFrom(isGreen, nx, nz, cell), m = boxMean(ground, nx, nz, Math.max(1, Math.round(2.5 / cell))), EASE = 3;
-  for (let k = 0; k < m.length; k++) { const w = isGreen[k] ? 1 : out[k] < EASE ? 1 - out[k] / EASE : 0; if (w > 0) ground[k] = ground[k] * (1 - w) + m[k] * w; }
+  for (let k = 0; k < m.length; k++) { const w = isGreen[k] ? 1 : out[k] < EASE ? 1 - out[k] / EASE : 0; if (w > 0) { ground[k] = ground[k] * (1 - w) + m[k] * w; smoothR[k] = 3; } }
  }
  // THE 3D EDITOR'S SHAPING (round-trip.js): a difference on this grid, added
  // to the ground as the survey and the smoothing leave it -- before the ponds
@@ -273,6 +296,7 @@ export function docFromLand({land, traced = null, holes, trees = [], homes = [],
    }
   }
  }
+ const patches = surveyed && land.fine ? finePatches(land, ground, smoothR, surfaces) : [];
  const yards = (a, b) => Math.hypot(b.x - a.x, b.z - a.z) / .9144;
  // Inside a kind's outlines (each polygon even-odd over its rings).
  const onKind = (kind, p) => surfaces[kind].some(poly => poly.filter(r => inside(r, [p.x, p.z])).length % 2 === 1);
@@ -306,8 +330,61 @@ export function docFromLand({land, traced = null, holes, trees = [], homes = [],
   treeData.push(t.x, t.z, t.h, t.crown, t.trunk ?? Math.min(3.6, Math.max(.14, t.h * .027)), (t.role ?? (t.crown / t.h < .2 ? 1 : 2)) | (t.placed ? TREE_HAND : 0), ki);
  }
  return {type: 'built', name, landscape, designer: null, halfX: halfX - GRID_MARGIN, halfZ: halfZ - GRID_MARGIN,
-  land: {x0: -halfX, z0: -halfZ, cell, nx, nz, heights: ground}, patches: [], surfaces, water, creeks: [...structuredClone(creeks), ...drawnCreeks], holes: recs,
+  land: {x0: -halfX, z0: -halfZ, cell, nx, nz, heights: ground}, patches, surfaces, water, creeks: [...structuredClone(creeks), ...drawnCreeks], holes: recs,
   trees: new Float32Array(treeData), treeKinds, rocks: structuredClone(rocks), homes, credits, source: {kind: 'lidar', ...source}, from: null, picture: null, landEdits: [], ...(treePlan ? {treePlan} : {}), ...(surround ? {surround} : {})};
+}
+// THE HALF-METRE PATCHES (22 November 2026; the owner: "yes go ahead, include
+// bunkers"). Round every bunker, tee and green, inside the fine ground the
+// course's outline gathered (land.js `fine`), a finer grid the game lays over
+// the land (built-world.js landSampler, blended over PATCH_BLEND at its edge):
+// the course's own 1 m ground, read between its nodes, plus the fine ground's
+// detail -- but only where the 1 m ground is still the survey's own. Where
+// the course changed it on purpose the detail would undo the change: a green,
+// tee or fairway smoothed so a putt holds (above; RESEARCH, *Greens a putt
+// can hold*), a green's surround eased into it, the 3D editor's shaping, a
+// bunker dug or a creek carved on the plan, a pond's bed. So the detail lands
+// on bunkers' lips and faces, tees' and greens' banks, swales in the rough
+// round them: what the 1 m land rounds off. PLACED: the margins round each
+// shape (green 8 m, for its banks and false front; tee 5 m; bunker 4 m, past
+// the 1.5 m blend), the 1 cm that counts as changed, and patches carrying
+// under 5 mm of detail left out. Merged where they overlap; the smallest first
+// up to the file's limit (course-doc.js LIMITS.patchSamples).
+export const PATCH_MARGIN = {green: 8, tee: 5, sand: 4};
+function finePatches(land, ground, smoothR, surfaces) {
+ const {nx, nz, cell, halfX, halfZ, fine} = land, F = fine, N = nx * nz;
+ const keep = new Float32Array(N);
+ for (let k = 0; k < N; k++) keep[k] = smoothR[k] === 0 && Math.abs(ground[k] - land.ground[k]) < .01 ? 1 : 0;
+ const read = (a, x, z) => { const u = Math.min(nx - 1, Math.max(0, (x + halfX) / cell)), v = Math.min(nz - 1, Math.max(0, (z + halfZ) / cell)), i = Math.min(nx - 2, Math.floor(u)), j = Math.min(nz - 2, Math.floor(v)), fu = u - i, fv = v - j, k = j * nx + i;
+  const p = a[k] + (a[k + 1] - a[k]) * fu, q = a[k + nx] + (a[k + nx + 1] - a[k + nx]) * fu; return p + (q - p) * fv; };
+ // Each shape's box, its margin round it, inside the fine ground.
+ const fx1 = F.x0 + (F.nx - 1) * F.cell, fz1 = F.z0 + (F.nz - 1) * F.cell;
+ let boxes = [];
+ for (const kind of ['sand', 'tee', 'green']) for (const poly of surfaces[kind] ?? []) for (const ring of poly) {
+  const m = PATCH_MARGIN[kind], xs = ring.map(p => p[0]), zs = ring.map(p => p[1]);
+  const b = [Math.max(F.x0, Math.min(...xs) - m), Math.max(F.z0, Math.min(...zs) - m), Math.min(fx1, Math.max(...xs) + m), Math.min(fz1, Math.max(...zs) + m)];
+  if (b[2] - b[0] >= 2 * F.cell && b[3] - b[1] >= 2 * F.cell) boxes.push(b);
+ }
+ for (let merged = true; merged;) {
+  merged = false;
+  for (let i = 0; i < boxes.length && !merged; i++) for (let j = i + 1; j < boxes.length; j++) {
+   const a = boxes[i], b = boxes[j];
+   if (a[0] <= b[2] && b[0] <= a[2] && a[1] <= b[3] && b[1] <= a[3]) { boxes[i] = [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[2], b[2]), Math.max(a[3], b[3])]; boxes.splice(j, 1); merged = true; break; }
+  }
+ }
+ const out = []; let budget = LIMITS.patchSamples;
+ boxes.sort((a, b) => (a[2] - a[0]) * (a[3] - a[1]) - (b[2] - b[0]) * (b[3] - b[1]));
+ for (const b of boxes) {
+  const i0 = Math.ceil((b[0] - F.x0) / F.cell - 1e-9), i1 = Math.floor((b[2] - F.x0) / F.cell + 1e-9), j0 = Math.ceil((b[1] - F.z0) / F.cell - 1e-9), j1 = Math.floor((b[3] - F.z0) / F.cell + 1e-9);
+  const pnx = i1 - i0 + 1, pnz = j1 - j0 + 1; if (pnx < 3 || pnz < 3 || pnx * pnz > budget) continue;
+  const heights = new Float32Array(pnx * pnz); let most = 0;
+  for (let j = 0; j < pnz; j++) for (let i = 0; i < pnx; i++) {
+   const x = F.x0 + (i0 + i) * F.cell, z = F.z0 + (j0 + j) * F.cell, d = F.detail[(j0 + j) * F.nx + i0 + i], add = d === FINE_NONE ? 0 : read(keep, x, z) * d / 1000;
+   heights[j * pnx + i] = read(ground, x, z) + add; most = Math.max(most, Math.abs(add));
+  }
+  if (most < .005) continue;
+  out.push({x0: F.x0 + i0 * F.cell, z0: F.z0 + j0 * F.cell, cell: F.cell, nx: pnx, nz: pnz, heights}); budget -= pnx * pnz;
+ }
+ return out;
 }
 const inside = (ring, [x, z]) => { let c = false; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) { const [ax, az] = ring[j], [bx, bz] = ring[i]; if ((bz > z) !== (az > z) && x < (ax - bx) * (z - bz) / (az - bz) + bx) c = !c; } return c; };
 const ringArea = r => { let a = 0; for (let i = 0, j = r.length - 1; i < r.length; j = i++) a += r[j][0] * r[i][1] - r[i][0] * r[j][1]; return Math.abs(a) / 2; };

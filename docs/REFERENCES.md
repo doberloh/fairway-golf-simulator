@@ -987,3 +987,10 @@ Read for RESEARCH.md, *A state portal's ZIP of zLAS, 6.2 GB*.
 - Esri Optimized LAS FAQ -- https://kennis.hunzeenaas.nl/images/hunzeenaas/2/22/Esri_Optimized_LAS_FAQ.pdf -- quoted by search, not fetched. Taken: the LAS Optimizer is free, converts LAS to and from zLAS losslessly, and needs no ArcGIS.
 - Esri, ArcGIS Pro *Convert LAS* -- https://pro.arcgis.com/en/pro-app/latest/tool-reference/conversion/convert-las.htm -- search summary. Taken: writes plain LAS from zLAS; needs ArcGIS Pro (not offered to players).
 - Esri zLAS I/O library -- https://community.esri.com/t5/3d-blog/esri-zlas-i-o-library-is-available/ba-p/901386 -- not read. Noted only: a developer library for reading zLAS exists; reading zLAS in the builder was not taken up.
+
+## Full detail inside the course, less outside (22-23 November 2026, the builder-big-zips branch)
+
+Read for RESEARCH.md, *Full detail inside the course, less outside*.
+
+- Entwine Point Tile -- https://entwine.io/en/latest/entwine-point-tile.html -- recalled from *Finding LIDAR from the builder*, not fetched again. Taken: every depth of the octree holds a sample of its node's cube, so a survey thinned is its nodes down to a depth; the counts per node in `ept-hierarchy`.
+- OpenStreetMap, Alpine Lake Resort Golf Course (way 299070913, `leisure=golf_course`, and its holes, greens, tees and bunkers) -- https://www.openstreetmap.org/way/299070913 -- asked through the Overpass API on 22 November 2026 (ODbL). Taken: the course's outline and its course, for the measurements on the owner's square.

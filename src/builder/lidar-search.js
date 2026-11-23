@@ -22,6 +22,7 @@ import {nodesFor, nodeBox, lonLatToMerc, mercToLonLat} from '../lidar/ept.js';
 import {toUtm, zoneOf} from '../lidar/geo.js';
 import {parseHeader, readPoints} from '../lidar/las.js';
 import {boxFrom, boxOfGeometry, coverageOf, overlaps, polygonsOf, squareOfName, unionBox} from './lidar-coverage.js';
+import {chooseNodes} from '../lidar/detail.js';
 
 const EPT = 'https://s3-us-west-2.amazonaws.com/usgs-lidar-public';
 // EVERY STATE'S OWN SURVEY (the owner, 1 November 2026: "add sources for each
@@ -184,12 +185,21 @@ export const coverTogether = (founds, box) => coverageOf(box, {boxes: founds.fla
 // null -- what is there is read, not downloaded again. `list()`: the names in
 // that folder, so a square can find the pieces its neighbours already hold. A
 // source read from there says `kept: true`; one downloaded carries `keep`.
-export async function downloadLidar(found, box, {get = fetch, lazModule, onProgress = () => {}, kept = async () => null, list = async () => []} = {}) {
+// `detail`: {ring: [[lon, lat], ...], perM2} -- the course's rough outline,
+// inside which every depth of a USGS survey is fetched, and the points a
+// square metre wanted outside it (lidar/detail.js); null for the whole survey.
+// `kept(name)` may give the file (read a part at a time) or its bytes.
+export async function downloadLidar(found, box, {get = fetch, lazModule, onProgress = () => {}, kept = async () => null, list = async () => [], detail = null} = {}) {
  if (found.source === 'usgs') {
   const held = await heldPieces(found, box, {kept, list}), name = squareName(found, box);
-  const exact = held.squares.find(s => squareName(found, s.box) === name);
-  if (exact && exact.keys.every(k => held.pieces.has(k))) return [{...eptSource({...held.head, box, count: exact.count}, exact.keys.map(k => held.pieces.get(k)), lazModule), kept: true, keptAs: held.from[0]}];
-  return downloadEpt(found, box, {get, lazModule, onProgress, held});
+  const here = held.squares.filter(s => squareName(found, s.box) === name && s.keys.every(k => held.pieces.has(k)));
+  // Kept for this box with this outline (or the whole survey, asked whole):
+  // read from the folder, nothing asked of USGS.
+  const exact = here.find(s => sameDetail(s.detail, detail));
+  const fromFolder = s => [{...eptSource({...held.head, box, count: s.count}, s.keys.map(k => held.pieces.get(k)), lazModule), kept: true, keptAs: held.from[0]}];
+  if (exact) return fromFolder(exact);
+  try { return await downloadEpt(found, box, {get, lazModule, onProgress, held, detail}); }
+  catch (e) { if (here.length) return fromFolder(here[0]).map(s => ({...s, offline: e.message})); throw e; }
  }
  if (found.source === 'ign' || found.source === 'swisstopo') {
   const [{openSource}, {readZip}] = await Promise.all([import('../lidar/formats.js'), import('../zip.js')]), out = [], who = found.source === 'ign' ? 'IGN' : 'swisstopo';
@@ -197,6 +207,7 @@ export async function downloadLidar(found, box, {get = fetch, lazModule, onProgr
    const file = url.split('/').pop();
    onProgress(n / found.urls.length, `tile ${n + 1} of ${found.urls.length}`);
    let bytes = await kept(file); const was = !!bytes;
+   if (bytes && !(bytes instanceof Uint8Array)) bytes = new Uint8Array(await bytes.arrayBuffer());
    if (!bytes) { const r = await get(url); if (!r.ok) throw Error(`${who} would not give ${file} (${r.status}).`); bytes = new Uint8Array(await r.arrayBuffer()); }
    const extra = was ? {kept: true, keptAs: file} : {keep: {name: file, bytes}};
    if (found.source === 'ign') { out.push({...(await openSource(file, bytes, {lazModule})), name: file, downloaded: true, ...extra}); continue; }
@@ -228,60 +239,114 @@ async function searchSwisstopo(box, get) {
 // download whats needed, then combine them"): the pieces of every kept square of
 // the survey that touches it, whatever its middle or size. A file from before
 // this holds one square, with no list of them.
+// Each piece is read from its file only when its turn comes (22 November
+// 2026: a kept square was read whole, 1.7 GB for the owner's Alpine Lake,
+// and every piece held in memory beside it).
 async function heldPieces(found, box, {kept, list}) {
  const self = squareName(found, box), names = (await list()).filter(n => { const q = squareOfName(n); return q?.id === found.id && overlaps(q.box, box); });
  if (!names.includes(self)) names.push(self);
- const out = {pieces: new Map(), squares: [], from: [], head: null, counted: 0};
+ const out = {pieces: new Map(), squares: [], from: [], head: null, points: {}};
  for (const n of names) {
-  const bytes = await kept(n); if (!bytes) continue;
-  const {readZip} = await import('../zip.js'), parts = await readZip(bytes); if (!parts.has(EPT_META)) continue;
-  const meta = JSON.parse(new TextDecoder().decode(parts.get(EPT_META))), keys = [];
-  for (const [p, b] of parts) if (p.endsWith('.laz')) { const k = p.replace(/^ept-data\//, '').replace(/\.laz$/, ''); keys.push(k); out.pieces.set(k, b); }
+  const got = await kept(n); if (!got) continue;
+  const parts = await piecesOfZip(got); if (!parts) continue;
+  const {meta} = parts, keys = [];
+  for (const p of parts.pieces) { keys.push(p.key); out.pieces.set(p.key, p); }
   out.squares.push(...(meta.squares ?? [{box: meta.box, keys, count: meta.count}]));
-  out.head ??= meta; out.from.push(n); out.counted += meta.count;
+  Object.assign(out.points, meta.points ?? {});
+  out.head ??= meta; out.from.push(n);
  }
  return out;
 }
+// A kept square's file (or bytes): its record and its pieces, each
+// {key, size, read()}; null when it is not one.
+async function piecesOfZip(file) {
+ const {readZipFile} = await import('../zip.js');
+ const all = await readZipFile(file instanceof Uint8Array ? new Blob([file]) : file), head = all.find(p => p.name === EPT_META);
+ if (!head) return null;
+ const meta = JSON.parse(await (await head.blob()).text());
+ const pieces = all.filter(p => p.name.endsWith('.laz')).map(p => ({key: p.name.replace(/^ept-data\//, '').replace(/\.laz$/, ''), size: p.size, read: async () => new Uint8Array(await (await p.blob()).arrayBuffer())}));
+ return {meta, pieces};
+}
+const sameDetail = (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+// The nodes to fetch for a box in degrees and an outline (lidar/detail.js).
+function pickNodes(nodes, cube, box, detail) {
+ if (!detail?.ring?.length) return {nodes, depth: null};
+ const a = lonLatToMerc(box.lon0, box.lat0), b = lonLatToMerc(box.lon1, box.lat1), metres = Math.cos((box.lat0 + box.lat1) / 2 * Math.PI / 180);
+ const ring = detail.ring.map(([lon, lat]) => { const m = lonLatToMerc(lon, lat); return [m.x, m.y]; });
+ return chooseNodes(nodes, k => nodeBox(k, cube), [a.x, a.y, b.x, b.y], {ring, perM2: detail.perM2, metres});
+}
+// The file a download keeps, and its bytes (small ones, and tests).
+export const keepBytes = async keep => keep.bytes ?? (await import('../zip.js')).zipBytes(keep);
 // The Entwine pieces over the square, their points carried from Web Mercator
 // to UTM (the square's middle's zone, NAD83(2011): what 3DEP's own tiles use)
 // as they are read. Only those not already held are fetched; what is new is
 // combined with what was held into one file, so a survey over one course is one
 // ZIP however many searches built it. Its name is its whole extent, and the
 // files it replaces are named for door 2 to remove once it is safely written.
-async function downloadEpt(found, box, {get, lazModule, onProgress, held = {pieces: new Map(), squares: [], from: [], head: null, counted: 0}}) {
+async function downloadEpt(found, box, {get, lazModule, onProgress, held = {pieces: new Map(), squares: [], from: [], head: null, points: {}}, detail = null}) {
  if (!found.ept) throw Error('This survey has no copy that downloads by the square: download all its tiles.');
  const er = await get(found.ept); if (!er.ok) throw Error(`This survey's square copy did not answer (${er.status}): download all its tiles.`);
  const ept = await er.json(), root =found.ept.replace(/ept\.json$/, '');
  if (ept.dataType !== 'laszip') throw Error(`This survey's copy is stored as ${ept.dataType}, which the builder does not read.`);
  const a = lonLatToMerc(box.lon0, box.lat0), b = lonLatToMerc(box.lon1, box.lat1);
- const {nodes} = await nodesFor(ept.bounds, [a.x, a.y, b.x, b.y], async key => { const r = await get(`${root}ept-hierarchy/${key}.json`); if (!r.ok) throw Error(`The survey's index would not load (${r.status}).`); return r.json(); });
- if (!nodes.length) throw Error('This survey has no points over the square.');
+ const {nodes: every} = await nodesFor(ept.bounds, [a.x, a.y, b.x, b.y], async key => { const r = await get(`${root}ept-hierarchy/${key}.json`); if (!r.ok) throw Error(`The survey's index would not load (${r.status}).`); return r.json(); });
+ if (!every.length) throw Error('This survey has no points over the square.');
+ // FULL DETAIL INSIDE THE OUTLINE, A THIN LAYER OUTSIDE (lidar/detail.js).
+ const pick = pickNodes(every, ept.bounds, box, detail), nodes = pick.nodes;
  const missing = nodes.filter(n => !held.pieces.has(n.key)), fresh = new Map();
  for (const [n, node] of missing.entries()) {
   onProgress(n / missing.length, `piece ${n + 1} of ${missing.length}${held.pieces.size ? `, the rest already saved` : ''}`);
   const r = await get(`${root}ept-data/${node.key}.laz`); if (!r.ok) throw Error(`A piece of the survey would not load (${r.status}).`);
-  fresh.set(node.key, new Uint8Array(await r.arrayBuffer()));
+  const bytes = new Uint8Array(await r.arrayBuffer());
+  fresh.set(node.key, {key: node.key, size: bytes.length, bytes});
  }
  onProgress(1, 'done');
- const count = nodes.reduce((s, x) => s + x.points, 0), meta = {title: found.title, box, minZ: ept.bounds[2], maxZ: ept.bounds[5], count}, bytesOf = k => fresh.get(k) ?? held.pieces.get(k);
- const source = {...eptSource(meta, nodes.map(n => bytesOf(n.key)), lazModule), reused: nodes.length - missing.length, fetched: missing.length};
+ // `points`: every node over the box with its count, fetched or not -- so a
+ // kept square can later be thinned to an outline, and tell what an outline
+ // drawn wider would still need (`choose`).
+ const points = {...held.points, ...Object.fromEntries(every.map(n => [n.key, n.points]))};
+ const count = nodes.reduce((s, x) => s + x.points, 0), meta = {title: found.title, box, minZ: ept.bounds[2], maxZ: ept.bounds[5], count, cube: ept.bounds, points}, partOf = k => fresh.get(k) ?? held.pieces.get(k);
+ const source = {...eptSource(meta, nodes.map(n => partOf(n.key)), lazModule), reused: nodes.length - missing.length, fetched: missing.length, thinned: pick.depth != null ? {depth: pick.depth, of: every.length} : null};
  if (!missing.length) return [{...source, kept: true, keptAs: held.from[0]}];
- const square = {box, keys: nodes.map(n => n.key), count}, squares = [...held.squares, square], whole = unionBox(squares.map(s => s.box)), all = new Map([...held.pieces, ...fresh]);
- const file = {...meta, box: whole, count: held.counted + missing.reduce((s, x) => s + x.points, 0), squares}, name = squareName(found, whole);
- return [{...source, keep: {name, bytes: await eptZip(file, [...all].map(([key, bytes]) => ({key, bytes}))), replaces: held.from.filter(n => n !== name)}}];
+ // The record of this box replaces an earlier one of the same box (another
+ // outline); every piece held or fetched goes into the one file.
+ const square = {box, keys: nodes.map(n => n.key), count, ...(detail ? {detail} : {})}, name0 = squareName(found, box);
+ const squares = [...held.squares.filter(s => squareName(found, s.box) !== name0), square], whole = unionBox(squares.map(s => s.box)), all = new Map([...held.pieces, ...fresh]);
+ const file = {...meta, box: whole, count: [...all.keys()].reduce((s, k) => s + (points[k] ?? 0), 0), squares}, name = squareName(found, whole);
+ const {zipStream} = await import('../zip.js'), z = zipStream([{name: EPT_META, data: JSON.stringify(file)}, ...[...all.values()].map(p => ({name: `ept-data/${p.key}.laz`, size: p.size, data: p.bytes, read: p.read}))]);
+ return [{...source, keep: {name, size: z.size, chunks: z.chunks, replaces: held.from.filter(n => n !== name)}}];
 }
-// The square's pieces as door 2 reads a source.
-function eptSource(meta, parts, lazModule) {
+// The square's pieces as door 2 reads a source. `parts`: [{key, size, bytes}
+// or {key, size, read()}] (or bare bytes, from before keys). Each piece is
+// read in its turn; `rebind(file)` points the pieces at a kept file once it
+// is written, so those downloaded leave memory; `choose(detail)` gives the
+// source thinned to an outline, and how many pieces it would still need.
+function eptSource(meta, given, lazModule) {
+ let parts = given.map((p, i) => p instanceof Uint8Array ? {key: String(i), size: p.length, bytes: p} : p);
  const {box} = meta, lon = (box.lon0 + box.lon1) / 2, zone = zoneOf(lon), epsg = 6329 + zone;
  const c0 = toUtm(box.lat0, box.lon0, zone), c1 = toUtm(box.lat1, box.lon1, zone), c2 = toUtm(box.lat0, box.lon1, zone), c3 = toUtm(box.lat1, box.lon0, zone);
- return {kind: 'points', form: 'ept', name: `${meta.title} (USGS 3DEP)`, downloaded: true, bytes: parts.reduce((s, p) => s + p.length, 0), pieces: parts.length, count: meta.count,
+ return {kind: 'points', form: 'ept', name: `${meta.title} (USGS 3DEP)`, downloaded: true, bytes: parts.reduce((s, p) => s + p.size, 0), pieces: parts.length, count: meta.count,
   crs: {epsg, units: {h: 'metre', v: 'metre'}, wkt: null, geographic: false},
   bounds: {minX: Math.min(c0.x, c3.x), maxX: Math.max(c1.x, c2.x), minY: Math.min(c0.y, c2.y), maxY: Math.max(c1.y, c3.y), minZ: meta.minZ, maxZ: meta.maxZ},
+  keys: () => parts.map(p => p.key),
   async each(f, opts = {}) {
-   for (const [n, bytes] of parts.entries()) {
-    const header = parseHeader(bytes);
+   for (const [n, part] of parts.entries()) {
+    const bytes = part.bytes ?? await part.read(), header = parseHeader(bytes);
     await readPoints(bytes, header, p => { const g = mercToLonLat(p.x, p.y), u = toUtm(g.lat, g.lon, zone); p.x = u.x; p.y = u.y; f(p); }, {lazModule, ...opts, onProgress: opts.onProgress ? q => opts.onProgress((n + q) / parts.length) : null});
    }
+  },
+  async rebind(file) {
+   const got = await piecesOfZip(file); if (!got) return;
+   const byKey = new Map(got.pieces.map(p => [p.key, p]));
+   parts = parts.map(p => byKey.get(p.key) ?? p);
+  },
+  choose(detail) {
+   if (!detail?.ring?.length || !meta.cube || !meta.points) return {source: this, missing: 0};
+   const every = Object.entries(meta.points).map(([key, points]) => ({key, points})), pick = pickNodes(every, meta.cube, meta.box, detail);
+   const have = new Map(parts.map(p => [p.key, p])), want = pick.nodes.filter(n => have.has(n.key));
+   if (want.length === parts.length) return {source: this, missing: pick.nodes.length - want.length};
+   const thin = eptSource({...meta, count: want.reduce((s, n) => s + n.points, 0)}, want.map(n => have.get(n.key)), lazModule);
+   return {source: {...this, ...thin}, missing: pick.nodes.length - want.length};
   }};
 }
 
@@ -303,15 +368,12 @@ export function squareName(found, box) {
  return `${found.id}_${lat.toFixed(4)}_${lon.toFixed(4)}_${Math.abs(w - h) <= 1 ? h : `${w}x${h}`}m.ept.zip`;
 }
 const EPT_META = 'fairway-ept.json';
-async function eptZip(meta, parts) {
- const {writeZip} = await import('../zip.js');
- return writeZip([{name: EPT_META, data: JSON.stringify(meta)}, ...parts.map(p => ({name: `ept-data/${p.key}.laz`, data: p.bytes, store: true}))]);
-}
 export const isEptZip = parts => parts.has(EPT_META);
-// A kept square back as a source (`parts`: readZip's Map).
-export function eptZipSource(parts, lazModule) {
- const meta = JSON.parse(new TextDecoder().decode(parts.get(EPT_META)));
- return eptSource(meta, [...parts].filter(([n]) => n.endsWith('.laz')).map(([, b]) => b), lazModule);
+// A kept square back as a source, from its file (read a part at a time) or
+// its bytes.
+export async function eptFileSource(file, lazModule) {
+ const got = await piecesOfZip(file); if (!got) throw Error('This is not a square kept from USGS.');
+ return eptSource(got.meta, got.pieces, lazModule);
 }
 // A survey whose files state no map grid, placed by its name: swisstopo's
 // swissSURFACE3D tiles are LV95 (EPSG 2056; its catalogue, checked 1 November

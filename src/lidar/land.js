@@ -19,15 +19,35 @@
 // November 2026).
 const GROUND = new Set([2, 8]), NOISE = new Set([7, 18]), WATER = new Set([9, 41, 42, 45]);
 
+// THE FINE GROUND (22 November 2026; the owner: "for detail inside building at
+// a 1 meter detail would still lose a ton of data right???"). With `fine`
+// ({x0, z0, nx, nz, cell} in local metres, its nodes on the land's own), the
+// ground returns inside it are gathered a second time at that finer cell, and
+// `finish` gives `land.fine`: {x0, z0, nx, nz, cell, detail} -- `detail` the
+// fine ground less the land's own read between its nodes, in millimetres
+// (Int16; FINE_NONE where fewer than FINE_LEAST returns landed), the detail
+// the coarse land cannot hold. real-course.js docFromLand lays it back on as
+// half-metre patches. PLACED: FINE_LEAST 2 returns (one is a centimetre or two
+// of noise); a difference past +-32 m is held at that.
+export const FINE_NONE = -32768, FINE_LEAST = 2;
+// The grid's shape and its local metres, without its arrays.
+export function gridFrame({box, cell = 1, unit = {h: 1, v: 1}}) {
+ const cx = (box.x0 + box.x1) / 2, cy = (box.y0 + box.y1) / 2, halfX = (box.x1 - box.x0) * unit.h / 2, halfZ = (box.y1 - box.y0) * unit.h / 2;
+ return {cell, halfX, halfZ, nx: Math.round(2 * halfX / cell) + 1, nz: Math.round(2 * halfZ / cell) + 1, local: (mx, my) => ({x: (mx - cx) * unit.h, z: -(my - cy) * unit.h})};
+}
 // `box`: {x0, y0, x1, y1} in the source's map units; `cell` metres;
 // `unit`: {h, v} metres per map unit.
-export function createGridder({box, cell = 1, unit = {h: 1, v: 1}}) {
+export function createGridder({box, cell = 1, unit = {h: 1, v: 1}, fine = null}) {
  const cx = (box.x0 + box.x1) / 2, cy = (box.y0 + box.y1) / 2;
  const halfX = (box.x1 - box.x0) * unit.h / 2, halfZ = (box.y1 - box.y0) * unit.h / 2;
  const nx = Math.round(2 * halfX / cell) + 1, nz = Math.round(2 * halfZ / cell) + 1, N = nx * nz;
  const g = {sum: new Float64Array(N), n: new Uint32Array(N), low: new Float32Array(N).fill(Infinity), top: new Float32Array(N).fill(-Infinity),
   isum: new Float64Array(N), in: new Uint32Array(N), rgb: null, rgbN: new Uint32Array(0), water: new Uint16Array(N), building: new Uint16Array(N), multi: new Uint16Array(N), any: new Uint32Array(N)};
- let classed = 0, points = 0;
+ let classed = 0, points = 0, zRef = null;
+ // The fine ground's sums, relative to the first ground height met (a float's
+ // centimetres stay true a few metres either side, not at 1,000 m).
+ const F = fine ? {sum: new Float32Array(fine.nx * fine.nz), n: new Uint16Array(fine.nx * fine.nz)} : null;
+ const fineAt = (x, z) => { const i = Math.round((x - fine.x0) / fine.cell), j = Math.round((z - fine.z0) / fine.cell); return i < 0 || j < 0 || i >= fine.nx || j >= fine.nz ? -1 : j * fine.nx + i; };
  const at = (mx, my) => {
   const x = (mx - cx) * unit.h, z = -(my - cy) * unit.h;
   const i = Math.round((x + halfX) / cell), j = Math.round((z + halfZ) / cell);
@@ -40,12 +60,15 @@ export function createGridder({box, cell = 1, unit = {h: 1, v: 1}}) {
   local: (mx, my) => ({x: (mx - cx) * unit.h, z: -(my - cy) * unit.h}),
   map: (x, z) => ({x: cx + x / unit.h, y: cy - z / unit.h}),
   add(p) {
-   if (NOISE.has(p.cls)) return;
+   if (NOISE.has(p.cls) || !g.sum) return;
    const k = at(p.x, p.y); if (k < 0) return;
    points++;
    const z = p.z * unit.v;
    g.any[k]++;
-   if (GROUND.has(p.cls)) { g.sum[k] += z; g.n[k]++; classed++; g.isum[k] += p.intensity; g.in[k]++; }
+   if (GROUND.has(p.cls)) {
+    g.sum[k] += z; g.n[k]++; classed++; g.isum[k] += p.intensity; g.in[k]++;
+    if (F) { const q = fineAt((p.x - cx) * unit.h, -(p.y - cy) * unit.h); if (q >= 0 && F.n[q] < 65535) { zRef ??= z; F.sum[q] += z - zRef; F.n[q]++; } }
+   }
    else if (p.cls > 1) classed++;
    if (z < g.low[k]) g.low[k] = z;
    // The tops of things: the highest return of any kind, not only first
@@ -99,8 +122,28 @@ export function createGridder({box, cell = 1, unit = {h: 1, v: 1}}) {
    const share = arr => Uint8Array.from(arr, (c, k) => g.any[k] ? Math.min(255, Math.round(255 * c / g.any[k])) : 0);
    let rgb = null;
    if (g.rgb) { rgb = new Uint8Array(N * 3); for (let k = 0; k < N; k++) if (g.rgbN[k]) for (let c = 0; c < 3; c++) rgb[k * 3 + c] = Math.min(255, g.rgb[k * 3 + c] / g.rgbN[k]); }
-   return {nx, nz, cell, halfX, halfZ, center: {...this.center}, unit, ground, surface, canopy, intensity, rgb, water: share(g.water), building: share(g.building), multi: share(g.multi),
-    noReturns: Uint8Array.from(g.any, v => v ? 0 : 1), filled, method, points};
+   // The fine ground, as its difference from the land (above). Only from a
+   // survey's own classes: a ground filter works on the coarse cells.
+   let fineLand = null;
+   if (F && method === 'classified' && zRef !== null) {
+    const detail = new Int16Array(fine.nx * fine.nz).fill(FINE_NONE);
+    const base = (x, z) => { const u = Math.min(nx - 1, Math.max(0, (x + halfX) / cell)), v = Math.min(nz - 1, Math.max(0, (z + halfZ) / cell)), i = Math.min(nx - 2, Math.floor(u)), j = Math.min(nz - 2, Math.floor(v)), fu = u - i, fv = v - j, k = j * nx + i;
+     const a = ground[k] + (ground[k + 1] - ground[k]) * fu, b = ground[k + nx] + (ground[k + nx + 1] - ground[k + nx]) * fu; return a + (b - a) * fv; };
+    for (let j = 0; j < fine.nz; j++) for (let i = 0; i < fine.nx; i++) {
+     const q = j * fine.nx + i; if (F.n[q] < FINE_LEAST) continue;
+     const mm = Math.round((zRef + F.sum[q] / F.n[q] - base(fine.x0 + i * fine.cell, fine.z0 + j * fine.cell)) * 1000);
+     detail[q] = Math.max(-32767, Math.min(32767, mm));
+    }
+    fineLand = {x0: fine.x0, z0: fine.z0, nx: fine.nx, nz: fine.nz, cell: fine.cell, detail};
+   }
+   const out = {nx, nz, cell, halfX, halfZ, center: {...this.center}, unit, ground, surface, canopy, intensity, rgb, water: share(g.water), building: share(g.building), multi: share(g.multi),
+    noReturns: Uint8Array.from(g.any, v => v ? 0 : 1), filled, method, points, ...(fineLand ? {fine: fineLand} : {})};
+   // The sums go once the land is made (22 November 2026): door 2 keeps the
+   // gridder for its map conversions, and with them it kept about 40 bytes a
+   // cell -- 400 MB on a 3 km property -- for nothing.
+   for (const k of Object.keys(g)) g[k] = null;
+   if (F) { F.sum = null; F.n = null; }
+   return out;
   },
  };
 }
