@@ -317,7 +317,7 @@ export default function ({journey, SHOTS}) {
   // Extrapolate: semi-rough laid 4 m round the fairway.
   const semiCells = () => page.evaluate(() => window.fairwayBuilder.door2.model.state.layers.mask('semi')?.reduce((t, v) => t + v, 0) ?? 0);
   const semi0 = await semiCells();
-  await page.locator('.cb-exto').selectOption('semi'); await page.locator('.cb-exwidth').fill('4');
+  await page.locator('.cb-exfrom').selectOption('fairway'); await page.locator('.cb-exto').selectOption('semi'); await page.locator('.cb-exwidth').fill('4');
   await page.getByRole('button', {name: 'Add layer around', exact: true}).click();
   if (!(await semiCells() > semi0)) throw Error('Extrapolate should lay semi-rough round the fairway');
   // The landscape decides the ground types offered: heather is a links' own.
@@ -370,7 +370,7 @@ export default function ({journey, SHOTS}) {
   await page.getByRole('button', {name: 'Clear trees from tees and greens'}).click();
   const over = await page.evaluate(() => { const st = window.fairwayBuilder.door2, L = st.land, g = st.model.state.layers.masks.get('green'); if (!g) return 0; let n = 0; for (const t of st.model.state.trees) { const r = Math.ceil(t.crown / L.cell); const i0 = Math.round((t.x + L.halfX) / L.cell), j0 = Math.round((t.z + L.halfZ) / L.cell); for (let j = j0 - r; j <= j0 + r; j++) for (let i = i0 - r; i <= i0 + r; i++) if (i >= 0 && j >= 0 && i < L.nx && j < L.nz && g[j * L.nx + i] && Math.hypot((i - i0) * L.cell, (j - j0) * L.cell) < t.crown - L.cell) { n++; j = 1e9; break; } } return n; });
   if (over) throw Error(`no tree's crown should reach over a green after clearing: ${over}`);
-  await page.getByRole('button', {name: 'Smooth all edges'}).click();
+  await page.locator('[data-clean="smooth"]').click();
   await t.shot('corrected');
   await page.getByRole('button', {name: 'Next: mark holes'}).click();
   // 4. Nine holes, each a left click: the back tee, an aim point on the

@@ -208,7 +208,16 @@ export function createTrace(grid, {codes = null, trees = [], homes = [], rocks =
   // floor only on bare ground, and plants no tree on a surface or a house.
   // `size(x, z, rnd)`: a planted tree's {h, crown} (wood-size.js, from the
   // survey; 22 November 2026), or null for the `height` and `crown` ranges.
-  fillOutside(ring, {ground = null, density = 120, edge = 15, height = [10, 22], crown = [2.5, 5], seed = 1, keep = false, size = null} = {}) {
+  // THE TREES ON THEIR OWN (the owner, 23 November 2026: "does fill outside
+  // while keeping also keep trees ... It probably should remove trees but
+  // keep everything else"): `trees` 'replace' takes every tree outside off and
+  // plants the wood, 'keep' leaves them and plants only in the gaps (what
+  // `keep` meant for trees until then, and still its default), 'none' takes
+  // them off and plants nothing. `where(x, z)`: plant only where it says (the
+  // survey's canopy, so a field stays a field); `vary`: each planted tree's
+  // height and crown scaled by up to that share either way (a wood sized from
+  // one canopy height came out one height).
+  fillOutside(ring, {ground = null, density = 120, edge = 15, height = [10, 22], crown = [2.5, 5], seed = 1, keep = false, size = null, trees = keep ? 'keep' : 'replace', where = null, vary = 0} = {}) {
    if (!ring || ring.length < 3) return 0;
    const G = ground && ground !== 'rough' ? layerOf(ground) : null;
    let q = seed >>> 0 || 1; const rnd = () => (q = (q * 1103515245 + 12345) % 2147483648) / 2147483648;
@@ -227,16 +236,20 @@ export function createTrace(grid, {codes = null, trees = [], homes = [], rocks =
     }
     keepTrees();
     const onHome = (x, z) => s.homes.some(h => Math.hypot(h.x - x, h.z - z) < Math.max(h.width, h.depth) / 2 + 3);
-    if (!keep) { keepHomes(); s.homes = s.homes.filter(h => inside(ring, h.x, h.z)); s.trees = s.trees.filter(t => inside(ring, t.x, t.z)); }
+    if (!keep) { keepHomes(); s.homes = s.homes.filter(h => inside(ring, h.x, h.z)); }
+    if (trees !== 'keep') s.trees = s.trees.filter(t => inside(ring, t.x, t.z));
+    if (trees === 'none' || !(density > 0)) return;
     const spacing = Math.sqrt(1e4 / density), stood = new Map(), at = (x, z) => `${Math.floor(x / spacing)},${Math.floor(z / spacing)}`;
     for (const t of s.trees) { const c = at(t.x, t.z); stood.set(c, (stood.get(c) || 0) + 1); }
     for (let z = -halfZ; z <= halfZ; z += spacing) for (let x = -halfX; x <= halfX; x += spacing) {
      const px = x + (rnd() - .5) * spacing * .9, pz = z + (rnd() - .5) * spacing * .9;
      if (Math.abs(px) > halfX || Math.abs(pz) > halfZ || inside(ring, px, pz) || stood.get(at(px, pz))) continue;
      if (rnd() > Math.min(1, segDist(px, pz) / edge)) continue;
+     if (where && !where(px, pz)) continue;
      if (keep) { const k = idx(px, pz); if (k >= 0 && layers.codes[k] && !(G && layers.mask(G)?.[k])) continue; if (onHome(px, pz)) continue; }
-     const sized = size?.(px, pz, rnd);
-     s.trees.push(sized ? {x: px, z: pz, h: sized.h, crown: sized.crown} : {x: px, z: pz, h: height[0] + rnd() * (height[1] - height[0]), crown: crown[0] + rnd() * (crown[1] - crown[0])}); planted++;
+     const sized = size?.(px, pz, rnd), f = vary > 0 ? 1 + (rnd() * 2 - 1) * vary : 1;
+     const t = sized ? {h: sized.h, crown: sized.crown} : {h: height[0] + rnd() * (height[1] - height[0]), crown: crown[0] + rnd() * (crown[1] - crown[0])};
+     s.trees.push({x: px, z: pz, h: t.h * f, crown: t.crown * f}); planted++;
     }
    });
    return planted;

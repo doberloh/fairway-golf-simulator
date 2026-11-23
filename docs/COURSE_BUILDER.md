@@ -1536,6 +1536,54 @@ the yards and the scorecard when it lands. In the 3D editor, **Drag markers** do
 the same for tees, bends and greens (14 pixels, PLACED), one undo a drag; door 2's
 step has no undo, and never had. Not seen on screen.
 
+### Clean up, Add layer around, Outside the course, darker cart paths (23 November 2026)
+
+The owner, on the trace step's panel: the extrapolate "drop down and
+measurement around isnt clear what that is for"; "a sub box for both smooth
+and reduce specs that also has a selector for what you are applying to";
+"smooth edges on thin shapes like cart paths will completely delete large
+sections of it"; Fill outside "fills at the same height, but also i feel like
+it is still the same or even more trees than if i kept the original LIDAR
+data ... its not clear in the UI that the drop down applies to the fill
+outside button"; "does fill outside while keeping also keep trees ... It
+probably should remove trees but keep everything else"; the section named
+"something else like 'boundary and trees'"; and "cart paths for all courses
+should be a much darker grey color". Built (not yet tested, by the owner's
+word: "dont do the checks or tests yet"):
+
+- **Add layer around** is its own section: **Around** (the layer), **Lay**
+  (the layer laid round it), **Width, metres**, then the button. It no longer
+  takes the layer being painted.
+- **Clean up** holds two boxes, **Smooth edges** and **Remove specks**, each
+  with its **Layer** (every layer, or one), then Clear trees from tees and
+  greens.
+- **Thin shapes survive smoothing** (layer-ops.js `smoothCells`, both
+  editors): a cell is taken off only where some cell within the smoothing
+  radius lies more than the radius inside the shape -- so a cart path, a
+  narrow tee or a creek's strip keeps every cell, and a fairway's edge is
+  rounded as before. Filling a notch is unchanged.
+- **Outside the course** (was Course boundary): 1 the boundary line, 2 a
+  **Fill outside boundary** box with each choice labelled above its button --
+  **Surfaces and houses** (Keep them, the default now; Remove them),
+  **Ground** (the landscape's floor, or Rough), **Trees** (Replace with a new
+  wood, the default; Keep them, fill the gaps; Remove them all), **Plant**
+  (Only where the LIDAR saw trees, the default; Everywhere outside),
+  **Trees per hectare** (empty: as many as the LIDAR found outside the line,
+  a hectare of the ground they could stand on), **Height variety, %** (20 by
+  default: each new tree up to that much taller or shorter, so a wood sized
+  from one canopy is not one height). Until now "Keep what is outside" kept
+  the LIDAR's trees too and planted in the gaps, and the wood went in at the
+  landscape's density (150 a hectare where needles or leaves fall) everywhere
+  outside, fields included -- more trees than the survey had.
+- **Cart paths dark grey on every course** (grounds.js `GROUNDS.path.map`
+  #4b4d51, was #d9d2c2): a built course's path layer, a generated course's
+  paths whatever the landscape's surface (renderer.js `cartpath`, asphalt's
+  texture; boardwalks, roads and drives keep theirs), the hole map and the
+  builder's plan. Drawing only: no version moves.
+
+Read as "fills at the same height": the wood's trees all one height (sized
+from one canopy height); the ground itself is not changed by Fill outside.
+
 ### The course's outline: full detail inside, less outside (22-23 November 2026)
 
 The owner, after the builder hung on a 3 x 3.2 km Alpine Lake square (the

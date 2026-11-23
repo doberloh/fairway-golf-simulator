@@ -46,7 +46,7 @@ import {createGridder} from '../lidar/land.js';
 import {trace, refineTrace} from '../lidar/trace.js';
 import {fetchOsm, osmFeatures, layOsm, osmBoundary, mergeTrees, OSM_CREDIT, courseOutline} from './osm.js';
 import {ringPress, ringHectares} from './outline-ring.js';
-import {osmCourses, osmHoles, shiftHoles, fitHoles, osmTeeSets} from './osm-course.js';
+import {osmCourses, osmHoles, shiftHoles, fitHoles, osmTeeSets, insideRing} from './osm-course.js';
 import {TEE_ORDER, TEE_COLOURS, GENERATED_TEES, courseSets, backTee, colourOf, teeName} from '../tees.js';
 import {sourceBox, sourcesBox, crsOfSources, landFromSources, pictureOnLand, affineFromPairs, docFromLand, layerRings, lidarTexels, coverage, parFor, LIDAR_VIEWS, MAX_PROPERTY, cellFor} from './real-course.js';
 import {DETAIL} from '../lidar/detail.js';
@@ -80,7 +80,7 @@ import {landscapeMap} from '../ui-map.js';
 const {el} = ui;
 const frame = () => new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
 const hex = h => { const n = parseInt(String(h).slice(1, 7), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
-const OWN = {fairway: [70, 170, 60], semi: [150, 200, 100], tee: [120, 220, 150], green: [150, 245, 150], sand: [245, 228, 175], water: [60, 120, 220], path: [210, 205, 195]};
+const OWN = {fairway: [70, 170, 60], semi: [150, 200, 100], tee: [120, 220, 150], green: [150, 245, 150], sand: [245, 228, 175], water: [60, 120, 220], path: [75, 77, 81]};
 const COLOUR = Object.fromEntries(PALETTE.map(k => [k, k === 'rough' ? null : OWN[k] ?? hex(GROUNDS[k]?.map ?? '#888888')]));
 const LABEL = k => ({rough: 'Rough', fairway: 'Fairway', semi: 'Semi-rough', tee: 'Tee', green: 'Green', sand: 'Sand', water: 'Water', path: 'Cart path'})[k] ?? GROUNDS[k]?.label ?? k;
 // What a ZIP may hold that door 2 reads (a portal's notes and READMEs left out).
@@ -1689,19 +1689,45 @@ export function open(draft = null) {
   }));
  }
  const ringArea = r => { let a = 0; for (let i = 0, j = r.length - 1; i < r.length; j = i++) a += r[j][0] * r[i][1] - r[i][0] * r[j][1]; return Math.abs(a) / 2; };
+ // WHERE THE SURVEY SAW TREES: canopy of 2 m or more, not a roof (wood-size.js
+ // reads it the same way). Null with no canopy (a course opened from a file).
+ const canopyAt = () => {
+  const L = st.land; if (!L?.canopy?.some(v => v >= 2)) return null;
+  return (x, z) => { const i = Math.round((x + L.halfX) / L.cell), j = Math.round((z + L.halfZ) / L.cell); if (i < 0 || j < 0 || i >= L.nx || j >= L.nz) return false; const k = j * L.nx + i; return L.canopy[k] >= 2 && !L.building?.[k]; };
+ };
+ // THE SURVEY'S OWN DENSITY OUTSIDE THE LINE (the owner, 23 November 2026: "i
+ // feel like it is still the same or even more trees than if i kept the
+ // original LIDAR data"): the survey's trees outside the boundary a hectare
+ // of the ground they could stand on there (the canopy, or all of it),
+ // counted on every other cell, row by row.
+ function surveyDensity(ring, where) {
+  const L = st.land, s = 2, trees = st.trees.filter(t => !insideRing(ring, t.x, t.z)).length;
+  let cells = 0;
+  for (let j = 0; j < L.nz; j += s) {
+   const z = -L.halfZ + j * L.cell, xs = [];
+   for (let p = 0, o = ring.length - 1; p < ring.length; o = p++) { const [ax, az] = ring[o], [bx, bz] = ring[p]; if ((az > z) !== (bz > z)) xs.push(ax + (z - az) / (bz - az) * (bx - ax)); }
+   xs.sort((u, v) => u - v);
+   for (let i = 0; i < L.nx; i += s) { const x = -L.halfX + i * L.cell; let inn = false; for (const c of xs) if (c < x) inn = !inn; if (!inn && (!where || where(x, z))) cells++; }
+  }
+  const ha = cells * (s * L.cell) ** 2 / 1e4;
+  return ha > 0 ? Math.max(5, Math.round(trees / ha)) : null;
+ }
  function fillOutsideNow() {
   if (!st.boundary) return say('Draw the boundary first, or download OpenStreetMap\'s.', true);
-  const bio = BIOMES[st.landscape], ground = outsideGround(bio), density = outsideTrees(st.landscape);
+  const bio = BIOMES[st.landscape], ground = st.outGround === 'rough' ? null : outsideGround(bio);
+  const keep = st.outsideKeep !== false, trees = st.outTrees ?? 'replace', canopy = canopyAt(), where = (st.outWhere ?? 'canopy') === 'canopy' ? canopy : null;
   setBusy('Filling outside the boundary…');
   try {
-   const homes = st.model.state.homes.length, keep = !!st.outsideKeep;
-   const trees0 = st.model.state.trees.length;
-   // Each tree sized from the survey where it is planted (wood-size.js; the
-   // owner, 22 November 2026), or the old 10-22 m with nothing to size from.
-   const size = woodSizer(st.land, st.trees);
-   const n = st.model.fillOutside(st.boundary, {ground, density, keep, size, seed: st.model.state.undo.length + 1}), gone = homes - st.model.state.homes.length, treesGone = trees0 - (st.model.state.trees.length - n);
+   const homes = st.model.state.homes.length, trees0 = st.model.state.trees.length;
+   // As many trees a hectare as the survey has outside the line (unless set),
+   // each sized from the survey where it is planted (wood-size.js), its height
+   // varied by the share asked.
+   const auto = canopy ? surveyDensity(st.boundary, where) : null, density = st.outDensity > 0 ? st.outDensity : auto ?? outsideTrees(st.landscape);
+   const size = woodSizer(st.land, st.trees), vary = (st.outVary ?? 20) / 100;
+   const n = st.model.fillOutside(st.boundary, {ground, density, keep, trees, where, vary, size, seed: st.model.state.undo.length + 1}), gone = homes - st.model.state.homes.length, treesGone = trees0 - (st.model.state.trees.length - n);
    paintCodes(); refreshCount(); plan.draw();
-   say(`Outside the boundary: ${keep ? 'what was there kept (OpenStreetMap\'s and yours), ' : `everything taken off first (every surface${gone ? `, ${gone} house${gone === 1 ? '' : 's'}` : ''}${treesGone ? `, ${treesGone.toLocaleString()} trees` : ''}), then `}${ground ? LABEL(ground).toLowerCase() : 'rough'}${keep ? ' on the bare ground' : ''} and ${n.toLocaleString()} trees (${density} a hectare, thinning in from the line; ${size ? 'each as tall as the survey\'s canopy where it stands, or as one of the survey\'s own trees on open ground' : '10 to 22 m: there is no survey here to size them from'}). Past the land the game's landscape carries on, as round a generated course. Undo takes it back.`);
+   const treeWords = trees === 'none' ? `${treesGone.toLocaleString()} trees taken off, none planted` : trees === 'keep' ? `the trees kept, ${n.toLocaleString()} added in the gaps` : `${treesGone.toLocaleString()} trees replaced by ${n.toLocaleString()}`;
+   say(`Outside the boundary: ${keep ? 'surfaces and houses kept' : `surfaces${gone ? ` and ${gone} house${gone === 1 ? '' : 's'}` : ''} removed`}; ground ${ground ? LABEL(ground).toLowerCase() : 'rough'}${keep ? ' where nothing was laid' : ''}; ${treeWords}${trees === 'none' ? '' : ` (${density} a hectare${st.outDensity > 0 ? '' : auto ? ', the survey\'s own density' : ', the landscape\'s'}${where ? ', only where the survey saw trees' : ''}, height varied by up to ${Math.round(vary * 100)}%)`}. Undo takes it back.`);
   } finally { setBusy(''); }
  }
  // CLEAR TREES FROM TEES AND GREENS (tree-clear.js): every crown reaching
@@ -1716,8 +1742,8 @@ export function open(draft = null) {
   say(got.shrunk || got.removed ? `Off the greens and tees: ${got.shrunk.toLocaleString()} crowns drawn in, ${got.removed.toLocaleString()} trees with no room taken out. Undo puts them back.` : 'No tree reaches over a green or a tee.');
  }
  function extrapolateNow() {
-  const from = st.kind, to = st.exTo;
-  if (from === 'rough' || !st.model.state.layers.masks.get(from)?.some(v => v)) return say(`Pick a layer with something on it to extrapolate from; ${LABEL(from).toLowerCase()} has nothing.`, true);
+  const from = st.exFrom ?? 'fairway', to = st.exTo;
+  if (from === 'rough' || !st.model.state.layers.masks.get(from)?.some(v => v)) return say(`Pick a layer under Around that has something on it; ${LABEL(from).toLowerCase()} has nothing.`, true);
   if (to === from) return say('Pick another layer to lay round it.', true);
   st.model.extrapolate({from, to, width: st.exWidth}); paintCodes(); refreshCount();
   say(`${LABEL(to)} laid ${st.exWidth} m round the ${LABEL(from).toLowerCase()}. Undo takes it back.`);
@@ -1891,25 +1917,57 @@ export function open(draft = null) {
     suggestionLine() ? el('small', {class: 'cb-suggest'}, suggestionLine()) : null,
     landscapeMap(document, {built: BIOME_KEYS, chosen: st.landscape, mark: (c => c && [c.lat, c.lon])(surveyPlace()), onPick: k => { st.landscape = k; st.landscapePicked = true; go(2); }}).el,
     el('select', {class: 'cb-landscape', onchange: e => { st.landscape = e.target.value; st.landscapePicked = true; go(2); }}, BIOME_KEYS.map(k => el('option', {value: k, selected: k === st.landscape}, BIOMES[k].name)))),
-   // THE COURSE BOUNDARY (the owner, 1 November 2026).
-   fold('boundary', 'Course boundary', st.boundary ? `${(ringArea(st.boundary) / 1e4).toFixed(1)} ha` : 'not drawn', false,
-    el('small', {}, st.boundary ? `Boundary: ${(ringArea(st.boundary) / 1e4).toFixed(1)} ha (dashed line). Fill outside boundary lays the landscape's ground and a wood outside the line, thinner near it, each tree sized from the LIDAR. Choose below whether surfaces, houses and trees already outside are removed or kept.` : 'Draw a line round the course (OpenStreetMap supplies one if it has it). Then Fill outside boundary lays the landscape\'s ground and a wood outside it.'),
-    el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn' + (st.tool === 'boundary' ? ' cb-on' : ''), type: 'button', 'data-tool': 'boundary', onclick: () => setTool('boundary')}, st.boundary ? 'Redraw boundary' : 'Draw boundary'),
-     el('select', {class: 'cb-outside', title: 'What happens to the surfaces and houses already outside the line (OpenStreetMap\'s roads, ponds and buildings, or your own)', onchange: e => { st.outsideKeep = e.target.value === 'keep'; }},
-      el('option', {value: 'remove', selected: !st.outsideKeep}, 'Remove what is outside'), el('option', {value: 'keep', selected: !!st.outsideKeep}, 'Keep what is outside')),
-     el('button', {class: 'cb-btn', type: 'button', disabled: !st.boundary, title: 'Lay the landscape\'s ground and a wood outside the line; one Undo takes it back', onclick: fillOutsideNow}, 'Fill outside boundary'))),
+   // OUTSIDE THE COURSE (the owner, 1 November 2026; renamed from Course
+   // boundary, 23 November 2026: "the course boundary box would make more
+   // sense if it was named something else like 'boundary and trees'"): the
+   // line, then each choice Fill outside boundary makes, labelled, above it.
+   fold('boundary', 'Outside the course', st.boundary ? `boundary ${(ringArea(st.boundary) / 1e4).toFixed(1)} ha` : 'no boundary yet', false,
+    el('small', {}, '1. Draw the course boundary (OpenStreetMap supplies one when it has it). 2. Choose what happens outside it. 3. Press Fill outside boundary. One Undo takes it back.'),
+    el('button', {class: 'cb-btn' + (st.tool === 'boundary' ? ' cb-on' : ''), type: 'button', 'data-tool': 'boundary', onclick: () => setTool('boundary')}, st.boundary ? 'Redraw boundary' : 'Draw boundary'),
+    st.boundary ? el('small', {}, `Boundary: ${(ringArea(st.boundary) / 1e4).toFixed(1)} ha (the dashed line).`) : null,
+    el('div', {class: 'cb-subbox'}, el('b', {}, 'Fill outside boundary'),
+     el('label', {class: 'cb-opt'}, 'Surfaces and houses', el('select', {class: 'cb-outside', title: 'OpenStreetMap\'s roads, ponds and buildings, or your own, already outside the line', onchange: e => { st.outsideKeep = e.target.value === 'keep'; }},
+      el('option', {value: 'keep', selected: st.outsideKeep !== false}, 'Keep them'), el('option', {value: 'remove', selected: st.outsideKeep === false}, 'Remove them'))),
+     el('label', {class: 'cb-opt'}, 'Ground', el('select', {class: 'cb-outground', title: 'What the bare ground outside becomes', onchange: e => { st.outGround = e.target.value; }},
+      el('option', {value: 'floor', selected: st.outGround !== 'rough'}, (g => g ? LABEL(g) : 'Rough')(outsideGround(BIOMES[st.landscape]))), el('option', {value: 'rough', selected: st.outGround === 'rough'}, 'Rough'))),
+     el('label', {class: 'cb-opt'}, 'Trees', el('select', {class: 'cb-outtrees', title: 'What happens to the trees outside the line', onchange: e => { st.outTrees = e.target.value; go(2); }},
+      [['replace', 'Replace with a new wood'], ['keep', 'Keep them, fill the gaps'], ['none', 'Remove them all']].map(([v, t]) => el('option', {value: v, selected: v === (st.outTrees ?? 'replace')}, t)))),
+     (st.outTrees ?? 'replace') === 'none' ? null : el('label', {class: 'cb-opt'}, 'Plant', el('select', {class: 'cb-outwhere', title: 'Where the new trees may stand', onchange: e => { st.outWhere = e.target.value; }},
+      el('option', {value: 'canopy', selected: (st.outWhere ?? 'canopy') === 'canopy'}, 'Only where the LIDAR saw trees'), el('option', {value: 'all', selected: st.outWhere === 'all'}, 'Everywhere outside'))),
+     (st.outTrees ?? 'replace') === 'none' ? null : el('label', {class: 'cb-opt'}, 'Trees per hectare', el('input', {type: 'number', class: 'cb-outdensity', min: 0, max: 600, step: 5, value: st.outDensity || '', placeholder: 'as the LIDAR', title: 'Empty: as many as the LIDAR found outside the line', oninput: e => { st.outDensity = +e.target.value || null; }})),
+     (st.outTrees ?? 'replace') === 'none' ? null : el('label', {class: 'cb-opt'}, 'Height variety, %', el('input', {type: 'number', class: 'cb-outvary', min: 0, max: 50, step: 5, value: st.outVary ?? 20, title: 'Each new tree up to this much taller or shorter than the LIDAR says', oninput: e => { st.outVary = Math.max(0, Math.min(50, +e.target.value || 0)); }})),
+     el('button', {class: 'cb-btn cb-hot', type: 'button', disabled: !st.boundary, title: 'Do the choices above outside the line; one Undo takes it back', onclick: fillOutsideNow}, 'Fill outside boundary'))),
    // HISTORY (item 11): the last changes, newest first; a click undoes back to there.
    fold('history', 'History', names.undo.length ? `${names.undo.length} change${names.undo.length === 1 ? '' : 's'}` : 'nothing yet', false, historyList),
    // CLEAN-UP: what works on the whole trace at once.
-   fold('cleanup', 'Clean up', 'edges, specks, surrounds', false,
-    el('small', {}, 'Add layer around: lays the chosen layer a set width (metres) round the layer you are painting, e.g. semi-rough round a fairway. The game adds the green fringe itself.'),
-    el('div', {class: 'cb-btns'}, el('select', {class: 'cb-exto', onchange: e => { st.exTo = e.target.value; }}, kindsShown().filter(k => k !== 'rough').map(k => el('option', {value: k, selected: k === st.exTo}, LABEL(k)))),
-     el('input', {type: 'number', class: 'cb-exwidth', min: .5, max: 40, step: .5, value: st.exWidth, title: 'metres', oninput: e => { st.exWidth = +e.target.value || 4; }})),
-    el('button', {class: 'cb-btn', type: 'button', onclick: extrapolateNow}, 'Add layer around'),
-    el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.model.smooth({radius: 1.5}); paintCodes(); refreshCount(); }}, 'Smooth all edges'),
-     el('button', {class: 'cb-btn', type: 'button', onclick: () => { st.model.tidy(); paintCodes(); refreshCount(); }}, 'Remove specks'),
-     el('button', {class: 'cb-btn', type: 'button', onclick: clearTurfTreesNow}, 'Clear trees from tees and greens'))),
+   // ADD LAYER AROUND, its own section (the owner, 23 November 2026: "the
+   // drop down and measurement around isnt clear what that is for"): which
+   // layer, which layer to lay round it, how wide, each named.
+   fold('around', 'Add layer around', 'e.g. semi-rough round fairways', false,
+    el('small', {}, 'Lays one layer in a band round another, for example semi-rough round every fairway. The game adds the fringe round greens itself.'),
+    el('label', {class: 'cb-opt'}, 'Around', el('select', {class: 'cb-exfrom', title: 'The layer to lay the band round', onchange: e => { st.exFrom = e.target.value; }}, kindsShown().filter(k => k !== 'rough').map(k => el('option', {value: k, selected: k === (st.exFrom ?? 'fairway')}, LABEL(k))))),
+    el('label', {class: 'cb-opt'}, 'Lay', el('select', {class: 'cb-exto', title: 'The layer the band is made of', onchange: e => { st.exTo = e.target.value; }}, kindsShown().filter(k => k !== 'rough').map(k => el('option', {value: k, selected: k === st.exTo}, LABEL(k))))),
+    el('label', {class: 'cb-opt'}, 'Width, metres', el('input', {type: 'number', class: 'cb-exwidth', min: .5, max: 40, step: .5, value: st.exWidth, title: 'How wide the band is', oninput: e => { st.exWidth = +e.target.value || 4; }})),
+    el('button', {class: 'cb-btn', type: 'button', onclick: extrapolateNow}, 'Add layer around')),
+   // CLEAN UP (the owner, 23 November 2026: "a sub box for both smooth and
+   // reduce specs that also has a selector for what you are applying to"):
+   // each its own box with the layer it works on, every layer by default.
+   fold('cleanup', 'Clean up', 'smooth edges, remove specks', false,
+    el('div', {class: 'cb-subbox'}, el('b', {}, 'Smooth edges'),
+     el('small', {}, 'Rounds ragged edges. Thin shapes such as cart paths are kept whole.'),
+     el('label', {class: 'cb-opt'}, 'Layer', layerPick('smoothOn')),
+     el('button', {class: 'cb-btn', type: 'button', 'data-clean': 'smooth', title: 'Round every ragged edge of the layer chosen (or of every layer)', onclick: () => { st.model.smooth({radius: 1.5, kind: st.smoothOn || null}); paintCodes(); refreshCount(); say(`Edges smoothed: ${st.smoothOn ? LABEL(st.smoothOn).toLowerCase() : 'every layer'}. Undo takes it back.`); }}, 'Smooth edges')),
+    el('div', {class: 'cb-subbox'}, el('b', {}, 'Remove specks'),
+     el('small', {}, 'Removes tiny patches and fills tiny holes.'),
+     el('label', {class: 'cb-opt'}, 'Layer', layerPick('specksOn')),
+     el('button', {class: 'cb-btn', type: 'button', 'data-clean': 'specks', title: 'Take off tiny patches and fill tiny holes on the layer chosen (or on every layer)', onclick: () => { st.model.tidy({kind: st.specksOn || null}); paintCodes(); refreshCount(); say(`Specks removed: ${st.specksOn ? LABEL(st.specksOn).toLowerCase() : 'every layer'}. Undo takes it back.`); }}, 'Remove specks')),
+    el('button', {class: 'cb-btn', type: 'button', onclick: clearTurfTreesNow}, 'Clear trees from tees and greens')),
    experimental];
+ }
+ // A layer picker for a clean-up box: every layer, or one ('' is every layer).
+ function layerPick(key) {
+  return el('select', {class: `cb-${key.toLowerCase()}`, onchange: e => { st[key] = e.target.value; }},
+   el('option', {value: '', selected: !st[key]}, 'Every layer'), ...kindsShown().filter(k => k !== 'rough').map(k => el('option', {value: k, selected: k === st[key]}, LABEL(k))));
  }
  async function fetchImagery(key, apiKey, keys) {
   const ll = lonLatOfLocal();
@@ -2331,7 +2389,7 @@ export function open(draft = null) {
    const doc = st.doc = validateDoc(docFromLand({treePlan: st.treePlan, surround: st.surround, land: st.land, traced: {layers: st.model.state.layers}, holes, trees: st.model.state.trees.map(t => st.treeScale === 1 ? t : {...t, h: t.h * st.treeScale, crown: t.crown * st.treeScale, ...(t.trunk ? {trunk: t.trunk * st.treeScale} : {})}), homes: st.model.state.homes, bunkers: st.model.state.bunkers, creekLines: st.model.state.creekLines, name: st.name.trim() || 'My real course', landscape: st.landscape, credits: st.credits, landEdits: st.landEdits, creeks: st.creeks, rocks: st.model?.state.rocks ?? st.rocks,
     source: {files: st.sources.map(s => s.name), epsg: crsOfSources(st.sources)?.epsg ?? null, crs: crsOfSources(st.sources) ?? null, geo: st.geo, origin: {x: st.gridder.center.x, y: st.gridder.center.y}, trace: st.traceMode, picture: st.picShow === 'lidar' ? 'lidar' : st.picture ? 'placed' : 'none'}}));
    const w = worldFromDoc(doc), bio = BIOMES[st.landscape], mt = bio.mapTurf || {};
-   const col = {green: hex(mt.green ?? bio.green), fringe: hex(bio.fringe ?? mt.green ?? bio.green), fairway: hex(mt.fairway ?? bio.fairway), tee: hex(mt.fairway ?? bio.fairway), semi: hex(mt.semi ?? bio.semi), rough: hex(bio.rough), sand: hex(bio.sand), water: [52, 104, 160], path: [205, 200, 190]};
+   const col = {green: hex(mt.green ?? bio.green), fringe: hex(bio.fringe ?? mt.green ?? bio.green), fairway: hex(mt.fairway ?? bio.fairway), tee: hex(mt.fairway ?? bio.fairway), semi: hex(mt.semi ?? bio.semi), rough: hex(bio.rough), sand: hex(bio.sand), water: [52, 104, 160], path: [75, 77, 81]};
    const {nx, nz, cell, halfX, halfZ, ground: g} = st.land, N = nx * nz;
    plan.setLayer('course', d => {
     for (let k = 0; k < N; k++) {

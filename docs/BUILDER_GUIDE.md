@@ -170,6 +170,19 @@ yards, metres and rise or fall between two clicks. **Paint rock on slopes** pain
 the landscape's rock on the steep ground in one go; press and hold **Hold to
 show before** to compare.
 
+**Clean up**: **Smooth edges** rounds ragged edges (thin shapes such as cart
+paths are kept whole) and **Remove specks** takes off tiny patches; each has a
+**Layer** picker (every layer, or one). **Add layer around** lays one layer in
+a band round another: pick **Around** (fairway), **Lay** (semi-rough) and the
+**Width**.
+
+**Outside the course**: draw the course boundary, then in the **Fill outside
+boundary** box choose what happens outside it -- surfaces and houses kept or
+removed, the ground, the trees (replaced by a new wood, kept, or removed),
+where new trees may stand (only where the LIDAR saw trees, or everywhere), how
+many a hectare (empty: as many as the LIDAR found) and how much their heights
+vary -- and press **Fill outside boundary**.
+
 Undo (Ctrl+Z) says what it will undo, and the **History** section lists your
 last changes with **Undo to here**.
 

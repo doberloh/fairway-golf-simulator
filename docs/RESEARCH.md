@@ -11048,6 +11048,19 @@ against the old 10 to 22 m evenly. A suburban parkland's woods are mostly
 lower than the old sizes put them. Not yet looked at in the builder or the
 game.
 
+**23 November 2026, Fill outside's own choices** (COURSE_BUILDER.md, *Clean
+up, Add layer around, Outside the course*). The owner found the wood "the
+same or even more trees than if i kept the original LIDAR data" and all one
+height. Now, by default: trees only where the survey's canopy is 2 m or more
+(not a roof), as many a hectare of that canopy as the survey's own trees
+outside the line (counted on every other land cell, at least 5 a hectare),
+and each tree's height and crown scaled by up to **20% either way (PLACED)**.
+Not measured on a real course yet. **Thin shapes and smoothing**: the
+majority over a 1.5 m circle took off every cell of a shape narrower than
+about half the circle (a 2.5 m cart path on 1 m land); a cell is now taken off
+only where some cell within the radius lies more than the radius inside the
+shape -- no new number.
+
 ## Finding LIDAR from the builder (1 November 2026)
 
 The owner asked for LIDAR searched for and downloaded inside the builder

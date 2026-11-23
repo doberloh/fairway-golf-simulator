@@ -513,6 +513,18 @@ here is a claim of support until it is done.
   out now says why (no land yet, land still building, the survey not placed
   on the globe, anything thrown): ask the owner what the button says now.
 
+- [ ] **Clean up, Add layer around, Outside the course and dark cart paths:
+  untested** (branch `builder-big-zips`, 23 November 2026; COURSE_BUILDER.md,
+  *Clean up, Add layer around, Outside the course, darker cart paths*).
+  Built and both pages build; by the owner's word ("dont do the checks or
+  tests yet") no Node test or journey was run. Owed: tests for the thin-shape
+  smoothing (layer-ops.js, a 2.5 m path through a smoothing that kept to
+  remove it), Fill outside's new options (trace-edit.js `trees`, `where`,
+  `vary`; door-real.js `surveyDensity`), the builder journeys (door-2 and
+  door-2-osm press the new controls; door-2-osm's Fill outside expectations
+  assume the old defaults), the guide pictures, and a look at the dark paths
+  in the game.
+
 - [ ] **The course's outline and the half-metre ground, by hand** (branch
   `builder-big-zips`, 22-23 November 2026; COURSE_BUILDER.md, *The course's
   outline*). Built and tested in Node and in the builder journeys (an outline
