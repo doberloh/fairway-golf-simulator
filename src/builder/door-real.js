@@ -35,7 +35,7 @@ import {fromEditor} from './round-trip.js';
 import {preview} from './preview.js';
 import {coverOptions, coverByKey, COVER_RANGE, treeChoices} from './cover.js';
 import {cornersOf, anchorHit} from './layer-ops.js';
-import {markNear, moveMark, pressOn} from './hole-marks.js';
+import {markNear, moveMark, pressOn, nextToMark} from './hole-marks.js';
 import {fileName} from '../course-file.js';
 import {openSource, formOf} from '../lidar/formats.js';
 import {readGeoTiffRgb} from '../lidar/geotiff.js';
@@ -90,7 +90,11 @@ const IMAGE = /\.(png|jpe?g|webp|gif|bmp)$/i, WORLD = /\.(pgw|jgw|tfw|wld|j2w|bp
 // 80 elsewhere (PLACED: by eye against the generated courses' edges).
 const outsideGround = bio => bio.fallen?.kind ?? bio.landform?.kinds?.floor ?? (['native', 'heather'].includes(bio.landform?.kinds?.a) ? bio.landform.kinds.a : null);
 const outsideTrees = key => BIOMES[key].fallen ? 150 : ['links', 'desert', 'florida'].includes(regionOf(key)) ? 15 : 80;
+// The mark in hand, in words: a tee by its set's colour (tees.js), the
+// three old set names a draft from before the six may hold, an aim point, the
+// green.
 const MARK_NAME = {back: 'back tee', middle: 'middle tee', front: 'front tee', aim: 'aim point', green: 'green'};
+const markName = m => MARK_NAME[m] ?? (TEE_COLOURS[m] ? `${m} tee` : m);
 // THE TRACE STEP'S TOOLS, in the palette's order, with their keys (the
 // builder-ux goal): [key, name, shortcut, the palette's group].
 const TOOL_LIST = [['move', 'Move the view', 'H', 0], ['select', 'Select shape', 'V', 0],
@@ -340,7 +344,7 @@ export function open(draft = null) {
   const k = LABEL(st.kind).toLowerCase(), r = st.size, view = 'Right-drag or Space-drag moves the view; the wheel zooms.', corners = n => `${n} node${n === 1 ? '' : 's'}: click to add more${n >= 3 ? ', click the first node to close' : ''}; Enter fills, Backspace takes the last off, Esc drops it.`;
   let t = '';
   if (st.step === 0) t = st.map ? `Drag a box round the course on the map, then Build it for me or Build it myself. ${view}` : st.preview ? `Drag a box round the property on the relief. ${view}` : '';
-  else if (st.step === 3) t = `Hole ${st.hole + 1}: click to place its ${MARK_NAME[st.mark] ?? st.mark}, or drag any mark to move it. ${view}`;
+  else if (st.step === 3) t = `Hole ${st.hole + 1}: click to place its ${markName(st.mark)}, or drag any mark to move it. ${view}`;
   else if (st.step === 2 && !st.model && st.tool !== 'align') t = st.land ? 'Fetch OpenStreetMap, or press Auto trace or Manual trace, to start.' : '';
   else if (st.step === 2) {
    const all = st.kind === 'rough';
@@ -429,7 +433,12 @@ export function open(draft = null) {
    if (!h) return;
    const on = n === st.hole, line = holeLine(h);
    if (line.length >= 2) { ctx.strokeStyle = on ? '#fde68a' : 'rgba(255,255,255,.75)'; ctx.lineWidth = (on ? 2 : 1.2) * px; ctx.beginPath(); line.forEach(([x, z], q) => { const [sx, sy] = p.toScreen(x, z); q ? ctx.lineTo(sx, sy) : ctx.moveTo(sx, sy); }); ctx.stroke(); }
-   for (const t of h.tees) { const [x, y] = p.toScreen(t.x, t.z); ctx.fillStyle = {back: '#4385d5', middle: '#f4f2e7', front: '#d75c52'}[t.set]; ctx.beginPath(); ctx.arc(x, y, 5 * px, 0, 7); ctx.fill(); }
+   // Each tee in its set's colour (tees.js), ringed dark so white and silver
+   // show on a pale picture. Until 22 November 2026 this still asked the three
+   // sets from before the six (back, middle, front), so every tee took
+   // whatever colour was drawn last (the owner: "the tees are all showing the
+   // same color").
+   for (const t of h.tees) { const [x, y] = p.toScreen(t.x, t.z); ctx.fillStyle = TEE_COLOURS[colourOf(t.set)] ?? TEE_COLOURS.blue; ctx.strokeStyle = 'rgba(0,0,0,.7)'; ctx.lineWidth = 1.5 * px; ctx.beginPath(); ctx.arc(x, y, 5 * px, 0, 7); ctx.fill(); ctx.stroke(); }
    for (const a of h.aims) { const [x, y] = p.toScreen(a.x, a.z); ctx.strokeStyle = '#fde68a'; ctx.lineWidth = 2 * px; ctx.beginPath(); ctx.arc(x, y, 6 * px, 0, 7); ctx.moveTo(x - 9 * px, y); ctx.lineTo(x + 9 * px, y); ctx.moveTo(x, y - 9 * px); ctx.lineTo(x, y + 9 * px); ctx.stroke(); }
    if (h.green) { const [x, y] = p.toScreen(h.green.x, h.green.z); ctx.fillStyle = on ? '#fde68a' : '#d4443a'; ctx.beginPath(); ctx.arc(x, y, 6 * px, 0, 7); ctx.fill(); ctx.fillStyle = '#fff'; ctx.font = `bold ${13 * px}px system-ui`; ctx.fillText(String(n + 1), x + 8 * px, y - 6 * px); }
   });
@@ -813,7 +822,7 @@ export function open(draft = null) {
   "Find the course by name: the builder shows the aerial map round it. Drag a box round the course, then Build it for me -- every step done for you -- or Build it myself, picking the LIDAR and doing each step. Or open LIDAR files you have, and drag the box on the relief.",
   "Build the land: the ground's heights, the trees and the water, read from the survey. It takes from a few seconds to a minute.",
   "Draw the course over the aerial picture: lay OpenStreetMap's version if the club is mapped, then fix it with the tools on the left -- or draw it yourself.",
-  'Mark each hole: its tees (pick a set, black to red, the longest first), any bends, and its green, then Next hole. The scorecard below fills itself in.',
+  'Mark each hole: its tees (pick a set, black to red, the longest first), any bends, and its green: the next hole comes up by itself. The scorecard below fills itself in.',
   'Name the course, and credit the survey and the picture you used.',
   'Look the course over as it will play. Open it in the editor to shape it in 3D, or save it now.'];
  // FIRST-VISIT TIPS (item 13): each step's line is a tip until it is closed
@@ -2112,7 +2121,13 @@ export function open(draft = null) {
  }
  function markAt(p) {
   const h = st.holes[st.hole] ??= {tees: [], aims: [], green: null};
-  if (st.mark === 'green') { h.green = {x: p.x, z: p.z}; st.mark = firstSet(); }
+  if (st.mark === 'green') {
+   h.green = {x: p.x, z: p.z}; st.mark = firstSet();
+   // The hole has its tee and green: on to the next still to mark, its tee in
+   // hand (or its green, where the map gave it a tee already).
+   const next = h.tees.length ? nextToMark(st.holes, st.hole, st.holesN) : -1;
+   if (next >= 0) { const done = st.hole; st.hole = next; st.mark = st.holes[next]?.tees?.length ? 'green' : firstSet(); go(3); say(`Hole ${done + 1} marked. Hole ${next + 1}: click its ${markName(st.mark)}.`); return; }
+  }
   else if (st.mark === 'aim') h.aims.push({x: p.x, z: p.z});
   else {
    // A tee of one of the six sets (tees.js), longest first; the hole's first
@@ -2181,8 +2196,11 @@ export function open(draft = null) {
      d[k * 4] = c[0] * sh; d[k * 4 + 1] = c[1] * sh; d[k * 4 + 2] = c[2] * sh; d[k * 4 + 3] = 255;
     }
    });
-   const rows = w.holes.map(h => `${h.number}: par ${h.par}, ${Math.round(h.tees.blue?.yards ?? h.tees.white?.yards ?? 0)} yd`);
-   card.replaceChildren(el('small', {}, `${doc.holes.length} holes, par ${w.holes.reduce((a, h) => a + h.par, 0)}, ${Math.round(w.holes.reduce((a, h) => a + (h.tees.blue?.yards ?? 0), 0)).toLocaleString()} yards from the back; ${(doc.trees.length / 7).toLocaleString()} trees, ${doc.water.length} ponds.`), el('ul', {}, rows.map(r => el('li', {}, r))));
+   // From the course's longest set (black when it has one; it was always
+   // blue, from before the six sets).
+   const longest = sets()[0], backYd = h => h.tees[longest]?.yards ?? Object.values(h.tees)[0]?.yards ?? 0;
+   const rows = w.holes.map(h => `${h.number}: par ${h.par}, ${Math.round(backYd(h))} yd`);
+   card.replaceChildren(el('small', {}, `${doc.holes.length} holes, par ${w.holes.reduce((a, h) => a + h.par, 0)}, ${Math.round(w.holes.reduce((a, h) => a + backYd(h), 0)).toLocaleString()} yards from the ${longest} tees; ${(doc.trees.length / 7).toLocaleString()} trees, ${doc.water.length} ponds.`), el('ul', {}, rows.map(r => el('li', {}, r))));
    const issues = checkCourse(createEditor(doc));
    found.replaceChildren(...(issues.length ? issues.map(c => el('li', {style: c.at ? 'cursor:pointer' : '', onclick: () => c.at && plan.look(c.at.x, c.at.z, Math.max(plan.view.scale, 2))}, c.text)) : [el('li', {}, 'Nothing breaks a rule.')]));
    say(st.cameBack ?? 'The course as it will be built. Open it in the editor, or go back to change anything.'); st.cameBack = null;

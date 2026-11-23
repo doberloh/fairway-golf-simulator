@@ -19,6 +19,7 @@ import {osmWays, holesFromOsm} from '../osm-holes.mjs';
 import {compareBuilt} from '../built-compare.mjs';
 import {playOneShot} from './door-generate.mjs';
 import {worthingtonDir} from '../lidar-home.mjs';
+import {colourOf} from '../../src/tees.js';
 
 export default function ({journey, ROOT, SHOTS}) {
  const dir = worthingtonDir(), data = path.join(ROOT, 'bench', 'shots', 'lidar');
@@ -82,9 +83,14 @@ export default function ({journey, ROOT, SHOTS}) {
   const click = async (x, z) => { const [px, py] = await onPage(await page.evaluate(([x, z]) => window.fairwayBuilder.door2.toCanvas(x, z), [x, z])); await page.mouse.click(px, py); };
   const mark = name => page.locator('button[data-mark="' + name + '"]').click();
   for (const [n, h] of holes.entries()) {
-   for (const tee of h.tees) { await mark(tee.set); await click(tee.x, tee.z); }
+   // Each set by its colour's button (the six sets, 10 November 2026: the
+   // map's back, middle and front are blue, white and red, as tees.js reads
+   // them; the buttons by those names went then); the green brings the next
+   // hole up by itself (22 November 2026).
+   for (const tee of h.tees) { await mark(colourOf(tee.set) ?? tee.set); await click(tee.x, tee.z); }
    await mark('green'); await click(h.green.x, h.green.z);
-   if (n < 17) await page.getByRole('button', {name: 'Next hole'}).click();
+   const up = await page.evaluate(() => window.fairwayBuilder.door2.hole);
+   if (n < 17 && up !== n + 1) throw Error(`after hole ${n + 1}'s green, hole ${n + 2} should be up, not ${up + 1}`);
   }
   const marked = await page.evaluate(() => window.fairwayBuilder.door2.holes.filter(h => h?.green && h.tees.length).length);
   if (marked !== 18) throw Error(`eighteen holes should be marked, not ${marked}`);

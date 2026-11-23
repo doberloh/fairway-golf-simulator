@@ -1536,6 +1536,33 @@ the yards and the scorecard when it lands. In the 3D editor, **Drag markers** do
 the same for tees, bends and greens (14 pixels, PLACED), one undo a drag; door 2's
 step has no undo, and never had. Not seen on screen.
 
+### Tees in their colours, and the next hole after a green (22 November 2026)
+
+The owner: "the tees are all showing the same color when i try to place them
+in the hole section. seems that the flow through placing holes isnt working
+right either." Two faults, both from the six tee sets (10 November 2026):
+
+- **The colours.** The plan still coloured a tee from the three sets before
+  the six (back, middle, front). A tee's set is a colour now, which that list
+  did not know, so each dot took whatever colour the canvas last held: every
+  tee alike. Each is drawn in its set's colour (tees.js `TEE_COLOURS`), ringed
+  dark so white and silver show on a pale picture. The status line said
+  "click to place its blue"; it says "blue tee".
+- **The flow.** After a green the mark in hand went back to the first tee
+  set on the same hole, so the next click -- meant for the next hole's tee --
+  moved this hole's tee. Now a green placed on a hole that has a tee brings up
+  the next hole still missing a tee or a green (hole-marks.js `nextToMark`,
+  round to the start), its tee in hand, or its green where the map gave it a
+  tee already; the status line names it. Next hole, Previous hole and the
+  hole list still go anywhere. Rejected: keeping the old stop-and-press-Next
+  (it is what the owner tripped on) and moving on after a tee as well (a hole
+  often has several tee sets to place before its green).
+
+The review's yards "from the back" were always blue's; they are the course's
+longest set's now. The builder-door-2 journey marks its nine holes with no
+Next hole and reads a blue and a red tee's colour off the plan. Seen in the
+journey's picture; not yet seen by the owner.
+
 ### The wait shows itself (5 November 2026)
 
 The owner: "when getting data from open street map, we need to indicate processing

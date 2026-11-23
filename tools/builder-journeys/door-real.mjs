@@ -348,16 +348,31 @@ export default function ({journey, SHOTS}) {
   await t.shot('corrected');
   await page.getByRole('button', {name: 'Next: the holes'}).click();
   // 4. Nine holes, each a left click: the back tee, an aim point on the
-  // first, the green.
+  // first, the green -- and each green placed brings the next hole up with
+  // its tee in hand (the owner, 22 November 2026: no Next hole between them;
+  // a click after a green used to move that hole's tee).
   await page.locator('.cb-holes').selectOption('9');
   for (const [n, h] of HOLES.entries()) {
    let [px, py] = await at(h.x, h.tee); await page.mouse.click(px, py);
    if (n === 0) { await page.locator('[data-mark="aim"]').click(); [px, py] = await at(h.x + 8, 0); await page.mouse.click(px, py); await page.locator('[data-mark="green"]').click(); }
    [px, py] = await at(h.x, h.green); await page.mouse.click(px, py);
-   if (n < 8) await page.getByRole('button', {name: 'Next hole'}).click();
+   const now = await page.evaluate(() => { const st = window.fairwayBuilder.door2; return {hole: st.hole, mark: st.mark}; });
+   if (n < 8 && (now.hole !== n + 1 || now.mark !== 'blue')) throw Error(`after hole ${n + 1}'s green, hole ${n + 2} should be up with its blue tee in hand: ${JSON.stringify(now)}`);
   }
   const holes = await page.evaluate(() => window.fairwayBuilder.door2.holes.filter(h => h?.green && h.tees.length).length);
   if (holes !== 9) throw Error(`nine holes should be marked, not ${holes}`);
+  // Each tee drawn in its set's colour (the owner, 22 November 2026: "the
+  // tees are all showing the same color"): hole 1 given a red tee too, and
+  // the plan's pixel at each read.
+  await page.evaluate(() => { const st = window.fairwayBuilder.door2; st.hole = 0; });
+  await page.locator('[data-mark="red"]').click();
+  { const [px, py] = await at(HOLES[0].x, HOLES[0].tee - 20); await page.mouse.click(px, py); }
+  const dot = (x, z) => page.evaluate(([x, z]) => { const c = document.querySelector('canvas.cb-plan'), [cx, cy] = window.fairwayBuilder.door2.toCanvas(x, z); return [...c.getContext('2d').getImageData(Math.round(cx), Math.round(cy), 1, 1).data.slice(0, 3)]; }, [x, z]);
+  const blue = await dot(HOLES[0].x, HOLES[0].tee), red = await dot(HOLES[0].x, HOLES[0].tee - 20);
+  if (!(blue[2] > blue[0] + 60) || !(red[0] > red[2] + 60)) throw Error(`the blue tee should be drawn blue and the red tee red: ${JSON.stringify({blue, red})}`);
+  // The red tee taken off again (and the step drawn anew by picking the blue).
+  await page.evaluate(() => { const h = window.fairwayBuilder.door2.holes[0]; h.tees = h.tees.filter(t => t.set !== 'red'); });
+  await page.locator('[data-mark="blue"]').click();
   // The scorecard: nine holes and a total, the yards the game will measure;
   // par and handicap index set by hand (hole 2 a par 5, index 1).
   const card = await page.locator('.cb-card tbody tr').evaluateAll(rows => rows.map(r => [...r.children].map(c => c.querySelector('select')?.value ?? c.textContent)));

@@ -115,8 +115,10 @@ hand -- drag its green or tee onto the right one, with the photograph to go by.
 (The builder used to guess the right green, and was wrong too often.)
 
 **Tee sets.** A course has up to six, longest first: **black, blue, white,
-silver, gold, red**. On the holes step, pick a set and click where its tee is;
-the scorecard shows a column for each set the course has. From OpenStreetMap
+silver, gold, red**. On the holes step, pick a set and click where its tee is
+(each tee shows on the plan in its set's colour), then click the green: the
+next hole still to mark comes up by itself, its tee in hand. The scorecard
+shows a column for each set the course has. From OpenStreetMap
 the sets come from the map's tags where it has them, and otherwise from how
 many tee boxes the holes have, the farthest box the longest set. In Fairway a
 golfer whose set the course lacks plays the nearest one it has.

@@ -864,7 +864,10 @@ changes, newest first, each with **Back to here**.
      Silver, Gold** or **Red**, each with its colour -- and left-click its
      tee (the longest first; then any others, picking each set first), any
      **Aim points** where it bends, in order from the tee, and its
-     **Green**; then **Next hole**. 9 or 18. The game draws
+     **Green**. Placing a green brings up the next hole still to mark,
+     its tee in hand (Next hole and Previous hole, and clicking a hole in
+     the list, go anywhere). Each tee is drawn in its set's colour.
+     9 or 18. The game draws
      each hole's line through its aim points in turn -- two make a double
      dogleg -- measures its yards along that line, and points the tee shot
      at the first; an aim point no farther on than the one before (or at the
