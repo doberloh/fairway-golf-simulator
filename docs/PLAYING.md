@@ -706,7 +706,9 @@ changes, newest first, each with **Back to here**.
 
      **OpenStreetMap** comes first: many courses are already drawn there.
      **Fetch OpenStreetMap** (or **An OpenStreetMap file**, an Overpass JSON
-     answer you saved) lays its greens, fairways, tees, bunkers, water, cart
+     answer you saved; if it cannot -- no land built yet, the land still
+     building, the survey not placed on the globe -- the line at the foot
+     says why) lays its greens, fairways, tees, bunkers, water, cart
      paths, woods and buildings (as houses) as layers and sets its numbered
      holes as step 4's markers -- with the map's par, each green mark put on
      its green and each hole given the tee boxes along it as its back, middle

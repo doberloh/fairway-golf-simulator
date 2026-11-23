@@ -45,7 +45,12 @@ on screen, from West Virginia's 6.2 GB ZIP. It held 17 zLAS files, not LAZ.
 Tested: zip and lidar-words Node tests; the owner's real file read by the
 new reader (17 parts, directory in 1 ms); the builder's 10 smoke journeys,
 `builder-door-2-osm` now picking a ZIP of zLAS and the survey in a ZIP.
-RESEARCH, *A state portal's ZIP of zLAS, 6.2 GB*. Also that evening, the
+RESEARCH, *A state portal's ZIP of zLAS, 6.2 GB*. Then "something is
+happening when i try to grab open street map ... I click the button and
+nothing happens": not reproduced; `loadOsm` had a silent return with no
+land and could throw before its `try`, both now said in the status line
+(`osmClick` catches the rest); the cause waits on what the owner sees next.
+Also that evening, the
 owner's rule of at most 10 Node test files at once (AGENTS.md;
 tools/test.mjs enforces it; RULES_HISTORY, *Ten test files at most*).
 

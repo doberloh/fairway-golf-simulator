@@ -1656,7 +1656,7 @@ export function open(draft = null) {
   // have drawn it, kept as it is or refined from the picture or the LIDAR.
   const osmBits = [
    el('small', {}, 'Many courses are already drawn in OpenStreetMap: greens, fairways, tees, bunkers, water, paths, woods and numbered holes, laid as layers and markers. Credited in the course (ODbL). Goes online only when pressed. It can be incomplete or wrong: check it against the picture.'),
-   el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: () => loadOsm()}, 'Fetch OpenStreetMap'), el('button', {class: 'cb-btn', type: 'button', onclick: () => loadOsm(true)}, 'An OpenStreetMap file')),
+   el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: () => osmClick()}, 'Fetch OpenStreetMap'), el('button', {class: 'cb-btn', type: 'button', onclick: () => osmClick(true)}, 'An OpenStreetMap file')),
    st.osm ? el('small', {}, st.osm.said) : null,
    // WHICH COURSE (osm-course.js osmCourses): a club with two or more, each
    // its own holes and boundary.
@@ -1875,9 +1875,15 @@ export function open(draft = null) {
   if (st.geo) return (lat, lon) => ({x: (lon - st.geo.lon) * 111320 * Math.cos(st.geo.lat * Math.PI / 180), z: -(lat - st.geo.lat) * 111320});
   return null;
  };
+ // NEVER A CLICK THAT DOES NOTHING (the owner, 22 November 2026: "I click the
+ // button and nothing happens"). Before, no land meant a silent return, and
+ // anything thrown before the `try` was an uncaught promise with nothing on
+ // screen; each is said now (`osmClick` catches the rest).
  async function loadOsm(fromFile = false) {
-  if (!st.land) return;
-  const toLocal = localOfLonLat(), ll = lonLatOfLocal();
+  if (!st.land) return say(st.building ? 'The land is still being built: fetch OpenStreetMap once it is ready.' : 'Build the land first (Next: build the land), then fetch OpenStreetMap.', true);
+  let toLocal, ll;
+  try { toLocal = localOfLonLat(); ll = lonLatOfLocal(); }
+  catch (e) { console.warn('OpenStreetMap: placing the survey', e); return say(`OpenStreetMap: the survey could not be placed on the globe (${e.message}). Find the place in the box above, then try again.`, true); }
   if (!toLocal || !ll) return say('The survey does not say where it is: find the place first.', true);
   // THE WAIT, stage by stage (the owner, 5 November 2026). The server can take
   // a minute and a half and says nothing until it answers, so the seconds count
@@ -1913,6 +1919,8 @@ export function open(draft = null) {
   } catch (e) { st.osmFailed = e.name === 'AbortError' ? 'stopped' : e.message; if (e.name === 'AbortError') say('Stopped: nothing was changed.'); else say('OpenStreetMap: ' + e.message, true); }
   finally { clearInterval(ticking); setBusy(''); }
  }
+ // The buttons' way in: whatever escapes loadOsm is said, never left in the console alone.
+ const osmClick = fromFile => loadOsm(fromFile).catch(e => { console.warn('OpenStreetMap:', e); setBusy(''); say(`OpenStreetMap: something went wrong (${e?.message || e}). Nothing was changed; try again.`, true); });
  function treesFrom(how) {
   st.treesFrom = how; if (!st.osm?.osmTrees) return;
   const list = mergeTrees(st.trees, st.osm.osmTrees ?? [], how), was = st.model?.state.trees.length ?? 0;

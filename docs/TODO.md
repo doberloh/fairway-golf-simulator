@@ -508,7 +508,10 @@ here is a claim of support until it is done.
   real file's directory and parts. Not seen by the owner in the builder, and
   no real ZIP of LAZ over 2 GB has gone all the way to built land. A single
   LIDAR file over about 2 GB still cannot be read (now said so, with its
-  size).
+  size). **Fetch OpenStreetMap "did nothing"** for the owner the same
+  evening: the cause is not known (it was not reproduced). Every silent way
+  out now says why (no land yet, land still building, the survey not placed
+  on the globe, anything thrown): ask the owner what the button says now.
 
 - [ ] **A real course's doglegs, checked by a person.** Since 10 November 2026
   door 2 finds a dogleg's bend from the traced fairway (**Find the doglegs**;
