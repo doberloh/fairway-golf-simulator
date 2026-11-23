@@ -1563,7 +1563,8 @@ What was built:
   answer it carries on with the whole survey and says so.
 - **The download** (lidar/detail.js, lidar-search.js): every Entwine depth
   under the outline (grown 30 m), and outside only the depths that reach
-  70% of 2 points a land cell (PLACED). A kept square now records which pieces
+  70% of 8 points a land cell (the owner's choice, 23 November: "Use more
+  outside", over 2, which left most of the ground outside filled in). A kept square now records which pieces
   it holds for which outline, and every node over its box with its count; the
   same box and outline reads from the folder, a wider outline downloads only
   what it adds, and a kept square opened from disk is read only as far as the

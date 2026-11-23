@@ -523,11 +523,11 @@ here is a claim of support until it is done.
   half-metre ground), and look at a bunker's lip in the 3D editor and in
   the game; and load the old Alpine Lake square with an outline (an older
   kept square is read whole when opened from the folder: Download box
-  thins it). **Open choice for the owner**: outside the outline the survey
-  is fetched at about 2 points a square metre (a sixteenth of Alpine
-  Lake's), which leaves 58% of the ground there filled in and breaks the
-  woods into more, smaller trees; the next step up (8 a cell) keeps the
-  outside nearly as it was and saves little time. (The frame rate with
+  thins it). Outside the outline the survey is fetched at about 8 points a
+  land cell (the owner's choice, 23 November: about three quarters of
+  Alpine Lake's points; the outside nearly as the whole survey makes it).
+  Not run on the real square at 8 since the choice (measured with the tool's
+  `--outside 8` before). (The frame rate with
   patches was measured on every tier on 23 November: no cost.) On Alpine
   Lake the half-metre detail is small (a 2 cm noise floor leaves little):
   it pays on a denser survey, which no real course over 2.25 km² has been

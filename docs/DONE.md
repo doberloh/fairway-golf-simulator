@@ -35,8 +35,9 @@ Fill outside's wood sized from the survey; every button and panel reworded
 (COURSE_BUILDER.md, the 22 November sections).
 
 - [x] **The course's outline** drawn in step 1 (or OpenStreetMap's, for
-  Build automatically): every depth of a USGS survey inside it, a thin layer
-  outside; kept squares record what they hold for which outline.
+  Build automatically): every depth of a USGS survey inside it, about 8
+  points a land cell outside (the owner's choice over 2); kept squares
+  record what they hold for which outline.
 - [x] **Memory**: a kept square read a piece at a time and written a piece at a
   time (ZIP64 past 4 GB); the gridder's sums freed. Alpine Lake's peak 3.1 GB
   to 1.45 GB with no outline at all.
@@ -47,8 +48,7 @@ Fill outside's wood sized from the survey; every button and panel reworded
 Tested: lidar-detail, builder-outline, lidar-coverage, real-course, zip and
 draft Node tests; every builder journey; Alpine Lake measured in Node
 (RESEARCH, *Full detail inside the course, less outside*); the frame rate
-with patches on every tier (no cost). Still owed: the owner's own look and
-the choice outside the outline (TODO).
+with patches on every tier (no cost). Still owed: the owner's own look (TODO).
 
 ## A big LIDAR ZIP in the builder (branch `builder-big-zips`, 22 November 2026; not merged)
 

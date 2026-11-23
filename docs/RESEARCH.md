@@ -11239,8 +11239,10 @@ depths step by four times, so "about" needs that slack; PLACED) more than
 half the 1 m cells get no ground return and are filled from their
 neighbours, and the canopy from sparse tops breaks into more, smaller
 crowns (+16% trees outside). At 8 a cell the outside is nearly as before and
-the time saved small. Kept at 2 (the owner asked for less outside); the
-choice is open in TODO.
+the time saved small. **The owner chose 8 a cell** (23 November 2026: "Use
+more outside"), so the outline now buys a quarter less reading and download
+and keeps the land outside nearly as the whole survey makes it; 2 a cell is
+left as `tools/lidar-detail.mjs --outside 2` for comparison.
 
 **The half-metre ground inside the outline**: 50% of the half-metre cells
 inside Alpine Lake's outline got the two ground returns FINE_LEAST asks

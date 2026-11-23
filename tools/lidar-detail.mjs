@@ -13,7 +13,7 @@
 //   node tools/lidar-detail.mjs <square.ept.zip> --outline "lon,lat lon,lat ..."
 //   ... --whole    every piece read into memory first, as door 2 did before
 //                  22 November 2026 (the baseline)
-//   ... --outside <n>  points a land cell outside the outline (default 2)
+//   ... --outside <n>  points a land cell outside the outline (default 8, DETAIL.outsidePerCell)
 //   ... --course <folder>  the course too, as door 2 lays it from OpenStreetMap
 //                  (asked online: its greens, tees, bunkers and numbered
 //                  holes), written twice to <folder> -- with the half-metre
