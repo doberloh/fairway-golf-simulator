@@ -1536,6 +1536,62 @@ the yards and the scorecard when it lands. In the 3D editor, **Drag markers** do
 the same for tees, bends and greens (14 pixels, PLACED), one undo a drag; door 2's
 step has no undo, and never had. Not seen on screen.
 
+### Buttons that say what they do; panels that read like a manual (22 November 2026)
+
+The owner: "please make the buttons that have text on them just say what
+they do exactly as well. in clear and concise wording. I find the text on the
+right hand of the screen can be misleading or too wordy. Make the text read
+like a manual, not a novel. No need for fancy language."
+
+The rule from here on: **a button is a verb and its object, and says what
+pressing it does** ("Search for LIDAR", not "Build it myself", which only
+searched); **panel text is short instructions** (numbered steps where there is
+an order, "Wheel: zoom" for keys, no asides or history). "Photo" throughout for
+the aerial picture. Older entries in this document use the old names; they map:
+
+| Old | New |
+|---|---|
+| Find (course search) / Find (picture's place) | Find course / Find place |
+| Show the map / Fetch the map again | Show map / Reload map |
+| Build it for me / its Build it | Build automatically / Start building |
+| Build it myself | Search for LIDAR |
+| Choose the folder / Change the folder | Choose LIDAR folder / Change LIDAR folder |
+| Load from the folder / Load the ticked | List folder files / Load ticked files |
+| Download the box here / Download here / Load the saved box / tiles / Download what is missing | Download box / Download tiles / Load saved box / tiles / Download missing part |
+| Bring it back / Discard | Restore draft / Delete draft |
+| Choose LIDAR files | Open LIDAR files |
+| Build the land / Build it again | Build land / Rebuild land |
+| Next: build the land, trace the course, the holes, the name, review the course | Next: build land, trace course, mark holes, name course, review course |
+| Fetch imagery for this land / A picture file / The LIDAR's own | Download photo / Open photo file / Use LIDAR colours |
+| Lock / Unlock the picture / Back to its position | Lock / Unlock photo / Reset photo position |
+| Reset the picture's look / Picture on top / LIDAR on top | Reset brightness and contrast / Put photo on top / Put LIDAR on top |
+| Fetch OpenStreetMap / An OpenStreetMap file | Download OpenStreetMap / Open OpenStreetMap file |
+| Refine with the picture / with the LIDAR / Keep it as drawn | Align map to photo / Align map to LIDAR / Keep map as is |
+| Draw it myself | Trace by hand |
+| Remove last node / Drop | Remove last point / Cancel shape |
+| Skin from the land / Before (hold) | Paint rock on slopes / Hold to show before |
+| Draw the boundary / Draw it again / Fill outside it | Draw boundary / Redraw boundary / Fill outside boundary |
+| Remove everything there / Keep what is there | Remove what is outside / Keep what is outside |
+| Extrapolate / Tidy specks | Add layer around / Remove specks |
+| Got it / Back to here | Hide tip / Undo to here |
+| Clear this hole / Drop last aim | Clear hole / Remove last aim point |
+| Fit holes to the trace / Find the doglegs | Snap holes to traced greens and tees / Add dogleg aim points |
+| Checking the map / Take the N fixes offered / Next thing to check | Hole checks / Apply all N fixes / Show next problem |
+| Check against the card / Forget the card | Compare yards / Clear scorecard |
+| Open in the editor / Save the course for Fairway | Open in 3D editor / Save course file |
+| (door 1) Take it over / Grow this course | Edit in 3D editor / Generate course |
+| (editor) From above / This hole / Check the course / Play a test round / Save a copy to share | View from above / View this hole / Check course / Play test round / Save shareable copy |
+
+Every step's panel text, the step tips, the "still needs" line, the status
+messages that name a button, the tooltips (tips.js) and the View menu's
+toggles were rewritten to match. Kept: names already exact (Undo, Redo,
+Smooth all edges, Clear trees from tees and greens, Previous hole, Next hole,
+Show, Fix, Auto trace, Tick all). Rejected: shortening labels to one word
+(Find, Build) -- the owner's complaint was that the words did not say what
+happens. Every builder journey and the capture tools press the new names;
+all ten journeys passed and the guide's pictures were retaken. Not yet read
+by the owner in the builder.
+
 ### The wood outside, sized from the survey (22 November 2026)
 
 The owner, asked whether Fill outside should thin the land outside the

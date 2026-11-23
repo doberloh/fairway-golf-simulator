@@ -34,7 +34,7 @@ export default function ({journey, ROOT, SHOTS}) {
   await page.getByRole('button', {name: /Generate a real life course/}).click();
   // 1. The four tiles.
   const tiles = fs.readdirSync(path.join(dir, 'raw')).filter(f => /\.laz$/i.test(f)).map(f => path.join(dir, 'raw', f));
-  const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.getByRole('button', {name: 'Choose LIDAR files'}).click()]);
+  const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.getByRole('button', {name: 'Open LIDAR files'}).click()]);
   await chooser.setFiles(tiles);
   await page.waitForFunction(() => window.fairwayBuilder.door2?.preview, null, {timeout: 600000}); await idle();
   say(`tiles read and previewed: ${secs()}`);
@@ -49,15 +49,15 @@ export default function ({journey, ROOT, SHOTS}) {
   await page.mouse.move(ax, ay); await page.mouse.down(); await page.mouse.move(bx, by, {steps: 10}); await page.mouse.up();
   const boxNow = await page.evaluate(() => window.fairwayBuilder.door2.box);
   if (!(boxNow.x1 - boxNow.x0 > 700 && boxNow.x1 - boxNow.x0 < 1000)) throw Error(`the property box is ${JSON.stringify(boxNow)}`);
-  await page.getByRole('button', {name: 'Next: build the land'}).click();
+  await page.getByRole('button', {name: 'Next: build land'}).click();
   // 2. The land.
   // (Next starts the build at once.)
   await page.waitForFunction(() => window.fairwayBuilder.door2.land, null, {timeout: 900000}); await idle();
   say(`land: ${await page.locator('.cb-note').first().textContent()} (${secs()})`);
-  await page.getByRole('button', {name: 'Next: trace the course'}).click();
+  await page.getByRole('button', {name: 'Next: trace course'}).click();
   // 3. The pictures, one tile at a time; the auto trace.
   for (const f of naip) {
-   const [pc] = await Promise.all([page.waitForEvent('filechooser'), page.getByRole('button', {name: 'A picture file'}).click()]);
+   const [pc] = await Promise.all([page.waitForEvent('filechooser'), page.getByRole('button', {name: 'Open photo file'}).click()]);
    await pc.setFiles(f); await page.waitForTimeout(500); await idle();
   }
   const cover = await page.evaluate(() => { const p = window.fairwayBuilder.door2.picture; return p.has.reduce((s, v) => s + v, 0) / p.has.length; });
@@ -74,7 +74,7 @@ export default function ({journey, ROOT, SHOTS}) {
   if (!/Classic Parkland/.test(suggest) || await page.locator('.cb-landscape').inputValue() !== 'parkland') throw Error(`the landscape suggested: "${suggest}", chosen ${await page.locator('.cb-landscape').inputValue()}`);
   say(`suggested: ${suggest}`);
   await t.shot('worthington-traced');
-  await page.getByRole('button', {name: 'Next: the holes'}).click();
+  await page.getByRole('button', {name: 'Next: mark holes'}).click();
   // 4. The holes, clicked where OpenStreetMap and the card put them.
   const origin = await page.evaluate(() => { const g = window.fairwayBuilder.door2.gridder; return {...g.center, u: g.unit.h}; });
   const ways = osmWays(osm, (lat, lon) => { const p = toUtm(lat, lon, zone); return {x: (p.x - origin.x) * origin.u, z: -(p.y - origin.y) * origin.u}; });
@@ -96,14 +96,14 @@ export default function ({journey, ROOT, SHOTS}) {
   if (marked !== 18) throw Error(`eighteen holes should be marked, not ${marked}`);
   const off = await page.evaluate(hs => Math.max(...hs.map((h, n) => Math.hypot(window.fairwayBuilder.door2.holes[n].green.x - h.green.x, window.fairwayBuilder.door2.holes[n].green.z - h.green.z))), holes);
   say(`18 holes clicked; the farthest green click ${off.toFixed(2)} m from its mark`);
-  await page.getByRole('button', {name: 'Next: the name'}).click();
+  await page.getByRole('button', {name: 'Next: name course'}).click();
   // 5. The name and credit; 6. the review; the editor.
   await page.locator('.cb-name').fill('Worthington (door 2)');
   await page.locator('.cb-credits').fill('Elevation: USGS 3D Elevation Program');
-  await page.getByRole('button', {name: 'Next: review the course'}).click();
+  await page.getByRole('button', {name: 'Next: review course'}).click();
   await page.waitForFunction(() => window.fairwayBuilder.door2.doc, null, {timeout: 600000}); await idle();
   await t.shot('worthington-review');
-  await page.getByRole('button', {name: 'Open in the editor'}).click();
+  await page.getByRole('button', {name: 'Open in 3D editor'}).click();
   await page.waitForFunction(() => window.fairwayBuilder?.editor?.view, null, {timeout: 600000});
   await page.waitForTimeout(1500);
   await t.shot('worthington-editor');

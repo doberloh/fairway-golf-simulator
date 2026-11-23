@@ -63,7 +63,7 @@ await shot('home');
 await page.getByRole('button', {name: /Generate a real life course/}).click();
 await page.locator('.cb-lidarplace').fill('Worthington Country Club, Minnesota');
 if (haveMap) {
- await page.getByRole('button', {name: 'Find', exact: true}).click();
+ await page.getByRole('button', {name: 'Find course', exact: true}).click();
  await page.waitForFunction(() => window.fairwayBuilder.door2.map, null, {timeout: 60000}); await idle();
  const plan = page.locator('canvas.cb-plan'), at = async (x, z) => { const b = await plan.boundingBox(), [cx, cy] = await page.evaluate(([x, z]) => window.fairwayBuilder.door2.toCanvas(x, z), [x, z]), r = await plan.evaluate(c => c.width / c.getBoundingClientRect().width); return [b.x + cx / r, b.y + cy / r]; };
  const here = await page.evaluate(() => { const s = window.fairwayBuilder.door2; return s.map.toLocal(s.find.lon, s.find.lat); });
@@ -71,7 +71,7 @@ if (haveMap) {
  const [ax, ay] = await at(here.x - 700, here.z - 450), [bx, by] = await at(here.x + 520, here.z + 800);
  await page.mouse.move(ax, ay); await page.mouse.down(); await page.mouse.move(bx, by, {steps: 8}); await page.mouse.up();
  await shot('map-box');
- await page.getByRole('button', {name: 'Build it for me', exact: true}).click();
+ await page.getByRole('button', {name: 'Build automatically', exact: true}).click();
  await page.locator('.cb-formeask').waitFor();
  await shot('build-it-for-me');
  await page.locator('[data-build="no"]').click();
@@ -113,7 +113,7 @@ await page.locator('.cb-stepchip', {hasText: 'Review'}).click();
 await page.waitForFunction(() => window.fairwayBuilder.door2.doc, null, {timeout: 300000}); await idle();
 await shot('review');
 // The 3D editor.
-await page.getByRole('button', {name: 'Open in the editor'}).click();
+await page.getByRole('button', {name: 'Open in 3D editor'}).click();
 await page.waitForFunction(() => window.fairwayBuilder?.editor?.view, null, {timeout: 300000}); await idle();
 await page.waitForTimeout(2500);
 await shot('editor');

@@ -444,7 +444,7 @@ here is a claim of support until it is done.
     walk and fly; seams in the distant ground; a large built course's load.
   - **The builder** (0.9.12): a built course with four or more tee sets in a
     round (seat buttons, Playing tee, scorecard); tee markers on a narrow
-    built tee; Build it myself from a drawn box on the real services; Game
+    built tee; Search for LIDAR from a drawn box on the real services; Game
     view on a small course and a big one; a pond drawn on a hillside, played;
     painted rocks and bushes (does a ball hit them?); a pond and a creek
     deleted; the cost readout and its weight note.
@@ -508,13 +508,13 @@ here is a claim of support until it is done.
   real file's directory and parts. Not seen by the owner in the builder, and
   no real ZIP of LAZ over 2 GB has gone all the way to built land. A single
   LIDAR file over about 2 GB still cannot be read (now said so, with its
-  size). **Fetch OpenStreetMap "did nothing"** for the owner the same
+  size). **Download OpenStreetMap "did nothing"** for the owner the same
   evening: the cause is not known (it was not reproduced). Every silent way
   out now says why (no land yet, land still building, the survey not placed
   on the globe, anything thrown): ask the owner what the button says now.
 
 - [ ] **A real course's doglegs, checked by a person.** Since 10 November 2026
-  door 2 finds a dogleg's bend from the traced fairway (**Find the doglegs**;
+  door 2 finds a dogleg's bend from the traced fairway (**Add dogleg aim points**;
   map-checks.js `bendFor`). Not played, and Worthington's yards against its
   card not measured again (they were short by a median 22 yards, and its test
   round scored 96 against par 71, the golfers aiming through trees). (was:

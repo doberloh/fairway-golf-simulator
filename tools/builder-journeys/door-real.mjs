@@ -83,14 +83,14 @@ export default function ({journey, SHOTS}) {
   await page.route(/raw\.githubusercontent\.com\/hobuinc/, r => r.fulfill({status: 200, contentType: 'application/json', headers: {'Access-Control-Allow-Origin': '*'}, body: JSON.stringify({features: [{properties: {name: 'MN_TEST_1_B21', url: 'https://s3-us-west-2.amazonaws.com/usgs-lidar-public/MN_TEST_1_B21/ept.json', count: 1e9}, geometry: {type: 'Polygon', coordinates: [[[-96, 43], [-95, 43], [-95, 44], [-96, 44], [-96, 43]]]}}]})}));
   await page.route(/tnmaccess\.nationalmap\.gov/, r => r.fulfill({status: 200, contentType: 'application/json', headers: {'Access-Control-Allow-Origin': '*'}, body: JSON.stringify({items: [1, 2].map(n => ({publicationDate: '2023-02-10', sizeInBytes: 6e7, downloadLazURL: `https://rockyweb.usgs.gov/vdelivery/Datasets/Staged/Elevation/LPC/Projects/MN_TEST/MN_TEST_1_B21/LAZ/USGS_LPC_MN_TEST_${n}.laz`}))})}));
   await page.locator('.cb-lidarplace').fill('A test place');
-  await page.getByRole('button', {name: 'Find', exact: true}).click();
+  await page.getByRole('button', {name: 'Find course', exact: true}).click();
   await page.getByText('A test place, Minnesota').click();
   // The map round the place comes first (USGS NAIP stood in for), and the
   // LIDAR waits for a box dragged round the course on it (the owner, 10
   // November 2026: "search, grab the map ... square off the course, from
   // there we will grab LIDAR").
   await page.waitForFunction(() => window.fairwayBuilder.door2.map, null, {timeout: 30000}); await idle();
-  if (await page.getByRole('button', {name: 'Build it myself'}).isEnabled() || await page.getByRole('button', {name: 'Build it for me', exact: true}).isEnabled()) throw Error('Build it for me and Build it myself should wait for a box on the map');
+  if (await page.getByRole('button', {name: 'Search for LIDAR'}).isEnabled() || await page.getByRole('button', {name: 'Build automatically', exact: true}).isEnabled()) throw Error('Build it for me and Build it myself should wait for a box on the map');
   const here = await page.evaluate(() => { const s = window.fairwayBuilder.door2; return s.map.toLocal(s.find.lon, s.find.lat); });
   {
    const [ax, ay] = await at(here.x - 600, here.z - 450), [bx, by] = await at(here.x + 600, here.z + 450);
@@ -103,7 +103,7 @@ export default function ({journey, SHOTS}) {
   // counts start again for the trace step's picture.
   if (!tiles || blocks.length) throw Error(`the map should come from the USGS tile cache: ${tiles} tiles, ${blocks.length} blocks`);
   tiles = 0; blocks.length = 0;
-  await page.getByRole('button', {name: 'Build it myself'}).click();
+  await page.getByRole('button', {name: 'Search for LIDAR'}).click();
   await page.waitForSelector('[data-download="MN_TEST_1_B21"]', {timeout: 30000});
   const found = await page.locator('.cb-lidarfound').textContent();
   if (!/MN TEST 1 B21/.test(found) || !/2 tiles/.test(found) || !/MnGeo Lidar \(Minnesota\)/.test(found) || /Iowa/.test(found)) throw Error(`the search should list the survey and Minnesota's own portal: ${found}`);
@@ -111,33 +111,33 @@ export default function ({journey, SHOTS}) {
   await t.shot('lidar-found');
   // 1. The LIDAR, and the property boxed with a left drag (the whole survey
   // less 20 m each side).
-  const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.getByRole('button', {name: 'Choose LIDAR files'}).click()]);
+  const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.getByRole('button', {name: 'Open LIDAR files'}).click()]);
   await chooser.setFiles(las);
   await page.waitForFunction(() => window.fairwayBuilder.door2?.preview, null, {timeout: 60000}); await idle();
   let [x0, y0] = await at(-190, -140), [x1, y1] = await at(190, 140);
   await page.mouse.move(x0, y0); await page.mouse.down(); await page.mouse.move(x1, y1, {steps: 6}); await page.mouse.up();
   const box = await page.evaluate(() => window.fairwayBuilder.door2.box);
   if (Math.abs(box.x1 - box.x0 - 380) > 6 || Math.abs(box.y1 - box.y0 - 280) > 6) throw Error(`the dragged property should be about 380 x 280 m, not ${JSON.stringify(box)}`);
-  await page.getByRole('button', {name: 'Next: build the land'}).click();
+  await page.getByRole('button', {name: 'Next: build land'}).click();
   // 2. The land.
   // Next starts the build at once: the box is set, no second press (the owner, 10 November 2026).
   if (!await page.evaluate(() => window.fairwayBuilder.door2.building || !!window.fairwayBuilder.door2.land)) throw Error('Next: build the land should start building at once');
   await page.waitForFunction(() => window.fairwayBuilder.door2.land, null, {timeout: 120000}); await idle();
-  await page.getByRole('button', {name: 'Next: trace the course'}).click();
+  await page.getByRole('button', {name: 'Next: trace course'}).click();
   // 3. The place (the survey states no map grid), the imagery, a drag to align.
   await page.locator('.cb-provider').selectOption('usgs');
   await page.getByPlaceholder(/A place/).fill('A test place');
-  await page.getByRole('button', {name: 'Find', exact: true}).click();
+  await page.getByRole('button', {name: 'Find place', exact: true}).click();
   await page.getByText('A test place, Minnesota').click();
   await page.locator('.cb-provider').selectOption('usgs');
-  await page.getByRole('button', {name: 'Fetch imagery for this land'}).click();
+  await page.getByRole('button', {name: 'Download photo'}).click();
   await page.waitForFunction(() => window.fairwayBuilder.door2.pics?.length, null, {timeout: 60000}); await idle();
   if (!tiles) throw Error('no imagery tile was asked for');
   // The sharpest free US source is offered first, and asks for blocks.
   const offered = await page.locator('.cb-provider option').evaluateAll(o => o.map(x => x.value));
   if (offered[0] !== 'naip') throw Error(`USGS NAIP should be offered first: ${offered}`);
   await page.locator('.cb-provider').selectOption('naip');
-  await page.getByRole('button', {name: 'Fetch imagery for this land'}).click();
+  await page.getByRole('button', {name: 'Download photo'}).click();
   await page.waitForFunction(() => window.fairwayBuilder.door2.pics?.some(p => p.group === 'naip'), null, {timeout: 60000}); await idle();
   // The picture's blocks (the date is asked for apart, through identify).
   const pictureBlocks = blocks.filter(u => !/[/]identify[?]/.test(u));
@@ -148,14 +148,14 @@ export default function ({journey, SHOTS}) {
   const pv = () => page.evaluate(() => { const v = window.fairwayBuilder.door2.plan.view; return {alpha: {...v.alpha}, order: v.order.slice()}; });
   await page.locator('[data-alpha="picAlpha"]').fill('40');
   if (Math.abs((await pv()).alpha.picture - .4) > .01) throw Error(`the picture opacity slider should set 0.4: ${JSON.stringify(await pv())}`);
-  await page.getByRole('button', {name: 'LIDAR on top'}).click();
+  await page.getByRole('button', {name: 'Put LIDAR on top'}).click();
   if ((await pv()).order.indexOf('relief') < (await pv()).order.indexOf('picture')) throw Error('LIDAR on top should draw the relief over the picture');
   await page.locator('[data-alpha="lidarAlpha"]').fill('50');
   await page.locator('.cb-lidarview').selectOption('slope');
   await t.shot('lidar-over-picture');
-  await page.getByRole('button', {name: 'Picture on top'}).click();
+  await page.getByRole('button', {name: 'Put photo on top'}).click();
   // Unlock, drag the picture into line, nudge it, lock it.
-  await page.getByRole('button', {name: 'Unlock the picture'}).click();
+  await page.getByRole('button', {name: 'Unlock photo'}).click();
   [x0, y0] = await at(0, 0); [x1, y1] = await at(6, -4);
   await page.mouse.move(x0, y0); await page.mouse.down(); await page.mouse.move(x1, y1, {steps: 4}); await page.mouse.up();
   await idle();
@@ -165,7 +165,7 @@ export default function ({journey, SHOTS}) {
   const nudged = await page.evaluate(() => window.fairwayBuilder.door2.offset);
   if (Math.abs(nudged.x - off.x - .25) > .01 || Math.abs(nudged.z - off.z + 1) > .01) throw Error(`the arrows should nudge a quarter metre east and (Shift) a metre north: ${JSON.stringify(off)} -> ${JSON.stringify(nudged)}`);
   if (!/unlocked/i.test(await page.locator('.cb-toolhint').textContent())) throw Error('the banner should say the picture is unlocked');
-  await page.getByRole('button', {name: 'Lock the picture'}).click();
+  await page.getByRole('button', {name: 'Lock photo'}).click();
   off = nudged;
   [x0, y0] = await at(20, 20); [x1, y1] = await at(30, 30);
   await page.mouse.move(x0, y0); await page.mouse.down(); await page.mouse.move(x1, y1, {steps: 4}); await page.mouse.up();
@@ -292,7 +292,7 @@ export default function ({journey, SHOTS}) {
   const semiCells = () => page.evaluate(() => window.fairwayBuilder.door2.model.state.layers.mask('semi')?.reduce((t, v) => t + v, 0) ?? 0);
   const semi0 = await semiCells();
   await page.locator('.cb-exto').selectOption('semi'); await page.locator('.cb-exwidth').fill('4');
-  await page.getByRole('button', {name: 'Extrapolate', exact: true}).click();
+  await page.getByRole('button', {name: 'Add layer around', exact: true}).click();
   if (!(await semiCells() > semi0)) throw Error('Extrapolate should lay semi-rough round the fairway');
   // The landscape decides the ground types offered: heather is a links' own.
   if (await page.locator('.cb-kind option[value="heather"]').count()) throw Error('the Midwest should not offer heather');
@@ -346,7 +346,7 @@ export default function ({journey, SHOTS}) {
   if (over) throw Error(`no tree's crown should reach over a green after clearing: ${over}`);
   await page.getByRole('button', {name: 'Smooth all edges'}).click();
   await t.shot('corrected');
-  await page.getByRole('button', {name: 'Next: the holes'}).click();
+  await page.getByRole('button', {name: 'Next: mark holes'}).click();
   // 4. Nine holes, each a left click: the back tee, an aim point on the
   // first, the green -- and each green placed brings the next hole up with
   // its tee in hand (the owner, 22 November 2026: no Next hole between them;
@@ -392,7 +392,7 @@ export default function ({journey, SHOTS}) {
   await page.keyboard.press('Control+s'); await page.waitForFunction(() => window.__writes === 2, null, {timeout: 60000});
   if (await page.evaluate(() => window.__picks) !== 1) throw Error('saving again should go to the same file without asking');
   if (!/My-real-course\.fairway-draft/.test(await page.locator('#cbSaveNote').textContent())) throw Error(`the bar should name the draft: ${await page.locator('#cbSaveNote').textContent()}`);
-  await page.getByRole('button', {name: 'Next: the name'}).click();
+  await page.getByRole('button', {name: 'Next: name course'}).click();
   // 5. The name; 6. the review, painted.
   await page.locator('.cb-name').fill('Door 2 test');
   // Renamed: Save makes a new file.
@@ -410,7 +410,7 @@ export default function ({journey, SHOTS}) {
   if (opened.sand !== saved.sand || opened.trees !== saved.trees || opened.holes !== saved.holes || opened.name !== 'Door 2 test') throw Error(`the draft should open as saved: ${JSON.stringify(saved)} -> ${JSON.stringify(opened)}`);
   await t.shot('draft-reopened');
   await page.evaluate(() => { window.showSaveFilePicker = undefined; });   // downloads again, as the harness set it
-  await page.getByRole('button', {name: 'Next: review the course'}).click();
+  await page.getByRole('button', {name: 'Next: review course'}).click();
   await page.waitForFunction(() => window.fairwayBuilder.door2.doc, null, {timeout: 120000}); await idle();
   const doc = await page.evaluate(() => { const d = window.fairwayBuilder.door2.doc; return {holes: d.holes.length, line: d.holes[0].line.length, credits: d.credits, kinds: Object.entries(d.surfaces).filter(([, v]) => v.length).map(([k]) => k)}; });
   if (doc.line !== 3) throw Error(`hole 1's line should bend at its aim point: ${doc.line} points`);
@@ -420,7 +420,7 @@ export default function ({journey, SHOTS}) {
   if (!doc.credits.some(c => /USGS/.test(c))) throw Error('the imagery\'s credit should be on the course');
   console.log(`       auto trace: ${greens.toFixed(0)} m² of green; ${treesAfter - treesBefore} trees in the zone (undone); ${tiles} imagery tiles; review: ${doc.kinds.join(', ')}`);
   await t.shot('review');
-  await page.getByRole('button', {name: 'Open in the editor'}).click();
+  await page.getByRole('button', {name: 'Open in 3D editor'}).click();
   await page.waitForFunction(() => window.fairwayBuilder?.editor?.view, null, {timeout: 120000});
   await page.waitForTimeout(800);
   await t.shot('editor');
@@ -518,7 +518,7 @@ export default function ({journey, SHOTS}) {
   const below = await page.evaluate(() => ['.cb-statusbar', '.cb-note'].map(q => document.querySelector(q).getBoundingClientRect().bottom - innerHeight));
   if (below.some(v => v > 1)) throw Error(`door 2's plan bar and notes should be inside the window: ${below}`);
   await t.shot('back-to-2d');
-  await page.getByRole('button', {name: 'Open in the editor'}).click();
+  await page.getByRole('button', {name: 'Open in 3D editor'}).click();
   await page.waitForFunction(() => window.fairwayBuilder?.editor?.view && document.querySelector('.cb-view canvas'), null, {timeout: 120000});
   const again = await page.evaluate(([x, z]) => { const e = window.fairwayBuilder.editor.editor; return {kind: e.surfaceAt(x, z), h: e.height(x, z)}; }, [mid.x, mid.z]);
   if (again.kind !== 'sand' || Math.abs(again.h - h3d1) > .05) throw Error(`the editor again should have the sand and the hill: ${JSON.stringify(again)} against ${h3d1}`);

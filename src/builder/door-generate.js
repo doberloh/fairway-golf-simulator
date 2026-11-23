@@ -75,8 +75,8 @@ export function open(start = null) {
  let world = null;
  const preview = el('div', {class: 'cb-row'}), facts = el('p', {class: 'cb-note', style: 'text-align:left'});
  const form = el('div');
- const take = el('button', {class: 'cb-btn cb-hot', type: 'button', disabled: true, onclick: takeOver}, 'Take it over');
- const growBtn = el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: growNow}, 'Grow this course');
+ const take = el('button', {class: 'cb-btn cb-hot', type: 'button', disabled: true, onclick: takeOver}, 'Edit in 3D editor');
+ const growBtn = el('button', {class: 'cb-btn cb-hot', type: 'button', onclick: growNow}, 'Generate course');
  const set = (k, v) => { try { s = validateSettings({...s, [k]: v}); } catch (e) { facts.textContent = e.message; } world = null; take.disabled = true; render(); };
  function render() {
   const groups = CATEGORIES.map(([cat, title, note]) => {
@@ -113,7 +113,7 @@ export function open(start = null) {
  // the game plays and Open a course file brings back here.
  const courseName = () => (start?.name || s.courseName || `${BIOMES[s.biome].name} ${s.seed}`).slice(0, 60);
  setSaver({key: `door1-${++opened}`, name: courseName, file: () => fileName(courseName()), bytes: async () => new TextEncoder().encode(courseFile({name: courseName(), settings: s})),
-  said: r => { facts.textContent = r.how === 'failed' ? 'Could not save: ' + r.error.message : `${r.how === 'overwrite' ? 'Saved again to' : 'Saved as'} ${r.file}: the course as its settings, which Fairway grows the same every time. Take it over to change the ground itself.`; }});
+  said: r => { facts.textContent = r.how === 'failed' ? 'Could not save: ' + r.error.message : `${r.how === 'overwrite' ? 'Saved again to' : 'Saved as'} ${r.file}: the course as its settings; Fairway generates the same course from them every time. To change the ground itself, press Edit in 3D editor.`; }});
  render();
  topTools(el('button', {class: 'cb-btn', type: 'button', onclick: home}, 'Back'), growBtn, take);
  show(el('section', {class: 'cb-sheet'},

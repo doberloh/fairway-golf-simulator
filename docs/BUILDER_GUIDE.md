@@ -20,8 +20,8 @@ offline; it goes online only when you ask it for something from the internet
   week is grown with: wide fairways, a few doglegs, large shaped greens, a
   lake and plenty of trees -- and every one of them can be moved.
 - **Generate a real life course** -- a real course, from its survey, its
-  photograph and its map. Find it by name, box it on the map, and **Build it
-  for me** does the steps -- or **Build it myself**.
+  photograph and its map. Find it by name, box it on the map, then press
+  **Build automatically** -- or **Search for LIDAR** to do each step yourself.
 - **Open a course file** -- carry on with a course or a draft you saved, or open
   a `.fairway` file somebody gave you.
 
@@ -53,7 +53,7 @@ zoomed in -- click it to go there.
 ![The map round Worthington Country Club, a box dragged round the course](builder-guide/map-box.webp)
 
 Under **Find the course**, type the course's name (add its town if the name is
-common) and press **Find**. A golf course on the map is taken at once, even
+common) and press **Find course**. A golf course on the map is taken at once, even
 over a town of the same name; if the search finds several places, click the
 one you mean. The builder shows the aerial map of the ground round it, 5 km
 across (**Map 3 km** or **8 km** if the course is not on it). Drag a box round
@@ -63,14 +63,14 @@ built.
 
 Then choose how to build it.
 
-### Build it for me
+### Build automatically
 
-![Build it for me, and its warning](builder-guide/build-it-for-me.webp)
+![Build automatically, and its warning](builder-guide/build-it-for-me.webp)
 
-Press **Build it for me**. It first says that **it might not always get it
-right** -- OpenStreetMap's map of a course can be wrong or missing, so a hole
-may point the wrong way or a green may be missing -- and **Build it** goes on
-(**Cancel** if you would rather not). The builder:
+Press **Build automatically**. It first warns that **the result may be
+wrong** -- OpenStreetMap's map of a course can be wrong or incomplete, so a
+hole may point the wrong way or a green may be missing. Press **Start
+building** to go on, or **Cancel**. The builder:
 
 1. downloads the newest USGS survey covering the most of the box,
 2. builds the land,
@@ -84,29 +84,29 @@ Worthington Country Club took under four minutes. It works for courses in the
 United States, and everything it did can be changed afterwards. Look every
 hole over before you play it.
 
-### Build it myself
+### Search for LIDAR
 
-Press **Build it myself**: every source of LIDAR over the box is listed, with
+Press **Search for LIDAR**: every source of LIDAR over the box is listed, with
 how much of the box each survey covers. Download one (or open a state portal's
 page, and put what it gives you in your LIDAR folder). When the LIDAR is in,
 the map gives way to the relief, and the box you drew is the property -- drag
-another on the relief to change it. **Next: build the land** builds the land
+another on the relief to change it. **Next: build land** builds the land
 at once; then the trace, the holes, the name and the review, each by hand.
 
-If you already have LIDAR files, **Choose LIDAR files** or **Load from the
-folder** skip the map: the relief shows, and you drag the box on it.
+If you already have LIDAR files, **Open LIDAR files** or **List folder
+files** skip the map: the relief shows, and you drag the box on it.
 
-## Checking the map
+## Hole checks
 
 OpenStreetMap is drawn by volunteers: some courses are mapped in full, some in
 part, some wrongly. When the holes come from the map, the holes step opens with
-**Checking the map**: what the map holds against what the course needs, and
+**Hole checks**: what the map holds against what the course needs, and
 each thing to check -- a hole whose line runs across the rough instead of down
 a fairway, a green or tee mark off any green or tee, two holes on one green,
 lines that cross, a length that does not suit the par, a tee far from the last
 green. Red rings mark them on the plan.
 
-![Checking the map on Worthington, after its fixes were taken: seven things left to check, most about the map's hole numbers](builder-guide/holes-checks.webp)
+![Hole checks on Worthington, after its fixes were taken: seven things left to check, most about the map's hole numbers](builder-guide/holes-checks.webp)
 
 Each has **Show** (the hole, framed) and, where one suits, **Fix** -- a mark a
 few metres off moved onto the nearest green or tee, or a bend down the fairway.
@@ -123,7 +123,7 @@ the sets come from the map's tags where it has them, and otherwise from how
 many tee boxes the holes have, the farthest box the longest set. In Fairway a
 golfer whose set the course lacks plays the nearest one it has.
 When half the holes or more have something to check, the map is called
-unreliable: go through every hole. **Find the doglegs** gives holes with no bend
+unreliable: go through every hole. **Add dogleg aim points** gives holes with no bend
 the bend their fairway takes. **.** and **,** go to the next and previous hole.
 
 ## Drawing and correcting the course
@@ -156,21 +156,23 @@ course boundary and creeks use the same pen.
 **Select** (V) picks a shape, tree or house: drag it to move it, an anchor to
 turn it. **Ctrl+C**, **Ctrl+V** (pastes at the pointer), **Ctrl+D** (a copy
 beside it) and **Delete** work on what is selected. **Measure** (M) gives the
-yards, metres and rise or fall between two clicks. **Skin from the land** paints
-the landscape's rock on the steep ground in one go; hold **Before** to compare.
+yards, metres and rise or fall between two clicks. **Paint rock on slopes** paints
+the landscape's rock on the steep ground in one go; press and hold **Hold to
+show before** to compare.
 
 Undo (Ctrl+Z) says what it will undo, and the **History** section lists your
-last changes with **Back to here**.
+last changes with **Undo to here**.
 
-**The photograph** is kept in your file but never drawn in the game. If it sits
-a little off, unlock it and drag it into line. Viewing has its brightness and
-contrast, and USGS's photographs say when they were taken.
+**The photo** is kept in your file but never drawn in the game. If it sits a
+little off, press **Unlock photo**, drag it into line, and press **Lock
+photo**. Viewing has its brightness and contrast, and USGS's photos say when
+they were taken.
 
 ## The 3D editor
 
 ![The 3D editor](builder-guide/editor.webp)
 
-**Open in the editor** shows the course in 3D, with the same kind of tool
+**Open in 3D editor** shows the course in 3D, with the same kind of tool
 strip down the left and the options beside it. Shape the ground (raise, lower,
 smooth, flatten, ramp), paint with the one brush and pen on the layer chosen,
 dig bunkers, draw ponds and creeks, plant trees and houses; select anything and
@@ -214,10 +216,10 @@ step: set a side back to **As the landscape** to take a choice away.
 ![The review: Play it in Fairway](builder-guide/review.webp)
 
 - **Your work is kept as you go** in this browser: a closed tab costs a few
-  minutes at most, and door 2 offers it back next time.
+  minutes at most, and **Restore draft** brings it back next time.
 - **Save** (Ctrl+S) in the top bar keeps door 2's draft, which the builder
   reopens just where you were.
-- **Save the course for Fairway**, on the review (or Save in the 3D editor),
+- **Save course file**, on the review (or Save in the 3D editor),
   writes the `.fairway` file. In **Fairway.html**: Saved courses > Import
   courses from a file, or drop the file there. It joins your shelf; play it
   from Play > a saved course.

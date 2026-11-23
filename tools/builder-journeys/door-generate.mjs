@@ -62,10 +62,10 @@ export default function ({journey, ROOT, SHOTS}) {
  journey('builder-door-1', 'grow a nine, take it over, raise and paint, save it; the game opens the file and a shot is played on it', async t => {
   const {page} = t;
   await page.getByRole('button', {name: /Generate and modify a course/}).click();
-  await page.getByRole('button', {name: 'Grow this course'}).first().click();
+  await page.getByRole('button', {name: 'Generate course'}).first().click();
   await page.waitForSelector('.cb-sheet canvas', {timeout: 120000});
   await t.shot('preview');
-  await page.getByRole('button', {name: 'Take it over'}).first().click();
+  await page.getByRole('button', {name: 'Edit in 3D editor'}).first().click();
   await page.waitForFunction(() => window.fairwayBuilder?.editor?.view, null, {timeout: 120000});
   await page.waitForTimeout(800);
   await t.shot('editor');

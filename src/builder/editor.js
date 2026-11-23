@@ -259,19 +259,19 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
  }
  const buildTools = () => { fillLayerPick(); buildPalette(); tools.replaceChildren(
   el('div', {class: 'cb-group'}, el('b', {}, 'View'), el('div', {class: 'cb-btns'},
-   el('button', {class: 'cb-btn', type: 'button', onclick: () => view.planView()}, 'From above'),
-   el('button', {class: 'cb-btn', type: 'button', onclick: () => view.frameHole(selected)}, 'This hole'),
+   el('button', {class: 'cb-btn', type: 'button', onclick: () => view.planView()}, 'View from above'),
+   el('button', {class: 'cb-btn', type: 'button', onclick: () => view.frameHole(selected)}, 'View this hole'),
    el('button', {class: 'cb-btn', type: 'button', onclick: undo}, 'Undo'),
    el('button', {class: 'cb-btn', type: 'button', onclick: redo}, 'Redo'))),
   el('div', {class: 'cb-group', 'data-for': 'shape paint erase eraseAll smoothEdges clear clearHomes bunker creek cover clearCover'}, el('b', {}, 'Brush'),
    range('Size', 1, 60, 1, radius, v => { radius = v; }),
    // THE STEADIED BRUSH (steady.js), as door 2's.
    el('div', {'data-for': 'paint erase eraseAll'}, range('Steadiness', 0, 100, 1, steadiness, v => { steadiness = v; }),
-    el('label', {'data-for': 'paint erase', title: 'Round the stroke\'s edge when you let go'}, el('input', {type: 'checkbox', class: 'cb-smoothstroke', checked: smoothStroke, onchange: e => { smoothStroke = e.target.checked; }}), ' Smooth the edge when I let go')), el('div', {'data-for': 'shape'}, range('Strength', .05, 1, .05, strength, v => { strength = v; }))),
+    el('label', {'data-for': 'paint erase', title: 'Round the stroke\'s edge when you let go'}, el('input', {type: 'checkbox', class: 'cb-smoothstroke', checked: smoothStroke, onchange: e => { smoothStroke = e.target.checked; }}), ' Smooth edge on release')), el('div', {'data-for': 'shape'}, range('Strength', .05, 1, .05, strength, v => { strength = v; }))),
   // The sizes the brush in hand lays, for ground cover and trees alike.
-  el('div', {class: 'cb-group', 'data-for': 'cover'}, el('b', {}, 'What it lays'),
+  el('div', {class: 'cb-group', 'data-for': 'cover'}, el('b', {}, 'Brush sizes'),
    el('label', {}, 'Smallest ', coverMinText, coverMin), el('label', {}, 'Largest ', coverMaxText, coverMax),
-   range('How thick', .05, 1, .05, coverThick, v => { coverThick = v; })),
+   range('Density', .05, 1, .05, coverThick, v => { coverThick = v; })),
   // ONE BRUSH AND ONE PEN, ON THE LAYER CHOSEN (the builder-ux goal, 10
   // November 2026): the layer is the paint program's colour, chosen here or by
   // clicking it in Layers. Replaced a Paint and an Outline button for each of
@@ -280,22 +280,22 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
    el('label', {}, 'Layer ', layerPick),
    underLine,
    el('button', {class: 'cb-btn', type: 'button', style: 'width:100%;margin-top:4px', onclick: skinLand,
-    title: "Paint the steep ground the landscape's rock and the ground below it its apron, read from the land's heights -- a best effort; paint over it, or Undo"}, 'Skin from the land')),
+    title: "Paint the steep ground the landscape's rock and the ground below it its apron, read from the land's heights -- a best effort; paint over it, or Undo"}, 'Paint rock on slopes')),
   el('div', {class: 'cb-group'}, el('b', {}, 'Clean up'), el('div', {class: 'cb-btns'},
     el('button', {class: 'cb-btn', type: 'button', onclick: () => { editor.smoothEdges({radius: 1.5, kind: layerNow()}); cleaned(); }}, 'Smooth all edges'),
-    el('button', {class: 'cb-btn', type: 'button', onclick: () => { editor.tidy({kind: layerNow()}); cleaned(); }}, 'Tidy specks')),
-   el('small', {}, 'Extrapolate the layer above: lay another round it, a width out.'),
+    el('button', {class: 'cb-btn', type: 'button', onclick: () => { editor.tidy({kind: layerNow()}); cleaned(); }}, 'Remove specks')),
+   el('small', {}, 'Add layer around: lays the chosen layer a set width (metres) round the layer selected above.'),
    el('div', {class: 'cb-btns'}, el('select', {class: 'cb-exto', onchange: e => { exTo = e.target.value; }}, landscapeKinds().filter(k => k !== 'rough').map(k => el('option', {value: k, selected: k === exTo}, label(k)))),
     el('input', {type: 'number', class: 'cb-exwidth', min: .5, max: 40, step: .5, value: exWidth, title: 'metres', oninput: e => { exWidth = +e.target.value || 4; }})),
-   el('button', {class: 'cb-btn', type: 'button', onclick: () => { if (editor.extrapolate({from: layer, to: exTo, width: exWidth})) cleaned(); else status.textContent = 'Pick a layer that holds something, and another to lay round it.'; }}, 'Extrapolate')),
+   el('button', {class: 'cb-btn', type: 'button', onclick: () => { if (editor.extrapolate({from: layer, to: exTo, width: exWidth})) cleaned(); else status.textContent = 'Pick a layer that holds something, and another to lay round it.'; }}, 'Add layer around')),
   el('div', {class: 'cb-group'}, el('b', {}, 'Ground cover'), coverButtons()),
-  el('div', {class: 'cb-group cb-layers'}, el('b', {}, 'Layers'), el('small', {}, 'Top first. Show or hide one; Erase takes it off under the brush.'), layerList),
+  el('div', {class: 'cb-group cb-layers'}, el('b', {}, 'Layers'), el('small', {}, 'Top of list draws on top. The eye shows or hides a layer; Erase removes it under the brush.'), layerList),
   el('div', {class: 'cb-group'}, el('b', {}, 'Trees'),
    el('label', {'data-for': 'placeTree'}, 'Which tree ', el('select', {class: 'cb-treekind', style: 'width:100%', title: 'The tree to place, from those this landscape grows', onchange: e => { treeKind = e.target.value; showModel(); }}, el('option', {value: ''}, 'Any of the landscape\'s'), ...treeChoices(BIOMES[s.landscape]).map(([k, name]) => el('option', {value: k, selected: k === treeKind}, name)))),
    el('label', {'data-for': 'placeTree'}, 'Tree height, metres ', el('input', {type: 'number', class: 'cb-treeh', min: 3, max: 60, value: treeH, oninput: e => { treeH = +e.target.value || 15; showModel(); }})),
-   el('label', {'data-for': 'treeZone'}, 'Trees a hectare ', el('input', {type: 'number', class: 'cb-density', min: 10, max: 600, value: zoneDensity, oninput: e => { zoneDensity = +e.target.value || 120; }})),
+   el('label', {'data-for': 'treeZone'}, 'Trees per hectare ', el('input', {type: 'number', class: 'cb-density', min: 10, max: 600, value: zoneDensity, oninput: e => { zoneDensity = +e.target.value || 120; }})),
    el('button', {class: 'cb-btn', type: 'button', style: 'width:100%', onclick: clearTurfTrees}, 'Clear trees from tees and greens'),
-   el('label', {title: 'Every tree on the course together'}, 'Every tree\'s size ', scaleText, treeScale),
+   el('label', {title: 'Every tree on the course together'}, 'All trees\' size ', scaleText, treeScale),
    el('label', {'data-for': 'sizeTree'}, 'This tree ', oneText, oneTree),
    // Live: the trees redraw as it is ticked, and Game view shows them next.
    treePlanControls(el, BIOMES[s.landscape], s.treePlan, plan => { editor.setTreePlan(plan); view.refreshTrees(); refreshSave(); })),
@@ -369,11 +369,11 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
  }
  side.replaceChildren(
   el('h4', {}, 'The course'), el('div', {class: 'cb-field'}, el('label', {}, 'Name'), nameInput),
-  el('div', {class: 'cb-field'}, el('label', {}, 'Landscape (the look; the land and lies stay)'), landscape),
+  el('div', {class: 'cb-field'}, el('label', {}, 'Landscape (changes the look only)'), landscape),
   el('h4', {style: 'margin-top:10px'}, 'Surroundings'), surroundBox,
   el('h4', {style: 'margin-top:10px'}, 'Holes'), holeList, holeTools,
-  el('h4', {style: 'margin-top:10px'}, 'Checks'), el('button', {class: 'cb-btn', type: 'button', onclick: runChecks}, 'Check the course'), checkList,
-  el('h4', {style: 'margin-top:10px'}, 'Test round'), el('button', {class: 'cb-btn', type: 'button', onclick: runTest}, 'Play a test round'), roundList);
+  el('h4', {style: 'margin-top:10px'}, 'Checks'), el('button', {class: 'cb-btn', type: 'button', onclick: runChecks}, 'Check course'), checkList,
+  el('h4', {style: 'margin-top:10px'}, 'Test round'), el('button', {class: 'cb-btn', type: 'button', onclick: runTest}, 'Play test round'), roundList);
  refreshHoles(); refreshLayers();
  // CLOSE ASKS TWICE (the owner, 1 November 2026: "close needs a double
  // confirm if its going to fully close the project in the builder"): Close
@@ -420,7 +420,7 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
     leave(); open(made);
    } catch (e) { status.textContent = 'Could not lay it out in 2D: ' + e.message; } finally { setBusy(''); }
   }}, 'Back to 2D'),
-  work ? el('button', {class: 'cb-btn', type: 'button', title: 'A copy of this course to give to someone: what the game plays, without the pictures, the map data and the rest of your builder work', onclick: shareCopy}, 'Save a copy to share') : null,
+  work ? el('button', {class: 'cb-btn', type: 'button', title: 'A copy of this course to give to someone: what the game plays, without the pictures, the map data and the rest of your builder work', onclick: shareCopy}, 'Save shareable copy') : null,
   gameButton,
   el('button', {class: 'cb-btn', type: 'button', onclick: () => closeCourse()}, 'Close'));
  function closeCourse() {
@@ -632,7 +632,7 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
   said(r, bytes) {
    if (r.how === 'failed') { status.textContent = 'Could not save: ' + r.error.message; return; }
    s.changed = false;
-   status.textContent = `${r.how === 'overwrite' ? 'Saved again to' : 'Saved'} ${r.file} (${(bytes.length / 1e6).toFixed(1)} MB). Open it in Fairway: Saved courses, Import courses from a file.${work ? ' It keeps everything the builder needs, your pictures too: to give the course to someone, use Save a copy to share.' : ''}`;
+   status.textContent = `${r.how === 'overwrite' ? 'Saved again to' : 'Saved'} ${r.file} (${(bytes.length / 1e6).toFixed(1)} MB). Open it in Fairway: Saved courses, Import courses from a file.${work ? ' It keeps all your builder work, photos included. To give the course to someone, use Save shareable copy.' : ''}`;
   },
  });
  setTool({kind: 'navigate'});
@@ -644,11 +644,11 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
  const backBtn = () => [...document.querySelectorAll('#cbTopTools .cb-btn')].find(b => b.textContent === 'Back to 2D');
  const notGame = () => !game?.showing;
  useMenus({
-  file: [{label: 'Save a copy to share…', enabled: () => !!work, run: () => shareCopy()}, {sep: true}, {label: 'Back to 2D', run: () => backBtn()?.click()}, {label: 'Close the course', run: () => closeCourse()}],
+  file: [{label: 'Save shareable copy…', enabled: () => !!work, run: () => shareCopy()}, {sep: true}, {label: 'Back to 2D', run: () => backBtn()?.click()}, {label: 'Close the course', run: () => closeCourse()}],
   edit: [{label: 'Undo', key: 'Ctrl+Z', enabled: notGame, run: () => undo()}, {label: 'Redo', key: ['Ctrl+Y', 'Ctrl+Shift+Z'], enabled: notGame, run: () => redo()}, {sep: true},
    // DELETE (item 9): a pond with its water, a creek, a shape, a tree, a rock, a house.
    {label: 'Delete what is selected', key: 'Delete', enabled: () => notGame() && !!chosen, run: () => deleteChosen()}],
-  view: [{label: 'From above', key: 'F', enabled: notGame, run: () => view.planView()}, {label: 'This hole', enabled: notGame, run: () => view.frameHole(selected)}, {sep: true}, {label: 'Game view', key: 'G', checked: () => !!game?.showing, run: () => toggleGame()}],
+  view: [{label: 'View from above', key: 'F', enabled: notGame, run: () => view.planView()}, {label: 'View this hole', enabled: notGame, run: () => view.frameHole(selected)}, {sep: true}, {label: 'Game view', key: 'G', checked: () => !!game?.showing, run: () => toggleGame()}],
   tools: [
    {label: 'Move the view', key: 'H', enabled: notGame, checked: () => tool.kind === 'navigate', run: () => setTool({kind: 'navigate'})},
    {label: 'Select shape', key: 'V', enabled: notGame, checked: () => tool.kind === 'select', run: () => setTool({kind: 'select'})},
