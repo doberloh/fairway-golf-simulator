@@ -41,6 +41,11 @@ export const TIPS = {
  'Cancel': 'Stop this and keep what was there',
  'Edit in 3D editor': 'Open this generated course in the 3D editor to change it',
  'Generate course': 'Make a course from these settings and seed',
+ // The save box and Open a course (the courses folder).
+ 'Save': 'Save the course into your courses folder',
+ 'Replace it': 'Write over the file already in the folder with this course',
+ 'Change folder': 'Pick another courses folder (remembered next time)',
+ 'Choose courses folder': 'Pick the folder every course is saved to and opened from (remembered next time)',
  // Door 2's plan.
  'Zoom in': 'Zoom in (or use the wheel)',
  'Zoom out': 'Zoom out (or use the wheel)',

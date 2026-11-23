@@ -1622,6 +1622,55 @@ word: "dont do the checks or tests yet"):
 Read as "fills at the same height": the wood's trees all one height (sized
 from one canopy height); the ground itself is not changed by Fill outside.
 
+### The courses folder, and a name before saving (23 November 2026)
+
+The owner: "When saving a course from any step, can we make it so that the
+user picks a 'courses folder' and we save and load from there? We should also
+ask the user to name the course if they are saving from a step before they
+named it." Built:
+
+- **One courses folder**, picked once and remembered as the LIDAR folder is
+  (courses-folder.js; its handle kept in the same IndexedDB store under its
+  own key, lidar-folder.js `recallFolder(key)`). With it, **every save goes
+  into it with no dialog** (saving.js `useFolder`, `folderPlan`): the top
+  bar's Save from door 1, door 2 at any step and the editor; door 2's Save
+  course file; the editor's Save shareable copy. The file is named after the
+  course, as before (course-file.js `fileName`).
+- **The save box** (builder.js `saveBox`, over the screen) comes up when a
+  save needs something first: no courses folder yet (Choose courses folder;
+  pressing Save picks one if none is chosen), and/or **door 2 before step 5,
+  Name, with no name typed** (door-real.js saver `named`): the name box,
+  filled with the name the course has (the course found, or OpenStreetMap's),
+  asked once; the answer sets the name the Name step shows, and a draft keeps
+  `named`. Cancel saves nothing.
+- **Never over another course unasked.** The same work and name write the same
+  file again (Save again, as since 1 November); a new name a new file. A file
+  of that name already in the folder that this work did not write -- another
+  course called the same -- brings a box: **Save as name-2** (the next free
+  name), **Replace it**, or **Cancel**. Rejected: overwriting by name alone
+  (two courses called "My real course" would eat each other), and always
+  saving beside (opening a course and saving it would leave name-2 copies).
+- **A course opened from the folder saves back to its file** (saving.js
+  `openedFrom`): it is this session's file at once, claimed by the first work
+  that saves under its name. Back to the builder's start lets an unclaimed one
+  go, so a new course of the same name is asked about, not written over it.
+- **Open a course file** (File > Open, Ctrl+O, and the start page's door) is a
+  box listing the folder's courses and drafts, newest first, each with its
+  size and when it was saved; Open another file… for one elsewhere; Choose
+  courses folder / Change folder. It is a box over the screen, so Cancel leaves
+  the work in hand.
+- **Firefox and Safari** cannot pick a folder: saving and opening work as
+  before (a download; the browser's file picker). The name box still asks.
+- The builder journeys hide the folder picker as they hide the save dialog
+  (tools/builder-smoke.mjs), so they save as Firefox does; door-real.mjs now
+  answers the name box at the Holes step.
+
+Tested in Node (tests/builder-saving.test.mjs: the folder's rule, saving into
+a fake folder -- again, a clash asked once and saved beside, Cancel, Replace,
+a renamed course -- a course opened and saved back, the listing). **Not seen
+by a person; no journey run** (the save box and the Open box need a real
+folder, which a script cannot pick).
+
 ### Houses of any size, Normalize width, the Line tool, the pen's curve (23 November 2026)
 
 The owner: "the open street map data places houses that are odd shapes and it

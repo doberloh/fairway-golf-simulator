@@ -536,6 +536,18 @@ here is a claim of support until it is done.
   course found, in the builder by hand (the map round them, the outer limit
   the middle 3 x 3 km); and how much wait it saves (not timed).
 
+- [ ] **The courses folder and the name before saving: not seen** (branch
+  `builder-big-zips`, 23 November 2026; COURSE_BUILDER.md, *The courses
+  folder, and a name before saving*). Tested in Node with a fake folder only;
+  the builder journeys hide the folder picker, so no script has shown the save
+  box or the Open box. Owed, by hand in Chrome: the first Save asking for a
+  folder (and a name, in door 2 before the Name step), Save again with no box,
+  a second course of the same name asked about (Save as name-2, Replace,
+  Cancel), Open listing the folder and a course opened from it saving back to
+  its own file, a new visit asking leave for the folder again, and Firefox
+  still downloading. door-real.mjs was taught to answer the name box at the
+  Holes step; not run.
+
 - [ ] **Houses of any size, Normalize width, the Line tool, the pen's curve:
   not seen** (branch `builder-big-zips`, 23 November 2026; COURSE_BUILDER.md,
   *Houses of any size, Normalize width, the Line tool, the pen's curve*).

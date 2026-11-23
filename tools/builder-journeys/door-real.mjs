@@ -416,7 +416,13 @@ export default function ({journey, SHOTS}) {
   // Save from here: a stand-in save dialog (the harness hides Chrome's) -- the
   // first Save asks where, the second goes to the same file with one click.
   await page.evaluate(() => { window.__picks = 0; window.__writes = 0; window.showSaveFilePicker = async o => { window.__picks++; return {name: o.suggestedName, async createWritable() { return {async write() { window.__writes++; }, async close() {}}; }}; }; });
-  await page.locator('#cbSave').click(); await page.waitForFunction(() => window.__writes === 1, null, {timeout: 60000});
+  await page.locator('#cbSave').click();
+  // NAMED FIRST (the owner, 23 November 2026): a save before step 5 asks for
+  // the course's name, filled in with the one it has; asked once.
+  await page.locator('.cb-askname').waitFor({timeout: 10000});
+  if (await page.locator('.cb-askname').inputValue() !== 'My real course') throw Error(`the name box should hold the course's name: ${await page.locator('.cb-askname').inputValue()}`);
+  await page.locator('[data-ask="save"]').click();
+  await page.waitForFunction(() => window.__writes === 1, null, {timeout: 60000});
   if (await page.locator('#cbSave').textContent() !== 'Save again') throw Error('after saving, the button should offer Save again');
   await page.keyboard.press('Control+s'); await page.waitForFunction(() => window.__writes === 2, null, {timeout: 60000});
   if (await page.evaluate(() => window.__picks) !== 1) throw Error('saving again should go to the same file without asking');

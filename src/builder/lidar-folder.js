@@ -26,9 +26,10 @@ function db() {
  return new Promise((ok, no) => { const r = indexedDB.open(DB, 1); r.onupgradeneeded = () => r.result.createObjectStore(STORE); r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error); });
 }
 async function tx(mode, f) { const d = await db(); return new Promise((ok, no) => { const t = d.transaction(STORE, mode), r = f(t.objectStore(STORE)); t.oncomplete = () => { d.close(); ok(r?.result); }; t.onerror = () => { d.close(); no(t.error); }; }); }
-// The folder picked on an earlier visit, or null.
-export async function recallFolder() { try { return (await tx('readonly', s => s.get(KEY))) ?? null; } catch { return null; } }
-export async function rememberFolder(dir) { try { await tx('readwrite', s => s.put(dir, KEY)); } catch { /* a private window: kept for this visit only */ } }
+// The folder picked on an earlier visit, or null. `key`: which folder (the
+// courses folder, courses-folder.js, is kept beside this one).
+export async function recallFolder(key = KEY) { try { return (await tx('readonly', s => s.get(key))) ?? null; } catch { return null; } }
+export async function rememberFolder(dir, key = KEY) { try { await tx('readwrite', s => s.put(dir, key)); } catch { /* a private window: kept for this visit only */ } }
 
 // Leave to read and write it: asked for (a prompt) only when `ask`, which
 // must be inside a press.

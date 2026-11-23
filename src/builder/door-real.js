@@ -23,7 +23,7 @@
 // work is in pure modules beside this one: real-course.js (land, picture,
 // course), trace-edit.js (the trace being drawn), imagery.js (fetched
 // pictures), lidar/trace.js (the auto trace).
-import {show, setTitle, setBusy, topTools, home, pickFile, ui, setSaver, refreshSave, useMenus} from './builder.js';
+import {show, setTitle, setBusy, topTools, home, pickFile, ui, setSaver, refreshSave, useMenus, savePlace} from './builder.js';
 import {icon, eyeButton} from './icons.js';
 import {penCurve, closesOn} from './pen.js';
 import {areaWidth} from './line-work.js';
@@ -2498,7 +2498,7 @@ export function open(draft = null) {
  // 5. Name; 6. Edit.
  function stepName() {
   return [el('div', {class: 'cb-field'}, el('label', {}, 'The course'),
-   el('small', {}, 'Name'), el('input', {class: 'cb-name', value: st.name, maxlength: 60, oninput: e => { st.name = e.target.value; refreshSave(); }}),
+   el('small', {}, 'Name'), el('input', {class: 'cb-name', value: st.name, maxlength: 60, oninput: e => { st.name = e.target.value; st.named = true; refreshSave(); }}),
    el('small', {}, 'Landscape (changes the look only)'), el('select', {onchange: e => { st.landscape = e.target.value; }}, BIOME_KEYS.map(k => el('option', {value: k, selected: k === st.landscape}, BIOMES[k].name))),
    el('small', {}, 'Data credits (one per line)'), el('textarea', {class: 'cb-credits', rows: 4, style: 'background:#03100e;border:1px solid var(--line);color:inherit', oninput: e => { st.credits = e.target.value.split('\n').map(s => s.trim()).filter(Boolean); }}, st.credits.join('\n'))),
   next(5)];
@@ -2522,12 +2522,13 @@ export function open(draft = null) {
  }
  async function saveForGame() {
   if (!st.doc) return say('The course is still being painted: a moment.', true);
+  if (!await savePlace()) return;
   setBusy('Saving the course for Fairway…');
   try {
    const bytes = await writeBuiltFile(validateDoc(st.doc), BUILT_VERSION, {builder: await writeDraft(await whole())});
    const r = await saveBytes(bytes, {key: `door2-course-${st.name}`, name: st.name, file: fileName(st.name)});
    if (r.how === 'cancelled') return;
-   const said = `Saved ${r.file} (${(bytes.length / 1e6).toFixed(1)} MB). Now open Fairway.html: Saved courses > Import courses from a file.`;
+   const said = `Saved ${r.file}${r.folder ? ` in ${r.folder}` : ''} (${(bytes.length / 1e6).toFixed(1)} MB). Now open Fairway.html: Saved courses > Import courses from a file.`;
    say(said); const n = panel.querySelector('.cb-togamesaid'); if (n) n.textContent = said;
    window.fairwayBuilder.lastSaved = bytes;
   } catch (e) { say('Could not save the course: ' + e.message, true); }
@@ -2565,7 +2566,7 @@ export function open(draft = null) {
  // SAVE FROM ANY STEP (the owner, 1 November 2026): door 2 saves a draft
  // (draft.js) that opens back here at the same step; the playable course is
  // saved from the editor. Pictures are not in it, but each one's lining up is.
- const snapshot = () => ({step: st.step, name: st.name, landscape: st.landscape, credits: st.credits, holes: st.holes, holesN: st.holesN, hole: st.hole, boundary: st.boundary, traceMode: st.traceMode, box: st.box, detailRing: st.detailRing ?? null, detailMap: !!st.detailMap,
+ const snapshot = () => ({step: st.step, name: st.name, named: !!st.named, landscape: st.landscape, credits: st.credits, holes: st.holes, holesN: st.holesN, hole: st.hole, boundary: st.boundary, traceMode: st.traceMode, box: st.box, detailRing: st.detailRing ?? null, detailMap: !!st.detailMap,
   sources: st.sources.map(s => ({name: s.name, crs: s.kind === 'points' ? s.crs : s.raster?.crs ?? s.crs ?? null})),
   view: {lidarView: st.lidarView, lidarAlpha: st.lidarAlpha, picAlpha: st.picAlpha, traceAlpha: st.traceAlpha, lidarOnTop: st.lidarOnTop, smoothView: st.smoothView, treeScale: st.treeScale, treesFrom: st.treesFrom},
   geo: st.geo, picShow: st.picShow, treePlan: st.treePlan, surround: st.surround,
@@ -2573,8 +2574,13 @@ export function open(draft = null) {
   trace: st.model ? {masks: st.model.state.layers.masks, hidden: [...st.model.state.layers.hidden], trees: st.model.state.trees, homes: st.model.state.homes, bunkers: st.model.state.bunkers, creekLines: st.model.state.creekLines} : null});
  // Everything, the pictures packed as a file holds them (picture-file.js).
  const whole = async () => ({...snapshot(), pics: await packPictures(st.pics, {onStep: label => setBusy(`Saving the pictures… ${label}`)})});
+ // NAMED FIRST (the owner, 23 November 2026: "ask the user to name the course
+ // if they are saving from a step before they named it"): before step 5 (Name)
+ // and with no name typed, Save asks for one (builder.js saveBox), the name
+ // found with the course filled in.
  const saver = {key: `door2-${++opened}`, name: () => st.name, file: () => fileName(st.name).replace(/\.fairway$/, DRAFT_EXT), bytes: async () => writeDraft(await whole()),
-  said: (r, bytes) => r.how === 'failed' ? say('Could not save: ' + r.error.message, true) : say(`${r.how === 'overwrite' ? 'Saved again to' : 'Saved as'} ${r.file} (${(bytes.length / 1e6).toFixed(1)} MB): a draft that opens back at this step (Open a course file). The playable course is saved from the editor.`)};
+  named: () => !!st.named || st.step >= 4, rename: name => { st.name = name; st.named = true; const n = panel.querySelector('.cb-name'); if (n) n.value = name; },
+  said: (r, bytes) => r.how === 'failed' ? say('Could not save: ' + r.error.message, true) : say(`${r.how === 'overwrite' ? 'Saved again to' : 'Saved as'} ${r.file}${r.folder ? ` in ${r.folder}` : ''} (${(bytes.length / 1e6).toFixed(1)} MB): a draft that opens back at this step (Open a course file). The playable course is saved from the editor.`)};
  setSaver(saver);
  // THE KEPT DRAFT (autosave.js; item 12): door 2's draft written to this
  // browser's storage at each step and every 3 minutes once there is land,
@@ -2632,7 +2638,7 @@ export function open(draft = null) {
   // The LIDAR files are not in a draft: stand-ins carry their names and map
   // grid, so the place is known (imagery, OpenStreetMap); building the land
   // anew needs the files again. Everything else comes back as it was left.
-  Object.assign(st, {name: d.name, landscape: d.landscape, credits: d.credits ?? [], holes: (d.holes ?? []).map(h => h && {...h, tees: (h.tees ?? []).map(t => ({...t, set: colourOf(t.set) ?? 'blue'}))}), holesN: d.holesN ?? 18, hole: d.hole ?? 0, boundary: d.boundary, traceMode: d.traceMode, box: d.box, detailRing: d.detailRing ?? null, detailMap: !!d.detailMap,
+  Object.assign(st, {name: d.name, named: !!d.named, landscape: d.landscape, credits: d.credits ?? [], holes: (d.holes ?? []).map(h => h && {...h, tees: (h.tees ?? []).map(t => ({...t, set: colourOf(t.set) ?? 'blue'}))}), holesN: d.holesN ?? 18, hole: d.hole ?? 0, boundary: d.boundary, traceMode: d.traceMode, box: d.box, detailRing: d.detailRing ?? null, detailMap: !!d.detailMap,
    sources: (d.sources ?? []).map(s => ({name: s.name, kind: 'points', crs: s.crs, restored: true})), picOffsets: d.picOffsets ?? {}, trees: d.trees ?? [], landEdits: d.landEdits ?? null, creeks: d.creeks ?? [], rocks: d.rocks ?? [], geo: d.geo ?? null, treePlan: d.treePlan ?? null, surround: d.surround ?? null, ...(d.view ?? {})});
   let lostPics = 0;
   if (d.land) {

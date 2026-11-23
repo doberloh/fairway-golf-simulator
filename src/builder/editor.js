@@ -4,7 +4,7 @@
 // change goes through the editing model (editing.js), which is tested in
 // Node; this file only turns the mouse and keys into its calls and tells the
 // view what to redraw.
-import {show, setTitle, setBusy, topTools, home, ui, setSaver, refreshSave, useMenus} from './builder.js';
+import {show, setTitle, setBusy, topTools, home, ui, setSaver, refreshSave, useMenus, savePlace} from './builder.js';
 import {penCurve} from './pen.js';
 import {eyeButton, icon} from './icons.js';
 import {createSteady} from './steady.js';
@@ -609,12 +609,13 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
  // What the editor hands the door 2 session behind this course.
  function editorWork(now) { return {base: doc, now, changed: editor.changedLayers(), hidden: editor.hiddenLayers()}; }
  async function shareCopy() {
+  if (!await savePlace()) return;
   setBusy('Saving a copy to share…');
   try {
    await new Promise(r => setTimeout(r, 30));
    const bytes = await writeBuiltFile(validateDoc(editor.toDoc()), BUILT_VERSION);
    const r = await saveBytes(bytes, {key: `share-${opened}`, name: s.name, file: fileName(s.name).replace(/\.fairway$/, '-share.fairway'), remember: false});
-   if (r.how !== 'cancelled') status.textContent = `A copy to share: ${r.file} (${(bytes.length / 1e6).toFixed(1)} MB), the course without your pictures and builder work.`;
+   if (r.how !== 'cancelled') status.textContent = `A copy to share: ${r.file}${r.folder ? ` in ${r.folder}` : ''} (${(bytes.length / 1e6).toFixed(1)} MB), the course without your pictures and builder work.`;
   } catch (e) { status.textContent = 'Could not save the copy: ' + e.message; } finally { setBusy(''); }
  }
  // Save (the top bar's, and Ctrl+S): the course as a .fairway file, with the
@@ -632,7 +633,7 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
   said(r, bytes) {
    if (r.how === 'failed') { status.textContent = 'Could not save: ' + r.error.message; return; }
    s.changed = false;
-   status.textContent = `${r.how === 'overwrite' ? 'Saved again to' : 'Saved'} ${r.file} (${(bytes.length / 1e6).toFixed(1)} MB). Open it in Fairway: Saved courses, Import courses from a file.${work ? ' It keeps all your builder work, photos included. To give the course to someone, use Save shareable copy.' : ''}`;
+   status.textContent = `${r.how === 'overwrite' ? 'Saved again to' : 'Saved'} ${r.file}${r.folder ? ` in ${r.folder}` : ''} (${(bytes.length / 1e6).toFixed(1)} MB). Open it in Fairway: Saved courses, Import courses from a file.${work ? ' It keeps all your builder work, photos included. To give the course to someone, use Save shareable copy.' : ''}`;
   },
  });
  setTool({kind: 'navigate'});

@@ -951,7 +951,22 @@ changes, newest first, each with **Undo to here**.
      (top right) to the builder's start asks twice once there is work in
      the course.
 - **Open a course file** to carry on with one you saved or one somebody gave
-  you, or a door 2 draft.
+  you, or a door 2 draft. It lists the courses and drafts in your **courses
+  folder**, newest first, each with its size and when it was saved (a click
+  opens it); **Open another file…** opens one from anywhere else, and
+  **Choose courses folder** / **Change folder** picks the folder.
+
+**The courses folder** (Chrome and Edge): the first Save asks you to pick a
+folder once, remembered next time (the browser may ask again for leave to use
+it). Every Save from then on -- a draft from any step, a course from the
+editor or door 1, Save course file, Save shareable copy -- goes into it with no
+dialog, named after the course. A course opened from the folder saves back to
+its own file. If another course of the same name is already there, you are
+asked: **Save as name-2**, **Replace it**, or **Cancel**. **Saving a real
+course before its Name step asks for its name** first, filled in with the one
+it has (the course found, or OpenStreetMap's); asked once, and a draft keeps
+the answer. Other browsers have no folder to pick and save to their downloads,
+as before.
 
 **Save, anywhere** (top right, or Ctrl+S): the editor saves the course as a
 .fairway file; door 1 saves the course as its settings; door 2 saves a
@@ -983,8 +998,8 @@ rest of your builder work. Use it for a course that went through door 2, above
 all when it holds Google or Bing pictures, which are yours to use on your own
 account and not to pass on. Once
 saved, the button says **Save again** and one click writes the same file;
-rename the course and Save asks for a new file. (Chrome and Edge write to
-the file you chose; other browsers download a new copy each time.)
+rename the course and Save makes a new file. (Chrome and Edge write into
+your courses folder; other browsers download a new copy each time.)
 
 **The editor** looks like the course's landscape -- its sky, its ground
 colours, its trees drawn as the landscape grows them (cones for the

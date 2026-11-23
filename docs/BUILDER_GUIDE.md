@@ -23,7 +23,16 @@ offline; it goes online only when you ask it for something from the internet
   photograph and its map. Find it by name, box it on the map, then press
   **Build automatically** -- or **Search for LIDAR** to do each step yourself.
 - **Open a course file** -- carry on with a course or a draft you saved, or open
-  a `.fairway` file somebody gave you.
+  a `.fairway` file somebody gave you. It lists what is in your **courses
+  folder**, newest first; **Open another file…** opens one from anywhere else.
+
+**Your courses folder.** The first time you save, the builder asks you to pick
+a folder for your courses (and, on a real course before the Name step, asks
+for the course's name). From then on every Save goes straight into that folder
+with no dialog, named after the course, and Open lists it. If a course of the
+same name is already there and it is not the one you are working on, you are
+asked whether to replace it or save beside it. **Change folder** in either box
+picks another. (Chrome and Edge; other browsers save to their downloads.)
 
 ## Finding your way round
 
