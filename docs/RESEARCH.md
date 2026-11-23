@@ -17591,3 +17591,40 @@ way, so the relay never sees it.
   keys exchanged, the host's pinned) would close both; it was weighed
   against @noble/curves' size (tens of KB) and the friends-only rooms the
   owner asked for, and not built.
+
+## Normalize width: a cart path's and a street's width (23 November 2026, the builder-big-zips branch)
+
+Door 2's Clean up lays the cart paths or the streets again at one width
+(line-work.js `evenWidth`; COURSE_BUILDER.md *Houses of any size, Normalize
+width, the Line tool, the pen's curve*). The owner asked for cart paths
+"about 1.5 carts wide".
+
+- **A golf cart's width.** Club Car's own sheet for the Onward 2 Passenger:
+  overall width 48.75 in (123.8 cm); its 6 Passenger 48.8 in, 51.3 in lifted
+  (https://www.clubcar.com/en/personal/golf-carts/onward-2-passenger/specifications,
+  https://www.clubcar.com/en/personal/golf-carts/onward-6-passenger/specifications).
+  E-Z-GO's RXV page gives no width; third-party lists put it at 47 in
+  (https://www.golfcartgarage.com/blog/golf-cart-dimensions-and-their-importance,
+  read through a search summary only, not checked against the maker). One
+  third-party guide gives the Onward 2 Passenger as 47.5 in, against Club
+  Car's 48.75: Club Car's own figure followed. So a cart is about 1.2 to
+  1.24 m wide, and **1.5 carts is 1.8 m** -- the starting width, which the
+  player can change (1 to 6 m).
+- **Not followed: the usual built width.** Course cart paths are commonly
+  laid 8 ft (2.4 m) wide so two carts can pass; the owner asked for 1.5
+  carts, so 1.8 m is the start and 2.4 m is one number away. (From general
+  knowledge, no source fetched this pass -- PLACED as a remark, not used.)
+- **A street's width: 6 m**, the residential street of osm.js `ROAD_WIDTH`
+  (PLACED there from US lane widths, 3 to 3.7 m a lane).
+- **What is an area, not a path (PLACED, line-work.js `areaWidth`)**: wider
+  than three times the width and at least 8 m -- 8 m for cart paths, 18 m for
+  streets. A parking lot (two rows of spaces, about 5 to 5.5 m deep each, and
+  a 6 to 7 m aisle: 16 to 18 m, from general knowledge) is kept as drawn; a
+  single row along a drive, narrower than 18 m, is laid as a street.
+- **How a width lands on the grid.** A cell is painted when its middle lies
+  within half the width of the middle line, the brush's own test. On half-metre
+  cells a line along the grid at 1.8 m covers 3 or 4 cells across (1.5 or 2 m)
+  depending on where the line falls between cell middles; the middle lines are
+  smoothed, so along a path it averages about the width asked. In the Node
+  test a ragged path 2 to 4.5 m wide came out 1.5 to 2.5 m across at every
+  point measured, from end to end, its branch still joined.

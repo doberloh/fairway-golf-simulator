@@ -38,10 +38,15 @@ function segment(p0, p1, p2, p3, n) {
 // apart (at least 2 and at most 64 a segment). `closed`: back round to the
 // first node. `sharp`: the indices of corner nodes. Fewer than two nodes: the
 // nodes as they are; two on a closed curve: the line.
-export function penCurve(nodes, {closed = false, sharp = [], step = 1} = {}) {
+// HOW MUCH IT CURVES (the owner, 23 November 2026: "options for both the line
+// and outline tool to toggle the 'auto curving' on and off and also the
+// strength of the curve"): `curve` 1 is the full spline, 0 straight lines
+// node to node, and between the two each point is that share of the way from
+// the straight line to the spline -- still through every node, bulging less.
+export function penCurve(nodes, {closed = false, sharp = [], step = 1, curve = 1} = {}) {
  const N = nodes.length;
  if (N < 2 || (closed && N < 3)) return nodes.map(p => [p[0], p[1]]);
- const corner = new Set(sharp), at = i => nodes[(i + N) % N], out = [];
+ const corner = new Set(sharp), at = i => nodes[(i + N) % N], out = [], c = Math.max(0, Math.min(1, curve));
  const segs = closed ? N : N - 1;
  for (let s = 0; s < segs; s++) {
   const i1 = s, i2 = s + 1, p1 = at(i1), p2 = at(i2);
@@ -50,7 +55,11 @@ export function penCurve(nodes, {closed = false, sharp = [], step = 1} = {}) {
   if (corner.has(i1 % N)) p0 = mirror(p1, p2);
   if (corner.has(i2 % N)) p3 = mirror(p2, p1);
   const n = Math.max(2, Math.min(64, Math.ceil(dist(p1, p2) / step)));
-  out.push(...segment(p0, p1, p2, p3, n));
+  const pts = c > 0 ? segment(p0, p1, p2, p3, n) : null;
+  for (let i = 0; i < n; i++) {
+   const u = i / n, sx = p1[0] + (p2[0] - p1[0]) * u, sz = p1[1] + (p2[1] - p1[1]) * u;
+   out.push(pts ? [sx + (pts[i][0] - sx) * c, sz + (pts[i][1] - sz) * c] : [sx, sz]);
+  }
  }
  if (!closed) out.push([nodes[N - 1][0], nodes[N - 1][1]]);
  return out;

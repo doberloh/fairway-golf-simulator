@@ -26,6 +26,7 @@
 import {show, setTitle, setBusy, topTools, home, pickFile, ui, setSaver, refreshSave, useMenus} from './builder.js';
 import {icon, eyeButton} from './icons.js';
 import {penCurve, closesOn} from './pen.js';
+import {areaWidth} from './line-work.js';
 import {createSteady} from './steady.js';
 import {keepDraft, keptDraft, dropDraft} from './autosave.js';
 import {readDraft} from './draft.js';
@@ -44,7 +45,7 @@ import {converter} from '../lidar/geo.js';
 import {crsOf, toMetres, parseHeader} from '../lidar/las.js';
 import {createGridder} from '../lidar/land.js';
 import {trace, refineTrace} from '../lidar/trace.js';
-import {fetchOsm, osmFeatures, layOsm, osmBoundary, mergeTrees, OSM_CREDIT, courseOutline} from './osm.js';
+import {fetchOsm, osmFeatures, layOsm, osmBoundary, mergeTrees, OSM_CREDIT, courseOutline, homeOfFootprint, ROAD_WIDTH} from './osm.js';
 import {ringPress, ringHectares} from './outline-ring.js';
 import {osmCourses, osmHoles, shiftHoles, fitHoles, osmTeeSets, insideRing} from './osm-course.js';
 import {TEE_ORDER, TEE_COLOURS, GENERATED_TEES, courseSets, backTee, colourOf, teeName} from '../tees.js';
@@ -101,7 +102,7 @@ const markName = m => MARK_NAME[m] ?? (TEE_COLOURS[m] ? `${m} tee` : m);
 // THE TRACE STEP'S TOOLS, in the palette's order, with their keys (the
 // builder-ux goal): [key, name, shortcut, the palette's group].
 const TOOL_LIST = [['move', 'Move the view', 'H', 0], ['select', 'Select shape', 'V', 0],
- ['brush', 'Paint brush', 'B', 1], ['erase', 'Erase brush', 'E', 1], ['eraseAll', 'Erase all layers', 'Shift+E', 1], ['outline', 'Outline fill', 'P', 1], ['smooth', 'Smooth edges', 'S', 1],
+ ['brush', 'Paint brush', 'B', 1], ['erase', 'Erase brush', 'E', 1], ['eraseAll', 'Erase all layers', 'Shift+E', 1], ['outline', 'Outline fill', 'P', 1], ['line', 'Line', 'L', 1], ['smooth', 'Smooth edges', 'S', 1],
  ['creek', 'Draw a creek', 'C', 2], ['bunker', 'Dig a bunker', 'U', 2],
  ['tree', 'Place tree', 'T', 3], ['treeBrush', 'Tree brush', 'Shift+T', 3], ['treeZone', 'Tree zone', 'Z', 3], ['treeErase', 'Clear trees', 'X', 3], ['sizeTree', 'Size a tree', null, 3],
  ['cover', 'Ground cover', 'G', 4], ['coverErase', 'Clear cover', 'Shift+G', 4],
@@ -109,7 +110,18 @@ const TOOL_LIST = [['move', 'Move the view', 'H', 0], ['select', 'Select shape',
  ['measure', 'Measure', 'M', 6]];
 // The tools that draw with the pen (pen.js), and how near the first node a
 // click closes the shape, in screen pixels.
-const PEN_TOOLS = ['outline', 'treeZone', 'boundary', 'homeZone', 'creek'], PEN_REACH = 10;
+const PEN_TOOLS = ['outline', 'line', 'treeZone', 'boundary', 'homeZone', 'creek'], PEN_REACH = 10;
+// The pen tools that draw a line, not a closed shape: Enter or a double-click ends them.
+const OPEN_PEN = ['creek', 'line'];
+// A house dragged out by hand (the owner, 23 November 2026): any rectangle from
+// 12 to 5000 m², PLACED -- a garden shed to a clubhouse; a click stands one of
+// the size set in the tool's options, 4 to 80 m a side (PLACED).
+const HOME_DRAWN = {least: 12, most: 5000}, HOME_SIDE = [4, 80];
+// NORMALIZE WIDTH's starting widths (the owner, 23 November 2026: "a standard
+// width of about 1.5 carts wide"): a golf cart is about 1.2 m wide (47 to 48
+// inches), so a cart path 1.8 m; a street a residential street's 6 m
+// (osm.js ROAD_WIDTH). Both can be changed in the box.
+const EVEN_PATH = 1.8, EVEN_ROAD = ROAD_WIDTH.residential;
 // The brushes that are steadied (steady.js) and smooth their edge when let go.
 const STEADIED = ['brush', 'erase', 'eraseAll'];
 const STEPS = ['1 LIDAR', '2 Land', '3 Trace', '4 Holes', '5 Name', '6 Review'];
@@ -128,7 +140,7 @@ export async function openSaved(draft) {
 export function open(draft = null) {
  setTitle('Real life course');
  const st = {step: 0, treePlan: null, surround: null, sources: [], preview: null, box: null, land: null, gridder: null, trees: [], pics: [], offset: {x: 0, z: 0}, picture: null, geo: null,
-  model: null, traceMode: null, tool: 'move', kind: 'fairway', size: 4, outline: [], sharp: new Set(), steadiness: 50, smoothStroke: true, hover: null, holes: [], hole: 0, holesN: 18, mark: 'blue',
+  model: null, traceMode: null, tool: 'move', kind: 'fairway', size: 4, outline: [], sharp: new Set(), steadiness: 50, smoothStroke: true, curveOn: true, curve: 1, lineWidth: 2.5, lineCaps: 'round', homeW: 20, homeD: 15, evenPath: EVEN_PATH, evenRoad: EVEN_ROAD, hover: null, holes: [], hole: 0, holesN: 18, mark: 'blue',
   name: 'My real course', landscape: 'parkland', credits: [], align: null, smoothView: true, traceOn: true, vec: null, boundary: null, exTo: 'semi', exWidth: 4,
   chosen: null, carry: null, sizing: null, treeScale: 1, treeKind: '', cover: 'rocks', coverThick: .5, coverSizes: Object.fromEntries(Object.entries(COVER_RANGE).map(([k, r]) => [k, {min: r.from[0], max: r.from[1]}])), picShow: null, picOffsets: {}, landEdits: null, creeks: [], rocks: [], lidarView: 'relief', lidarAlpha: 1, picAlpha: 1, traceAlpha: 120 / 255, lidarOnTop: false, picLocked: true};
  window.fairwayBuilder.door2 = st;
@@ -205,7 +217,7 @@ export function open(draft = null) {
  // The cover in hand, or the landscape's first if it does not offer that one.
  const coverNow = () => { const o = coverOptions(BIOMES[st.landscape]); return o.find(c => c.key === st.cover) ?? o[0]; };
  const showModel = () => {
-  const item = st.step === 2 ? ({brush: {kind: 'surface', surface: st.kind}, outline: {kind: 'surface', surface: st.kind}, tree: {kind: 'tree', species: st.treeKind || null, height: st.treeH}, treeZone: {kind: 'tree'}, home: {kind: 'house'}, homeZone: {kind: 'house'}, creek: {kind: 'creek'}, bunker: {kind: 'bunker'}, cover: {kind: 'cover', cover: coverNow().key, ...st.coverSizes[coverNow().key]}, treeBrush: {kind: 'cover', cover: 'trees', ...st.coverSizes.trees}})[st.tool] ?? null : null;
+  const item = st.step === 2 ? ({brush: {kind: 'surface', surface: st.kind}, outline: {kind: 'surface', surface: st.kind}, line: {kind: 'surface', surface: st.kind}, tree: {kind: 'tree', species: st.treeKind || null, height: st.treeH}, treeZone: {kind: 'tree'}, home: {kind: 'house'}, homeZone: {kind: 'house'}, creek: {kind: 'creek'}, bunker: {kind: 'bunker'}, cover: {kind: 'cover', cover: coverNow().key, ...st.coverSizes[coverNow().key]}, treeBrush: {kind: 'cover', cover: 'trees', ...st.coverSizes.trees}})[st.tool] ?? null : null;
   preview().show(item, st.landscape);
  };
  // Back to the builder's start ends this course, so with work in it, it asks
@@ -356,7 +368,8 @@ export function open(draft = null) {
     brush: all ? `Paint brush, rough (${r} m round): drag to take every layer off.` : `Paint brush: drag to paint ${k} (${r} m round).`,
     erase: all ? `Erase brush (${r} m round): drag to take every layer off.` : `Erase brush: drag to take ${k} off (${r} m round); whatever lies under it shows.`,
     eraseAll: `Erase all layers (${r} m round): drag to take every layer off, down to rough.`,
-    outline: st.outline.length ? `Outline fill, ${k}: ${corners(st.outline.length)}` : `Outline fill, ${k}: click round the shape, node by node; the curve follows.`,
+    outline: st.outline.length ? `Outline fill, ${k}: ${corners(st.outline.length)}` : `Outline fill, ${k}: click round the shape, node by node; the ${st.curveOn ? 'curve' : 'straight line'} follows.`,
+    line: st.outline.length ? `Line, ${k}, ${st.lineWidth} m wide: ${st.outline.length} point${st.outline.length === 1 ? '' : 's'}; click to add more; Enter or double-click lays it, Backspace takes the last off, Esc drops it.` : `Line, ${k}, ${st.lineWidth} m wide with ${st.lineCaps} ends: click along it, point by point.`,
     smooth: `Smooth brush (${r} m round): drag along a ragged edge to round it.`,
     tree: `Place tree: click to stand a ${st.treeH} m tree (not on mown ground, sand, water or a path).`,
     treeBrush: `Tree brush: drag to scatter the landscape's trees (${r} m round), from ${st.coverSizes.trees.min.toFixed(1)} to ${st.coverSizes.trees.max.toFixed(1)} m tall.`,
@@ -366,7 +379,7 @@ export function open(draft = null) {
     select: st.carry?.hold ? (st.carry.turn ? `Turning the ${st.chosen.what}: ${Math.round(st.carry.angle * 180 / Math.PI)} degrees; let go to set it.` : `Moving the ${st.chosen.what}: let go where it belongs. Undo puts it back.`) : st.chosen ? `${st.chosen.what[0].toUpperCase() + st.chosen.what.slice(1)} selected: drag inside the outline to move it${st.chosen.corners.length ? ', or an anchor to turn it' : ''}.` : `Select shape: click a green, bunker, fairway, pond, tree or house -- the ${k} layer where it lies.`,
     treeZone: st.outline.length ? `Tree zone: ${corners(st.outline.length)}` : `Tree zone: click round the zone, node by node; the curve follows; it fills with ${st.density} trees a hectare.`,
     boundary: st.outline.length ? `Course boundary: ${corners(st.outline.length)}` : 'Course boundary: click round the course, node by node; the curve follows; outside it becomes the landscape\'s wood.',
-    home: 'House: click to stand a house; it faces the nearest fairway, green or tee.',
+    home: st.homeDrag ? `House: ${homeDragWords()}; let go to stand it.` : `House: click to stand a ${st.homeW} x ${st.homeD} m house, or drag out its size corner to corner; it faces the nearest fairway, green or tee.`,
     homeZone: st.outline.length ? `House zone: ${corners(st.outline.length)}` : 'House zone: click round a street or estate, node by node; the curve follows; houses line it 42 m apart, each facing the course.',
     homeErase: `Clear houses: drag to take houses off (${r} m round).`,
     cover: `Ground cover, ${coverNow().label.toLowerCase()}: drag over open ground (${r} m round), from ${st.coverSizes[coverNow().key].min.toFixed(1)} to ${st.coverSizes[coverNow().key].max.toFixed(1)} m. Not on turf, sand, water, paths or roads.`,
@@ -437,6 +450,11 @@ export function open(draft = null) {
    [[-w, -d], [w, -d], [w, d], [-w, d]].forEach(([a, b], q) => { const [x, y] = pt(a, b); if (q) ctx.lineTo(x, y); else ctx.moveTo(x, y); }); ctx.closePath(); ctx.fill(); ctx.stroke();
    ctx.strokeStyle = '#fff4d6'; ctx.lineWidth = 2 * px; ctx.beginPath(); ctx.moveTo(...pt(-w, d)); ctx.lineTo(...pt(w, d)); ctx.stroke();
   }
+  // A house being dragged out: its footprint, corner to corner.
+  if (st.homeDrag?.b) {
+   const {a, b} = st.homeDrag, [x0, y0] = p.toScreen(Math.min(a.x, b.x), Math.min(a.z, b.z)), [x1, y1] = p.toScreen(Math.max(a.x, b.x), Math.max(a.z, b.z));
+   ctx.save(); ctx.fillStyle = 'rgba(214,120,96,.45)'; ctx.fillRect(x0, y0, x1 - x0, y1 - y0); ctx.setLineDash([6 * px, 4 * px]); ctx.strokeStyle = '#fff4d6'; ctx.lineWidth = 2 * px; ctx.strokeRect(x0, y0, x1 - x0, y1 - y0); ctx.restore();
+  }
   if (st.step >= 3) st.holes.slice(0, st.holesN).forEach((h, n) => {
    if (!h) return;
    const on = n === st.hole, line = holeLine(h);
@@ -467,12 +485,14 @@ export function open(draft = null) {
   // when the pointer is on it, as a click there closes the shape; once closed,
   // the shape is filled faintly and its nodes can be dragged before Enter.
   if (st.outline.length) {
-   const closedTool = st.tool !== 'creek', reach = PEN_REACH * px / p.view.scale, hov = st.hover ? [st.hover.x, st.hover.z] : null;
+   const closedTool = !OPEN_PEN.includes(st.tool), reach = PEN_REACH * px / p.view.scale, hov = st.hover ? [st.hover.x, st.hover.z] : null;
    const closing = closedTool && hov && closesOn(st.outline, hov, reach);
    const nodes = closing || !hov ? st.outline : [...st.outline, hov];
-   const pts = penCurve(nodes, {closed: closedTool && closing, sharp: [...st.sharp]});
+   const pts = penCurve(nodes, {closed: closedTool && closing, sharp: [...st.sharp], curve: penStrength()});
    const path = () => { ctx.beginPath(); pts.forEach(([x, z], q) => { const [sx, sy] = p.toScreen(x, z); q ? ctx.lineTo(sx, sy) : ctx.moveTo(sx, sy); }); };
    if (closedTool && closing) { path(); ctx.closePath(); ctx.fillStyle = 'rgba(255,107,214,.18)'; ctx.fill(); }
+   // The line tool: the band it will lay, at its width and with its ends.
+   if (st.tool === 'line') { ctx.save(); ctx.lineCap = st.lineCaps === 'square' ? 'butt' : 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = 'rgba(255,107,214,.3)'; ctx.lineWidth = Math.max(2 * px, st.lineWidth * p.view.scale); path(); ctx.stroke(); ctx.restore(); }
    ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.lineWidth = 4 * px; path(); if (closedTool && closing) ctx.closePath(); ctx.stroke();
    ctx.strokeStyle = '#ff6bd6'; ctx.lineWidth = 2 * px; path(); if (closedTool && closing) ctx.closePath(); ctx.stroke();
    // While drawing a shape, a faint line from the pointer back to the first node.
@@ -614,9 +634,9 @@ export function open(draft = null) {
     // Enter or an Apply button; the owner: "we dont need to have an apply
     // button. Lets just close the shape and apply when either enter is
     // pressed or the starting node is clicked again." Undo takes it back.)
-    const reach = PEN_REACH * plan.px / plan.view.scale, hit = [p.x, p.z], min = t === 'creek' ? 2 : 3;
+    const reach = PEN_REACH * plan.px / plan.view.scale, hit = [p.x, p.z], open = OPEN_PEN.includes(t), min = open ? 2 : 3;
     if (type === 'down') {
-     if (t !== 'creek' && closesOn(st.outline, hit, reach, min)) { closeOutline(); plan.draw(); return; }
+     if (!open && closesOn(st.outline, hit, reach, min)) { closeOutline(); plan.draw(); return; }
      else { st.outline.push(hit); if (e?.shiftKey) st.sharp.add(st.outline.length - 1); }
     }
     if (type === 'double' && st.outline.length >= min) closeOutline();
@@ -663,10 +683,22 @@ export function open(draft = null) {
     plan.draw(); return;
    }
    if (t === 'bunker' && type === 'down') { m.digBunker({x: p.x, z: p.z, radius: Math.max(2, st.size)}); patchCodes(p.x, p.z, st.size + 2); refreshCount(); plan.draw(); return; }
-   if (t === 'home' && type === 'down') {
-    const h = m.homeAt({x: p.x, z: p.z});
-    if (!m.homeFits(h)) say('A house needs open ground all round it -- not turf, sand, water, a path or another house.', true);
-    else { m.addHome(h); refreshCount(); }
+   // THE HOUSE (the owner, 23 November 2026: "the ability to place houses of
+   // off size shapes as well"): a click stands one of the size set in the
+   // tool's options; a drag of more than 2 m stands the rectangle dragged out,
+   // corner to corner, its front the side nearest a fairway, green or tee
+   // (osm.js homeOfFootprint, as a map's building is stood). Select turns it.
+   if (t === 'home') {
+    if (type === 'down') st.homeDrag = {a: p, b: null};
+    if (type === 'drag' && st.homeDrag) { st.homeDrag.b = Math.hypot(p.x - st.homeDrag.a.x, p.z - st.homeDrag.a.z) > 2 ? p : null; showHint(); }
+    if (type === 'up' && st.homeDrag) {
+     const {a, b} = st.homeDrag; st.homeDrag = null;
+     const h = b ? homeOfFootprint([[a.x, a.z], [b.x, a.z], [b.x, b.z], [a.x, b.z]], m.facing, HOME_DRAWN) : m.homeAt({x: a.x, z: a.z, width: st.homeW, depth: st.homeD});
+     if (!h) say(`A house is ${HOME_DRAWN.least} to ${HOME_DRAWN.most} m² on the ground: drag out a ${Math.abs(b.x - a.x) * Math.abs(b.z - a.z) < HOME_DRAWN.least ? 'larger' : 'smaller'} one.`, true);
+     else if (!m.homeFits(h)) say('A house needs open ground all round it -- not turf, sand, water, a path or another house.', true);
+     else { m.addHome(h); refreshCount(); if (b) say(`A ${h.width.toFixed(1)} x ${h.depth.toFixed(1)} m house, facing the course. Select turns it or sets its size.`); }
+     showHint();
+    }
     plan.draw(); return;
    }
    if (t === 'tree' && type === 'down') {
@@ -766,6 +798,9 @@ export function open(draft = null) {
  function goHole(n) { if (!st.holesN) return; st.hole = (n + st.holesN) % st.holesN; if (st.step === 3) go(3); frameHole(st.hole); say(`Hole ${st.hole + 1}${st.holes[st.hole]?.green ? '' : ': not marked yet'}.`); }
  // The pen put down: no nodes, not closed.
  function dropPen() { st.outline = []; st.sharp = new Set(); }
+ // How much the pen curves (pen.js `curve`): the strength set, or straight when Auto curve is off.
+ const penStrength = () => st.curveOn ? st.curve : 0;
+ const homeDragWords = () => { const {a, b} = st.homeDrag; return b ? `${Math.abs(b.x - a.x).toFixed(1)} x ${Math.abs(b.z - a.z).toFixed(1)} m` : 'drag out its size'; };
  function closeOutline() {
   // A double-click adds its own two clicks as nodes; they are one point. The
   // shape filled is the pen's curve through the nodes (pen.js), the very
@@ -773,9 +808,10 @@ export function open(draft = null) {
   const keep = st.outline.map((q, i, a) => !i || Math.hypot(q[0] - a[i - 1][0], q[1] - a[i - 1][1]) > .05);
   const nodes = st.outline.filter((_, i) => keep[i]), sharp = [];
   st.outline.forEach((_, i) => { if (keep[i] && st.sharp.has(i)) sharp.push(keep.slice(0, i).filter(Boolean).length); });
-  const ring = nodes.length >= (st.tool === 'creek' ? 2 : 3) ? penCurve(nodes, {closed: st.tool !== 'creek', sharp, step: Math.max(.5, st.land.cell)}) : nodes;
+  const open = OPEN_PEN.includes(st.tool), ring = nodes.length >= (open ? 2 : 3) ? penCurve(nodes, {closed: !open, sharp, step: Math.max(.5, st.land.cell), curve: penStrength()}) : nodes;
   dropPen();
   if (st.tool === 'creek') { if (ring.length >= 2) { st.model.addCreekLine({points: ring, width: Math.max(1.5, Math.min(12, st.size / 2))}); refreshCount(); plan.draw(); } return; }
+  if (st.tool === 'line') { if (ring.length >= 2) { st.model.line(ring, {kind: st.kind, width: st.lineWidth, caps: st.lineCaps}); paintCodes(); refreshCount(); plan.draw(); } return; }
   if (ring.length < 3) return;
   if (st.tool === 'boundary') { st.boundary = ring; say(`Course boundary: ${(ringArea(ring) / 1e4).toFixed(1)} ha. Press Fill outside boundary when it is right.`); setTool('move'); go(2); return; }
   if (st.tool === 'homeZone') { const n = st.model.homeZone(ring, {seed: st.model.state.undo.length + 1}); say(n ? `${n} house${n === 1 ? '' : 's'} in the zone, each facing the nearest fairway, green or tee.` : 'No house fits there: each needs open ground all round it.', !n); refreshCount(); plan.draw(); return; }
@@ -793,7 +829,7 @@ export function open(draft = null) {
    if (e.key === 'Backspace' && st.ringDraw?.length) { e.preventDefault(); st.ringDraw.pop(); ringSaid(); plan.draw(); }
    return;
   }
-  if (e.key === 'Enter' && st.outline.length >= (st.tool === 'creek' ? 2 : 3)) closeOutline();
+  if (e.key === 'Enter' && st.outline.length >= (OPEN_PEN.includes(st.tool) ? 2 : 3)) closeOutline();
   if (e.key === 'Escape') { dropPen(); chooseShape(null); plan.draw(); }
   // Backspace takes the last node off a shape being drawn (the pen).
   if (e.key === 'Backspace' && st.outline.length) { e.preventDefault(); st.sharp.delete(st.outline.length - 1); st.outline.pop(); plan.draw(); }
@@ -947,6 +983,18 @@ export function open(draft = null) {
   if (st.toolTitle) st.toolTitle.textContent = (TOOL_LIST.find(t => t[0] === st.tool)?.[1]) ?? (st.tool === 'boundary' ? 'Course boundary' : st.tool === 'align' ? 'Lining up the picture' : 'Tools'); for (const n of panel.querySelectorAll('[data-for]')) n.hidden = !n.dataset.for.split(' ').includes(st.tool); st.coverPut?.(); }
  // What is selected, with its outline and anchors. A tree is round: no anchors.
  function chooseShape(pick) {
+  chooseShapeOnly(pick);
+  // A house held: its size in the Select tool's options.
+  const box = panel.querySelector('.cb-homesize'), h = st.chosen?.pick.type === 'home' ? st.model.state.homes[st.chosen.pick.index] : null;
+  if (box) { box.hidden = !h; if (h) { box.querySelector('.cb-chosenw').value = +h.width.toFixed(1); box.querySelector('.cb-chosend').value = +h.depth.toFixed(1); } }
+ }
+ function sizeChosenHome(side, v) {
+  const pick = st.chosen?.pick; if (pick?.type !== 'home' || !(v > 0)) return;
+  const h = st.model.state.homes[pick.index], size = {width: h.width, depth: h.depth, [side]: Math.max(HOME_SIDE[0], Math.min(HOME_SIDE[1], v))};
+  st.model.sizeHome(pick.index, size); chooseShape(pick); refreshCount(); plan.draw();
+  say(`The house is ${size.width.toFixed(1)} x ${size.depth.toFixed(1)} m. Undo puts it back.`);
+ }
+ function chooseShapeOnly(pick) {
   if (!pick) { st.chosen = null; return; }
   const {nx, nz, cell, halfX, halfZ} = st.land, m = st.model.state;
   let rings, mid, what;
@@ -1008,8 +1056,9 @@ export function open(draft = null) {
  // locks it again, so a brush stroke never drags it.
  function setTool(t) {
   if (t !== 'align') st.picLocked = true;
-  if (t !== 'select') { st.chosen = null; st.carry = null; }
+  if (t !== 'select') { chooseShape(null); st.carry = null; }
   if (t !== 'sizeTree') st.sizing = null;
+  st.homeDrag = null;
   st.tool = t; if (st.step === 2 && t !== 'align') st.traceTool = t; plan.setTool(t === 'move' ? 'move' : 'draw'); dropPen();
   toolButtons.forEach(b => b.classList.toggle('cb-on', b.dataset.tool === t));
   showModel(); showToolOptions();
@@ -1949,10 +1998,25 @@ export function open(draft = null) {
    toolOption(['move'], el('small', {}, 'Drag: move the view. Wheel: zoom. Pick a tool on the left to paint.')),
    toolOption(['select'], el('small', {}, 'Click a shape, tree or house to select it. Drag inside it: move. Drag an anchor: turn. Esc: deselect.')),
    toolOption(['measure'], el('small', {}, 'Click two points. Shows the distance in yards and metres, and the height change.')),
-   toolOption(PEN_TOOLS, el('small', {}, 'Click to add points. Click the first point or press Enter to close and fill the shape. Shift-click: sharp corner. Ctrl+Z: undo. Creek: Enter or double-click ends the line.'),
+   toolOption(PEN_TOOLS, el('small', {}, 'Click to add points. Click the first point or press Enter to close and fill the shape. Shift-click: sharp corner. Ctrl+Z: undo. Line and creek: Enter or double-click ends the line.'),
+    // AUTO CURVE AND ITS STRENGTH (the owner, 23 November 2026), for every pen tool.
+    el('label', {class: 'cb-opt'}, 'Auto curve', el('input', {type: 'checkbox', class: 'cb-curveon', checked: st.curveOn, title: 'Off: straight lines from point to point', onchange: e => { st.curveOn = e.target.checked; const s = panel.querySelector('.cb-curve'); if (s) s.disabled = !st.curveOn; showHint(); plan.draw(); }})),
+    el('label', {class: 'cb-opt'}, 'Curve strength', el('input', {type: 'range', class: 'cb-curve', min: 0, max: 100, value: Math.round(st.curve * 100), disabled: !st.curveOn, title: 'How far the line bows between points: 100 the full curve, lower flatter', oninput: e => { st.curve = +e.target.value / 100; plan.draw(); }})),
     el('div', {class: 'cb-btns'},
      el('button', {class: 'cb-btn', type: 'button', title: 'Take the last node off (Backspace)', onclick: () => { if (st.outline.length) { st.sharp.delete(st.outline.length - 1); st.outline.pop(); plan.draw(); } }}, 'Remove last point'),
      el('button', {class: 'cb-btn', type: 'button', title: 'Drop the shape (Esc)', onclick: () => { dropPen(); plan.draw(); }}, 'Cancel shape'))),
+   // THE LINE TOOL's width and ends (the owner, 23 November 2026).
+   toolOption(['line'], el('label', {class: 'cb-opt'}, 'Line width, metres', el('input', {type: 'number', class: 'cb-linewidth', min: .5, max: 40, step: .1, value: st.lineWidth, title: 'How wide the line is laid', oninput: e => { st.lineWidth = Math.max(.5, Math.min(40, +e.target.value || 2.5)); showHint(); plan.draw(); }})),
+    el('label', {class: 'cb-opt'}, 'Ends', el('select', {class: 'cb-linecaps', title: 'Round ends, or ends cut square across the line at the first and last point', onchange: e => { st.lineCaps = e.target.value; showHint(); plan.draw(); }},
+     el('option', {value: 'round', selected: st.lineCaps === 'round'}, 'Round'), el('option', {value: 'square', selected: st.lineCaps === 'square'}, 'Square')))),
+   // THE HOUSE's size for a click (the owner, 23 November 2026); a drag sets its own.
+   toolOption(['home'], el('small', {}, 'Click: a house of this size. Drag corner to corner: a house of the size dragged. Its front faces the nearest fairway, green or tee.'),
+    el('label', {class: 'cb-opt'}, 'Width, metres', el('input', {type: 'number', class: 'cb-homew', min: HOME_SIDE[0], max: HOME_SIDE[1], step: .5, value: st.homeW, title: 'Across the front', oninput: e => { st.homeW = Math.max(HOME_SIDE[0], Math.min(HOME_SIDE[1], +e.target.value || 20)); showHint(); }})),
+    el('label', {class: 'cb-opt'}, 'Depth, metres', el('input', {type: 'number', class: 'cb-homed', min: HOME_SIDE[0], max: HOME_SIDE[1], step: .5, value: st.homeD, title: 'Front to back', oninput: e => { st.homeD = Math.max(HOME_SIDE[0], Math.min(HOME_SIDE[1], +e.target.value || 15)); showHint(); }}))),
+   // ONE HOUSE'S SIZE, while Select holds a house.
+   toolOption(['select'], el('div', {class: 'cb-homesize', hidden: st.chosen?.pick.type !== 'home'}, el('small', {}, 'This house'),
+    el('label', {class: 'cb-opt'}, 'Width, metres', el('input', {type: 'number', class: 'cb-chosenw', min: HOME_SIDE[0], max: HOME_SIDE[1], step: .5, onchange: e => sizeChosenHome('width', +e.target.value)})),
+    el('label', {class: 'cb-opt'}, 'Depth, metres', el('input', {type: 'number', class: 'cb-chosend', min: HOME_SIDE[0], max: HOME_SIDE[1], step: .5, onchange: e => sizeChosenHome('depth', +e.target.value)})))),
    toolOption([...BRUSHES, 'bunker', 'creek'], el('label', {class: 'cb-opt'}, 'Brush radius, metres', el('input', {type: 'range', class: 'cb-brushsize', min: 1, max: 60, value: st.size, oninput: e => { st.size = +e.target.value; showHint(); plan.draw(); }}))),
    // THE STEADIED BRUSH's two settings (steady.js; the owner: "can result in really squiggly lines").
    toolOption(STEADIED, el('label', {class: 'cb-opt'}, 'Steadiness', el('input', {type: 'range', class: 'cb-steady', min: 0, max: 100, value: st.steadiness, title: 'How far the pointer may wander before the brush follows: higher draws smoother lines, 0 paints right under the pointer', oninput: e => { st.steadiness = +e.target.value; }}))),
@@ -2036,8 +2100,22 @@ export function open(draft = null) {
      el('small', {}, 'Removes tiny patches and fills tiny holes.'),
      el('label', {class: 'cb-opt'}, 'Layer', layerPick('specksOn')),
      el('button', {class: 'cb-btn', type: 'button', 'data-clean': 'specks', title: 'Take off tiny patches and fill tiny holes on the layer chosen (or on every layer)', onclick: () => { st.model.tidy({kind: st.specksOn || null}); paintCodes(); refreshCount(); say(`Specks removed: ${st.specksOn ? LABEL(st.specksOn).toLowerCase() : 'every layer'}. Undo takes it back.`); }}, 'Remove specks')),
+    // NORMALIZE WIDTH (the owner, 23 November 2026: "a 'normalize cart path
+    // width' and 'normalize street width' option"): line-work.js evenWidth.
+    el('div', {class: 'cb-subbox'}, el('b', {}, 'Normalize width'),
+     el('small', {}, `Lays every cart path or street again at one width along its middle. Where two meet, they still meet in the same place. Wide areas, such as parking lots, are kept as drawn: over three times the width and at least ${areaWidth(0)} m across.`),
+     el('label', {class: 'cb-opt'}, 'Cart path width, metres', el('input', {type: 'number', class: 'cb-evenpath', min: 1, max: 6, step: .1, value: st.evenPath, title: 'About one and a half golf carts across: 1.8 m', oninput: e => { st.evenPath = Math.max(1, Math.min(6, +e.target.value || EVEN_PATH)); }})),
+     el('button', {class: 'cb-btn', type: 'button', 'data-clean': 'evenPath', title: 'Lay every cart path again at the width above; Undo takes it back', onclick: () => evenNow('path', st.evenPath)}, 'Normalize cart paths'),
+     el('label', {class: 'cb-opt'}, 'Street width, metres', el('input', {type: 'number', class: 'cb-evenroad', min: 3, max: 20, step: .5, value: st.evenRoad, title: 'A residential street: 6 m', oninput: e => { st.evenRoad = Math.max(3, Math.min(20, +e.target.value || EVEN_ROAD)); }})),
+     el('button', {class: 'cb-btn', type: 'button', 'data-clean': 'evenRoad', title: 'Lay every street again at the width above; Undo takes it back', onclick: () => evenNow('road', st.evenRoad)}, 'Normalize streets')),
     el('button', {class: 'cb-btn', type: 'button', onclick: clearTurfTreesNow}, 'Clear trees from tees and greens')),
    experimental];
+ }
+ function evenNow(kind, width) {
+  const what = kind === 'path' ? 'cart paths' : 'streets';
+  if (!st.model.state.layers.mask(kind)?.some(v => v)) return say(`There are no ${what} on the course to normalize.`, true);
+  say(`Normalizing the ${what}…`);
+  setTimeout(() => { const n = st.model.evenWidth({kind, width}); paintCodes(); refreshCount(); plan.draw(); say(n ? `The ${what} are ${width} m wide now, where they meet as before. Undo takes it back.` : `The ${what} were already ${width} m wide.`); }, 0);
  }
  // A layer picker for a clean-up box: every layer, or one ('' is every layer).
  function layerPick(key) {

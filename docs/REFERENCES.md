@@ -994,3 +994,12 @@ Read for RESEARCH.md, *Full detail inside the course, less outside*.
 
 - Entwine Point Tile -- https://entwine.io/en/latest/entwine-point-tile.html -- recalled from *Finding LIDAR from the builder*, not fetched again. Taken: every depth of the octree holds a sample of its node's cube, so a survey thinned is its nodes down to a depth; the counts per node in `ept-hierarchy`.
 - OpenStreetMap, Alpine Lake Resort Golf Course (way 299070913, `leisure=golf_course`, and its holes, greens, tees and bunkers) -- https://www.openstreetmap.org/way/299070913 -- asked through the Overpass API on 22 November 2026 (ODbL). Taken: the course's outline and its course, for the measurements on the owner's square.
+
+## Normalize width (23 November 2026, the builder-big-zips branch)
+
+Read for RESEARCH.md, *Normalize width: a cart path's and a street's width*.
+
+- Club Car, Onward 2 Passenger specifications -- https://www.clubcar.com/en/personal/golf-carts/onward-2-passenger/specifications -- search summary. Taken: overall width 48.75 in (123.8 cm).
+- Club Car, Onward 6 Passenger specifications -- https://www.clubcar.com/en/personal/golf-carts/onward-6-passenger/specifications -- search summary. Taken: 48.8 in, 51.3 in lifted.
+- Golf Cart Garage, *Golf cart dimensions and their importance* -- https://www.golfcartgarage.com/blog/golf-cart-dimensions-and-their-importance -- search summary only. Taken: E-Z-GO RXV about 47 in wide (E-Z-GO's own page gives no width). A third-party guide's 47.5 in for the Onward 2 Passenger was set aside for Club Car's figure.
+- Zhang, T. Y. and Suen, C. Y., *A fast parallel algorithm for thinning digital patterns*, Communications of the ACM 27(3), 1984 -- from memory, not fetched. Taken: the two-pass thinning rule `skeleton` uses. Yokoi's connectivity number (8-connected) for the stair-step corners, also from memory.

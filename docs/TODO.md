@@ -517,9 +517,9 @@ here is a claim of support until it is done.
   untested** (branch `builder-big-zips`, 23 November 2026; COURSE_BUILDER.md,
   *Clean up, Add layer around, Outside the course, darker cart paths*).
   Built and both pages build; by the owner's word ("dont do the checks or
-  tests yet") no Node test or journey was run. Owed: tests for the thin-shape
-  smoothing (layer-ops.js, a 2.5 m path through a smoothing that kept to
-  remove it), Fill outside's new options (trace-edit.js `trees`, `where`,
+  tests yet") no journey was run. The thin-shape smoothing has its Node test
+  now (trace-edit.test.mjs, with the next entry's work; it found a lone speck
+  kept, fixed). Owed: Fill outside's new options (trace-edit.js `trees`, `where`,
   `vary`; door-real.js `surveyDensity`), the builder journeys (door-2 and
   door-2-osm press the new controls; door-2-osm's Fill outside expectations
   assume the old defaults), the guide pictures, and a look at the dark paths
@@ -535,6 +535,21 @@ here is a claim of support until it is done.
   (rewritten to drag on the map round its files); files opened with no
   course found, in the builder by hand (the map round them, the outer limit
   the middle 3 x 3 km); and how much wait it saves (not timed).
+
+- [ ] **Houses of any size, Normalize width, the Line tool, the pen's curve:
+  not seen** (branch `builder-big-zips`, 23 November 2026; COURSE_BUILDER.md,
+  *Houses of any size, Normalize width, the Line tool, the pen's curve*).
+  Tested in Node only (builder-line-work, builder-pen, trace-edit, osm; the
+  thin-shape smoothing's own test came with it and caught a speck kept, now
+  fixed). Owed: a look in the builder -- a house clicked at a set size and one
+  dragged out, a house's size changed under Select, Normalize cart paths and
+  streets on an OpenStreetMap course (Worthington's paths; a parking lot kept),
+  a line with each kind of end, Auto curve off and the strength slid; the
+  builder journeys (door-2 and door-2-osm would press these if taught); the
+  guide's pictures (the pen's options and Clean up have grown); and how long
+  Normalize takes on a large course (not timed: it works on the box round the
+  layer, a few seconds expected, none measured). The 3D editor has none of
+  the four.
 
 - [ ] **The course's outline and the half-metre ground, by hand** (branch
   `builder-big-zips`, 22-23 November 2026; COURSE_BUILDER.md, *The course's

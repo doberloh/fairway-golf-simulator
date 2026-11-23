@@ -162,7 +162,18 @@ again (it grows yellow when the pointer is on it), or press **Enter**, and the
 shape closes and fills at once -- **Ctrl+Z** takes it back if it is not right.
 Shift-click makes a sharp corner; Backspace takes the last node off; Esc drops
 the shape. Tree zones, house zones, the
-course boundary and creeks use the same pen.
+course boundary and creeks use the same pen. **Auto curve** turns the curving
+off (straight lines point to point) and **Curve strength** sets how much it
+bows; both hold for every pen tool.
+
+**The line** (L) is the pen without closing: click along a path or a road and
+press **Enter** or double-click to lay it on the chosen layer, **Line width**
+metres wide, with round or square **Ends**.
+
+**The house** (O): a click stands a house of the **Width** and **Depth** set in
+its options; drag corner to corner to stand one the size of the box. Its front
+faces the nearest fairway, green or tee. A house picked with **Select** shows
+its own Width and Depth to change.
 
 ![The pen, round a green, about to close](builder-guide/pen.webp)
 
@@ -175,7 +186,10 @@ show before** to compare.
 
 **Clean up**: **Smooth edges** rounds ragged edges (thin shapes such as cart
 paths are kept whole) and **Remove specks** takes off tiny patches; each has a
-**Layer** picker (every layer, or one). **Add layer around** lays one layer in
+**Layer** picker (every layer, or one). **Normalize width** lays every cart path
+(1.8 m to start) or every street (6 m) again at one width; paths that meet still
+meet where they did, and wide areas such as parking lots are kept as drawn.
+**Add layer around** lays one layer in
 a band round another: pick **Around** (fairway), **Lay** (semi-rough) and the
 **Width**.
 

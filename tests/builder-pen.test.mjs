@@ -40,6 +40,19 @@ test('the points are about a step apart, and close nodes do not loop', () => {
  assert.ok(c.every(p => p[0] > -1 && p[0] < 21 && Math.abs(p[1]) < 2), 'no overshoot or loop');
 });
 
+// HOW MUCH IT CURVES (the owner, 23 November 2026): off is straight lines, a
+// strength between bulges less than the full curve, every one through the nodes.
+test('the curve\'s strength: off is the polygon, half bulges half as far, all through the nodes', () => {
+ const off = penCurve(square, {closed: true, curve: 0});
+ for (const p of off) assert.ok(Math.min(Math.abs(p[0]), Math.abs(p[0] - 20), Math.abs(p[1]), Math.abs(p[1] - 20)) < 1e-9, `${p} lies on the square's edge`);
+ const full = penCurve(square, {closed: true}), half = penCurve(square, {closed: true, curve: .5});
+ assert.equal(full.length, half.length);
+ const bulge = c => Math.min(...c.map(p => p[1]));
+ assert.ok(Math.abs(bulge(half) - bulge(full) / 2) < 1e-9, `half the bulge: ${bulge(half)} against ${bulge(full)}`);
+ for (const c of [off, half]) for (const n of square) assert.ok(c.some(p => near(p, n)), `through ${n}`);
+ assert.deepEqual(penCurve(square, {closed: true, curve: 1}), full, 'full strength is the curve as before');
+});
+
 test('the first node closes the shape once there are three; a node is found under the pointer', () => {
  assert.ok(!closesOn(square.slice(0, 2), [0, 0], 1));
  assert.ok(closesOn(square, [.5, .5], 1));

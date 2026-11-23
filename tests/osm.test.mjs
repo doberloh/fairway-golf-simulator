@@ -94,6 +94,11 @@ test('a building becomes a house: its smallest rectangle, turned to face the cou
  assert.ok(Math.abs(h.width * h.depth - 240) < 1e-6, `${h.width} x ${h.depth}`);
  assert.ok(Math.abs(Math.atan2(Math.sin(h.rotation - Math.PI / 2), Math.cos(h.rotation - Math.PI / 2))) <= Math.PI / 4 + 1e-9, `faces east: ${h.rotation}`);
  assert.equal(homeOfFootprint([[0, 0], [5, 0], [5, 5], [0, 5], [0, 0]]), null, 'a 25 m² shed');
+ // Door 2's House tool stands a dragged rectangle through the same rule, its own sizes allowed.
+ const shed = homeOfFootprint([[0, 0], [5, 0], [5, 5], [0, 5]], () => 0, {least: 12, most: 5000});
+ assert.ok(shed && Math.abs(shed.width * shed.depth - 25) < 1e-9, 'a 25 m² house drawn by hand');
+ const long = homeOfFootprint([[0, 0], [60, 0], [60, 10], [0, 10]], () => 0, {least: 12, most: 5000});
+ assert.ok(long && Math.abs(long.width - 60) < 1e-9 && Math.abs(long.depth - 10) < 1e-9, `a 60 x 10 m house, its long side to the south: ${long.width} x ${long.depth}`);
 });
 
 test('whose trees: the LIDAR\'s all kept, OpenStreetMap\'s added only where no LIDAR tree stands within 6 m; or either alone', () => {

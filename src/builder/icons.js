@@ -8,6 +8,7 @@ const S = {
  erase: '<path d="M16 4l5 5-10 10H6l-3-3z"/><path d="M9 11l5 5M11 19h10"/>',
  eraseAll: '<path d="M16 4l5 5-10 10H6l-3-3z"/><path d="M11 19h10M4 4l16 16" stroke-dasharray="2 2"/>',
  outline: '<path d="M4 18c0-6 4-12 9-12s7 4 7 7-3 5-6 5H4z"/><circle cx="4" cy="18" r="1.8"/><circle cx="13" cy="6" r="1.8"/><circle cx="20" cy="13" r="1.8"/>',
+ line: '<path d="M4 18c4-1 5-9 9-10s5 3 7 1" stroke-width="3" stroke-linecap="round"/><circle cx="4" cy="18" r="1.4"/><circle cx="13" cy="8" r="1.4"/><circle cx="20" cy="9" r="1.4"/>',
  smooth: '<path d="M3 15c3-6 6 2 9-4s6 2 9-2"/><path d="M3 20h18" opacity=".5"/>',
  creek: '<path d="M3 7c3-2 5 2 8 0s5 2 10 0M3 13c3-2 5 2 8 0s5 2 10 0M3 19c3-2 5 2 8 0s5 2 10 0"/>',
  bunker: '<ellipse cx="12" cy="14" rx="8" ry="5"/><path d="M8 13h.01M12 15h.01M15 12h.01M10 16h.01" stroke-width="2.5"/>',

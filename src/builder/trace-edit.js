@@ -16,6 +16,7 @@ import {createLayers, tidyMask, LAYER_ORDER} from './layers.js';
 import {scatterCover, coverAt, refusedBy, treeSized} from './cover.js';
 import {smoothCells, extrapolateCells, zoneTrees, zoneHomes} from './layer-ops.js';
 import {skinFromHeights, SKIN} from './skin.js';
+import {lineCells, evenWidth} from './line-work.js';
 
 export const PALETTE = [...TRACE, ...GROUND_KINDS.filter(k => !TRACE.includes(k))];
 export const CODE = Object.fromEntries(PALETTE.map((k, i) => [k, i]));
@@ -110,6 +111,23 @@ export function createTrace(grid, {codes = null, trees = [], homes = [], rocks =
   extrapolate({from, to, width}) {
    const F = layers.mask(layerOf(from)), T = layerOf(to); if (!F || !T || T === from || !(width > 0)) return;
    step(() => extrapolateCells(F, grid, width, LI[T] > LI[from], (k, v) => put(T, k, v)));
+  },
+  // THE LINE TOOL (line-work.js lineCells; the owner, 23 November 2026): the
+  // pen's line laid `width` metres wide on `kind`'s layer, its ends 'round' or
+  // 'square' ('rough' takes every layer off along it). One undo.
+  line(points, {kind, width, caps = 'round'}) {
+   const L = kind === 'rough' ? null : layerOf(kind), cells = lineCells(points, {width, caps, grid});
+   step(() => { for (const k of cells) { if (L) put(L, k, 1); else for (const K of every()) put(K, k, 0); } });
+   return cells.length;
+  },
+  // NORMALIZE WIDTH (line-work.js evenWidth; the owner, 23 November 2026):
+  // `kind`'s thin shapes laid again `width` metres wide along their middle
+  // lines, meetings kept, areas kept. One undo. Returns the cells changed.
+  evenWidth({kind, width}) {
+   const L = layerOf(kind), m = L && layers.mask(L); if (!m) return 0;
+   const {add, remove} = evenWidth(m, grid, width);
+   step(() => { for (const k of remove) put(L, k, 0); for (const k of add) put(L, k, 1); });
+   return add.length + remove.length;
   },
   // TIDY: on each layer (or `kind`'s), patches under `minArea` m² go and
   // holes under POCK m² fill -- no specks, no pocks.
@@ -266,6 +284,11 @@ export function createTrace(grid, {codes = null, trees = [], homes = [], rocks =
   removeHomes({x, z, radius}) { step(() => { keepHomes(); s.homes = s.homes.filter(h => Math.hypot(h.x - x, h.z - z) > radius); }); },
   facing: (x, z) => facing(x, z),
   homeAt({x, z, rotation = null, width = 20, depth = 15}) { return {x, z, rotation: rotation ?? facing(x, z), width, depth}; },
+  // A HOUSE OF ANY SIZE (the owner, 23 November 2026: "I would like the
+  // ability to place houses of off size shapes as well. (obviously we can keep
+  // them rectangle.)"): one house's width (across its front) and depth set,
+  // where it stands and which way it faces kept. One undo.
+  sizeHome(index, {width, depth}) { if (!s.homes[index]) return; step(() => { keepHomes(); s.homes[index] = {...s.homes[index], width, depth}; }); },
   homeFits(h) { const c = Math.cos(h.rotation), sn = Math.sin(h.rotation); return [[-1, -1], [1, -1], [1, 1], [-1, 1], [0, 0]].every(([a, b]) => { const lx = a * (h.width / 2 + 2), lz = b * (h.depth / 2 + 2), here = api.kindAt(h.x + lx * c + lz * sn, h.z - lx * sn + lz * c); return here && OPEN.has(here); }) && !s.homes.some(o => Math.hypot(o.x - h.x, o.z - h.z) < (Math.max(o.width, o.depth) + Math.max(h.width, h.depth)) / 2 + 4); },
   homeZone(ring, {spacing = 42, seed = 1} = {}) {
    let n = 0;

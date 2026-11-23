@@ -137,8 +137,9 @@ export async function courseOutline([lon0, lat0, lon1, lat1], get = fetch, {sign
 // rectangle round its outline, tried along each of its edges, turned to face
 // the nearest mown ground (`facing(x, z)`, a bearing) among its four sides.
 // Only house-sized ones (40 to 1500 m², PLACED): a garden shed is not drawn,
-// and a warehouse is not a house.
-export function homeOfFootprint(ring, facing = () => 0) {
+// and a warehouse is not a house. (`least` and `most` change that: door 2's
+// House tool stands a footprint dragged out by hand through this same rule.)
+export function homeOfFootprint(ring, facing = () => 0, {least = 40, most = 1500} = {}) {
  const pts = ring.slice(0, ring.length > 1 && ring[0][0] === ring.at(-1)[0] && ring[0][1] === ring.at(-1)[1] ? -1 : ring.length);
  if (pts.length < 3) return null;
  let best = null;
@@ -149,7 +150,7 @@ export function homeOfFootprint(ring, facing = () => 0) {
   const area = (u1 - u0) * (v1 - v0);
   if (!best || area < best.area) { const um = (u0 + u1) / 2, vm = (v0 + v1) / 2; best = {area, a: u1 - u0, b: v1 - v0, phi: Math.atan2(ux, uz), x: um * ux - vm * uz, z: um * uz + vm * ux}; }
  }
- if (!best || best.area < 40 || best.area > 1500) return null;
+ if (!best || best.area < least || best.area > most) return null;
  const want = facing(best.x, best.z), diff = t => Math.abs(Math.atan2(Math.sin(t - want), Math.cos(t - want)));
  const k = [0, 1, 2, 3].reduce((m, q) => diff(best.phi + q * Math.PI / 2) < diff(best.phi + m * Math.PI / 2) ? q : m, 0);
  const along = k % 2 === 0;

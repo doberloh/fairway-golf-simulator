@@ -759,7 +759,7 @@ changes, newest first, each with **Undo to here**.
      **The tools are the palette down the left of the plan**, an icon each
      with its key in the corner: **H** Move the view, **V** Select shape,
      **B** Paint brush, **E** Erase brush (**Shift+E** erase all layers),
-     **P** Outline fill, **S** Smooth edges, **C** Draw a creek, **U** Dig a
+     **P** Outline fill, **L** Line, **S** Smooth edges, **C** Draw a creek, **U** Dig a
      bunker, **T** Place tree (**Shift+T** Tree brush, **Z** Tree zone, **X**
      Clear trees), **G** Ground cover (**Shift+G** Clear cover), **O** House
      (**Shift+O** House zone), **M** Measure (click two points: the yards,
@@ -807,8 +807,15 @@ changes, newest first, each with **Undo to here**.
      **Enter**, or a double-click (no Apply button since 10 November 2026;
      **Ctrl+Z** takes a fill back); **Shift**-click
      makes a sharp corner; **Backspace** takes the last node off; **Esc**
-     drops it. Tree zone, House zone, the course boundary and Draw a creek
-     (an open line) use the same pen. **Smooth edges** rounds edges under it, **Skin from the
+     drops it. Tree zone, House zone, the course boundary, **Line** and Draw
+     a creek (both open lines: **Enter** or a double-click ends them) use the
+     same pen. **Auto curve** in the pen's options turns the curving off
+     (straight lines from point to point), and **Curve strength** sets how far
+     the line bows between points (100 the full curve, lower flatter); both
+     hold for every pen tool. **Line** paints the chosen layer along the line
+     it draws, **Line width, metres** wide, its **Ends** round or square (cut
+     straight across at the first and last point); the band it will lay shows
+     faintly as you draw. **Smooth edges** rounds edges under it, **Skin from the
      land** paints the steep ground the landscape's rock, **Draw a creek** cuts a
      channel along a line and **Dig a bunker** lays sand in a hollow, both made
      when the course is built; **Place tree** stands one tree, the kind you pick by name, at the height set,
@@ -819,15 +826,25 @@ changes, newest first, each with **Undo to here**.
      brush, **Size a tree** resizes one and **Every tree's size** all of them,
      **Ground cover** paints the landscape's rocks, mixed bushes or flowers on
      open ground, and **Clear cover** takes them off, as in the 3D editor,
-     **House** stands a house where clicked facing the nearest fairway, green
-     or tee, **House zone** lines an outline with houses 42 m apart (each on
+     **House** stands a house where clicked, of the **Width** and **Depth**
+     set in its options (20 x 15 m to start), or -- dragged corner to corner
+     -- a house the size of the box dragged (from 12 to 5000 m²), either way
+     facing the nearest fairway, green or tee; a house held with **Select
+     shape** shows its own Width and Depth to change,
+     **House zone** lines an outline with houses 42 m apart (each on
      open ground), **Clear houses** takes them away under the brush, and
      **Select shape** works as in the 3D editor: click one thing to outline it,
      drag inside to move it and drag an anchor to turn it. Each tool's own
      options show while you hold it.
-     **Clean up** has two boxes, **Smooth edges** and **Remove specks**,
-     each with its **Layer** (every layer, or one). Smoothing keeps thin
-     shapes such as cart paths whole and rounds the edges of wide ones.
+     **Clean up** has three boxes. **Smooth edges** and **Remove specks**
+     each have a **Layer** (every layer, or one). Smoothing keeps thin
+     shapes such as cart paths whole and rounds the edges of wide ones; a
+     speck smaller than the smoothing still goes. **Normalize width** lays
+     every cart path (**Normalize cart paths**, 1.8 m to start: about one
+     and a half carts) or every street (**Normalize streets**, 6 m) again at
+     one width along its middle; where two meet they still meet in the same
+     place, and wide areas such as parking lots (over three times the width
+     and at least 8 m across) are kept as drawn. One Undo takes it back.
      **Add layer around** (its own section) lays one layer in a band round
      another: **Around** (fairway, say), **Lay** (semi-rough), **Width,
      metres**; under the chosen layer it runs on

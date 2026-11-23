@@ -1596,7 +1596,10 @@ word: "dont do the checks or tests yet"):
   editors): a cell is taken off only where some cell within the smoothing
   radius lies more than the radius inside the shape -- so a cart path, a
   narrow tee or a creek's strip keeps every cell, and a fairway's edge is
-  rounded as before. Filling a notch is unchanged.
+  rounded as before. Filling a notch is unchanged. (Later the same day, when
+  the trace's test was run: the rule also kept a lone speck the smoothing
+  had always cleared, and the test caught it. A patch smaller than the
+  smoothing circle now goes however thin; a path is far longer than that.)
 - **Outside the course** (was Course boundary): 1 the boundary line, 2 a
   **Fill outside boundary** box with each choice labelled above its button --
   **Surfaces and houses** (Keep them, the default now; Remove them),
@@ -1618,6 +1621,69 @@ word: "dont do the checks or tests yet"):
 
 Read as "fills at the same height": the wood's trees all one height (sized
 from one canopy height); the ground itself is not changed by Fill outside.
+
+### Houses of any size, Normalize width, the Line tool, the pen's curve (23 November 2026)
+
+The owner: "the open street map data places houses that are odd shapes and it
+looks like the game procedurally generates houses of larger sizes properly ...
+I would like the ability to place houses of off size shapes as well.
+(obviously we can keep them rectangle.)"; "under cleanup a 'normalize cart
+path width' and 'normalize street width' option ... a standard width of about
+1.5 carts wide. Im finding the OSM data has uneven cart paths. We would still
+need to keep intersections of paths the same"; "a new 'line tool' ... just
+clicking on points and drawing a line. with rounded or 90 degree ends"; and
+"options for both the line and outline tool to toggle the 'auto curving' on
+and off and also the strength of the curve". Built, in door 2's trace step:
+
+- **House** (O): a click stands a house of the **Width** and **Depth** in its
+  options (20 x 15 m to start, as before; 4 to 80 m a side, PLACED); a drag of
+  more than 2 m stands the rectangle dragged out, corner to corner, through
+  the same rule a map's building is stood by (osm.js `homeOfFootprint`, its
+  front the side nearest a fairway, green or tee; 12 to 5000 m², PLACED, where
+  a map's building is 40 to 1500). A house held with **Select** shows **This
+  house**: its Width and Depth, set where it stands (trace-edit.js
+  `sizeHome`, one undo). The game already builds a house of any footprint
+  (homes.js scales its model to the record's width and depth), so nothing
+  changed there and no version moves. A dragged house is square to the map;
+  Select turns it.
+- **Normalize width** in Clean up (line-work.js `evenWidth`, trace-edit.js
+  `evenWidth`): **Normalize cart paths** (1.8 m to start) and **Normalize
+  streets** (6 m, the residential width of osm.js `ROAD_WIDTH`), each with its
+  width. The layer's thin part is thinned to its middle line (Zhang and Suen's
+  thinning, then the stair-step corners taken off), the short spurs a ragged
+  edge leaves cut away (a branch from a free end to a meeting shorter than the
+  width asked, or than the layer is wide there), each line between its ends
+  smoothed, and laid again at the width. **Meetings and free ends never move**,
+  so paths that met still meet where they did. **A wide part is kept as drawn**
+  (line-work.js `areaWidth`, PLACED: three times the width and at least 8 m
+  across -- 8 m for cart paths, 18 m for streets), with the layer within that
+  width of it, so a parking lot keeps its square corners and a path joins it
+  where it did. One undo. The "1.5 carts" is from a golf cart's width: about
+  1.2 m (47 to 48 inches, the usual two-seat cart), so 1.8 m; RESEARCH,
+  *Normalize width*. Rejected: laying OpenStreetMap's own lines again at the
+  width -- it reaches only paths that came from the map, not those painted or
+  moved by Align map, and the uneven paths are on the layer.
+- **Line** (L), in the palette beside Outline fill: the pen drawing an open
+  line (Enter or a double-click ends it, as a creek), painted on the chosen
+  layer **Line width, metres** wide (2.5 to start), its **Ends** Round or
+  Square -- cut straight across the line at the first and last point
+  (line-work.js `lineCells`: a cell is painted when its middle lies within half
+  the width, the brush's own test, so a 2.5 m line and a 2.5 m brush cover the
+  same cells). The band it will lay is drawn faintly while drawing. Painting
+  Rough with it takes every layer off along it.
+- **Auto curve** and **Curve strength** in every pen tool's options (Outline
+  fill, Line, Tree zone, House zone, the boundary, the creek -- one setting for
+  all, PLACED: the owner named the line and the outline; the others use the
+  same pen and a different curve per tool would surprise). pen.js `penCurve`
+  `curve`: 1 the spline as before, 0 straight lines node to node, between them
+  each point that share of the way from the straight line to the spline --
+  still through every node, bulging less. What is drawn is what is filled, as
+  before.
+
+Tested in Node only (tests/builder-line-work.test.mjs, builder-pen,
+trace-edit, osm). **Not seen by a person, and no builder journey run**: the
+owner had asked for the checks to wait. The 3D editor has none of the four
+(its House still stands 20 x 15 m houses); door 2 only.
 
 ### The course's outline: full detail inside, less outside (22-23 November 2026)
 
