@@ -11153,6 +11153,44 @@ Sources: [National Map product API](https://tnmaccess.nationalmap.gov/api/v1/doc
 [IOGP Guidance Note 7-2](https://www.iogp.org/bookstore/product/coordinate-conversions-and-transformation-including-formulas/);
 Snyder, *Map Projections -- A Working Manual*, USGS PP 1395 (1987).
 
+## A state portal's ZIP of zLAS, 6.2 GB (21-22 November 2026)
+
+The owner chose a ZIP downloaded from West Virginia's LIDAR tool in door 2
+and got three `NotReadableError`s in the console, uncaught, and nothing on
+screen. Measured on the file: **6,201,257,648 bytes, 17 parts, every one a
+`.zlas`** (162,950,690 to 641,439,427 bytes each; 6,202,872,434 unpacked:
+the parts are barely compressed). Two causes:
+
+- **The builder read a ZIP whole** (`readZip(new Uint8Array(await
+  f.arrayBuffer()))`), and Chrome will not hand over a file that size in one
+  piece: `arrayBuffer()` fails with NotReadableError. Now a ZIP is read from
+  its file a part at a time (zip.js `readZipFile`): the directory from the
+  last 64 KB, ZIP64's 8-byte sizes and offsets followed (this ZIP, over 4 GB,
+  needs them), each part sliced out only when read. On the owner's file the
+  directory read took **1 ms** and the first and last parts came out at once.
+  The line where the message says "too big to read in one piece" is PLACED
+  at 2 GB (`ONE_PIECE`), the figure usually given for Chrome's limit; not
+  measured here.
+- **zLAS is Esri's own format** ("Esri Optimized LAS"), which Fairway does
+  not read (COURSE_BUILDER, *Real land: LIDAR*: named with a converter).
+  West Virginia's download tool delivers its point clouds as `.zlas`
+  ([WV Elevation and LIDAR Data Download Tool](https://data.wvgis.wvu.edu/lidar/),
+  read only as summarised by a search). Esri's own FAQ: the LAS Optimizer is
+  a free executable that converts LAS to and from zLAS, losslessly, without
+  ArcGIS ([Esri Optimized LAS FAQ](https://kennis.hunzeenaas.nl/images/hunzeenaas/2/22/Esri_Optimized_LAS_FAQ.pdf),
+  quoted by search, not fetched); ArcGIS Pro's Convert LAS tool also writes
+  plain LAS but needs a licence ([Convert LAS](https://pro.arcgis.com/en/pro-app/latest/tool-reference/conversion/convert-las.htm));
+  Esri published a zLAS reading library for developers
+  ([Esri zLAS I/O library](https://community.esri.com/t5/3d-blog/esri-zlas-i-o-library-is-available/ba-p/901386),
+  not read: reading zLAS in the builder itself was not taken up). The
+  message names the LAS Optimizer and LASliberator, as the loose-file one
+  does, and the builder's own map search, which fetches USGS LIDAR (3DEP
+  covers West Virginia).
+- **Node's `openAsBlob` gives a file over 4 GB a wrapped size** (1,906,290,352
+  for this one: the real size less 2^32, Node 24.19): the check against the
+  real file read it through plain file reads instead. Browsers report the
+  size right.
+
 ## Free aerial imagery for the builder (31 October 2026)
 
 The owner asked for free imagery beside Google's. What a golf course needs:

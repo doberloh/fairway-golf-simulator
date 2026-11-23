@@ -638,7 +638,7 @@ changes, newest first, each with **Back to here**.
      only when pressed.
      Or choose LIDAR files -- LAS, LAZ, COPC, E57, PLY, PTS, PTX,
      XYZ/TXT/CSV points, height grids (GeoTIFF, ASCII grid, float grid with
-     its .hdr, BIL, SRTM HGT), or a ZIP of them (a portal's download). Several tiles at once; a .prj or .hdr beside a
+     its .hdr, BIL, SRTM HGT), or a ZIP of them (a portal's download, of any size: it is read a file at a time). **zLAS** files (`.zlas`, Esri's own compressed LIDAR, which West Virginia's download tool hands out) cannot be read: the list says so, and that Esri's free LAS Optimizer turns them into LAS, or that searching the map fetches USGS LIDAR for the place instead. A file the browser cannot read is said so in the list, with its size when it is too big to read in one piece. Several tiles at once; a .prj or .hdr beside a
      file is read with it. Where the files reach shows **yellow** over the
      relief, each file's box outlined yellow with its name; the property box
      is white. Each file is listed with its form, its size, its map

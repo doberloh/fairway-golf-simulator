@@ -56,7 +56,8 @@ import {treeAt} from '../built-world.js';
 import {sourcesAt, squareAround, growBox, searchLidar, downloadLidar, isEptZip, eptZipSource, gridByName, coverFor, coverTogether, tilesOf} from './lidar-search.js';
 import {coverageWords, percent} from './lidar-coverage.js';
 import {canPick, recallFolder, pickFolder, allowed, fileIn, bytesIn, saveIn, saveAsDownload, listIn, overPlace, removeIn} from './lidar-folder.js';
-import {readZip} from '../zip.js';
+import {readZipFile} from '../zip.js';
+import {readProblem, ZLAS, zlasWords} from './lidar-words.js';
 import {createPlanView} from './plan-view.js';
 import {validateDoc, writeBuiltFile} from '../course-doc.js';
 import {saveBytes} from './saving.js';
@@ -1386,17 +1387,37 @@ export function open(draft = null) {
  }
  // A ZIP's LIDAR files as files of their own (a state portal's download, a
  // swisstopo tile), each remembering the ZIP it came from; a kept USGS
- // square (lidar-search.js eptZipSource) as the source it was.
+ // square (lidar-search.js eptZipSource) as the source it was. The ZIP is
+ // read from its file a part at a time (zip.js readZipFile: 21 November 2026,
+ // a 6.2 GB download that could not be read whole), and each part is lifted
+ // out only when it is read (`lazy`), so a ZIP of any size opens.
+ const lazy = (part, name, zip) => {
+  let blob = null; const get = () => blob ??= part.blob();
+  return {name, zip, size: part.size, slice: (a, b) => ({arrayBuffer: async () => (await get()).slice(a, b).arrayBuffer()}),
+   arrayBuffer: async () => (await get()).arrayBuffer(), text: async () => (await get()).text()};
+ };
  async function unzipped(files, laz) {
   const out = [];
   for (const f of files) {
    if (!/\.zip$/i.test(f.name)) { out.push(f); continue; }
    setBusy(`Unpacking ${f.name}…`);
-   const parts = await readZip(new Uint8Array(await f.arrayBuffer()));
-   if (isEptZip(parts)) { const src = {...eptZipSource(parts, await laz()), kept: true, keptAs: f.name}; st.sources.push(src); fileList.append(el('li', {}, `${f.name}: a square kept from USGS, ${src.count.toLocaleString()} points`)); continue; }
-   let any = false;
-   for (const [path, bytes] of parts) { const name = path.split('/').pop(); if (!name || /\.zip$/i.test(name) || !LIDAR_IN_ZIP.test(name)) continue; const g = new File([bytes], name); g.zip = f.name; out.push(g); any = true; }
-   if (!any) fileList.append(el('li', {class: 'cb-err'}, `${f.name}: no LIDAR files in it`));
+   let parts;
+   try { parts = await readZipFile(f); } catch (e) { fileList.append(el('li', {class: 'cb-err'}, `${f.name}: ${readProblem(e, f)}`)); continue; }
+   if (isEptZip(new Set(parts.map(p => p.name)))) {
+    const all = new Map();
+    for (const p of parts) all.set(p.name, new Uint8Array(await (await p.blob()).arrayBuffer()));
+    const src = {...eptZipSource(all, await laz()), kept: true, keptAs: f.name}; st.sources.push(src); fileList.append(el('li', {}, `${f.name}: a square kept from USGS, ${src.count.toLocaleString()} points`)); continue;
+   }
+   let any = false; const zlas = [];
+   for (const p of parts) {
+    const name = p.name.split('/').pop();
+    if (!name || /\.zip$/i.test(name)) continue;
+    if (ZLAS.test(name)) { zlas.push(name); continue; }
+    if (!LIDAR_IN_ZIP.test(name)) continue;
+    out.push(lazy(p, name, f.name)); any = true;
+   }
+   if (zlas.length) fileList.append(el('li', {class: 'cb-err'}, `${f.name}: ${zlasWords(zlas)}`));
+   else if (!any) fileList.append(el('li', {class: 'cb-err'}, `${f.name}: no LIDAR files in it`));
   }
   return out;
  }
@@ -1406,10 +1427,13 @@ export function open(draft = null) {
    let laz = null; const lazNow = async () => laz ??= await (await import('../lidar/laz.js')).lazModule();
    files = await unzipped(files, lazNow);
    const side = new Map(files.filter(f => /\.(prj|hdr)$/i.test(f.name)).map(f => [f.name.toLowerCase(), f]));
+   const zlas = files.filter(f => ZLAS.test(f.name));
+   if (zlas.length) fileList.append(el('li', {class: 'cb-err'}, zlasWords(zlas.map(f => f.name), {start: true})));
    for (const f of files) {
-    if (/\.(prj|hdr)$/i.test(f.name)) continue;
-    const head = new Uint8Array(await f.slice(0, 64).arrayBuffer()), form = formOf(f.name, head), base = f.name.replace(/\.[^.]+$/, '').toLowerCase();
+    if (/\.(prj|hdr)$/i.test(f.name) || ZLAS.test(f.name)) continue;
+    if (f.zip) setBusy(`Reading ${f.zip}: ${f.name}…`);
     try {
+     const head = new Uint8Array(await f.slice(0, 64).arrayBuffer()), form = formOf(f.name, head), base = f.name.replace(/\.[^.]+$/, '').toLowerCase();
      if (form === 'laz') await lazNow();
      const bytes = new Uint8Array(await f.arrayBuffer());
      const prj = side.get(base + '.prj') ? await side.get(base + '.prj').text() : null, hdr = side.get(base + '.hdr') ? await side.get(base + '.hdr').text() : null;
@@ -1420,9 +1444,14 @@ export function open(draft = null) {
      st.sources.push(src);
      const crs = src.kind === 'points' ? src.crs : src.raster.crs;
      fileList.append(el('li', {}, `${f.zip ? f.zip + ' / ' : ''}${f.name}: ${src.form.toUpperCase()}, ${src.kind === 'points' ? src.count.toLocaleString() + ' points' : `${src.raster.width} x ${src.raster.height} heights`}, ${crs.epsg ? 'EPSG ' + crs.epsg : 'no map grid stated'}, ${crs.units.h === 'metre' && crs.units.v === 'metre' ? 'metres' : `${crs.units.h} across, ${crs.units.v} up (converted to metres)`}`));
-    } catch (e) { fileList.append(el('li', {class: 'cb-err'}, `${f.name}: ${e.message}`)); }
+    } catch (e) { fileList.append(el('li', {class: 'cb-err'}, `${f.zip ? f.zip + ' / ' : ''}${f.name}: ${readProblem(e, f)}`)); }
    }
    if (st.sources.length) await previewLand(st.findBox);
+  } catch (e) {
+   // Never an uncaught promise from a click with nothing on screen (the
+   // owner's NotReadableError of 21 November 2026): said in the file list.
+   console.warn('reading LIDAR files:', e);
+   const r = readProblem(e); fileList.append(el('li', {class: 'cb-err'}, r[0].toUpperCase() + r.slice(1)));
   } finally { setBusy(''); }
  }
  // What to do once the LIDAR is in: the box from the map is the property already.

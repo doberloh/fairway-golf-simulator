@@ -13,6 +13,7 @@ import path from 'node:path';
 import fs from 'node:fs';
 import {surveyLas} from './door-real.mjs';
 import {playOneShot} from './door-generate.mjs';
+import {writeZip} from '../../src/zip.js';
 
 const GEO = {lat: 43.63, lon: -95.62};
 // Local metres to degrees as door 2 does round a place found by name.
@@ -51,12 +52,29 @@ export default function ({journey, SHOTS}) {
   await page.route(/nominatim\.openstreetmap\.org/, r => r.fulfill({status: 200, contentType: 'application/json', headers: {'Access-Control-Allow-Origin': '*'}, body: JSON.stringify([{lon: String(GEO.lon), lat: String(GEO.lat), display_name: 'A test place, Minnesota'}])}));
   await page.route(/overpass-api\.de/, r => { asked++; return r.fulfill({status: 200, contentType: 'application/json', headers: {'Access-Control-Allow-Origin': '*'}, body: JSON.stringify(answer())}); });
   const idle = () => page.waitForFunction(() => document.querySelector('.cb-busy').hidden, null, {timeout: 120000});
-  const las = path.join(SHOTS, 'door-2-osm-survey.las');
-  fs.writeFileSync(las, surveyLas());
+  // THE SURVEY IN A ZIP, as a state portal hands it out (21 November 2026:
+  // the owner's 6.2 GB West Virginia ZIP gave uncaught errors and nothing on
+  // screen). First a ZIP of zLAS, Esri's format, which is named and not
+  // read; then the survey's LAS inside a ZIP with a README, read through
+  // zip.js readZipFile a part at a time.
+  const zlasZip = path.join(SHOTS, 'door-2-osm-zlas.zip'), lasZip = path.join(SHOTS, 'door-2-osm-survey.zip');
+  fs.writeFileSync(zlasZip, await writeZip([{name: 'tiles/17SPD000001.zlas', data: new Uint8Array(4000).fill(3)}, {name: 'tiles/17SPD000002.zlas', data: new Uint8Array(4000).fill(5)}, {name: 'tiles/', data: ''}]));
+  fs.writeFileSync(lasZip, await writeZip([{name: 'README.txt', data: 'A made-up survey.'}, {name: 'survey/door-2-osm-survey.las', data: surveyLas()}]));
   await page.getByRole('button', {name: /Generate a real life course/}).click();
+  {
+   const [zc] = await Promise.all([page.waitForEvent('filechooser'), page.getByRole('button', {name: 'Choose LIDAR files'}).click()]);
+   await zc.setFiles(zlasZip); await idle();
+   const said = await page.locator('li.cb-err', {hasText: 'zLAS'}).textContent({timeout: 15000});
+   if (!/door-2-osm-zlas\.zip: these 2 files are zLAS/.test(said) || !/LAS Optimizer/.test(said) || !/search the map/.test(said)) throw Error(`a ZIP of zLAS should be named, with what to do: ${said}`);
+   if (await page.evaluate(() => window.fairwayBuilder.door2.sources?.length)) throw Error('nothing should be read from a ZIP of zLAS');
+  }
   const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.getByRole('button', {name: 'Choose LIDAR files'}).click()]);
-  await chooser.setFiles(las);
+  await chooser.setFiles(lasZip);
   await page.waitForFunction(() => window.fairwayBuilder.door2?.preview, null, {timeout: 60000}); await idle();
+  {
+   const listed = await page.locator('li', {hasText: 'door-2-osm-survey.zip / door-2-osm-survey.las'}).textContent({timeout: 5000});
+   if (!/LAS, [0-9,]+ points/.test(listed)) throw Error(`the survey read from its ZIP should be listed with its points: ${listed}`);
+  }
   await page.getByRole('button', {name: 'Next: build the land'}).click();
   // (Next starts the build at once.)
   await page.waitForFunction(() => window.fairwayBuilder.door2.land, null, {timeout: 120000}); await idle();

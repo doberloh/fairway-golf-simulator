@@ -25,6 +25,30 @@ kept whole: *The open list before the 11 November 2026 prune* and *The open
 list before the 16 October prune*, each with a table of what became of every
 entry.
 
+## A big LIDAR ZIP in the builder (branch `builder-big-zips`, 22 November 2026; not merged)
+
+The owner, trying the builder: "Im getting these errors trying to load
+downloaded LAZ files in a zip" -- three uncaught NotReadableErrors, nothing
+on screen, from West Virginia's 6.2 GB ZIP. It held 17 zLAS files, not LAZ.
+
+- [x] **A ZIP of any size opens**: zip.js `readZipFile` reads the directory
+  from the file's end (ZIP64 followed) and each part only when read; door 2
+  uses it for a player's ZIPs (`readZip` of the whole file is kept for the
+  builder's own small files).
+- [x] **zLAS in a ZIP is named**, all its files in one line, with Esri's LAS
+  Optimizer, LASliberator, and the builder's own map search (USGS LIDAR).
+  Before, a ZIP of them said "no LIDAR files in it".
+- [x] **Nothing fails silently**: door 2's file reading catches everything
+  and says it in the file list; a file too big to read in one piece is said
+  so with its size (lidar-words.js `readProblem`).
+
+Tested: zip and lidar-words Node tests; the owner's real file read by the
+new reader (17 parts, directory in 1 ms); the builder's 10 smoke journeys,
+`builder-door-2-osm` now picking a ZIP of zLAS and the survey in a ZIP.
+RESEARCH, *A state portal's ZIP of zLAS, 6.2 GB*. Also that evening, the
+owner's rule of at most 10 Node test files at once (AGENTS.md;
+tools/test.mjs enforces it; RULES_HISTORY, *Ten test files at most*).
+
 ## Online play with friends in other houses (branch `online-play`, 19-21 November 2026; released as 0.9.20)
 
 ### Release 0.9.20 (21 November 2026)

@@ -10,9 +10,10 @@
 // a few fixed headers and a CRC.
 //
 // What it handles: stored (0) and deflated (8) entries, no encryption, no
-// ZIP64 (a part over 4 GB is refused -- a course is megabytes), no data
+// ZIP64 written (a part over 4 GB is refused -- a course is megabytes), no data
 // descriptors on write; on read, a data descriptor is tolerated because the
-// central directory carries the sizes. Pure: no DOM, tested in Node
+// central directory carries the sizes. `readZipFile` reads a ZIP of any size
+// (ZIP64 too) from its file a part at a time, for LIDAR downloads. Pure: no DOM, tested in Node
 // (tests/zip.test.mjs).
 
 const CRC_TABLE = (() => {
@@ -25,10 +26,14 @@ const CRC_TABLE = (() => {
  return t;
 })();
 
-export function crc32(bytes) {
- let c = 0xFFFFFFFF;
+// The CRC carried on over another stretch of bytes (start with 0xFFFFFFFF;
+// the finished value is `(c ^ 0xFFFFFFFF) >>> 0`).
+function crcUpdate(c, bytes) {
  for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
- return (c ^ 0xFFFFFFFF) >>> 0;
+ return c;
+}
+export function crc32(bytes) {
+ return (crcUpdate(0xFFFFFFFF, bytes) ^ 0xFFFFFFFF) >>> 0;
 }
 
 async function through(bytes, stream) {
@@ -119,6 +124,72 @@ export async function readZip(bytes, {only = null} = {}) {
   out.set(name, raw);
  }
  return out;
+}
+
+// A ZIP READ FROM ITS FILE, A PART AT A TIME (the owner, 21 November 2026: a
+// state portal's 6.2 GB LIDAR download could not be opened in the builder --
+// `readZip` wants the whole ZIP in memory, and a browser will not hand over a
+// file that size in one piece, so it failed with NotReadableError and nothing
+// on screen). The directory is read from the file's end, ZIP64's sizes and
+// offsets followed (a ZIP or a part over 4 GB), and each part is lifted out
+// of the file only when asked: a stored part is the file's own slice, nothing
+// copied; a deflated one is unpacked as it streams, its CRC and length
+// checked on the way. A stored part's CRC is not checked (that would read it
+// twice; whatever reads it next checks its own format). Returns [{name, size
+// (unpacked), blob(): Promise<Blob>}], folders left out. `file`: a File or
+// Blob, read only through `slice`.
+const MAX32 = 0xFFFFFFFF;
+const u64 = (v, at) => v.getUint32(at, true) + v.getUint32(at + 4, true) * 2 ** 32;
+export async function readZipFile(file, {only = null} = {}) {
+ const bytesOf = async (a, b) => new Uint8Array(await file.slice(a, b).arrayBuffer());
+ const tailLen = Math.min(file.size, 22 + 65535 + 20), tail = await bytesOf(file.size - tailLen, file.size), tv = new DataView(tail.buffer);
+ let e = -1;
+ for (let i = tail.length - 22; i >= 0; i--) if (tv.getUint32(i, true) === 0x06054b50) { e = i; break; }
+ if (e < 0) throw Error('This file is damaged, or not a ZIP: it has no ZIP directory.');
+ let count = tv.getUint16(e + 10, true), cenSize = tv.getUint32(e + 12, true), cenAt = tv.getUint32(e + 16, true);
+ if (cenAt === MAX32 || cenSize === MAX32 || count === 0xFFFF) {
+  if (e < 20 || tv.getUint32(e - 20, true) !== 0x07064b50) throw Error('This file is damaged: its large-ZIP directory is missing.');
+  const recAt = u64(tv, e - 20 + 8), rec = await bytesOf(recAt, recAt + 56), rv = new DataView(rec.buffer);
+  if (rec.length < 56 || rv.getUint32(0, true) !== 0x06064b50) throw Error('This file is damaged: its large-ZIP directory is broken.');
+  count = u64(rv, 32); cenSize = u64(rv, 40); cenAt = u64(rv, 48);
+ }
+ if (cenAt + cenSize > file.size || cenSize > 256e6) throw Error('This file is damaged or cut short: its ZIP directory does not fit it.');
+ const cen = await bytesOf(cenAt, cenAt + cenSize), v = new DataView(cen.buffer), dec = new TextDecoder(), out = [];
+ let p = 0;
+ for (let k = 0; k < count; k++) {
+  if (p + 46 > cen.length || v.getUint32(p, true) !== 0x02014b50) throw Error('This file is damaged: its ZIP directory is broken.');
+  const method = v.getUint16(p + 10, true), crc = v.getUint32(p + 16, true);
+  let size = v.getUint32(p + 20, true), raw = v.getUint32(p + 24, true), local = v.getUint32(p + 42, true);
+  const nameLen = v.getUint16(p + 28, true), extraLen = v.getUint16(p + 30, true), commentLen = v.getUint16(p + 32, true);
+  const name = dec.decode(cen.subarray(p + 46, p + 46 + nameLen));
+  // ZIP64: the 8-byte figures, for those the record marks as too large, in the format's order.
+  for (let x = p + 46 + nameLen; x + 4 <= p + 46 + nameLen + extraLen;) {
+   const id = v.getUint16(x, true), len = v.getUint16(x + 2, true);
+   if (id === 1) { let q = x + 4; if (raw === MAX32) { raw = u64(v, q); q += 8; } if (size === MAX32) { size = u64(v, q); q += 8; } if (local === MAX32) local = u64(v, q); }
+   x += 4 + len;
+  }
+  p += 46 + nameLen + extraLen + commentLen;
+  if (name.endsWith('/') || (only && !only(name))) continue;
+  const entry = {name, method, crc, size, raw, local};
+  out.push({name, size: raw, blob: () => zipPart(file, entry, bytesOf)});
+ }
+ return out;
+}
+async function zipPart(file, e, bytesOf) {
+ const head = await bytesOf(e.local, e.local + 30), hv = new DataView(head.buffer);
+ if (head.length < 30 || hv.getUint32(0, true) !== 0x04034b50) throw Error(`This file is damaged: ${e.name} cannot be found.`);
+ const start = e.local + 30 + hv.getUint16(26, true) + hv.getUint16(28, true);
+ if (start + e.size > file.size) throw Error(`This file is damaged: ${e.name} is cut short.`);
+ const body = file.slice(start, start + e.size);
+ if (e.method === 0) return body;
+ if (e.method !== 8) throw Error(`This ZIP packs ${e.name} in a way Fairway cannot read: unpack it first, then choose the files inside.`);
+ let c = 0xFFFFFFFF, n = 0;
+ const check = new TransformStream({transform(chunk, out) { c = crcUpdate(c, chunk); n += chunk.length; out.enqueue(chunk); }});
+ let blob;
+ try { blob = await new Response(body.stream().pipeThrough(new DecompressionStream('deflate-raw')).pipeThrough(check)).blob(); }
+ catch { throw Error(`This file is damaged: ${e.name} cannot be unpacked.`); }
+ if (n !== e.raw || ((c ^ 0xFFFFFFFF) >>> 0) !== e.crc) throw Error(`This file is damaged: ${e.name} does not check out.`);
+ return blob;
 }
 
 // The same ZIP without the part `name`, its other parts copied as they are.

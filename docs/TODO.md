@@ -501,6 +501,15 @@ here is a claim of support until it is done.
 
 ## Course Builder
 
+- [ ] **A big LIDAR ZIP, by hand** (branch `builder-big-zips`, 22 November
+  2026). The owner's 6.2 GB West Virginia ZIP of zLAS now opens a part at a
+  time and is named in the file list (zLAS, with Esri's LAS Optimizer,
+  LASliberator, and the map search); smoke tried small ZIPs and Node read the
+  real file's directory and parts. Not seen by the owner in the builder, and
+  no real ZIP of LAZ over 2 GB has gone all the way to built land. A single
+  LIDAR file over about 2 GB still cannot be read (now said so, with its
+  size).
+
 - [ ] **A real course's doglegs, checked by a person.** Since 10 November 2026
   door 2 finds a dogleg's bend from the traced fairway (**Find the doglegs**;
   map-checks.js `bendFor`). Not played, and Worthington's yards against its

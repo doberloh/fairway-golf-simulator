@@ -242,7 +242,12 @@ hand (`tools/capture/overhaul.mjs --built`; SURROUNDINGS.md, round 8).
 ASCII points (XYZ, TXT, CSV, PTS, PTX), GeoTIFF and Cloud Optimized GeoTIFF,
 Esri ASCII grid, XYZ grids, Esri float grid and BIL, ERDAS Imagine, SRTM HGT.
 **The two closed forms** -- Esri zLAS and MrSID LiDAR -- are named with a free
-converter (Esri's LAS Optimizer or rapidlasso's LASliberator for zLAS).
+converter (Esri's LAS Optimizer or rapidlasso's LASliberator for zLAS), and
+zLAS inside a ZIP too, all its files in one line with the map search offered
+(lidar-words.js, 22 November 2026). **A ZIP of any size** is read a file at a
+time (zip.js `readZipFile`, ZIP64 included): a state portal's 6.2 GB download
+had failed whole with nothing on screen, and any failure now says what
+happened in the file list (RESEARCH, *A state portal's ZIP of zLAS*).
 Several tiles at once, of mixed forms. Ground from class 2 (or a ground filter
 on an unclassified cloud), gaps filled and relaxed smooth, a traced pond's
 floor carved a metre under its level; trees from canopy height peaks;
@@ -1764,7 +1769,8 @@ minute apart; the card read before each), 31 October 2026:
   full where a stage depends on them): laz-perf (https://github.com/hobuinc/laz-perf;
   Apache-2.0 per Alpine's package metadata, to confirm in its LICENSE); COPC
   (https://copc.io/); Esri's zLAS and LAS Optimizer
-  (https://lidarmag.com/?p=6066) and rapidlasso's LASliberator
+  (https://lidarmag.com/?p=6066; Esri's FAQ, quoted in RESEARCH, *A state
+  portal's ZIP of zLAS*) and rapidlasso's LASliberator
   (https://rapidlasso.de/new-lasliberator-frees-lidar-from-closed-format/);
   libE57Format, BSL-1.0 (https://dfsg-new-queue.debian.org/reviews/libe57format);
   geotiff.js, MIT (https://geotiffjs.github.io/) and proj4js, MIT, NTv2
