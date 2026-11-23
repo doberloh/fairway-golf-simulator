@@ -131,6 +131,13 @@ export default function ({journey, SHOTS}) {
   if (gone.homes !== 1 || gone.pond === 'water') throw Error(`filling outside and removing should take the map's pond and the house outside: ${JSON.stringify(gone)}`);
   const filled = await page.evaluate(() => { const st = window.fairwayBuilder.door2; return {trees: st.model.state.trees.length, out: st.model.kindAt(-200, 0), inside: st.model.kindAt(-160, 0)}; });
   if (!(filled.trees > kept.trees) || filled.inside !== 'fairway' || ['fairway', 'green', 'tee'].includes(filled.out)) throw Error(`outside the boundary should become the landscape's wood: ${JSON.stringify(filled)}`);
+  // The wood sized from the survey (wood-size.js; the owner, 22 November
+  // 2026): every tree outside as tall as the canopy somewhere or as one of the
+  // survey's own trees -- none of the old 10 to 22 m drawn at random.
+  const sized = await page.evaluate(() => { const st = window.fairwayBuilder.door2, inRing = (r, x, z) => { let c = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const [ax, az] = r[j], [bx, bz] = r[i]; if ((bz > z) !== (az > z) && x < (ax - bx) * (z - bz) / (az - bz) + bx) c = !c; } return c; };
+   const canopy = new Set(st.land.canopy), own = new Set(st.trees.map(t => t.h)), out = st.model.state.trees.filter(t => !inRing(st.boundary, t.x, t.z));
+   return {out: out.length, off: out.filter(t => !canopy.has(t.h) && !own.has(t.h) && t.h !== 70).map(t => t.h).slice(0, 5), said: document.querySelector('[role="status"].cb-note')?.textContent ?? ''}; });
+  if (!sized.out || sized.off.length || !/as tall as the survey's canopy/.test(sized.said)) throw Error(`the wood outside should be sized from the survey: ${JSON.stringify(sized)}`);
   await t.shot('osm');
   await page.getByRole('button', {name: 'Next: the holes'}).click();
   await page.getByRole('button', {name: 'Next: the name'}).click();

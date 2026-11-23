@@ -36,6 +36,7 @@ import {preview} from './preview.js';
 import {coverOptions, coverByKey, COVER_RANGE, treeChoices} from './cover.js';
 import {cornersOf, anchorHit} from './layer-ops.js';
 import {markNear, moveMark, pressOn, nextToMark} from './hole-marks.js';
+import {woodSizer} from './wood-size.js';
 import {fileName} from '../course-file.js';
 import {openSource, formOf} from '../lidar/formats.js';
 import {readGeoTiffRgb} from '../lidar/geotiff.js';
@@ -1555,9 +1556,12 @@ export function open(draft = null) {
   try {
    const homes = st.model.state.homes.length, keep = !!st.outsideKeep;
    const trees0 = st.model.state.trees.length;
-   const n = st.model.fillOutside(st.boundary, {ground, density, keep, seed: st.model.state.undo.length + 1}), gone = homes - st.model.state.homes.length, treesGone = trees0 - (st.model.state.trees.length - n);
+   // Each tree sized from the survey where it is planted (wood-size.js; the
+   // owner, 22 November 2026), or the old 10-22 m with nothing to size from.
+   const size = woodSizer(st.land, st.trees);
+   const n = st.model.fillOutside(st.boundary, {ground, density, keep, size, seed: st.model.state.undo.length + 1}), gone = homes - st.model.state.homes.length, treesGone = trees0 - (st.model.state.trees.length - n);
    paintCodes(); refreshCount(); plan.draw();
-   say(`Outside the boundary: ${keep ? 'what was there kept (OpenStreetMap\'s and yours), ' : `everything taken off first (every surface${gone ? `, ${gone} house${gone === 1 ? '' : 's'}` : ''}${treesGone ? `, ${treesGone.toLocaleString()} trees` : ''}), then `}${ground ? LABEL(ground).toLowerCase() : 'rough'}${keep ? ' on the bare ground' : ''} and ${n.toLocaleString()} trees (${density} a hectare, thinning in from the line). Past the land the game's landscape carries on, as round a generated course. Undo takes it back.`);
+   say(`Outside the boundary: ${keep ? 'what was there kept (OpenStreetMap\'s and yours), ' : `everything taken off first (every surface${gone ? `, ${gone} house${gone === 1 ? '' : 's'}` : ''}${treesGone ? `, ${treesGone.toLocaleString()} trees` : ''}), then `}${ground ? LABEL(ground).toLowerCase() : 'rough'}${keep ? ' on the bare ground' : ''} and ${n.toLocaleString()} trees (${density} a hectare, thinning in from the line; ${size ? 'each as tall as the survey\'s canopy where it stands, or as one of the survey\'s own trees on open ground' : '10 to 22 m: there is no survey here to size them from'}). Past the land the game's landscape carries on, as round a generated course. Undo takes it back.`);
   } finally { setBusy(''); }
  }
  // CLEAR TREES FROM TEES AND GREENS (tree-clear.js): every crown reaching
@@ -1749,7 +1753,7 @@ export function open(draft = null) {
     el('select', {class: 'cb-landscape', onchange: e => { st.landscape = e.target.value; st.landscapePicked = true; go(2); }}, BIOME_KEYS.map(k => el('option', {value: k, selected: k === st.landscape}, BIOMES[k].name)))),
    // THE COURSE BOUNDARY (the owner, 1 November 2026).
    fold('boundary', 'Course boundary', st.boundary ? `${(ringArea(st.boundary) / 1e4).toFixed(1)} ha` : 'not drawn', false,
-    el('small', {}, st.boundary ? `Set: ${(ringArea(st.boundary) / 1e4).toFixed(1)} ha (the dashed line). Fill outside it: the landscape's ground and a wood go in, thinning in from the line, and what is already there -- surfaces, houses and trees, the survey's too -- is removed first or kept (the choice beside it). Past the land the game's landscape carries on.` : 'Draw a line round the course (OpenStreetMap\'s comes with its outlines when it has one). Outside it becomes the landscape\'s ground and wood; what is already there -- OpenStreetMap\'s roads, ponds and houses -- removed or kept, as you choose.'),
+    el('small', {}, st.boundary ? `Set: ${(ringArea(st.boundary) / 1e4).toFixed(1)} ha (the dashed line). Fill outside it: the landscape's ground and a wood go in, thinning in from the line, each tree as tall as the survey measured there, and what is already there -- surfaces, houses and trees, the survey's too -- is removed first or kept (the choice beside it). Past the land the game's landscape carries on.` : 'Draw a line round the course (OpenStreetMap\'s comes with its outlines when it has one). Outside it becomes the landscape\'s ground and wood; what is already there -- OpenStreetMap\'s roads, ponds and houses -- removed or kept, as you choose.'),
     el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn' + (st.tool === 'boundary' ? ' cb-on' : ''), type: 'button', 'data-tool': 'boundary', onclick: () => setTool('boundary')}, st.boundary ? 'Draw it again' : 'Draw the boundary'),
      el('select', {class: 'cb-outside', title: 'What happens to the surfaces and houses already outside the line (OpenStreetMap\'s roads, ponds and buildings, or your own)', onchange: e => { st.outsideKeep = e.target.value === 'keep'; }},
       el('option', {value: 'remove', selected: !st.outsideKeep}, 'Remove everything there'), el('option', {value: 'keep', selected: !!st.outsideKeep}, 'Keep what is there')),

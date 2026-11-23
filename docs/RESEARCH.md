@@ -11025,6 +11025,29 @@ its 978 houses and some roads and ponds: Fill outside with **Remove what is
 there** took 34,101 surfaced cells (0.85 ha) and the 967 houses off;
 **Keep what is there** left all of them and floored only the bare ground.
 
+### The wood outside, sized from the survey (22 November 2026)
+
+The owner chose Fill outside's wood "sized from LIDAR" over thinning the land
+outside the boundary. Until then every planted tree was 10 to 22 m tall with
+a crown of 2.5 to 5 m (trace-edit.js defaults, PLACED on 1 November). Now
+(wood-size.js `woodSizer`), each planted tree is:
+
+- **under canopy** (land.js `canopy`, the tops less the ground, at least
+  2 m within 4 m of the spot): as tall as the highest of it, its crown in
+  the proportion of the nearest tree the survey found within 15 m, or 0.23
+  of its height with none (the old sizes' middle, 3.75 m over 16 m);
+- **on open ground**: the size of one of the survey's own trees (land.js
+  `findTrees`), drawn at random.
+
+A cell with building returns is not canopy, and no tree is over 70 m. All
+five numbers (4 m, 15 m, 2 m, 0.23, 70 m) are **PLACED**: 2 m is
+`findTrees`' own least tree; 4 m about half a crown across. Measured on
+Worthington's draft (8,074 survey trees, 3,437 spots sampled outside its
+boundary): 10th percentile 4.0 m, median 9.8 m, 90th 18.6 m, tallest 31.0 m,
+against the old 10 to 22 m evenly. A suburban parkland's woods are mostly
+lower than the old sizes put them. Not yet looked at in the builder or the
+game.
+
 ## Finding LIDAR from the builder (1 November 2026)
 
 The owner asked for LIDAR searched for and downloaded inside the builder

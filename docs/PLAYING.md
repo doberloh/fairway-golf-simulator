@@ -824,7 +824,10 @@ changes, newest first, each with **Back to here**.
      landscape's own ground goes in (pine straw, leaves, the desert floor or
      native grass) with a wood -- 150 trees a hectare where needles or leaves
      fall, 15 on a links, desert or island, 80 elsewhere -- thinning in from
-     the line. Past the land, the game's
+     the line. Each tree is sized from the survey where it stands: as tall
+     as the canopy the laser measured there, or, on open ground, the size
+     of one of the survey's own trees (with no survey behind the course, 10
+     to 22 m). Past the land, the game's
      landscape carries on as round any generated course. Undo and Redo
      (Ctrl+Z; Ctrl+Shift+Z or Ctrl+Y) cover every stroke. **Clear trees from
      tees and greens** draws in every tree's crown that reaches over a

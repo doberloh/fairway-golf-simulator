@@ -206,7 +206,9 @@ export function createTrace(grid, {codes = null, trees = [], homes = [], rocks =
   // outside off -- the survey's trees too -- before the floor and the wood go
   // in; `keep` true leaves each surface, house and tree where it is, lays the
   // floor only on bare ground, and plants no tree on a surface or a house.
-  fillOutside(ring, {ground = null, density = 120, edge = 15, height = [10, 22], crown = [2.5, 5], seed = 1, keep = false} = {}) {
+  // `size(x, z, rnd)`: a planted tree's {h, crown} (wood-size.js, from the
+  // survey; 22 November 2026), or null for the `height` and `crown` ranges.
+  fillOutside(ring, {ground = null, density = 120, edge = 15, height = [10, 22], crown = [2.5, 5], seed = 1, keep = false, size = null} = {}) {
    if (!ring || ring.length < 3) return 0;
    const G = ground && ground !== 'rough' ? layerOf(ground) : null;
    let q = seed >>> 0 || 1; const rnd = () => (q = (q * 1103515245 + 12345) % 2147483648) / 2147483648;
@@ -233,7 +235,8 @@ export function createTrace(grid, {codes = null, trees = [], homes = [], rocks =
      if (Math.abs(px) > halfX || Math.abs(pz) > halfZ || inside(ring, px, pz) || stood.get(at(px, pz))) continue;
      if (rnd() > Math.min(1, segDist(px, pz) / edge)) continue;
      if (keep) { const k = idx(px, pz); if (k >= 0 && layers.codes[k] && !(G && layers.mask(G)?.[k])) continue; if (onHome(px, pz)) continue; }
-     s.trees.push({x: px, z: pz, h: height[0] + rnd() * (height[1] - height[0]), crown: crown[0] + rnd() * (crown[1] - crown[0])}); planted++;
+     const sized = size?.(px, pz, rnd);
+     s.trees.push(sized ? {x: px, z: pz, h: sized.h, crown: sized.crown} : {x: px, z: pz, h: height[0] + rnd() * (height[1] - height[0]), crown: crown[0] + rnd() * (crown[1] - crown[0])}); planted++;
     }
    });
    return planted;

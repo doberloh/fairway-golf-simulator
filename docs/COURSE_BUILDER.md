@@ -1536,6 +1536,25 @@ the yards and the scorecard when it lands. In the 3D editor, **Drag markers** do
 the same for tees, bends and greens (14 pixels, PLACED), one undo a drag; door 2's
 step has no undo, and never had. Not seen on screen.
 
+### The wood outside, sized from the survey (22 November 2026)
+
+The owner, asked whether Fill outside should thin the land outside the
+boundary or size its wood from the LIDAR: "Size the wood from LIDAR". Fill
+outside planted every tree 10 to 22 m tall with a crown of 2.5 to 5 m,
+whatever stood there. Now each planted tree is sized by wood-size.js
+`woodSizer` from door 2's land and the survey's trees: under canopy, as tall
+as the canopy's highest point within 4 m, its crown in the proportion of the
+nearest survey tree within 15 m (0.23 of its height with none); on open
+ground, the size of one of the survey's trees drawn at random, so a wood on
+a field matches the woods round it. A cell with building returns is not
+canopy, and no tree is over 70 m (a mast reads as canopy). With nothing to
+size from (a course opened from a file: no canopy, no survey trees) the old
+sizes stand. All PLACED; RESEARCH, *The wood outside, sized from the
+survey*. Where the trees go -- the density, thinning in from the line -- is
+unchanged. On Worthington's draft the sizes run 4 to 31 m, median 9.8
+(sampled; not planted and looked at in the builder). The builder-door-2-osm
+journey checks every tree outside is a canopy height or a survey tree's.
+
 ### Tees in their colours, and the next hole after a green (22 November 2026)
 
 The owner: "the tees are all showing the same color when i try to place them
