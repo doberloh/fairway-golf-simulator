@@ -335,8 +335,13 @@ It holds in every turn, goal and branch, and needs no asking.
   `nvidia-smi`'s busy figure**: this card idles at a third of its clock, where
   a launcher and a chat window read 18 to 50% (RULES_HISTORY.md, *The gate
   read an idle card as busy*).
+- **Never more than 10 Node test files at once, gaming or not** (the owner,
+  22 November 2026: "only run max 10 node tests at a time"). `tools/test.mjs`
+  holds `--jobs` to 10 by itself; `node --test` run directly takes
+  `--test-concurrency=10` or less, and no more than 10 test runs go side by
+  side.
 - **While a game runs: one job at a time, graphics or not.** A single test
-  file or test run (`npm test -- --test-concurrency=1`), one smoke run with its
+  file or test run (`npm test -- --jobs 1`), one smoke run with its
   journeys one after another, one capture, one profile group, one build, one
   bench, one Blender job, or the game in the browser pane -- never two at once,
   and no subagents running jobs beside it. A game that starts mid-run: let the

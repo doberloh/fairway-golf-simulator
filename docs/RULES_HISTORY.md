@@ -708,3 +708,16 @@ rule now rests on that line alone. The checks were run one job at a time
 anyway, by the program's name; whether the line moves (or a list of known
 games joins it) was put to the owner at the hand-over. **The owner, 20
 November 2026: "leave it as is".** The line stays at 15%, with no list.
+
+## Ten test files at most (22 November 2026)
+
+With the card free, a `npm run test:changed` on the builder-big-zips branch
+started 31 test files at once (the runner's default, this machine's cores
+less one), the course-building ones each taking a core for three minutes or
+more. The owner, the same evening: "can you add a rule to only run max 10
+node tests at a time?" AGENTS.md says so beside the gaming rule, and
+`tools/test.mjs` enforces it: its default is held to 10, and `--jobs` above
+10 is held to 10 with a line saying why. The gaming rule's own example was
+corrected at the same time: it named `--test-concurrency=1`, which
+`tools/test.mjs` refuses as an unknown flag (it had failed that way on 20
+November); the runner's flag is `--jobs 1`.
