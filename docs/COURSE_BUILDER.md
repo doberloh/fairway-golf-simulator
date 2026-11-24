@@ -1864,9 +1864,15 @@ and off and also the strength of the curve". Built, in door 2's trace step:
   all, PLACED: the owner named the line and the outline; the others use the
   same pen and a different curve per tool would surprise). pen.js `penCurve`
   `curve`: 1 the spline as before, 0 straight lines node to node, between them
-  each point that share of the way from the straight line to the spline --
-  still through every node, bulging less. What is drawn is what is filled, as
-  before.
+  the spline's handles at each node that share of their length -- still
+  through every node, bulging that share as far. What is drawn is what is
+  filled, as before. **Changed 24 November 2026**: at first each point was
+  that share of the way from the straight line to the spline, which left a
+  corner at every node (74 degrees at one point on a box at a quarter
+  strength, sampled at 5 cm), and the trace squared some of those off -- the
+  owner's box with two square corners and two round. Now the curve bends
+  through each node without a kink (pen.js `segment`, a Hermite curve on the
+  centripetal spline's own tangents; full strength is the same curve).
 
 Tested in Node (tests/builder-line-work.test.mjs, builder-pen, trace-edit,
 osm) and, from the same evening, in the builder-door-2 journey: an outline
