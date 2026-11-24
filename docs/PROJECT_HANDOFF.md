@@ -2469,9 +2469,18 @@ measured `greenD` from the row's green, which on a built hole is a skeleton, so 
 and the traced green took the lap's plain tone; and the block set `teePadD` to 1e3, so no built tee
 was ever mown. Now `greenD=dGreen` and a built tee sets `teePadD=dTee`, its frame the hole's
 (`teeF=p`), its lap's way from the edge distance's screen slope (`teeBuilt`); no worn divot strip
-(the markers' place is not in the shader). Known seam: a built tee's bands follow the hole row that
-owns that ground, so where two holes meet across a tee its bands can turn (Worthington's 1st). Any
-new effect that reads a hole row's shapes after that block must ask the built field instead.
+(the markers' place is not in the shader). Any new effect that reads a hole row's shapes after that
+block must ask the built field instead. **And each mown piece has one owner** (23 November 2026, the
+owner: built fairway stripes "broken", meeting in chevrons with stepped seams): the bands' direction
+is the owning hole's, and the atlas gave each texel its nearest hole, so a traced fairway running
+nearer another hole's line was mown at two angles meeting on the atlas's 1.75 m staircase (Troon
+North: twelve places; the "known seam" across Worthington's 1st tee was the same, and should be
+gone, not looked at). ground.js now hands
+the atlas to owner-atlas.js `builtMowOwners` on a built course: every connected piece of fairway, of
+green with its fringe and of tee gets ONE hole (a green its pin's, a tee its tee's, else the
+majority's), carried two texels into the rough so the shader's resolve happens where nothing is
+mown. Paint only (the lie reads the field); about 0.1 s at the start of a round; no shader change.
+Two holes' fairways joined into one piece are mown as one, in the larger share's direction.
 
 **THE MOWN OUTLINE IS ROUNDED BY `BAND_ROUND`, IN BOTH HALVES.** The fairway beside water is an intersection, so it has a sharp corner; `smoothMax` in course.js and `smax` in ground.js round it by the same 2 m arc. The lie needs `fairwayDepth` (how far outside the corridor) and `ovalDistance` (metres from a pond's outline, built the same way the shader builds `hd`) to do it — a plain margin test cannot round anything. Lakes keep the unrounded test on purpose: `lakeOwner` answers inside-or-out rather than a distance. Do NOT try to make semi-rough a uniform offset of the mown region instead: that is a distance transform, `surface()` is a point query, and it would need a fourth baked representation to keep in step. Priced at 25.2 m against 32.2 m of worst swath for 1.04% of the ground, and declined.
 

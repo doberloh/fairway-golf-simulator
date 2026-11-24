@@ -50,7 +50,14 @@ export function createTrace(grid, {codes = null, trees = [], homes = [], rocks =
   const key = k * 32 + LI[kind]; if (!s.stroke.cells.has(key)) s.stroke.cells.set(key, m[k]);
   m[k] = v; const i = k % nx, j = (k - i) / nx, bx = s.stroke.box;
   if (i < bx[0]) bx[0] = i; if (i > bx[1]) bx[1] = i; if (j < bx[2]) bx[2] = j; if (j > bx[3]) bx[3] = j;
+  touch(i, i, j, j);
  };
+ // THE CELLS CHANGED SINCE THE PLAN LAST LOOKED (`takeTouched`): door 2
+ // redraws only the part of its smooth trace they reach (the owner, 23
+ // November 2026: painting on a large course turned the whole plan to cells
+ // and hung while every layer was traced again).
+ let touched = null;
+ const touch = (i0, i1, j0, j1) => { if (!touched) touched = [i0, i1, j0, j1]; else { if (i0 < touched[0]) touched[0] = i0; if (i1 > touched[1]) touched[1] = i1; if (j0 < touched[2]) touched[2] = j0; if (j1 > touched[3]) touched[3] = j1; } };
  const keepTrees = () => { if (!s.stroke.trees) s.stroke.trees = s.trees.map(t => ({...t})); };
  const keepHomes = () => { if (!s.stroke.homes) s.stroke.homes = s.homes.map(h => ({...h})); };
  const keepRocks = () => { if (!s.stroke.rocks) s.stroke.rocks = s.rocks.map(q => [...q]); };
@@ -68,6 +75,8 @@ export function createTrace(grid, {codes = null, trees = [], homes = [], rocks =
   kindAt: (x, z) => { const k = idx(x, z); return k < 0 ? null : PALETTE[layers.codes[k]]; },
   layersPresent: () => layers.present(),
   setHidden(kind, hide) { layers.setHidden(kind, hide); },
+  // The box of cells [i0, i1, j0, j1] changed since the last call, or null.
+  takeTouched() { const t = touched; touched = null; return t; },
   // A brush stroke is one undo step from `beginStroke` to `endStroke`; a
   // single call outside a stroke is its own.
   beginStroke: begin, endStroke: end,
@@ -373,7 +382,7 @@ export function createTrace(grid, {codes = null, trees = [], homes = [], rocks =
   if (st.rocks) s.rocks = st.rocks;
   if (st.bunkers) s.bunkers = st.bunkers;
   if (st.creekLines) s.creekLines = st.creekLines;
-  if (st.box[1] >= 0) layers.recompose(st.box[0], st.box[1], st.box[2], st.box[3]);
+  if (st.box[1] >= 0) { layers.recompose(st.box[0], st.box[1], st.box[2], st.box[3]); touch(...st.box); }
   to.push(back); return true;
  }
  return api;

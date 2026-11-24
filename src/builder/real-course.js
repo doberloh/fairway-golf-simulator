@@ -12,7 +12,7 @@
 import {createGridder, findTrees, gridFrame, FINE_NONE} from '../lidar/land.js';
 import {toMetres} from '../lidar/las.js';
 import {TREE_HAND} from '../built-world.js';
-import {maskRings, simplify, smoothRing, relaxRing} from '../contour.js';
+import {maskRings, fitRing, cellArea} from '../contour.js';
 import {PALETTE, SPECK, POCK} from './trace-edit.js';
 import {createLayers, tidyMask, LAYER_ORDER} from './layers.js';
 import {boxMean, features, distanceFrom} from '../lidar/trace.js';
@@ -190,20 +190,21 @@ export const parFor = yards => yards <= 250 ? 3 : yards <= 470 ? 4 : 5;
 // the trace drew no green or tee under a mark -- a green is a 12 m disc round
 // its mark and a tee a 6 x 10 m pad (PLACED), for the player to draw over. `holes`: [{number, par?, tees: [{x, z, set}], green: {x, z},
 // line?}] in local metres. `trees` as land.js finds them.
-// One layer's outlines as a course gets them: traced round its cells, the
-// staircase relaxed away (eight passes), simplified to a tenth of a cell and
-// the corners rounded (one pass of corner cutting) -- all PLACED; scraps
-// under SPECK dropped. Until 1 November 2026 the staircase was simplified
-// away (0.6 of a cell) and two passes rounded it, which kept a stair corner
-// here and there as a notch the 3D editor showed close up: on a 12 m circle
-// at half a metre, 29 cm off and an 18-degree notch then, 16 cm and none now
-// (RESEARCH, *Outlines without notches*). The
+// One layer's outlines as a course gets them: traced round its cells and
+// FITTED (contour.js `fitRing`, 23 November 2026): straight where the cells
+// ran straight, sharp where they turned a corner, curved elsewhere, and
+// grown back to the cells' own area; scraps under SPECK dropped. Until then
+// the staircase was relaxed (eight passes) and the corners cut, which left a
+// side a few degrees off the grid wobbling -- the owner's "jaggy edges" on
+// tees and greens, 80 cm on 1 m land -- and wore every corner off, a Line
+// laid with Auto curve off included (RESEARCH, *Outlines fitted*; before
+// 1 November, *Outlines without notches*). The
 // trace step draws these too, so what is painted is seen as it will play.
 // `x0`, `z0`: the first cell's middle, when the grid is not centred (the
 // editor's raster, a part of it).
 export function layerRings(m, {nx, nz, cell, halfX, halfZ, x0 = -halfX, z0 = -halfZ}) {
  return maskRings((i, j) => m[j * nx + i] === 1, nx, nz, x0, z0, cell)
-  .map(r => smoothRing(simplify(relaxRing(r, 8), cell * .1), 1)).filter(r => r.length >= 3 && ringArea(r) > SPECK);
+  .map(r => fitRing(r, cell, {area: cellArea(r, x0, cell)})).filter(r => r.length >= 3 && ringArea(r) > SPECK);
 }
 
 export function docFromLand({land, traced = null, holes, trees = [], homes = [], name = 'Real course', landscape = 'heartland', credits = [], source = {}, landEdits = null, creeks = [], rocks = [], bunkers = [], creekLines = [], treePlan = null, surround = null}) {

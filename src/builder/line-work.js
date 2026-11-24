@@ -44,6 +44,26 @@ export function lineCells(points, {width, caps = 'round', grid}) {
    if (ex * ex + ez * ez <= r2) out.add(j * nx + i);
   });
  }
+ // SQUARE ENDS, SHARP BENDS (23 November 2026: a Line with Auto curve off
+ // still came out rounded): each bend's outside filled out to where its two
+ // edges meet, as a mitre -- or, past a turn of 150 degrees (PLACED), cut
+ // square across. Round ends keep round bends, as the brush lays them.
+ if (caps === 'square') for (let s = 1; s + 1 < pts.length; s++) {
+  const [ax, az] = pts[s - 1], [bx, bz] = pts[s], [cx, cz] = pts[s + 1];
+  let ux = bx - ax, uz = bz - az, vx = cx - bx, vz = cz - bz; const lu = Math.hypot(ux, uz), lv = Math.hypot(vx, vz); ux /= lu; uz /= lu; vx /= lv; vz /= lv;
+  const turn = ux * vz - uz * vx; if (Math.abs(turn) < 1e-6) continue;
+  // The outside of the bend: right of the way for a left turn, and the other way.
+  const o = turn > 0 ? -1 : 1, n1 = [-uz * o, ux * o], n2 = [-vz * o, vx * o], P = [bx + n1[0] * r, bz + n1[1] * r], Q = [bx + n2[0] * r, bz + n2[1] * r];
+  const half = Math.acos(Math.max(-1, Math.min(1, ux * vx + uz * vz))) / 2, quad = [[bx, bz], P];
+  if (half < 75 * Math.PI / 180) { const mx = n1[0] + n2[0], mz = n1[1] + n2[1], ml = Math.hypot(mx, mz), k = r / Math.cos(half); quad.push([bx + mx / ml * k, bz + mz / ml * k]); }
+  quad.push(Q);
+  const xs = quad.map(q => q[0]), zs = quad.map(q => q[1]);
+  span(Math.min(...xs), Math.max(...xs), Math.min(...zs), Math.max(...zs), (i, j, x, z) => {
+   let inside = true, sign = 0;
+   for (let q = 0; q < quad.length && inside; q++) { const [px, pz] = quad[q], [qx, qz] = quad[(q + 1) % quad.length], cr = (qx - px) * (z - pz) - (qz - pz) * (x - px); if (Math.abs(cr) < 1e-12) continue; const sg = Math.sign(cr); if (sign && sg !== sign) inside = false; sign = sg; }
+   if (inside) out.add(j * nx + i);
+  });
+ }
  // Square ends: what lies past the end node, across the line there, comes off
  // -- only near the end (within the width), so a line bending back on itself
  // keeps its own cells.

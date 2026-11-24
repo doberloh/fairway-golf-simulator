@@ -10851,7 +10851,79 @@ centred halfway between the ground below the camera and what the camera
 looks at, its side 2.2 times the camera's distance, because centred on the
 target the near ground sat in the fade.
 
+## Outlines fitted (23 November 2026)
+
+**Replaces the relaxing below** (kept for its history). The owner, on Alpine
+Lake Resort (2233 x 3066 m, so 1 m cells: `cellFor` above 2.25 km²): "jaggy
+edges on things like greens and tee boxes ... I did click smooth edges on
+them", and a Line laid with Auto curve off still came out rounded. Both were
+`layerRings`. Eight relax passes reach about two points, so a side a few
+degrees off the grid -- whose steps are ten or thirty cells apart -- kept them
+as a wobble, which the game's fringe and mowing then outline; and every corner
+was worn off. Smooth edges cannot help: it moves cells, and cells are what
+make the steps.
+
+Now (contour.js `fitRing`, all four numbers PLACED): from each traced point,
+how far a straight edge can run with every point within 0.55 of a cell of it;
+the ring walked in those longest edges from its sharpest turn; each edge laid
+on its points' least-squares line and each vertex where two such lines cross
+(kept within 1.2 cells of the cells' own corner); a vertex is a CORNER, kept
+sharp, when both its edges are at least 2 cells and it turns 70 degrees or
+more, or rounding it would pull the edge more than a cell; otherwise a
+quadratic curve from half the shorter edge before it to as far after. A
+circle's fitted edges sag at most the tolerance, so a green is always curved.
+Then (`cellArea`, `grownTo`) the ring is moved along its normals, at most half
+a cell, until it holds the cells' own area: fitting curves takes them inside
+the cells, 10-15 cm all round a green on 1 m land.
+
+Measured (a local script: shapes rasterised off the grid, traced, the stray
+from the true edge away from corners, its in/out bias, the corner cut, the
+sharpest kink on a shape with no corner):
+
+| Shape | cell | Relaxed: stray worst / typical, corner cut, kink | Fitted |
+| --- | --- | --- | --- |
+| green 34 x 26 m, turned 20 deg | 0.5 m | 20 / 7 cm, -, 8 deg | 29 / 6 cm, -, 7 deg |
+| green 34 x 26 m | 1 m | 42 / 20 cm (15 in), -, 11 deg | 46 / 14 cm (2 out), -, 8 deg |
+| tee 20 x 8 m, turned 6 deg | 0.5 m | 13 / 4 cm, 72 cm, 8 deg | 9 / 2 cm, 23 cm, 3 deg |
+| tee 20 x 8 m, turned 6 deg | 1 m | 52 / 19 cm, 127 cm, 15 deg | 23 / 9 cm, 46 cm, 6 deg |
+| fairway 300 x 40 m, turned 3 deg | 1 m | 54 / 17 cm, -, 15 deg | 69 / 11 cm, -, 9 deg |
+| path 60 x 2.5 m, turned 4 deg | 1 m | 112 / 31 cm, 159 cm, 38 deg | 43 / 10 cm, 92 cm, 4 deg |
+
+The worst strays left on curves sit where a curve runs flattest along the grid
+(the bottom of the green, the tips of the fairway): there the true edge lies
+anywhere inside one row of cells, and nothing can say where -- the cells'
+limit, not the fit's. On the owner's draft (2780 x 3280 cells, 1 m) every
+layer traced in 2.4-2.8 s, against 3.1-3.9 s relaxed, with 68 thousand points
+against 51 thousand (the file allows 2 million).
+
+What the game adds on its own, for comparison: its built field
+(built-field.js) is a 1.6 m texel on a 3.3 km property, and its linear filter
+rounds an exact rectangle's corner by 69 cm (24 cm at 0.6 m texels) while
+keeping its sides within 2 cm. Not changed: it is the game's memory and frame
+budget, and the corner is a tee's.
+
+**A part traced on its own differs a little from the whole**: the walk starts
+somewhere, so the 3D editor's and door 2's redraw after a stroke can place a
+curve where it enters the part slightly differently -- on the owner's draft,
+with 32 cells round the part, 95 in 100 points within 5 cm, 99 within 9 cm,
+27 cm the very worst (the 3D editor's margin went from 8 to 32 cells for
+this). A saved course is always traced whole. **Tried and rejected**: each
+point on the best line through the straight run centred on it (no walk, so a
+part agreed with the whole exactly) -- it left the 6-degree tee 9 cm typical
+off (against 2) and kinks of 14-29 degrees; and Bezier curves from edge middle
+to edge middle (potrace's own) -- 15 cm typical on the 1 m green, against 14,
+and 26 cm on the 1 m path, against 10.
+
+A Line laid with square ends now has square BENDS too (line-work.js: each
+bend's outside filled out to a mitre, cut across past a 150-degree turn,
+PLACED); round ends keep round bends. Saved, the outside corner of a 4 m L on
+half-metre land is within 25 cm of the cells' corner. Nothing a saved file
+holds changed, so no `BUILT_VERSION`; a course saved again gets the fitted
+outlines.
+
 ## Outlines without notches (1 November 2026)
+
+Superseded by *Outlines fitted* above (23 November 2026).
 
 Every surface's outline in a door 2 course, in door 2's smooth view and in
 the 3D editor is `layerRings` (real-course.js): the cells traced (contour.js

@@ -312,17 +312,33 @@ export function open(draft = null) {
   plan.setLayer('picture', (d, nx, nz) => { for (let k = 0; k < nx * nz; k++) if (p.has[k]) { d[k * 4] = p.rgb[k * 3]; d[k * 4 + 1] = p.rgb[k * 3 + 1]; d[k * 4 + 2] = p.rgb[k * 3 + 2]; d[k * 4 + 3] = 255; } });
   plan.shiftLayer('picture', 0, 0);
  }
+ const countWhere = (a, v) => { let n = 0; for (let k = 0; k < a.length; k++) if (a[k] === v) n++; return n; };
  const codeTexel = (d, o, c) => { const col = COLOUR[PALETTE[c]]; if (col) { d[o] = col[0]; d[o + 1] = col[1]; d[o + 2] = col[2]; d[o + 3] = 255; } else d[o + 3] = 0; };
+ // The cells as shown: painted whole when the trace, the land, the hidden
+ // layers or Hold to show before change; otherwise only the box the trace's
+ // cells changed in (trace-edit.js `takeTouched`) -- a whole repaint of a
+ // 2.8 x 3.3 km course at 1 m is nine million cells.
+ let codesOf = {};
  function paintCodes() {
-  if (!st.land || !st.model) { plan.clearLayer('codes'); return; }
-  const c = st.compareSkin && st.preSkin ? st.preSkin : st.model.state.layers.view;
-  plan.setLayer('codes', (d, nx, nz) => { for (let k = 0; k < nx * nz; k++) codeTexel(d, k * 4, c[k]); });
-  dirtyVec();
+  if (!st.land || !st.model) { plan.clearLayer('codes'); codesOf = {}; return; }
+  const pre = !!(st.compareSkin && st.preSkin), c = pre ? st.preSkin : st.model.state.layers.view, box = st.model.takeTouched?.() ?? null;
+  const hidden = [...st.model.state.layers.hidden].sort().join(), newModel = codesOf.model !== st.model || codesOf.land !== st.land;
+  if (newModel || codesOf.pre !== pre || codesOf.hidden !== hidden || !plan.view.layers.codes) {
+   plan.setLayer('codes', (d, nx, nz) => { for (let k = 0; k < nx * nz; k++) codeTexel(d, k * 4, c[k]); });
+   codesOf = {model: st.model, land: st.land, pre, hidden};
+   if (newModel) dirtyVec(null); else if (box) dirtyVec(box); else showCodes();
+   return;
+  }
+  if (box) patchBox(box, c);
+  if (box) dirtyVec(box); else showCodes();
  }
- function patchCodes(x, z, r) {
-  const {cell, halfX, halfZ, nx} = st.land, c = st.model.state.layers.view, w = 2 * r / cell + 4;
-  plan.patchLayer('codes', (x - r + halfX) / cell - 2, (z - r + halfZ) / cell - 2, w, w, (d, a, b, W, H) => { for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) codeTexel(d, (j * W + i) * 4, c[(b + j) * nx + a + i]); });
-  dirtyVec();
+ function patchBox([i0, i1, j0, j1], c) {
+  const nx = st.land.nx;
+  plan.patchLayer('codes', i0, j0, i1 - i0 + 1, j1 - j0 + 1, (d, a, b, W, H) => { for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) codeTexel(d, (j * W + i) * 4, c[(b + j) * nx + a + i]); });
+ }
+ function patchCodes() {
+  const box = st.model.takeTouched?.();
+  if (box) { patchBox(box, st.model.state.layers.view); dirtyVec(box); }
  }
  // THE TRACE AS IT WILL PLAY (the owner, 1 November 2026: "It gets really
  // pixellated in the tracer. will the game smooth those lines out?"). It
@@ -330,26 +346,105 @@ export function open(draft = null) {
  // after the specks and pocks are tidied), so the trace is drawn that way
  // too, a moment after each change. While a stroke is being painted its cells
  // show; Smooth view off shows the cells always.
- let vecTimer = 0;
+ //
+ // IN TILES (the owner, 23 November 2026: "when i start painting everything
+ // gets really pixellated and then goes back crisp ... causes hangs"): every
+ // change threw the whole smooth trace away -- cells everywhere -- and traced
+ // every layer of the whole land again a moment later, 3 to 4 seconds with the
+ // page frozen on a 2.8 x 3.3 km course at 1 m. Now the land is traced in
+ // tiles of TILE cells, each with MARGIN cells round it (so its outlines come
+ // out as the whole's: contour.js `fitRing`), and kept; a change marks the
+ // tiles it reaches, shows its own cells only where they changed, and those
+ // tiles are traced again a few at a time between frames once the stroke is
+ // done, the ones in view first. The course itself is always traced whole.
+ const TILE = 128, MARGIN = 32;
+ let vt = null, vecTimer = 0;
  const vecCanvas = document.createElement('canvas');
- function dirtyVec() { st.vec = null; clearTimeout(vecTimer); if (st.smoothView) vecTimer = setTimeout(buildVec, 250); showCodes(); }
- function buildVec() {
-  if (!st.model || !st.land || !st.smoothView) return;
-  if (st.model.state.stroke) { vecTimer = setTimeout(buildVec, 250); return; }
-  const Ls = st.model.state.layers, {nx, nz, cell} = st.land, speck = Math.round(SPECK / (cell * cell)), pock = Math.round(POCK / (cell * cell));
-  st.vec = LAYER_ORDER.filter(k => Ls.masks.has(k) && !Ls.hidden.has(k)).reverse().map(k => { const c = Uint8Array.from(Ls.masks.get(k)); tidyMask(c, nx, nz, speck, pock); return {kind: k, rings: layerRings(c, st.land)}; });
-  showCodes();
+ function resetVec() {
+  const cols = Math.ceil(st.land.nx / TILE), rows = Math.ceil(st.land.nz / TILE);
+  vt = {model: st.model, land: st.land, cols, rows, tiles: new Array(cols * rows).fill(null), dirty: new Set(Array.from({length: cols * rows}, (_, k) => k)), marks: new Map()};
  }
- function showCodes() { plan.view.show.codes = st.traceOn && st.step !== 5 && (!(st.smoothView && st.vec) || !!st.compareSkin); plan.draw(); }
+ // `box`: the cells [i0, i1, j0, j1] changed, or null for all of them.
+ function dirtyVec(box = null) {
+  if (!st.land || !st.model) return;
+  if (!vt || vt.model !== st.model || vt.land !== st.land) resetVec();
+  else if (!box) for (let k = 0; k < vt.tiles.length; k++) { vt.dirty.add(k); vt.marks.set(k, [0, st.land.nx, 0, st.land.nz]); }
+  else {
+   const span = (a, b, n) => [Math.max(0, Math.floor(a / TILE)), Math.min(n - 1, Math.floor(b / TILE))];
+   const [t0, t1] = span(box[0] - MARGIN, box[1] + MARGIN, vt.cols), [u0, u1] = span(box[2] - MARGIN, box[3] + MARGIN, vt.rows);
+   for (let u = u0; u <= u1; u++) for (let t = t0; t <= t1; t++) {
+    const k = u * vt.cols + t; vt.dirty.add(k);
+    const i0 = Math.max(box[0], t * TILE), i1 = Math.min(box[1], (t + 1) * TILE - 1), j0 = Math.max(box[2], u * TILE), j1 = Math.min(box[3], (u + 1) * TILE - 1);
+    if (i0 > i1 || j0 > j1) continue;
+    const m = vt.marks.get(k); vt.marks.set(k, m ? [Math.min(m[0], i0), Math.max(m[1], i1), Math.min(m[2], j0), Math.max(m[3], j1)] : [i0, i1, j0, j1]);
+   }
+  }
+  scheduleVec(); showCodes();
+ }
+ function scheduleVec(wait = 250) { clearTimeout(vecTimer); if (st.smoothView && vt?.dirty.size) vecTimer = setTimeout(buildVec, wait); }
+ // The dirty tile to trace next: one in view if there is one.
+ function nextTile() {
+  const {cell, halfX, halfZ} = st.land, a = plan.toWorld(0, 0), b = plan.toWorld(canvas.width, canvas.height);
+  const ti0 = Math.floor(((a.x + halfX) / cell) / TILE), ti1 = Math.floor(((b.x + halfX) / cell) / TILE), tj0 = Math.floor(((a.z + halfZ) / cell) / TILE), tj1 = Math.floor(((b.z + halfZ) / cell) / TILE);
+  let first = -1;
+  for (const k of vt.dirty) { if (first < 0) first = k; const t = k % vt.cols, u = (k - t) / vt.cols; if (t >= ti0 && t <= ti1 && u >= tj0 && u <= tj1) return k; }
+  return first;
+ }
+ function buildVec() {
+  if (!st.model || !st.land || !st.smoothView || !vt) return;
+  if (vt.model !== st.model || vt.land !== st.land) { resetVec(); }
+  if (st.model.state.stroke) { scheduleVec(); return; }
+  const t0 = performance.now();
+  while (vt.dirty.size && performance.now() - t0 < 24) { const k = nextTile(); vt.dirty.delete(k); vt.tiles[k] = traceTile(k); vt.marks.delete(k); }
+  plan.draw();
+  if (vt.dirty.size) scheduleVec(0);
+ }
+ // One tile's outlines, layer by layer, as Path2Ds in metres.
+ function traceTile(k) {
+  const {nx, nz, cell, halfX, halfZ} = st.land, t = k % vt.cols, u = (k - t) / vt.cols, speck = Math.round(SPECK / (cell * cell)), pock = Math.round(POCK / (cell * cell));
+  const i0 = Math.max(0, t * TILE - MARGIN), i1 = Math.min(nx - 1, (t + 1) * TILE - 1 + MARGIN), j0 = Math.max(0, u * TILE - MARGIN), j1 = Math.min(nz - 1, (u + 1) * TILE - 1 + MARGIN), W = i1 - i0 + 1, H = j1 - j0 + 1;
+  const paths = new Map();
+  for (const [kind, m] of st.model.state.layers.masks) {
+   const sub = new Uint8Array(W * H);
+   for (let j = 0; j < H; j++) sub.set(m.subarray((j + j0) * nx + i0, (j + j0) * nx + i0 + W), j * W);
+   if (sub.indexOf(1) < 0) continue;
+   tidyMask(sub, W, H, speck, pock, undefined, true);
+   const rings = layerRings(sub, {nx: W, nz: H, cell, x0: -halfX + i0 * cell, z0: -halfZ + j0 * cell});
+   if (!rings.length) continue;
+   const path = new Path2D();
+   for (const r of rings) { r.forEach(([x, z], q) => q ? path.lineTo(x, z) : path.moveTo(x, z)); path.closePath(); }
+   paths.set(kind, path);
+  }
+  return {paths};
+ }
+ function showCodes() { plan.view.show.codes = st.traceOn && st.step !== 5 && (!st.smoothView || !!st.compareSkin); plan.draw(); }
+ // Every tile of the trace traced as it stands (for the builder journeys).
+ st.smoothDrawn = () => !!(vt && st.model && vt.model === st.model && vt.land === st.land && !vt.dirty.size && !vt.marks.size);
+ // The tiles in view: each its outlines, clipped to it, and its changed cells
+ // over them until it is traced again (a tile never traced: all its cells).
  function drawVec(ctx, p) {
   const W = ctx.canvas.width, H = ctx.canvas.height;
   if (vecCanvas.width !== W || vecCanvas.height !== H) { vecCanvas.width = W; vecCanvas.height = H; }
-  const v = vecCanvas.getContext('2d'); v.clearRect(0, 0, W, H); v.lineWidth = p.px; v.strokeStyle = 'rgba(0,0,0,.45)';
-  for (const {kind, rings} of st.vec) {
-   const col = COLOUR[kind]; if (!col) continue;
-   v.fillStyle = `rgb(${col.join(',')})`; v.beginPath();
-   for (const r of rings) { r.forEach(([x, z], q) => { const [sx, sy] = p.toScreen(x, z); if (q) v.lineTo(sx, sy); else v.moveTo(sx, sy); }); v.closePath(); }
-   v.fill('evenodd'); v.stroke();
+  const v = vecCanvas.getContext('2d'); v.setTransform(1, 0, 0, 1, 0, 0); v.clearRect(0, 0, W, H);
+  const {nx, nz, cell, halfX, halfZ} = st.land, s = p.view.scale, [ox, oy] = p.toScreen(0, 0), a = p.toWorld(0, 0), b = p.toWorld(W, H), codes = plan.view.layers.codes;
+  const order = LAYER_ORDER.filter(k => !st.model.state.layers.hidden.has(k)).reverse();
+  const tile = (w, half, n) => Math.max(0, Math.min(n - 1, Math.floor(((w + half) / cell + .5) / TILE)));
+  const ti0 = tile(a.x, halfX, vt.cols), ti1 = tile(b.x, halfX, vt.cols), tj0 = tile(a.z, halfZ, vt.rows), tj1 = tile(b.z, halfZ, vt.rows);
+  v.imageSmoothingEnabled = false; v.lineWidth = p.px / s; v.strokeStyle = 'rgba(0,0,0,.45)';
+  const ex = i => -halfX + (i - .5) * cell, ez = j => -halfZ + (j - .5) * cell;
+  for (let u = tj0; u <= tj1; u++) for (let t = ti0; t <= ti1; t++) {
+   const k = u * vt.cols + t, tl = vt.tiles[k], ci0 = t * TILE, ci1 = Math.min(nx, (t + 1) * TILE) - 1, cj0 = u * TILE, cj1 = Math.min(nz, (u + 1) * TILE) - 1;
+   // Clipped a screen pixel past its own edge, so two tiles' softened edges
+   // overlap rather than leave a faint seam between them (the fills are solid).
+   const px = 1 / s;
+   v.save(); v.setTransform(s, 0, 0, s, ox, oy); v.beginPath(); v.rect(ex(ci0) - px, ez(cj0) - px, (ci1 - ci0 + 1) * cell + 2 * px, (cj1 - cj0 + 1) * cell + 2 * px); v.clip();
+   if (tl) for (const kind of order) { const path = tl.paths.get(kind), col = COLOUR[kind]; if (!path || !col) continue; v.fillStyle = `rgb(${col.join(',')})`; v.fill(path, 'evenodd'); v.stroke(path); }
+   const m = tl ? vt.marks.get(k) : [ci0, ci1, cj0, cj1];
+   if (m && codes) {
+    const i0 = Math.max(ci0, m[0]), i1 = Math.min(ci1, m[1]), j0 = Math.max(cj0, m[2]), j1 = Math.min(cj1, m[3]);
+    if (i0 <= i1 && j0 <= j1) { v.clearRect(ex(i0), ez(j0), (i1 - i0 + 1) * cell, (j1 - j0 + 1) * cell); v.drawImage(codes, i0, j0, i1 - i0 + 1, j1 - j0 + 1, ex(i0), ez(j0), (i1 - i0 + 1) * cell, (j1 - j0 + 1) * cell); }
+   }
+   v.restore();
   }
   ctx.globalAlpha = st.traceAlpha; ctx.drawImage(vecCanvas, 0, 0); ctx.globalAlpha = 1;
  }
@@ -420,7 +515,7 @@ export function open(draft = null) {
    drawRing(ctx, p, px);
    return;
   }
-  if (st.vec && st.smoothView && st.traceOn && st.step < 5 && st.land && !st.compareSkin) drawVec(ctx, p);
+  if (vt && st.model && vt.model === st.model && vt.land === st.land && st.smoothView && st.traceOn && st.step < 5 && !st.compareSkin) drawVec(ctx, p);
   if (st.step === 0 && (st.preview || st.land)) {
    // Each file's box in yellow with its name, the property in white.
    const g = st.land ? st.gridder : st.preview.gridder, rect = b => { const a = g.local(b.x0, b.y1), c = g.local(b.x1, b.y0), [ax, ay] = p.toScreen(a.x, a.z), [cx, cy] = p.toScreen(c.x, c.z); return [ax, ay, cx - ax, cy - ay]; };
@@ -492,7 +587,7 @@ export function open(draft = null) {
    const path = () => { ctx.beginPath(); pts.forEach(([x, z], q) => { const [sx, sy] = p.toScreen(x, z); q ? ctx.lineTo(sx, sy) : ctx.moveTo(sx, sy); }); };
    if (closedTool && closing) { path(); ctx.closePath(); ctx.fillStyle = 'rgba(255,107,214,.18)'; ctx.fill(); }
    // The line tool: the band it will lay, at its width and with its ends.
-   if (st.tool === 'line') { ctx.save(); ctx.lineCap = st.lineCaps === 'square' ? 'butt' : 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = 'rgba(255,107,214,.3)'; ctx.lineWidth = Math.max(2 * px, st.lineWidth * p.view.scale); path(); ctx.stroke(); ctx.restore(); }
+   if (st.tool === 'line') { ctx.save(); ctx.lineCap = st.lineCaps === 'square' ? 'butt' : 'round'; ctx.lineJoin = st.lineCaps === 'square' ? 'miter' : 'round'; ctx.miterLimit = 3.9; ctx.strokeStyle = 'rgba(255,107,214,.3)'; ctx.lineWidth = Math.max(2 * px, st.lineWidth * p.view.scale); path(); ctx.stroke(); ctx.restore(); }
    ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.lineWidth = 4 * px; path(); if (closedTool && closing) ctx.closePath(); ctx.stroke();
    ctx.strokeStyle = '#ff6bd6'; ctx.lineWidth = 2 * px; path(); if (closedTool && closing) ctx.closePath(); ctx.stroke();
    // While drawing a shape, a faint line from the pointer back to the first node.
@@ -958,7 +1053,7 @@ export function open(draft = null) {
     {label: 'Previous hole', key: ',', enabled: () => st.step >= 2 && st.holes.some(h => h?.tees?.length), run: () => goHole(st.hole - 1)}, {sep: true},
     {label: 'Photo', checked: () => st.picOn !== false, run: () => { st.picOn = st.picOn === false; plan.showLayer('picture', st.picOn); }},
     {label: 'Trace', checked: () => !!st.traceOn, run: () => { st.traceOn = !st.traceOn; showCodes(); }},
-    {label: 'Smooth trace (as it will play)', checked: () => !!st.smoothView, run: () => { st.smoothView = !st.smoothView; if (st.smoothView) buildVec(); else { st.vec = null; showCodes(); } }},
+    {label: 'Smooth trace (as it will play)', checked: () => !!st.smoothView, run: () => { st.smoothView = !st.smoothView; if (st.smoothView) { if (!vt || vt.model !== st.model || vt.land !== st.land) dirtyVec(null); scheduleVec(0); } showCodes(); }},
     {label: 'LIDAR over photo', checked: () => !!st.lidarOnTop, run: () => { st.lidarOnTop = !st.lidarOnTop; viewLayers(); go(st.step); }}],
    tools: [...toolItems, {sep: true}, {label: 'Smaller brush', key: '[', enabled: tracing, run: () => brushSize(-1)}, {label: 'Larger brush', key: ']', enabled: tracing, run: () => brushSize(1)},
     {sep: true}, {heading: 'Experimental'}, {label: 'Auto trace (a rough start to fix by hand)', enabled: () => st.step === 2 && !!st.land, run: () => autoTrace()}],
@@ -1796,7 +1891,7 @@ export function open(draft = null) {
  function underWords() {
   const all = kindsShown(), i = all.indexOf(st.kind);
   if (st.kind === 'rough') return ['Rough takes every layer off where you paint it.'];
-  const Ls = st.model.state.layers, above = all.slice(0, Math.max(0, i)).filter(k => k !== 'rough' && Ls.masks.get(k)?.some(v => v));
+  const Ls = st.model.state.layers, above = all.slice(0, Math.max(0, i)).filter(k => k !== 'rough' && (Ls.masks.get(k)?.indexOf(1) ?? -1) >= 0);
   return above.length ? [`${LABEL(st.kind)} goes under `, el('b', {}, above.map(k => LABEL(k)).join(', ')), ', which stay on top where they are painted.'] : [`${LABEL(st.kind)} is the top layer painted here: it shows wherever you paint it.`];
  }
  function layersList() {
@@ -1804,7 +1899,9 @@ export function open(draft = null) {
   underLine.replaceChildren(...underWords());
   const L = st.model.state.layers, a = st.land.cell ** 2, own = layersFor(BIOMES[st.landscape]);
   layerBox.replaceChildren(...kindsShown().map(k => {
-   const rough = k === 'rough', m = L.masks.get(k), n = rough ? L.codes.reduce((t, c) => t + (c ? 0 : 1), 0) : m ? m.reduce((t, v) => t + v, 0) : 0;
+   // Counted by a plain loop: reduce() a cell at a time was half a second
+   // after every stroke on a 9-million-cell course.
+   const rough = k === 'rough', m = L.masks.get(k), n = rough ? countWhere(L.codes, 0) : m ? m.length - countWhere(m, 0) : 0;
    const col = rough ? hex(BIOMES[st.landscape].rough ?? '#5f7f3f') : COLOUR[k] ?? [128, 128, 128], ha = `${(n * a / 1e4).toFixed(2)} ha`;
    return el('li', {class: (k === st.kind ? 'cb-cur cb-chosen' : '') + (n ? '' : ' cb-empty'), 'data-layer': k, style: 'display:flex;gap:6px;align-items:center;cursor:pointer;padding:2px 0', onclick: () => { st.kind = k; const sel = panel.querySelector('.cb-kind'); if (sel) sel.value = k; layersList(); showHint(); showModel(); }},
     rough ? el('span', {style: 'width:28px;flex:none'}) : eyeButton(document, k, LABEL(k), L.hidden.has(k), () => { st.model.setHidden(k, !L.hidden.has(k)); paintCodes(); layersList(); }),
@@ -1859,7 +1956,7 @@ export function open(draft = null) {
  function clearTurfTreesNow() {
   const {nx, nz, cell, halfX, halfZ} = st.land, N = nx * nz, mask = new Uint8Array(N), M = st.model.state.layers.masks;
   for (const k of ['green', 'tee']) { const m = M.get(k); if (m) for (let q = 0; q < N; q++) if (m[q]) mask[q] = 1; }
-  if (!mask.some(v => v)) return say('No greens or tees traced yet to clear trees from.', true);
+  if (mask.indexOf(1) < 0) return say('No greens or tees traced yet to clear trees from.', true);
   const got = clearTrees(st.model.state.trees, {nx, nz, cell, x0: -halfX, z0: -halfZ}, mask);
   if (got.shrunk || got.removed) st.model.setTrees(got.trees);
   plan.draw(); refreshCount();
@@ -1867,12 +1964,15 @@ export function open(draft = null) {
  }
  function extrapolateNow() {
   const from = st.exFrom ?? 'fairway', to = st.exTo;
-  if (from === 'rough' || !st.model.state.layers.masks.get(from)?.some(v => v)) return say(`Pick a layer under Around that has something on it; ${LABEL(from).toLowerCase()} has nothing.`, true);
+  if (from === 'rough' || (st.model.state.layers.masks.get(from)?.indexOf(1) ?? -1) < 0) return say(`Pick a layer under Around that has something on it; ${LABEL(from).toLowerCase()} has nothing.`, true);
   if (to === from) return say('Pick another layer to lay round it.', true);
   st.model.extrapolate({from, to, width: st.exWidth}); paintCodes(); refreshCount();
   say(`${LABEL(to)} laid ${st.exWidth} m round the ${LABEL(from).toLowerCase()}. Undo takes it back.`);
  }
- const refreshCount = () => { if (!st.model) return; layersList(); const n = new Map(); for (const c of st.model.state.codes) n.set(c, (n.get(c) || 0) + 1); const a = st.land.cell ** 2; countText.textContent = [...n].filter(([c]) => c).sort((p, q) => q[1] - p[1]).slice(0, 6).map(([c, v]) => `${LABEL(PALETTE[c])} ${(v * a / 1e4).toFixed(2)} ha`).join(' · ') + ` · ${st.model.state.trees.length.toLocaleString()} trees · ${st.model.state.homes.length} house${st.model.state.homes.length === 1 ? '' : 's'}`; };
+ // The hectares of each surface under the plan: counted into a plain table (a
+ // Map a cell was most of a second after every stroke on a 2.8 x 3.3 km course
+ // at 1 m; the owner, 23 November 2026).
+ const refreshCount = () => { if (!st.model) return; layersList(); const codes = st.model.state.codes, tab = new Uint32Array(256); for (let k = 0; k < codes.length; k++) tab[codes[k]]++; const n = [...tab].map((v, c) => [c, v]).filter(([, v]) => v); const a = st.land.cell ** 2; countText.textContent = n.filter(([c]) => c).sort((p, q) => q[1] - p[1]).slice(0, 6).map(([c, v]) => `${LABEL(PALETTE[c])} ${(v * a / 1e4).toFixed(2)} ha`).join(' · ') + ` · ${st.model.state.trees.length.toLocaleString()} trees · ${st.model.state.homes.length} house${st.model.state.homes.length === 1 ? '' : 's'}`; };
  // Local metres to degrees: by the survey's map grid, or round a place the
  // player searched for when the survey states none.
  const lonLatOfLocal = () => {
@@ -2113,7 +2213,7 @@ export function open(draft = null) {
  }
  function evenNow(kind, width) {
   const what = kind === 'path' ? 'cart paths' : 'streets';
-  if (!st.model.state.layers.mask(kind)?.some(v => v)) return say(`There are no ${what} on the course to normalize.`, true);
+  if ((st.model.state.layers.mask(kind)?.indexOf(1) ?? -1) < 0) return say(`There are no ${what} on the course to normalize.`, true);
   say(`Normalizing the ${what}…`);
   setTimeout(() => { const n = st.model.evenWidth({kind, width}); paintCodes(); refreshCount(); plan.draw(); say(n ? `The ${what} are ${width} m wide now, where they meet as before. Undo takes it back.` : `The ${what} were already ${width} m wide.`); }, 0);
  }
@@ -2624,7 +2724,9 @@ export function open(draft = null) {
    st.model.setTrees(got.trees); st.model.state.homes = got.homes; st.model.state.rocks = got.rocks;
    Object.assign(st, {creeks: got.creeks, rocks: got.rocks, name: got.name, landscape: got.landscape, treePlan: editor.state.treePlan ?? null, surround: editor.state.surround ?? null});
    told = [got.masks.size ? `${got.masks.size} layer${got.masks.size === 1 ? '' : 's'} as painted there` : '', got.landEdits ? 'the ground as shaped' : '', 'the holes, trees and houses'].filter(Boolean).join(', ');
-   dirtyVec(); refreshSave();
+   // The layers were swapped in whole, past the trace's own record of what
+   // changed: the cells and the smooth trace painted again from scratch.
+   codesOf = {}; paintCodes(); refreshSave();
   }
   // Said now, and again by the review once it has painted (paintCourse).
   st.cameBack = `Back from the 3D editor with ${told}. Change anything in the steps; Open in 3D editor builds the course from both.`;

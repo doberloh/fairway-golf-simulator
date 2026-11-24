@@ -302,8 +302,9 @@ export default function ({journey, SHOTS}) {
   if (await sandCells() !== sandA) throw Error('Delete should take the copy away');
   { const last = await page.evaluate(() => window.fairwayBuilder.door2.names.undo.at(-1)); if (last !== 'Delete') throw Error(`Delete should be named in History, not ${last}`); }
   await page.locator('[data-tool="brush"]').click();
-  // The smooth view: a moment after the stroke, the trace is drawn as outlines.
-  await page.waitForFunction(() => { const st = window.fairwayBuilder.door2; return st.vec && !st.plan.view.show.codes; }, null, {timeout: 10000});
+  // The smooth view: a moment after the stroke, the trace is drawn as outlines
+  // -- since 23 November 2026 in tiles, every one traced again (`smoothDrawn`).
+  await page.waitForFunction(() => { const st = window.fairwayBuilder.door2; return st.smoothDrawn?.() && !st.plan.view.show.codes; }, null, {timeout: 30000});
   // Layers: a fairway painted over the bunker leaves the bunker on top; the
   // sand layer hidden shows the fairway under it in the view, not the course.
   await page.locator('.cb-kind').selectOption('fairway');

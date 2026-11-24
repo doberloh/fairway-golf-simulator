@@ -411,9 +411,10 @@ After trying the builder, the owner amended the goal:
     Decided, with what was turned down:
     - **Finer tracing: the outlines drawn, not a finer grid.** The game never
       saw the cells: each layer goes into the course as smoothed outlines
-      (since 1 November 2026 relaxed eight passes, simplified to a tenth of
-      a cell, one pass of corner cutting; until then simplified to 0.6 of a
-      cell, two passes), so the tracer now draws exactly those (`layerRings`, real-course.js). A grid
+      (since 23 November 2026 FITTED -- straight runs, sharp corners, curves
+      between, the cells' own area kept: contour.js `fitRing`, RESEARCH
+      *Outlines fitted*; from 1 November relaxed eight passes; until then
+      simplified to 0.6 of a cell), so the tracer now draws exactly those (`layerRings`, real-course.js). A grid
       four times finer would have cost sixteen times the memory and every
       brush stroke's time on a 3 km property, and still shown steps.
     - **A green's fringe is not an extrapolated layer**: the game already
@@ -1671,6 +1672,76 @@ a renamed course -- a course opened and saved back, the listing). **Not seen
 by a person; no journey run** (the save box and the Open box need a real
 folder, which a script cannot pick).
 
+### Edges fitted, sharp bends, a trace step that keeps up (23 November 2026, evening)
+
+The owner, on Alpine Lake Resort (2233 x 3066 m, so 1 m cells): "jaggy edges
+on things like greens and tee boxes ... I did click smooth edges on them";
+"when painting on alpine lake resort when i start painting everything gets
+really pixellated and then goes back crisp ... causes hangs"; "if I'm
+painting lines without the auto curve on, edges are still getting smoothed
+out automatically?" With screenshots from the game and the review.
+
+- **Outlines fitted** (contour.js `fitRing`, used by `layerRings`, so the
+  trace step, the 3D editor and a saved course alike): straight where the
+  cells run straight, a corner kept where they turn one, curves between, and
+  grown back to the cells' area. Relaxing the staircase (since 1 November)
+  left a side a few degrees off the grid wobbling -- up to 80 cm on 1 m land,
+  the "jaggy" edges -- and cut every corner by 0.7 m (1.4 m on 1 m land). Now
+  a 6-degree tee's sides are within 9 cm (23 cm on 1 m land) and its corners
+  within 23 cm (46 cm). Figures, and what was tried and turned down, in
+  RESEARCH *Outlines fitted*. Smooth edges was never the cure: it moves
+  cells, and the steps are the cells'. A course already saved keeps its old
+  outlines until it is saved again; nothing the game reads changed, so no
+  `BUILT_VERSION`.
+- **A Line with square ends bends square** (line-work.js `lineCells`: each
+  bend's outside mitred, cut across past 150 degrees); round ends bend round.
+  The preview draws it so. Auto curve off already gave straight runs: the
+  rounding was the outline routine above.
+- **The trace step in tiles** (door-real.js): the smooth trace is traced in
+  tiles of 128 cells with 32 round each and kept; a change (trace-edit.js
+  `takeTouched`, every cell changed, undo and redo too) marks only the tiles
+  it reaches, shows its own cells only where they changed, and those tiles are
+  traced again between frames once the stroke is done, the ones in view
+  first. It threw the whole smooth trace away at every change and traced the
+  whole land again (3-4 s, frozen, on the owner's 2.8 x 3.3 km draft), cells
+  everywhere meanwhile. The cells are repainted only where they changed.
+- **Three counts done a cell at a time through a callback** ran after every
+  stroke over all nine million cells: the hectares under the plan (a Map),
+  each layer's area in the Layers list (`reduce`), and which layers are
+  painted (`some`, twice). Plain loops and `indexOf` now. Measured on the
+  owner's draft in the built builder: the longest freeze after a stroke went
+  from 1.2 s to about 0.1 s.
+- **Not changed, measured**: opening a draft at its review, or coming back to
+  the review, still holds the page about 13 s on Alpine (the game's ground
+  mesh 4-5 s, the course 3 s, the picture re-projected 2 s, the editor's model
+  2 s) -- it was so before, and is a job of its own (TODO).
+- **Broken fairway stripes** in the game (bands meeting in chevrons along
+  stepped seams): a fairway's bands run along the line of the hole that owns
+  the ground, and the ground atlas gave each 1.75 m texel its nearest hole, so
+  a traced fairway running nearer another hole's line was mown at two angles
+  (Troon North: twelve places; Alpine: three). Now each connected piece of
+  fairway, of green with its fringe and of tee has one hole (owner-atlas.js
+  `builtMowOwners`; PROJECT_HANDOFF *A BUILT COURSE'S MOWING READS THE BUILT
+  EDGES*). Paint only, about 0.1 s when a round starts, no shader change.
+  Left as the owner's choice: the bands also bend with the ground's height,
+  as on a generated course, which makes them wander on a survey's relief.
+- **The pale band round every green** in the review and the game is the
+  game's fringe: 2 m outside the green as painted (the course's fringe width,
+  `doc.fringe ?? 2`), in the fringe's colour, which is paler than the green;
+  inside it the diamonds reach the painted edge, with the 0.65 m clean-up
+  lap. The 3D editor does not draw it, so it first shows at the review. Not
+  changed: whether a built green keeps that fringe outside what was painted
+  is the owner's call (dropping it changes play, a `BUILT_VERSION`). TODO.
+
+Checked: Node tests (tests/contour.test.mjs: a fitted tee and green on both
+cell sizes; tests/builder-line-work.test.mjs: a square bend kept when saved);
+the owner's two drafts opened in the built builder (local scripts): strokes,
+undo, close-ups of a green and a tee, the review, Save course file, and the
+saved Alpine course loaded in the game with a tee shot played
+(`tools/play-built.mjs`, which now hands the page a large course in pieces:
+an 87 MB file took Node out of memory as one array of numbers). **Not yet
+seen by the owner.**
+
 ### Houses of any size, Normalize width, the Line tool, the pen's curve (23 November 2026)
 
 The owner: "the open street map data places houses that are odd shapes and it
@@ -2082,9 +2153,12 @@ owner can overrule them:
 - The editor: the land drawn at every stored sample to about 1 km a side,
   coarser past it (under 2.2 million vertices); the surfaces edited at half a
   metre (coarser past 4096 cells a side), traced back as door 2 does since 1
-  November 2026 (`layerRings`: the staircase relaxed, simplified to a tenth of
-  a cell, corners rounded; first 0.35 of a cell with the staircase kept, then
-  0.6 of a cell, which left notches); the 3D view's surfaces drawn from those
+  November 2026 (`layerRings`: since 23 November fitted -- straight runs,
+  sharp corners, curves between, the cells' area kept; before that the
+  staircase relaxed, which left near-straight sides wobbling and wore corners
+  off; first 0.35 of a cell with the staircase kept, then 0.6 of a cell,
+  which left notches); a stroke's part redrawn with 32 cells round it (8
+  until the fit); the 3D view's surfaces drawn from those
   outlines at up to 4 texels a cell and 12 million texels, and again round
   the camera at 1.5 to 15 cm a texel (`closeUp`); a brush's raise or lower 0.5 m a dab at full strength.
 - The checks: a green needs 3 m of room for a cup (Sunday's), and over 6%

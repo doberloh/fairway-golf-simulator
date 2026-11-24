@@ -4,6 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {lineCells, evenWidth, areaWidth, skeleton, chains} from '../src/builder/line-work.js';
+import {layerRings} from '../src/builder/real-course.js';
 
 // A 200 x 200 m grid at half a metre, its middle at (0, 0).
 const grid = {nx: 400, nz: 400, cell: .5, halfX: 100, halfZ: 100};
@@ -31,6 +32,18 @@ test('a square end cuts across the line\'s own direction, at a slant too', () =>
  const cells = maskOf(lineCells([[0, 0], [10, 10]], {width: 3, grid, caps: 'square'}));
  assert.ok(!has(cells, 11, 11), 'nothing past the end along the line');
  assert.ok(has(cells, 10 - 1, 10 + 1), 'the corner across the end is painted');
+});
+
+test('a square-ended line bends sharp, as laid and as the course gets it; a round one bends round', () => {
+ // An L: east 20 m, then north 20 m, 4 m wide. Its outside corner is at (22, -2).
+ const L = [[0, 0], [20, 0], [20, 20]], sq = maskOf(lineCells(L, {width: 4, grid, caps: 'square'})), rd = maskOf(lineCells(L, {width: 4, grid}));
+ assert.ok(has(sq, 21.5, -1.5), 'square: the bend\'s outside corner is painted');
+ assert.ok(!has(rd, 21.5, -1.5), 'round: the bend\'s outside is round');
+ assert.ok(!has(sq, 22.5, -2.5), 'nothing past the corner');
+ // As saved: the fitted outline keeps the corner of the cells, which reach a
+ // quarter metre past it, (22.25, -2.25).
+ const rings = layerRings(sq, grid), d = Math.min(...rings.flat().map(([x, z]) => Math.hypot(x - 22.25, z + 2.25)));
+ assert.ok(d < .25, `the saved outline's corner is ${d.toFixed(2)} m off`);
 });
 
 test('the middle line of a band is one cell wide and one piece', () => {

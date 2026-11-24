@@ -563,6 +563,36 @@ here is a claim of support until it is done.
   layer, a few seconds expected, none measured). The 3D editor has none of
   the four.
 
+- [ ] **Fitted edges, square bends and the tiled trace: not seen by the
+  owner** (branch `builder-big-zips`, 23 November 2026 evening;
+  COURSE_BUILDER.md, *Edges fitted, sharp bends, a trace step that keeps up*;
+  RESEARCH *Outlines fitted*). Measured on shapes and on the owner's two
+  drafts in the built builder (a stroke now holds the page about 0.1 s, was
+  1.2 s); Alpine Lake Resort saved and a tee shot played in the game. Owed:
+  the owner's look at tee and green edges in the game on a course saved
+  again (a course saved before keeps its old outlines), a square-ended Line
+  with bends, and painting on Alpine. Not checked: the 3D editor's redraw
+  after a stroke with its margin now 32 cells (Node tests only).
+- [ ] **A built green's fringe: the owner's call** (23 November 2026): the
+  game lays a 2 m fringe OUTSIDE every green as painted, which the owner saw
+  as "bands added around every green" in the review and the game, and the 3D
+  editor does not draw. Keep it; paint it darker on built courses (look only);
+  lay it inside the painted edge or not at all (changes play, a
+  `BUILT_VERSION`); or let the builder draw it. COURSE_BUILDER.md, *Edges
+  fitted, sharp bends, a trace step that keeps up*.
+- [ ] **Built fairway stripes in one direction a piece: not seen by the
+  owner** (23 November 2026; owner-atlas.js `builtMowOwners`). Seen fixed in
+  top-down pictures of Troon North and Alpine (bench/shots/built-look/,
+  local); Worthington's 1st tee seam should be gone, not looked at.
+- [ ] **The review step holds the page about 13 seconds on a big course**
+  (measured 23 November 2026 on Alpine Lake Resort, 2233 x 3066 cells at
+  1 m): on opening a draft saved at its review, and on coming back to the
+  review. Where it goes: the game's ground mesh for the review's picture
+  (`makeGroundGrid`, 4-5 s), the course built (`docFromLand`, 3 s), the
+  aerial picture re-projected (2 s), the editor's model (`createEditor`,
+  2 s). As it was before that day's work. Wants its own job: built a piece at
+  a time with a progress line, or not rebuilt when nothing changed.
+
 - [ ] **The course's outline and the half-metre ground, by hand** (branch
   `builder-big-zips`, 22-23 November 2026; COURSE_BUILDER.md, *The course's
   outline*). Built and tested in Node and in the builder journeys (an outline

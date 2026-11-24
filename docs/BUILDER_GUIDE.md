@@ -177,7 +177,14 @@ bows; both hold for every pen tool.
 
 **The line** (L) is the pen without closing: click along a path or a road and
 press **Enter** or double-click to lay it on the chosen layer, **Line width**
-metres wide, with round or square **Ends**.
+metres wide, with round or square **Ends**. Square ends make square bends
+too; round ends make round ones.
+
+Every edge goes into the course straight where you painted it straight, its
+corners kept and its curves smooth, and the plan draws it that way a moment
+after each stroke. **Smooth edges** is for edges you want rounder than you
+painted them, not for the little steps of the squares: those the course
+never has.
 
 **The house** (O): a click stands a house of the **Width** and **Depth** set in
 its options; drag corner to corner to stand one the size of the box. Its front

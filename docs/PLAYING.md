@@ -814,8 +814,11 @@ changes, newest first, each with **Undo to here**.
      the line bows between points (100 the full curve, lower flatter); both
      hold for every pen tool. **Line** paints the chosen layer along the line
      it draws, **Line width, metres** wide, its **Ends** round or square (cut
-     straight across at the first and last point); the band it will lay shows
-     faintly as you draw. **Smooth edges** rounds edges under it, **Skin from the
+     straight across at the first and last point, and square at every bend
+     too; round ends bend round); the band it will lay shows faintly as you
+     draw. Every edge you paint goes into the course straight where you
+     painted it straight, with its corners kept and its curves smooth -- the
+     plan shows it so a moment after you paint, only round what you changed. **Smooth edges** rounds edges under it, **Skin from the
      land** paints the steep ground the landscape's rock, **Draw a creek** cuts a
      channel along a line and **Dig a bunker** lays sand in a hollow, both made
      when the course is built; **Place tree** stands one tree, the kind you pick by name, at the height set,
