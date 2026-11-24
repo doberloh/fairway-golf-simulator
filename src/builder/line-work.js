@@ -96,15 +96,23 @@ export function evenWidth(mask, grid, width) {
  }
  // Each middle line smoothed between its ends, then laid at the width; the
  // ends -- the meetings and the free ends -- stay where they were.
+ // THE WIDTH IN WHOLE CELLS (found when the builder journey ran, 23 November
+ // 2026: 1.8 m on a 1 m land came out 1 m). The middle line runs through cell
+ // middles, so half the width as a reach covers 2 * floor(r / cell) + 1 cells
+ // across -- one cell at 1.8 m on 1 m cells. Instead the width is rounded to
+ // a whole number of cells, and an even number is laid on a line moved half a
+ // cell, between two rows: 1.8 m is 2 cells on 1 m land, 4 on half-metre land.
+ const across = Math.max(1, Math.round(width / cell)), even = across % 2 === 0, shift = even ? cell / 2 : 0;
+ const lay = 2 * ((even ? across / 2 - .5 : (across - 1) / 2) + .05) * cell;
  const local = {nx: w, nz: h, cell, halfX: 0, halfZ: 0}, out = new Uint8Array(W), reach = Math.max(2, Math.round(width / cell));
  for (const ch of chains(skel, w, h)) {
-  const P = ch.cells.map(c => [(c % w) * cell, Math.floor(c / w) * cell]), n = P.length, S = P.map(p => [...p]);
+  const P = ch.cells.map(c => [(c % w) * cell + shift, Math.floor(c / w) * cell + shift]), n = P.length, S = P.map(p => [...p]);
   for (let q = 1; q < n - 1; q++) {
    const k = ch.closed ? reach : Math.min(reach, q, n - 1 - q); let sx = 0, sz = 0;
    for (let d = -k; d <= k; d++) { const p = P[ch.closed ? (q + d + n) % n : q + d]; sx += p[0]; sz += p[1]; }
    S[q] = [sx / (2 * k + 1), sz / (2 * k + 1)];
   }
-  for (const c of lineCells(ch.closed ? [...S, S[0]] : S, {width, grid: local})) out[c] = 1;
+  for (const c of lineCells(ch.closed ? [...S, S[0]] : S, {width: lay, grid: local})) out[c] = 1;
  }
  for (let c = 0; c < W; c++) if (area[c]) out[c] = 1;
  const add = [], remove = [];

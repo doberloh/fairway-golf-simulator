@@ -514,27 +514,27 @@ here is a claim of support until it is done.
   on the globe, anything thrown): ask the owner what the button says now.
 
 - [ ] **Clean up, Add layer around, Outside the course and dark cart paths:
-  untested** (branch `builder-big-zips`, 23 November 2026; COURSE_BUILDER.md,
-  *Clean up, Add layer around, Outside the course, darker cart paths*).
-  Built and both pages build; by the owner's word ("dont do the checks or
-  tests yet") no journey was run. The thin-shape smoothing has its Node test
-  now (trace-edit.test.mjs, with the next entry's work; it found a lone speck
-  kept, fixed). Owed: Fill outside's new options (trace-edit.js `trees`, `where`,
-  `vary`; door-real.js `surveyDensity`), the builder journeys (door-2 and
-  door-2-osm press the new controls; door-2-osm's Fill outside expectations
-  assume the old defaults), the guide pictures, and a look at the dark paths
-  in the game.
+  not used by a person** (branch `builder-big-zips`, 23 November 2026;
+  COURSE_BUILDER.md, *Clean up, Add layer around, Outside the course, darker
+  cart paths*). Every Node test and every builder journey passed on 23
+  November (the thin-shape smoothing's Node test found a lone speck kept,
+  fixed; door-2-osm's Fill outside was taught the new defaults -- it now
+  chooses Everywhere outside at 120 a hectare, no variety, to check the
+  wood's sizes). Owed: Fill outside's new defaults on a real survey (Only
+  where the LIDAR saw trees, the survey's density) seen by the owner, a Node
+  test for `where`, `vary` and `surveyDensity`, the guide pictures, and a look
+  at the dark cart paths in the game (all 51 game smoke journeys ran on 23
+  November -- 50 at once, online-again again alone after a slow putt under
+  load -- but no smoke picture shows a cart path).
 
-- [ ] **No first look at the land: the LIDAR stays on the map, untested**
-  (branch `builder-big-zips`, 23 November 2026; COURSE_BUILDER.md, *No first
-  look at the land*). Built and the builder page builds; no Node test or
-  journey run (the owner's word above). Owed: the builder journeys --
-  lidar-folder (rewritten to expect the map kept and the LIDAR's reach in
-  yellow on it), build-for-me, door-2 and door-2-osm (their surveys state no
-  map grid, so they still take the relief) and, locally, Worthington
-  (rewritten to drag on the map round its files); files opened with no
-  course found, in the builder by hand (the map round them, the outer limit
-  the middle 3 x 3 km); and how much wait it saves (not timed).
+- [ ] **No first look at the land: the LIDAR stays on the map, not used by a
+  person** (branch `builder-big-zips`, 23 November 2026; COURSE_BUILDER.md,
+  *No first look at the land*). Every builder journey passed on 23 November,
+  Worthington (local) included -- the map kept with the LIDAR's reach on it
+  (lidar-folder), drags on the map round its files (Worthington). Owed: files
+  opened with no course found, in the builder by hand (the map round them,
+  the outer limit the middle 3 x 3 km); and how much wait it saves (not
+  timed).
 
 - [ ] **The courses folder and the name before saving: not seen** (branch
   `builder-big-zips`, 23 November 2026; COURSE_BUILDER.md, *The courses
@@ -549,16 +549,16 @@ here is a claim of support until it is done.
   Holes step; not run.
 
 - [ ] **Houses of any size, Normalize width, the Line tool, the pen's curve:
-  not seen** (branch `builder-big-zips`, 23 November 2026; COURSE_BUILDER.md,
-  *Houses of any size, Normalize width, the Line tool, the pen's curve*).
-  Tested in Node only (builder-line-work, builder-pen, trace-edit, osm; the
-  thin-shape smoothing's own test came with it and caught a speck kept, now
-  fixed). Owed: a look in the builder -- a house clicked at a set size and one
-  dragged out, a house's size changed under Select, Normalize cart paths and
-  streets on an OpenStreetMap course (Worthington's paths; a parking lot kept),
-  a line with each kind of end, Auto curve off and the strength slid; the
-  builder journeys (door-2 and door-2-osm would press these if taught); the
-  guide's pictures (the pen's options and Clean up have grown); and how long
+  not used by a person** (branch `builder-big-zips`, 23 November 2026;
+  COURSE_BUILDER.md, *Houses of any size, Normalize width, the Line tool, the
+  pen's curve*). Tested in Node (builder-line-work, builder-pen, trace-edit,
+  osm) and driven by the builder-door-2 journey on its made-up land (curve
+  off, a square-ended Line, Normalize cart paths, a clicked and a dragged
+  house, This house; which found 1.8 m paths laid one cell wide on 1 m land,
+  fixed). Owed: a look by the owner -- Normalize cart paths and streets on a
+  real OpenStreetMap course (Worthington's paths; a parking lot kept), the
+  strength slider slid; the guide's pictures (the pen's options and Clean up
+  have grown); and how long
   Normalize takes on a large course (not timed: it works on the box round the
   layer, a few seconds expected, none measured). The 3D editor has none of
   the four.

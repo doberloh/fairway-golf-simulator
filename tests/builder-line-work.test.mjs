@@ -79,6 +79,16 @@ test('normalize: a wide area is kept as drawn, corners and all', () => {
  assert.ok(across(m, 40) <= 2.5, 'the path leaving it is narrowed');
 });
 
+// Found by the builder journey (23 November 2026): 1.8 m on 1 m land came out
+// one cell, 1 m. The width is laid as a whole number of cells: two here.
+test('normalize on 1 m land: 1.8 m is two cells across, not one', () => {
+ const g1 = {nx: 200, nz: 200, cell: 1, halfX: 100, halfZ: 100}, at1 = (x, z) => Math.round(z + 100) * 200 + Math.round(x + 100);
+ const m = new Uint8Array(200 * 200); for (const k of lineCells([[-40, 0], [40, 0]], {width: 4, grid: g1})) m[k] = 1;
+ const {add, remove} = evenWidth(m, g1, 1.8);
+ for (const k of remove) m[k] = 0; for (const k of add) m[k] = 1;
+ for (const x of [-20, 0, 20]) { let n = 0; for (let z = -10; z <= 10; z++) if (m[at1(x, z)]) n++; assert.equal(n, 2, `two cells across at x ${x}`); }
+});
+
 test('normalize: an empty layer changes nothing', () => {
  const {add, remove} = evenWidth(new Uint8Array(grid.nx * grid.nz), grid, 1.8);
  assert.equal(add.length + remove.length, 0);

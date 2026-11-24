@@ -1707,7 +1707,10 @@ and off and also the strength of the curve". Built, in door 2's trace step:
   (line-work.js `areaWidth`, PLACED: three times the width and at least 8 m
   across -- 8 m for cart paths, 18 m for streets), with the layer within that
   width of it, so a parking lot keeps its square corners and a path joins it
-  where it did. One undo. The "1.5 carts" is from a golf cart's width: about
+  where it did. One undo. The width is laid as the nearest whole number of the
+  land's cells (1.8 m is 2 m on half-metre and on 1 m land): the first version
+  laid 1.8 m paths ONE cell wide on 1 m land, which the builder journey found
+  (RESEARCH, *Normalize width*). The "1.5 carts" is from a golf cart's width: about
   1.2 m (47 to 48 inches, the usual two-seat cart), so 1.8 m; RESEARCH,
   *Normalize width*. Rejected: laying OpenStreetMap's own lines again at the
   width -- it reaches only paths that came from the map, not those painted or
@@ -1729,10 +1732,14 @@ and off and also the strength of the curve". Built, in door 2's trace step:
   still through every node, bulging less. What is drawn is what is filled, as
   before.
 
-Tested in Node only (tests/builder-line-work.test.mjs, builder-pen,
-trace-edit, osm). **Not seen by a person, and no builder journey run**: the
-owner had asked for the checks to wait. The 3D editor has none of the four
-(its House still stands 20 x 15 m houses); door 2 only.
+Tested in Node (tests/builder-line-work.test.mjs, builder-pen, trace-edit,
+osm) and, from the same evening, in the builder-door-2 journey: an outline
+with Auto curve off fills straight, a 3 m Line with square ends is 3 m and
+named Line, Normalize cart paths leaves it 1 to 2.6 m, a click stands a
+30 x 12 m house and a drag one of about 40 x 25, Select's This house resizes
+it, and six Undos take all of it away. **Not used by a person yet.** The 3D
+editor has none of the four (its House still stands 20 x 15 m houses); door 2
+only.
 
 ### The course's outline: full detail inside, less outside (22-23 November 2026)
 

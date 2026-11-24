@@ -352,6 +352,54 @@ export default function ({journey, SHOTS}) {
   // sand lies past the straight line between the first and last nodes. (Not
   // the top side: a pond lies over its bow, and water stays on top of sand.)
   if (await kindAt(147.5, 35) !== 'sand') throw Error('the pen fills its rounded curve, not the straight lines between its nodes');
+  // THE OWNER'S FOUR OF 23 NOVEMBER 2026, each undone after, so the rest of
+  // the journey finds the course as before. Auto curve off: the outline is
+  // the polygon, nothing past its straight sides.
+  const undos = async n => { for (let i = 0; i < n; i++) await page.getByRole('button', {name: 'Undo', exact: true}).click(); };
+  await page.locator('.cb-curveon').uncheck();
+  if (!await page.locator('.cb-curve').isDisabled()) throw Error('Curve strength should wait while Auto curve is off');
+  for (const [x, z] of [[150, 60], [180, 60], [180, 80], [150, 80]]) { const [px, py] = await at(x, z); await page.mouse.click(px, py); }
+  await page.keyboard.press('Enter');
+  if (await kindAt(165, 70) !== 'sand' || await kindAt(148, 70) === 'sand') throw Error(`with Auto curve off the outline should be straight: ${await kindAt(165, 70)} inside, ${await kindAt(148, 70)} past a side`);
+  await page.locator('.cb-curveon').check();
+  // The Line tool: a 3 m cart path with square ends.
+  await page.locator('[data-tool="line"]').click(); await page.locator('.cb-kind').selectOption('path');
+  await page.locator('.cb-linewidth').fill('3'); await page.locator('.cb-linecaps').selectOption('square');
+  for (const [x, z] of [[-100, 120], [-40, 120]]) { const [px, py] = await at(x, z); await page.mouse.click(px, py); }
+  await page.keyboard.press('Enter');
+  const line = await page.evaluate(() => { const m = window.fairwayBuilder.door2.model; let w = 0; for (let z = 110; z <= 130; z += .25) if (m.kindAt(-70, z) === 'path') w += .25; return {w, end: m.kindAt(-38.5, 120), last: window.fairwayBuilder.door2.names.undo.at(-1)}; });
+  if (Math.abs(line.w - 3) > .75 || line.end === 'path' || line.last !== 'Line') throw Error(`the line should be a 3 m path, square at its ends, named Line: ${JSON.stringify(line)}`);
+  await t.shot('line-tool');
+  // Normalize cart paths: the path laid again at 1.8 m.
+  await page.locator('.cb-evenpath').fill('1.8');
+  await page.getByRole('button', {name: 'Normalize cart paths', exact: true}).click();
+  await page.waitForFunction(() => /1\.8 m wide now|already 1\.8 m/.test(document.querySelector('[role="status"].cb-note')?.textContent ?? ''), null, {timeout: 60000});
+  const even = await page.evaluate(() => { const m = window.fairwayBuilder.door2.model; let w = 0; for (let z = 110; z <= 130; z += .25) if (m.kindAt(-70, z) === 'path') w += .25; return w; });
+  if (!(even > 1 && even < 2.6)) throw Error(`Normalize cart paths should leave the path about 1.8 m wide, not ${even} m`);
+  // The House: a click stands one of the size set; a drag one the size dragged.
+  await page.locator('[data-tool="home"]').click();
+  await page.locator('.cb-homew').fill('30'); await page.locator('.cb-homed').fill('12');
+  const spot = (w, d) => page.evaluate(([w, d]) => { const m = window.fairwayBuilder.door2.model; for (let z = -120; z <= 120; z += 10) for (let x = -170; x <= 170; x += 10) if (m.homeFits(m.homeAt({x, z, width: w, depth: d})) && m.homeFits(m.homeAt({x, z, width: d, depth: w})) && m.homeFits(m.homeAt({x, z, width: Math.max(w, d) + 4, depth: Math.max(w, d) + 4}))) return {x, z}; return null; }, [w, d]);
+  const homes0 = await page.evaluate(() => window.fairwayBuilder.door2.model.state.homes.length);
+  const s1 = await spot(30, 12); if (!s1) throw Error('no open ground for a 30 x 12 m house');
+  { const [px, py] = await at(s1.x, s1.z); await page.mouse.click(px, py); }
+  const clicked = await page.evaluate(() => window.fairwayBuilder.door2.model.state.homes.at(-1));
+  if (await page.evaluate(() => window.fairwayBuilder.door2.model.state.homes.length) !== homes0 + 1 || clicked.width !== 30 || clicked.depth !== 12) throw Error(`a click should stand a 30 x 12 m house: ${JSON.stringify(clicked)}`);
+  const s2 = await spot(40, 25); if (!s2) throw Error('no open ground for a 40 x 25 m house');
+  { const [ax, ay] = await at(s2.x - 20, s2.z - 12.5), [bx, by] = await at(s2.x + 20, s2.z + 12.5); await page.mouse.move(ax, ay); await page.mouse.down(); await page.mouse.move(bx, by, {steps: 6}); await page.mouse.up(); }
+  const dragged = await page.evaluate(() => window.fairwayBuilder.door2.model.state.homes.at(-1));
+  if (await page.evaluate(() => window.fairwayBuilder.door2.model.state.homes.length) !== homes0 + 2 || Math.abs(dragged.width * dragged.depth - 1000) > 80) throw Error(`a drag should stand a house about 40 x 25 m: ${JSON.stringify(dragged)}`);
+  // Select holds it: its own size, changed.
+  await page.locator('[data-tool="select"]').click();
+  { const [px, py] = await at(dragged.x, dragged.z); await page.mouse.click(px, py); }
+  if (await page.locator('.cb-homesize').isHidden()) throw Error('a selected house should show its width and depth');
+  await page.locator('.cb-chosenw').fill('26'); await page.locator('.cb-chosenw').press('Tab');
+  if (await page.evaluate(() => window.fairwayBuilder.door2.model.state.homes.at(-1).width) !== 26) throw Error('This house\'s width should size the selected house');
+  await t.shot('house-sizes');
+  // Back as it was: the resize, the two houses, Normalize, the line, the straight outline.
+  await undos(6);
+  if (await page.evaluate(() => window.fairwayBuilder.door2.model.state.homes.length) !== homes0 || await kindAt(-70, 120) === 'path' || await kindAt(165, 70) === 'sand') throw Error('six Undos should take the four tools\' work away');
+  await page.locator('[data-tool="outline"]').click();
   const treesBefore =await page.evaluate(() => window.fairwayBuilder.door2.model.state.trees.length);
   await page.locator('[data-tool="treeZone"]').click();
   for (const [x, z] of [[-180, -130], [-150, -130], [-150, -100], [-180, -100]]) { const [px, py] = await at(x, z); await page.mouse.click(px, py); }

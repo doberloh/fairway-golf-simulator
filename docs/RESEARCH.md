@@ -17621,10 +17621,15 @@ width, the Line tool, the pen's curve*). The owner asked for cart paths
   streets. A parking lot (two rows of spaces, about 5 to 5.5 m deep each, and
   a 6 to 7 m aisle: 16 to 18 m, from general knowledge) is kept as drawn; a
   single row along a drive, narrower than 18 m, is laid as a street.
-- **How a width lands on the grid.** A cell is painted when its middle lies
-  within half the width of the middle line, the brush's own test. On half-metre
-  cells a line along the grid at 1.8 m covers 3 or 4 cells across (1.5 or 2 m)
-  depending on where the line falls between cell middles; the middle lines are
-  smoothed, so along a path it averages about the width asked. In the Node
-  test a ragged path 2 to 4.5 m wide came out 1.5 to 2.5 m across at every
-  point measured, from end to end, its branch still joined.
+- **How a width lands on the grid.** The middle line found runs through cell
+  middles, so a cell painted when its middle lies within half the width (the
+  brush's own test) covers 2 x floor(half width / cell) + 1 cells across: at
+  1.8 m, 3 cells (1.5 m) on half-metre land and ONE cell (1 m) on 1 m land --
+  which the builder journey found, the first version laying 1 m cart paths on
+  its 1 m test land. So the width is laid as a whole number of cells, the
+  nearest: 1.8 m is 4 cells (2 m) on half-metre land and 2 cells (2 m) on 1 m
+  land, an even number laid on the middle line moved half a cell so it sits
+  between two rows. Measured: the Node test's ragged path (2 to 4.5 m wide)
+  came out 1.5 to 2.5 m across at every point measured, end to end, its branch
+  still joined; on 1 m land exactly 2 cells across; the builder journey's 3 m
+  line normalized to between 1 and 2.6 m (its check).

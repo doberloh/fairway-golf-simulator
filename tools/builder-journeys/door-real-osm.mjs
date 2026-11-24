@@ -129,6 +129,13 @@ export default function ({journey, SHOTS}) {
   if (keptOut.homes !== 2 || keptOut.pond !== 'water' || keptOut.out === 'fairway') throw Error(`filling outside and keeping should leave the map's pond and house: ${JSON.stringify(keptOut)}`);
   await page.getByRole('button', {name: 'Undo', exact: true}).click();
   await page.locator('.cb-outside').selectOption('remove');
+  // The wood planted everywhere outside, at a set density (since 23 November
+  // 2026 the default plants only where the LIDAR saw trees, at the survey's
+  // own density -- few on this small test survey).
+  await page.locator('.cb-outwhere').selectOption('all');
+  await page.locator('.cb-outdensity').fill('120');
+  // No height variety, so each tree is exactly a size the survey gives (below).
+  await page.locator('.cb-outvary').fill('0');
   await page.getByRole('button', {name: 'Fill outside boundary'}).click(); await idle();
   const gone = await page.evaluate(() => { const st = window.fairwayBuilder.door2; return {homes: st.model.state.homes.length, pond: st.model.kindAt(200, 80)}; });
   if (gone.homes !== 1 || gone.pond === 'water') throw Error(`filling outside and removing should take the map's pond and the house outside: ${JSON.stringify(gone)}`);
@@ -140,7 +147,7 @@ export default function ({journey, SHOTS}) {
   const sized = await page.evaluate(() => { const st = window.fairwayBuilder.door2, inRing = (r, x, z) => { let c = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const [ax, az] = r[j], [bx, bz] = r[i]; if ((bz > z) !== (az > z) && x < (ax - bx) * (z - bz) / (az - bz) + bx) c = !c; } return c; };
    const canopy = new Set(st.land.canopy), own = new Set(st.trees.map(t => t.h)), out = st.model.state.trees.filter(t => !inRing(st.boundary, t.x, t.z));
    return {out: out.length, off: out.filter(t => !canopy.has(t.h) && !own.has(t.h) && t.h !== 70).map(t => t.h).slice(0, 5), said: document.querySelector('[role="status"].cb-note')?.textContent ?? ''}; });
-  if (!sized.out || sized.off.length || !/as tall as the survey's canopy/.test(sized.said)) throw Error(`the wood outside should be sized from the survey: ${JSON.stringify(sized)}`);
+  if (!sized.out || sized.off.length || !/height varied by up to 0%/.test(sized.said)) throw Error(`the wood outside should be sized from the survey: ${JSON.stringify(sized)}`);
   await t.shot('osm');
   await page.getByRole('button', {name: 'Next: mark holes'}).click();
   await page.getByRole('button', {name: 'Next: name course'}).click();
