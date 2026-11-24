@@ -1,4 +1,4 @@
-import {ownerAtlasSize,ownerRows,strawChannel} from './owner-atlas.js';
+import {ownerAtlasSize,ownerRows,strawChannel,builtMowOwners} from './owner-atlas.js';
 import {BANK_COLORS} from './streams.js';
 import {toonRamp} from './textures.js';
 import * as T from 'three';
@@ -10,7 +10,7 @@ import {BLOWOUT_NEAR,BLOWOUT_RAMP,BLOWOUT_WATER} from './blowouts.js';
 import {WILD_WATER} from './landforms.js';
 import {TURF_DETAIL} from './turf-detail.js';
 import {FIELD_RANGE} from './surface-field.js';
-import {BUILT_FIELD} from './built-world.js';
+import {BUILT_FIELD,BUILT_CHANNELS,builtFieldAt,builtGroundAt} from './built-world.js';
 import {GROUNDS,GROUND_TINT} from './grounds.js';
 import {courseEdge} from './surround.js';
 import {edgeUniform,EDGE_WOODS} from './edge-woods.js';
@@ -277,6 +277,15 @@ export function groundMaterial(view,palette){
  if(pre&&pre.Sx===Sx&&pre.Sz===Sz)owners.set(pre.data);
  else owners.set(ownerRows({lakeOwner:w.lakeOwner,nearest:w.nearest,streamAt:(x,z)=>w.streams.at(x,z)},extent.x,extent.y,Sx,Sz,0,Sz));
  strawChannel(owners,w.groundCover,extent.x,extent.y,Sx,Sz);
+ // A built course's fairways, greens and tees, one hole a piece, so a traced
+ // fairway is mown in one direction (owner-atlas.js builtMowOwners: why).
+ if(w.built&&w.builtField){
+  const f=w.builtField,fr=w.settings.fringe??2,C=k=>BUILT_CHANNELS.indexOf(k),cg=C('green'),ct=C('tee'),cf=C('fairway');
+  const cgd=C('ground'),fringeAt=(x,z)=>builtFieldAt(f,x,z,cgd)<=0&&builtGroundAt(f,x,z)==='fringe';
+  const kindAt=(x,z)=>Math.abs(x)>=f.ex||Math.abs(z)>=f.ez?0:builtFieldAt(f,x,z,cg)<=fr||fringeAt(x,z)?2:builtFieldAt(f,x,z,ct)<=0?3:builtFieldAt(f,x,z,cf)<=0?1:0;
+  const anchors=w.holes.flatMap(h=>[{hole:h.hole,...h.worldPin,kind:2},...Object.values(h.tees).map(t=>({hole:h.hole,...h.toWorld(t),kind:3}))]);
+  builtMowOwners(owners,Sx,Sz,extent.x,extent.y,kindAt,anchors);
+ }
  for(const h of w.holes){holeData.set([h.worldTee.x,h.worldTee.z,Math.cos(h.rotation),Math.sin(h.rotation),h.length,h.phase,w.settings.fringe,w.settings.semiRough,h.mowStart??h.fairwayStart,h.greenWave2,h.greenWave3,h.greenWave5],(h.hole*HW+HOLE_ATLAS.route)*4);// Two texels a tee: where and how big, then which way it faces. The fourth
   // slot of the first was already the pad's half-length; the direction needed
   // somewhere of its own.
@@ -929,14 +938,17 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   if(dGround<=0.&&gcode>.5&&gcode<9.5){turf=groundPaint(gcode,wp,groundPoint.y,normalize(groundNormal),roughTint);wildTop=gcode;}
   if(dSemi<=0.){turf=tint_semi;kind=1.;wildTop=0.;}
   if(dFair<=0.){turf=tint_fairway;kind=2.;wildTop=0.;}
-  if(dGround<=0.&&gcode>9.5){turf=gcode>10.5?gt_road:gt_path;kind=1.;wildTop=0.;}
+  if(dGround<=0.&&gcode>9.5&&gcode<11.5){turf=gcode>10.5?gt_road:gt_path;kind=1.;wildTop=0.;}
   // A BUILT TEE IS MOWN TOO (the owner, 8 November 2026: "tee boxes have no mow
   // lines in builder"). Its edge is the built tee's own (dTee); its bands run
   // with the hole's line of play (the hole frame, p), and its clean-up lap
   // follows its outline (teeBuilt, in the mowing below). It had teePadD left
   // at 1e3 above, so no tee on a built course was ever mown.
   if(dTee<=0.){turf=teeTurf;kind=1.;teeGround=1.;wildTop=0.;teePadD=dTee;teeF=p;teeAxis=vec2(0.,1.);teeBuilt=1.;}
-  if(dGreen<=builtFringe){turf=tint_fringe;kind=3.;wildTop=0.;}
+  // A PAINTED FRINGE (code 12; the owner, 24 November 2026: only where it is
+  // painted). builtFringe is 0 on a course from the builder, so this is its
+  // only collar; a file from before keeps its 2 m one.
+  if(dGreen<=builtFringe||(dGround<=0.&&gcode>11.5)){turf=tint_fringe;kind=3.;wildTop=0.;}
   if(dGreen<=0.){turf=tint_green;kind=4.;}
   if(dSand<=0.){turf=tint_sand;kind=5.;wildTop=0.;}
   if(kind>2.5)teePadD=1e3;

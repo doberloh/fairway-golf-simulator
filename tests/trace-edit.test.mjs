@@ -236,3 +236,47 @@ test('a creek line is picked near its line and deleted, one undo (builder-ux)', 
  t.remove({type: 'creek', index: 0}); assert.equal(t.state.creekLines.length, 0);
  t.undo(); assert.equal(t.state.creekLines.length, 1);
 });
+
+// THIN SHAPES KEPT (the owner, 23 November 2026: "smooth edges on thin shapes
+// like cart paths will completely delete large sections of it"), specks still not.
+test('smoothing every layer keeps a cart path whole and still clears a speck', () => {
+ const t = createTrace(grid);
+ t.line([[-40, -20], [0, 0], [40, -10]], {kind: 'path', width: 2.5});
+ t.paint({x: 25, z: 20, radius: .4, kind: 'sand'});
+ const before = count(t, 'path');
+ t.smooth({radius: 1.5});
+ assert.ok(count(t, 'path') >= before, `${before} -> ${count(t, 'path')} path cells`);
+ assert.equal(t.kindAt(25, 20), 'rough', 'the speck of sand goes');
+});
+
+// The owner, 23 November 2026: the line tool, Normalize width, a house of any size.
+test('a line is laid on its layer at its width, one undo; rough takes every layer off along it', () => {
+ const t = createTrace(grid);
+ t.line([[-30, 0], [30, 0]], {kind: 'path', width: 2.5});
+ assert.equal(t.kindAt(0, 0), 'path'); assert.equal(t.kindAt(0, 1), 'path'); assert.equal(t.kindAt(0, 2), 'rough');
+ assert.equal(t.kindAt(31, 0), 'path', 'round ends');
+ t.undo(); assert.equal(count(t, 'path'), 0);
+ t.line([[-30, 0], [30, 0]], {kind: 'path', width: 2.5, caps: 'square'});
+ assert.equal(t.kindAt(31, 0), 'rough', 'square ends');
+ t.line([[0, -10], [0, 10]], {kind: 'rough', width: 3});
+ assert.equal(t.kindAt(0, 0), 'rough', 'rough clears the path where it crosses');
+});
+
+test('normalize width lays a path again at one width, one undo; a layer with none changes nothing', () => {
+ const t = createTrace(grid);
+ t.line([[-40, 0], [0, 0]], {kind: 'path', width: 4}); t.line([[0, 0], [40, 0]], {kind: 'path', width: 2});
+ const before = count(t, 'path');
+ assert.ok(t.evenWidth({kind: 'path', width: 2.5}) > 0);
+ const across = x => { let n = 0; for (let z = -5; z <= 5; z += .5) if (t.kindAt(x, z) === 'path') n++; return n * .5; };
+ assert.ok(Math.abs(across(-20) - across(20)) <= .5, `one width both sides: ${across(-20)} and ${across(20)} m`);
+ t.undo(); assert.equal(count(t, 'path'), before);
+ assert.equal(t.evenWidth({kind: 'road', width: 6}), 0);
+});
+
+test('a house is sized whole, where it stands and facing as it was, one undo', () => {
+ const t = createTrace(grid);
+ t.addHome({x: 0, z: 0, rotation: 1, width: 20, depth: 15});
+ t.sizeHome(0, {width: 34, depth: 9});
+ assert.deepEqual(t.state.homes[0], {x: 0, z: 0, rotation: 1, width: 34, depth: 9});
+ t.undo(); assert.equal(t.state.homes[0].width, 20);
+});

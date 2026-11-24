@@ -49,7 +49,7 @@ try {
  const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.getByRole('button', {name: /Open a course file/}).click()]);
  await chooser.setFiles(file);
  await page.waitForFunction(() => window.fairwayBuilder?.editor?.view, null, {timeout: 120000});
- await page.getByRole('button', {name: 'From above'}).click();
+ await page.getByRole('button', {name: 'View from above'}).click();
  await page.waitForTimeout(1500);
  const shot = async name => { await page.waitForTimeout(1400); await page.screenshot({path: path.join(OUT, `${name}.jpg`), type: 'jpeg', quality: 85}); console.log(`  ${name}`); };
  // Each layer's cells, and how many undo steps the editor holds.
@@ -63,7 +63,7 @@ try {
  console.log(`${label}: land ${c0.nx} by ${c0.nz} at ${c0.cell} m`);
  await shot('1-before');
  const t0 = Date.now();
- await page.getByRole('button', {name: 'Skin from the land'}).click();
+ await page.getByRole('button', {name: 'Paint rock on slopes'}).click();
  await page.waitForFunction(() => /Skinned from the land|Nothing here is steep/.test(document.querySelector('.cb-status')?.textContent || ''), null, {timeout: 120000});
  const ms = Date.now() - t0, said = await page.locator('.cb-status').textContent(), c1 = await counts();
  console.log(`  pressed: ${ms} ms; "${said}"`);

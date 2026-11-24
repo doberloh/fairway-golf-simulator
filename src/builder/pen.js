@@ -19,17 +19,26 @@ const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
 const mirror = (p, q) => [2 * p[0] - q[0], 2 * p[1] - q[1]];   // q reflected through p: a straight run out of p
 
 // One segment p1 -> p2 of the spline with neighbours p0, p3, sampled at `n`
-// points (p1 included, p2 left for the next segment).
-function segment(p0, p1, p2, p3, n) {
+// points (p1 included, p2 left for the next segment), its handles at p1 and
+// p2 `c` of the full curve's. Written as a Hermite curve with the centripetal
+// spline's own tangents (Barry and Goldman's form, differentiated): at `c` 1
+// it is the centripetal Catmull-Rom segment, at 0 the straight line, and
+// between them the tangent at a node keeps its direction on both sides, so
+// the curve is softened without a kink (24 November 2026: blending the
+// spline's points toward the straight line, as at first, left a corner at
+// every node -- 57 degrees on a box at half strength -- and the trace squared
+// some of those off).
+function segment(p0, p1, p2, p3, n, c = 1) {
  const k = d => Math.max(Math.sqrt(d), 1e-6);
- const t0 = 0, t1 = t0 + k(dist(p0, p1)), t2 = t1 + k(dist(p1, p2)), t3 = t2 + k(dist(p2, p3));
- const lerp = (a, b, ta, tb, t) => { const u = (t - ta) / (tb - ta); return [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u]; };
+ const t1 = k(dist(p0, p1)), t2 = t1 + k(dist(p1, p2)), t3 = t2 + k(dist(p2, p3)), h = t2 - t1;
+ const tan = (a, b, ta, tb) => [(b[0] - a[0]) / (tb - ta), (b[1] - a[1]) / (tb - ta)];
+ const d01 = tan(p0, p1, 0, t1), d02 = tan(p0, p2, 0, t2), d12 = tan(p1, p2, t1, t2), d13 = tan(p1, p3, t1, t3), d23 = tan(p2, p3, t2, t3);
+ const m1 = [(d01[0] - d02[0] + d12[0]) * h * c, (d01[1] - d02[1] + d12[1]) * h * c];
+ const m2 = [(d12[0] - d13[0] + d23[0]) * h * c, (d12[1] - d13[1] + d23[1]) * h * c];
  const out = [];
  for (let i = 0; i < n; i++) {
-  const t = t1 + (t2 - t1) * i / n;
-  const a1 = lerp(p0, p1, t0, t1, t), a2 = lerp(p1, p2, t1, t2, t), a3 = lerp(p2, p3, t2, t3, t);
-  const b1 = lerp(a1, a2, t0, t2, t), b2 = lerp(a2, a3, t1, t3, t);
-  out.push(lerp(b1, b2, t1, t2, t));
+  const u = i / n, u2 = u * u, u3 = u2 * u, a = 2 * u3 - 3 * u2 + 1, b = u3 - 2 * u2 + u, d = -2 * u3 + 3 * u2, e = u3 - u2;
+  out.push([a * p1[0] + b * m1[0] + d * p2[0] + e * m2[0], a * p1[1] + b * m1[1] + d * p2[1] + e * m2[1]]);
  }
  return out;
 }
@@ -38,10 +47,16 @@ function segment(p0, p1, p2, p3, n) {
 // apart (at least 2 and at most 64 a segment). `closed`: back round to the
 // first node. `sharp`: the indices of corner nodes. Fewer than two nodes: the
 // nodes as they are; two on a closed curve: the line.
-export function penCurve(nodes, {closed = false, sharp = [], step = 1} = {}) {
+// HOW MUCH IT CURVES (the owner, 23 November 2026: "options for both the line
+// and outline tool to toggle the 'auto curving' on and off and also the
+// strength of the curve"): `curve` 1 is the full spline, 0 straight lines
+// node to node, and between the two the spline's handles that much of their
+// length -- still through every node, bulging that share as far, and smooth
+// through each node (`segment`).
+export function penCurve(nodes, {closed = false, sharp = [], step = 1, curve = 1} = {}) {
  const N = nodes.length;
  if (N < 2 || (closed && N < 3)) return nodes.map(p => [p[0], p[1]]);
- const corner = new Set(sharp), at = i => nodes[(i + N) % N], out = [];
+ const corner = new Set(sharp), at = i => nodes[(i + N) % N], out = [], c = Math.max(0, Math.min(1, curve));
  const segs = closed ? N : N - 1;
  for (let s = 0; s < segs; s++) {
   const i1 = s, i2 = s + 1, p1 = at(i1), p2 = at(i2);
@@ -50,7 +65,8 @@ export function penCurve(nodes, {closed = false, sharp = [], step = 1} = {}) {
   if (corner.has(i1 % N)) p0 = mirror(p1, p2);
   if (corner.has(i2 % N)) p3 = mirror(p2, p1);
   const n = Math.max(2, Math.min(64, Math.ceil(dist(p1, p2) / step)));
-  out.push(...segment(p0, p1, p2, p3, n));
+  if (c > 0) out.push(...segment(p0, p1, p2, p3, n, c));
+  else for (let i = 0; i < n; i++) { const u = i / n; out.push([p1[0] + (p2[0] - p1[0]) * u, p1[1] + (p2[1] - p1[1]) * u]); }
  }
  if (!closed) out.push([nodes[N - 1][0], nodes[N - 1][1]]);
  return out;

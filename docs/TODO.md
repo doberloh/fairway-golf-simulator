@@ -228,7 +228,10 @@ Fairway Tour and computer golfers*).
   green can beat it; not shown, as the screenshot was overwritten by the
   passing reruns (the journey writes one file name). A person's putt runs no
   code the branch changed that day. Where: tools/smoke.mjs, *holing out
-  plays a flourish over the cup*.
+  plays a flourish over the cup*. **Again 24 November 2026** (builder-big-zips,
+  the darker grass; 50 of 51 in the full run), on seed DRIFT-1078-2, hole 2;
+  passed 3 of 3 alone straight after, once on that very seed -- so not the
+  green alone. The grass change touches no ball code.
 - [ ] **The `no-late-shaders` smoke journey failed once** on round F3's build
   (Ultra, a drawn Lowcountry nine, seed HOLLOW-1812: one lit shader built 142
   ms after the course appeared), passed ten times alone, and passed in the
@@ -268,6 +271,12 @@ Fairway Tour and computer golfers*).
 
 Hardware, browsers and hands the development machine does not have. Nothing
 here is a claim of support until it is done.
+
+- [ ] **The darker grass on the projector** (branch `builder-big-zips`, 24
+  November 2026; RESEARCH *The turf as the landscape paints it*). The owner
+  passed it on the before-and-after pictures; the reason for it was the
+  projector washing the grass out. Look at a round there: is the rough still
+  too light, and do the slopes and mowing read better than before?
 
 - [ ] **The pull-and-push swing, on the owner's iPhone** (branch
   `pull-push-swing`, 15-17 November 2026; RESEARCH *The pull-and-push
@@ -444,7 +453,7 @@ here is a claim of support until it is done.
     walk and fly; seams in the distant ground; a large built course's load.
   - **The builder** (0.9.12): a built course with four or more tee sets in a
     round (seat buttons, Playing tee, scorecard); tee markers on a narrow
-    built tee; Build it myself from a drawn box on the real services; Game
+    built tee; Search for LIDAR from a drawn box on the real services; Game
     view on a small course and a big one; a pond drawn on a hillside, played;
     painted rocks and bushes (does a ball hit them?); a pond and a creek
     deleted; the cost readout and its weight note.
@@ -501,8 +510,121 @@ here is a claim of support until it is done.
 
 ## Course Builder
 
+- [ ] **A big LIDAR ZIP, by hand** (branch `builder-big-zips`, 22 November
+  2026). The owner's 6.2 GB West Virginia ZIP of zLAS now opens a part at a
+  time and is named in the file list (zLAS, with Esri's LAS Optimizer,
+  LASliberator, and the map search); smoke tried small ZIPs and Node read the
+  real file's directory and parts. Not seen by the owner in the builder, and
+  no real ZIP of LAZ over 2 GB has gone all the way to built land. A single
+  LIDAR file over about 2 GB still cannot be read (now said so, with its
+  size). **Download OpenStreetMap "did nothing"** for the owner the same
+  evening: the cause is not known (it was not reproduced). Every silent way
+  out now says why (no land yet, land still building, the survey not placed
+  on the globe, anything thrown): ask the owner what the button says now.
+
+- [ ] **Clean up, Add layer around, Outside the course and dark cart paths:
+  not used by a person** (branch `builder-big-zips`, 23 November 2026;
+  COURSE_BUILDER.md, *Clean up, Add layer around, Outside the course, darker
+  cart paths*). Every Node test and every builder journey passed on 23
+  November (the thin-shape smoothing's Node test found a lone speck kept,
+  fixed; door-2-osm's Fill outside was taught the new defaults -- it now
+  chooses Everywhere outside at 120 a hectare, no variety, to check the
+  wood's sizes). Owed: Fill outside's new defaults on a real survey (Only
+  where the LIDAR saw trees, the survey's density) seen by the owner, a Node
+  test for `where`, `vary` and `surveyDensity`, the guide pictures, and a look
+  at the dark cart paths in the game (all 51 game smoke journeys ran on 23
+  November -- 50 at once, online-again again alone after a slow putt under
+  load -- but no smoke picture shows a cart path).
+
+- [ ] **No first look at the land: the LIDAR stays on the map, not used by a
+  person** (branch `builder-big-zips`, 23 November 2026; COURSE_BUILDER.md,
+  *No first look at the land*). Every builder journey passed on 23 November,
+  Worthington (local) included -- the map kept with the LIDAR's reach on it
+  (lidar-folder), drags on the map round its files (Worthington). Owed: files
+  opened with no course found, in the builder by hand (the map round them,
+  the outer limit the middle 3 x 3 km); and how much wait it saves (not
+  timed).
+
+- [ ] **The courses folder and the name before saving: not seen** (branch
+  `builder-big-zips`, 23 November 2026; COURSE_BUILDER.md, *The courses
+  folder, and a name before saving*). Tested in Node with a fake folder only;
+  the builder journeys hide the folder picker, so no script has shown the save
+  box or the Open box. Owed, by hand in Chrome: the first Save asking for a
+  folder (and a name, in door 2 before the Name step), Save again with no box,
+  a second course of the same name asked about (Save as name-2, Replace,
+  Cancel), Open listing the folder and a course opened from it saving back to
+  its own file, a new visit asking leave for the folder again, and Firefox
+  still downloading. door-real.mjs was taught to answer the name box at the
+  Holes step; not run.
+
+- [ ] **Houses of any size, Normalize width, the Line tool, the pen's curve:
+  not used by a person** (branch `builder-big-zips`, 23 November 2026;
+  COURSE_BUILDER.md, *Houses of any size, Normalize width, the Line tool, the
+  pen's curve*). Tested in Node (builder-line-work, builder-pen, trace-edit,
+  osm) and driven by the builder-door-2 journey on its made-up land (curve
+  off, a square-ended Line, Normalize cart paths, a clicked and a dragged
+  house, This house; which found 1.8 m paths laid one cell wide on 1 m land,
+  fixed). Owed: a look by the owner -- Normalize cart paths and streets on a
+  real OpenStreetMap course (Worthington's paths; a parking lot kept), the
+  strength slider slid; the guide's pictures (the pen's options and Clean up
+  have grown); and how long
+  Normalize takes on a large course (not timed: it works on the box round the
+  layer, a few seconds expected, none measured). The 3D editor has none of
+  the four.
+
+- [ ] **Fitted edges, square bends and the tiled trace: not seen by the
+  owner** (branch `builder-big-zips`, 23 November 2026 evening;
+  COURSE_BUILDER.md, *Edges fitted, sharp bends, a trace step that keeps up*;
+  RESEARCH *Outlines fitted*). Measured on shapes and on the owner's two
+  drafts in the built builder (a stroke now holds the page about 0.1 s, was
+  1.2 s); Alpine Lake Resort saved and a tee shot played in the game. Owed:
+  the owner's look at tee and green edges in the game on a course saved
+  again (a course saved before keeps its old outlines), a square-ended Line
+  with bends, and painting on Alpine. Not checked: the 3D editor's redraw
+  after a stroke with its margin now 32 cells (Node tests only).
+- [ ] **The fringe only where painted: not seen by the owner** (24 November
+  2026; COURSE_BUILDER.md, *A fringe only where it is painted*). Seen: the
+  Fringe layer offered, Add layer around Green with Fringe at 2 m on a copy
+  of the Alpine draft, saved, and a green in the game with and without it
+  (bench/shots/paint/, local). Owed: painting a fringe by hand and seeing it
+  in the review and a round; the 3D editor opening a generated course taken
+  over with its collar painted on (Node tests only); a course saved before
+  that day still showing its collar until saved again.
+- [ ] **Built fairway stripes in one direction a piece: not seen by the
+  owner** (23 November 2026; owner-atlas.js `builtMowOwners`). Seen fixed in
+  top-down pictures of Troon North and Alpine (bench/shots/built-look/,
+  local); Worthington's 1st tee seam should be gone, not looked at.
+- [ ] **The review step holds the page about 13 seconds on a big course**
+  (measured 23 November 2026 on Alpine Lake Resort, 2233 x 3066 cells at
+  1 m): on opening a draft saved at its review, and on coming back to the
+  review. Where it goes: the game's ground mesh for the review's picture
+  (`makeGroundGrid`, 4-5 s), the course built (`docFromLand`, 3 s), the
+  aerial picture re-projected (2 s), the editor's model (`createEditor`,
+  2 s). As it was before that day's work. Wants its own job: built a piece at
+  a time with a progress line, or not rebuilt when nothing changed.
+
+- [ ] **The course's outline and the half-metre ground, by hand** (branch
+  `builder-big-zips`, 22-23 November 2026; COURSE_BUILDER.md, *The course's
+  outline*). Built and tested in Node and in the builder journeys (an outline
+  drawn and dragged on the relief; Build automatically taking OpenStreetMap's),
+  and measured on the owner's Alpine Lake square in Node (RESEARCH, *Full
+  detail inside the course, less outside*). Not seen by the owner: draw an
+  outline in step 1, download, build the land (the status line names the
+  half-metre ground), and look at a bunker's lip in the 3D editor and in
+  the game; and load the old Alpine Lake square with an outline (an older
+  kept square is read whole when opened from the folder: Download box
+  thins it). Outside the outline the survey is fetched at about 8 points a
+  land cell (the owner's choice, 23 November: about three quarters of
+  Alpine Lake's points; the outside nearly as the whole survey makes it).
+  Not run on the real square at 8 since the choice (measured with the tool's
+  `--outside 8` before). (The frame rate with
+  patches was measured on every tier on 23 November: no cost.) On Alpine
+  Lake the half-metre detail is small (a 2 cm noise floor leaves little):
+  it pays on a denser survey, which no real course over 2.25 km² has been
+  built from yet.
+
 - [ ] **A real course's doglegs, checked by a person.** Since 10 November 2026
-  door 2 finds a dogleg's bend from the traced fairway (**Find the doglegs**;
+  door 2 finds a dogleg's bend from the traced fairway (**Add dogleg aim points**;
   map-checks.js `bendFor`). Not played, and Worthington's yards against its
   card not measured again (they were short by a median 22 yards, and its test
   round scored 96 against par 71, the golfers aiming through trees). (was:

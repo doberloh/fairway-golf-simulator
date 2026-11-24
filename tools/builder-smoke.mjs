@@ -62,7 +62,10 @@ async function run() {
    // The save dialog (showSaveFilePicker) is a window a script cannot answer:
    // hidden, so Save downloads as in Firefox; a journey that tests the dialog's
    // one-click resave puts a stand-in back (door-real.mjs).
-   await context.addInitScript(() => { window.showSaveFilePicker = undefined; });
+   // The folder picker likewise (23 November 2026): with it, Save first asks
+   // for a courses folder (builder.js saveBox), a box no journey answers; the
+   // lidar-folder journey puts a stand-in back for its own folder.
+   await context.addInitScript(() => { window.showSaveFilePicker = undefined; window.showDirectoryPicker = undefined; });
    // THE FOLDING SECTIONS OPEN (the builder-ux goal, 10 November 2026): door
    // 2's side panel folds its sections (details.cb-fold), and a journey clicks
    // buttons inside them as a player would after opening one. Every section is

@@ -32,8 +32,13 @@ try {
   try {
    await page.goto(pathToFileURL(path.join(ROOT, 'dist', 'index.html')).href);
    await page.waitForFunction(() => window.lab && !document.getElementById('splash'), null, {timeout: 120000});
-   const bytes = [...fs.readFileSync(path.join(HOME, key, file))];
-   const hash = await page.evaluate(b => window.lab.built(b), bytes);
+   // As base64 and turned back into bytes in the page: a plain array of
+   // numbers took Node out of memory on an 87 MB course (23 November 2026).
+   // In 6 MB pieces, so no one string is the whole file.
+   const raw = fs.readFileSync(path.join(HOME, key, file)), PIECE = 6e6;
+   await page.evaluate(n => { window.__bytes = new Uint8Array(n); }, raw.length);
+   for (let o = 0; o < raw.length; o += PIECE) await page.evaluate(([s, at]) => { const t = atob(s); for (let k = 0; k < t.length; k++) window.__bytes[at + k] = t.charCodeAt(k); }, [raw.subarray(o, o + PIECE).toString('base64'), o]);
+   const hash = await page.evaluate(() => { const b = window.__bytes; window.__bytes = null; return window.lab.built(b); });
    await page.evaluate(h => window.lab.course({built: h}), hash);
    await page.waitForFunction(() => document.getElementById('app').dataset.mode === 'play', null, {timeout: 180000});
    await page.waitForFunction(() => window.lab.state().canSwing, null, {timeout: 60000});

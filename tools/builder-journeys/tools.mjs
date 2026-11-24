@@ -12,7 +12,7 @@ export default function ({journey, SHOTS}) {
   const {page} = t;
   await openFile(page, await fixture(SHOTS));
   const state = () => page.evaluate(() => { const s = window.fairwayBuilder.editor.editor.state; return {water: s.water.length, creeks: s.creeks.length, trees: s.trees.length, undo: s.undo.length, green: s.holes[0].green, edited: s.surfacesEdited}; });
-  await page.getByRole('button', {name: 'From above'}).click();
+  await page.getByRole('button', {name: 'View from above'}).click();
   await page.waitForTimeout(600);
   const b = await page.locator('.cb-view canvas').boundingBox();
   const at = (fx, fy) => [b.x + b.width * fx, b.y + b.height * fy];
@@ -92,9 +92,9 @@ export default function ({journey, SHOTS}) {
   if (moved.undo !== 1 || moved.under === 'sand' || moved.last !== 'paint') throw Error(`Select shape should carry the bunker off its spot in one step: ${JSON.stringify(moved)}`);
   await page.getByRole('button', {name: 'Undo'}).click();
   if (await kindUnder(...spot) !== 'sand') throw Error('Undo should put the bunker back');
-  await page.getByRole('button', {name: 'Check the course'}).click();
+  await page.getByRole('button', {name: 'Check course'}).click();
   await page.waitForFunction(() => [...document.querySelectorAll('.cb-side li')].some(li => /Hole|Nothing breaks|tree/.test(li.textContent)), null, {timeout: 30000});
-  await page.getByRole('button', {name: 'Play a test round'}).click();
+  await page.getByRole('button', {name: 'Play test round'}).click();
   await page.waitForFunction(() => [...document.querySelectorAll('.cb-side li')].some(li => /on average against par/.test(li.textContent)), null, {timeout: 120000});
   const report = await page.evaluate(() => [...document.querySelectorAll('.cb-side li')].map(li => li.textContent).filter(t => /par/.test(t)).slice(0, 3));
   console.log(`       ${report.join(' | ')}`);

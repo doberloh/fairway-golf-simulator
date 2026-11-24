@@ -33,7 +33,7 @@ export function surfaceColours(key) {
  const own = biomeOf(key), bio = {...own, ...seasonPalette(own, 'summer', regionOf(key))}, c = v => new T.Color(v);
  return PAINT.map(kind => {
   const col = kind === 'rough' ? bio.rough : kind === 'semi' ? bio.semi : kind === 'fairway' ? bio.fairway : kind === 'green' ? bio.green
-   : kind === 'tee' ? bio.fairway : kind === 'sand' ? bio.sand : kind === 'water' ? (bio.water || '#4a8fb0') : GROUNDS[kind]?.map ?? bio.rough;
+   : kind === 'fringe' ? (bio.fringe ?? bio.green) : kind === 'tee' ? bio.fairway : kind === 'sand' ? bio.sand : kind === 'water' ? (bio.water || '#4a8fb0') : GROUNDS[kind]?.map ?? bio.rough;
   const k = c(col); if (kind === 'tee') k.lerp(c('#ffffff'), .12);
   return [Math.round(k.r * 255), Math.round(k.g * 255), Math.round(k.b * 255)];
  });
@@ -76,7 +76,10 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
  function drawCells(i0, i1, j0, j1) {
   for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { g2.fillStyle = rgb(colours[r.layers.view[j * r.nx + i]]); g2.fillRect(i * F, j * F, F + .5, F + .5); }
  }
- const MARGIN = 8;   // cells round a redrawn part, so outlines there close outside it
+ // Cells round a redrawn part, so outlines there close outside it and are
+ // fitted as the whole is (contour.js `fitRing`; 8 until the fit, 23
+ // November 2026, whose straight runs reach farther than the relaxing did).
+ const MARGIN = 32;
  // Cells [i0, i1] x [j0, j1] as outlines onto a sheet, `scale` texels a metre
  // from (ox, oz) -- the whole course's sheet or the close-up one.
  function drawOutlines(g, i0, i1, j0, j1, ox, oz, scale) {

@@ -242,7 +242,12 @@ hand (`tools/capture/overhaul.mjs --built`; SURROUNDINGS.md, round 8).
 ASCII points (XYZ, TXT, CSV, PTS, PTX), GeoTIFF and Cloud Optimized GeoTIFF,
 Esri ASCII grid, XYZ grids, Esri float grid and BIL, ERDAS Imagine, SRTM HGT.
 **The two closed forms** -- Esri zLAS and MrSID LiDAR -- are named with a free
-converter (Esri's LAS Optimizer or rapidlasso's LASliberator for zLAS).
+converter (Esri's LAS Optimizer or rapidlasso's LASliberator for zLAS), and
+zLAS inside a ZIP too, all its files in one line with the map search offered
+(lidar-words.js, 22 November 2026). **A ZIP of any size** is read a file at a
+time (zip.js `readZipFile`, ZIP64 included): a state portal's 6.2 GB download
+had failed whole with nothing on screen, and any failure now says what
+happened in the file list (RESEARCH, *A state portal's ZIP of zLAS*).
 Several tiles at once, of mixed forms. Ground from class 2 (or a ground filter
 on an unclassified cloud), gaps filled and relaxed smooth, a traced pond's
 floor carved a metre under its level; trees from canopy height peaks;
@@ -406,14 +411,17 @@ After trying the builder, the owner amended the goal:
     Decided, with what was turned down:
     - **Finer tracing: the outlines drawn, not a finer grid.** The game never
       saw the cells: each layer goes into the course as smoothed outlines
-      (since 1 November 2026 relaxed eight passes, simplified to a tenth of
-      a cell, one pass of corner cutting; until then simplified to 0.6 of a
-      cell, two passes), so the tracer now draws exactly those (`layerRings`, real-course.js). A grid
+      (since 23 November 2026 FITTED -- straight runs, sharp corners, curves
+      between, the cells' own area kept: contour.js `fitRing`, RESEARCH
+      *Outlines fitted*; from 1 November relaxed eight passes; until then
+      simplified to 0.6 of a cell), so the tracer now draws exactly those (`layerRings`, real-course.js). A grid
       four times finer would have cost sixteen times the memory and every
       brush stroke's time on a 3 km property, and still shown steps.
-    - **A green's fringe is not an extrapolated layer**: the game already
-      mows a collar round every green (the course's fringe width). There is
-      no fringe layer to paint, and adding one would draw two fringes.
+    - **A green's fringe** was at first no layer at all: the game mowed a
+      collar round every green (the course's fringe width), and a layer
+      would have drawn two. **Reversed 24 November 2026**: the fringe is a
+      layer, and a course from the builder has only the fringe painted on
+      it (*A fringe only where it is painted*, below).
     - **Outside the boundary, the survey's trees stay.** They are real; the
       wood is added only where none stands. Wiping them would have thinned a
       boundary that is already a wood.
@@ -1531,6 +1539,530 @@ the yards and the scorecard when it lands. In the 3D editor, **Drag markers** do
 the same for tees, bends and greens (14 pixels, PLACED), one undo a drag; door 2's
 step has no undo, and never had. Not seen on screen.
 
+### No first look at the land (23 November 2026)
+
+The owner asked what "a first look at the land" did that "build the land"
+did not, and then: "lets just remove 'a first look at the land' because we
+have the colored map being loaded now. for the user to draw boundaries."
+
+**What it was.** Every LIDAR loaded in step 1 was read thinly (up to 4
+million points, on a 2 m grid or coarser) into a grey relief that took the
+aerial map's place, for the outer limit and the course outline to be drawn
+on. Build the land then read the LIDAR again, in full. Since the map came
+first (10 November) and the outline was drawn on it (22 November), the
+relief only repeated what was already drawn, and Build automatically paid
+for it too.
+
+**Now** (door-real.js `placeSources`): the map stays when the LIDAR comes
+in; each file's box is outlined yellow on it (`st.lidarDeg`, in degrees);
+the outer limit drawn is the property (`boxFromFind`, clipped to the
+LIDAR), and dragging a new one on the map changes it; nothing is read until
+Build the land. LIDAR files opened with no course found bring up the map
+round themselves (`mapForFiles`, the smallest of 3, 5 or 8 km that holds
+them), the outer limit starting as their middle 3 x 3 km. An outer limit
+the LIDAR does not reach is replaced by that middle, and said. Back on step
+1 after the land is built, the outer limit is dragged on the land (it was
+the relief's before).
+
+**Kept, and why** (rejected: removing the relief outright): a survey that
+does not say where it lies has no place on any map, and a place no free map
+covers (outside the US without a Google or Bing key) has no map to show.
+Both still get the relief (`previewLand`), now said as "No map here:
+reading the LIDAR for a relief to draw on". The builder journeys' own
+surveys (door-2, door-2-osm) state no map grid, so they still take this
+way.
+
+Not tested yet (TODO).
+
+### Clean up, Add layer around, Outside the course, darker cart paths (23 November 2026)
+
+The owner, on the trace step's panel: the extrapolate "drop down and
+measurement around isnt clear what that is for"; "a sub box for both smooth
+and reduce specs that also has a selector for what you are applying to";
+"smooth edges on thin shapes like cart paths will completely delete large
+sections of it"; Fill outside "fills at the same height, but also i feel like
+it is still the same or even more trees than if i kept the original LIDAR
+data ... its not clear in the UI that the drop down applies to the fill
+outside button"; "does fill outside while keeping also keep trees ... It
+probably should remove trees but keep everything else"; the section named
+"something else like 'boundary and trees'"; and "cart paths for all courses
+should be a much darker grey color". Built (not yet tested, by the owner's
+word: "dont do the checks or tests yet"):
+
+- **Add layer around** is its own section: **Around** (the layer), **Lay**
+  (the layer laid round it), **Width, metres**, then the button. It no longer
+  takes the layer being painted.
+- **Clean up** holds two boxes, **Smooth edges** and **Remove specks**, each
+  with its **Layer** (every layer, or one), then Clear trees from tees and
+  greens.
+- **Thin shapes survive smoothing** (layer-ops.js `smoothCells`, both
+  editors): a cell is taken off only where some cell within the smoothing
+  radius lies more than the radius inside the shape -- so a cart path, a
+  narrow tee or a creek's strip keeps every cell, and a fairway's edge is
+  rounded as before. Filling a notch is unchanged. (Later the same day, when
+  the trace's test was run: the rule also kept a lone speck the smoothing
+  had always cleared, and the test caught it. A patch smaller than the
+  smoothing circle now goes however thin; a path is far longer than that.)
+- **Outside the course** (was Course boundary): 1 the boundary line, 2 a
+  **Fill outside boundary** box with each choice labelled above its button --
+  **Surfaces and houses** (Keep them, the default now; Remove them),
+  **Ground** (the landscape's floor, or Rough), **Trees** (Replace with a new
+  wood, the default; Keep them, fill the gaps; Remove them all), **Plant**
+  (Only where the LIDAR saw trees, the default; Everywhere outside),
+  **Trees per hectare** (empty: as many as the LIDAR found outside the line,
+  a hectare of the ground they could stand on), **Height variety, %** (20 by
+  default: each new tree up to that much taller or shorter, so a wood sized
+  from one canopy is not one height). Until now "Keep what is outside" kept
+  the LIDAR's trees too and planted in the gaps, and the wood went in at the
+  landscape's density (150 a hectare where needles or leaves fall) everywhere
+  outside, fields included -- more trees than the survey had.
+- **Cart paths dark grey on every course** (grounds.js `GROUNDS.path.map`
+  #4b4d51, was #d9d2c2): a built course's path layer, a generated course's
+  paths whatever the landscape's surface (renderer.js `cartpath`, asphalt's
+  texture; boardwalks, roads and drives keep theirs), the hole map and the
+  builder's plan. Drawing only: no version moves.
+
+Read as "fills at the same height": the wood's trees all one height (sized
+from one canopy height); the ground itself is not changed by Fill outside.
+
+### The courses folder, and a name before saving (23 November 2026)
+
+The owner: "When saving a course from any step, can we make it so that the
+user picks a 'courses folder' and we save and load from there? We should also
+ask the user to name the course if they are saving from a step before they
+named it." Built:
+
+- **One courses folder**, picked once and remembered as the LIDAR folder is
+  (courses-folder.js; its handle kept in the same IndexedDB store under its
+  own key, lidar-folder.js `recallFolder(key)`). With it, **every save goes
+  into it with no dialog** (saving.js `useFolder`, `folderPlan`): the top
+  bar's Save from door 1, door 2 at any step and the editor; door 2's Save
+  course file; the editor's Save shareable copy. The file is named after the
+  course, as before (course-file.js `fileName`).
+- **The save box** (builder.js `saveBox`, over the screen) comes up when a
+  save needs something first: no courses folder yet (Choose courses folder;
+  pressing Save picks one if none is chosen), and/or **door 2 before step 5,
+  Name, with no name typed** (door-real.js saver `named`): the name box,
+  filled with the name the course has (the course found, or OpenStreetMap's),
+  asked once; the answer sets the name the Name step shows, and a draft keeps
+  `named`. Cancel saves nothing.
+- **Never over another course unasked.** The same work and name write the same
+  file again (Save again, as since 1 November); a new name a new file. A file
+  of that name already in the folder that this work did not write -- another
+  course called the same -- brings a box: **Save as name-2** (the next free
+  name), **Replace it**, or **Cancel**. Rejected: overwriting by name alone
+  (two courses called "My real course" would eat each other), and always
+  saving beside (opening a course and saving it would leave name-2 copies).
+- **A course opened from the folder saves back to its file** (saving.js
+  `openedFrom`): it is this session's file at once, claimed by the first work
+  that saves under its name. Back to the builder's start lets an unclaimed one
+  go, so a new course of the same name is asked about, not written over it.
+- **Open a course file** (File > Open, Ctrl+O, and the start page's door) is a
+  box listing the folder's courses and drafts, newest first, each with its
+  size and when it was saved; Open another file… for one elsewhere; Choose
+  courses folder / Change folder. It is a box over the screen, so Cancel leaves
+  the work in hand.
+- **Firefox and Safari** cannot pick a folder: saving and opening work as
+  before (a download; the browser's file picker). The name box still asks.
+- The builder journeys hide the folder picker as they hide the save dialog
+  (tools/builder-smoke.mjs), so they save as Firefox does; door-real.mjs now
+  answers the name box at the Holes step.
+
+Tested in Node (tests/builder-saving.test.mjs: the folder's rule, saving into
+a fake folder -- again, a clash asked once and saved beside, Cancel, Replace,
+a renamed course -- a course opened and saved back, the listing). **Not seen
+by a person; no journey run** (the save box and the Open box need a real
+folder, which a script cannot pick).
+
+### Edges fitted, sharp bends, a trace step that keeps up (23 November 2026, evening)
+
+The owner, on Alpine Lake Resort (2233 x 3066 m, so 1 m cells): "jaggy edges
+on things like greens and tee boxes ... I did click smooth edges on them";
+"when painting on alpine lake resort when i start painting everything gets
+really pixellated and then goes back crisp ... causes hangs"; "if I'm
+painting lines without the auto curve on, edges are still getting smoothed
+out automatically?" With screenshots from the game and the review.
+
+- **Outlines fitted** (contour.js `fitRing`, used by `layerRings`, so the
+  trace step, the 3D editor and a saved course alike): straight where the
+  cells run straight, a corner kept where they turn one, curves between, and
+  grown back to the cells' area. Relaxing the staircase (since 1 November)
+  left a side a few degrees off the grid wobbling -- up to 80 cm on 1 m land,
+  the "jaggy" edges -- and cut every corner by 0.7 m (1.4 m on 1 m land). Now
+  a 6-degree tee's sides are within 9 cm (23 cm on 1 m land) and its corners
+  within 23 cm (46 cm). Figures, and what was tried and turned down, in
+  RESEARCH *Outlines fitted*. Smooth edges was never the cure: it moves
+  cells, and the steps are the cells'. A course already saved keeps its old
+  outlines until it is saved again; nothing the game reads changed, so no
+  `BUILT_VERSION`.
+- **A Line with square ends bends square** (line-work.js `lineCells`: each
+  bend's outside mitred, cut across past 150 degrees); round ends bend round.
+  The preview draws it so. Auto curve off already gave straight runs: the
+  rounding was the outline routine above.
+- **The trace step in tiles** (door-real.js): the smooth trace is traced in
+  tiles of 128 cells with 32 round each and kept; a change (trace-edit.js
+  `takeTouched`, every cell changed, undo and redo too) marks only the tiles
+  it reaches, shows its own cells only where they changed, and those tiles are
+  traced again between frames once the stroke is done, the ones in view
+  first. It threw the whole smooth trace away at every change and traced the
+  whole land again (3-4 s, frozen, on the owner's 2.8 x 3.3 km draft), cells
+  everywhere meanwhile. The cells are repainted only where they changed.
+- **Three counts done a cell at a time through a callback** ran after every
+  stroke over all nine million cells: the hectares under the plan (a Map),
+  each layer's area in the Layers list (`reduce`), and which layers are
+  painted (`some`, twice). Plain loops and `indexOf` now. Measured on the
+  owner's draft in the built builder: the longest freeze after a stroke went
+  from 1.2 s to about 0.1 s.
+- **Not changed, measured**: opening a draft at its review, or coming back to
+  the review, still holds the page about 13 s on Alpine (the game's ground
+  mesh 4-5 s, the course 3 s, the picture re-projected 2 s, the editor's model
+  2 s) -- it was so before, and is a job of its own (TODO).
+- **Broken fairway stripes** in the game (bands meeting in chevrons along
+  stepped seams): a fairway's bands run along the line of the hole that owns
+  the ground, and the ground atlas gave each 1.75 m texel its nearest hole, so
+  a traced fairway running nearer another hole's line was mown at two angles
+  (Troon North: twelve places; Alpine: three). Now each connected piece of
+  fairway, of green with its fringe and of tee has one hole (owner-atlas.js
+  `builtMowOwners`; PROJECT_HANDOFF *A BUILT COURSE'S MOWING READS THE BUILT
+  EDGES*). Paint only, about 0.1 s when a round starts, no shader change.
+  Left as the owner's choice: the bands also bend with the ground's height,
+  as on a generated course, which makes them wander on a survey's relief.
+- **The pale band round every green** in the review and the game is the
+  game's fringe: 2 m outside the green as painted (the course's fringe width,
+  `doc.fringe ?? 2`), in the fringe's colour, which is paler than the green;
+  inside it the diamonds reach the painted edge, with the 0.65 m clean-up
+  lap. The 3D editor did not draw it, so it first showed at the review. The
+  owner's answer, the next day: a fringe layer, played only where painted
+  (*A fringe only where it is painted*, below).
+
+Checked: Node tests (tests/contour.test.mjs: a fitted tee and green on both
+cell sizes; tests/builder-line-work.test.mjs: a square bend kept when saved);
+the owner's two drafts opened in the built builder (local scripts): strokes,
+undo, close-ups of a green and a tee, the review, Save course file, and the
+saved Alpine course loaded in the game with a tee shot played
+(`tools/play-built.mjs`, which now hands the page a large course in pieces:
+an 87 MB file took Node out of memory as one array of numbers). **Not yet
+seen by the owner.**
+
+### A fringe only where it is painted (24 November 2026)
+
+The owner, on the pale band the game laid round every built green: "for the
+fringe in the builder, make sure its added as a paintable type, but then
+only add it if the user paints it", and then "keep it in courses from
+outside the builder".
+
+- **Fringe is a layer** in door 2's trace and the 3D editor, just under
+  Green (layers.js `LAYER_ORDER`), so a collar painted up to and over a
+  green's edge leaves no gap. The quickest way to lay one: **Add layer
+  around**, Around **Green**, Lay **Fringe**, about **2** metres (the help
+  there says so). Brush, Outline fill, Line and the rest paint it as any
+  layer. It is kept clear of trees, houses and ground cover like the other
+  mown turf. In the trace palette it is the LAST code (trace-edit.js
+  `PALETTE`): a draft keeps OpenStreetMap's cells as palette codes, so no
+  older code moved.
+- **A course saved from the builder has no fringe but the painted one**:
+  door 2 (real-course.js `docFromLand`) and the 3D editor (editing.js
+  `toDoc`) write `fringe: 0`, which turns the game's own collar off, and the
+  fringe layer goes into the file as `surfaces.fringe`.
+- **A file saved before plays as it did**: one with no `fringe` (null) keeps
+  the 2 m collar, so nothing a player already has changes, and there is no
+  `BUILT_VERSION` bump. It loses the collar when saved again from the
+  builder (from a file with a builder section, below). Until then the 3D
+  editor shows it without the collar the game still gives it -- the same
+  disagreement the owner reported, gone once it is saved again. The other
+  way round, a file saved since and opened in an older copy of the game
+  (0.9.20) plays its greens with no fringe at all: an older copy keeps only
+  the kinds it knows and honours the 0. A bump could not have warned it --
+  no copy compares a file's `builtVersion`, the stamp only checks saved
+  rounds against the game's own reader -- and an online room already needs
+  everyone on the same version.
+- **A course from outside the builder keeps its fringe, as painted fringe**
+  (PLACED): a generated course taken over (freeze.js) or a course file with
+  no builder section opens in the 3D editor with its collar -- every cell
+  within its fringe width of a green, `doc.fringe ?? 2` -- laid into the
+  fringe layer (editing.js `fringeBand`, from editor.js `openEditor`), so
+  what the editor shows is what will play, and it can be erased. A file
+  that has a builder section was made in the builder and gets none.
+  Turned down: turning the collar into painted fringe on every file opened,
+  builder-made ones too -- it would have brought back the bands the owner
+  asked to be rid of on their own courses.
+- **In the game** a painted fringe is code 12 in the field's ground layer
+  (built-field.js `BUILT_GROUND_CODE`), not a channel of its own: all eight
+  are taken, and a third texture would have cost a sampler on every tier.
+  Inside its outline it wins over any ground type, as the layers show it.
+  The lie (built-world.js `builtSurface`: right after the green), the
+  ground shader's built branch and the mowing's one-hole-a-piece
+  (ground.js, `builtMowOwners`'s `kindAt`) read it the same way. It is
+  painted and mown as the generator's fringe is.
+
+Checked: Node tests (built-world: painted, none and an old file's collar;
+builder-editing: none unless painted, the collar from outside kept as
+painted fringe; real-course: door 2's course; layers: the order and the
+palette); the owner's Alpine draft (a copy) in the built builder, Add layer
+around Green with Fringe at 2 m (about 3 s), saved, a green looked at in
+the game painted and unpainted, and the saved file opened in the 3D editor:
+the band drawn there too, in the landscape's fringe colour, darker than the
+game's paler collar (`tools/builder-look.mjs`, mended the same day: with the
+courses folder, its Open button never reached the file chooser). A
+generated course taken over has not been looked at with its collar painted
+on (Node tests only). **Not yet seen by the owner.**
+
+### Houses of any size, Normalize width, the Line tool, the pen's curve (23 November 2026)
+
+The owner: "the open street map data places houses that are odd shapes and it
+looks like the game procedurally generates houses of larger sizes properly ...
+I would like the ability to place houses of off size shapes as well.
+(obviously we can keep them rectangle.)"; "under cleanup a 'normalize cart
+path width' and 'normalize street width' option ... a standard width of about
+1.5 carts wide. Im finding the OSM data has uneven cart paths. We would still
+need to keep intersections of paths the same"; "a new 'line tool' ... just
+clicking on points and drawing a line. with rounded or 90 degree ends"; and
+"options for both the line and outline tool to toggle the 'auto curving' on
+and off and also the strength of the curve". Built, in door 2's trace step:
+
+- **House** (O): a click stands a house of the **Width** and **Depth** in its
+  options (20 x 15 m to start, as before; 4 to 80 m a side, PLACED); a drag of
+  more than 2 m stands the rectangle dragged out, corner to corner, through
+  the same rule a map's building is stood by (osm.js `homeOfFootprint`, its
+  front the side nearest a fairway, green or tee; 12 to 5000 m², PLACED, where
+  a map's building is 40 to 1500). A house held with **Select** shows **This
+  house**: its Width and Depth, set where it stands (trace-edit.js
+  `sizeHome`, one undo). The game already builds a house of any footprint
+  (homes.js scales its model to the record's width and depth), so nothing
+  changed there and no version moves. A dragged house is square to the map;
+  Select turns it.
+- **Normalize width** in Clean up (line-work.js `evenWidth`, trace-edit.js
+  `evenWidth`): **Normalize cart paths** (1.8 m to start) and **Normalize
+  streets** (6 m, the residential width of osm.js `ROAD_WIDTH`), each with its
+  width. The layer's thin part is thinned to its middle line (Zhang and Suen's
+  thinning, then the stair-step corners taken off), the short spurs a ragged
+  edge leaves cut away (a branch from a free end to a meeting shorter than the
+  width asked, or than the layer is wide there), each line between its ends
+  smoothed, and laid again at the width. **Meetings and free ends never move**,
+  so paths that met still meet where they did. **A wide part is kept as drawn**
+  (line-work.js `areaWidth`, PLACED: three times the width and at least 8 m
+  across -- 8 m for cart paths, 18 m for streets), with the layer within that
+  width of it, so a parking lot keeps its square corners and a path joins it
+  where it did. One undo. The width is laid as the nearest whole number of the
+  land's cells (1.8 m is 2 m on half-metre and on 1 m land): the first version
+  laid 1.8 m paths ONE cell wide on 1 m land, which the builder journey found
+  (RESEARCH, *Normalize width*). The "1.5 carts" is from a golf cart's width: about
+  1.2 m (47 to 48 inches, the usual two-seat cart), so 1.8 m; RESEARCH,
+  *Normalize width*. Rejected: laying OpenStreetMap's own lines again at the
+  width -- it reaches only paths that came from the map, not those painted or
+  moved by Align map, and the uneven paths are on the layer.
+- **Line** (L), in the palette beside Outline fill: the pen drawing an open
+  line (Enter or a double-click ends it, as a creek), painted on the chosen
+  layer **Line width, metres** wide (2.5 to start), its **Ends** Round or
+  Square -- cut straight across the line at the first and last point
+  (line-work.js `lineCells`: a cell is painted when its middle lies within half
+  the width, the brush's own test, so a 2.5 m line and a 2.5 m brush cover the
+  same cells). The band it will lay is drawn faintly while drawing. Painting
+  Rough with it takes every layer off along it.
+- **Auto curve** and **Curve strength** in every pen tool's options (Outline
+  fill, Line, Tree zone, House zone, the boundary, the creek -- one setting for
+  all, PLACED: the owner named the line and the outline; the others use the
+  same pen and a different curve per tool would surprise). pen.js `penCurve`
+  `curve`: 1 the spline as before, 0 straight lines node to node, between them
+  the spline's handles at each node that share of their length -- still
+  through every node, bulging that share as far. What is drawn is what is
+  filled, as before. **Changed 24 November 2026**: at first each point was
+  that share of the way from the straight line to the spline, which left a
+  corner at every node (74 degrees at one point on a box at a quarter
+  strength, sampled at 5 cm), and the trace squared some of those off -- the
+  owner's box with two square corners and two round. Now the curve bends
+  through each node without a kink (pen.js `segment`, a Hermite curve on the
+  centripetal spline's own tangents; full strength is the same curve).
+
+Tested in Node (tests/builder-line-work.test.mjs, builder-pen, trace-edit,
+osm) and, from the same evening, in the builder-door-2 journey: an outline
+with Auto curve off fills straight, a 3 m Line with square ends is 3 m and
+named Line, Normalize cart paths leaves it 1 to 2.6 m, a click stands a
+30 x 12 m house and a drag one of about 40 x 25, Select's This house resizes
+it, and six Undos take all of it away. **Not used by a person yet.** The 3D
+editor has none of the four (its House still stands 20 x 15 m houses); door 2
+only.
+
+### The course's outline: full detail inside, less outside (22-23 November 2026)
+
+The owner, after the builder hung on a 3 x 3.2 km Alpine Lake square (the
+page at 2.8 GB of its 3.76 GB): "During the LIDAR phase, lets make the user
+roughly trace the course manually. Then we can use higher precision inside
+that boundary, and lower precision outside of it. That would be different
+than the course boundaries that can be traced later." Then: "for detail
+inside building at a 1 meter detail would still lose a ton of data
+right???" -- and, offered half-metre ground on greens, tees and bunkers
+inside the outline: "yes go ahead, include bunkers".
+
+What was built:
+
+- **Course outline**, in step 1 under Find the course: **Draw outline**, click
+  round the course on the map (or the relief), click the first corner or
+  press Enter to finish, Esc to cancel, Backspace for the last corner; drag a
+  corner after. Drawn cyan and dashed in steps 1 and 2. Kept in degrees (the
+  survey's own map units where it states no grid), in the draft, and apart
+  from the course boundary of the trace step, which is unchanged. **Build
+  automatically** takes OpenStreetMap's `leisure=golf_course` for it first,
+  asked alone and given 20 s -- the course round the place found, else the
+  one covering most of the box (never simply the largest: a big neighbour
+  reaching into the box would win, and the course wanted get the thin
+  layer); with none on the map it stops and asks for one drawn; with no
+  answer it carries on with the whole survey and says so.
+- **The download** (lidar/detail.js, lidar-search.js): every Entwine depth
+  under the outline (grown 30 m), and outside only the depths that reach
+  70% of 8 points a land cell (the owner's choice, 23 November: "Use more
+  outside", over 2, which left most of the ground outside filled in). A kept square now records which pieces
+  it holds for which outline, and every node over its box with its count; the
+  same box and outline reads from the folder, a wider outline downloads only
+  what it adds, and a kept square opened from disk is read only as far as the
+  outline asks. **A square kept before this has no such record**: opened
+  from disk it is read whole; downloaded again (Download box), USGS's index
+  says which pieces the outline wants and nothing new is fetched.
+- **Memory**: a kept square's pieces are read one at a time from its file,
+  never all at once; a download is written to the folder a piece at a time
+  (zip.js `zipStream`, ZIP64 past 4 GB -- writeZip wrapped there, and copied
+  everything into one array); the source then reads from the written file,
+  so the downloaded pieces leave memory; and land.js frees the gridder's sums
+  once the land is made (door 2 kept the gridder, and its 40 bytes a cell).
+- **The half-metre ground** (land.js `fine`, real-course.js `finePatches`):
+  inside the outline the ground returns are gathered again at 0.5 m, kept as
+  the difference from the 1 m land, and laid back as the course file's
+  patches round every bunker (4 m out), tee (5 m) and green (8 m) -- only
+  where the 1 m ground is still the survey's own. **Putting surfaces stay
+  smoothed** (5 m, *Greens a putt can hold*): the detail would bring back
+  pits a putt cannot climb out of. So the half-metre detail is bunkers' lips
+  and faces, tees' banks, greens' banks and false fronts, and swales in the
+  rough round them. Land already at half a metre (a property to 2.25 km²)
+  gets no patches: it has the detail. Each difference is moved 2 cm towards
+  nought first (23 November: on Alpine Lake 94% of the detail laid was under
+  3 cm, mostly noise of a two-return mean). Measured: no frame cost on any
+  tier, 1 MB on the file.
+- Rejected: one land grid finer everywhere inside the outline (one grid has
+  one cell; two would change the file and the game); 0.25 m patches (one or
+  two returns a cell on these surveys: noise); thinning by the course boundary
+  of step 3 (the owner chose the rough outline in step 1, before anything is
+  downloaded -- the boundary instead sizes Fill outside's wood from the
+  survey, above).
+
+Measured on the owner's Alpine Lake square: RESEARCH, *Full detail inside the
+course, less outside*. Not yet used by the owner in the builder.
+
+**Required, and the box is the outer limit** (23 November 2026; the owner:
+"The course boundary is not optional, then also, we need to indicate that
+the box in the LIDAR step is the 'outer limit' and how its drawn in simple
+terms"). No download (Download box, Download all tiles) and no land (Next:
+build land, Build land) without an outline; Next waits with "Draw the course
+outline"; Clear outline went (Redraw replaces it). Land already built, in an
+older draft, stays reachable. Step 1's panel is four numbered parts in the
+order they are done -- 1 Find the course, 2 Outer limit (what the box is,
+and "point at one corner of the course, hold the left mouse button, drag to
+the opposite corner, let go"), 3 Course outline, 4 Build the course (the two
+buttons) -- and the box is labelled *Outer limit* on the map, the relief, the
+status line and the messages. Build automatically still takes OpenStreetMap's
+outline, or stops and asks for one.
+
+### Buttons that say what they do; panels that read like a manual (22 November 2026)
+
+The owner: "please make the buttons that have text on them just say what
+they do exactly as well. in clear and concise wording. I find the text on the
+right hand of the screen can be misleading or too wordy. Make the text read
+like a manual, not a novel. No need for fancy language."
+
+The rule from here on: **a button is a verb and its object, and says what
+pressing it does** ("Search for LIDAR", not "Build it myself", which only
+searched); **panel text is short instructions** (numbered steps where there is
+an order, "Wheel: zoom" for keys, no asides or history). "Photo" throughout for
+the aerial picture. Older entries in this document use the old names; they map:
+
+| Old | New |
+|---|---|
+| Find (course search) / Find (picture's place) | Find course / Find place |
+| Show the map / Fetch the map again | Show map / Reload map |
+| Build it for me / its Build it | Build automatically / Start building |
+| Build it myself | Search for LIDAR |
+| Choose the folder / Change the folder | Choose LIDAR folder / Change LIDAR folder |
+| Load from the folder / Load the ticked | List folder files / Load ticked files |
+| Download the box here / Download here / Load the saved box / tiles / Download what is missing | Download box / Download tiles / Load saved box / tiles / Download missing part |
+| Bring it back / Discard | Restore draft / Delete draft |
+| Choose LIDAR files | Open LIDAR files |
+| Build the land / Build it again | Build land / Rebuild land |
+| Next: build the land, trace the course, the holes, the name, review the course | Next: build land, trace course, mark holes, name course, review course |
+| Fetch imagery for this land / A picture file / The LIDAR's own | Download photo / Open photo file / Use LIDAR colours |
+| Lock / Unlock the picture / Back to its position | Lock / Unlock photo / Reset photo position |
+| Reset the picture's look / Picture on top / LIDAR on top | Reset brightness and contrast / Put photo on top / Put LIDAR on top |
+| Fetch OpenStreetMap / An OpenStreetMap file | Download OpenStreetMap / Open OpenStreetMap file |
+| Refine with the picture / with the LIDAR / Keep it as drawn | Align map to photo / Align map to LIDAR / Keep map as is |
+| Draw it myself | Trace by hand |
+| Remove last node / Drop | Remove last point / Cancel shape |
+| Skin from the land / Before (hold) | Paint rock on slopes / Hold to show before |
+| Draw the boundary / Draw it again / Fill outside it | Draw boundary / Redraw boundary / Fill outside boundary |
+| Remove everything there / Keep what is there | Remove what is outside / Keep what is outside |
+| Extrapolate / Tidy specks | Add layer around / Remove specks |
+| Got it / Back to here | Hide tip / Undo to here |
+| Clear this hole / Drop last aim | Clear hole / Remove last aim point |
+| Fit holes to the trace / Find the doglegs | Snap holes to traced greens and tees / Add dogleg aim points |
+| Checking the map / Take the N fixes offered / Next thing to check | Hole checks / Apply all N fixes / Show next problem |
+| Check against the card / Forget the card | Compare yards / Clear scorecard |
+| Open in the editor / Save the course for Fairway | Open in 3D editor / Save course file |
+| (door 1) Take it over / Grow this course | Edit in 3D editor / Generate course |
+| (editor) From above / This hole / Check the course / Play a test round / Save a copy to share | View from above / View this hole / Check course / Play test round / Save shareable copy |
+
+Every step's panel text, the step tips, the "still needs" line, the status
+messages that name a button, the tooltips (tips.js) and the View menu's
+toggles were rewritten to match. Kept: names already exact (Undo, Redo,
+Smooth all edges, Clear trees from tees and greens, Previous hole, Next hole,
+Show, Fix, Auto trace, Tick all). Rejected: shortening labels to one word
+(Find, Build) -- the owner's complaint was that the words did not say what
+happens. Every builder journey and the capture tools press the new names;
+all ten journeys passed and the guide's pictures were retaken. Not yet read
+by the owner in the builder.
+
+### The wood outside, sized from the survey (22 November 2026)
+
+The owner, asked whether Fill outside should thin the land outside the
+boundary or size its wood from the LIDAR: "Size the wood from LIDAR". Fill
+outside planted every tree 10 to 22 m tall with a crown of 2.5 to 5 m,
+whatever stood there. Now each planted tree is sized by wood-size.js
+`woodSizer` from door 2's land and the survey's trees: under canopy, as tall
+as the canopy's highest point within 4 m, its crown in the proportion of the
+nearest survey tree within 15 m (0.23 of its height with none); on open
+ground, the size of one of the survey's trees drawn at random, so a wood on
+a field matches the woods round it. A cell with building returns is not
+canopy, and no tree is over 70 m (a mast reads as canopy). With nothing to
+size from (a course opened from a file: no canopy, no survey trees) the old
+sizes stand. All PLACED; RESEARCH, *The wood outside, sized from the
+survey*. Where the trees go -- the density, thinning in from the line -- is
+unchanged. On Worthington's draft the sizes run 4 to 31 m, median 9.8
+(sampled; not planted and looked at in the builder). The builder-door-2-osm
+journey checks every tree outside is a canopy height or a survey tree's.
+
+### Tees in their colours, and the next hole after a green (22 November 2026)
+
+The owner: "the tees are all showing the same color when i try to place them
+in the hole section. seems that the flow through placing holes isnt working
+right either." Two faults, both from the six tee sets (10 November 2026):
+
+- **The colours.** The plan still coloured a tee from the three sets before
+  the six (back, middle, front). A tee's set is a colour now, which that list
+  did not know, so each dot took whatever colour the canvas last held: every
+  tee alike. Each is drawn in its set's colour (tees.js `TEE_COLOURS`), ringed
+  dark so white and silver show on a pale picture. The status line said
+  "click to place its blue"; it says "blue tee".
+- **The flow.** After a green the mark in hand went back to the first tee
+  set on the same hole, so the next click -- meant for the next hole's tee --
+  moved this hole's tee. Now a green placed on a hole that has a tee brings up
+  the next hole still missing a tee or a green (hole-marks.js `nextToMark`,
+  round to the start), its tee in hand, or its green where the map gave it a
+  tee already; the status line names it. Next hole, Previous hole and the
+  hole list still go anywhere. Rejected: keeping the old stop-and-press-Next
+  (it is what the owner tripped on) and moving on after a tee as well (a hole
+  often has several tee sets to place before its green).
+
+The review's yards "from the back" were always blue's; they are the course's
+longest set's now. The builder-door-2 journey marks its nine holes with no
+Next hole and reads a blue and a red tee's colour off the plan. Seen in the
+journey's picture; not yet seen by the owner.
+
 ### The wait shows itself (5 November 2026)
 
 The owner: "when getting data from open street map, we need to indicate processing
@@ -1692,9 +2224,12 @@ owner can overrule them:
 - The editor: the land drawn at every stored sample to about 1 km a side,
   coarser past it (under 2.2 million vertices); the surfaces edited at half a
   metre (coarser past 4096 cells a side), traced back as door 2 does since 1
-  November 2026 (`layerRings`: the staircase relaxed, simplified to a tenth of
-  a cell, corners rounded; first 0.35 of a cell with the staircase kept, then
-  0.6 of a cell, which left notches); the 3D view's surfaces drawn from those
+  November 2026 (`layerRings`: since 23 November fitted -- straight runs,
+  sharp corners, curves between, the cells' area kept; before that the
+  staircase relaxed, which left near-straight sides wobbling and wore corners
+  off; first 0.35 of a cell with the staircase kept, then 0.6 of a cell,
+  which left notches); a stroke's part redrawn with 32 cells round it (8
+  until the fit); the 3D view's surfaces drawn from those
   outlines at up to 4 texels a cell and 12 million texels, and again round
   the camera at 1.5 to 15 cm a texel (`closeUp`); a brush's raise or lower 0.5 m a dab at full strength.
 - The checks: a green needs 3 m of room for a cup (Sunday's), and over 6%
@@ -1710,8 +2245,10 @@ owner can overrule them:
   where the canopy falls under half, its height the highest raw canopy within
   its window, peaks found on the canopy smoothed once (3 x 3).
 - Door 2: the land's cell never finer than the survey's point spacing,
-  rounded up to the half metre; a first look at the land from at most 4
-  million points; filled ground relaxed 40 passes; a traced pond's level 15 cm
+  rounded up to the half metre; where no map can be shown, a relief to draw
+  on from at most 4 million points (the first look at every LIDAR loaded
+  until 23 November 2026); files opened with no course found, a map up to 8
+  km across round them; filled ground relaxed 40 passes; a traced pond's level 15 cm
   under its lowest tenth of shore and its floor a metre under that; greens and
   tees averaged over 2.5 m and fairways over 1.5 m; par from length (to 250
   yards a three, to 470 a four); a tree a conifer when its crown is under a
@@ -1764,7 +2301,8 @@ minute apart; the card read before each), 31 October 2026:
   full where a stage depends on them): laz-perf (https://github.com/hobuinc/laz-perf;
   Apache-2.0 per Alpine's package metadata, to confirm in its LICENSE); COPC
   (https://copc.io/); Esri's zLAS and LAS Optimizer
-  (https://lidarmag.com/?p=6066) and rapidlasso's LASliberator
+  (https://lidarmag.com/?p=6066; Esri's FAQ, quoted in RESEARCH, *A state
+  portal's ZIP of zLAS*) and rapidlasso's LASliberator
   (https://rapidlasso.de/new-lasliberator-frees-lidar-from-closed-format/);
   libE57Format, BSL-1.0 (https://dfsg-new-queue.debian.org/reviews/libe57format);
   geotiff.js, MIT (https://geotiffjs.github.io/) and proj4js, MIT, NTv2

@@ -25,6 +25,96 @@ kept whole: *The open list before the 11 November 2026 prune* and *The open
 list before the 16 October prune*, each with a table of what became of every
 entry.
 
+## The grass toned down (branch `builder-big-zips`, 24 November 2026; not merged)
+
+The owner: "our grasses are almost too neon and too light colored on all of
+our biomes ... It tends to also get washed out on the projector screens."
+Asked whether darker grass would also read the ground better, and on the
+answer, "lets do it here". Built: the turf colours the ground is handed are
+the landscape's own -- the lifts renderer.js had put on the fairway, fringe,
+green and semi-rough since the first commit are gone -- and every turf colour,
+the rough and the 3D grass tufts included, is made less saturated and darker
+by as much as it is green (textures.js `turfGrade`, `TURF_SAT` .8,
+`TURF_VALUE` .84, PLACED), so straw and fescue keep their colour. Round 1
+took the lifts away alone and left the rough the limiest thing on screen; round
+2 is what shipped. Judged by the owner on a before-and-after page of five
+landscapes at five views each ("These Grass color changes are perfect").
+Numbers, and what was rejected, in RESEARCH *The turf as the landscape paints
+it*. Fingerprints unchanged; no version moves. Not seen on the projector.
+
+## Large courses in the builder: the outline, the half-metre ground, the memory (branch `builder-big-zips`, 22-23 November 2026; not merged)
+
+The owner, the builder hanging on a 3 km square: "I think we have
+optimizations that need to happen on large courses maybe", then the rough
+outline in the LIDAR step, and half-metre ground "include bunkers". Same
+branch, same days: tees in their colours and the next hole after a green;
+Fill outside's wood sized from the survey; every button and panel reworded
+(COURSE_BUILDER.md, the 22 November sections).
+
+- [x] **The course's outline** drawn in step 1 (or OpenStreetMap's, for
+  Build automatically): every depth of a USGS survey inside it, about 8
+  points a land cell outside (the owner's choice over 2); kept squares
+  record what they hold for which outline.
+- [x] **Memory**: a kept square read a piece at a time and written a piece at a
+  time (ZIP64 past 4 GB); the gridder's sums freed. Alpine Lake's peak 3.1 GB
+  to 1.45 GB with no outline at all.
+- [x] **Half-metre patches** round bunkers, tees and greens inside the outline,
+  only where the ground is still the survey's own; putting surfaces stay
+  smoothed.
+
+Tested: lidar-detail, builder-outline, lidar-coverage, real-course, zip and
+draft Node tests; every builder journey; Alpine Lake measured in Node
+(RESEARCH, *Full detail inside the course, less outside*); the frame rate
+with patches on every tier (no cost). Still owed: the owner's own look (TODO).
+
+## A big LIDAR ZIP in the builder (branch `builder-big-zips`, 22 November 2026; not merged)
+
+The owner, trying the builder: "Im getting these errors trying to load
+downloaded LAZ files in a zip" -- three uncaught NotReadableErrors, nothing
+on screen, from West Virginia's 6.2 GB ZIP. It held 17 zLAS files, not LAZ.
+
+- [x] **A ZIP of any size opens**: zip.js `readZipFile` reads the directory
+  from the file's end (ZIP64 followed) and each part only when read; door 2
+  uses it for a player's ZIPs (`readZip` of the whole file is kept for the
+  builder's own small files).
+- [x] **zLAS in a ZIP is named**, all its files in one line, with Esri's LAS
+  Optimizer, LASliberator, and the builder's own map search (USGS LIDAR).
+  Before, a ZIP of them said "no LIDAR files in it".
+- [x] **Nothing fails silently**: door 2's file reading catches everything
+  and says it in the file list; a file too big to read in one piece is said
+  so with its size (lidar-words.js `readProblem`).
+
+Tested: zip and lidar-words Node tests; the owner's real file read by the
+new reader (17 parts, directory in 1 ms); the builder's 10 smoke journeys,
+`builder-door-2-osm` now picking a ZIP of zLAS and the survey in a ZIP.
+RESEARCH, *A state portal's ZIP of zLAS, 6.2 GB*. Then "something is
+happening when i try to grab open street map ... I click the button and
+nothing happens": not reproduced; `loadOsm` had a silent return with no
+land and could throw before its `try`, both now said in the status line
+(`osmClick` catches the rest); the cause waits on what the owner sees next.
+Also that evening, the
+owner's rule of at most 10 Node test files at once (AGENTS.md;
+tools/test.mjs enforces it; RULES_HISTORY, *Ten test files at most*).
+
+### Course Builder (TODO, 23-24 November 2026)
+
+- [x] **A built green's fringe: the owner's call** (23 November 2026): the
+  game laid a 2 m fringe OUTSIDE every green as painted, which the owner saw
+  as "bands added around every green" in the review and the game, and the 3D
+  editor did not draw. Offered: keep it; paint it darker; lay it inside the
+  painted edge or not at all; or let the builder draw it. **Decided 24
+  November**: "make sure its added as a paintable type, but then only add it
+  if the user paints it", and "keep it in courses from outside the
+  builder". Built: a Fringe layer under Green; a course saved from the
+  builder writes `fringe: 0` and its painted fringe; a file from before
+  keeps its collar, no `BUILT_VERSION`; a seeded course taken over, or a
+  file with no builder section, opens in the 3D editor with its collar as
+  painted fringe; in the game a painted fringe is code 12 of the field's
+  ground layer. COURSE_BUILDER.md, *A fringe only where it is painted*.
+  Turned down: a third field texture (a sampler on every tier for one
+  layer), and painting the collar into every file opened (it would have
+  brought the bands back on the owner's own courses).
+
 ## Online play with friends in other houses (branch `online-play`, 19-21 November 2026; released as 0.9.20)
 
 ### Release 0.9.20 (21 November 2026)

@@ -35,6 +35,7 @@ const ROW = [[-.75, .1], [.75, -.1], [0, -.5]];
 function surface(kind, bio) {
  const fine = {title: '', ground: bio.rough, pieces: []};
  if (kind === 'green') return {...fine, title: 'Green', ground: bio.green, flag: true, caption: 'Cut short. The cup goes here.'};
+ if (kind === 'fringe') return {...fine, title: 'Fringe', ground: bio.fringe ?? bio.green, caption: 'The collar round a green. Only where you paint it.'};
  if (kind === 'fairway') return {...fine, title: 'Fairway', ground: bio.fairway, stripes: bio.semi, caption: 'Mown in stripes in the game.'};
  if (kind === 'semi') return {...fine, title: 'Semi-rough', ground: bio.semi, caption: 'The first cut, round the fairway.'};
  if (kind === 'tee') return {...fine, title: 'Tee', ground: bio.fairway, tee: true, caption: 'Where the hole starts.'};

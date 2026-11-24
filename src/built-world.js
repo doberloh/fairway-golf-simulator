@@ -147,8 +147,9 @@ export function builtGroundAt(field, x, z) {
 const CH = Object.fromEntries(BUILT_CHANNELS.map((k, i) => [k, i]));
 // What a ball lies on, from the field. The order is the paint's (ground.js,
 // the built branch) and the generator's own: water, sand, the green and its
-// fringe, a tee, a cart path (it crosses fairway and semi-rough), fairway,
-// semi-rough, any other ground type, rough. `fringe` is the fringe width.
+// fringe (the collar `fringe` metres wide, then a painted one), a tee, a cart
+// path (it crosses fairway and semi-rough), fairway, semi-rough, any other
+// ground type, rough.
 export function builtSurface(field, x, z, fringe = DEFAULT_COURSE.fringe) {
  if (Math.abs(x) >= field.ex || Math.abs(z) >= field.ez) return 'rough';
  if (builtFieldAt(field, x, z, CH.water) <= 0) return 'water';
@@ -156,8 +157,11 @@ export function builtSurface(field, x, z, fringe = DEFAULT_COURSE.fringe) {
  const g = builtFieldAt(field, x, z, CH.green);
  if (g <= 0) return 'green';
  if (g <= fringe) return 'fringe';
- if (builtFieldAt(field, x, z, CH.tee) <= 0) return 'tee';
+ // A painted fringe (built-field.js, code 12): `fringe` is 0 on a course from
+ // the builder since 24 November 2026, so this is its only fringe.
  const ground = builtFieldAt(field, x, z, CH.ground) <= 0 ? builtGroundAt(field, x, z) : null;
+ if (ground === 'fringe') return 'fringe';
+ if (builtFieldAt(field, x, z, CH.tee) <= 0) return 'tee';
  if (ground === 'path') return 'path';
  if (builtFieldAt(field, x, z, CH.fairway) <= 0) return 'fairway';
  if (builtFieldAt(field, x, z, CH.semi) <= 0) return 'semi';

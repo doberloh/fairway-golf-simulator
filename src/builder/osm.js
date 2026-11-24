@@ -82,7 +82,9 @@ export function osmFeatures(json, toLocal) {
 // THE COURSE'S BOUNDARY as OpenStreetMap draws it (leisure=golf_course): a
 // closed way, or a relation whose outer ways are joined end to end into
 // rings. The largest ring, in local metres, or null when the course has none.
-export function osmBoundary(json, toLocal) {
+export const osmBoundary = (json, toLocal) => osmBoundaries(json, toLocal)[0] ?? null;
+// Every course boundary's outer ring, largest first.
+export function osmBoundaries(json, toLocal) {
  const rings = [], key = p => `${p.lat},${p.lon}`;
  for (const e of json?.elements || []) {
   if (e.tags?.leisure !== 'golf_course') continue;
@@ -105,15 +107,39 @@ export function osmBoundary(json, toLocal) {
  }
  const local = rings.map(r => r.map(p => { const q = toLocal(p.lat, p.lon); return [q.x, q.z]; }));
  const area = r => { let a = 0; for (let i = 0, j = r.length - 1; i < r.length; j = i++) a += r[j][0] * r[i][1] - r[i][0] * r[j][1]; return Math.abs(a) / 2; };
- return local.sort((a, b) => area(b) - area(a))[0] ?? null;
+ return local.sort((a, b) => area(b) - area(a));
+}
+
+// THE COURSE'S ROUGH OUTLINE FROM THE MAP (22 November 2026): Build
+// automatically draws the LIDAR step's outline from OpenStreetMap's
+// leisure=golf_course before anything is downloaded -- a small question
+// (that tag alone over the box, [lon0, lat0, lon1, lat1]), asked with
+// `signal` to give up after a while. WHICH COURSE: the one round `at` (the
+// place found, {lon, lat}), else the one covering most of the box -- never
+// simply the largest, which can be a neighbour reaching into the box (and
+// would leave the course wanted with the thin layer). As [[lon, lat]], or
+// null when the map has none there.
+export async function courseOutline([lon0, lat0, lon1, lat1], get = fetch, {signal = null, at = null} = {}) {
+ const b = `${lat0},${lon0},${lat1},${lon1}`, q = `[out:json][timeout:25];(way["leisure"="golf_course"](${b});relation["leisure"="golf_course"](${b}););out geom;`;
+ const r = await get('https://overpass-api.de/api/interpreter', {method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, body: 'data=' + encodeURIComponent(q), signal});
+ if (!r.ok) throw Error(`OpenStreetMap's server said ${r.status}`);
+ const rings = osmBoundaries(await r.json(), (lat, lon) => ({x: lon, z: lat})).map(ring => ring.slice(0, ring.length > 3 && ring[0][0] === ring.at(-1)[0] && ring[0][1] === ring.at(-1)[1] ? -1 : undefined));
+ if (!rings.length) return null;
+ const inside = (ring, x, z) => { let c = false; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) { const [ax, az] = ring[j], [bx, bz] = ring[i]; if ((bz > z) !== (az > z) && x < (ax - bx) * (z - bz) / (az - bz) + bx) c = !c; } return c; };
+ const round = at && rings.find(ring => inside(ring, at.lon, at.lat));
+ if (round) return round;
+ // How much of the box each covers, on a 20 x 20 sample.
+ const share = ring => { let n = 0; for (let i = 0; i < 20; i++) for (let j = 0; j < 20; j++) if (inside(ring, lon0 + (i + .5) / 20 * (lon1 - lon0), lat0 + (j + .5) / 20 * (lat1 - lat0))) n++; return n; };
+ return rings.map(ring => ({ring, n: share(ring)})).sort((a, b) => b.n - a.n)[0].ring;
 }
 
 // A building's footprint as a house (trace-edit.js `homes`): the smallest
 // rectangle round its outline, tried along each of its edges, turned to face
 // the nearest mown ground (`facing(x, z)`, a bearing) among its four sides.
 // Only house-sized ones (40 to 1500 m², PLACED): a garden shed is not drawn,
-// and a warehouse is not a house.
-export function homeOfFootprint(ring, facing = () => 0) {
+// and a warehouse is not a house. (`least` and `most` change that: door 2's
+// House tool stands a footprint dragged out by hand through this same rule.)
+export function homeOfFootprint(ring, facing = () => 0, {least = 40, most = 1500} = {}) {
  const pts = ring.slice(0, ring.length > 1 && ring[0][0] === ring.at(-1)[0] && ring[0][1] === ring.at(-1)[1] ? -1 : ring.length);
  if (pts.length < 3) return null;
  let best = null;
@@ -124,7 +150,7 @@ export function homeOfFootprint(ring, facing = () => 0) {
   const area = (u1 - u0) * (v1 - v0);
   if (!best || area < best.area) { const um = (u0 + u1) / 2, vm = (v0 + v1) / 2; best = {area, a: u1 - u0, b: v1 - v0, phi: Math.atan2(ux, uz), x: um * ux - vm * uz, z: um * uz + vm * ux}; }
  }
- if (!best || best.area < 40 || best.area > 1500) return null;
+ if (!best || best.area < least || best.area > most) return null;
  const want = facing(best.x, best.z), diff = t => Math.abs(Math.atan2(Math.sin(t - want), Math.cos(t - want)));
  const k = [0, 1, 2, 3].reduce((m, q) => diff(best.phi + q * Math.PI / 2) < diff(best.phi + m * Math.PI / 2) ? q : m, 0);
  const along = k % 2 === 0;

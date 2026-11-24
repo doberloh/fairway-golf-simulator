@@ -23,7 +23,7 @@ import {normaliseSurround} from '../surround-sides.js';
 import {createLayers, LAYER_ORDER, tidyMask} from './layers.js';
 import {facingFrom, turnedCells, POCK, SPECK} from './trace-edit.js';
 import {layerRings} from './real-course.js';
-import {GRID_MARGIN, landSampler, polygonDistance} from '../built-world.js';
+import {GRID_MARGIN, landSampler, polygonDistance, greenParts} from '../built-world.js';
 import {TREE_STRIDE, TREE_ROLES, CREEK_FIELDS} from '../course-doc.js';
 import {clearTrees} from './tree-clear.js';
 import {skinFromHeights, SKIN} from './skin.js';
@@ -34,7 +34,7 @@ import {smoothCells, extrapolateCells, zoneTrees, zoneHomes} from './layer-ops.j
 
 // The codes a surface cell can hold, in the order the field paints them
 // lowest first: a later one wins where a document's outlines overlap.
-export const PAINT = ['rough', ...GROUND_KINDS.filter(k => k !== 'path'), 'semi', 'fairway', 'path', 'tee', 'green', 'sand', 'water'];
+export const PAINT = ['rough', ...GROUND_KINDS.filter(k => k !== 'path'), 'semi', 'fairway', 'path', 'tee', 'fringe', 'green', 'sand', 'water'];
 export const CODE = Object.fromEntries(PAINT.map((k, i) => [k, i]));
 export const RASTER = {cell: .5, maxSide: 4096};
 // A brush's weight at a share `t` of its radius: 1 at the centre, 0 at the edge.
@@ -68,8 +68,13 @@ function fill(r, poly, mask, v = 1) {
 }
 
 // A copy of a document an editor can change. `doc` is a validated built
-// document (course-doc.js); it is not changed.
-export function createEditor(doc) {
+// document (course-doc.js); it is not changed. `fringeBand`: metres of fringe
+// to paint round every green as it opens (openEditor: the game's own collar
+// on a course from outside the builder -- a generated one taken over, or a
+// file with no builder section -- turned into the fringe layer, since every
+// course this saves has no fringe but the painted one; PLACED, 24 November
+// 2026).
+export function createEditor(doc, {fringeBand = 0} = {}) {
  const ex = doc.halfX + GRID_MARGIN, ez = doc.halfZ + GRID_MARGIN;
  const r = {...rasterSize(ex, ez)};
  // THE SURFACES IN LAYERS (layers.js; the owner, 1 November 2026): each its
@@ -80,6 +85,19 @@ export function createEditor(doc) {
  for (const kind of LAYER_ORDER) {
   const polys = kind === 'water' ? (doc.water || []).map(w => w.rings) : doc.surfaces?.[kind] || [];
   for (const poly of polys) fill(r, poly, r.layers.mask(kind, true));
+ }
+ // The fringe band: every cell within `fringeBand` of a green, the green's
+ // own cells too (the fringe lies under it), as the game's collar measured it.
+ let fringeLaid = false;
+ if (fringeBand > 0 && !r.layers.mask('fringe')?.includes(1)) {
+  const m = r.layers.mask('fringe', true);
+  for (const poly of greenParts(doc.surfaces?.green || [])) {
+   let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+   for (const [x, z] of poly[0]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
+   const i0 = Math.max(0, Math.floor((x0 - fringeBand - r.x0) / r.cell)), i1 = Math.min(r.nx - 1, Math.ceil((x1 + fringeBand - r.x0) / r.cell));
+   const j0 = Math.max(0, Math.floor((z0 - fringeBand - r.z0) / r.cell)), j1 = Math.min(r.nz - 1, Math.ceil((z1 + fringeBand - r.z0) / r.cell));
+   for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) if (polygonDistance(poly, r.x0 + (i + .5) * r.cell, r.z0 + (j + .5) * r.cell) <= fringeBand) { m[j * r.nx + i] = 1; fringeLaid = true; }
+  }
  }
  r.layers.recompose();
  r.codes = r.layers.codes;
@@ -331,7 +349,7 @@ export function createEditor(doc) {
    const nx = r.nx, nz = r.nz, ground = new Float32Array(nx * nz);
    for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) ground[j * nx + i] = sample(r.x0 + (i + .5) * r.cell, r.z0 + (j + .5) * r.cell);
    const land = {nx, nz, cell: r.cell, halfX: -r.x0, halfZ: -r.z0, ground};
-   const PLAYED = new Set(['fairway', 'green', 'tee', 'sand', 'water', 'path', 'semi']), c = SKIN.clear;
+   const PLAYED = new Set(['fairway', 'green', 'fringe', 'tee', 'sand', 'water', 'path', 'semi']), c = SKIN.clear;
    const keepOut = (x, z) => [[0, 0], [c, 0], [-c, 0], [0, c], [0, -c]].some(([dx, dz]) => PLAYED.has(api.surfaceAt(x + dx, z + dz)));
    const skin = skinFromHeights(land, bio, keepOut);
    // The layers made before the undo snapshot, so undo knows them (as
@@ -466,7 +484,7 @@ export function createEditor(doc) {
    remember('records', 0, 0, 0, 0); state.homes.push(home); return true;
   },
   homeFits({x, z, rotation, width, depth}) {
-   const c = Math.cos(rotation), sn = Math.sin(rotation), MOWN = new Set(['fairway', 'green', 'tee', 'sand', 'water', 'path', 'semi']);
+   const c = Math.cos(rotation), sn = Math.sin(rotation), MOWN = new Set(['fairway', 'green', 'fringe', 'tee', 'sand', 'water', 'path', 'semi']);
    return ![[-1, -1], [1, -1], [1, 1], [-1, 1], [0, 0]].some(([a, b]) => { const lx = a * (width / 2 + 2), lz = b * (depth / 2 + 2); return MOWN.has(api.surfaceAt(x + lx * c + lz * sn, z - lx * sn + lz * c)); });
   },
   // GROUND COVER (cover.js; the owner, 4 November 2026: "a paint brush for
@@ -728,6 +746,10 @@ export function createEditor(doc) {
     });
     for (const [kind, rings] of Object.entries(traced)) if (kind !== 'water' && rings.length) surfaces[kind] = [rings];
     water = bodiesFrom(traced.water || []);
+   } else if (fringeLaid) {
+    // Nothing painted, but the collar it opened with is now the fringe layer.
+    const rings = outlines('fringe').map(ring => ring.map(([x, z]) => [Math.round(x * 100) / 100, Math.round(z * 100) / 100]));
+    surfaces = {...surfaces, fringe: rings.length ? [rings] : []};
    }
    const grids = [{...land, heights: Float32Array.from(land.heights)}, ...patches.map(p => ({...p, heights: Float32Array.from(p.heights)}))];
    for (const w of water) digInto(grids, w.rings, w.level);
@@ -735,7 +757,9 @@ export function createEditor(doc) {
    state.trees.forEach((t, i) => trees.set(f === 1 ? t : [t[0], t[1], t[2] * f, t[3] * f, t[4] * f, ...t.slice(5)], i * TREE_STRIDE));
    const {treePlan: _old, surround: _was, ...rest} = doc;
    return {...rest, ...(state.treePlan ? {treePlan: state.treePlan} : {}), ...(state.surround ? {surround: state.surround} : {}), name: state.name, landscape: state.landscape, land: grids[0], patches: grids.slice(1),
-    surfaces, water, creeks: structuredClone(state.creeks), holes: structuredClone(state.holes), trees, treeKinds: [...state.treeKinds], rocks: structuredClone(state.rocks), homes: structuredClone(state.homes), landEdits: state.landEdits.map(b => [...b])};
+    surfaces, water, creeks: structuredClone(state.creeks), holes: structuredClone(state.holes), trees, treeKinds: [...state.treeKinds], rocks: structuredClone(state.rocks), homes: structuredClone(state.homes), landEdits: state.landEdits.map(b => [...b]),
+    // No fringe but the painted one (real-course.js, the same rule).
+    fringe: 0};
   },
  };
  // A brush onto one layer (or every layer, `kind` null) -- covering (v 1) or

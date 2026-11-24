@@ -19,6 +19,8 @@ import {osmWays, holesFromOsm} from '../osm-holes.mjs';
 import {compareBuilt} from '../built-compare.mjs';
 import {playOneShot} from './door-generate.mjs';
 import {worthingtonDir} from '../lidar-home.mjs';
+import {colourOf} from '../../src/tees.js';
+import {drawOutline} from './door-real.mjs';
 
 export default function ({journey, ROOT, SHOTS}) {
  const dir = worthingtonDir(), data = path.join(ROOT, 'bench', 'shots', 'lidar');
@@ -33,10 +35,14 @@ export default function ({journey, ROOT, SHOTS}) {
   await page.getByRole('button', {name: /Generate a real life course/}).click();
   // 1. The four tiles.
   const tiles = fs.readdirSync(path.join(dir, 'raw')).filter(f => /\.laz$/i.test(f)).map(f => path.join(dir, 'raw', f));
-  const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.getByRole('button', {name: 'Choose LIDAR files'}).click()]);
+  const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.getByRole('button', {name: 'Open LIDAR files'}).click()]);
   await chooser.setFiles(tiles);
-  await page.waitForFunction(() => window.fairwayBuilder.door2?.preview, null, {timeout: 600000}); await idle();
-  say(`tiles read and previewed: ${secs()}`);
+  // The aerial map round the files comes up to draw on (23 November 2026: no
+  // first look at the land); the relief only if the map does not come.
+  t.allow.push(/^https:\/\/basemap\.nationalmap\.gov\//);
+  await page.waitForFunction(() => { const s = window.fairwayBuilder.door2; return s?.box && (s.map || s.preview); }, null, {timeout: 600000}); await idle();
+  const onMap = await page.evaluate(() => !!window.fairwayBuilder.door2.map);
+  say(`tiles read, ${onMap ? 'the map round them' : 'the relief (no map came)'}: ${secs()}`);
   // 2. The property: the club's box and 30 m, dragged on the plan.
   const epsg = await page.evaluate(() => { const s = window.fairwayBuilder.door2.sources[0]; return s.crs.epsg; }), zone = utmOfEpsg(epsg).zone;
   const [lon0, lat0, lon1, lat1] = course.bbox_lonlat, a = toUtm(lat1, lon0, zone), b = toUtm(lat0, lon1, zone);
@@ -44,19 +50,25 @@ export default function ({journey, ROOT, SHOTS}) {
   // Canvas pixels to the page's (the plan is drawn at the screen's density).
   const onPage = async ([cx, cy]) => { const box = await plan.boundingBox(), r = await plan.evaluate(c => c.width / c.getBoundingClientRect().width); return [box.x + cx / r, box.y + cy / r]; };
   const toPlan = async (mx, my) => onPage(await page.evaluate(([mx, my]) => { const st = window.fairwayBuilder.door2, g = st.land ? st.gridder : st.preview.gridder, p = g.local(mx, my); return st.toCanvas(p.x, p.z); }, [mx, my]));
-  const [ax, ay] = await toPlan(a.x - 30, a.y + 30), [bx, by] = await toPlan(b.x + 30, b.y - 30);
+  // On the map, the club's box in degrees and about 30 m round it.
+  const toMap = async (lon, lat) => onPage(await page.evaluate(([lon, lat]) => { const st = window.fairwayBuilder.door2, p = st.map.toLocal(lon, lat); return st.toCanvas(p.x, p.z); }, [lon, lat]));
+  const dLat = 30 / 111320, dLon = dLat / Math.cos((lat0 + lat1) / 2 * Math.PI / 180);
+  const [ax, ay] = onMap ? await toMap(lon0 - dLon, lat1 + dLat) : await toPlan(a.x - 30, a.y + 30), [bx, by] = onMap ? await toMap(lon1 + dLon, lat0 - dLat) : await toPlan(b.x + 30, b.y - 30);
   await page.mouse.move(ax, ay); await page.mouse.down(); await page.mouse.move(bx, by, {steps: 10}); await page.mouse.up();
   const boxNow = await page.evaluate(() => window.fairwayBuilder.door2.box);
   if (!(boxNow.x1 - boxNow.x0 > 700 && boxNow.x1 - boxNow.x0 < 1000)) throw Error(`the property box is ${JSON.stringify(boxNow)}`);
-  await page.getByRole('button', {name: 'Next: build the land'}).click();
+  // The course's outline, 40 m inside the outer limit (required since 23 November 2026).
+  const inner = await page.evaluate(() => { const st = window.fairwayBuilder.door2; let a, c; if (st.map) { a = {x: st.mapBox.x0, z: st.mapBox.z0}; c = {x: st.mapBox.x1, z: st.mapBox.z1}; } else { const g = st.preview.gridder, b = st.box; a = g.local(b.x0, b.y1); c = g.local(b.x1, b.y0); } return [[a.x + 40, a.z + 40], [c.x - 40, a.z + 40], [c.x - 40, c.z - 40], [a.x + 40, c.z - 40]]; });
+  await drawOutline(page, inner);
+  await page.getByRole('button', {name: 'Next: build land'}).click();
   // 2. The land.
   // (Next starts the build at once.)
   await page.waitForFunction(() => window.fairwayBuilder.door2.land, null, {timeout: 900000}); await idle();
   say(`land: ${await page.locator('.cb-note').first().textContent()} (${secs()})`);
-  await page.getByRole('button', {name: 'Next: trace the course'}).click();
+  await page.getByRole('button', {name: 'Next: trace course'}).click();
   // 3. The pictures, one tile at a time; the auto trace.
   for (const f of naip) {
-   const [pc] = await Promise.all([page.waitForEvent('filechooser'), page.getByRole('button', {name: 'A picture file'}).click()]);
+   const [pc] = await Promise.all([page.waitForEvent('filechooser'), page.getByRole('button', {name: 'Open photo file'}).click()]);
    await pc.setFiles(f); await page.waitForTimeout(500); await idle();
   }
   const cover = await page.evaluate(() => { const p = window.fairwayBuilder.door2.picture; return p.has.reduce((s, v) => s + v, 0) / p.has.length; });
@@ -73,7 +85,7 @@ export default function ({journey, ROOT, SHOTS}) {
   if (!/Classic Parkland/.test(suggest) || await page.locator('.cb-landscape').inputValue() !== 'parkland') throw Error(`the landscape suggested: "${suggest}", chosen ${await page.locator('.cb-landscape').inputValue()}`);
   say(`suggested: ${suggest}`);
   await t.shot('worthington-traced');
-  await page.getByRole('button', {name: 'Next: the holes'}).click();
+  await page.getByRole('button', {name: 'Next: mark holes'}).click();
   // 4. The holes, clicked where OpenStreetMap and the card put them.
   const origin = await page.evaluate(() => { const g = window.fairwayBuilder.door2.gridder; return {...g.center, u: g.unit.h}; });
   const ways = osmWays(osm, (lat, lon) => { const p = toUtm(lat, lon, zone); return {x: (p.x - origin.x) * origin.u, z: -(p.y - origin.y) * origin.u}; });
@@ -82,22 +94,27 @@ export default function ({journey, ROOT, SHOTS}) {
   const click = async (x, z) => { const [px, py] = await onPage(await page.evaluate(([x, z]) => window.fairwayBuilder.door2.toCanvas(x, z), [x, z])); await page.mouse.click(px, py); };
   const mark = name => page.locator('button[data-mark="' + name + '"]').click();
   for (const [n, h] of holes.entries()) {
-   for (const tee of h.tees) { await mark(tee.set); await click(tee.x, tee.z); }
+   // Each set by its colour's button (the six sets, 10 November 2026: the
+   // map's back, middle and front are blue, white and red, as tees.js reads
+   // them; the buttons by those names went then); the green brings the next
+   // hole up by itself (22 November 2026).
+   for (const tee of h.tees) { await mark(colourOf(tee.set) ?? tee.set); await click(tee.x, tee.z); }
    await mark('green'); await click(h.green.x, h.green.z);
-   if (n < 17) await page.getByRole('button', {name: 'Next hole'}).click();
+   const up = await page.evaluate(() => window.fairwayBuilder.door2.hole);
+   if (n < 17 && up !== n + 1) throw Error(`after hole ${n + 1}'s green, hole ${n + 2} should be up, not ${up + 1}`);
   }
   const marked = await page.evaluate(() => window.fairwayBuilder.door2.holes.filter(h => h?.green && h.tees.length).length);
   if (marked !== 18) throw Error(`eighteen holes should be marked, not ${marked}`);
   const off = await page.evaluate(hs => Math.max(...hs.map((h, n) => Math.hypot(window.fairwayBuilder.door2.holes[n].green.x - h.green.x, window.fairwayBuilder.door2.holes[n].green.z - h.green.z))), holes);
   say(`18 holes clicked; the farthest green click ${off.toFixed(2)} m from its mark`);
-  await page.getByRole('button', {name: 'Next: the name'}).click();
+  await page.getByRole('button', {name: 'Next: name course'}).click();
   // 5. The name and credit; 6. the review; the editor.
   await page.locator('.cb-name').fill('Worthington (door 2)');
   await page.locator('.cb-credits').fill('Elevation: USGS 3D Elevation Program');
-  await page.getByRole('button', {name: 'Next: review the course'}).click();
+  await page.getByRole('button', {name: 'Next: review course'}).click();
   await page.waitForFunction(() => window.fairwayBuilder.door2.doc, null, {timeout: 600000}); await idle();
   await t.shot('worthington-review');
-  await page.getByRole('button', {name: 'Open in the editor'}).click();
+  await page.getByRole('button', {name: 'Open in 3D editor'}).click();
   await page.waitForFunction(() => window.fairwayBuilder?.editor?.view, null, {timeout: 600000});
   await page.waitForTimeout(1500);
   await t.shot('worthington-editor');

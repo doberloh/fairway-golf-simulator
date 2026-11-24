@@ -2,7 +2,7 @@
 // (editing.js marksOf, holdMark).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {marksOf, markNear, moveMark, pressOn} from '../src/builder/hole-marks.js';
+import {marksOf, markNear, moveMark, pressOn, nextToMark} from '../src/builder/hole-marks.js';
 import {createEditor} from '../src/builder/editing.js';
 import {validateDoc} from '../src/course-doc.js';
 
@@ -70,4 +70,13 @@ test('a press takes the hole in hand\'s mark, waits on another hole\'s, places o
  assert.equal(pressOn(holes, 1, {x: 1, z: 199}, 5).mark.hole, 0);
  assert.equal(pressOn(holes, 0, {x: 1, z: 199}, 5).act, 'take');
  assert.equal(pressOn(holes, 1, {x: 500, z: 500}, 5).act, 'place');
+});
+
+test('a hole marked, the next one still to mark follows, round to the start', () => {
+ const done = hole(), teeOnly = {tees: [{x: 0, z: 0, set: 'blue'}], aims: [], green: null};
+ assert.equal(nextToMark([done, undefined, done], 0, 3), 1);
+ assert.equal(nextToMark([done, done, teeOnly], 0, 3), 2, 'a hole with a tee but no green is still to mark');
+ assert.equal(nextToMark([undefined, done, done], 2, 3), 0, 'round to the start');
+ assert.equal(nextToMark([done, done, done], 1, 3), -1, 'every hole marked');
+ assert.equal(nextToMark([done, done, done, undefined], 1, 3), -1, 'only the holes being played count');
 });

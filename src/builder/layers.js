@@ -6,8 +6,8 @@
 // shows the topmost layer that covers it. Painting a layer changes that layer
 // only -- a fairway painted through a bunker leaves the bunker, and the
 // fairway runs on unbroken under it. The order is the game's own: a built
-// course's field is read water, sand, green, tee, path, fairway, semi, then a
-// ground type (built-world.js), so overlapping outlines in a course file
+// course's field is read water, sand, green, a painted fringe, tee, path,
+// fairway, semi, then a ground type (built-world.js), so overlapping outlines in a course file
 // resolve exactly as the layers show them. Hiding a layer hides it from the
 // view only; a course is made from every layer.
 //
@@ -16,7 +16,10 @@
 import {GROUND_KINDS} from '../grounds.js';
 
 // Top first.
-export const LAYER_ORDER = ['water', 'sand', 'green', 'tee', 'path', 'fairway', 'semi', ...GROUND_KINDS.filter(k => k !== 'path')];
+// The fringe (24 November 2026) just under the green, so a collar painted up
+// to and over a green's edge leaves no gap; in the game it is a code in the
+// ground layer that wins inside it (built-field.js).
+export const LAYER_ORDER = ['water', 'sand', 'green', 'fringe', 'tee', 'path', 'fairway', 'semi', ...GROUND_KINDS.filter(k => k !== 'path')];
 
 // The layers a landscape offers, top first, ending with rough (the owner, 1
 // November 2026: "all types available to that biome ... i dont see rough,
@@ -43,7 +46,9 @@ export function createLayers(nx, nz, palette) {
   // A layer's mask (made empty when first asked for with `make`).
   mask(kind, make = false) { if (!L.masks.has(kind) && make) { if (!LAYER_ORDER.includes(kind)) throw Error(`No layer called ${kind}.`); L.masks.set(kind, new Uint8Array(N)); } return L.masks.get(kind) ?? null; },
   // The layers that hold anything, top first.
-  present: () => LAYER_ORDER.filter(k => L.masks.get(k)?.some(v => v)),
+  // (indexOf, not some(): a cell at a time through a callback was a quarter
+  // of a second on a 9-million-cell course, twice after every stroke.)
+  present: () => LAYER_ORDER.filter(k => (L.masks.get(k)?.indexOf(1) ?? -1) >= 0),
   kindAt: k => palette[L.codes[k]],
   // Recomputes the composites over a box of cells (inclusive), or the grid.
   recompose(i0 = 0, i1 = nx - 1, j0 = 0, j1 = nz - 1) {
@@ -64,7 +69,10 @@ export function createLayers(nx, nz, palette) {
 
 // A layer's mask tidied: patches of it under `speck` cells removed and holes
 // in it under `pock` cells filled. `put(k, v)` writes (and may remember).
-export function tidyMask(mask, nx, nz, speck, pock, put = (k, v) => { mask[k] = v; }) {
+// `keepEdge`: a patch touching the grid's edge is never a speck -- for a part
+// of a layer tidied on its own (door 2's smooth trace, a tile at a time),
+// where that patch may run on outside the part.
+export function tidyMask(mask, nx, nz, speck, pock, put = (k, v) => { mask[k] = v; }, keepEdge = false) {
  const N = nx * nz, seen = new Uint8Array(N), list = [];
  for (let s = 0; s < N; s++) {
   if (seen[s]) continue;
@@ -73,7 +81,7 @@ export function tidyMask(mask, nx, nz, speck, pock, put = (k, v) => { mask[k] = 
    const k = list[q], i = k % nx; if (i === 0 || i === nx - 1 || k < nx || k >= N - nx) edge = true;
    for (const n of [i > 0 ? k - 1 : -1, i < nx - 1 ? k + 1 : -1, k - nx, k + nx]) if (n >= 0 && n < N && !seen[n] && mask[n] === on) { seen[n] = 1; list.push(n); }
   }
-  if (on && list.length < speck) for (const k of list) put(k, 0);
+  if (on && list.length < speck && !(keepEdge && edge)) for (const k of list) put(k, 0);
   else if (!on && !edge && list.length < pock) for (const k of list) put(k, 1);
  }
 }

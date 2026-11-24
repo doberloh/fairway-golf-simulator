@@ -13,9 +13,9 @@ export default function ({journey, ROOT, SHOTS}) {
  journey('builder-surroundings', 'choose a sea, a mountain, mesas and a lake round a grown nine; Game view shows them; the file keeps them; the game plays it', async t => {
   const {page} = t;
   await page.getByRole('button', {name: /Generate and modify a course/}).click();
-  await page.getByRole('button', {name: 'Grow this course'}).first().click();
+  await page.getByRole('button', {name: 'Generate course'}).first().click();
   await page.waitForSelector('.cb-sheet canvas', {timeout: 120000});
-  await page.getByRole('button', {name: 'Take it over'}).first().click();
+  await page.getByRole('button', {name: 'Edit in 3D editor'}).first().click();
   await page.waitForFunction(() => window.fairwayBuilder?.editor?.view, null, {timeout: 120000});
   await page.waitForTimeout(600);
   // The block is there, each side on the landscape's own.

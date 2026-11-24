@@ -8,14 +8,34 @@ import {boxMean, distanceFrom} from '../lidar/trace.js';
 // SMOOTHING: a layer's edge takes the majority of its neighbourhood, over cells
 // [i0, i1] x [j0, j1] where `within(i, j)`. Worked on a crop of the mask, so a
 // brush dab on a big course reads only what it can reach.
+// THIN SHAPES KEPT (the owner, 23 November 2026: "smooth edges on thin shapes
+// like cart paths will completely delete large sections of it"): a majority
+// over the circle takes off every cell of a shape narrower than about half
+// the circle -- a 2.5 m path under the 1.5 m smoothing on 1 m land. So a cell
+// is taken off only where the shape near it is thicker than the circle: some
+// cell within `r` of it lies more than `r` cells inside the shape. A path, a
+// creek's bank strip, a narrow tee keep every cell; a fairway's or a green's
+// edge is rounded as before. (Filling a notch is unchanged.) But a SPECK is
+// still a speck: a patch smaller than the circle itself goes, however thin
+// (found when the trace's test ran, 23 November 2026: the thin rule had kept
+// a lone cell of sand the smoothing used to clear).
 export function smoothCells(mask, {nx, nz}, r, {i0, i1, j0, j1}, within, put) {
- const a0 = Math.max(0, i0 - r), a1 = Math.min(nx - 1, i1 + r), b0 = Math.max(0, j0 - r), b1 = Math.min(nz - 1, j1 + r), w = a1 - a0 + 1, h = b1 - b0 + 1;
- const crop = new Float32Array(w * h);
- for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) crop[j * w + i] = mask[(j + b0) * nx + i + a0];
+ const a0 = Math.max(0, i0 - 2 * r), a1 = Math.min(nx - 1, i1 + 2 * r), b0 = Math.max(0, j0 - 2 * r), b1 = Math.min(nz - 1, j1 + 2 * r), w = a1 - a0 + 1, h = b1 - b0 + 1;
+ const crop = new Float32Array(w * h), out = new Uint8Array(w * h);
+ for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) { const v = mask[(j + b0) * nx + i + a0]; crop[j * w + i] = v; out[j * w + i] = v ? 0 : 1; }
  const share = boxMean(crop, w, h, r);
+ // How far inside the shape each cell lies (in cells), and the most of that within r.
+ const inside = distanceFrom(out, w, h, 1), thick = new Float32Array(w * h), tmp = new Float32Array(w * h);
+ for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) { let m = 0; for (let d = -r; d <= r; d++) { const q = i + d; if (q >= 0 && q < w) m = Math.max(m, inside[j * w + q]); } tmp[j * w + i] = m; }
+ for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) { let m = 0; for (let d = -r; d <= r; d++) { const q = j + d; if (q >= 0 && q < h) m = Math.max(m, tmp[q * w + i]); } thick[j * w + i] = m; }
+ // Each patch's size (cells joined edge to edge in the crop), so a speck is known from a path.
+ const patch = new Int32Array(w * h).fill(-1), sizes = [], speck = Math.PI * r * r;
+ const patchOf = c0 => { if (patch[c0] >= 0) return sizes[patch[c0]]; const id = sizes.length, q = [c0]; patch[c0] = id; for (let n = 0; n < q.length; n++) { const c = q[n], i = c % w; for (const d of [i > 0 ? c - 1 : -1, i < w - 1 ? c + 1 : -1, c - w, c + w]) if (d >= 0 && d < w * h && crop[d] && patch[d] < 0) { patch[d] = id; q.push(d); } } sizes.push(q.length); return q.length; };
  for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
   if (!within(i, j)) continue;
-  const k = j * nx + i, v = share[(j - b0) * w + i - a0], now = v > .5 ? 1 : v < .5 ? 0 : mask[k];
+  const k = j * nx + i, c = (j - b0) * w + i - a0, v = share[c];
+  let now = v > .5 ? 1 : v < .5 ? 0 : mask[k];
+  if (mask[k] && !now && thick[c] <= r && patchOf(c) >= speck) now = 1;
   if (now !== mask[k]) put(k, now);
  }
 }

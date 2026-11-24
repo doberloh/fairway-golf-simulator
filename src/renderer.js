@@ -50,7 +50,7 @@ import {finishTexels,finishSurface,finishAverage} from './ball-finishes.js';
 // OFF by default since 14 October 2026); the range boards are not under that
 // switch.
 const FLAG_MIN_PX=36,FLAG_MAX_SCALE=10,FLAG_CLOTH_PX=14,POLE_MIN_PX=2;
-import {toonRamp} from './textures.js';
+import {toonRamp,turfPalette} from './textures.js';
 import {modelParts} from './mesh-assets.js';
 import {MESH_MODELS} from './asset-meshes.js';
 // THE SUN AND THE SKY'S SHARE OF THE LIGHT (the cartoon overhaul's lighting,
@@ -1195,7 +1195,7 @@ export class GolfView{
   if(this.quality.cascades&&!blue)this.makeCascades(sunDir,this.sun.color,this.sun.intensity);this.applyShadowSpan();add(this.sun.target);this.sunDir=sunDir;
   this.addSky(sunDir);
   this.addLandscape();
-  const palette=blue?{rough:'#193c50',semi:'#285d6a',fairway:'#397e85',fringe:'#5caba6',green:'#9ad2bc',sand:'#bdc2a0'}:toon?{rough:new T.Color(bio.rough).lerp(new T.Color(bio.roughTint??'#b6bc65'),.23),semi:new T.Color(bio.semi).multiplyScalar(1.13),fairway:new T.Color(bio.fairway).offsetHSL(.015,.1,.04),fringe:new T.Color(bio.fringe).offsetHSL(0,.1,.07),green:new T.Color(bio.green).offsetHSL(.01,.05,.08),sand:'#ffebbd'}:{rough:bio.rough,semi:bio.semi,fairway:bio.fairway,fringe:bio.fringe,green:bio.green,sand:bio.sand};
+  const palette=blue?{rough:'#193c50',semi:'#285d6a',fairway:'#397e85',fringe:'#5caba6',green:'#9ad2bc',sand:'#bdc2a0'}:toon?turfPalette(bio):{rough:bio.rough,semi:bio.semi,fairway:bio.fairway,fringe:bio.fringe,green:bio.green,sand:bio.sand};
   const terrain=groundGeometry(world.groundGrid);stitchSeam(terrain,this.landscape.geometry);this.terrain=add(new T.Mesh(terrain,groundMaterial(this,palette)));this.landscape.material.dispose();this.landscape.material=this.terrain.material;this.landscape.receiveShadow=true;
   // The ring is drawn as its pieces (landscape-edge.js landscapeChunks), each
   // skipped when out of view; the whole ring's own mesh stays for its bounds
@@ -2145,7 +2145,7 @@ export class GolfView{
   const dots=(n,size,light,dark)=>{for(let i=0;i<n;i++){g.fillStyle=r()<.5?light:dark;const s=size*(.5+r());g.fillRect(r()*64,r()*128,s,s);}};
   if(kind==='boardwalk'){for(let y=0;y<128;y+=8){g.fillStyle=r()<.5?'#f2f2f2':'#dcdcdc';g.fillRect(0,y,64,7);g.fillStyle='#9a9a9a';g.fillRect(0,y+7,64,1);}g.fillStyle='#b0b0b0';g.fillRect(6,0,2,128);g.fillRect(56,0,2,128);}
   else if(kind==='concrete'){dots(160,1.2,'#f4f4f4','#d2d2d2');g.fillStyle='#b8b8b8';g.fillRect(0,0,64,1.5);g.fillRect(0,64,64,1.5);}
-  else if(kind==='asphalt'){dots(420,1.4,'#f6f6f6','#c4c4c4');g.fillStyle='#fbfbfb';g.fillRect(3,0,2,128);g.fillRect(59,0,2,128);}
+  else if(kind==='asphalt'||kind==='cartpath'){dots(420,1.4,'#f6f6f6','#c4c4c4');g.fillStyle='#fbfbfb';g.fillRect(3,0,2,128);g.fillRect(59,0,2,128);}
   // A road (roads.js): asphalt, its edge lines, a dashed centre line.
   else if(kind==='road'){dots(420,1.4,'#f2f2f2','#c4c4c4');g.fillStyle='#ffffff';g.fillRect(2,0,2,128);g.fillRect(60,0,2,128);g.fillRect(31,0,2,64);}
   // A residential street (roads.js placeStreets): asphalt and a pale curb and
@@ -2163,7 +2163,12 @@ export class GolfView{
  }
  addPaths(w){
   if(!w?.paths?.length&&!w?.roads?.length)return;
-  const COLORS={asphalt:'#6b6863',concrete:'#cfc9ba',gravel:'#bfb197',shell:'#f0e9d8',bark:'#7c5b3d',granite:'#c49d70',boardwalk:'#a9814f',road:'#55595e',
+  // CART PATHS ARE ONE DARK GREY ON EVERY COURSE (the owner, 23 November 2026:
+  // "cart paths for all courses should be a much darker grey color"): a
+  // landscape's own path surface (asphalt, bark, gravel, shell...) is drawn
+  // `cartpath`, grounds.js GROUNDS.path.map; a boardwalk stays a boardwalk,
+  // and roads and drives keep their own surfaces.
+  const COLORS={cartpath:GROUNDS.path.map,asphalt:'#6b6863',concrete:'#cfc9ba',gravel:'#bfb197',shell:'#f0e9d8',bark:'#7c5b3d',granite:'#c49d70',boardwalk:'#a9814f',road:'#55595e',
    dirt:'#9c8466',redclay:'#a5583a',brick:'#9a4e3c',cobble:'#8a8478'};
   // EACH LANDSCAPE'S ROAD SURFACE (the streets kit, PLAN 4; the study's
   // catalogue `streets`): the public road asphalt -- concrete where the
@@ -2185,7 +2190,7 @@ export class GolfView{
   // street's own; a house's lane is the drive it runs on from. A road lies a
   // finger above the paths and lanes, so a crossing does not shimmer.
   const roadKind=r=>r.kind==='drive'?DRIVE[roadKey]||'road':r.kind==='lane'?'concrete':PUBLIC[roadKey]||(r.kind==='street'?'street':'road');
-  for(const path of [...(w.paths||[]),...(w.roads||[]).map(r=>({points:r.points,width:r.width,kind:roadKind(r),lift:r.kind==='lane'?.035:.05}))]){
+  for(const path of [...(w.paths||[]).map(q=>({...q,kind:q.kind==='boardwalk'?'boardwalk':'cartpath'})),...(w.roads||[]).map(r=>({points:r.points,width:r.width,kind:roadKind(r),lift:r.kind==='lane'?.035:.05}))]){
    // ON THE GROUND ALL THE WAY (the owner, 31 October 2026, Links: a path
    // "clipping through hills"): a straightened run's corners can be a hundred
    // metres apart, and a strip with points only there ran straight through
@@ -4234,7 +4239,7 @@ export function drawMap(canvas,course,position,candidates=[],full=false,camera=n
  // October 2026), under the holes, at their width (never thinner than a line).
  if(world.paths?.length){
   const wp=p=>full?mapPoint(transform,p):mapPoint(transform,course.toLocal(p));
-  ctx.save();ctx.lineJoin='round';ctx.lineCap='round';ctx.strokeStyle=world.bio.mapTurf?.path??'#a69a86';
+  ctx.save();ctx.lineJoin='round';ctx.lineCap='round';ctx.strokeStyle=world.bio.mapTurf?.path??GROUNDS.path.map;
   for(const path of world.paths){if(path.points.length<2)continue;ctx.lineWidth=Math.max(1.2,path.width*scale);ctx.beginPath();path.points.forEach((p,i)=>{const q=wp(p);i?ctx.lineTo(...q):ctx.moveTo(...q);});ctx.stroke();}
   ctx.restore();
  }
@@ -4244,7 +4249,7 @@ export function drawMap(canvas,course,position,candidates=[],full=false,camera=n
  if(world.built){
   const wp=([x,z])=>full?mapPoint(transform,{x,z}):mapPoint(transform,course.toLocal({x,z})),o=world.builtOutlines||{},mt=world.bio.mapTurf||{};
   const fill=(polys,col)=>{for(const poly of polys||[]){ctx.fillStyle=col;ctx.beginPath();for(const ring of poly){ring.forEach((q,i)=>{const m=wp(q);i?ctx.lineTo(...m):ctx.moveTo(...m);});ctx.closePath();}ctx.fill('evenodd');}};
-  fill(o.semi,mt.semi??'#a1b481');fill(o.fairway,mt.fairway??'#608449');fill(o.path,mt.path??'#a69a86');fill(o.tee,mt.fairway??'#608449');
+  fill(o.semi,mt.semi??'#a1b481');fill(o.fairway,mt.fairway??'#608449');fill(o.path,mt.path??GROUNDS.path.map);fill(o.tee,mt.fairway??'#608449');
   fill((world.builtWater||[]).map(b=>b.rings),'#70a6aa');fill(o.sand,'#efe0b9');fill(o.green,mt.green??'#b3cc86');
  }
  for(const hole of full?world.holes:[course]){

@@ -9,7 +9,9 @@ import {BIOMES} from '../biomes.js';
 import {BIOME_KEYS} from '../settings-schema.js';
 import {readBuiltFile, isBuiltFile, builderPart, textOf} from '../course-doc.js';
 import {readCourseFile} from '../course-file.js';
-import {saveBytes, saveHow, lastSave} from './saving.js';
+import {saveBytes, saveHow, lastSave, coursesFolder, useFolder, setClashAsk, openedFrom, forgetOpened} from './saving.js';
+import {recallCourses, pickCourses, listCourses} from './courses-folder.js';
+import {allowed, canPick} from './lidar-folder.js';
 import {isDraft, readDraft, DRAFT_EXT} from './draft.js';
 import {tipFor} from './tips.js';
 import {menuBarEl, keySheetEl, setMenus, showKeys} from './menu.js';
@@ -70,12 +72,32 @@ export function refreshSave() {
  const b = document.getElementById('cbSave'), note = document.getElementById('cbSaveNote'), last = lastSave();
  b.hidden = !saver;
  if (!saver) { note.textContent = ''; return; }
- const again = saveHow(last, {key: saver.key, name: saver.name()}, {canPick: typeof window.showSaveFilePicker === 'function'}) === 'overwrite';
+ const again = saveHow(last, {key: saver.key, name: saver.name()}, {canPick: typeof window.showSaveFilePicker === 'function' || !!last?.folder}) === 'overwrite';
  b.textContent = again ? 'Save again' : 'Save';
- note.textContent = last?.key === saver.key ? `Saved as ${last.file}${last.name !== saver.name() ? ' -- renamed, Save makes a new file' : ''}` : '';
+ const mine = last && (last.key === saver.key || last.key == null);
+ note.textContent = mine ? `${last.key == null ? 'Opened' : 'Saved as'} ${last.file}${last.folder && coursesFolder() ? ` in ${coursesFolder().name}` : ''}${last.name !== saver.name() ? ' -- renamed, Save makes a new file' : ''}` : '';
+}
+// THE COURSES FOLDER (courses-folder.js; the owner, 23 November 2026), made
+// ready for a save or an open: the one remembered, with leave to use it --
+// asked for (`ask`) only inside a press, as a browser allows. Null where the
+// browser cannot pick a folder or none is chosen yet.
+async function readyFolder(ask = false) {
+ if (!canPick()) return null;
+ const dir = coursesFolder() ?? await recallCourses();
+ if (!dir) return null;
+ try { if (await allowed(dir, ask)) { useFolder(dir); return dir; } } catch { /* asked outside a press */ }
+ return null;
+}
+// Before any save: the courses folder ready, or the save box asking for one
+// (and for the course's name, `needName`). False: the player cancelled.
+export async function savePlace({needName = false, name = '', rename = null} = {}) {
+ const dir = await readyFolder(true);
+ if (!needName && (dir || !canPick())) return true;
+ return saveBox({needName, name, rename, dir});
 }
 export async function saveNow() {
  if (!saver) return;
+ if (!await savePlace({needName: !!saver.named && !saver.named(), name: saver.name(), rename: saver.rename})) return;
  setBusy('Saving…');
  try {
   const bytes = await saver.bytes(), r = await saveBytes(bytes, {key: saver.key, name: saver.name(), file: saver.file()});
@@ -84,6 +106,51 @@ export async function saveNow() {
  finally { setBusy(''); }
  refreshSave();
 }
+// A box over the builder (the shortcuts sheet's look): `build(close)` makes
+// its inside; `close(v)` takes it down and answers the promise with v. Esc is
+// Cancel (null).
+function askBox(build) {
+ return new Promise(done => {
+  const sheet = el('div', {class: 'cb-keysheet cb-asksheet', role: 'dialog', 'aria-modal': 'true'});
+  const close = v => { sheet.remove(); window.removeEventListener('keydown', esc, true); done(v); };
+  const esc = e => { if (e.key === 'Escape') { e.stopPropagation(); close(null); } };
+  sheet.append(el('div', {class: 'cb-keyinner cb-askbox'}, ...build(close)));
+  window.addEventListener('keydown', esc, true);
+  document.body.append(sheet);
+  sheet.querySelector('input, button.cb-hot')?.focus();
+ });
+}
+// THE SAVE BOX: the course's name when it has not been named yet (the owner:
+// "We should also ask the user to name the course if they are saving from a
+// step before they named it"), and the courses folder when none is chosen.
+async function saveBox({needName, name, rename, dir}) {
+ let chosen = dir;
+ const ok = await askBox(close => {
+  const input = needName ? el('input', {class: 'cb-askname', value: name, maxlength: 60, 'aria-label': 'Course name', onkeydown: e => { if (e.key === 'Enter') go(); }}) : null;
+  const where = el('small', {class: 'cb-askwhere'}), said = el('small', {class: 'cb-askerr'});
+  const show = () => { where.textContent = chosen ? `Saves to your courses folder: ${chosen.name}.` : canPick() ? 'Pick a courses folder once: every Save goes there, and Open a course file lists what is in it.' : 'Your browser saves the file to its downloads.'; pick.textContent = chosen ? 'Change folder' : 'Choose courses folder'; };
+  const pick = el('button', {class: 'cb-btn', type: 'button', 'data-ask': 'folder', hidden: !canPick(), onclick: async () => { try { chosen = await pickCourses(); useFolder(chosen); said.textContent = ''; show(); } catch { /* closed */ } }});
+  async function go() {
+   if (input && !input.value.trim()) { said.textContent = 'Give the course a name.'; input.focus(); return; }
+   if (!chosen && canPick()) { try { chosen = await pickCourses(); useFolder(chosen); } catch { said.textContent = 'Choose a courses folder to save into.'; show(); return; } }
+   if (input) rename?.(input.value.trim());
+   close(true);
+  }
+  show();
+  return [el('h3', {}, 'Save the course'),
+   input ? el('label', {class: 'cb-opt'}, 'Course name', input) : null,
+   el('div', {class: 'cb-field'}, el('b', {}, 'Courses folder'), where, pick), said,
+   el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn cb-hot', type: 'button', 'data-ask': 'save', onclick: go}, 'Save'), el('button', {class: 'cb-btn', type: 'button', 'data-ask': 'cancel', onclick: () => close(null)}, 'Cancel'))];
+ });
+ refreshSave();
+ return !!ok;
+}
+// ANOTHER COURSE OF THE SAME NAME in the folder: replaced only when the player says.
+setClashAsk((file, beside) => askBox(close => [el('h3', {}, 'Already in the folder'),
+ el('small', {}, `${file} is already in your courses folder, and it is not the one you are working on.`),
+ el('div', {class: 'cb-btns'}, el('button', {class: 'cb-btn cb-hot', type: 'button', 'data-ask': 'beside', onclick: () => close('beside')}, `Save as ${beside}`),
+  el('button', {class: 'cb-btn', type: 'button', 'data-ask': 'replace', onclick: () => close('replace')}, 'Replace it'),
+  el('button', {class: 'cb-btn', type: 'button', 'data-ask': 'cancel', onclick: () => close('cancel')}, 'Cancel'))]).then(v => v ?? 'cancel'));
 // THE MENUS EVERY SCREEN SHARES (menu.js; the builder-ux goal): File starts
 // with Save and Save as, Help ends the bar. A screen adds its own: `file`
 // items after Save, then Edit, View and Tools as it has them. `keys`: lines
@@ -122,12 +189,12 @@ const doors = [
  // first visit tries every tool, with nothing to download (PLACED: it is the
  // sample course -- a grown course needs no file and no connection).
  {key: 'generate', title: 'Generate and modify a course', text: 'A made-up course in a minute: pick a landscape, grow it, take it over and change anything. New here? Start with this one -- nothing to download.', go: () => import('./door-generate.js').then(m => m.open())},
- {key: 'real', title: 'Generate a real life course', text: 'A real course from its laser survey (LIDAR), aerial photo and map. Find it by name, box it on the map, and Build it for me does the steps -- or build it yourself.', go: () => import('./door-real.js').then(m => m.open())},
+ {key: 'real', title: 'Generate a real life course', text: 'Build a real course from its laser survey (LIDAR), aerial photo and map. Find it by name, box it on the map, then build it automatically or step by step.', go: () => import('./door-real.js').then(m => m.open())},
  {key: 'open', title: 'Open a course file', text: 'Carry on with a course or a draft you saved, or open a .fairway file somebody gave you.', go: openFile},
 ];
 
 export function home() {
- setTitle(''); topTools(); setSaver(null); window.fairwayBuilder.leave = null; useMenus();
+ setTitle(''); topTools(); setSaver(null); forgetOpened(); window.fairwayBuilder.leave = null; useMenus();
  const msg = el('p', {class: 'cb-note', id: 'cbHomeMsg'});
  show(el('section', {class: 'cb-doors'},
   el('h1', {}, 'Build a ', el('b', {}, 'course')),
@@ -138,20 +205,47 @@ export function home() {
   el('p', {class: 'cb-note'}, `Offline: the builder reads only the files you give it. Landscapes: ${BIOME_KEYS.map(k => BIOMES[k].name).join(', ')}.`)));
 }
 
+// OPEN A COURSE FILE: with a courses folder, what is in it, newest first, a
+// click each (and Open another file for one elsewhere); without one, the
+// browser's file picker as before.
 async function openFile() {
+ if (!canPick()) return openPicked();
+ const dir = await readyFolder(true);
+ const list = el('ul', {class: 'cb-courselist'}), head = el('small', {}), msg = el('small', {class: 'cb-askerr'});
+ let shut = null;
+ const fill = async d => {
+  head.textContent = d ? `Your courses folder: ${d.name}` : 'No courses folder yet: choose the folder your courses are saved in, and they are listed here every time.';
+  if (!d) { list.replaceChildren(); return; }
+  const got = await listCourses(d).catch(e => { msg.textContent = 'Could not read the folder: ' + e.message; return []; });
+  list.replaceChildren(...(got.length ? got.map(c => el('li', {}, el('button', {class: 'cb-btn cb-course', type: 'button', 'data-course': c.name, title: `Open ${c.name}`, onclick: () => shut({file: c.file, handle: c.handle})},
+   el('strong', {}, c.name.replace(/\.fairway(-draft)?$/i, '')), el('small', {}, `${c.draft ? 'draft, opens at its step' : 'course'} · ${(c.size / 1e6).toFixed(1)} MB · ${new Date(c.modified).toLocaleString()}`)))) : [el('li', {}, el('small', {}, `Nothing saved in ${d.name} yet.`))]));
+ };
+ const folderBtn = el('button', {class: 'cb-btn', type: 'button', 'data-open': 'folder', onclick: async () => { try { const d = await pickCourses(); useFolder(d); folderBtn.textContent = 'Change folder'; await fill(d); } catch { /* closed */ } }}, dir ? 'Change folder' : 'Choose courses folder');
+ const shown = fill(dir);
+ const pick = await askBox(close => { shut = close; return [el('h3', {}, 'Open a course'), head, list, msg,
+  el('div', {class: 'cb-btns'}, folderBtn, el('button', {class: 'cb-btn', type: 'button', 'data-open': 'other', title: 'A .fairway or draft file somewhere else', onclick: () => close('other')}, 'Open another file…'), el('button', {class: 'cb-btn', type: 'button', 'data-open': 'cancel', onclick: () => close(null)}, 'Cancel'))]; });
+ await shown;
+ if (pick === 'other') return openPicked();
+ if (pick) await openOne(pick.file, pick.handle);
+}
+async function openPicked() {
  const [file] = await pickFile('.fairway,' + DRAFT_EXT + ',application/zip,application/json');
- if (!file) return;
+ if (file) await openOne(file);
+}
+// One file opened; from the courses folder (`handle`), it is where Save writes back to.
+async function openOne(file, handle = null) {
  setBusy('Opening ' + file.name);
  try {
   const bytes = new Uint8Array(await file.arrayBuffer());
-  if (await isDraft(bytes)) { await (await import('./door-real.js')).openSaved(await readDraft(bytes)); return; }
+  if (await isDraft(bytes)) { const d = await readDraft(bytes); if (handle) openedFrom({handle, file: file.name, name: d.name}); await (await import('./door-real.js')).openSaved(d); return; }
   const got = await readCourseAny(file);
+  if (handle) openedFrom({handle, file: file.name, name: got.kind === 'built' ? got.doc.name : got.course.name});
   // A course saved from the editor brings its builder's section (course-doc.js),
   // unpacked only when Back to 2D or Save wants it.
   let draft = null;
   if (got.kind === 'built') (await import('./editor.js')).openEditor(got.doc, {work: got.builder ? {draft: () => draft ??= readDraft(got.builder)} : null});
   else (await import('./door-generate.js')).open(got.course);
- } finally { setBusy(''); }
+ } finally { setBusy(''); refreshSave(); }
 }
 
 // The test harness (tools/smoke.mjs) and the console reach the builder here.

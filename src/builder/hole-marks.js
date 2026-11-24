@@ -29,6 +29,15 @@ export function pressOn(holes, current, p, reach) {
  if (!g) return {act: 'place'};
  return {act: g.hole === current ? 'take' : 'wait', mark: g};
 }
+// THE HOLE TO MARK NEXT, once the hole in hand has its tee and green (the
+// owner, 22 November 2026: "the flow through placing holes isnt working
+// right"): the first after it, round to the start, still missing a tee or a
+// green -- or -1 when every one of the `n` holes has both. Until then a click
+// after placing a green moved that same hole's tee.
+export function nextToMark(holes, current, n) {
+ for (let k = 1; k < n; k++) { const q = (current + k) % n, h = holes[q]; if (!h?.tees?.length || !h.green) return q; }
+ return -1;
+}
 // The mark put at `p`. Its set and place in the list stay.
 export function moveMark(h, m, p) {
  if (m.kind === 'green') h.green = {...h.green, x: p.x, z: p.z};

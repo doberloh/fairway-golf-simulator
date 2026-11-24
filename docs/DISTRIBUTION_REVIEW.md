@@ -1669,12 +1669,13 @@ trees, never the survey or the picture (an aerial picture's licence may
 forbid passing it on). All five builder journeys pass with no network request,
 `builder-door-2` among them, which brings a LIDAR file in through the file
 picker, makes a course and plays it in the game by file://. **The one network use (the owner's amended goal, 31 October 2026)**:
-door 2's *Fetch imagery for this land* and *Find* ask an imagery provider --
+door 2's *Download photo* and *Find place* (named *Fetch imagery for this land* and *Find* until 22 November 2026) ask an imagery provider --
 USGS, IGN France, PDOK, PNOA, swisstopo with no key, Google or Bing with the
 player's own -- for map tiles over the land, and OpenStreetMap's Nominatim
-(the free providers' place search) for a place by name; and *Fetch
+(the free providers' place search) for a place by name; and *Download
 OpenStreetMap* asks the Overpass API (overpass-api.de) for the golf features, the course boundary and the buildings
-over the land. **OpenStreetMap's licence travels with a course built from
+over the land. *Build automatically* also asks it, first, for the course's
+outline alone (`leisure=golf_course` over the box, since 22 November 2026). **OpenStreetMap's licence travels with a course built from
 it**: the ODbL asks for the credit, which the builder adds to the course's
 credits, and a database made from it and shared stays ODbL -- a shared
 `.fairway` built from it carries that licence (the owner's call to allow,

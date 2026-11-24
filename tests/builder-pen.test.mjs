@@ -40,6 +40,51 @@ test('the points are about a step apart, and close nodes do not loop', () => {
  assert.ok(c.every(p => p[0] > -1 && p[0] < 21 && Math.abs(p[1]) < 2), 'no overshoot or loop');
 });
 
+// HOW MUCH IT CURVES (the owner, 23 November 2026): off is straight lines, a
+// strength between bulges less than the full curve, every one through the nodes.
+test('the curve\'s strength: off is the polygon, half bulges half as far, all through the nodes', () => {
+ const off = penCurve(square, {closed: true, curve: 0});
+ for (const p of off) assert.ok(Math.min(Math.abs(p[0]), Math.abs(p[0] - 20), Math.abs(p[1]), Math.abs(p[1] - 20)) < 1e-9, `${p} lies on the square's edge`);
+ const full = penCurve(square, {closed: true}), half = penCurve(square, {closed: true, curve: .5});
+ assert.equal(full.length, half.length);
+ const bulge = c => Math.min(...c.map(p => p[1]));
+ assert.ok(Math.abs(bulge(half) - bulge(full) / 2) < 1e-9, `half the bulge: ${bulge(half)} against ${bulge(full)}`);
+ for (const c of [off, half]) for (const n of square) assert.ok(c.some(p => near(p, n)), `through ${n}`);
+ assert.deepEqual(penCurve(square, {closed: true, curve: 1}), full, 'full strength is the default');
+});
+
+// 24 November 2026: part strength once blended the curve toward the straight
+// lines, which left a corner at every node; now the handles shorten instead.
+test('a curve at part strength has no kink at its nodes', () => {
+ // (Small, so a segment's 64 points at most are 5 cm apart.)
+ const nodes = [[0, 0], [3.4, 0], [3.4, 2.2], [0, 2.2]];
+ // Sampled finely, a smooth curve turns little from one point to the next
+ // even where it bends hardest; a kink turns at one point, however fine.
+ for (const curve of [.25, .5, .75]) {
+  const c = penCurve(nodes, {closed: true, curve, step: .02});
+  const turn = j => { const i = (j + c.length) % c.length, a = c[(i - 1 + c.length) % c.length], b = c[i], d = c[(i + 1) % c.length]; const u = [b[0] - a[0], b[1] - a[1]], v = [d[0] - b[0], d[1] - b[1]]; return Math.abs(Math.atan2(u[0] * v[1] - u[1] * v[0], u[0] * v[0] + u[1] * v[1])) * 180 / Math.PI; };
+  for (const n of nodes) {
+   const i = c.findIndex(p => near(p, n));
+   // (Before 24 November: 74 degrees at one point at a quarter strength.)
+   assert.ok(turn(i) < 1.5 * Math.max(turn(i - 1), turn(i + 1)) + 1, `curve ${curve}, node ${n}: turns ${turn(i).toFixed(1)} degrees at one point, ${turn(i - 1).toFixed(1)} and ${turn(i + 1).toFixed(1)} beside it`);
+  }
+ }
+});
+
+test('full strength is the centripetal spline, as it always was', () => {
+ // A point worked out by hand-free reference: the old de Boor-style form.
+ const ref = (p0, p1, p2, p3, u) => {
+  const k = (a, b) => Math.sqrt(Math.hypot(b[0] - a[0], b[1] - a[1])), t1 = k(p0, p1), t2 = t1 + k(p1, p2), t3 = t2 + k(p2, p3), t = t1 + (t2 - t1) * u;
+  const L = (a, b, ta, tb) => [a[0] + (b[0] - a[0]) * (t - ta) / (tb - ta), a[1] + (b[1] - a[1]) * (t - ta) / (tb - ta)];
+  const a1 = L(p0, p1, 0, t1), a2 = L(p1, p2, t1, t2), a3 = L(p2, p3, t2, t3), b1 = L(a1, a2, 0, t2), b2 = L(a2, a3, t1, t3);
+  return L(b1, b2, t1, t2);
+ };
+ const nodes = [[0, 0], [12, 3], [20, 15], [4, 22]], c = penCurve(nodes, {closed: true, step: 1});
+ // The second segment starts after the first's points.
+ const n0 = Math.max(2, Math.min(64, Math.ceil(Math.hypot(12, 3)))), n1 = Math.max(2, Math.min(64, Math.ceil(Math.hypot(8, 12))));
+ for (let i = 0; i < n1; i++) assert.ok(near(c[n0 + i], ref(nodes[0], nodes[1], nodes[2], nodes[3], i / n1), 1e-9), `point ${i}`);
+});
+
 test('the first node closes the shape once there are three; a node is found under the pointer', () => {
  assert.ok(!closesOn(square.slice(0, 2), [0, 0], 1));
  assert.ok(closesOn(square, [.5, .5], 1));

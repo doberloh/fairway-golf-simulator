@@ -7,7 +7,7 @@
 //   node tools/test.mjs --fast            only files that build no course (seconds)
 //   node tools/test.mjs paths water       only files whose names hold these words
 //   node tools/test.mjs --save-times      every file, then store each one's time
-//   --jobs N                              files at once (default: cores - 1)
+//   --jobs N                              files at once (default: cores - 1, at most 10)
 //   --list                                name the files it would run, and stop
 //
 // WHY NOT `node --test tests/*.test.mjs`. That runner takes its files in
@@ -33,15 +33,19 @@ const TIMES = join(ROOT, 'bench', 'test-times.json');
 // quickest course-building file took 5 s; nearly every other under 1).
 const FAST = 3;
 
+// NEVER MORE THAN 10 FILES AT ONCE (the owner, 22 November 2026: "can you add
+// a rule to only run max 10 node tests at a time?"; AGENTS.md). A run had
+// started 31 at once on this machine's cores. `--jobs` above it is held to it.
+const MAX_JOBS = 10;
 const argv = process.argv.slice(2), words = [];
-const opt = {jobs: Math.max(1, availableParallelism() - 1)};
+const opt = {jobs: Math.min(MAX_JOBS, Math.max(1, availableParallelism() - 1))};
 for (let i = 0; i < argv.length; i++) {
  const a = argv[i];
  if (a === '--changed') {opt.changed = true; if (argv[i + 1] && !argv[i + 1].startsWith('--')) opt.since = argv[++i];}
  else if (a === '--fast') opt.fast = true;
  else if (a === '--save-times') opt.save = true;
  else if (a === '--list') opt.list = true;
- else if (a === '--jobs') opt.jobs = +argv[++i];
+ else if (a === '--jobs') { opt.jobs = Math.max(1, +argv[++i] || 1); if (opt.jobs > MAX_JOBS) { console.log(`--jobs ${opt.jobs} held to ${MAX_JOBS}: never more than ${MAX_JOBS} test files at once (AGENTS.md).`); opt.jobs = MAX_JOBS; } }
  else if (a.startsWith('--')) {console.error(`unknown flag ${a}`); process.exit(2);}
  else words.push(a);
 }

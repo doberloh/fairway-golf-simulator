@@ -3,7 +3,7 @@
 // markers -- against a hand-made answer, never the network.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {osmFeatures, layOsm, overpassQuery, fetchOsm, osmBoundary, homeOfFootprint, mergeTrees} from '../src/builder/osm.js';
+import {osmFeatures, layOsm, overpassQuery, fetchOsm, osmBoundary, homeOfFootprint, mergeTrees, courseOutline} from '../src/builder/osm.js';
 import {osmHoles} from '../src/builder/osm-course.js';
 import {createTrace} from '../src/builder/trace-edit.js';
 
@@ -69,6 +69,22 @@ test('the course boundary: a relation\'s outer ways joined end to end, the large
  assert.equal(osmBoundary({elements: []}, toLocal), null);
 });
 
+// BUILD AUTOMATICALLY'S OUTLINE (22 November 2026): the course found, not the
+// largest -- a big neighbour reaching into the box must not win.
+test('the LIDAR step\'s outline from the map: the course round the place found, else the one covering most of the box', async () => {
+ const P = (lat, lon) => ({lat, lon}), sq = (lat, lon, d) => [P(lat, lon), P(lat, lon + d), P(lat + d, lon + d), P(lat + d, lon), P(lat, lon)];
+ const answer = {elements: [{type: 'way', id: 1, tags: {leisure: 'golf_course'}, geometry: sq(43.60, -95.62, .010)}, {type: 'way', id: 2, tags: {leisure: 'golf_course', name: 'The big neighbour'}, geometry: sq(43.585, -95.66, .05)}]};
+ const get = async (url, o) => { assert.match(decodeURIComponent(o.body), /leisure"="golf_course/); return {ok: true, json: async () => answer}; };
+ const box = [-95.625, 43.595, -95.605, 43.615];
+ const found = await courseOutline(box, get, {at: {lon: -95.615, lat: 43.605}});
+ assert.equal(found.length, 4, 'closed ring without its repeated corner');
+ assert.ok(Math.max(...found.map(p => p[0])) < -95.60, 'the small course round the place, not the larger neighbour');
+ const most = await courseOutline(box, get);
+ assert.ok(Math.max(...most.map(p => p[0])) < -95.60, 'with no place: the one covering most of the box');
+ assert.equal(await courseOutline(box, async () => ({ok: true, json: async () => ({elements: []})})), null);
+ await assert.rejects(courseOutline(box, async () => ({ok: false, status: 502})), /502/);
+});
+
 test('a building becomes a house: its smallest rectangle, turned to face the course; a shed is left out', () => {
  // A 20 x 12 m footprint turned 30 degrees, the course to the east.
  const t = Math.PI / 6, c = Math.cos(t), s = Math.sin(t), pt = (a, b) => [100 + a * c + b * s, 50 - a * s + b * c];
@@ -78,6 +94,11 @@ test('a building becomes a house: its smallest rectangle, turned to face the cou
  assert.ok(Math.abs(h.width * h.depth - 240) < 1e-6, `${h.width} x ${h.depth}`);
  assert.ok(Math.abs(Math.atan2(Math.sin(h.rotation - Math.PI / 2), Math.cos(h.rotation - Math.PI / 2))) <= Math.PI / 4 + 1e-9, `faces east: ${h.rotation}`);
  assert.equal(homeOfFootprint([[0, 0], [5, 0], [5, 5], [0, 5], [0, 0]]), null, 'a 25 m² shed');
+ // Door 2's House tool stands a dragged rectangle through the same rule, its own sizes allowed.
+ const shed = homeOfFootprint([[0, 0], [5, 0], [5, 5], [0, 5]], () => 0, {least: 12, most: 5000});
+ assert.ok(shed && Math.abs(shed.width * shed.depth - 25) < 1e-9, 'a 25 m² house drawn by hand');
+ const long = homeOfFootprint([[0, 0], [60, 0], [60, 10], [0, 10]], () => 0, {least: 12, most: 5000});
+ assert.ok(long && Math.abs(long.width - 60) < 1e-9 && Math.abs(long.depth - 10) < 1e-9, `a 60 x 10 m house, its long side to the south: ${long.width} x ${long.depth}`);
 });
 
 test('whose trees: the LIDAR\'s all kept, OpenStreetMap\'s added only where no LIDAR tree stands within 6 m; or either alone', () => {

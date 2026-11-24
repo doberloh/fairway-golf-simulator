@@ -9564,7 +9564,43 @@ captures unless it says otherwise.
 Rejected: tinting the cast shadows through the shadow term (CSM replaces
 three's light loop, so a patch there would have to follow it); a fixed
 saturation per landscape (the chunk cannot take per-landscape uniforms
-without recompiling every program). Sources: Barla, Thollot and Markosian,
+without recompiling every program).
+
+**The turf as the landscape paints it (24 November 2026).** The owner: "our
+grasses are almost too neon and too light colored on all of our biomes ...
+It tends to also get washed out on the projector screens." The cause was not
+the landscapes' colours, which are ordinary mid greens (Classic Parkland's
+fairway #709245), but two lifts on top of them. From the first commit
+renderer.js handed the ground each turf colour lifted: semi-rough x1.13,
+fairway `offsetHSL(.015, .1, .04)`, fringe `(0, .1, .07)`, green `(.01, .05,
+.08)` -- three works HSL in linear colour, so +.1 saturation is a big push
+(Classic Parkland's fairway went #709245 to #72a540, its green #b2c280 to
+#bfd786) -- and the grade above, added later, put 12% more colour back over
+everything. The rough was only tinted 23% toward `roughTint` (#b6bc65, a pale
+yellow), but it is most of any picture and read the limiest of all.
+textures.js `turfPalette` now hands the ground the landscape's own colours,
+each through `turfGrade`: saturation about luminance times `TURF_SAT` .8 and
+the colour times `TURF_VALUE` .84 (linear), both by the colour's greenness
+(green over the larger of red and blue, relative to luminance, times 2.5,
+clamped to 0..1 -- the slope tint's measure in ground.js), so straw and dry
+fescue (Desert's rough #b99967, North Sea Links') do not move and a lawn
+green takes all of it. The rough takes it after its tint; the 3D grass tufts
+(vegetation.js) take it too, or they stood out pale on the darker ground.
+Classic Parkland's drawn colours, before and after: rough #7a974d to
+#758a57, fairway #72a540 to #6c8550, fringe #acc266 to #94a26a, green
+#bfd786 to #adbb82. Every landscape still steps lighter from fairway to
+fringe to green (tests/toon-ramp.test.mjs). **Both numbers PLACED by eye** on
+five landscapes at five views (Classic Parkland, Seaside Links, Mountain,
+Florida Palms, Desert Resort; the owner, on the before-and-after page: "These
+Grass color changes are perfect"). Round 1 only took the lifts away: the
+fairway lost its lime but the rough, untouched, stayed the brightest thing on
+screen. Rejected: lowering `GRADE`, which would have dulled the trees, autumn
+leaves, water and sand that were all chosen under it; a per-landscape palette
+pass (forty colours to retune, and the next landscape would bring the lift
+back). Darker turf also keeps the ground's slopes, stripes and shade in the
+middle of the tone curve rather than its top, where ACES squeezes them
+together; that is reasoning, not a measurement. Not yet seen on the
+projector. Generation untouched (fingerprints unchanged): no version moves. Sources: Barla, Thollot and Markosian,
 *X-Toon* (rims and tone by view); the stylised-foliage tutorials already in
 REFERENCES (Inasa Fujio); *Belt of Venus*.
 
@@ -10851,7 +10887,105 @@ centred halfway between the ground below the camera and what the camera
 looks at, its side 2.2 times the camera's distance, because centred on the
 target the near ground sat in the fade.
 
+## Outlines fitted (23 November 2026)
+
+**Replaces the relaxing below** (kept for its history). The owner, on Alpine
+Lake Resort (2233 x 3066 m, so 1 m cells: `cellFor` above 2.25 km²): "jaggy
+edges on things like greens and tee boxes ... I did click smooth edges on
+them", and a Line laid with Auto curve off still came out rounded. Both were
+`layerRings`. Eight relax passes reach about two points, so a side a few
+degrees off the grid -- whose steps are ten or thirty cells apart -- kept them
+as a wobble, which the game's fringe and mowing then outline; and every corner
+was worn off. Smooth edges cannot help: it moves cells, and cells are what
+make the steps.
+
+Now (contour.js `fitRing`, all four numbers PLACED): from each traced point,
+how far a straight edge can run with every point within 0.55 of a cell of it;
+the ring walked in those longest edges from its sharpest turn; each edge laid
+on its points' least-squares line and each vertex where two such lines cross
+(kept within 1.2 cells of the cells' own corner); a vertex is a CORNER, kept
+sharp, when both its edges are at least 2 cells and it turns 70 degrees or
+more, or rounding it would pull the edge more than a cell; otherwise a
+quadratic curve from half the shorter edge before it to as far after. A
+circle's fitted edges sag at most the tolerance, so a green is always curved.
+Then (`cellArea`, `grownTo`) the ring is moved along its normals, at most half
+a cell, until it holds the cells' own area: fitting curves takes them inside
+the cells, 10-15 cm all round a green on 1 m land.
+
+Measured (a local script: shapes rasterised off the grid, traced, the stray
+from the true edge away from corners, its in/out bias, the corner cut, the
+sharpest kink on a shape with no corner):
+
+| Shape | cell | Relaxed: stray worst / typical, corner cut, kink | Fitted |
+| --- | --- | --- | --- |
+| green 34 x 26 m, turned 20 deg | 0.5 m | 20 / 7 cm, -, 8 deg | 29 / 6 cm, -, 7 deg |
+| green 34 x 26 m | 1 m | 42 / 20 cm (15 in), -, 11 deg | 46 / 14 cm (2 out), -, 8 deg |
+| tee 20 x 8 m, turned 6 deg | 0.5 m | 13 / 4 cm, 72 cm, 8 deg | 9 / 2 cm, 23 cm, 3 deg |
+| tee 20 x 8 m, turned 6 deg | 1 m | 52 / 19 cm, 127 cm, 15 deg | 23 / 9 cm, 46 cm, 6 deg |
+| fairway 300 x 40 m, turned 3 deg | 1 m | 54 / 17 cm, -, 15 deg | 69 / 11 cm, -, 9 deg |
+| path 60 x 2.5 m, turned 4 deg | 1 m | 112 / 31 cm, 159 cm, 38 deg | 43 / 10 cm, 92 cm, 4 deg |
+
+The worst strays left on curves sit where a curve runs flattest along the grid
+(the bottom of the green, the tips of the fairway): there the true edge lies
+anywhere inside one row of cells, and nothing can say where -- the cells'
+limit, not the fit's. On the owner's draft (2780 x 3280 cells, 1 m) every
+layer traced in 2.4-2.8 s, against 3.1-3.9 s relaxed, with 68 thousand points
+against 51 thousand (the file allows 2 million).
+
+What the game adds on its own, for comparison: its built field
+(built-field.js) is a 1.6 m texel on a 3.3 km property, and its linear filter
+rounds an exact rectangle's corner by 69 cm (24 cm at 0.6 m texels) while
+keeping its sides within 2 cm. Not changed: it is the game's memory and frame
+budget, and the corner is a tee's.
+
+**A part traced on its own differs a little from the whole**: the walk starts
+somewhere, so the 3D editor's and door 2's redraw after a stroke can place a
+curve where it enters the part slightly differently -- on the owner's draft,
+with 32 cells round the part, 95 in 100 points within 5 cm, 99 within 9 cm,
+27 cm the very worst (the 3D editor's margin went from 8 to 32 cells for
+this). A saved course is always traced whole. **Tried and rejected**: each
+point on the best line through the straight run centred on it (no walk, so a
+part agreed with the whole exactly) -- it left the 6-degree tee 9 cm typical
+off (against 2) and kinks of 14-29 degrees; and Bezier curves from edge middle
+to edge middle (potrace's own) -- 15 cm typical on the 1 m green, against 14,
+and 26 cm on the 1 m path, against 10.
+
+A Line laid with square ends now has square BENDS too (line-work.js: each
+bend's outside filled out to a mitre, cut across past a 150-degree turn,
+PLACED); round ends keep round bends. Saved, the outside corner of a 4 m L on
+half-metre land is within 25 cm of the cells' corner. Nothing a saved file
+holds changed, so no `BUILT_VERSION`; a course saved again gets the fitted
+outlines.
+
+## A built green's fringe, only where painted (24 November 2026)
+
+The game's fringe is a collar the course's fringe width (`fringe`, 2 m by
+default, 0-6 m) outside every green; on a built course it was 2 m outside the
+green as painted, which the owner saw as "bands added around every green".
+The owner's rule: a Fringe layer, played only where painted; a course from
+outside the builder keeps its fringe. Numbers and what is PLACED:
+
+- **A course saved from the builder: `fringe` 0**, so no collar but the
+  painted one. A file with none keeps 2 m, so a course already saved plays
+  as before (no `BUILT_VERSION`).
+- **Taken over or opened from outside the builder: the collar painted in**,
+  every 3D editor cell (0.5 m, or coarser on a big course) whose centre is
+  within the course's fringe width of a green, the green's own cells too
+  (PLACED: by the cell centre, as the editor fills every outline).
+- **The suggested width, about 2 m** in the builder's help (PLACED: the
+  game's default fringe, `DEFAULT_COURSE.fringe`; the generator's preset
+  range is 1-4 m).
+- **In the field, code 12** of the ground layer, winning inside its outline;
+  no new texture, so no cost on any tier: the shader's built branch reads the
+  code it already fetched. Profiled (`--only built`, the RTX 4090, Low):
+  the frozen copies of Parkland, the Pacific Northwest and Seaside draw in
+  0.48, 0.67 and 0.66 ms of graphics card a frame (median), under their
+  seeded twins (0.64, 0.86, 0.73); the baseline holds no built group to
+  compare against.
+
 ## Outlines without notches (1 November 2026)
+
+Superseded by *Outlines fitted* above (23 November 2026).
 
 Every surface's outline in a door 2 course, in door 2's smooth view and in
 the 3D editor is `layerRings` (real-course.js): the cells traced (contour.js
@@ -11025,6 +11159,42 @@ its 978 houses and some roads and ponds: Fill outside with **Remove what is
 there** took 34,101 surfaced cells (0.85 ha) and the 967 houses off;
 **Keep what is there** left all of them and floored only the bare ground.
 
+### The wood outside, sized from the survey (22 November 2026)
+
+The owner chose Fill outside's wood "sized from LIDAR" over thinning the land
+outside the boundary. Until then every planted tree was 10 to 22 m tall with
+a crown of 2.5 to 5 m (trace-edit.js defaults, PLACED on 1 November). Now
+(wood-size.js `woodSizer`), each planted tree is:
+
+- **under canopy** (land.js `canopy`, the tops less the ground, at least
+  2 m within 4 m of the spot): as tall as the highest of it, its crown in
+  the proportion of the nearest tree the survey found within 15 m, or 0.23
+  of its height with none (the old sizes' middle, 3.75 m over 16 m);
+- **on open ground**: the size of one of the survey's own trees (land.js
+  `findTrees`), drawn at random.
+
+A cell with building returns is not canopy, and no tree is over 70 m. All
+five numbers (4 m, 15 m, 2 m, 0.23, 70 m) are **PLACED**: 2 m is
+`findTrees`' own least tree; 4 m about half a crown across. Measured on
+Worthington's draft (8,074 survey trees, 3,437 spots sampled outside its
+boundary): 10th percentile 4.0 m, median 9.8 m, 90th 18.6 m, tallest 31.0 m,
+against the old 10 to 22 m evenly. A suburban parkland's woods are mostly
+lower than the old sizes put them. Not yet looked at in the builder or the
+game.
+
+**23 November 2026, Fill outside's own choices** (COURSE_BUILDER.md, *Clean
+up, Add layer around, Outside the course*). The owner found the wood "the
+same or even more trees than if i kept the original LIDAR data" and all one
+height. Now, by default: trees only where the survey's canopy is 2 m or more
+(not a roof), as many a hectare of that canopy as the survey's own trees
+outside the line (counted on every other land cell, at least 5 a hectare),
+and each tree's height and crown scaled by up to **20% either way (PLACED)**.
+Not measured on a real course yet. **Thin shapes and smoothing**: the
+majority over a 1.5 m circle took off every cell of a shape narrower than
+about half the circle (a 2.5 m cart path on 1 m land); a cell is now taken off
+only where some cell within the radius lies more than the radius inside the
+shape -- no new number.
+
 ## Finding LIDAR from the builder (1 November 2026)
 
 The owner asked for LIDAR searched for and downloaded inside the builder
@@ -11152,6 +11322,144 @@ Sources: [National Map product API](https://tnmaccess.nationalmap.gov/api/v1/doc
 [National Lidar Dataset (United States), Wikipedia](https://en.wikipedia.org/wiki/National_Lidar_Dataset_(United_States));
 [IOGP Guidance Note 7-2](https://www.iogp.org/bookstore/product/coordinate-conversions-and-transformation-including-formulas/);
 Snyder, *Map Projections -- A Working Manual*, USGS PP 1395 (1987).
+
+## A state portal's ZIP of zLAS, 6.2 GB (21-22 November 2026)
+
+The owner chose a ZIP downloaded from West Virginia's LIDAR tool in door 2
+and got three `NotReadableError`s in the console, uncaught, and nothing on
+screen. Measured on the file: **6,201,257,648 bytes, 17 parts, every one a
+`.zlas`** (162,950,690 to 641,439,427 bytes each; 6,202,872,434 unpacked:
+the parts are barely compressed). Two causes:
+
+- **The builder read a ZIP whole** (`readZip(new Uint8Array(await
+  f.arrayBuffer()))`), and Chrome will not hand over a file that size in one
+  piece: `arrayBuffer()` fails with NotReadableError. Now a ZIP is read from
+  its file a part at a time (zip.js `readZipFile`): the directory from the
+  last 64 KB, ZIP64's 8-byte sizes and offsets followed (this ZIP, over 4 GB,
+  needs them), each part sliced out only when read. On the owner's file the
+  directory read took **1 ms** and the first and last parts came out at once.
+  The line where the message says "too big to read in one piece" is PLACED
+  at 2 GB (`ONE_PIECE`), the figure usually given for Chrome's limit; not
+  measured here.
+- **zLAS is Esri's own format** ("Esri Optimized LAS"), which Fairway does
+  not read (COURSE_BUILDER, *Real land: LIDAR*: named with a converter).
+  West Virginia's download tool delivers its point clouds as `.zlas`
+  ([WV Elevation and LIDAR Data Download Tool](https://data.wvgis.wvu.edu/lidar/),
+  read only as summarised by a search). Esri's own FAQ: the LAS Optimizer is
+  a free executable that converts LAS to and from zLAS, losslessly, without
+  ArcGIS ([Esri Optimized LAS FAQ](https://kennis.hunzeenaas.nl/images/hunzeenaas/2/22/Esri_Optimized_LAS_FAQ.pdf),
+  quoted by search, not fetched); ArcGIS Pro's Convert LAS tool also writes
+  plain LAS but needs a licence ([Convert LAS](https://pro.arcgis.com/en/pro-app/latest/tool-reference/conversion/convert-las.htm));
+  Esri published a zLAS reading library for developers
+  ([Esri zLAS I/O library](https://community.esri.com/t5/3d-blog/esri-zlas-i-o-library-is-available/ba-p/901386),
+  not read: reading zLAS in the builder itself was not taken up). The
+  message names the LAS Optimizer and LASliberator, as the loose-file one
+  does, and the builder's own map search, which fetches USGS LIDAR (3DEP
+  covers West Virginia).
+- **Node's `openAsBlob` gives a file over 4 GB a wrapped size** (1,906,290,352
+  for this one: the real size less 2^32, Node 24.19): the check against the
+  real file read it through plain file reads instead. Browsers report the
+  size right.
+
+## Full detail inside the course, less outside (22-23 November 2026)
+
+The owner's Alpine Lake square (USGS 3DEP WV_FEMAR3_Southcentral_B2_2018,
+kept as a 1.6 GB `.ept.zip`, 268,979,492 points in 4,800 Entwine pieces over
+3 x 3.2 km with the margin) hung the builder: the page at 2.8 GB of a 3.76 GB
+limit, 1.7 GB of it the survey held in memory. Measured in Node by
+`tools/lidar-detail.mjs`, which reads the square and builds its land exactly
+as door 2 does (one job at a time; the card idle for the timings below):
+
+| Run | Points read | Reading the survey | Peak memory (process) | Ground filled in | Trees |
+|---|---|---|---|---|---|
+| Before (every piece read into memory first) | 269 M, 1.6 GB | 3.7 min | 3.1 GB | 10.7% | 44,459 |
+| Pieces read in turn, gridder freed, no outline | 269 M | 4.1 min | 1.45 GB | 10.7% | 44,314 |
+| Outline (OpenStreetMap's, 1.4 x 1.0 km), 2 a cell outside | 67 M, 441 MB | 1.2 min | 1.66 GB | 4.0% in, 57.7% out | 1,448 in, 50,137 out |
+| The same, 8 a cell outside | 205 M, 1.2 GB | 3.2 min | 1.5 GB | 4.0% in, 16.2% out | 1,448 in, 43,121 out |
+
+So: **memory** is fixed by reading pieces in their turn and freeing the
+gridder's sums (40 bytes a cell, about 400 MB here), outline or not; the
+outline's gain is **time** (2.5 times quicker at 2 a cell) and **download**
+(a quarter of the pieces). Its cost is the ground outside: at about 1.9
+points a square metre (the depth reaching 70% of 2 a cell -- Entwine's
+depths step by four times, so "about" needs that slack; PLACED) more than
+half the 1 m cells get no ground return and are filled from their
+neighbours, and the canopy from sparse tops breaks into more, smaller
+crowns (+16% trees outside). At 8 a cell the outside is nearly as before and
+the time saved small. **The owner chose 8 a cell** (23 November 2026: "Use
+more outside"), so the outline now buys a quarter less reading and download
+and keeps the land outside nearly as the whole survey makes it; 2 a cell is
+left as `tools/lidar-detail.mjs --outside 2` for comparison.
+
+**The half-metre ground inside the outline**: 50% of the half-metre cells
+inside Alpine Lake's outline got the two ground returns FINE_LEAST asks
+(PLACED: one is a centimetre or two of noise). The survey's ground returns are
+thinner than its 23 points a square metre suggest (about a third of them
+are ground here): where a cell has fewer, the patch keeps the 1 m ground. A
+made survey (tests/real-course.test.mjs, 16 ground points a square metre, a
+sheer 1 m bunker) shows the gain where returns are dense: half a metre outside
+the lip the ground is within 5 cm with patches and over 20 cm low at 1 m, in
+the game's ground mesh as in the sampler.
+
+**The course built on it** (`--course`: OpenStreetMap's 18 holes, 19 greens,
+37 tees and 20 bunkers laid as door 2 lays them, the land at 1 m with the
+outline), with the patches and without:
+
+| | With patches | Without |
+|---|---|---|
+| Course file | 9 MB | 8 MB |
+| Patches | 52, 0.20 M heights | 0 |
+| The game's ground mesh | 593,290 refined cells, 20.90 M triangles | 593,209 cells, 20.90 M triangles |
+| Test round (scratch and bogey computer golfers) | 97 and 127 | 99 and 130 |
+| Holes where a ball stuck | 1 | 1 (the same hole) |
+
+The mesh is already half a metre within 3 m of sand, tees and greens, and
+refines wherever it misses the land by 6 cm, so the patches added 81
+refined cells and no triangles worth counting. The stuck ball is there with
+or without patches.
+
+**Frame rate** (23 November 2026, the card idle; `frame-ab --built` on each
+file, one build, two rounds, tees 1 and 9; the graphics card's milliseconds
+at full clock, patches / plain):
+
+| Tier | Tee 1 | Tee 9 | Triangles |
+|---|---|---|---|
+| Low | 0.56 / 0.52 | 0.67 / 0.61 | within 0.1% |
+| Medium | 1.16 / 1.23 | 1.46 / 1.48 | within 0.2% |
+| High | 2.42 / 2.51 | 2.68 / 2.67 | within 0.6% |
+| Ultra | 3.48 / 3.39 | 3.66 / 3.93 | within 0.2% |
+
+The differences go both ways and are inside a run's noise: no frame cost on
+any tier. (These are the files before the noise floor below, with more
+patches than now: the dearer case.)
+
+**The detail is mostly noise on this survey.** Of the heights in Alpine
+Lake's patches, before the floor: 72% no detail, 22% under 3 cm, 6% 3 to
+10 cm, none over 10 cm. A two-return mean on a 3DEP survey is noisy by a
+centimetre or two, so most of it was noise, not shape. Since 23 November
+every difference is moved 2 cm towards nought (real-course.js PATCH_FLOOR,
+PLACED): noise goes, and a lip keeps its shape less 2 cm with no step at the
+floor (tests/real-course.test.mjs: a 1.5 cm ripple laid on nowhere, the sheer
+lip still within 5 cm). With the floor, Alpine Lake's patches: 91% no
+detail, 6% under 3 cm, 2% 3 to 10 cm; the file still 9 MB against 8, 35
+more refined cells. The test round (93 and 131 with patches, 94 and 134
+without) moves as much between two runs of the same file (99 and 130 the
+run before): the computer golfers cannot tell a difference this small.
+
+PLACED with it: BUFFER 30 m round the outline (a rough outline drawn by hand
+on a 2 m map); the fine grid at most 40 million cells; patch margins green
+8 m, tee 5 m, bunker 4 m; 1 cm of change marks the ground as changed on
+purpose; patches carrying under 5 mm of detail left out; patches merged
+only while under 250,000 heights (about 250 m square), so a compact course's
+boxes never run together past the file's limit and drop out. Putting surfaces
+keep their 5 m smoothing (*Greens a putt can hold*): the patches carry no
+detail there.
+
+**Sources**: Entwine Point Tile format (entwine.io, *Entwine Point Tile*: the
+octree's depths, each node's points a sample of its cube) -- already in
+REFERENCES under *Finding LIDAR from the builder*; OpenStreetMap's
+`leisure=golf_course` for Alpine Lake Resort Golf Course (way 299070913,
+ODbL), asked through Overpass on 22 November 2026.
 
 ## Free aerial imagery for the builder (31 October 2026)
 
@@ -17417,3 +17725,45 @@ way, so the relay never sees it.
   keys exchanged, the host's pinned) would close both; it was weighed
   against @noble/curves' size (tens of KB) and the friends-only rooms the
   owner asked for, and not built.
+
+## Normalize width: a cart path's and a street's width (23 November 2026, the builder-big-zips branch)
+
+Door 2's Clean up lays the cart paths or the streets again at one width
+(line-work.js `evenWidth`; COURSE_BUILDER.md *Houses of any size, Normalize
+width, the Line tool, the pen's curve*). The owner asked for cart paths
+"about 1.5 carts wide".
+
+- **A golf cart's width.** Club Car's own sheet for the Onward 2 Passenger:
+  overall width 48.75 in (123.8 cm); its 6 Passenger 48.8 in, 51.3 in lifted
+  (https://www.clubcar.com/en/personal/golf-carts/onward-2-passenger/specifications,
+  https://www.clubcar.com/en/personal/golf-carts/onward-6-passenger/specifications).
+  E-Z-GO's RXV page gives no width; third-party lists put it at 47 in
+  (https://www.golfcartgarage.com/blog/golf-cart-dimensions-and-their-importance,
+  read through a search summary only, not checked against the maker). One
+  third-party guide gives the Onward 2 Passenger as 47.5 in, against Club
+  Car's 48.75: Club Car's own figure followed. So a cart is about 1.2 to
+  1.24 m wide, and **1.5 carts is 1.8 m** -- the starting width, which the
+  player can change (1 to 6 m).
+- **Not followed: the usual built width.** Course cart paths are commonly
+  laid 8 ft (2.4 m) wide so two carts can pass; the owner asked for 1.5
+  carts, so 1.8 m is the start and 2.4 m is one number away. (From general
+  knowledge, no source fetched this pass -- PLACED as a remark, not used.)
+- **A street's width: 6 m**, the residential street of osm.js `ROAD_WIDTH`
+  (PLACED there from US lane widths, 3 to 3.7 m a lane).
+- **What is an area, not a path (PLACED, line-work.js `areaWidth`)**: wider
+  than three times the width and at least 8 m -- 8 m for cart paths, 18 m for
+  streets. A parking lot (two rows of spaces, about 5 to 5.5 m deep each, and
+  a 6 to 7 m aisle: 16 to 18 m, from general knowledge) is kept as drawn; a
+  single row along a drive, narrower than 18 m, is laid as a street.
+- **How a width lands on the grid.** The middle line found runs through cell
+  middles, so a cell painted when its middle lies within half the width (the
+  brush's own test) covers 2 x floor(half width / cell) + 1 cells across: at
+  1.8 m, 3 cells (1.5 m) on half-metre land and ONE cell (1 m) on 1 m land --
+  which the builder journey found, the first version laying 1 m cart paths on
+  its 1 m test land. So the width is laid as a whole number of cells, the
+  nearest: 1.8 m is 4 cells (2 m) on half-metre land and 2 cells (2 m) on 1 m
+  land, an even number laid on the middle line moved half a cell so it sits
+  between two rows. Measured: the Node test's ragged path (2 to 4.5 m wide)
+  came out 1.5 to 2.5 m across at every point measured, end to end, its branch
+  still joined; on 1 m land exactly 2 cells across; the builder journey's 3 m
+  line normalized to between 1 and 2.6 m (its check).

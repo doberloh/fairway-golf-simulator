@@ -18,6 +18,9 @@ const OUT = path.join(ROOT, 'bench', 'shots', 'builder-look'); fs.mkdirSync(OUT,
 const browser = await chromium.launch({args: ['--use-angle=default', '--enable-gpu', '--ignore-gpu-blocklist']});
 try {
  const page = await browser.newPage({viewport: {width: 1600, height: 900}});
+ // No courses folder (23 November 2026): with one, Open goes through the
+ // folder's own box and never reaches the file chooser.
+ await page.addInitScript(() => { window.showDirectoryPicker = undefined; });
  page.on('pageerror', e => console.log('pageerror:', e.message));
  await page.goto(pathToFileURL(path.join(ROOT, 'dist', 'builder.html')).href);
  const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.getByRole('button', {name: /Open a course file/}).click()]);

@@ -87,7 +87,11 @@ select option{background:#03100e;color:var(--ink)}
 .cb-toolset>b{font:700 12px/1 var(--head);text-transform:uppercase;letter-spacing:.05em;color:var(--soft)}
 .cb-toolopt{display:flex;flex-direction:column;gap:4px;margin-top:6px;padding:6px 8px;border-left:2px solid var(--a1);background:rgba(94,234,212,.06)}
 .cb-toolopt[hidden]{display:none}
-.cb-field label.cb-opt{display:flex;align-items:center;justify-content:space-between;gap:8px;font:400 12px/1.2 var(--body);text-transform:none;letter-spacing:0;color:var(--ink)}
+.cb-field label.cb-opt,.cb-fold label.cb-opt{display:flex;align-items:center;justify-content:space-between;gap:8px;font:400 12px/1.2 var(--body);text-transform:none;letter-spacing:0;color:var(--ink);margin:4px 0}
+.cb-fold label.cb-opt select{flex:1;min-width:0;max-width:65%}
+/* A box inside a section (Clean up's Smooth edges and Remove specks, 23 November 2026). */
+.cb-subbox{border:1px solid var(--line);border-radius:0;padding:6px 8px;margin:6px 0;display:flex;flex-direction:column;gap:4px}
+.cb-subbox>b{font-size:12px}
 .cb-opt input[type=number]{width:72px}
 .cb-opt input[type=range]{flex:1;min-width:0}
 .cb-door2 .cb-preview{left:auto;right:12px;bottom:56px}
@@ -207,6 +211,13 @@ select option{background:#03100e;color:var(--ink)}
 .cb-keysheet[hidden]{display:none}
 .cb-keyinner{background:#0a2420;border:1px solid var(--line);padding:20px 24px;max-width:960px;max-height:90vh;overflow:auto;display:flex;flex-direction:column;gap:14px}
 .cb-keyinner h3{margin:0;font:800 26px/1 var(--head);text-transform:uppercase}
+/* The save box and Open a course (builder.js askBox; 23 November 2026). */
+.cb-asksheet{z-index:45}
+.cb-askbox{width:min(560px,100%)}
+.cb-askbox input.cb-askname{width:100%}
+.cb-askerr{color:var(--hot)}
+.cb-courselist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow:auto}
+.cb-course{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left}
 .cb-keycols{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px 28px}
 .cb-keycols h4{margin:0 0 6px;font:800 15px/1 var(--head);text-transform:uppercase;color:var(--a1)}
 .cb-keycols div{display:flex;justify-content:space-between;gap:12px;padding:3px 0;border-bottom:1px solid rgba(94,234,212,.1);font-size:14px}

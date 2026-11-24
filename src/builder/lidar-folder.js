@@ -26,9 +26,10 @@ function db() {
  return new Promise((ok, no) => { const r = indexedDB.open(DB, 1); r.onupgradeneeded = () => r.result.createObjectStore(STORE); r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error); });
 }
 async function tx(mode, f) { const d = await db(); return new Promise((ok, no) => { const t = d.transaction(STORE, mode), r = f(t.objectStore(STORE)); t.oncomplete = () => { d.close(); ok(r?.result); }; t.onerror = () => { d.close(); no(t.error); }; }); }
-// The folder picked on an earlier visit, or null.
-export async function recallFolder() { try { return (await tx('readonly', s => s.get(KEY))) ?? null; } catch { return null; } }
-export async function rememberFolder(dir) { try { await tx('readwrite', s => s.put(dir, KEY)); } catch { /* a private window: kept for this visit only */ } }
+// The folder picked on an earlier visit, or null. `key`: which folder (the
+// courses folder, courses-folder.js, is kept beside this one).
+export async function recallFolder(key = KEY) { try { return (await tx('readonly', s => s.get(key))) ?? null; } catch { return null; } }
+export async function rememberFolder(dir, key = KEY) { try { await tx('readwrite', s => s.put(dir, key)); } catch { /* a private window: kept for this visit only */ } }
 
 // Leave to read and write it: asked for (a prompt) only when `ask`, which
 // must be inside a press.
@@ -53,16 +54,26 @@ export async function fileIn(dir, name, size = null) {
 export async function bytesIn(dir, name) { const f = await fileIn(dir, name); return f ? new Uint8Array(await f.arrayBuffer()) : null; }
 // Written whole: to a temporary name the browser renames when done, so a
 // download cut off leaves no half file under the real name.
-export async function saveIn(dir, name, bytes) {
+// `data`: bytes, or a ZIP written a part at a time ({size, chunks()},
+// zip.js zipStream), written as it comes so it is never whole in memory.
+// Returns the bytes written.
+export async function saveIn(dir, name, data) {
  const w = await (await dir.getFileHandle(name, {create: true})).createWritable();
- try { await w.write(bytes); await w.close(); } catch (e) { await w.abort?.(); throw e; }
+ let n = 0;
+ try {
+  if (data.chunks) for await (const c of data.chunks()) { await w.write(c); n += c.length; }
+  else { await w.write(data); n = data.length; }
+  await w.close();
+ } catch (e) { await w.abort?.(); throw e; }
+ return n;
 }
 // A file taken out of the folder: only ever one the builder made, whose every
 // piece is in the file that replaced it (door-real.js keepAll checks that first).
 export async function removeIn(dir, name) { try { await dir.removeEntry(name); return true; } catch { return false; } }
 // Where no folder can be picked: the browser saves it, into its downloads.
-export function saveAsDownload(name, bytes) {
- const url = URL.createObjectURL(new Blob([bytes])), a = document.createElement('a');
+export async function saveAsDownload(name, data) {
+ const parts = []; if (data.chunks) for await (const c of data.chunks()) parts.push(c); else parts.push(data);
+ const url = URL.createObjectURL(new Blob(parts)), a = document.createElement('a');
  a.href = url; a.download = name; document.body.append(a); a.click(); a.remove();
  setTimeout(() => URL.revokeObjectURL(url), 60e3);
 }

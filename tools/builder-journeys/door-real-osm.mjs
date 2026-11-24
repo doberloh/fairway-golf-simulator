@@ -11,8 +11,9 @@
 // Registered by tools/builder-smoke.mjs.
 import path from 'node:path';
 import fs from 'node:fs';
-import {surveyLas} from './door-real.mjs';
+import {surveyLas, drawOutline} from './door-real.mjs';
 import {playOneShot} from './door-generate.mjs';
+import {writeZip} from '../../src/zip.js';
 
 const GEO = {lat: 43.63, lon: -95.62};
 // Local metres to degrees as door 2 does round a place found by name.
@@ -51,22 +52,42 @@ export default function ({journey, SHOTS}) {
   await page.route(/nominatim\.openstreetmap\.org/, r => r.fulfill({status: 200, contentType: 'application/json', headers: {'Access-Control-Allow-Origin': '*'}, body: JSON.stringify([{lon: String(GEO.lon), lat: String(GEO.lat), display_name: 'A test place, Minnesota'}])}));
   await page.route(/overpass-api\.de/, r => { asked++; return r.fulfill({status: 200, contentType: 'application/json', headers: {'Access-Control-Allow-Origin': '*'}, body: JSON.stringify(answer())}); });
   const idle = () => page.waitForFunction(() => document.querySelector('.cb-busy').hidden, null, {timeout: 120000});
-  const las = path.join(SHOTS, 'door-2-osm-survey.las');
-  fs.writeFileSync(las, surveyLas());
+  // THE SURVEY IN A ZIP, as a state portal hands it out (21 November 2026:
+  // the owner's 6.2 GB West Virginia ZIP gave uncaught errors and nothing on
+  // screen). First a ZIP of zLAS, Esri's format, which is named and not
+  // read; then the survey's LAS inside a ZIP with a README, read through
+  // zip.js readZipFile a part at a time.
+  const zlasZip = path.join(SHOTS, 'door-2-osm-zlas.zip'), lasZip = path.join(SHOTS, 'door-2-osm-survey.zip');
+  fs.writeFileSync(zlasZip, await writeZip([{name: 'tiles/17SPD000001.zlas', data: new Uint8Array(4000).fill(3)}, {name: 'tiles/17SPD000002.zlas', data: new Uint8Array(4000).fill(5)}, {name: 'tiles/', data: ''}]));
+  fs.writeFileSync(lasZip, await writeZip([{name: 'README.txt', data: 'A made-up survey.'}, {name: 'survey/door-2-osm-survey.las', data: surveyLas()}]));
   await page.getByRole('button', {name: /Generate a real life course/}).click();
-  const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.getByRole('button', {name: 'Choose LIDAR files'}).click()]);
-  await chooser.setFiles(las);
+  {
+   const [zc] = await Promise.all([page.waitForEvent('filechooser'), page.getByRole('button', {name: 'Open LIDAR files'}).click()]);
+   await zc.setFiles(zlasZip); await idle();
+   const said = await page.locator('li.cb-err', {hasText: 'zLAS'}).textContent({timeout: 15000});
+   if (!/door-2-osm-zlas\.zip: these 2 files are zLAS/.test(said) || !/LAS Optimizer/.test(said) || !/search the map/.test(said)) throw Error(`a ZIP of zLAS should be named, with what to do: ${said}`);
+   if (await page.evaluate(() => window.fairwayBuilder.door2.sources?.length)) throw Error('nothing should be read from a ZIP of zLAS');
+  }
+  const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.getByRole('button', {name: 'Open LIDAR files'}).click()]);
+  await chooser.setFiles(lasZip);
   await page.waitForFunction(() => window.fairwayBuilder.door2?.preview, null, {timeout: 60000}); await idle();
-  await page.getByRole('button', {name: 'Next: build the land'}).click();
+  {
+   const listed = await page.locator('li', {hasText: 'door-2-osm-survey.zip / door-2-osm-survey.las'}).textContent({timeout: 5000});
+   if (!/LAS, [0-9,]+ points/.test(listed)) throw Error(`the survey read from its ZIP should be listed with its points: ${listed}`);
+  }
+  // The course's outline is required: Next waits for it (23 November 2026).
+  if (!/cb-wait/.test(await page.getByRole('button', {name: 'Next: build land'}).getAttribute('class'))) throw Error('Next: build land should wait for the course outline');
+  await drawOutline(page, [[-150, -100], [150, -100], [150, 100], [-150, 100]]);
+  await page.getByRole('button', {name: 'Next: build land'}).click();
   // (Next starts the build at once.)
   await page.waitForFunction(() => window.fairwayBuilder.door2.land, null, {timeout: 120000}); await idle();
-  await page.getByRole('button', {name: 'Next: trace the course'}).click();
+  await page.getByRole('button', {name: 'Next: trace course'}).click();
   // The place, then OpenStreetMap.
   await page.locator('.cb-provider').selectOption('usgs');
   await page.getByPlaceholder(/A place/).fill('A test place');
-  await page.getByRole('button', {name: 'Find', exact: true}).click();
+  await page.getByRole('button', {name: 'Find place', exact: true}).click();
   await page.getByText('A test place, Minnesota').click();
-  await page.getByRole('button', {name: 'Fetch OpenStreetMap'}).click();
+  await page.getByRole('button', {name: 'Download OpenStreetMap'}).click();
   await page.waitForFunction(() => window.fairwayBuilder.door2.osm, null, {timeout: 60000}); await idle();
   if (asked !== 1) throw Error(`OpenStreetMap should be asked once, not ${asked}`);
   const got = await page.evaluate(() => { const st = window.fairwayBuilder.door2; return {layers: st.model.layersPresent(), green: st.model.kindAt(-160, -110), sand: st.model.kindAt(-148, -104), fairway: st.model.kindAt(-160, 0), holes: st.holes.filter(h => h?.green).length, credits: st.credits}; });
@@ -96,34 +117,48 @@ export default function ({journey, SHOTS}) {
   // The trees choice stays inside the steps' column (it ran off it).
   const fits = await page.evaluate(() => { const s = document.querySelector('.cb-treesfrom').getBoundingClientRect(), c = document.querySelector('.cb-steps').getBoundingClientRect(); return s.right <= c.right + 1 && s.left >= c.left - 1; });
   if (!fits) throw Error('the trees choice should fit inside the steps\' column');
-  await page.getByRole('button', {name: 'Keep it as drawn'}).click();
+  await page.getByRole('button', {name: 'Keep map as is'}).click();
   if ((await trees()).now !== t0.lidar + 1) throw Error('Keep it as drawn should keep the merged trees');
   // Its boundary and its houses came with it; outside the boundary, filled
   // keeping what the map put there, then (after Undo) removing it.
   const kept = await page.evaluate(() => { const st = window.fairwayBuilder.door2; return {boundary: st.boundary?.length ?? 0, homes: st.model.state.homes.length, trees: st.model.state.trees.length, pond: st.model.kindAt(200, 80)}; });
   if (!kept.boundary || kept.homes !== 2 || kept.pond !== 'water') throw Error(`OpenStreetMap's boundary, houses and pond should come with it: ${JSON.stringify(kept)}`);
   await page.locator('.cb-outside').selectOption('keep');
-  await page.getByRole('button', {name: 'Fill outside it'}).click(); await idle();
+  await page.getByRole('button', {name: 'Fill outside boundary'}).click(); await idle();
   const keptOut = await page.evaluate(() => { const st = window.fairwayBuilder.door2; return {homes: st.model.state.homes.length, pond: st.model.kindAt(200, 80), out: st.model.kindAt(-200, 0)}; });
   if (keptOut.homes !== 2 || keptOut.pond !== 'water' || keptOut.out === 'fairway') throw Error(`filling outside and keeping should leave the map's pond and house: ${JSON.stringify(keptOut)}`);
   await page.getByRole('button', {name: 'Undo', exact: true}).click();
   await page.locator('.cb-outside').selectOption('remove');
-  await page.getByRole('button', {name: 'Fill outside it'}).click(); await idle();
+  // The wood planted everywhere outside, at a set density (since 23 November
+  // 2026 the default plants only where the LIDAR saw trees, at the survey's
+  // own density -- few on this small test survey).
+  await page.locator('.cb-outwhere').selectOption('all');
+  await page.locator('.cb-outdensity').fill('120');
+  // No height variety, so each tree is exactly a size the survey gives (below).
+  await page.locator('.cb-outvary').fill('0');
+  await page.getByRole('button', {name: 'Fill outside boundary'}).click(); await idle();
   const gone = await page.evaluate(() => { const st = window.fairwayBuilder.door2; return {homes: st.model.state.homes.length, pond: st.model.kindAt(200, 80)}; });
   if (gone.homes !== 1 || gone.pond === 'water') throw Error(`filling outside and removing should take the map's pond and the house outside: ${JSON.stringify(gone)}`);
   const filled = await page.evaluate(() => { const st = window.fairwayBuilder.door2; return {trees: st.model.state.trees.length, out: st.model.kindAt(-200, 0), inside: st.model.kindAt(-160, 0)}; });
   if (!(filled.trees > kept.trees) || filled.inside !== 'fairway' || ['fairway', 'green', 'tee'].includes(filled.out)) throw Error(`outside the boundary should become the landscape's wood: ${JSON.stringify(filled)}`);
+  // The wood sized from the survey (wood-size.js; the owner, 22 November
+  // 2026): every tree outside as tall as the canopy somewhere or as one of the
+  // survey's own trees -- none of the old 10 to 22 m drawn at random.
+  const sized = await page.evaluate(() => { const st = window.fairwayBuilder.door2, inRing = (r, x, z) => { let c = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const [ax, az] = r[j], [bx, bz] = r[i]; if ((bz > z) !== (az > z) && x < (ax - bx) * (z - bz) / (az - bz) + bx) c = !c; } return c; };
+   const canopy = new Set(st.land.canopy), own = new Set(st.trees.map(t => t.h)), out = st.model.state.trees.filter(t => !inRing(st.boundary, t.x, t.z));
+   return {out: out.length, off: out.filter(t => !canopy.has(t.h) && !own.has(t.h) && t.h !== 70).map(t => t.h).slice(0, 5), said: document.querySelector('[role="status"].cb-note')?.textContent ?? ''}; });
+  if (!sized.out || sized.off.length || !/height varied by up to 0%/.test(sized.said)) throw Error(`the wood outside should be sized from the survey: ${JSON.stringify(sized)}`);
   await t.shot('osm');
-  await page.getByRole('button', {name: 'Next: the holes'}).click();
-  await page.getByRole('button', {name: 'Next: the name'}).click();
+  await page.getByRole('button', {name: 'Next: mark holes'}).click();
+  await page.getByRole('button', {name: 'Next: name course'}).click();
   await page.locator('.cb-name').fill('Door 2 from the map');
-  await page.getByRole('button', {name: 'Next: review the course'}).click();
+  await page.getByRole('button', {name: 'Next: review course'}).click();
   await page.waitForFunction(() => window.fairwayBuilder.door2.doc, null, {timeout: 120000}); await idle();
   const doc = await page.evaluate(() => { const d = window.fairwayBuilder.door2.doc; return {holes: d.holes.length, par: d.holes[0].par, credits: d.credits}; });
   if (doc.holes !== 9) throw Error(`the course should have nine holes, not ${doc.holes}`);
   console.log(`       OpenStreetMap laid: ${got.layers.join(', ')}; ${got.holes} holes from its numbered lines`);
   await t.shot('review');
-  await page.getByRole('button', {name: 'Open in the editor'}).click();
+  await page.getByRole('button', {name: 'Open in 3D editor'}).click();
   await page.waitForFunction(() => window.fairwayBuilder?.editor?.view, null, {timeout: 120000});
   // The house OpenStreetMap gave is drawn in the editor; the House tool
   // stands another where clicked.

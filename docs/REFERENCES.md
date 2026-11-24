@@ -978,3 +978,28 @@ Read for RESEARCH.md, *Online play: where the relay can live*. The owner chose C
 - Metered Open Relay -- https://metered.ca/tools/openrelay/ , https://www.metered.ca/tools/openrelay/webrtc-library/ -- search summaries only. Taken: 20 GB a month TURN; free signalling capped at 100 connections and 100,000 messages a month.
 - ExpressTURN -- https://www.expressturn.com/ -- search summary only. Taken: 1 TB a month free TURN.
 - Cloudflare, Durable Objects WebSocket hibernation (`acceptWebSocket`, `serializeAttachment`, `getWebSockets`, `setWebSocketAutoResponse`) -- https://developers.cloudflare.com/durable-objects/best-practices/websockets/ -- recalled, not fetched this session; what relay/cloudflare/worker.js uses was run under `wrangler dev` 4.165.0 and passed tools/relay-check.mjs and whole rounds (RESEARCH, *As built and measured*).
+
+## A state portal's ZIP of zLAS (22 November 2026, the builder-big-zips branch)
+
+Read for RESEARCH.md, *A state portal's ZIP of zLAS, 6.2 GB*.
+
+- The WV Elevation and LIDAR Data Download Tool (WV GIS Technical Center) -- https://data.wvgis.wvu.edu/lidar/ -- search summary only. Taken: its point clouds are delivered as `.zlas`.
+- Esri Optimized LAS FAQ -- https://kennis.hunzeenaas.nl/images/hunzeenaas/2/22/Esri_Optimized_LAS_FAQ.pdf -- quoted by search, not fetched. Taken: the LAS Optimizer is free, converts LAS to and from zLAS losslessly, and needs no ArcGIS.
+- Esri, ArcGIS Pro *Convert LAS* -- https://pro.arcgis.com/en/pro-app/latest/tool-reference/conversion/convert-las.htm -- search summary. Taken: writes plain LAS from zLAS; needs ArcGIS Pro (not offered to players).
+- Esri zLAS I/O library -- https://community.esri.com/t5/3d-blog/esri-zlas-i-o-library-is-available/ba-p/901386 -- not read. Noted only: a developer library for reading zLAS exists; reading zLAS in the builder was not taken up.
+
+## Full detail inside the course, less outside (22-23 November 2026, the builder-big-zips branch)
+
+Read for RESEARCH.md, *Full detail inside the course, less outside*.
+
+- Entwine Point Tile -- https://entwine.io/en/latest/entwine-point-tile.html -- recalled from *Finding LIDAR from the builder*, not fetched again. Taken: every depth of the octree holds a sample of its node's cube, so a survey thinned is its nodes down to a depth; the counts per node in `ept-hierarchy`.
+- OpenStreetMap, Alpine Lake Resort Golf Course (way 299070913, `leisure=golf_course`, and its holes, greens, tees and bunkers) -- https://www.openstreetmap.org/way/299070913 -- asked through the Overpass API on 22 November 2026 (ODbL). Taken: the course's outline and its course, for the measurements on the owner's square.
+
+## Normalize width (23 November 2026, the builder-big-zips branch)
+
+Read for RESEARCH.md, *Normalize width: a cart path's and a street's width*.
+
+- Club Car, Onward 2 Passenger specifications -- https://www.clubcar.com/en/personal/golf-carts/onward-2-passenger/specifications -- search summary. Taken: overall width 48.75 in (123.8 cm).
+- Club Car, Onward 6 Passenger specifications -- https://www.clubcar.com/en/personal/golf-carts/onward-6-passenger/specifications -- search summary. Taken: 48.8 in, 51.3 in lifted.
+- Golf Cart Garage, *Golf cart dimensions and their importance* -- https://www.golfcartgarage.com/blog/golf-cart-dimensions-and-their-importance -- search summary only. Taken: E-Z-GO RXV about 47 in wide (E-Z-GO's own page gives no width). A third-party guide's 47.5 in for the Onward 2 Passenger was set aside for Club Car's figure.
+- Zhang, T. Y. and Suen, C. Y., *A fast parallel algorithm for thinning digital patterns*, Communications of the ACM 27(3), 1984 -- from memory, not fetched. Taken: the two-pass thinning rule `skeleton` uses. Yokoi's connectivity number (8-connected) for the stair-step corners, also from memory.

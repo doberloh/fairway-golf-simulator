@@ -3,8 +3,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {coverageOf, coverageWords, percent, squareOfName, unionBox, boxOfGeometry, overlaps} from '../src/builder/lidar-coverage.js';
-import {coverFor, coverTogether, tilesOf, squareAround, squareName, downloadLidar, growBox} from '../src/builder/lidar-search.js';
-import {readZip} from '../src/zip.js';
+import {coverFor, coverTogether, tilesOf, squareAround, squareName, downloadLidar, growBox, keepBytes, eptFileSource} from '../src/builder/lidar-search.js';
+import {readZip, writeZip} from '../src/zip.js';
 import {lonLatToMerc} from '../src/lidar/ept.js';
 
 const box = {lon0: 0, lat0: 0, lon1: 1, lat1: 1}, west = {lon0: -1, lat0: -1, lon1: .5, lat1: 2}, east = {lon0: .5, lat0: -1, lon1: 2, lat1: 2};
@@ -92,7 +92,7 @@ test('a square again: read from the folder, nothing downloaded', async () => {
  const [first] = await downloadLidar(found, b, {get: s.get, ...f});
  assert.ok(first.keep); assert.equal(first.keep.replaces.length, 0);
  const n = s.asked.length; assert.ok(n > 0);
- f.files.set(first.keep.name, first.keep.bytes);
+ f.files.set(first.keep.name, (await keepBytes(first.keep)));
  const [again] = await downloadLidar(found, b, {get: async () => { throw Error('online'); }, ...f});
  assert.ok(again.kept); assert.equal(again.keptAs, first.keep.name); assert.equal(s.asked.length, n);
 });
@@ -101,7 +101,7 @@ test('a bigger square downloads only the pieces missing, and combines them', asy
  const s = survey(), f = folder(), found = {source: 'usgs', id: 'S', title: 'S', ept: 'https://x/ept.json'};
  const small = squareAround(-122.38, 47.615, 500), big = squareAround(-122.4, 47.6, 3000);
  const [one] = await downloadLidar(found, small, {get: s.get, ...f});
- f.files.set(one.keep.name, one.keep.bytes);
+ f.files.set(one.keep.name, (await keepBytes(one.keep)));
  const first = [...s.asked];
  assert.equal(first.length, 2, 'the root and one quarter');
  s.asked.length = 0;
@@ -110,12 +110,12 @@ test('a bigger square downloads only the pieces missing, and combines them', asy
  assert.ok(s.asked.every(n => !first.includes(n)), 'nothing fetched twice');
  assert.equal(two.reused, 2); assert.equal(two.fetched, 3); assert.equal(two.pieces, 5, 'the source reads all five');
  assert.deepEqual(two.keep.replaces, [one.keep.name], 'the old square is named to go');
- const zip = await readZip(two.keep.bytes), meta = JSON.parse(new TextDecoder().decode(zip.get('fairway-ept.json')));
+ const zip = await readZip((await keepBytes(two.keep))), meta = JSON.parse(new TextDecoder().decode(zip.get('fairway-ept.json')));
  assert.equal([...zip.keys()].filter(n => n.endsWith('.laz')).length, 5, 'one ZIP holds them all');
  assert.equal(meta.squares.length, 2, 'both squares are listed');
  assert.ok(squareOfName(two.keep.name).box.lon1 >= big.lon1 - 1e-4, 'named for the whole extent');
  // The small one asked for again, offline, from the combined file.
- f.files.clear(); f.files.set(two.keep.name, two.keep.bytes);
+ f.files.clear(); f.files.set(two.keep.name, (await keepBytes(two.keep)));
  const [back] = await downloadLidar(found, small, {get: async () => { throw Error('online'); }, ...f});
  assert.ok(back.kept); assert.equal(back.pieces, 2, 'only its own pieces are read');
  // And nothing new needed: a square inside what is held downloads nothing.
@@ -127,9 +127,61 @@ test('a bigger square downloads only the pieces missing, and combines them', asy
 test('a square of another survey is left alone', async () => {
  const s = survey(), f = folder(), b = squareAround(-122.4, 47.6, 1000);
  const [other] = await downloadLidar({source: 'usgs', id: 'Other', title: 'O', ept: 'https://x/ept.json'}, b, {get: s.get, ...f});
- f.files.set(other.keep.name, other.keep.bytes); s.asked.length = 0;
+ f.files.set(other.keep.name, (await keepBytes(other.keep))); s.asked.length = 0;
  const [mine] = await downloadLidar({source: 'usgs', id: 'Mine', title: 'M', ept: 'https://x/ept.json'}, b, {get: s.get, ...f});
  assert.ok(s.asked.length > 0); assert.deepEqual(mine.keep.replaces, []);
+});
+
+// FULL DETAIL INSIDE THE OUTLINE (22 November 2026). A survey of three depths
+// over a cube 8 km (Web Mercator) round the place: one node, four, sixteen,
+// 1,000 points each. Over a 3 km box the top two depths give about 1.7e-4
+// points a square metre, the third brings it to 7.2e-4; asking 2e-4 outside
+// (70% of it reached at depth 1) keeps depths 0 and 1 everywhere and depth 2
+// only under the outline.
+function deepSurvey(lon = -122.4, lat = 47.6) {
+ const asked = [], {x, y} = lonLatToMerc(lon, lat), D = 4000, bounds = [x - D, y - D, -D, x + D, y + D, D];
+ const hierarchy = {'0-0-0-0': 1000};
+ for (let i = 0; i < 2; i++) for (let j = 0; j < 2; j++) hierarchy[`1-${i}-${j}-0`] = 1000;
+ for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) hierarchy[`2-${i}-${j}-0`] = 1000;
+ const get = async url => {
+  if (url.endsWith('ept.json')) return {ok: true, json: async () => ({dataType: 'laszip', bounds, span: 256})};
+  if (url.includes('ept-hierarchy')) return {ok: true, json: async () => hierarchy};
+  asked.push(url.split('/').pop().replace('.laz', ''));
+  return {ok: true, arrayBuffer: async () => Uint8Array.from([1, 2, 3, url.length]).buffer};
+ };
+ return {get, asked};
+}
+// A square ring `m` metres either side of a point `e` metres east and north of the place.
+const ringAt = (e, m, lon = -122.4, lat = 47.6) => { const dLon = 1 / (111320 * Math.cos(lat * Math.PI / 180)), dLat = 1 / 111320; return [[-m, -m], [m, -m], [m, m], [-m, m]].map(([a, b]) => [lon + (e + a) * dLon, lat + (e + b) * dLat]); };
+
+test('with an outline: every depth under it, the thin layer elsewhere; kept with its outline; a wider one fetches only what it lacks', async () => {
+ const s = deepSurvey(), f = folder(), found = {source: 'usgs', id: 'S', title: 'S', ept: 'https://x/ept.json'}, box = squareAround(-122.4, 47.6, 3000);
+ const small = {ring: ringAt(1000, 200), perM2: 2e-4};
+ const [one] = await downloadLidar(found, box, {get: s.get, ...f, detail: small});
+ assert.deepEqual(s.asked.filter(k => k.startsWith('2-')), ['2-2-2-0'], 'the one deepest piece under the outline');
+ assert.equal(s.asked.length, 1 + 4 + 1); assert.equal(one.thinned.depth, 1);
+ f.files.set(one.keep.name, await keepBytes(one.keep));
+ // Again with the same outline, offline: from the folder.
+ const [again] = await downloadLidar(found, box, {get: async () => { throw Error('online'); }, ...f, detail: small});
+ assert.ok(again.kept); assert.equal(again.pieces, 6);
+ // A wider outline: only the deeper pieces it adds.
+ s.asked.length = 0;
+ const wide = {ring: ringAt(1000, 1500), perM2: 2e-4};
+ const [two] = await downloadLidar(found, box, {get: s.get, ...f, detail: wide});
+ assert.ok(s.asked.length > 0 && s.asked.every(k => k.startsWith('2-') && k !== '2-2-2-0'), `only new deep pieces: ${s.asked}`);
+ assert.equal(two.reused, 6);
+ // The kept file, opened from the folder, thinned to the small outline: no
+ // download, none missing; asked for the whole survey: the pieces it lacks counted.
+ const bytes = await keepBytes(two.keep), src = await eptFileSource(bytes, null);
+ const thin = src.choose(small);
+ assert.equal(thin.missing, 0); assert.equal(thin.source.pieces, 6);
+ assert.equal(src.choose({ring: ringAt(-1000, 1500), perM2: 2e-4}).missing > 0, true, 'an outline elsewhere needs pieces not kept');
+ // An older kept square (no outline, no record of the survey's pieces): read whole, as before.
+ const made = await readZip(await keepBytes((await downloadLidar(found, squareAround(-122.4, 47.6, 1000), {get: deepSurvey().get, ...folder()}))[0].keep));
+ const meta = JSON.parse(new TextDecoder().decode(made.get('fairway-ept.json'))); delete meta.cube; delete meta.points;
+ const oldBytes = await writeZip([{name: 'fairway-ept.json', data: JSON.stringify(meta)}, ...[...made].filter(([n]) => n.endsWith('.laz')).map(([name, data]) => ({name, data, store: true}))]);
+ const old = await eptFileSource(oldBytes, null), kept = old.choose(small);
+ assert.equal(kept.source, old, 'read whole'); assert.equal(kept.missing, 0);
 });
 
 test('the LIDAR is downloaded 150 m past the box, as past a square', () => {

@@ -5,13 +5,13 @@
 // source over it searched (the National Map, Hobu's Entwine index and USGS's
 // Entwine copy stood in for by the journey: one piece of points over the
 // square); the square downloaded, written to the LIDAR folder as its ZIP and
-// shown yellow over the relief; door 2 opened again and the same square
+// its reach outlined yellow on the map, which stays; door 2 opened again and the same square
 // read from the folder with nothing asked of USGS; Load from the folder
 // lists it, ticked as over the place. The folder is a stand-in in the page
 // (showDirectoryPicker is a dialog a script cannot answer), so the browser
 // remembering it between visits (IndexedDB) is not driven here.
 // Registered by tools/builder-smoke.mjs.
-import {tilePng} from './door-real.mjs';
+import {tilePng, drawOutline} from './door-real.mjs';
 
 const GEO = {lat: 43.63, lon: -95.62}, R = 6378137;
 const merc = (lon, lat) => ({x: lon * Math.PI / 180 * R, y: R * Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360))});
@@ -66,11 +66,11 @@ export default function ({journey}) {
   const idle = () => page.waitForFunction(() => document.querySelector('.cb-busy').hidden, null, {timeout: 120000});
   async function findAndSearch() {
    await page.locator('.cb-lidarplace').fill('A test place');
-   await page.getByRole('button', {name: 'Find', exact: true}).click();
+   await page.getByRole('button', {name: 'Find course', exact: true}).click();
    // The result is a button, under a line saying to click one.
    await page.waitForSelector('.cb-result');
    const head = await page.locator('.cb-resulthead').textContent(), res = page.locator('.cb-result');
-   if (await res.count() !== 1 || !/click one to use it/.test(head) || !/Use/.test(await res.textContent()) || !await res.getAttribute('title')) throw Error(`the place found should be a button to click: ${head}`);
+   if (await res.count() !== 1 || !/Click one to use it/.test(head) || !/Use/.test(await res.textContent()) || !await res.getAttribute('title')) throw Error(`the place found should be a button to click: ${head}`);
    await res.click();
    // The map first; then a 1.5 km box dragged round the place on it -- the
    // LIDAR is searched for over that box alone.
@@ -79,7 +79,9 @@ export default function ({journey}) {
    const here = await page.evaluate(() => { const s = window.fairwayBuilder.door2; return s.map.toLocal(s.find.lon, s.find.lat); });
    const [ax, ay] = await at(here.x - 750, here.z - 750), [bx, by] = await at(here.x + 750, here.z + 750);
    await page.mouse.move(ax, ay); await page.mouse.down(); await page.mouse.move(bx, by, {steps: 6}); await page.mouse.up();
-   await page.getByRole('button', {name: 'Build it myself'}).click();
+   // The course's outline on the map (required before downloading, 23 November 2026).
+   await drawOutline(page, [[here.x - 500, here.z - 500], [here.x + 500, here.z - 500], [here.x + 500, here.z + 500], [here.x - 500, here.z + 500]]);
+   await page.getByRole('button', {name: 'Search for LIDAR'}).click();
    await page.waitForSelector('[data-download="MN_TEST_1_B21"]', {timeout: 30000});
   }
   await page.getByRole('button', {name: /Generate a real life course/}).click();
@@ -96,17 +98,19 @@ export default function ({journey}) {
   // The box and 150 m past it: about 1.8 km a side, named for both sides
   // when the drag was not exactly square.
   if (pieces !== 1 || kept.length !== 1 || !/^MN_TEST_1_B21_43\.63[0-9]{2}_-95\.6[0-9]{3}_(1[78][0-9]{2}x)?1[78][0-9]{2}m\.ept\.zip$/.test(kept[0][0]) || !(kept[0][1] > 4e4 * 20) || !maps) throw Error(`the square should be downloaded once and kept in the folder: ${pieces} pieces, ${JSON.stringify(kept)}`);
-  // The box drawn on the map is the property now, on the relief that took
-  // the map's place: 1.5 km a side, a little more in the survey's grid --
-  // UTM's north is turned about 1.8 degrees from true north here, and the
-  // property is the grid's square that holds the box's four corners (about
-  // 1,549 m).
-  const prop = await page.evaluate(() => { const s = window.fairwayBuilder.door2; return {fromMap: s.boxFromMap, map: !!s.map, w: s.box.x1 - s.box.x0, h: s.box.y1 - s.box.y0}; });
-  if (!prop.fromMap || prop.map || prop.w < 1495 || prop.w > 1580 || prop.h < 1495 || prop.h > 1580) throw Error(`the box drawn on the map should be the property once the LIDAR is in: ${JSON.stringify(prop)}`);
+  // The box drawn on the map is the property now, and the map stays (23
+  // November 2026: no first look at the land, no relief in its place): 1.5
+  // km a side, a little more in the survey's grid -- UTM's north is turned
+  // about 1.8 degrees from true north here, and the property is the grid's
+  // square that holds the box's four corners (about 1,549 m).
+  const prop = await page.evaluate(() => { const s = window.fairwayBuilder.door2; return {map: !!s.map, preview: !!s.preview, w: s.box.x1 - s.box.x0, h: s.box.y1 - s.box.y0}; });
+  if (!prop.map || prop.preview || prop.w < 1495 || prop.w > 1580 || prop.h < 1495 || prop.h > 1580) throw Error(`the box drawn on the map should be the property once the LIDAR is in, the map staying: ${JSON.stringify(prop)}`);
   const said = await page.locator('.cb-note').textContent();
-  if (!/Saved to your LIDAR folder \(Downloads\)/.test(said)) throw Error(`door 2 should say where the download was saved: ${said}`);
-  const cover = await page.evaluate(() => { const v = window.fairwayBuilder.door2.plan.view, c = v.layers.coverage; if (!c) return {layer: false}; const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let k = 3; k < d.length; k += 4) if (d[k]) n++; return {layer: true, shown: v.show.coverage, share: n / (c.width * c.height)}; });
-  if (!cover.layer || !cover.shown || !(cover.share > .5)) throw Error(`the files' coverage should show yellow over the relief: ${JSON.stringify(cover)}`);
+  if (!/Saved to your LIDAR folder \(Downloads\)/.test(said) || !/yellow on the map/.test(said)) throw Error(`door 2 should say where the download was saved, and that the LIDAR shows yellow on the map: ${said}`);
+  // Where the LIDAR reaches, yellow on the map: the square's box, round the
+  // outer limit.
+  const cover = await page.evaluate(() => { const s = window.fairwayBuilder.door2, r = s.lidarDeg?.[0], b = s.findBox; if (!r) return {n: 0}; const lons = r.map(q => q[0]), lats = r.map(q => q[1]); return {n: s.lidarDeg.length, round: Math.min(...lons) <= b.lon0 && Math.max(...lons) >= b.lon1 && Math.min(...lats) <= b.lat0 && Math.max(...lats) >= b.lat1}; });
+  if (cover.n !== 1 || !cover.round) throw Error(`the LIDAR's reach should show yellow on the map, round the outer limit: ${JSON.stringify(cover)}`);
   await t.shot('coverage');
   // Door 2 again: the same square read from the folder, nothing downloaded.
   // Back asks twice when door 2 holds work (both answered yes).
@@ -121,7 +125,7 @@ export default function ({journey}) {
   const again = await page.evaluate(() => ({kept: window.fairwayBuilder.door2.sources[0].kept, list: document.querySelector('.cb-door2 ul:not(.cb-found)')?.textContent ?? '', picks: window.__picks}));
   if (pieces !== 1 || !again.kept || again.picks !== 1) throw Error(`the second time the square should be read from the folder, not downloaded: ${pieces} pieces, ${JSON.stringify(again)}`);
   // Load from the folder: the square listed, ticked as over the place.
-  await page.getByRole('button', {name: 'Load from the folder'}).click(); await idle();
+  await page.getByRole('button', {name: 'List folder files'}).click(); await idle();
   const listed = await page.evaluate(() => [...document.querySelectorAll('.cb-folderfiles li')].map(li => ({text: li.textContent, on: li.querySelector('input').checked})));
   if (listed.length !== 1 || !listed[0].on || !/over this place/.test(listed[0].text)) throw Error(`Load from the folder should list the kept square, ticked: ${JSON.stringify(listed)}`);
   // A long file name must not squeeze a row's tick box away (the owner, 5

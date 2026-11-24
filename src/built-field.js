@@ -19,7 +19,12 @@ export const BUILT_CHANNELS = ['sand', 'green', 'fairway', 'tee', 'water', 'semi
 // groundPaint draws; tests/built-world.test.mjs holds the two the same), and
 // a cart path, which a generated course draws as its own strips instead, and
 // a road or parking lot (roads.js; the US landscapes goal, phase 4).
-export const BUILT_GROUND_CODE = {rock: 1, coral: 2, scree: 3, hardpan: 4, waste: 5, pinestraw: 6, litter: 7, heather: 8, native: 9, path: 10, road: 11};
+// A painted FRINGE is code 12 (24 November 2026; the owner: "make sure its
+// added as a paintable type, but then only add it if the user paints it"):
+// turf, not a ground type, but every channel is taken and a third texture
+// would cost a sampler on every tier; it wins inside its outline over any
+// ground type, as the builder's layers show it (fringe above them all).
+export const BUILT_GROUND_CODE = {rock: 1, coral: 2, scree: 3, hardpan: 4, waste: 5, pinestraw: 6, litter: 7, heather: 8, native: 9, path: 10, road: 11, fringe: 12};
 
 // The field's size for ground running `ex`, `ez` either side of the centre.
 export function fieldSize(ex, ez) {
@@ -91,6 +96,11 @@ export function bakeBuiltField(doc, ex, ez, rows = null) {
   if (!polys.length || !BUILT_GROUND_CODE[kind]) continue;
   const d = bakeDistance(polys, Sx, Sz, ex, ez, r0, r1);
   for (let k = 0; k < N; k++) if (d[k] < best[k]) { best[k] = d[k]; code[k] = BUILT_GROUND_CODE[kind]; }
+ }
+ // The fringe last: inside it, it is the fringe whatever lies deeper under it.
+ if (doc.surfaces?.fringe?.length) {
+  const d = bakeDistance(doc.surfaces.fringe, Sx, Sz, ex, ez, r0, r1), F = BUILT_GROUND_CODE.fringe;
+  for (let k = 0; k < N; k++) if (d[k] <= 0 || d[k] < best[k]) { best[k] = d[k]; code[k] = F; }
  }
  const a = new Uint8Array(N * 4), b = new Uint8Array(N * 4);
  for (let k = 0; k < N; k++) {

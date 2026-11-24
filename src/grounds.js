@@ -85,7 +85,11 @@ export const GROUNDS = {
  // hardest in play, a long hop and a long run, a clean tight lie. Not natural
  // ground: nothing grows or stands on it, and a ball at rest on one gets free
  // relief (relief.js `pathRelief`). PLACED, against rock just below it.
- path: {label: 'Cart path', word: 'cart path', like: 'fairway', sound: 'tee', map: '#d9d2c2', relief: 5,
+ // `map`: a dark grey on every course (the owner, 23 November 2026: "cart
+ // paths for all courses should be a much darker grey color"; #d9d2c2, a
+ // pale concrete, until then). renderer.js addPaths draws a generated
+ // course's paths in the same CART_PATH grey.
+ path: {label: 'Cart path', word: 'cart path', like: 'fairway', sound: 'tee', map: '#4b4d51', relief: 5,
   turf: {e0: .72, eHi: .68, tilt: 0, mu: .35, grab: 0, slide: .30, stimp: 9.0, hard: true},
   lie: .95, hop: .16},
  // A ROAD OR THE PARKING LOT (roads.js; the US landscapes goal, phase 4): the

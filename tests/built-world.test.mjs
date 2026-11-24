@@ -5,6 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {worldFromDoc, builtSurface, builtFieldAt, builtGroundAt, landSampler, polygonDistance, speciesFor, drawnSpecies, CONIFERS, PALMS, BUILT_FIELD} from '../src/built-world.js';
 import {GROUND_PLANTS, TREE_SIZE, tallHeight} from '../src/species.js';
+import {builtMowOwners} from '../src/owner-atlas.js';
 import {BIOME_KEYS} from '../src/settings-schema.js';
 import {standIn} from '../src/builder/tree-shape.js';
 import {biomeOf} from '../src/biomes.js';
@@ -54,6 +55,25 @@ test('the lie follows the outlines, in the generator\'s order', () => {
  assert.equal(at(-80, 0), 'hardpan');
  assert.equal(at(-28.5, 0), 'path');
  assert.equal(at(40, -100), 'rough');
+});
+
+// The owner, 24 November 2026: a fringe on a builder course only where it is
+// painted; a file from before (no `fringe`) keeps the 2 m collar.
+test('a builder course has the fringe it was painted with and no other', () => {
+ const ring = r => disc(0, 90, r, 96)[0], painted = worldFromDoc(doc({fringe: 0, surfaces: {...doc().surfaces, fringe: [[ring(14), ring(12).reverse()]]}}));
+ const bare = worldFromDoc(doc({fringe: 0}));
+ assert.equal(painted.surface(0, 90), 'green');
+ assert.equal(painted.surface(0, 90 - 13), 'fringe', 'inside the painted band');
+ assert.equal(painted.surface(0, 90 + 13), 'fringe');
+ assert.equal(painted.surface(0, 90 - 15), 'semi', 'past it, what lies under');
+ assert.equal(bare.surface(0, 90 - 13), 'rough', 'none painted: no collar');
+ assert.equal(bare.surface(0, 90 + 13), 'rough');
+ assert.equal(at(0, 90 + 13), 'fringe', 'an older file keeps its collar');
+ // A fringe painted over a ground type wins inside it, as the layers show it.
+ const overHeather = worldFromDoc(doc({fringe: 0, surfaces: {...doc().surfaces, fringe: [box(70, -10, 80, 10)]}}));
+ assert.equal(overHeather.surface(75, 0), 'fringe');
+ assert.equal(overHeather.surface(85, 0), 'heather');
+ assert.equal(overHeather.settings.fringe, 0);
 });
 
 test('a field edge is where the outline is, to a few centimetres', () => {
@@ -204,4 +224,25 @@ test('the 3D editor draws the species the game draws', () => {
  assert.equal(drawnSpecies(bio, 'tamarisk', false, 'broadleaf', 9, 1, 2), 'tamarisk', 'a tree picked by name stays');
  assert.notEqual(drawnSpecies(bio, 'redwood', false, 'conifer', 9, 1, 2), 'redwood', 'a species this landscape does not grow does not');
  assert.equal(drawnSpecies(bio, 'redwood', true, 'conifer', 9, 1, 2), 'redwood', 'the landscape it was grown in keeps it');
+});
+
+// owner-atlas.js builtMowOwners: a built course's fairway straddling two holes'
+// ground is mown as one, in one hole's direction (the owner, 23 November 2026:
+// torn, stepped stripe seams), and a green is its pin's hole.
+test('a built fairway, green and tee each have one owner in the ground atlas', () => {
+ const Sx = 20, Sz = 10, ex = 20, ez = 10, owners = new Float32Array(Sx * Sz * 4);
+ const at = (i, j) => owners[(j * Sx + i) * 4];
+ for (let j = 0; j < Sz; j++) for (let i = 0; i < Sx; i++) owners[(j * Sx + i) * 4] = i < 11 ? 0 : 1;
+ // Texel centres: x = -19, -17 ... 19 (i), z = -9, -7 ... 9 (j).
+ const kindAt = (fx, fz) => { const x = Math.round(fx), z = Math.round(fz); return (z === -1 || z === 1) ? 1 : (x >= 13 && x <= 17 && z >= 9) ? 2 : (x <= -15 && z <= -7) ? 3 : 0; };
+ const changed = builtMowOwners(owners, Sx, Sz, ex, ez, kindAt, [{hole: 0, x: 15, z: 9, kind: 2}, {hole: 1, x: -17, z: -9, kind: 3}]);
+ assert.ok(changed > 0);
+ for (let i = 0; i < Sx; i++) for (const j of [4, 5]) assert.equal(at(i, j), 0, `the fairway is one hole's at ${i},${j}`);
+ for (let i = 0; i < Sx; i++) for (const j of [3, 6]) assert.equal(at(i, j), 0, 'carried two texels into the rough round it');
+ for (let i = 5; i < Sx; i++) assert.equal(at(i, 2), 0, 'two texels out, where no nearer piece reaches first');
+ assert.equal(at(1, 2), 1, 'the tee\'s own ring is nearer the tee');
+ assert.equal(at(19, 1), 1, 'and no further');
+ for (let i = 16; i <= 18; i++) assert.equal(at(i, 9), 0, 'the green is its pin\'s hole, though the atlas gave it the other');
+ assert.equal(at(0, 0), 1, 'the tee is its own tee\'s hole, though the atlas gave it the other');
+ assert.equal(at(5, 0), 0, 'the rough past every piece keeps the nearest hole');
 });

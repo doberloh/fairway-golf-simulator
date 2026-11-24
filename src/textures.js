@@ -33,6 +33,38 @@ T.ShaderChunk.gradientmap_pars_fragment=T.ShaderChunk.gradientmap_pars_fragment.
 export const GRADE=1.12;
 T.ShaderChunk.tonemapping_pars_fragment=T.ShaderChunk.tonemapping_pars_fragment.replace('vec3 CustomToneMapping( vec3 color ) { return color; }',
  `vec3 CustomToneMapping( vec3 color ) { color = ACESFilmicToneMapping( color ); float grey = dot( color, vec3( .2126, .7152, .0722 ) ); return max( mix( vec3( grey ), color, ${GRADE.toFixed(3)} ), 0. ); }`);
+// THE TURF AS THE LANDSCAPE PAINTS IT (24 November 2026). The owner: "our
+// grasses are almost too neon and too light colored on all of our biomes ...
+// It tends to also get washed out on the projector screens". From the first
+// commit the ground took each landscape's turf colours lifted before drawing
+// them -- semi-rough 13% brighter, fairway, fringe and green 5 to 15 points
+// more saturated and 4 to 8 lighter (three's offsetHSL, which works in linear
+// colour, so the push was bigger than it reads) -- and the grade above, added
+// later, puts colour back on top of that. Both together turned a lawn green
+// toward lime, and lifted the turf into the top of the tone curve, where its
+// slopes, stripes and shade are squeezed together. The landscapes' colours are
+// now drawn as written (every landscape already paints its green lighter than
+// its fringe, and its fringe lighter than its fairway).
+//
+// Round 2: that alone left the ROUGH -- most of any picture, and never lifted,
+// only tinted toward a pale yellow -- the brightest, limiest thing on the
+// screen. Every turf colour, rough and its tint included, is now taken down
+// (`turfGrade`): less saturated and darker, in proportion to how GREEN it is,
+// so desert straw and links fescue hardly move. The 3D grass tufts take the
+// same (vegetation.js), or they would stand out pale on darker ground. TURF_SAT
+// and TURF_VALUE PLACED by eye on before-and-after pictures (RESEARCH, *The
+// turf as the landscape paints it*).
+export const TURF_SAT=.8,TURF_VALUE=.84;
+export function turfGrade(color){
+ const c=new T.Color(color),l=.2126*c.r+.7152*c.g+.0722*c.b;
+ // How green, as the ground shader's slope tint judges it (linear colour).
+ const w=Math.max(0,Math.min(1,(c.g-Math.max(c.r,c.b))/Math.max(l,1e-4)*2.5));
+ const s=1-(1-TURF_SAT)*w,v=1-(1-TURF_VALUE)*w;
+ return new T.Color(Math.max(0,(l+(c.r-l)*s)*v),Math.max(0,(l+(c.g-l)*s)*v),Math.max(0,(l+(c.b-l)*s)*v));
+}
+export function turfPalette(bio){
+ return {rough:turfGrade(new T.Color(bio.rough).lerp(new T.Color(bio.roughTint??'#b6bc65'),.23)),semi:turfGrade(bio.semi),fairway:turfGrade(bio.fairway),fringe:turfGrade(bio.fringe),green:turfGrade(bio.green),sand:'#ffebbd'};
+}
 // Round 2: eight steps where there were four, falling faster through the lit
 // half. With four, a slope turned 30 degrees from a noon sun drew 8% darker
 // than the flat beside it and the desert's dunes had no shape at all; now it

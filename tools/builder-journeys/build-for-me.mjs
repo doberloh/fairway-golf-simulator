@@ -35,16 +35,16 @@ export default function ({journey}) {
   // then Build it for me, its warning, and Build it.
   async function findAndBox() {
    await page.locator('.cb-lidarplace').fill('Testville Golf Club');
-   await page.getByRole('button', {name: 'Find', exact: true}).click();
+   await page.getByRole('button', {name: 'Find course', exact: true}).click();
    await page.waitForFunction(() => window.fairwayBuilder.door2.map, null, {timeout: 30000}); await idle();
-   if (await page.getByRole('button', {name: 'Build it for me', exact: true}).isEnabled()) throw Error('Build it for me should wait for a box on the map');
+   if (await page.getByRole('button', {name: 'Build automatically', exact: true}).isEnabled()) throw Error('Build it for me should wait for a box on the map');
    const plan = page.locator('canvas.cb-plan'), at = async (x, z) => { const b = await plan.boundingBox(), [cx, cy] = await page.evaluate(([x, z]) => window.fairwayBuilder.door2.toCanvas(x, z), [x, z]), r = await plan.evaluate(c => c.width / c.getBoundingClientRect().width); return [b.x + cx / r, b.y + cy / r]; };
    const here = await page.evaluate(() => { const s = window.fairwayBuilder.door2; return s.map.toLocal(s.find.lon, s.find.lat); });
    const [ax, ay] = await at(here.x - 750, here.z - 750), [bx, by] = await at(here.x + 750, here.z + 750);
    await page.mouse.move(ax, ay); await page.mouse.down(); await page.mouse.move(bx, by, {steps: 6}); await page.mouse.up();
-   await page.getByRole('button', {name: 'Build it for me', exact: true}).click();
+   await page.getByRole('button', {name: 'Build automatically', exact: true}).click();
    const warn = await page.locator('.cb-formeask').textContent().catch(() => '');
-   if (!/might not always get it right/.test(warn)) throw Error(`Build it for me should first warn that it might not get it right: ${warn}`);
+   if (!/may be wrong/.test(warn)) throw Error(`Build automatically should first warn that the result may be wrong: ${warn}`);
   }
   const json = body => ({status: 200, contentType: 'application/json', headers: {'Access-Control-Allow-Origin': '*'}, body: JSON.stringify(body)});
   const {bytes, cube} = piece(); const asked = {place: 0, osm: 0, picture: 0, pieces: 0};
@@ -69,16 +69,16 @@ export default function ({journey}) {
   // FIRST-VISIT TIPS (item 13): the step's tip shows until Got it closes it.
   if (!await page.locator('.cb-intro').count()) throw Error('the first step should open on its tip');
   await page.locator('.cb-gotit').click();
-  if (await page.locator('.cb-intro').count()) throw Error('Got it should close the tip');
+  if (await page.locator('.cb-intro').count()) throw Error('Hide tip should close the tip');
   await findAndBox();
   if (!/Golf Club/.test(await page.evaluate(() => window.fairwayBuilder.door2.find?.label))) throw Error('the golf course should be taken over its town without asking');
   await t.shot('start');
   // Cancel leaves it; pressed again, Build it builds.
   await page.locator('[data-build="no"]').click();
   if (await page.locator('.cb-formeask').count()) throw Error('Cancel should close the warning');
-  await page.getByRole('button', {name: 'Build it for me', exact: true}).click();
+  await page.getByRole('button', {name: 'Build automatically', exact: true}).click();
   const t0 = Date.now();
-  await page.getByRole('button', {name: 'Build it', exact: true}).click();
+  await page.getByRole('button', {name: 'Start building', exact: true}).click();
   await page.waitForFunction(() => window.fairwayBuilder.door2.built || /OpenStreetMap has no course|No USGS|Nothing found|failed|Could not/.test(document.querySelector('.cb-note')?.textContent ?? ''), null, {timeout: 600000});
   await page.waitForFunction(() => document.querySelector('.cb-busy').hidden, null, {timeout: 120000});
   const st = await page.evaluate(() => { const s = window.fairwayBuilder.door2; return {step: s.step, find: s.find?.label, name: s.name, holesN: s.holesN, marked: s.holes.slice(0, s.holesN).filter(h => h?.green && h.tees.length).length, pics: s.pics.map(p => p.group), land: !!s.land, trace: s.traceMode, built: s.built, note: document.querySelector('.cb-note').textContent}; });
@@ -91,7 +91,11 @@ export default function ({journey}) {
   const sets = await page.evaluate(() => [...new Set(window.fairwayBuilder.door2.holes.flatMap(h => h?.tees.map(t => t.set) ?? []))]);
   if (!sets.length || sets.some(s => !['black', 'blue', 'white', 'silver', 'gold', 'red'].includes(s))) throw Error(`every tee should be one of the six sets: ${sets}`);
   console.log(`       tee sets from the map: ${sets.join(', ')}`);
-  if (asked.place !== 1 || !asked.pieces || !asked.picture || asked.osm !== 1 || !maps) throw Error(`each service asked once (the picture in blocks, the map in tiles): ${JSON.stringify({...asked, maps})}`);
+  // OpenStreetMap twice since 22 November 2026: the course's outline before
+  // the LIDAR (so the survey is fetched whole only inside it), then the course.
+  if (asked.place !== 1 || !asked.pieces || !asked.picture || asked.osm !== 2 || !maps) throw Error(`each service asked once, OpenStreetMap twice (the picture in blocks, the map in tiles): ${JSON.stringify({...asked, maps})}`);
+  const ring = await page.evaluate(() => window.fairwayBuilder.door2.detailRing?.length ?? 0);
+  if (ring < 4) throw Error(`the course's outline should come from the map's golf course: ${ring} corners`);
   // The box drawn on the map is the property built (1.5 km, a little more in
   // the survey's grid, turned about 1.8 degrees from north here).
   const prop = await page.evaluate(() => { const b = window.fairwayBuilder.door2.box; return {w: b.x1 - b.x0, h: b.y1 - b.y0}; });
@@ -150,7 +154,7 @@ export default function ({journey}) {
   await page.locator('[data-recover="no"]').click();
   if (await page.locator('.cb-intro').count()) throw Error('a tip closed once should not show again');
   await findAndBox();
-  await page.getByRole('button', {name: 'Build it', exact: true}).click();
+  await page.getByRole('button', {name: 'Start building', exact: true}).click();
   await page.waitForFunction(() => window.fairwayBuilder.door2.built, null, {timeout: 600000});
   await page.waitForFunction(() => document.querySelector('.cb-busy').hidden, null, {timeout: 120000});
   const wrong = await page.evaluate(() => { const s = window.fairwayBuilder.door2; return {step: s.step, doubts: (s.doubts ?? []).map(q => ({hole: q.hole, other: q.other, kind: q.kind, fix: q.fix?.kind ?? null, text: q.text}))}; });

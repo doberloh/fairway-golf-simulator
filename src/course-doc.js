@@ -27,7 +27,10 @@
 //      has none and plays as it did
 //    homes: [{x, z, rotation, width, depth}]   houses (door 2's house tools; the
 //      game builds each from where it stands; built-world.js `builtHomes`),
-//    fringe, semiRough: metres (null: the defaults), sea: {level} | null (a coast),
+//    fringe, semiRough: metres (null: the defaults), sea: {level} | null (a coast);
+//      `fringe` is the collar the game mows round every green, 0 on a course
+//      saved from the builder since 24 November 2026, whose fringe is only the
+//      painted `surfaces.fringe`,
 //    landEdits: [[x0, x1, z0, z1]] where the land was shaped by hand (built-world.js
 //      refines its mesh to the land there; on land from LIDAR, everywhere),
 //    credits: [string], source: {} (door 2's: {kind: 'lidar', files, epsg, origin:
@@ -71,7 +74,9 @@ export const BUILT_FILE_VERSION = 2;
 // (rock, scree, hardpan, waste sand, pine straw, leaves, heather, native
 // grass, coral, cart path) -- each its own outlines, so a frozen Desert keeps
 // its hardpan and a hand-painted heather plays as heather.
-export const SURFACE_KINDS = ['green', 'fairway', 'tee', 'sand', 'semi', ...GROUND_KINDS];
+// `fringe` (24 November 2026): the collar painted in the builder, played only
+// where it is drawn; a file with `fringe: 0` has no other (built-world.js).
+export const SURFACE_KINDS = ['green', 'fringe', 'fairway', 'tee', 'sand', 'semi', ...GROUND_KINDS];
 // `kind` is an index into the document's `treeKinds` (the species it was
 // drawn as where it came from, a frozen generated course), or -1: drawn as
 // that species while the landscape grows it, else picked by role.
