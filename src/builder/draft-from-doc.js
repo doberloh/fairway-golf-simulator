@@ -20,7 +20,7 @@
 // tests/builder-cover.test.mjs.
 import {GRID_MARGIN, landSampler} from '../built-world.js';
 import {SURFACE_KINDS, TREE_STRIDE} from '../course-doc.js';
-import {fillRings} from './round-trip.js';
+import * as S from './shapes.js';
 import {cellFor} from './real-course.js';
 import {toMetres} from '../lidar/las.js';
 
@@ -36,8 +36,10 @@ export function draftFromDoc(doc) {
  const src = doc.source ?? {}, crs = src.crs ?? (src.epsg ? {epsg: src.epsg, units: {h: 'metre', v: 'metre'}, wkt: null, geographic: false} : null), placed = crs && src.origin;
  const land = {nx, nz, cell, halfX, halfZ, center: placed ? {...src.origin} : {x: 0, y: 0}, unit: placed ? toMetres(crs) : {h: 1, v: 1}, method: 'course', points: 0, rgb: null, ground, surface: ground,
   canopy: new Float32Array(N), intensity: new Float32Array(N).fill(NaN), water: new Uint8Array(N), building: new Uint8Array(N), multi: new Uint8Array(N), noReturns: new Uint8Array(N), filled: new Uint8Array(N)};
- const at = {nx, nz, cell, x0: -halfX - cell / 2, z0: -halfZ - cell / 2}, masks = new Map();
- const add = (kind, rings) => { if (!masks.has(kind)) masks.set(kind, new Uint8Array(N)); fillRings(rings, at, masks.get(kind)); };
+ // The course's own outlines are the trace's layers (since 24 November 2026;
+ // until then they were filled into cells and traced back).
+ const shapes = new Map();
+ const add = (kind, rings) => { shapes.set(kind, S.union(shapes.get(kind) ?? S.EMPTY, S.fromRings(rings))); };
  for (const k of SURFACE_KINDS) for (const poly of doc.surfaces?.[k] ?? []) add(k, poly);
  for (const w of doc.water ?? []) add('water', w.rings);
  const trees = [];
@@ -47,5 +49,5 @@ export function draftFromDoc(doc) {
  }
  const holes = doc.holes.map(h => ({tees: h.tees.map(t => ({...t})), aims: h.line.slice(1, -1).map(([x, z]) => ({x, z})), green: {...h.green}, par: h.par, index: h.index}));
  return {step: 5, name: doc.name, landscape: doc.landscape, surround: doc.surround ?? null, credits: doc.credits ?? [], holes, holesN: holes.length, hole: 0, boundary: null, traceMode: 'manual', box: null, sources: placed ? (src.files?.length ? src.files : ['the course file']).map(name => ({name, crs})) : [], geo: src.geo ?? null, treePlan: doc.treePlan ?? null, view: {}, picOffsets: {}, trees: trees.map(t => ({...t})),
-  land, trace: {masks, hidden: [], trees, homes: structuredClone(doc.homes ?? [])}, landEdits: null, creeks: structuredClone(doc.creeks ?? []), rocks: structuredClone(doc.rocks ?? [])};
+  land, trace: {shapes, hidden: [], trees, homes: structuredClone(doc.homes ?? [])}, landEdits: null, creeks: structuredClone(doc.creeks ?? []), rocks: structuredClone(doc.rocks ?? [])};
 }

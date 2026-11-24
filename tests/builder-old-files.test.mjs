@@ -15,6 +15,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {readBuiltFile, builderPart, validateDoc} from '../src/course-doc.js';
 import {readDraft} from '../src/builder/draft.js';
+import * as S from '../src/builder/shapes.js';
 import {worldFromDoc} from '../src/built-world.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -41,8 +42,11 @@ function gameSide(doc) {
 // The builder's own section, a door 2 draft: where it was, its holes, its
 // layers (each mask's painted cells), its pictures and its trees.
 function builderSide(d) {
+ // Each layer's land cells. Since 24 November 2026 a draft's layers open as
+ // outlines (the file's cells turned once): counted through the hidden lookup,
+ // and compared within 2% (the fitted edge against the cells' staircase).
  const sum = m => { let n = 0; for (let k = 0; k < m.length; k++) n += m[k] ? 1 : 0; return n; };
- const masks = d.trace?.masks ? Object.fromEntries([...(d.trace.masks instanceof Map ? d.trace.masks : Object.entries(d.trace.masks))].map(([k, m]) => [k, sum(m)]).sort()) : null;
+ const masks = d.trace?.shapes ? Object.fromEntries([...d.trace.shapes].map(([k, set]) => [k, sum(S.rasterize(set, d.land))]).sort()) : null;
  return {
   step: d.step, name: d.name, landscape: d.landscape, holesN: d.holesN,
   holes: (d.holes ?? []).map(h => h ? {tees: h.tees.length, aims: h.aims?.length ?? 0, green: !!h.green} : null),
@@ -59,5 +63,8 @@ test('a course file saved before the builder-ux goal opens as the same course an
  if (process.env.UPDATE_OLD_FILES) { fs.writeFileSync(EXPECT, JSON.stringify(got, null, 1) + '\n'); return; }
  const want = JSON.parse(fs.readFileSync(EXPECT, 'utf8'));
  assert.deepEqual(got.game, want.game, 'the game opens it as it did');
- assert.deepEqual(got.builder, want.builder, 'the builder reopens its draft as it did');
+ const {masks: gm, ...gb} = got.builder, {masks: wm, ...wb} = want.builder;
+ assert.deepEqual(gb, wb, 'the builder reopens its draft as it did');
+ assert.deepEqual(Object.keys(gm ?? {}), Object.keys(wm ?? {}), 'the same layers');
+ for (const k of Object.keys(wm ?? {})) assert.ok(Math.abs(gm[k] - wm[k]) <= Math.max(6, wm[k] * .02), `${k}: ${gm[k]} cells against ${wm[k]}`);
 });

@@ -22,6 +22,7 @@
 // Rejected: re-laying OpenStreetMap's own lines at the new width. It would
 // only reach paths that came from the map, not those painted by hand or moved
 // by Align map, and the owner's uneven paths are on the layer, not the map.
+import * as S from './shapes.js';
 
 // A grid as door 2's land: `nx` x `nz` cells of `cell` metres, cell (i, j)'s
 // middle at x = -halfX + i * cell, z = -halfZ + j * cell.
@@ -138,6 +139,48 @@ export function evenWidth(mask, grid, width) {
  const add = [], remove = [];
  for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) { const c = j * w + i, k = (j + j0) * nx + i + i0; if (out[c] && !m[c]) add.push(k); else if (!out[c] && m[c]) remove.push(k); }
  return {add, remove};
+}
+
+// NORMALIZE WIDTH ON OUTLINES (branch builder-outlines, 24 November 2026:
+// the builder's layers are outlines, shapes.js). The same rule as
+// `evenWidth`, and what it lays is outlines: the wide areas are the layer's
+// own outline where a circle `areaWidth` across fits, with the layer within
+// that width of it (grown and cut exactly, no cells), and each thin part's
+// middle line is laid again as a band `width` wide, round at its ends and
+// bends, so two paths that met still meet. Only FINDING the middle line uses
+// a grid, hidden and never drawn or traced: the thin part laid on cells a
+// quarter of the width across (at least 25 cm, at most 1 m, PLACED), thinned
+// to its middle, and the line read off as points. Returns the new set, or
+// the same set when it has nothing thin.
+export function evenWidthSet(set, width) {
+ if (!set.length) return set;
+ const T = areaWidth(width) / 2, core = S.grow(set, -T), area = core.length ? S.intersect(set, S.grow(core, 2 * T)) : S.EMPTY;
+ const thin = S.difference(set, area); if (!thin.length) return set;
+ const [bx0, bz0, bx1, bz1] = S.boundsOf(thin), cell = Math.max(.25, Math.min(1, width / 4)), pad = 2;
+ const w = Math.ceil((bx1 - bx0) / cell) + 2 * pad + 1, h = Math.ceil((bz1 - bz0) / cell) + 2 * pad + 1, x0 = bx0 - pad * cell, z0 = bz0 - pad * cell;
+ const grid = {nx: w, nz: h, cell, x0, z0}, m = S.rasterize(thin, grid), whole = S.rasterize(set, grid), not = new Uint8Array(w * h);
+ for (let c = 0; c < w * h; c++) not[c] = whole[c] ? 0 : 1;
+ const inside = chamfer(not, w, h, cell), skel = skeleton(m, w, h);
+ for (let pass = 0; pass < 2; pass++) for (const ch of chains(skel, w, h)) {
+  if (ch.closed) continue;
+  const free = ch.ends.map(e => e === 1), len = chainLength(ch.cells, w) * cell;
+  if (free[0] !== free[1]) { const meet = ch.cells[free[0] ? ch.cells.length - 1 : 0]; if (len < Math.max(width, 1.2 * inside[meet])) for (const c of ch.cells) if (c !== meet) skel[c] = 0; }
+ }
+ // Each middle line smoothed between its ends over about a width, the ends kept.
+ const reach = Math.max(2, Math.round(width / cell));
+ // Every band gathered and joined at once (one at a time into the whole took
+ // 7.3 s on the owner's Alpine Lake roads; together, below).
+ const out = [...area];
+ for (const ch of chains(skel, w, h)) {
+  const P = ch.cells.map(c => [x0 + (c % w) * cell, z0 + Math.floor(c / w) * cell]), n = P.length, Q = P.map(p => [...p]);
+  for (let q = 1; q < n - 1; q++) {
+   const k = ch.closed ? reach : Math.min(reach, q, n - 1 - q); let sx = 0, sz = 0;
+   for (let d = -k; d <= k; d++) { const p = P[ch.closed ? (q + d + n) % n : q + d]; sx += p[0]; sz += p[1]; }
+   Q[q] = [sx / (2 * k + 1), sz / (2 * k + 1)];
+  }
+  out.push(...S.band(ch.closed ? [...Q, Q[0]] : Q, width / 2));
+ }
+ return S.clean(out);
 }
 
 // Distance to the nearest set cell, metres (8-neighbour chamfer, as

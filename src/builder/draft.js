@@ -22,8 +22,20 @@ import {writeZip, readZip, isZip} from '../zip.js';
 // survey does not say (`geo`), and which picture was showing. A version 2 draft
 // reads as one with none of them: its map data has no features behind it, and
 // door 2 offers only what that can do.
+// Version 4 (24 November 2026, branch builder-outlines; the owner: "I want
+// these pixellated views gone from the builder entirely"): the trace's layers
+// as outlines (trace/shapes.json, each layer a list of paths of whole
+// centimetres, shapes.js `packSet`), and OpenStreetMap's trace as laid
+// likewise (osm/shapes.json). A version 3 draft's masks of cells
+// (trace/<layer>.bin, osm/codes.bin) are turned into outlines once, as it
+// opens. An older builder refuses a version 4 draft in plain words (it
+// could not read its layers).
 
-export const DRAFT_KIND = 'fairway-draft', DRAFT_VERSION = 3, DRAFT_EXT = '.fairway-draft';
+import * as S from './shapes.js';
+import {codesToShapes} from './trace-edit.js';
+export const DRAFT_KIND = 'fairway-draft', DRAFT_VERSION = 4, DRAFT_EXT = '.fairway-draft';
+const packShapes = m => JSON.stringify(Object.fromEntries([...m].filter(([, set]) => set.length).map(([k, set]) => [k, S.packSet(set)])));
+const unpackShapes = t => new Map(Object.entries(JSON.parse(t)).map(([k, v]) => [k, S.unpackSet(v)]));
 // The land's grids kept (`surface` is ground plus canopy, made again on reading).
 const F32 = ['ground', 'canopy', 'intensity'], U8 = ['water', 'building', 'multi', 'noReturns', 'filled'];
 const text = new TextDecoder();
@@ -31,7 +43,7 @@ const bytesOf = a => new Uint8Array(a.buffer, a.byteOffset, a.byteLength);
 
 // `d`: {step, name, landscape, credits, holes, holesN, hole, boundary,
 // traceMode, box, sources: [{name, crs}], view, picOffsets, osm, land|null,
-// trees, trace: {masks: Map kind -> Uint8Array, hidden: [kind], trees, homes}|null,
+// trees, trace: {shapes: Map kind -> set (shapes.js), hidden: [kind], trees, homes}|null,
 // landEdits: Float32Array|null, creeks, rocks, geo: {lat, lon}|null, picShow,
 // pics: [{group, label, provider, file, width, height, credit, place, pack:
 // {image, type, nir}}]}.
@@ -55,15 +67,15 @@ export async function writeDraft(d) {
  // The course's rough outline (door-real.js): [lon, lat] corners, or the
  // survey's own map units where it does not say where it lies (`detailMap`).
  json.detailRing = d.detailRing ?? null; json.detailMap = !!d.detailMap;
- if (d.osm?.codes) parts.push({name: 'osm/codes.bin', data: d.osm.codes});
+ if (d.osm?.shapes) parts.push({name: 'osm/shapes.json', data: packShapes(d.osm.shapes)});
  if (d.osm?.raw) parts.push({name: 'osm/raw.json', data: typeof d.osm.raw === 'string' ? d.osm.raw : JSON.stringify(d.osm.raw)});
  (d.pics ?? []).forEach((p, i) => {
   parts.push({name: `pictures/${i}.${p.pack.type}`, data: p.pack.image, store: p.pack.type === 'jpeg'});
   if (p.pack.nir) parts.push({name: `pictures/${i}.nir`, data: p.pack.nir});
  });
  if (d.trace) {
-  json.trace = {layers: [...d.trace.masks.keys()], hidden: d.trace.hidden ?? [], trees: d.trace.trees ?? [], homes: d.trace.homes ?? [], bunkers: d.trace.bunkers ?? [], creekLines: d.trace.creekLines ?? []};
-  for (const [k, m] of d.trace.masks) parts.push({name: `trace/${k}.bin`, data: m});
+  json.trace = {hidden: d.trace.hidden ?? [], trees: d.trace.trees ?? [], homes: d.trace.homes ?? [], bunkers: d.trace.bunkers ?? [], creekLines: d.trace.creekLines ?? []};
+  parts.push({name: 'trace/shapes.json', data: packShapes(d.trace.shapes)});
  }
  return writeZip([{name: 'draft.json', data: JSON.stringify(json)}, ...parts]);
 }
@@ -89,11 +101,15 @@ export async function readDraft(bytes) {
  }
  let trace = null;
  if (j.trace && land) {
-  const N = land.nx * land.nz, masks = new Map();
-  for (const k of j.trace.layers) masks.set(k, part(`trace/${k}.bin`, N).slice());
-  trace = {masks, hidden: j.trace.hidden, trees: j.trace.trees, homes: j.trace.homes, bunkers: j.trace.bunkers ?? [], creekLines: j.trace.creekLines ?? []};
+  const N = land.nx * land.nz;
+  let shapes;
+  if (parts.has('trace/shapes.json')) shapes = unpackShapes(text.decode(parts.get('trace/shapes.json')));
+  // A draft from before outlines: each layer's cells turned into outlines once.
+  else { shapes = new Map(); for (const k of j.trace.layers ?? []) { const set = S.fromMask(part(`trace/${k}.bin`, N), land); if (set.length) shapes.set(k, set); } }
+  trace = {shapes, hidden: j.trace.hidden, trees: j.trace.trees, homes: j.trace.homes, bunkers: j.trace.bunkers ?? [], creekLines: j.trace.creekLines ?? []};
  }
- const osm = j.osm && land && parts.has('osm/codes.bin') ? {...j.osm, codes: part('osm/codes.bin', land.nx * land.nz).slice(), raw: parts.has('osm/raw.json') ? text.decode(parts.get('osm/raw.json')) : null} : null;
+ const osmShapes = !j.osm || !land ? null : parts.has('osm/shapes.json') ? unpackShapes(text.decode(parts.get('osm/shapes.json'))) : parts.has('osm/codes.bin') ? codesToShapes(part('osm/codes.bin', land.nx * land.nz), land) : null;
+ const osm = osmShapes ? {...j.osm, shapes: osmShapes, raw: parts.has('osm/raw.json') ? text.decode(parts.get('osm/raw.json')) : null} : null;
  const pics = (j.pics ?? []).map(({type, nir, ...p}, i) => {
   const image = parts.get(`pictures/${i}.${type}`);
   if (!image) throw Error(`This draft is damaged: its picture ${p.label} is missing.`);

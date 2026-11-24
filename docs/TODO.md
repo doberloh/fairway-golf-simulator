@@ -572,22 +572,24 @@ here is a claim of support until it is done.
   layer, a few seconds expected, none measured). The 3D editor has none of
   the four.
 
-- [ ] **Fitted edges, square bends and the tiled trace: not seen by the
-  owner** (branch `builder-big-zips`, 23 November 2026 evening;
-  COURSE_BUILDER.md, *Edges fitted, sharp bends, a trace step that keeps up*;
-  RESEARCH *Outlines fitted*). Measured on shapes and on the owner's two
-  drafts in the built builder (a stroke now holds the page about 0.1 s, was
-  1.2 s); Alpine Lake Resort saved and a tee shot played in the game. Owed:
-  the owner's look at tee and green edges in the game on a course saved
-  again (a course saved before keeps its old outlines), a square-ended Line
-  with bends, and painting on Alpine. Not checked: the 3D editor's redraw
-  after a stroke with its margin now 32 cells (Node tests only).
+- [ ] **Fitted edges and square bends: not seen by the owner** (branch
+  `builder-big-zips`, 23 November 2026 evening; COURSE_BUILDER.md, *Edges
+  fitted, sharp bends, a trace step that keeps up*; RESEARCH *Outlines
+  fitted*). The tiled trace it also built is gone (*No squares in the
+  builder*, below); fitting now only turns what comes in as cells into
+  outlines, and the 3D editor's saves. Owed: the owner's look at tee and
+  green edges in the game on a course saved again (a course saved before
+  keeps its old outlines). Not checked: the 3D editor's redraw after a
+  stroke with its margin now 32 cells (Node tests only).
 - [ ] **No squares in the builder: under way** (branch `builder-outlines`,
   from 24 November 2026; COURSE_BUILDER.md, *No squares in the builder*).
   Done: the picture and LIDAR smoothed at every zoom, the review drawn from
-  the course's outlines. Still in cells: the trace step's layers and tools,
-  drafts, the 3D editor. Owed after: the owner's look at painting, the
-  review and the editor.
+  the course's outlines, door 2's trace step on outlines (its tools, drafts
+  version 4, Back to 2D, OpenStreetMap, the course made from them). Still in
+  cells: the 3D editor. Owed after: the owner's look at painting (a box with
+  Auto curve; a stroke on Alpine), the review and the editor; a version 3
+  draft opened by the owner (Alpine's took 3.9 s in Node). Not measured: the
+  plan's frame time drawing every layer from its outlines on Alpine.
 - [ ] **The fringe only where painted: not seen by the owner** (24 November
   2026; COURSE_BUILDER.md, *A fringe only where it is painted*). Seen: the
   Fringe layer offered, Add layer around Green with Fringe at 2 m on a copy

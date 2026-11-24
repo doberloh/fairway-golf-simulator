@@ -148,8 +148,9 @@ async function build(key) {
  // A scorecard in the course's folder (card.json: par, blue, white, red), when
  // the map numbers greens rather than drawing hole lines.
  const cardFile = path.join(dir, 'card.json'), card = fs.existsSync(cardFile) ? JSON.parse(fs.readFileSync(cardFile, 'utf8')) : null;
- const raw = osmHoles(feats, {within: course.rings, only: course.only ?? null, codes: model.state.codes, land, card});
- const codes = refineTrace(land, model.state.codes, {mode: 'lidar'}), shift = refineTrace.lastShift ?? {x: 0, z: 0};
+ const laidCodes = model.lookup().codes;   // the map's trace on the land's cells, a hidden lookup
+ const raw = osmHoles(feats, {within: course.rings, only: course.only ?? null, codes: laidCodes, land, card});
+ const codes = refineTrace(land, laidCodes, {mode: 'lidar'}), shift = refineTrace.lastShift ?? {x: 0, z: 0};
  // Eighteen when the map numbers all eighteen, else nine when it numbers 1 to
  // 9 (a club's nine: Breckenridge's Bear nine, a stray hole 12 beside it).
  const fitted = fitHoles(shiftHoles(raw, shift), codes, land), N = fitted.slice(0, 18).filter(Boolean).length === 18 ? 18 : fitted.slice(0, 9).filter(Boolean).length === 9 ? 9 : 0;
@@ -160,7 +161,7 @@ async function build(key) {
  if (![9, 18].includes(n) || holes.length !== n) { say(`NOT BUILT: holes numbered ${holes.map((h, i) => h ? i + 1 : null).filter(Boolean).join(',')}`); fs.writeFileSync(path.join(dir, 'report.txt'), log.join('\n') + '\n'); return; }
  // 5. The course.
  const recs = holes.map((h, i) => ({number: i + 1, par: h.par ?? null, index: null, tees: h.tees, green: h.green, line: [[h.tees[0].x, h.tees[0].z], ...h.aims.map(a => [a.x, a.z]), [h.green.x, h.green.z]]}));
- let doc = validateDoc(docFromLand({land, traced: {layers: traced.state.layers}, holes: recs, trees: traced.state.trees, homes: traced.state.homes, name: c.name, landscape: c.landscape,
+ let doc = validateDoc(docFromLand({land, traced: {shapes: traced.state.shapes}, holes: recs, trees: traced.state.trees, homes: traced.state.homes, name: c.name, landscape: c.landscape,
   credits: ['Elevation: USGS 3D Elevation Program (public domain)' + (crs.epsg === 2927 ? '; Washington DNR' : ''), OSM_CREDIT], source: {epsg: crs.epsg, files: sources.map(s => s.name), origin: {x: gridder.center.x, y: gridder.center.y}, trace: 'openstreetmap+lidar', picture: 'none'}}));
  // SKINNED FROM THE LAND (`skin: true`; the owner, 3 November 2026): the
  // editor's own Skin from the land, as a player pressing it would -- the

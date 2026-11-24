@@ -180,11 +180,11 @@ press **Enter** or double-click to lay it on the chosen layer, **Line width**
 metres wide, with round or square **Ends**. Square ends make square bends
 too; round ends make round ones.
 
-Every edge goes into the course straight where you painted it straight, its
-corners kept and its curves smooth, and the plan draws it that way a moment
-after each stroke. **Smooth edges** is for edges you want rounder than you
-painted them, not for the little steps of the squares: those the course
-never has.
+What you paint is the edge itself: a brush stroke shows as the band it
+sweeps while you hold the button and is laid exactly so when you let go,
+an outline is the curve you drew, and the course gets those edges as they
+are. Nothing is laid on squares. **Smooth edges** is for edges you want
+rounder than you painted them.
 
 **The house** (O): a click stands a house of the **Width** and **Depth** set in
 its options; drag corner to corner to stand one the size of the box. Its front

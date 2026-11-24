@@ -1707,6 +1707,8 @@ out automatically?" With screenshots from the game and the review.
   first. It threw the whole smooth trace away at every change and traced the
   whole land again (3-4 s, frozen, on the owner's 2.8 x 3.3 km draft), cells
   everywhere meanwhile. The cells are repainted only where they changed.
+  **Gone since 24 November 2026** with the cells themselves (*No squares in
+  the builder*, below): every layer is outlines, drawn as it is.
 - **Three counts done a cell at a time through a callback** ran after every
   stroke over all nine million cells: the hectares under the plan (a Map),
   each layer's area in the Layers list (`reduce`), and which layers are
@@ -1822,8 +1824,7 @@ be a hidden lookup (what is under a point, the land's grid for smoothing the
 ground under a green), never drawn and never traced back into outlines. What
 starts as a grid -- the LIDAR's auto trace, Paint rock on slopes, a draft
 saved before -- is turned into outlines once, as it comes in. The work goes
-in steps, each leaving a working builder; until the last, the trace step and
-the 3D editor still keep their surfaces in cells.
+in steps, each leaving a working builder.
 
 - **First step (24 November 2026):** the picture, the LIDAR and its
   coverage are drawn smoothed at every zoom (plan-view.js; until then a
@@ -1834,6 +1835,44 @@ the 3D editor still keep their surfaces in cells.
   over all of it -- until then it coloured each land cell by the surface at
   its middle. Checked: builder-door-2 and builder-door-2-worthington pass,
   the review picture looked at. Not seen by the owner.
+- **Second step (24 November 2026): the trace step is outlines.** Every
+  layer of door 2's trace is a set of outlines (shapes.js, on Clipper2 --
+  RESEARCH, *The builder on outlines*, for why it and the numbers) and every
+  tool works on them exactly:
+  - a **brush stroke** shows as the band it sweeps while the button is held,
+    in its layer's place among the others (an eraser's band cut out of the
+    layers it takes), and is added to or cut from the layer when the button
+    comes up -- what was seen is what is laid, round ends and all;
+  - **Outline fill**, the **Line** (round or square ends, square bends
+    mitred), **Add layer around** (the layer grown, round), **Fill outside
+    boundary** (the ring cuts every layer) and **Move, Copy, Turn, Delete**
+    of one shape (its own outline and holes, moved or turned exactly) are
+    the shapes themselves;
+  - **Smooth** eases the edge itself, rounding corners to about the radius
+    and filling notches narrower, a thin path keeping its width; **Remove
+    specks** drops shapes and holes by their area;
+  - **Normalize width** lays each thin part's middle line again as a band;
+    only finding that middle line uses a grid, hidden, never drawn;
+  - the plan draws every layer from its outlines each frame -- the **Smooth
+    trace (as it will play)** item in the View menu is gone, as there is
+    nothing else to show;
+  - what starts as a grid (the LIDAR's **Auto trace**, **Paint rock on
+    slopes**, OpenStreetMap lined up to the picture or the LIDAR) is turned
+    into outlines once, as it comes in;
+  - the course is made from the outlines as drawn (real-course.js
+    `docFromLand`); a hidden grid of the land's cells serves only what still
+    asks by cell (the ground smoothed under greens, the holes found on the
+    greens, trees kept off surfaces);
+  - **drafts are version 4**: the trace and OpenStreetMap's trace saved as
+    outlines (draft.js); a version 3 draft's cells are turned into outlines
+    once as it opens (3.9 s for the owner's Alpine Lake), and an older
+    builder refuses a version 4 draft in plain words; **Back to 2D** brings
+    the 3D editor's changed layers as their outlines.
+  Still in cells: **the 3D editor** (its brushes and its picture of the
+  surfaces), next. Checked: every builder Node test and all ten builder
+  journeys pass; on the owner's Alpine Lake draft a stroke is laid in 7 ms
+  at the median, 14 ms at worst, a Smooth dab 16 ms. **Not seen by the
+  owner.**
 
 ### Houses of any size, Normalize width, the Line tool, the pen's curve (23 November 2026)
 

@@ -28,7 +28,7 @@ function doc(rise = () => 100) {
 }
 const land2d = (rise = () => 100) => { const nx = 201, ground = new Float32Array(nx * nx); for (let j = 0; j < nx; j++) for (let i = 0; i < nx; i++) ground[j * nx + i] = rise(-100 + i, -100 + j); return {nx, nz: nx, cell: 1, halfX: 100, halfZ: 100, ground}; };
 const trace = (land = land2d()) => { const m = createTrace(land); m.fill(box(-12, -60, 12, 60), 'fairway'); m.fill(box(-10, 70, 10, 90), 'green'); return m; };
-const make = (land, m, extra = {}) => validateDoc(docFromLand({land, traced: {layers: m.state.layers}, holes: holes().map(({number, tees, green}) => ({number, tees, green})), trees: m.state.trees, homes: m.state.homes, rocks: m.state.rocks, bunkers: m.state.bunkers, creekLines: m.state.creekLines, name: 'Two', landscape: 'calcoast', ...extra}));
+const make = (land, m, extra = {}) => validateDoc(docFromLand({land, traced: {shapes: m.state.shapes}, holes: holes().map(({number, tees, green}) => ({number, tees, green})), trees: m.state.trees, homes: m.state.homes, rocks: m.state.rocks, bunkers: m.state.bunkers, creekLines: m.state.creekLines, name: 'Two', landscape: 'calcoast', ...extra}));
 const bio = BIOMES.calcoast, trees = treeCover(bio);
 
 test('the tree brush scatters across its width at many sizes, never in a line', () => {
@@ -171,7 +171,7 @@ test('held in 2D as in 3D: it comes off at once, moves or turns in one undo', ()
  assert.equal(m.kindAt(40, 42), 'sand'); assert.equal(m.state.undo.length, u, 'let go where it began, no undo');
  const turned = m.hold(m.pickAt({x: 40, z: 42})).drop(0, 0, Math.PI / 2);
  assert.equal(m.kindAt(40, 50), 'sand'); assert.equal(m.kindAt(32, 42), 'rough');
- assert.equal(turned.kind, 'sand'); assert.ok(got.cells.length);
+ assert.equal(turned.kind, 'sand'); assert.ok(got.set.length);
  m.addTree({x: 70, z: 70, h: 12, crown: 3});
  const tree = m.pickAt({x: 70, z: 70}), t = m.hold(tree);
  t.set(5, 0); assert.equal(m.state.trees[tree.index].x, 75);

@@ -17767,3 +17767,78 @@ width, the Line tool, the pen's curve*). The owner asked for cart paths
   came out 1.5 to 2.5 m across at every point measured, end to end, its branch
   still joined; on 1 m land exactly 2 cells across; the builder journey's 3 m
   line normalized to between 1 and 2.6 m (its check).
+- **Since 24 November 2026 the width is laid as an outline** (*The builder
+  on outlines*, below): the bands are exact, so the whole-cells rounding
+  above no longer applies; only the middle line is still found on a hidden
+  grid.
+
+## The builder on outlines (24 November 2026, the builder-outlines branch)
+
+The owner, 24 November 2026: "I want these pixellated views gone from the
+builder entirely. No 're processing on a 1m square' or anything like that ...
+The game doesnt render in blocks, why does the builder." Until then every
+trace layer was a mask of the land's cells (1 m on most courses), painted
+cell by cell and traced back into fitted outlines after each change; a box
+drawn with Auto curve came back with two square corners and two round
+(the fit guessing corners from cells). Now a layer is a set of outlines and
+every tool is a polygon operation (src/builder/shapes.js).
+
+**The library, measured on the owner's Alpine Lake (a built file: 2,233 x
+3,066 land cells; its biggest layer, road, 41 outlines and 36,291 points).**
+300 brush strokes, each 30 m of 15 dabs at 3 m radius near the layer's edge,
+alternately added and cut, through the whole layer:
+
+| Library | Licence | A stroke, median / worst | Notes |
+|---|---|---|---|
+| Clipper2, TypeScript port @countertype/clipper2-ts 1.5.4-3.9a869ba (https://github.com/countertype/clipper2-ts) | BSL-1.0 | 32 / 40 ms whole layer; 7.6 / 24 ms with only the paths near the stroke | **taken**: booleans, offsets with round and mitred joins, open-line bands, a polygon tree for holes; 97 KB in the builder's page |
+| Clipper 1 v6.4.2, `clipper-lib` (https://www.npmjs.com/package/clipper-lib) | BSL-1.0 | 48 / 91 ms whole layer | rejected: half again slower, the old engine (2014) |
+| polygon-clipping 0.15.7 (https://github.com/mfogel/polygon-clipping) | MIT | 16 / 29 ms whole layer (60 strokes) | rejected: no offsetting (a brush band, Add layer around, a line's width would need another library) |
+| clipper2-js 1.2.4 (https://www.npmjs.com/package/clipper2-js) | BSL-1.0 | not timed | rejected unmeasured: a port of Clipper2 1.2 (January 2024), the countertype port follows Clipper2's 2025 sources and passes its reference tests (README: 194 of 195, the one failure shared with C#) |
+
+Offsetting the whole road layer 4 m took 173 ms; the worst ground (the land
+with every surface 30 m round cut out: 73 outlines, 33,658 points) took a
+stroke's union in 27 ms whole. The port's version string is a pre-release
+of 1.5.4 tracking upstream commit 9a869ba; it is npm's `latest` and was
+pinned exactly.
+
+**Decisions.**
+- **Whole centimetres** (Clipper's 64-bit integer paths): a 3 km course is
+  300,000 units, far inside the range.
+- **Round ends and bends within 5 cm of a true arc** (`ARC`, PLACED): about
+  70 points round a 3 m brush. A round band comes out a little inside its
+  true area (a 20 m stroke of 2 m radius: 92.15 m² against 92.57).
+- **A stroke is laid when the button comes up**, one boolean however long
+  the drag; while it is held its dabs show as the band they sweep. Laying
+  each dab as it came was rejected: 8 to 30 ms a dab on the biggest layer.
+- **Only the paths near the other shape go through Clipper** (`split`): a
+  layer's paths never overlap, so the rest are carried as they are. On the
+  owner's Alpine Lake draft (2,780 x 3,280 cells, road 43,557 points) a stroke
+  laid in 7.4 ms at the median, 14.1 ms at worst.
+- **A pen outline that crosses itself is read even-odd**, as its cell fill
+  was.
+- **Smooth** eases the edge itself: points set a tenth of the radius apart,
+  each moved to the average of the edge round it under a bell half the
+  radius wide (so a 20 m square's corner is cut 0.58 m along its diagonal at
+  a 2 m radius -- a corner rounded to about 1.4 m -- and its area kept within
+  0.5%), then shapes smaller than the circle dropped. A thin path keeps its
+  width (each edge eased along itself). Rejected: Taubin's two-step easing
+  (toward the neighbours and back), which kept the area but cut the same
+  corner by only 0.21 m after 32 rounds; and growing and shrinking the
+  shape (opening and closing), which deletes every path thinner than the
+  circle -- what the owner asked on 23 November never to happen.
+  A Smooth brush dab took 16 ms at the median, 30 ms at worst on Alpine;
+  Smooth edges on the whole road layer 220 ms.
+- **Tidy** is exact: shapes under SPECK and holes under POCK by their area
+  (58 ms for every layer on Alpine).
+- **Normalize width** finds each thin part's middle line on a hidden grid a
+  quarter of the width across (at least 25 cm, at most 1 m; PLACED), then
+  lays it as a band; the wide areas are the layer's own outline grown and cut.
+  The grid is never drawn and nothing is traced from it. 0.34 s for Alpine's
+  paths, 1.05 s for its roads (7.3 s before the bands were joined in one go).
+- **A hidden lookup** (each land cell's topmost layer, rasterised from the
+  outlines in 16 ms on Alpine) serves what still asks by cell: the hole
+  finder, Fill outside's trees, Paint rock on slopes' clear ground, the
+  ground smoothed under greens in the course. It is never drawn.
+- **A draft saved before** (version 3, cells) is turned into outlines as it
+  opens: 3.9 s for Alpine's eight layers, once.
+- **Add layer around** on the fairway at 4 m: 20 ms.

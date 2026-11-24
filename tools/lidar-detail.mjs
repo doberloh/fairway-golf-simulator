@@ -112,7 +112,7 @@ if (out) {
  fs.mkdirSync(out, {recursive: true});
  for (const [label, withFine] of [['patches', true], ['plain', false]]) {
   const l = withFine ? land : {...land, fine: undefined};
-  const doc = validateDoc(docFromLand({land: l, traced: {layers: model.state.layers}, holes, trees: r.trees, name: `Alpine Lake (${label})`, landscape: 'heartland'}));
+  const doc = validateDoc(docFromLand({land: l, traced: {shapes: model.state.shapes}, holes, trees: r.trees, name: `Alpine Lake (${label})`, landscape: 'heartland'}));
   const bytes = await writeBuiltFile(doc, BUILT_VERSION), file = path.join(out, `alpine-lake-${label}.fairway`); fs.writeFileSync(file, bytes);
   const samples = doc.patches.reduce((s, p) => s + p.nx * p.nz, 0);
   // How large the detail laid is: each patch height against the 1 m land read

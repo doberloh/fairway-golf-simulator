@@ -11,6 +11,7 @@ import {createLayers} from '../src/builder/layers.js';
 import {PALETTE} from '../src/builder/trace-edit.js';
 import {validateDoc, TREE_STRIDE} from '../src/course-doc.js';
 import {fromEditor, fillRings} from '../src/builder/round-trip.js';
+import * as S from '../src/builder/shapes.js';
 
 test('outlines filled onto a grid: every point inside, none outside', () => {
  const g = {nx: 10, nz: 10, cell: 1, x0: 0, z0: 0}, m = fillRings([[[2, 2], [6, 2], [6, 5], [2, 5]]], g, new Uint8Array(100));
@@ -35,13 +36,15 @@ function course() {
  layers.recompose();
  const land = {nx, nz, cell, halfX, halfZ, ground};
  const trees = [{x: 24, z: 0, h: 12, crown: 4}];
- return {land, layers, holes, trees};
+ // The fixture drawn in cells, the trace's outlines made from it once.
+ const shapes = new Map([...layers.masks].map(([k, m]) => [k, S.fromMask(m, land)]));
+ return {land, shapes, holes, trees};
 }
-const make = (c, extra = {}) => validateDoc(docFromLand({land: c.land, traced: {layers: c.layers}, holes: c.holes.map((h, i) => ({number: i + 1, par: h.par ?? null, index: h.index ?? null, tees: h.tees, green: h.green, line: [[h.tees[0].x, h.tees[0].z], ...h.aims.map(a => [a.x, a.z]), [h.green.x, h.green.z]]})), trees: c.trees, homes: c.homes ?? [], name: 'Round trip', ...extra}));
+const make = (c, extra = {}) => validateDoc(docFromLand({land: c.land, traced: {shapes: c.shapes}, holes: c.holes.map((h, i) => ({number: i + 1, par: h.par ?? null, index: h.index ?? null, tees: h.tees, green: h.green, line: [[h.tees[0].x, h.tees[0].z], ...h.aims.map(a => [a.x, a.z]), [h.green.x, h.green.z]]})), trees: c.trees, homes: c.homes ?? [], name: 'Round trip', ...extra}));
 
 test('the editor\'s work comes back to the trace and into the next course; the layers it left alone stay as they were', () => {
  const c = course(), base = make(c), e = createEditor(base);
- const fairwayBefore = Uint8Array.from(c.layers.masks.get('fairway'));
+ const fairwayBefore = c.shapes.get('fairway');
  // In 3D: a bunker, a hill, the tee moved, the par set, a tree planted, a house.
  e.paint({kind: 'sand', x: 6, z: 0, radius: 2.5});
  e.shape({op: 'raise', x: -40, z: 0, radius: 8, strength: 1});
@@ -53,7 +56,7 @@ test('the editor\'s work comes back to the trace and into the next course; the l
  assert.deepEqual([...changed.keys()], ['sand'], 'only the painted layer changed');
  const got = fromEditor({base, now, grid: c.land, changed, holesBefore: c.holes});
  // The trace takes them.
- assert.ok(got.masks.get('sand').some(Boolean) && !got.masks.has('fairway'));
+ assert.ok(S.contains(got.shapes.get('sand'), 6, 0) && !got.shapes.has('fairway'));
  assert.ok(got.landEdits && got.landEdits.some(d => d > .1), 'the hill as a difference');
  assert.deepEqual(got.holes[4].tees[0], {x: 0, z: 60, set: 'back'});
  assert.equal(got.holes[4].par, 5, 'a par set in 3D stays set');
@@ -62,11 +65,10 @@ test('the editor\'s work comes back to the trace and into the next course; the l
  assert.ok(got.trees.some(t => t.x === 24 && !t.kept), 'the survey\'s tree, as it was');
  assert.equal(got.homes.length, 1);
  // Door 2 applies them (as door-real.js remount does) and makes the course again.
- for (const [k, m] of got.masks) c.layers.masks.set(k, m);
- c.layers.recompose();
+ for (const [k, set] of got.shapes) c.shapes.set(k, set);
  Object.assign(c, {holes: got.holes, trees: got.trees, homes: got.homes});
  const again = make(c, {landEdits: got.landEdits});
- assert.deepEqual(c.layers.masks.get('fairway'), fairwayBefore, 'the fairway exactly as traced');
+ assert.equal(c.shapes.get('fairway'), fairwayBefore, 'the fairway exactly as traced');
  assert.ok(again.surfaces.sand?.length, 'the bunker in the course');
  const k = 200 * 321 + Math.round((-40 + 80) / .5);
  assert.ok(Math.abs(again.land.heights[k] - now.land.heights[k]) < .01, `the hill as shaped: ${again.land.heights[k]} against ${now.land.heights[k]}`);
@@ -77,5 +79,5 @@ test('the editor\'s work comes back to the trace and into the next course; the l
  assert.equal(again.homes.length, 1);
  // And into the editor again: nothing left to carry.
  const e2 = createEditor(again), back = fromEditor({base: again, now: e2.toDoc(), grid: c.land, changed: e2.changedLayers(), holesBefore: c.holes});
- assert.equal(back.masks.size, 0); assert.equal(back.landEdits, null);
+ assert.equal(back.shapes.size, 0); assert.equal(back.landEdits, null);
 });
