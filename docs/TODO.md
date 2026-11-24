@@ -582,6 +582,12 @@ here is a claim of support until it is done.
   again (a course saved before keeps its old outlines), a square-ended Line
   with bends, and painting on Alpine. Not checked: the 3D editor's redraw
   after a stroke with its margin now 32 cells (Node tests only).
+- [ ] **No squares in the builder: under way** (branch `builder-outlines`,
+  from 24 November 2026; COURSE_BUILDER.md, *No squares in the builder*).
+  Done: the picture and LIDAR smoothed at every zoom, the review drawn from
+  the course's outlines. Still in cells: the trace step's layers and tools,
+  drafts, the 3D editor. Owed after: the owner's look at painting, the
+  review and the editor.
 - [ ] **The fringe only where painted: not seen by the owner** (24 November
   2026; COURSE_BUILDER.md, *A fringe only where it is painted*). Seen: the
   Fringe layer offered, Add layer around Green with Fringe at 2 m on a copy

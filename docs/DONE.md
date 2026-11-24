@@ -25,7 +25,7 @@ kept whole: *The open list before the 11 November 2026 prune* and *The open
 list before the 16 October prune*, each with a table of what became of every
 entry.
 
-## The grass toned down (branch `builder-big-zips`, 24 November 2026; not merged)
+## The grass toned down (branch `builder-big-zips`, 24 November 2026; merged 24 November, not released)
 
 The owner: "our grasses are almost too neon and too light colored on all of
 our biomes ... It tends to also get washed out on the projector screens."
@@ -42,7 +42,7 @@ landscapes at five views each ("These Grass color changes are perfect").
 Numbers, and what was rejected, in RESEARCH *The turf as the landscape paints
 it*. Fingerprints unchanged; no version moves. Not seen on the projector.
 
-## Large courses in the builder: the outline, the half-metre ground, the memory (branch `builder-big-zips`, 22-23 November 2026; not merged)
+## Large courses in the builder: the outline, the half-metre ground, the memory (branch `builder-big-zips`, 22-23 November 2026; merged 24 November, not released)
 
 The owner, the builder hanging on a 3 km square: "I think we have
 optimizations that need to happen on large courses maybe", then the rough
@@ -67,7 +67,7 @@ draft Node tests; every builder journey; Alpine Lake measured in Node
 (RESEARCH, *Full detail inside the course, less outside*); the frame rate
 with patches on every tier (no cost). Still owed: the owner's own look (TODO).
 
-## A big LIDAR ZIP in the builder (branch `builder-big-zips`, 22 November 2026; not merged)
+## A big LIDAR ZIP in the builder (branch `builder-big-zips`, 22 November 2026; merged 24 November, not released)
 
 The owner, trying the builder: "Im getting these errors trying to load
 downloaded LAZ files in a zip" -- three uncaught NotReadableErrors, nothing

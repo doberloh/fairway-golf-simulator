@@ -448,6 +448,16 @@ export function open(draft = null) {
   }
   ctx.globalAlpha = st.traceAlpha; ctx.drawImage(vecCanvas, 0, 0); ctx.globalAlpha = 1;
  }
+ // The review (paintCourse): the rough over the land, each surface's
+ // outlines, then the land's shading multiplied over them, smoothed.
+ function drawReview(ctx, p) {
+  const r = st.review, {nx, nz, cell, halfX, halfZ} = st.land, s = p.view.scale, [ox, oy] = p.toScreen(0, 0), x0 = -halfX - cell / 2, z0 = -halfZ - cell / 2;
+  ctx.save(); ctx.setTransform(s, 0, 0, s, ox, oy);
+  ctx.fillStyle = r.rough; ctx.fillRect(x0, z0, nx * cell, nz * cell);
+  for (const [path, fill] of r.paths) { ctx.fillStyle = fill; ctx.fill(path, 'evenodd'); }
+  ctx.globalCompositeOperation = 'multiply'; ctx.imageSmoothingEnabled = true; ctx.drawImage(r.shade, x0, z0, nx * cell, nz * cell);
+  ctx.restore();
+ }
  // WHAT THE TOOL DOES, top middle of the view for as long as it is held (the
  // owner, 1 November 2026: "It needs to be more clear what you are doing").
  function showHint() {
@@ -515,6 +525,7 @@ export function open(draft = null) {
    drawRing(ctx, p, px);
    return;
   }
+  if (st.step === 5 && st.review?.land === st.land) drawReview(ctx, p);
   if (vt && st.model && vt.model === st.model && vt.land === st.land && st.smoothView && st.traceOn && st.step < 5 && !st.compareSkin) drawVec(ctx, p);
   if (st.step === 0 && (st.preview || st.land)) {
    // Each file's box in yellow with its name, the property in white.
@@ -950,7 +961,7 @@ export function open(draft = null) {
   // The map before the LIDAR is step 1's alone: past it, the plan is the land.
   if (n !== 0 && st.map) leaveMap();
   st.step = n; dropPen();
-  if (n !== 5) { plan.clearLayer('course'); st.doc = null; }
+  if (n !== 5) { plan.clearLayer('course'); st.doc = null; st.review = null; }
   plan.showLayer('picture', !!st.map || (n !== 5 && st.picOn !== false)); plan.showLayer('coverage', n === 0); showCodes();
   stepBar();
   palette.hidden = true;
@@ -2644,14 +2655,26 @@ export function open(draft = null) {
     source: {files: st.sources.map(s => s.name), epsg: crsOfSources(st.sources)?.epsg ?? null, crs: crsOfSources(st.sources) ?? null, geo: st.geo, origin: {x: st.gridder.center.x, y: st.gridder.center.y}, trace: st.traceMode, picture: st.picShow === 'lidar' ? 'lidar' : st.picture ? 'placed' : 'none'}}));
    const w = worldFromDoc(doc), bio = BIOMES[st.landscape], mt = bio.mapTurf || {};
    const col = {green: hex(mt.green ?? bio.green), fringe: hex(bio.fringe ?? mt.green ?? bio.green), fairway: hex(mt.fairway ?? bio.fairway), tee: hex(mt.fairway ?? bio.fairway), semi: hex(mt.semi ?? bio.semi), rough: hex(bio.rough), sand: hex(bio.sand), water: [52, 104, 160], path: [75, 77, 81]};
-   const {nx, nz, cell, halfX, halfZ, ground: g} = st.land, N = nx * nz;
-   plan.setLayer('course', d => {
-    for (let k = 0; k < N; k++) {
-     const x = -halfX + (k % nx) * cell, z = -halfZ + Math.floor(k / nx) * cell, s = w.surface(x, z), c = col[s] ?? hex(GROUNDS[s]?.map ?? bio.rough);
-     const a = g[Math.min(N - 1, k + 1)] - g[Math.max(0, k - 1)], b = g[Math.min(N - 1, k + nx)] - g[Math.max(0, k - nx)], sh = Math.max(.55, Math.min(1.15, .9 - (a * .7 - b * .7) / (2 * cell) * 1.2));
-     d[k * 4] = c[0] * sh; d[k * 4 + 1] = c[1] * sh; d[k * 4 + 2] = c[2] * sh; d[k * 4 + 3] = 255;
-    }
-   });
+   // THE REVIEW FROM THE COURSE'S OWN OUTLINES (the owner, 24 November 2026:
+   // "in the final review step before going into the editor, the pixellated
+   // image is still showing. Why does this exist at all"): each surface the
+   // course file holds filled from its outlines, bottom to top in the game's
+   // own order, the water over them, and the land's shading laid over all of
+   // it, drawn smooth. Until then the review coloured each land cell by the
+   // surface at its middle -- the course drawn in 1 m squares.
+   const {nx, nz, cell, ground: g} = st.land, N = nx * nz, lift = c => `rgb(${c.map(v => Math.min(255, Math.round(v * 1.15))).join(',')})`;
+   const shade = document.createElement('canvas'); shade.width = nx; shade.height = nz;
+   const sx = shade.getContext('2d'), img = sx.createImageData(nx, nz);
+   for (let k = 0; k < N; k++) {
+    const a = g[Math.min(N - 1, k + 1)] - g[Math.max(0, k - 1)], b = g[Math.min(N - 1, k + nx)] - g[Math.max(0, k - nx)], sh = Math.max(.55, Math.min(1.15, .9 - (a * .7 - b * .7) / (2 * cell) * 1.2));
+    const v = Math.round(255 * sh / 1.15); img.data[k * 4] = img.data[k * 4 + 1] = img.data[k * 4 + 2] = v; img.data[k * 4 + 3] = 255;
+   }
+   sx.putImageData(img, 0, 0);
+   const pathOf = polys => { const p = new Path2D(); for (const poly of polys) for (const r of poly) { r.forEach(([x, z], q) => q ? p.lineTo(x, z) : p.moveTo(x, z)); p.closePath(); } return p; };
+   const paths = [...LAYER_ORDER].reverse().filter(k => k !== 'water' && doc.surfaces[k]?.length).map(k => [pathOf(doc.surfaces[k]), lift(col[k] ?? hex(GROUNDS[k]?.map ?? bio.rough))]);
+   if (doc.water.length) paths.push([pathOf(doc.water.map(b => b.rings)), lift(col.water)]);
+   st.review = {land: st.land, rough: lift(col.rough), paths, shade};
+   plan.clearLayer('course'); plan.draw();
    // From the course's longest set (black when it has one; it was always
    // blue, from before the six sets).
    const longest = sets()[0], backYd = h => h.tees[longest]?.yards ?? Object.values(h.tees)[0]?.yards ?? 0;

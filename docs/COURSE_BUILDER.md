@@ -1807,6 +1807,34 @@ courses folder, its Open button never reached the file chooser). A
 generated course taken over has not been looked at with its collar painted
 on (Node tests only). **Not yet seen by the owner.**
 
+### No squares in the builder (branch `builder-outlines`, from 24 November 2026)
+
+The owner, after a box drawn with Auto curve came back with two square
+corners: "I dont understand why things are so boxy in the editor, why cant i
+just paint and draw smooth lines like what shows up when i lift off the click
+after painting. Also in the final review step ... the pixellated image is
+still showing", and then "I want these pixellated views gone from the builder
+entirely. No 're processing on a 1m square' or anything like that ... The
+game doesnt render in blocks, why does the builder."
+
+**The rule from here on: outlines are what a surface is.** Squares may only
+be a hidden lookup (what is under a point, the land's grid for smoothing the
+ground under a green), never drawn and never traced back into outlines. What
+starts as a grid -- the LIDAR's auto trace, Paint rock on slopes, a draft
+saved before -- is turned into outlines once, as it comes in. The work goes
+in steps, each leaving a working builder; until the last, the trace step and
+the 3D editor still keep their surfaces in cells.
+
+- **First step (24 November 2026):** the picture, the LIDAR and its
+  coverage are drawn smoothed at every zoom (plan-view.js; until then a
+  layer went pixel-sharp past two screen pixels a cell -- a 1 m land showed
+  as 1 m blocks); and the review (door-real.js `paintCourse`,
+  `drawReview`) fills each surface from the course file's own outlines, in
+  the game's order, the water over them, with the land's shading multiplied
+  over all of it -- until then it coloured each land cell by the surface at
+  its middle. Checked: builder-door-2 and builder-door-2-worthington pass,
+  the review picture looked at. Not seen by the owner.
+
 ### Houses of any size, Normalize width, the Line tool, the pen's curve (23 November 2026)
 
 The owner: "the open street map data places houses that are odd shapes and it
