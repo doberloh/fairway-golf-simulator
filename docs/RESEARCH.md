@@ -10921,6 +10921,32 @@ half-metre land is within 25 cm of the cells' corner. Nothing a saved file
 holds changed, so no `BUILT_VERSION`; a course saved again gets the fitted
 outlines.
 
+## A built green's fringe, only where painted (24 November 2026)
+
+The game's fringe is a collar the course's fringe width (`fringe`, 2 m by
+default, 0-6 m) outside every green; on a built course it was 2 m outside the
+green as painted, which the owner saw as "bands added around every green".
+The owner's rule: a Fringe layer, played only where painted; a course from
+outside the builder keeps its fringe. Numbers and what is PLACED:
+
+- **A course saved from the builder: `fringe` 0**, so no collar but the
+  painted one. A file with none keeps 2 m, so a course already saved plays
+  as before (no `BUILT_VERSION`).
+- **Taken over or opened from outside the builder: the collar painted in**,
+  every 3D editor cell (0.5 m, or coarser on a big course) whose centre is
+  within the course's fringe width of a green, the green's own cells too
+  (PLACED: by the cell centre, as the editor fills every outline).
+- **The suggested width, about 2 m** in the builder's help (PLACED: the
+  game's default fringe, `DEFAULT_COURSE.fringe`; the generator's preset
+  range is 1-4 m).
+- **In the field, code 12** of the ground layer, winning inside its outline;
+  no new texture, so no cost on any tier: the shader's built branch reads the
+  code it already fetched. Profiled (`--only built`, the RTX 4090, Low):
+  the frozen copies of Parkland, the Pacific Northwest and Seaside draw in
+  0.48, 0.67 and 0.66 ms of graphics card a frame (median), under their
+  seeded twins (0.64, 0.86, 0.73); the baseline holds no built group to
+  compare against.
+
 ## Outlines without notches (1 November 2026)
 
 Superseded by *Outlines fitted* above (23 November 2026).

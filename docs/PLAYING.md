@@ -851,8 +851,13 @@ changes, newest first, each with **Undo to here**.
      **Add layer around** (its own section) lays one layer in a band round
      another: **Around** (fairway, say), **Lay** (semi-rough), **Width,
      metres**; under the chosen layer it runs on
-     unbroken, over it only the band shows. (The fringe round a green needs
-     none: the game mows one round every green.) The trace is drawn **as the
+     unbroken, over it only the band shows. **Fringe** is a layer too, and
+     a course from the builder has a fringe only where it is painted: Around
+     **Green**, Lay **Fringe**, about 2 m puts one round every green. (A
+     course you take over from a seed, or a course file from outside the
+     builder, opens in the 3D editor with the fringe it had, painted on; a
+     course file saved before 24 November 2026 keeps its fringe in the game
+     until it is saved again.) The trace is drawn **as the
      course will have it** -- each layer's outline smoothed and its specks
      gone -- a moment after each stroke; while you paint, its cells show.
      **Smooth / cell view** switches to the cells. **Outside the course**:

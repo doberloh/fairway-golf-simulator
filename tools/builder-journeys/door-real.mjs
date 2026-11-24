@@ -368,6 +368,10 @@ export default function ({journey, SHOTS}) {
   await page.locator('.cb-linewidth').fill('3'); await page.locator('.cb-linecaps').selectOption('square');
   for (const [x, z] of [[-100, 120], [-40, 120]]) { const [px, py] = await at(x, z); await page.mouse.click(px, py); }
   await page.keyboard.press('Enter');
+  // Enter names its change a moment later (door-real.js, a timeout after the
+  // keydown): read before it, the name was the last one's, a race lost on 24
+  // November 2026 on both this branch and the commit before it.
+  await page.waitForFunction(() => { const d = window.fairwayBuilder.door2; return d.names.undo.length === d.model.state.undo.length; }, null, {timeout: 5000});
   const line = await page.evaluate(() => { const m = window.fairwayBuilder.door2.model; let w = 0; for (let z = 110; z <= 130; z += .25) if (m.kindAt(-70, z) === 'path') w += .25; return {w, end: m.kindAt(-38.5, 120), last: window.fairwayBuilder.door2.names.undo.at(-1)}; });
   if (Math.abs(line.w - 3) > .75 || line.end === 'path' || line.last !== 'Line') throw Error(`the line should be a 3 m path, square at its ends, named Line: ${JSON.stringify(line)}`);
   await t.shot('line-tool');

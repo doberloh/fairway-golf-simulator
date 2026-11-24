@@ -417,9 +417,11 @@ After trying the builder, the owner amended the goal:
       simplified to 0.6 of a cell), so the tracer now draws exactly those (`layerRings`, real-course.js). A grid
       four times finer would have cost sixteen times the memory and every
       brush stroke's time on a 3 km property, and still shown steps.
-    - **A green's fringe is not an extrapolated layer**: the game already
-      mows a collar round every green (the course's fringe width). There is
-      no fringe layer to paint, and adding one would draw two fringes.
+    - **A green's fringe** was at first no layer at all: the game mowed a
+      collar round every green (the course's fringe width), and a layer
+      would have drawn two. **Reversed 24 November 2026**: the fringe is a
+      layer, and a course from the builder has only the fringe painted on
+      it (*A fringe only where it is painted*, below).
     - **Outside the boundary, the survey's trees stay.** They are real; the
       wood is added only where none stands. Wiping them would have thinned a
       boundary that is already a wood.
@@ -1729,9 +1731,9 @@ out automatically?" With screenshots from the game and the review.
   game's fringe: 2 m outside the green as painted (the course's fringe width,
   `doc.fringe ?? 2`), in the fringe's colour, which is paler than the green;
   inside it the diamonds reach the painted edge, with the 0.65 m clean-up
-  lap. The 3D editor does not draw it, so it first shows at the review. Not
-  changed: whether a built green keeps that fringe outside what was painted
-  is the owner's call (dropping it changes play, a `BUILT_VERSION`). TODO.
+  lap. The 3D editor did not draw it, so it first showed at the review. The
+  owner's answer, the next day: a fringe layer, played only where painted
+  (*A fringe only where it is painted*, below).
 
 Checked: Node tests (tests/contour.test.mjs: a fitted tee and green on both
 cell sizes; tests/builder-line-work.test.mjs: a square bend kept when saved);
@@ -1741,6 +1743,56 @@ saved Alpine course loaded in the game with a tee shot played
 (`tools/play-built.mjs`, which now hands the page a large course in pieces:
 an 87 MB file took Node out of memory as one array of numbers). **Not yet
 seen by the owner.**
+
+### A fringe only where it is painted (24 November 2026)
+
+The owner, on the pale band the game laid round every built green: "for the
+fringe in the builder, make sure its added as a paintable type, but then
+only add it if the user paints it", and then "keep it in courses from
+outside the builder".
+
+- **Fringe is a layer** in door 2's trace and the 3D editor, just under
+  Green (layers.js `LAYER_ORDER`), so a collar painted up to and over a
+  green's edge leaves no gap. The quickest way to lay one: **Add layer
+  around**, Around **Green**, Lay **Fringe**, about **2** metres (the help
+  there says so). Brush, Outline fill, Line and the rest paint it as any
+  layer. It is kept clear of trees, houses and ground cover like the other
+  mown turf. In the trace palette it is the LAST code (trace-edit.js
+  `PALETTE`): a draft keeps OpenStreetMap's cells as palette codes, so no
+  older code moved.
+- **A course saved from the builder has no fringe but the painted one**:
+  door 2 (real-course.js `docFromLand`) and the 3D editor (editing.js
+  `toDoc`) write `fringe: 0`, which turns the game's own collar off, and the
+  fringe layer goes into the file as `surfaces.fringe`.
+- **A file saved before plays as it did**: one with no `fringe` (null) keeps
+  the 2 m collar, so nothing a player already has changes, and there is no
+  `BUILT_VERSION` bump. It loses the collar when saved again from the
+  builder (from a file with a builder section, below).
+- **A course from outside the builder keeps its fringe, as painted fringe**
+  (PLACED): a generated course taken over (freeze.js) or a course file with
+  no builder section opens in the 3D editor with its collar -- every cell
+  within its fringe width of a green, `doc.fringe ?? 2` -- laid into the
+  fringe layer (editing.js `fringeBand`, from editor.js `openEditor`), so
+  what the editor shows is what will play, and it can be erased. A file
+  that has a builder section was made in the builder and gets none.
+  Turned down: turning the collar into painted fringe on every file opened,
+  builder-made ones too -- it would have brought back the bands the owner
+  asked to be rid of on their own courses.
+- **In the game** a painted fringe is code 12 in the field's ground layer
+  (built-field.js `BUILT_GROUND_CODE`), not a channel of its own: all eight
+  are taken, and a third texture would have cost a sampler on every tier.
+  Inside its outline it wins over any ground type, as the layers show it.
+  The lie (built-world.js `builtSurface`: right after the green), the
+  ground shader's built branch and the mowing's one-hole-a-piece
+  (ground.js, `builtMowOwners`'s `kindAt`) read it the same way. It is
+  painted and mown as the generator's fringe is.
+
+Checked: Node tests (built-world: painted, none and an old file's collar;
+builder-editing: none unless painted, the collar from outside kept as
+painted fringe; real-course: door 2's course; layers: the order and the
+palette); the owner's Alpine draft (a copy) in the built builder, Add layer
+around Green with Fringe at 2 m, saved, and a green looked at in the game
+painted and unpainted. **Not yet seen by the owner.**
 
 ### Houses of any size, Normalize width, the Line tool, the pen's curve (23 November 2026)
 

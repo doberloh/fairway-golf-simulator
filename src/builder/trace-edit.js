@@ -18,7 +18,9 @@ import {smoothCells, extrapolateCells, zoneTrees, zoneHomes} from './layer-ops.j
 import {skinFromHeights, SKIN} from './skin.js';
 import {lineCells, evenWidth} from './line-work.js';
 
-export const PALETTE = [...TRACE, ...GROUND_KINDS.filter(k => !TRACE.includes(k))];
+// The fringe last (24 November 2026): a draft keeps OpenStreetMap's cells as
+// these codes (draft.js osm/codes.bin), so a new kind goes on the end.
+export const PALETTE = [...TRACE, ...GROUND_KINDS.filter(k => !TRACE.includes(k)), 'fringe'];
 export const CODE = Object.fromEntries(PALETTE.map((k, i) => [k, i]));
 // Patches smaller than this are specks and holes smaller than this are pocks
 // (PLACED: 10 m², the smallest pot bunker; at 4 m² the imagery iterations
@@ -115,8 +117,9 @@ export function createTrace(grid, {codes = null, trees = [], homes = [], rocks =
   // Allow the user to extrapolate any layers"): `to`'s layer laid `width`
   // metres round `from`'s. A layer below runs on unbroken beneath it (semi
   // under a fairway, as a course is drawn); one above takes only the band
-  // round it, so `from` still shows. (A green's fringe needs none: the game
-  // mows a collar round every green, the course's fringe width.)
+  // round it, so `from` still shows. A green's fringe is laid this way too
+  // (Around Green, Lay Fringe): since 24 November 2026 a course from the
+  // builder has only the fringe painted on it (real-course.js, BUILT_FRINGE).
   extrapolate({from, to, width}) {
    const F = layers.mask(layerOf(from)), T = layerOf(to); if (!F || !T || T === from || !(width > 0)) return;
    step(() => extrapolateCells(F, grid, width, LI[T] > LI[from], (k, v) => put(T, k, v)));
@@ -186,7 +189,7 @@ export function createTrace(grid, {codes = null, trees = [], homes = [], rocks =
   // SKIN FROM THE LAND, as the 3D editor's (skin.js): `ground` the heights as
   // they stand. One undo. Returns {kinds, cells}.
   skin({bio, ground}) {
-   const c = SKIN.clear, PLAYED = new Set(['fairway', 'green', 'tee', 'sand', 'water', 'path', 'semi']);
+   const c = SKIN.clear, PLAYED = new Set(['fairway', 'green', 'fringe', 'tee', 'sand', 'water', 'path', 'semi']);
    const keepOut = (x, z) => [[0, 0], [c, 0], [-c, 0], [0, c], [0, -c]].some(([dx, dz]) => PLAYED.has(api.kindAt(x + dx, z + dz)));
    const skin = skinFromHeights({nx, nz, cell, halfX: halfX + cell / 2, halfZ: halfZ + cell / 2, ground}, bio, keepOut);
    step(() => { for (const [kind, m] of Object.entries(skin.masks)) for (let k = 0; k < N; k++) if (m[k]) put(kind, k, 1); });
@@ -420,7 +423,7 @@ export function facingFrom(kindAt) {
 // Where a tree may stand: rough and the wild ground types, not mown turf,
 // sand, water or path.
 const SHRUB = TREE_ROLES.indexOf('shrub');
-const OPEN = new Set(PALETTE.filter(k => !['fairway', 'tee', 'green', 'sand', 'water', 'path'].includes(k)));
+const OPEN = new Set(PALETTE.filter(k => !['fairway', 'tee', 'green', 'fringe', 'sand', 'water', 'path'].includes(k)));
 const inside = (ring, x, z) => { let c = false; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) { const [ax, az] = ring[j], [bx, bz] = ring[i]; if ((bz > z) !== (az > z) && x < (ax - bx) * (z - bz) / (az - bz) + bx) c = !c; } return c; };
 
 // Specks merged into their surroundings and pocks filled, in place (`put(k,

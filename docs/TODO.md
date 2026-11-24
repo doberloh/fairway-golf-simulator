@@ -573,13 +573,14 @@ here is a claim of support until it is done.
   again (a course saved before keeps its old outlines), a square-ended Line
   with bends, and painting on Alpine. Not checked: the 3D editor's redraw
   after a stroke with its margin now 32 cells (Node tests only).
-- [ ] **A built green's fringe: the owner's call** (23 November 2026): the
-  game lays a 2 m fringe OUTSIDE every green as painted, which the owner saw
-  as "bands added around every green" in the review and the game, and the 3D
-  editor does not draw. Keep it; paint it darker on built courses (look only);
-  lay it inside the painted edge or not at all (changes play, a
-  `BUILT_VERSION`); or let the builder draw it. COURSE_BUILDER.md, *Edges
-  fitted, sharp bends, a trace step that keeps up*.
+- [ ] **The fringe only where painted: not seen by the owner** (24 November
+  2026; COURSE_BUILDER.md, *A fringe only where it is painted*). Seen: the
+  Fringe layer offered, Add layer around Green with Fringe at 2 m on a copy
+  of the Alpine draft, saved, and a green in the game with and without it
+  (bench/shots/paint/, local). Owed: painting a fringe by hand and seeing it
+  in the review and a round; the 3D editor opening a generated course taken
+  over with its collar painted on (Node tests only); a course saved before
+  that day still showing its collar until saved again.
 - [ ] **Built fairway stripes in one direction a piece: not seen by the
   owner** (23 November 2026; owner-atlas.js `builtMowOwners`). Seen fixed in
   top-down pictures of Troon North and Alpine (bench/shots/built-look/,

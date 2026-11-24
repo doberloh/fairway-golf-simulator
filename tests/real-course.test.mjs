@@ -8,6 +8,7 @@ import {landSampler} from '../src/built-world.js';
 import {writeDraft, readDraft} from '../src/builder/draft.js';
 import {createGridder} from '../src/lidar/land.js';
 import {TRACE} from '../src/lidar/trace.js';
+import {PALETTE} from '../src/builder/trace-edit.js';
 import {validateDoc, writeBuiltFile, readBuiltFile} from '../src/course-doc.js';
 import {worldFromDoc} from '../src/built-world.js';
 import {BUILT_VERSION} from '../src/settings-schema.js';
@@ -54,6 +55,8 @@ test('the land, the trace and the marks become a course the game can play', asyn
   for (let dz = -4; dz <= 4; dz++) for (let dx = -3; dx <= 3; dx++) codes[at(x + dx, 120 + dz)] = TRACE.indexOf('tee');
  }
  for (let dz = -15; dz <= 15; dz++) for (let dx = -15; dx <= 15; dx++) if (dx * dx + dz * dz < 200) codes[at(200 + dx, dz)] = TRACE.indexOf('water');
+ // A fringe painted round the first green only (24 November 2026).
+ for (let dz = -16; dz <= 16; dz++) for (let dx = -16; dx <= 16; dx++) { const r2 = dx * dx + dz * dz; if (r2 >= 140 && r2 < 225) codes[at(-120 + dx, -120 + dz)] = PALETTE.indexOf('fringe'); }
  const trees = [{x: -120, z: -120, h: 12, crown: 4}, {x: 200, z: 150, h: 15, crown: 2}];
  const doc = validateDoc(docFromLand({land: {nx, nz, cell, halfX, halfZ, ground}, traced: {codes}, holes, trees, name: 'Test', credits: ['Elevation: a test']}));
  assert.equal(doc.holes.length, 9);
@@ -69,6 +72,9 @@ test('the land, the trace and the marks become a course the game can play', asyn
  assert.equal(doc.trees[5], 1);
  const w = worldFromDoc(await readBuiltFile(await writeBuiltFile(doc, BUILT_VERSION)));
  assert.equal(w.surface(-120, -120), 'green');
+ assert.equal(doc.fringe, 0, 'no collar but the painted one');
+ assert.equal(w.surface(-120, -120 + 13.5), 'fringe', 'the painted fringe');
+ assert.equal(w.surface(-90, -120 + 13.5), 'rough', 'none round a green with none painted');
  assert.equal(w.surface(200, 0), 'water');
  assert.equal(w.holes.length, 9);
  // With no trace, each green is a disc round its mark and each tee a pad.

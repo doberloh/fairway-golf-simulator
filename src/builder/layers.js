@@ -16,7 +16,10 @@
 import {GROUND_KINDS} from '../grounds.js';
 
 // Top first.
-export const LAYER_ORDER = ['water', 'sand', 'green', 'tee', 'path', 'fairway', 'semi', ...GROUND_KINDS.filter(k => k !== 'path')];
+// The fringe (24 November 2026) just under the green, so a collar painted up
+// to and over a green's edge leaves no gap; in the game it is a code in the
+// ground layer that wins inside it (built-field.js).
+export const LAYER_ORDER = ['water', 'sand', 'green', 'fringe', 'tee', 'path', 'fairway', 'semi', ...GROUND_KINDS.filter(k => k !== 'path')];
 
 // The layers a landscape offers, top first, ending with rough (the owner, 1
 // November 2026: "all types available to that biome ... i dont see rough,

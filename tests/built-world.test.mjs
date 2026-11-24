@@ -57,6 +57,25 @@ test('the lie follows the outlines, in the generator\'s order', () => {
  assert.equal(at(40, -100), 'rough');
 });
 
+// The owner, 24 November 2026: a fringe on a builder course only where it is
+// painted; a file from before (no `fringe`) keeps the 2 m collar.
+test('a builder course has the fringe it was painted with and no other', () => {
+ const ring = r => disc(0, 90, r, 96)[0], painted = worldFromDoc(doc({fringe: 0, surfaces: {...doc().surfaces, fringe: [[ring(14), ring(12).reverse()]]}}));
+ const bare = worldFromDoc(doc({fringe: 0}));
+ assert.equal(painted.surface(0, 90), 'green');
+ assert.equal(painted.surface(0, 90 - 13), 'fringe', 'inside the painted band');
+ assert.equal(painted.surface(0, 90 + 13), 'fringe');
+ assert.equal(painted.surface(0, 90 - 15), 'semi', 'past it, what lies under');
+ assert.equal(bare.surface(0, 90 - 13), 'rough', 'none painted: no collar');
+ assert.equal(bare.surface(0, 90 + 13), 'rough');
+ assert.equal(at(0, 90 + 13), 'fringe', 'an older file keeps its collar');
+ // A fringe painted over a ground type wins inside it, as the layers show it.
+ const overHeather = worldFromDoc(doc({fringe: 0, surfaces: {...doc().surfaces, fringe: [box(70, -10, 80, 10)]}}));
+ assert.equal(overHeather.surface(75, 0), 'fringe');
+ assert.equal(overHeather.surface(85, 0), 'heather');
+ assert.equal(overHeather.settings.fringe, 0);
+});
+
 test('a field edge is where the outline is, to a few centimetres', () => {
  for (const x of [-15.1, -14.9, 14.9, 15.1]) assert.equal(at(x, 0), Math.abs(x) < 15 ? 'fairway' : 'semi', `x ${x}`);
  const d = builtFieldAt(world.builtField, 0, 90, 1);

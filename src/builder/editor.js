@@ -14,7 +14,7 @@ import {writeBuiltFile, validateDoc} from '../course-doc.js';
 import {writeDraft} from './draft.js';
 import {withEditorWork} from './round-trip.js';
 import {saveBytes} from './saving.js';
-import {BUILT_VERSION, BIOME_KEYS} from '../settings-schema.js';
+import {BUILT_VERSION, BIOME_KEYS, DEFAULT_COURSE} from '../settings-schema.js';
 import {BIOMES} from '../biomes.js';
 import {SURROUND_KINDS, SURROUND_SIDES, SURROUND_NAMES} from '../surround-sides.js';
 import {fileName} from '../course-file.js';
@@ -47,7 +47,10 @@ const label = k => GROUNDS[k]?.label ?? (k[0].toUpperCase() + k.slice(1));
 // or a file from before 5 November 2026.
 export function openEditor(doc, {from = 'file', back = null, work = null} = {}) {
  current?.view.dispose();
- const editor = createEditor(doc), s = editor.state;
+ // A course from outside the builder (no door 2 session behind it) keeps the
+ // fringe the game gave it, as painted fringe (editing.js `fringeBand`); a
+ // builder course has only the fringe painted on it.
+ const editor = createEditor(doc, {fringeBand: work ? 0 : doc.fringe ?? DEFAULT_COURSE.fringe}), s = editor.state;
  setTitle(s.name);
  const wrap = el('div', {class: 'cb-view'}), status = el('div', {class: 'cb-status'}, 'Right-drag to turn, wheel to zoom, left-drag to move. Pick a tool on the left.');
  const tools = el('div', {class: 'cb-tools cb-tools3d'}), side = el('div', {class: 'cb-side'});

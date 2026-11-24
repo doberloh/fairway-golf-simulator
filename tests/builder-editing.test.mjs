@@ -135,6 +135,26 @@ test('the document it gives back is a valid course that plays what was edited', 
  assert.deepEqual(untouched.surfaces.green, doc().surfaces.green, 'an unpainted course keeps its own outlines');
 });
 
+// The owner, 24 November 2026: fringe a paintable layer, and only where painted;
+// "keep it in courses from outside the builder" (openEditor's `fringeBand`).
+test('the fringe is a layer: none unless painted, or the collar a course from outside came with', () => {
+ const plain = createEditor(doc()), out = validateDoc(plain.toDoc());
+ assert.equal(out.fringe, 0, 'a course saved from the builder has no collar of its own');
+ assert.equal(worldFromDoc(out).surface(0, 68.5), 'rough', 'so none round the green');
+ plain.paint({kind: 'fringe', x: 0, z: 69, radius: 3});
+ const painted = worldFromDoc(validateDoc(plain.toDoc()));
+ assert.equal(painted.surface(0, 69), 'fringe', 'painted, it is there');
+ assert.equal(painted.surface(0, 80), 'green', 'the green stays on top of it');
+ const outside = createEditor(doc(), {fringeBand: 2});
+ assert.equal(outside.surfaceAt(0, 68.5), 'fringe', 'the collar it came with, as the fringe layer');
+ assert.equal(outside.surfaceAt(0, 80), 'green');
+ assert.equal(outside.surfaceAt(0, 67.5), 'rough', 'no further than its width');
+ const kept = validateDoc(outside.toDoc()), w = worldFromDoc(kept);
+ assert.equal(kept.fringe, 0); assert.ok(kept.surfaces.fringe.length, 'saved as painted fringe');
+ assert.equal(w.surface(0, 68.5), 'fringe'); assert.equal(w.surface(11.5, 80), 'fringe');
+ assert.deepEqual(kept.surfaces.green, doc().surfaces.green, 'the rest of its outlines untouched');
+});
+
 test('layers: painting a fairway through a bunker keeps the bunker; erasing one layer shows what is under; hiding is the view only', () => {
  const e = createEditor(doc());
  e.paint({kind: 'sand', x: 0, z: 0, radius: 4});

@@ -325,14 +325,20 @@ export function docFromLand({land, traced = null, holes, trees = [], homes = [],
  // wherever it stands, with its own trunk and role.
  for (const t of trees) {
   const lie = codeAt(t.x, t.z);
-  if (!t.kept && ['green', 'tee', 'water', 'sand', 'fairway'].includes(lie)) continue;
+  if (!t.kept && ['green', 'fringe', 'tee', 'water', 'sand', 'fairway'].includes(lie)) continue;
   // A plant the editor painted keeps its species (cover.js).
   let ki = -1; if (t.kind) { ki = treeKinds.indexOf(t.kind); if (ki < 0) ki = treeKinds.push(t.kind) - 1; }
   treeData.push(t.x, t.z, t.h, t.crown, t.trunk ?? Math.min(3.6, Math.max(.14, t.h * .027)), (t.role ?? (t.crown / t.h < .2 ? 1 : 2)) | (t.placed ? TREE_HAND : 0), ki);
  }
  return {type: 'built', name, landscape, designer: null, halfX: halfX - GRID_MARGIN, halfZ: halfZ - GRID_MARGIN,
   land: {x0: -halfX, z0: -halfZ, cell, nx, nz, heights: ground}, patches, surfaces, water, creeks: [...structuredClone(creeks), ...drawnCreeks], holes: recs,
-  trees: new Float32Array(treeData), treeKinds, rocks: structuredClone(rocks), homes, credits, source: {kind: 'lidar', ...source}, from: null, picture: null, landEdits: [], ...(treePlan ? {treePlan} : {}), ...(surround ? {surround} : {})};
+  trees: new Float32Array(treeData), treeKinds, rocks: structuredClone(rocks), homes, credits, source: {kind: 'lidar', ...source}, from: null, picture: null, landEdits: [], ...(treePlan ? {treePlan} : {}), ...(surround ? {surround} : {}),
+  // NO FRINGE BUT THE PAINTED ONE (the owner, 24 November 2026: "make sure
+  // its added as a paintable type, but then only add it if the user paints
+  // it"): the game's own collar round every green is off on a course from the
+  // builder; the fringe layer is the fringe. A file with no `fringe` (null)
+  // keeps the 2 m collar, so a course saved before plays as it did.
+  fringe: 0};
 }
 // THE HALF-METRE PATCHES (22 November 2026; the owner: "yes go ahead, include
 // bunkers"). Round every bunker, tee and green, inside the fine ground the

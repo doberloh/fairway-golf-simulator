@@ -81,9 +81,9 @@ import {landscapeMap} from '../ui-map.js';
 const {el} = ui;
 const frame = () => new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
 const hex = h => { const n = parseInt(String(h).slice(1, 7), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
-const OWN = {fairway: [70, 170, 60], semi: [150, 200, 100], tee: [120, 220, 150], green: [150, 245, 150], sand: [245, 228, 175], water: [60, 120, 220], path: [75, 77, 81]};
+const OWN = {fairway: [70, 170, 60], semi: [150, 200, 100], tee: [120, 220, 150], green: [150, 245, 150], fringe: [105, 205, 120], sand: [245, 228, 175], water: [60, 120, 220], path: [75, 77, 81]};
 const COLOUR = Object.fromEntries(PALETTE.map(k => [k, k === 'rough' ? null : OWN[k] ?? hex(GROUNDS[k]?.map ?? '#888888')]));
-const LABEL = k => ({rough: 'Rough', fairway: 'Fairway', semi: 'Semi-rough', tee: 'Tee', green: 'Green', sand: 'Sand', water: 'Water', path: 'Cart path'})[k] ?? GROUNDS[k]?.label ?? k;
+const LABEL = k => ({rough: 'Rough', fairway: 'Fairway', semi: 'Semi-rough', tee: 'Tee', green: 'Green', fringe: 'Fringe', sand: 'Sand', water: 'Water', path: 'Cart path'})[k] ?? GROUNDS[k]?.label ?? k;
 // What a ZIP may hold that door 2 reads (a portal's notes and READMEs left out).
 const LIDAR_IN_ZIP = /\.(las|laz|e57|ply|pts|ptx|xyz|tif|tiff|asc|flt|bil|hgt|prj|hdr)$/i;
 const IMAGE = /\.(png|jpe?g|webp|gif|bmp)$/i, WORLD = /\.(pgw|jgw|tfw|wld|j2w|bpw|gfw)$/i;
@@ -798,7 +798,7 @@ export function open(draft = null) {
    }
    if (t === 'tree' && type === 'down') {
     const here = m.kindAt(p.x, p.z);
-    if (['fairway', 'green', 'tee', 'water', 'sand', 'path'].includes(here)) say(`A tree cannot stand on ${LABEL(here).toLowerCase()}.`, true);
+    if (['fairway', 'green', 'fringe', 'tee', 'water', 'sand', 'path'].includes(here)) say(`A tree cannot stand on ${LABEL(here).toLowerCase()}.`, true);
     else { m.addTree({x: p.x, z: p.z, h: st.treeH, crown: st.treeH * .28, species: st.treeKind || null}); refreshCount(); }
     plan.draw(); return;
    }
@@ -2183,7 +2183,7 @@ export function open(draft = null) {
    // drop down and measurement around isnt clear what that is for"): which
    // layer, which layer to lay round it, how wide, each named.
    fold('around', 'Add layer around', 'e.g. semi-rough round fairways', false,
-    el('small', {}, 'Lays one layer in a band round another, for example semi-rough round every fairway. The game adds the fringe round greens itself.'),
+    el('small', {}, 'Lays one layer in a band round another, for example semi-rough round every fairway. A green has no fringe unless you paint one: Around Green, Lay Fringe, about 2 metres.'),
     el('label', {class: 'cb-opt'}, 'Around', el('select', {class: 'cb-exfrom', title: 'The layer to lay the band round', onchange: e => { st.exFrom = e.target.value; }}, kindsShown().filter(k => k !== 'rough').map(k => el('option', {value: k, selected: k === (st.exFrom ?? 'fairway')}, LABEL(k))))),
     el('label', {class: 'cb-opt'}, 'Lay', el('select', {class: 'cb-exto', title: 'The layer the band is made of', onchange: e => { st.exTo = e.target.value; }}, kindsShown().filter(k => k !== 'rough').map(k => el('option', {value: k, selected: k === st.exTo}, LABEL(k))))),
     el('label', {class: 'cb-opt'}, 'Width, metres', el('input', {type: 'number', class: 'cb-exwidth', min: .5, max: 40, step: .5, value: st.exWidth, title: 'How wide the band is', oninput: e => { st.exWidth = +e.target.value || 4; }})),

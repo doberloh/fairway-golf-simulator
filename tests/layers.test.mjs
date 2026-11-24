@@ -7,9 +7,16 @@ import {createLayers, LAYER_ORDER, tidyMask, layersFor} from '../src/builder/lay
 import {BIOMES} from '../src/biomes.js';
 import {PALETTE} from '../src/builder/trace-edit.js';
 
-test('the order is the game\'s: water over sand over green over tee over path over fairway over semi over ground', () => {
- assert.deepEqual(LAYER_ORDER.slice(0, 7), ['water', 'sand', 'green', 'tee', 'path', 'fairway', 'semi']);
+test('the order is the game\'s: water over sand over green over fringe over tee over path over fairway over semi over ground', () => {
+ assert.deepEqual(LAYER_ORDER.slice(0, 8), ['water', 'sand', 'green', 'fringe', 'tee', 'path', 'fairway', 'semi']);
  assert.ok(LAYER_ORDER.includes('heather'));
+});
+
+// A draft keeps OpenStreetMap's cells as palette codes (draft.js), so the
+// fringe (24 November 2026) went on the end and no older code moved.
+test('the fringe is the palette\'s last code', () => {
+ assert.equal(PALETTE.at(-1), 'fringe');
+ assert.deepEqual(PALETTE.slice(0, 8), ['rough', 'fairway', 'semi', 'tee', 'green', 'sand', 'water', 'path']);
 });
 
 test('the topmost layer shows; a lower one runs on under it; hiding shows what is under', () => {
@@ -39,11 +46,11 @@ test('a mask is tidied: small patches go, small holes fill', () => {
 
 test('a landscape offers every turf layer, its own ground types, and rough last', () => {
  const mountain = layersFor(BIOMES.mountains), links = layersFor(BIOMES.seaside);
- for (const L of [mountain, links]) { assert.deepEqual(L.slice(0, 7), ['water', 'sand', 'green', 'tee', 'path', 'fairway', 'semi']); assert.equal(L.at(-1), 'rough'); }
+ for (const L of [mountain, links]) { assert.deepEqual(L.slice(0, 8), ['water', 'sand', 'green', 'fringe', 'tee', 'path', 'fairway', 'semi']); assert.equal(L.at(-1), 'rough'); }
  assert.ok(mountain.includes('rock') && mountain.includes('scree') && !mountain.includes('heather'), mountain.join());
  assert.ok(links.includes('native') && links.includes('heather') && !links.includes('rock'), links.join());
  assert.ok(layersFor(BIOMES.pacnw).includes('pinestraw'), 'what falls under its trees');
  // Road in every landscape (the US landscapes goal, PLAN 4: roads anywhere).
- assert.deepEqual(layersFor(null), [...LAYER_ORDER.slice(0, 7), 'road', 'rough']);
+ assert.deepEqual(layersFor(null), [...LAYER_ORDER.slice(0, 8), 'road', 'rough']);
  assert.ok(mountain.includes('road') && links.includes('road'));
 });

@@ -79,6 +79,25 @@ Also that evening, the
 owner's rule of at most 10 Node test files at once (AGENTS.md;
 tools/test.mjs enforces it; RULES_HISTORY, *Ten test files at most*).
 
+### Course Builder (TODO, 23-24 November 2026)
+
+- [x] **A built green's fringe: the owner's call** (23 November 2026): the
+  game laid a 2 m fringe OUTSIDE every green as painted, which the owner saw
+  as "bands added around every green" in the review and the game, and the 3D
+  editor did not draw. Offered: keep it; paint it darker; lay it inside the
+  painted edge or not at all; or let the builder draw it. **Decided 24
+  November**: "make sure its added as a paintable type, but then only add it
+  if the user paints it", and "keep it in courses from outside the
+  builder". Built: a Fringe layer under Green; a course saved from the
+  builder writes `fringe: 0` and its painted fringe; a file from before
+  keeps its collar, no `BUILT_VERSION`; a seeded course taken over, or a
+  file with no builder section, opens in the 3D editor with its collar as
+  painted fringe; in the game a painted fringe is code 12 of the field's
+  ground layer. COURSE_BUILDER.md, *A fringe only where it is painted*.
+  Turned down: a third field texture (a sampler on every tier for one
+  layer), and painting the collar into every file opened (it would have
+  brought the bands back on the owner's own courses).
+
 ## Online play with friends in other houses (branch `online-play`, 19-21 November 2026; released as 0.9.20)
 
 ### Release 0.9.20 (21 November 2026)

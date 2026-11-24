@@ -209,6 +209,13 @@ meet where they did, and wide areas such as parking lots are kept as drawn.
 a band round another: pick **Around** (fairway), **Lay** (semi-rough) and the
 **Width**.
 
+**The fringe** round a green is a layer like any other, and a green has one
+only if you paint it: **Add layer around** with Around **Green**, Lay
+**Fringe** and about **2** metres gives every green its collar at once, and the
+brush touches it up. A course you take over from a seed, or a course file made
+outside the builder, opens in the 3D editor with the fringe it had, already
+painted.
+
 **Outside the course**: draw the course boundary, then in the **Fill outside
 boundary** box choose what happens outside it -- surfaces and houses kept or
 removed, the ground, the trees (replaced by a new wood, kept, or removed),

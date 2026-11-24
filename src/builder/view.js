@@ -33,7 +33,7 @@ export function surfaceColours(key) {
  const own = biomeOf(key), bio = {...own, ...seasonPalette(own, 'summer', regionOf(key))}, c = v => new T.Color(v);
  return PAINT.map(kind => {
   const col = kind === 'rough' ? bio.rough : kind === 'semi' ? bio.semi : kind === 'fairway' ? bio.fairway : kind === 'green' ? bio.green
-   : kind === 'tee' ? bio.fairway : kind === 'sand' ? bio.sand : kind === 'water' ? (bio.water || '#4a8fb0') : GROUNDS[kind]?.map ?? bio.rough;
+   : kind === 'fringe' ? (bio.fringe ?? bio.green) : kind === 'tee' ? bio.fairway : kind === 'sand' ? bio.sand : kind === 'water' ? (bio.water || '#4a8fb0') : GROUNDS[kind]?.map ?? bio.rough;
   const k = c(col); if (kind === 'tee') k.lerp(c('#ffffff'), .12);
   return [Math.round(k.r * 255), Math.round(k.g * 255), Math.round(k.b * 255)];
  });
