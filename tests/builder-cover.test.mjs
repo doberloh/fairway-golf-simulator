@@ -165,7 +165,8 @@ test('held, a shape comes off the course at once and is put down in one undo', (
  const got = hold.drop(30, 10);
  assert.equal(e.surfaceAt(53, 13), 'sand'); assert.equal(e.surfaceAt(23, 3), 'rough');
  assert.equal(e.state.undo.length, u + 1);
- assert.equal(got.pick.cells.length, pick.cells.length);
+ // The same outline, moved (outlines since 24 November 2026).
+ assert.ok(Math.abs(S.areaOf(got.pick.set) - S.areaOf(pick.set)) < .01);
  assert.ok(e.onPick(got.pick, 53, 13), 'still selected where it lies');
  e.undo();
  assert.equal(e.surfaceAt(23, 3), 'sand'); assert.equal(e.surfaceAt(53, 13), 'rough');

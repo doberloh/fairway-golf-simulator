@@ -150,6 +150,11 @@ export function createTrace(grid, {codes = null, shapes = null, trees = [], home
    if (hidden) s.hidden = new Set(hidden);
    s.version++;
   },
+  // Every layer at once as `shapes` had them (the 3D editor's own undo, which
+  // keeps the layers as they were before each of its steps).
+  restore(shapes) { flush(); s.shapes = new Map([...shapes].filter(([, set]) => set.length)); s.version++; },
+  // Its own undo record dropped (the 3D editor keeps its own).
+  forget() { s.undo.length = 0; s.redo.length = 0; },
   setHidden(kind, hide) { if (hide) s.hidden.add(kind); else s.hidden.delete(kind); s.version++; },
   // Bumped by every change: the plan redraws what changed.
   version: () => s.version,

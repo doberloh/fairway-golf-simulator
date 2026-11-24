@@ -54,7 +54,8 @@ try {
  const shot = async name => { await page.waitForTimeout(1400); await page.screenshot({path: path.join(OUT, `${name}.jpg`), type: 'jpeg', quality: 85}); console.log(`  ${name}`); };
  // Each layer's cells, and how many undo steps the editor holds.
  const counts = () => page.evaluate(() => { const s = window.fairwayBuilder.editor.editor.state, o = {};
-  for (const [k, m] of s.raster.layers.masks) o[k] = m.reduce((t, v) => t + v, 0);
+  // Outlines since 24 November 2026: each layer's area in cells' worth.
+  for (const k of s.raster.trace.layersPresent()) o[k] = Math.round(s.raster.trace.area(k) / s.raster.cell ** 2);
   return {layers: o, undo: s.undo.length, cell: s.raster.cell, nx: s.raster.nx, nz: s.raster.nz}; });
  const fail = why => { failed++; console.log(`  FAIL: ${why}`); };
  // Equal cell for cell in count; a layer left empty after Undo counts as absent.
@@ -75,7 +76,7 @@ try {
  // and a low look across it.
  const spot = await page.evaluate(([was]) => { const s = window.fairwayBuilder.editor.editor.state, r = s.raster, step = Math.max(1, Math.round(100 / r.cell));
   const grid = new Map();
-  for (const [k, m] of r.layers.masks) { if (!(['rock', 'coral', 'scree', 'hardpan', 'waste', 'native', 'heather'].includes(k))) continue;
+  for (const k of r.trace.layersPresent()) { if (!(['rock', 'coral', 'scree', 'hardpan', 'waste', 'native', 'heather'].includes(k))) continue; const m = r.trace.lookup().mask(k);
    for (let j = 0; j < r.nz; j += 2) for (let i = 0; i < r.nx; i += 2) if (m[j * r.nx + i]) { const g = Math.floor(j / step) * 1e5 + Math.floor(i / step); grid.set(g, (grid.get(g) || 0) + 1); } }
   let best = 0, at = 0; for (const [g, n] of grid) if (n > best) { best = n; at = g; }
   return {x: r.x0 + (at % 1e5 + .5) * step * r.cell, z: r.z0 + (Math.floor(at / 1e5) + .5) * step * r.cell}; }, [c0.layers]);

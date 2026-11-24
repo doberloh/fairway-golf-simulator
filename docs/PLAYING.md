@@ -816,9 +816,9 @@ changes, newest first, each with **Undo to here**.
      it draws, **Line width, metres** wide, its **Ends** round or square (cut
      straight across at the first and last point, and square at every bend
      too; round ends bend round); the band it will lay shows faintly as you
-     draw. Every edge you paint goes into the course straight where you
-     painted it straight, with its corners kept and its curves smooth -- the
-     plan shows it so a moment after you paint, only round what you changed. **Smooth edges** rounds edges under it, **Skin from the
+     draw. What you paint is the edge itself: a stroke shows as the band it
+     sweeps while you hold the button and is laid exactly so when you let go,
+     and the course gets that edge -- nothing is laid on squares. **Smooth edges** rounds edges under it, **Skin from the
      land** paints the steep ground the landscape's rock, **Draw a creek** cuts a
      channel along a line and **Dig a bunker** lays sand in a hollow, both made
      when the course is built; **Place tree** stands one tree, the kind you pick by name, at the height set,
@@ -858,9 +858,8 @@ changes, newest first, each with **Undo to here**.
      builder, opens in the 3D editor with the fringe it had, painted on; a
      course file saved before 24 November 2026 keeps its fringe in the game
      until it is saved again.) The trace is drawn **as the
-     course will have it** -- each layer's outline smoothed and its specks
-     gone -- a moment after each stroke; while you paint, its cells show.
-     **Smooth / cell view** switches to the cells. **Outside the course**:
+     course will have it**: each layer's own outlines, as you paint them (the
+     course drops specks smaller than a pot bunker). **Outside the course**:
      draw the course boundary (OpenStreetMap's comes with it when it has
      one), then choose in the **Fill outside boundary** box -- **Surfaces
      and houses** (Keep them, or Remove them: OpenStreetMap's roads, ponds

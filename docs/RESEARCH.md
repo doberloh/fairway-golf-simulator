@@ -17850,3 +17850,12 @@ pinned exactly.
   as each outline's Path2D is made. Each outline keeps its own Path2D and a
   layer's is put together from them: building the whole layer's afresh
   after every stroke would have held that frame about as long as the first.
+- **The 3D editor on the same outlines** (editing.js, view.js): each brush
+  dab laid at once (the 3D view follows the brush, so a stroke is not
+  saved for the end as in door 2). On Alpine Lake's road layer (35,665
+  points, the built file) a dab took 3.6 ms at the median, 6.2 ms at worst,
+  and the view's texture redrawn after it 0.7 ms (73 ms the first time,
+  making the layer's Path2D). Undo restores the layers by reference: 0.1 ms.
+  Until then the editor painted a half-metre grid and drew the cells while
+  a brush was down; "a polygon boolean every frame" was its reason, never
+  measured.

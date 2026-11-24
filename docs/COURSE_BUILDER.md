@@ -1084,7 +1084,9 @@ the builder has been played by a person (TODO lists what to check).
   while editing (half a metre, coarser past 4096 cells a side), painted and
   filled, traced back into outlines on save -- untouched, a document keeps its
   own outlines; the land changed in place on its grid and patches; undo for
-  every tool (a drag is one step).
+  every tool (a drag is one step). **Since 24 November 2026 the surfaces are
+  outlines while editing too** (*No squares in the builder*); the grid is
+  only a hidden lookup.
 - **Measured**: the `builder-door-1` smoke journey grows a nine, takes it
   over, raises the ground with a drag, paints sand, undoes and redoes, saves
   the file (a ZIP over 100 KB), opens it in the built game and plays a tee
@@ -1868,12 +1870,28 @@ in steps, each leaving a working builder.
     once as it opens (3.9 s for the owner's Alpine Lake), and an older
     builder refuses a version 4 draft in plain words; **Back to 2D** brings
     the 3D editor's changed layers as their outlines.
-  Still in cells: **the 3D editor** (its brushes and its picture of the
-  surfaces), next. Checked: every builder Node test and all ten builder
+  Checked: every builder Node test and all ten builder
   journeys pass; on the owner's Alpine Lake draft a stroke is laid in 7 ms
   at the median, 14 ms at worst, a Smooth dab 16 ms, and the plan drawn in
   4.8 ms a frame at the whole land, about 1 ms zoomed in. **Not seen by the
   owner.**
+- **Third step (24 November 2026): the 3D editor is outlines.** Its
+  surfaces are door 2's own model (editing.js holds a trace-edit.js trace
+  on the course's outlines): each brush dab is added to or cut from the
+  outlines at once, and Outline fill, Smooth, Remove specks, Add layer
+  around, Paint rock on slopes, a pond, a bunker, and picking, carrying,
+  turning and deleting one shape all work on them exactly (a shape moved
+  by any distance, not by whole cells). Its undo keeps the layers as they
+  were (each layer's set by reference). The view draws the surfaces from
+  the outlines into its texture and its close-up sheet, always -- until
+  then a brush showed its cells and the outlines were traced from them a
+  moment after it lifted. **Save writes the outlines as they are**: nothing
+  is traced. A course from outside the builder opens with its collar as the
+  greens grown by the collar's width. A grid of half-metre cells remains
+  only as a hidden lookup (what lies at a point, for the checks and the
+  tools). Checked: every Node test, all ten builder journeys; on Alpine
+  Lake's 36,000-point road layer a dab took 3.6 ms (worst 6.2) and the view
+  after it 0.7 ms. **Not seen by the owner.**
 
 ### Houses of any size, Normalize width, the Line tool, the pen's curve (23 November 2026)
 

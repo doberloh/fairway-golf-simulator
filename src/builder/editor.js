@@ -146,12 +146,11 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
  // keeps it); Erase takes one off under the brush.
  const layerList = el('ul', {style: 'list-style:none;padding:0;margin:0;font-size:12px'});
  function refreshLayers() {
-  const a = s.raster.cell ** 2;
   underLine.replaceChildren(...underWords());
-  layerList.replaceChildren(...editor.layersPresent().map(k => { const m = s.raster.layers.masks.get(k), n = m.reduce((t, v) => t + v, 0), hid = editor.isHidden(k);
+  layerList.replaceChildren(...editor.layersPresent().map(k => { const n = editor.area(k), hid = editor.isHidden(k);
    return el('li', {'data-layer': k, class: k === layer ? 'cb-chosen' : '', title: `Click to paint ${label(k).toLowerCase()}`, style: 'display:flex;gap:4px;align-items:center;margin:2px 0;cursor:pointer', onclick: () => chooseLayer(k)},
     eyeButton(document, k, label(k), hid, () => { editor.setHidden(k, !hid); view.refreshLayers(); refreshLayers(); }),
-    el('span', {style: 'flex:1'}, `${label(k)} ${(n * a / 1e4).toFixed(2)} ha`),
+    el('span', {style: 'flex:1'}, `${label(k)} ${(n / 1e4).toFixed(2)} ha`),
     el('button', {class: 'cb-btn', type: 'button', style: 'padding:2px 5px;font-size:11px', title: `Erase the ${label(k).toLowerCase()} layer under the brush`, onclick: () => { layer = k; layerPick.value = k; setTool({kind: 'erase'}); }}, 'Erase')); }));
  }
  // The tree height scale, as the slider is dragged (editing.js treeScale).
@@ -601,9 +600,9 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
  function after(step) {
   if (!step) return;
   if (step.parts) view.refreshLand(step.box);
-  if (step.cells) { view.refreshSurface(step.box); refreshLayers(); }
+  if (step.shapes) { view.refreshSurface(step.box); refreshLayers(); }
   if (step.snapshot) { landscape.value = s.landscape; view.refreshAll(); refreshHoles(); }
-  else if (step.parts && step.cells) view.refreshSurface(step.box);
+  else if (step.parts && step.shapes) view.refreshSurface(step.box);
   else if (step.parts) { view.refreshHoles(selected); view.refreshTrees(); }
  }
  function undo() { unpick(); showPicked(); choose(null); after(editor.undo()); }

@@ -585,8 +585,9 @@ here is a claim of support until it is done.
   from 24 November 2026; COURSE_BUILDER.md, *No squares in the builder*).
   Done: the picture and LIDAR smoothed at every zoom, the review drawn from
   the course's outlines, door 2's trace step on outlines (its tools, drafts
-  version 4, Back to 2D, OpenStreetMap, the course made from them). Still in
-  cells: the 3D editor. Owed after: the owner's look at painting (a box with
+  version 4, Back to 2D, OpenStreetMap, the course made from them), and the
+  3D editor on outlines (its tools, its view, Save untraced). Cells remain
+  only as hidden lookups. Owed: the owner's look at painting (a box with
   Auto curve; a stroke on Alpine), the review and the editor; a version 3
   draft opened by the owner (Alpine's took 3.9 s in Node, 6.8 s to open in
   the built builder). The plan's frame on Alpine: 4.8 ms at the whole land,
