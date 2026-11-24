@@ -17842,3 +17842,11 @@ pinned exactly.
 - **A draft saved before** (version 3, cells) is turned into outlines as it
   opens: 3.9 s for Alpine's eight layers, once.
 - **Add layer around** on the fairway at 4 m: 20 ms.
+- **The plan draws every layer from its outlines every frame** (door-real.js
+  `drawTrace`; measured in the built builder on the owner's Alpine Lake
+  draft, Chrome with the graphics card): 4.8 ms a frame at the whole land
+  (0.22 px/m), 1.1 ms at 2 px/m, 0.8 ms at 8 px/m; the frame after a stroke
+  on the road layer about 5 ms; the first frame after opening 175 ms, once,
+  as each outline's Path2D is made. Each outline keeps its own Path2D and a
+  layer's is put together from them: building the whole layer's afresh
+  after every stroke would have held that frame about as long as the first.

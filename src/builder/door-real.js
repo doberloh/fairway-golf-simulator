@@ -325,8 +325,13 @@ export function open(draft = null) {
  // button comes up. Until then the plan showed the trace's cells and traced
  // them into outlines in tiles a moment after each change (COURSE_BUILDER.md,
  // *Edges fitted, sharp bends, a trace step that keeps up*).
- const PATHS = new WeakMap();
- const pathOf = set => { let p = PATHS.get(set); if (!p) { p = new Path2D(); for (const r of S.toRings(set)) { r.forEach(([x, z], q) => q ? p.lineTo(x, z) : p.moveTo(x, z)); p.closePath(); } PATHS.set(set, p); } return p; };
+ // Each outline's Path2D is kept with the outline, and a layer's is put
+ // together from them: a stroke makes a new set but keeps every path it did
+ // not reach, so only those it changed are walked point by point again (a
+ // whole layer of 43,000 points built afresh held a frame 175 ms).
+ const PATH1 = new WeakMap(), PATHS = new WeakMap();
+ const onePath = p => { let q = PATH1.get(p); if (!q) { q = new Path2D(); for (let i = 0; i < p.length; i++) { const x = p[i].x / S.CM, z = p[i].y / S.CM; if (i) q.lineTo(x, z); else q.moveTo(x, z); } q.closePath(); PATH1.set(p, q); } return q; };
+ const pathOf = set => { let p = PATHS.get(set); if (!p) { p = new Path2D(); for (const one of set) p.addPath(onePath(one)); PATHS.set(set, p); } return p; };
  // The plan's layers are drawn every frame; these keep the old calls' names.
  function paintCodes() { plan.draw(); }
  function patchCodes() { plan.draw(); }

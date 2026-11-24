@@ -588,8 +588,9 @@ here is a claim of support until it is done.
   version 4, Back to 2D, OpenStreetMap, the course made from them). Still in
   cells: the 3D editor. Owed after: the owner's look at painting (a box with
   Auto curve; a stroke on Alpine), the review and the editor; a version 3
-  draft opened by the owner (Alpine's took 3.9 s in Node). Not measured: the
-  plan's frame time drawing every layer from its outlines on Alpine.
+  draft opened by the owner (Alpine's took 3.9 s in Node, 6.8 s to open in
+  the built builder). The plan's frame on Alpine: 4.8 ms at the whole land,
+  about 1 ms zoomed in (RESEARCH, *The builder on outlines*).
 - [ ] **The fringe only where painted: not seen by the owner** (24 November
   2026; COURSE_BUILDER.md, *A fringe only where it is painted*). Seen: the
   Fringe layer offered, Add layer around Green with Fringe at 2 m on a copy

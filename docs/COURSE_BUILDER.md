@@ -1871,7 +1871,8 @@ in steps, each leaving a working builder.
   Still in cells: **the 3D editor** (its brushes and its picture of the
   surfaces), next. Checked: every builder Node test and all ten builder
   journeys pass; on the owner's Alpine Lake draft a stroke is laid in 7 ms
-  at the median, 14 ms at worst, a Smooth dab 16 ms. **Not seen by the
+  at the median, 14 ms at worst, a Smooth dab 16 ms, and the plan drawn in
+  4.8 ms a frame at the whole land, about 1 ms zoomed in. **Not seen by the
   owner.**
 
 ### Houses of any size, Normalize width, the Line tool, the pen's curve (23 November 2026)
