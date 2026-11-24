@@ -6,8 +6,8 @@
 // shows the topmost layer that covers it. Painting a layer changes that layer
 // only -- a fairway painted through a bunker leaves the bunker, and the
 // fairway runs on unbroken under it. The order is the game's own: a built
-// course's field is read water, sand, green, tee, path, fairway, semi, then a
-// ground type (built-world.js), so overlapping outlines in a course file
+// course's field is read water, sand, green, a painted fringe, tee, path,
+// fairway, semi, then a ground type (built-world.js), so overlapping outlines in a course file
 // resolve exactly as the layers show them. Hiding a layer hides it from the
 // view only; a course is made from every layer.
 //

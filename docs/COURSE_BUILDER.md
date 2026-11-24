@@ -1767,7 +1767,15 @@ outside the builder".
 - **A file saved before plays as it did**: one with no `fringe` (null) keeps
   the 2 m collar, so nothing a player already has changes, and there is no
   `BUILT_VERSION` bump. It loses the collar when saved again from the
-  builder (from a file with a builder section, below).
+  builder (from a file with a builder section, below). Until then the 3D
+  editor shows it without the collar the game still gives it -- the same
+  disagreement the owner reported, gone once it is saved again. The other
+  way round, a file saved since and opened in an older copy of the game
+  (0.9.20) plays its greens with no fringe at all: an older copy keeps only
+  the kinds it knows and honours the 0. A bump could not have warned it --
+  no copy compares a file's `builtVersion`, the stamp only checks saved
+  rounds against the game's own reader -- and an online room already needs
+  everyone on the same version.
 - **A course from outside the builder keeps its fringe, as painted fringe**
   (PLACED): a generated course taken over (freeze.js) or a course file with
   no builder section opens in the 3D editor with its collar -- every cell
@@ -1791,8 +1799,13 @@ Checked: Node tests (built-world: painted, none and an old file's collar;
 builder-editing: none unless painted, the collar from outside kept as
 painted fringe; real-course: door 2's course; layers: the order and the
 palette); the owner's Alpine draft (a copy) in the built builder, Add layer
-around Green with Fringe at 2 m, saved, and a green looked at in the game
-painted and unpainted. **Not yet seen by the owner.**
+around Green with Fringe at 2 m (about 3 s), saved, a green looked at in
+the game painted and unpainted, and the saved file opened in the 3D editor:
+the band drawn there too, in the landscape's fringe colour, darker than the
+game's paler collar (`tools/builder-look.mjs`, mended the same day: with the
+courses folder, its Open button never reached the file chooser). A
+generated course taken over has not been looked at with its collar painted
+on (Node tests only). **Not yet seen by the owner.**
 
 ### Houses of any size, Normalize width, the Line tool, the pen's curve (23 November 2026)
 

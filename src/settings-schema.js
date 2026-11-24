@@ -649,6 +649,12 @@ export const GENERATOR_VERSION=103;
 //     among the four texels round it, not the texel it falls in
 //     (built-world.js builtGroundAt, ground.js, 3 November 2026): the edge
 //     was a metre-wide staircase, and a lie there can change by half a metre.
+//  (Not bumped for the painted fringe, 24 November 2026: an unchanged file
+//  plays as it did -- one with no `fringe` keeps its 2 m collar. A file saved
+//  since, read by an older copy, plays its greens with no fringe at all; the
+//  stamp could not warn it, as no copy compares a file's `builtVersion`, and
+//  an online room already needs the same version. COURSE_BUILDER.md, *A
+//  fringe only where it is painted*.)
 export const BUILT_VERSION=3;
 // A BUILT course's stamp is BUILT_STAMP + BUILT_VERSION: no generator made
 // it, so neither generator number may flag it, and only BUILT_VERSION can.

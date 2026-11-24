@@ -780,7 +780,7 @@ changes, newest first, each with **Undo to here**.
      pick another on the map or the list; a survey off the map, or in a
      landscape not built yet, says so and leaves the choice to you.
      **Every surface is its own layer**, top first in the game's own order
-     (water, sand, green, tee, path, fairway, semi, then the landscape's
+     (water, sand, green, fringe, tee, path, fairway, semi, then the landscape's
      ground types, and **Rough** last): one higher in the list shows over one
      lower, so sand painted on fairway or rough is sand, and the fairway runs
      on under the bunker. The **Layers** list shows every layer the
