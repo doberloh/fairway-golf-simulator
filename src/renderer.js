@@ -50,7 +50,7 @@ import {finishTexels,finishSurface,finishAverage} from './ball-finishes.js';
 // OFF by default since 14 October 2026); the range boards are not under that
 // switch.
 const FLAG_MIN_PX=36,FLAG_MAX_SCALE=10,FLAG_CLOTH_PX=14,POLE_MIN_PX=2;
-import {toonRamp} from './textures.js';
+import {toonRamp,turfPalette} from './textures.js';
 import {modelParts} from './mesh-assets.js';
 import {MESH_MODELS} from './asset-meshes.js';
 // THE SUN AND THE SKY'S SHARE OF THE LIGHT (the cartoon overhaul's lighting,
@@ -1195,7 +1195,7 @@ export class GolfView{
   if(this.quality.cascades&&!blue)this.makeCascades(sunDir,this.sun.color,this.sun.intensity);this.applyShadowSpan();add(this.sun.target);this.sunDir=sunDir;
   this.addSky(sunDir);
   this.addLandscape();
-  const palette=blue?{rough:'#193c50',semi:'#285d6a',fairway:'#397e85',fringe:'#5caba6',green:'#9ad2bc',sand:'#bdc2a0'}:toon?{rough:new T.Color(bio.rough).lerp(new T.Color(bio.roughTint??'#b6bc65'),.23),semi:new T.Color(bio.semi).multiplyScalar(1.13),fairway:new T.Color(bio.fairway).offsetHSL(.015,.1,.04),fringe:new T.Color(bio.fringe).offsetHSL(0,.1,.07),green:new T.Color(bio.green).offsetHSL(.01,.05,.08),sand:'#ffebbd'}:{rough:bio.rough,semi:bio.semi,fairway:bio.fairway,fringe:bio.fringe,green:bio.green,sand:bio.sand};
+  const palette=blue?{rough:'#193c50',semi:'#285d6a',fairway:'#397e85',fringe:'#5caba6',green:'#9ad2bc',sand:'#bdc2a0'}:toon?turfPalette(bio):{rough:bio.rough,semi:bio.semi,fairway:bio.fairway,fringe:bio.fringe,green:bio.green,sand:bio.sand};
   const terrain=groundGeometry(world.groundGrid);stitchSeam(terrain,this.landscape.geometry);this.terrain=add(new T.Mesh(terrain,groundMaterial(this,palette)));this.landscape.material.dispose();this.landscape.material=this.terrain.material;this.landscape.receiveShadow=true;
   // The ring is drawn as its pieces (landscape-edge.js landscapeChunks), each
   // skipped when out of view; the whole ring's own mesh stays for its bounds

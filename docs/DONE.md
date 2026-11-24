@@ -25,6 +25,23 @@ kept whole: *The open list before the 11 November 2026 prune* and *The open
 list before the 16 October prune*, each with a table of what became of every
 entry.
 
+## The grass toned down (branch `builder-big-zips`, 24 November 2026; not merged)
+
+The owner: "our grasses are almost too neon and too light colored on all of
+our biomes ... It tends to also get washed out on the projector screens."
+Asked whether darker grass would also read the ground better, and on the
+answer, "lets do it here". Built: the turf colours the ground is handed are
+the landscape's own -- the lifts renderer.js had put on the fairway, fringe,
+green and semi-rough since the first commit are gone -- and every turf colour,
+the rough and the 3D grass tufts included, is made less saturated and darker
+by as much as it is green (textures.js `turfGrade`, `TURF_SAT` .8,
+`TURF_VALUE` .84, PLACED), so straw and fescue keep their colour. Round 1
+took the lifts away alone and left the rough the limiest thing on screen; round
+2 is what shipped. Judged by the owner on a before-and-after page of five
+landscapes at five views each ("These Grass color changes are perfect").
+Numbers, and what was rejected, in RESEARCH *The turf as the landscape paints
+it*. Fingerprints unchanged; no version moves. Not seen on the projector.
+
 ## Large courses in the builder: the outline, the half-metre ground, the memory (branch `builder-big-zips`, 22-23 November 2026; not merged)
 
 The owner, the builder hanging on a 3 km square: "I think we have

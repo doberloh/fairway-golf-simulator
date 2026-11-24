@@ -9564,7 +9564,43 @@ captures unless it says otherwise.
 Rejected: tinting the cast shadows through the shadow term (CSM replaces
 three's light loop, so a patch there would have to follow it); a fixed
 saturation per landscape (the chunk cannot take per-landscape uniforms
-without recompiling every program). Sources: Barla, Thollot and Markosian,
+without recompiling every program).
+
+**The turf as the landscape paints it (24 November 2026).** The owner: "our
+grasses are almost too neon and too light colored on all of our biomes ...
+It tends to also get washed out on the projector screens." The cause was not
+the landscapes' colours, which are ordinary mid greens (Classic Parkland's
+fairway #709245), but two lifts on top of them. From the first commit
+renderer.js handed the ground each turf colour lifted: semi-rough x1.13,
+fairway `offsetHSL(.015, .1, .04)`, fringe `(0, .1, .07)`, green `(.01, .05,
+.08)` -- three works HSL in linear colour, so +.1 saturation is a big push
+(Classic Parkland's fairway went #709245 to #72a540, its green #b2c280 to
+#bfd786) -- and the grade above, added later, put 12% more colour back over
+everything. The rough was only tinted 23% toward `roughTint` (#b6bc65, a pale
+yellow), but it is most of any picture and read the limiest of all.
+textures.js `turfPalette` now hands the ground the landscape's own colours,
+each through `turfGrade`: saturation about luminance times `TURF_SAT` .8 and
+the colour times `TURF_VALUE` .84 (linear), both by the colour's greenness
+(green over the larger of red and blue, relative to luminance, times 2.5,
+clamped to 0..1 -- the slope tint's measure in ground.js), so straw and dry
+fescue (Desert's rough #b99967, North Sea Links') do not move and a lawn
+green takes all of it. The rough takes it after its tint; the 3D grass tufts
+(vegetation.js) take it too, or they stood out pale on the darker ground.
+Classic Parkland's drawn colours, before and after: rough #7a974d to
+#758a57, fairway #72a540 to #6c8550, fringe #acc266 to #94a26a, green
+#bfd786 to #adbb82. Every landscape still steps lighter from fairway to
+fringe to green (tests/toon-ramp.test.mjs). **Both numbers PLACED by eye** on
+five landscapes at five views (Classic Parkland, Seaside Links, Mountain,
+Florida Palms, Desert Resort; the owner, on the before-and-after page: "These
+Grass color changes are perfect"). Round 1 only took the lifts away: the
+fairway lost its lime but the rough, untouched, stayed the brightest thing on
+screen. Rejected: lowering `GRADE`, which would have dulled the trees, autumn
+leaves, water and sand that were all chosen under it; a per-landscape palette
+pass (forty colours to retune, and the next landscape would bring the lift
+back). Darker turf also keeps the ground's slopes, stripes and shade in the
+middle of the tone curve rather than its top, where ACES squeezes them
+together; that is reasoning, not a measurement. Not yet seen on the
+projector. Generation untouched (fingerprints unchanged): no version moves. Sources: Barla, Thollot and Markosian,
 *X-Toon* (rims and tone by view); the stylised-foliage tutorials already in
 REFERENCES (Inasa Fujio); *Belt of Venus*.
 

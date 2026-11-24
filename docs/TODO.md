@@ -228,7 +228,10 @@ Fairway Tour and computer golfers*).
   green can beat it; not shown, as the screenshot was overwritten by the
   passing reruns (the journey writes one file name). A person's putt runs no
   code the branch changed that day. Where: tools/smoke.mjs, *holing out
-  plays a flourish over the cup*.
+  plays a flourish over the cup*. **Again 24 November 2026** (builder-big-zips,
+  the darker grass; 50 of 51 in the full run), on seed DRIFT-1078-2, hole 2;
+  passed 3 of 3 alone straight after, once on that very seed -- so not the
+  green alone. The grass change touches no ball code.
 - [ ] **The `no-late-shaders` smoke journey failed once** on round F3's build
   (Ultra, a drawn Lowcountry nine, seed HOLLOW-1812: one lit shader built 142
   ms after the course appeared), passed ten times alone, and passed in the
@@ -268,6 +271,12 @@ Fairway Tour and computer golfers*).
 
 Hardware, browsers and hands the development machine does not have. Nothing
 here is a claim of support until it is done.
+
+- [ ] **The darker grass on the projector** (branch `builder-big-zips`, 24
+  November 2026; RESEARCH *The turf as the landscape paints it*). The owner
+  passed it on the before-and-after pictures; the reason for it was the
+  projector washing the grass out. Look at a round there: is the rough still
+  too light, and do the slopes and mowing read better than before?
 
 - [ ] **The pull-and-push swing, on the owner's iPhone** (branch
   `pull-push-swing`, 15-17 November 2026; RESEARCH *The pull-and-push
