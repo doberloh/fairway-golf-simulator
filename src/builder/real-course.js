@@ -12,9 +12,9 @@
 import {createGridder, findTrees, gridFrame, FINE_NONE} from '../lidar/land.js';
 import {toMetres} from '../lidar/las.js';
 import {TREE_HAND} from '../built-world.js';
-import {maskRings, fitRing, cellArea} from '../contour.js';
-import {PALETTE, SPECK, POCK} from './trace-edit.js';
-import {createLayers, tidyMask, LAYER_ORDER} from './layers.js';
+import {PALETTE, SPECK, POCK, codesToShapes} from './trace-edit.js';
+import {LAYER_ORDER} from './layers.js';
+import * as S from './shapes.js';
 import {boxMean, features, distanceFrom} from '../lidar/trace.js';
 import {GRID_MARGIN, builtLine} from '../built-world.js';
 // The longest tee set's yards (built-world.js builtLine: its first name).
@@ -198,30 +198,35 @@ export const parFor = yards => yards <= 250 ? 3 : yards <= 470 ? 4 : 5;
 // side a few degrees off the grid wobbling -- the owner's "jaggy edges" on
 // tees and greens, 80 cm on 1 m land -- and wore every corner off, a Line
 // laid with Auto curve off included (RESEARCH, *Outlines fitted*; before
-// 1 November, *Outlines without notches*). The
-// trace step draws these too, so what is painted is seen as it will play.
+// 1 November, *Outlines without notches*). Since 24 November 2026 door 2's
+// trace is outlines and never comes here; what is left is the 3D editor's
+// grid until it is outlines too (shapes.js `maskOutlines`, the same fit).
 // `x0`, `z0`: the first cell's middle, when the grid is not centred (the
 // editor's raster, a part of it).
-export function layerRings(m, {nx, nz, cell, halfX, halfZ, x0 = -halfX, z0 = -halfZ}) {
- return maskRings((i, j) => m[j * nx + i] === 1, nx, nz, x0, z0, cell)
-  .map(r => fitRing(r, cell, {area: cellArea(r, x0, cell)})).filter(r => r.length >= 3 && ringArea(r) > SPECK);
-}
+export const layerRings = (m, grid) => S.maskOutlines(m, grid, SPECK);
 
 export function docFromLand({land, traced = null, holes, trees = [], homes = [], name = 'Real course', landscape = 'heartland', credits = [], source = {}, landEdits = null, creeks = [], rocks = [], bunkers = [], creekLines = [], treePlan = null, surround = null}) {
  const {nx, nz, cell, halfX, halfZ} = land, ground = Float32Array.from(land.ground);
  // THE LAYERS, TIDIED (the owner, 31 October 2026: "features should not have
- // jagged or pock marked edges"): on each layer, patches under SPECK go and
- // holes under POCK fill. Each layer is then traced as its own outlines --
- // overlapping where the layers overlap, as the game reads a built course's
- // surfaces in the layers' own order (layers.js) -- so a fairway runs on
- // unbroken under its bunkers.
- const L = traced ? createLayers(nx, nz, PALETTE) : null;
- if (traced) {
-  const from = traced.layers ?? createLayers(nx, nz, PALETTE).fromCodes(traced.codes);
-  for (const [kind, m] of from.masks) { const c = Uint8Array.from(m); tidyMask(c, nx, nz, Math.round(SPECK / (cell * cell)), Math.round(POCK / (cell * cell))); L.masks.set(kind, c); }
-  L.recompose();
- }
- const codes = L ? L.codes : null;
+ // jagged or pock marked edges"): on each layer, shapes under SPECK go and
+ // holes under POCK fill. Each layer goes into the course as its own
+ // outlines -- overlapping where the layers overlap, as the game reads a
+ // built course's surfaces in the layers' own order (layers.js) -- so a
+ // fairway runs on unbroken under its bunkers.
+ // AS DRAWN (branch builder-outlines, 24 November 2026): `traced.shapes`,
+ // the trace's own outlines (a Map of kind to set, shapes.js), go in as they
+ // are; a composite (`traced.codes`, the auto trace's in a test or a tool)
+ // is turned into outlines once. Until then every layer was a mask of cells,
+ // traced into outlines here.
+ const shapes = new Map();
+ // (Masks of cells, `traced.layers.masks` -- a tool's or a test's -- are
+ // turned into outlines once too.)
+ const given = !traced ? [] : traced.shapes ?? (traced.layers ? [...traced.layers.masks].map(([k, m]) => [k, S.fromMask(m, land)]) : codesToShapes(traced.codes, land));
+ for (const [kind, set] of given) { const t = S.tidy(set, SPECK, POCK); if (t.length) shapes.set(kind, t); }
+ // A hidden lookup of each land cell's topmost layer (the ground smoothed
+ // under greens, tees and fairways; a tree's lie), never drawn.
+ let codes = null;
+ if (traced) { codes = new Uint8Array(nx * nz); for (const kind of [...LAYER_ORDER].reverse()) if (shapes.has(kind)) S.rasterize(shapes.get(kind), land, codes, PALETTE.indexOf(kind)); }
  // MOWN GROUND SMOOTHED. A survey's ground is a few points a cell, each a
  // centimetre or two off: on a green that is a pit a putted ball cannot climb
  // out of (Worthington's first test round stuck 70 cm from two cups). A
@@ -276,21 +281,18 @@ export function docFromLand({land, traced = null, holes, trees = [], homes = [],
  const water = [];
  // THE OUTLINES, SMOOTH: each layer's as `layerRings` makes them.
  const codeAt = (x, z) => { const i = Math.round((x + halfX) / cell), j = Math.round((z + halfZ) / cell); return codes && i >= 0 && j >= 0 && i < nx && j < nz ? PALETTE[codes[j * nx + i]] : 'rough'; };
+ const ringsOf = set => S.toRings(set).map(r => r.map(([x, z]) => [r2(x), r2(z)])).filter(r => r.length >= 3);
  if (codes) {
   for (const kind of LAYER_ORDER) {
-   const m = L.masks.get(kind); if (!m) continue;
-   const rings = layerRings(m, land).map(r => r.map(([x, z]) => [r2(x), r2(z)])).filter(r => r.length >= 3);
-   if (!rings.length) continue;
-   if (kind !== 'water') { surfaces[kind] = [rings]; continue; }
-   // Water: a body a ring not inside another, its islands with it; its level
-   // just under its lowest tenth of shore; its bed dug and its banks graded
-   // (water-bed.js; the LIDAR's ground there was filled in from the shore, so
-   // it stood at the water's own level). A green or a tee beside it keeps its
-   // ground.
-   const outer = rings.filter(r => !rings.some(o => o !== r && inside(o, r[0])));
+   const set = shapes.get(kind); if (!set) continue;
+   if (kind !== 'water') { const rings = ringsOf(set); if (rings.length) surfaces[kind] = [rings]; continue; }
+   // Water: each body with its islands; its level just under its lowest
+   // tenth of shore; its bed dug and its banks graded (water-bed.js; the
+   // LIDAR's ground there was filled in from the shore, so it stood at the
+   // water's own level). A green or a tee beside it keeps its ground.
    const grid = {heights: ground, nx, nz, cell, x0: -halfX, z0: -halfZ}, keep = (x, z) => ['green', 'tee'].includes(codeAt(x, z));
-   for (const o of outer) {
-    const isl = rings.filter(r => r !== o && inside(o, r[0]));
+   for (const part of S.parts(set)) {
+    const [o, ...isl] = ringsOf(S.setOf(part)); if (!o) continue;
     const level = r2(levelFrom(shoreOf([o], (x, z) => sampleGrid(ground, land, x, z))));
     water.push({rings: [o, ...isl], level, kind: 'pond'});
     digBed(grid, [o, ...isl], level, {keep});

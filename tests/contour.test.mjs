@@ -64,6 +64,35 @@ test('a fitted green stays round, keeps its area and has no kink', () => {
  }
 });
 
+// 25 November 2026 (the owner's waves along the Alpine draft's straight turf):
+// a straight edge whose squares step unevenly -- runs of 8, 6, 3 and 6, one
+// stepping back -- comes out within 15 cm of a straight line, not bending
+// with each step; and a small blob of a tee has no spike out past its cells.
+test('uneven steps along a straight edge make a straight edge; a small blob has no spike', () => {
+ const runs = [8, 6, 3, 6, 9, 4, 7, 5, 8, 6, 3, 6, 9, 4, 7, 5], top = [];
+ let x = 0, z = 0; for (const [q, r] of runs.entries()) { for (let k = 0; k < r; k++) top.push(z); x += r; z += q === 2 ? -1 : 1; }
+ const n = top.length + 10, mask = (i, j) => i >= 5 && i < n - 5 && j >= 0 && j <= top[i - 5] + 10;
+ // How far the top edge bends off the best straight line through it, and how
+ // often it turns back and forth (the waves), fitted now and the first way.
+ const bend = opts => {
+  const rings = maskRings(mask, n, 40, 0, 0, 1).map(r => fitRing(r, 1, {area: cellArea(r, 0, 1), ...opts}));
+  assert.equal(rings.length, 1);
+  const edge = rings[0].filter(([px, pz]) => px > 15 && px < n - 15 && pz > 12).sort((a, b) => a[0] - b[0]);
+  const mx = edge.reduce((a, p) => a + p[0], 0) / edge.length, mz = edge.reduce((a, p) => a + p[1], 0) / edge.length;
+  const k = edge.reduce((a, p) => a + (p[0] - mx) * (p[1] - mz), 0) / edge.reduce((a, p) => a + (p[0] - mx) ** 2, 0);
+  let flips = 0, last = 0;
+  for (let q = 2; q < edge.length; q++) { const [a, b, c] = [edge[q - 2], edge[q - 1], edge[q]], t = (b[0] - a[0]) * (c[1] - b[1]) - (b[1] - a[1]) * (c[0] - b[0]); if (Math.abs(t) > 1e-4) { const sg = Math.sign(t); if (last && sg !== last) flips++; last = sg; } }
+  return {off: Math.max(...edge.map(([px, pz]) => Math.abs(pz - (mz + k * (px - mx))) / Math.hypot(1, k))), flips};
+ };
+ const now = bend({}), first = bend({tol: .55, spline: false});
+ assert.ok(now.flips < first.flips, `it turns one way then the other ${now.flips} times along the edge (${first.flips} the first way)`);
+ assert.ok(now.off < 1, `the edge bends ${now.off.toFixed(2)} m off a straight line (the cells' own steps wander about a metre)`);
+ // A 10 x 8 m blob of a tee on 1 m land (an L-shaped step in its cells).
+ const blob = (i, j) => { const u = (i - 20) / 5, v = (j - 20) / 4; return u * u + v * v <= 1 || (i === 16 && j === 23); };
+ const [b] = maskRings(blob, 40, 40, 0, 0, 1).map(r => fitRing(r, 1, {area: cellArea(r, 0, 1)}));
+ assert.ok(b.every(([px, pz]) => Math.hypot((px - 20) / 5.6, (pz - 20) / 4.6) <= 1.12), 'nothing a metre out past the blob');
+});
+
 test('two separate blobs are two rings; an empty or full mask is handled', () => {
  const rings = maskRings((i, j) => (i < 5 || i > 14) && j > 2 && j < 8, 20, 10, 0, 0, 1);
  assert.equal(rings.length, 2);

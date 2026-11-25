@@ -24,6 +24,7 @@
     "blender": "node tools/blender/run.mjs"
   },
   "dependencies": {
+    "@countertype/clipper2-ts": "1.5.4-3.9a869ba",
     "@noble/ciphers": "2.4.0",
     "@noble/hashes": "2.4.0",
     "laz-perf": "^0.0.7",

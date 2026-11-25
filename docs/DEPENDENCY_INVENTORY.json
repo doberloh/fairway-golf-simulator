@@ -1,6 +1,6 @@
 {
  "reviewed": "2026-11-21",
- "note": "Lockfile metadata, not a legal certification or proof every module ships. Embedded subcomponents are described in DISTRIBUTION_REVIEW.md and THIRD_PARTY_NOTICES.txt. Build-scope packages are installed separately and are not shipped in either archive. Bun (build-scope) compiles run_fairway_server; the Bun runtime is INSIDE that program, so its notices, including the LGPL for the JavaScriptCore it links, ship in THIRD_PARTY_NOTICES.txt. laz-perf (runtime) ships inside the course builder's page only (Fairway Builder.html), its WebAssembly inlined; the game's page does not carry it. @noble/ciphers and @noble/hashes (runtime, online play's sealing) ship inside the game's page.",
+ "note": "Lockfile metadata, not a legal certification or proof every module ships. Embedded subcomponents are described in DISTRIBUTION_REVIEW.md and THIRD_PARTY_NOTICES.txt. Build-scope packages are installed separately and are not shipped in either archive. Bun (build-scope) compiles run_fairway_server; the Bun runtime is INSIDE that program, so its notices, including the LGPL for the JavaScriptCore it links, ship in THIRD_PARTY_NOTICES.txt. laz-perf (runtime) ships inside the course builder's page only (Fairway Builder.html), its WebAssembly inlined; the game's page does not carry it. @noble/ciphers and @noble/hashes (runtime, online play's sealing) ship inside the game's page. @countertype/clipper2-ts (runtime, Clipper2's polygon geometry: the course builder's layers as outlines, since 24 November 2026) ships inside the course builder's page only.",
  "packages": [
   {
    "path": "node_modules/@oven/bun-darwin-aarch64",
@@ -391,6 +391,16 @@
    "optional": false,
    "integrity": "sha512-X5XaVWZIBCT7HHZGm5I7ZQXDwLG+bGXuSrMQAW+7Zvl87h1kmc1ZB1VSRJcpUfoUrGQp4Fkoxm5kZ+Ms+aW+eA==",
    "resolved": "https://registry.npmjs.org/@noble/hashes/-/hashes-2.4.0.tgz"
+  },
+  {
+   "path": "node_modules/@countertype/clipper2-ts",
+   "name": "@countertype/clipper2-ts",
+   "version": "1.5.4-3.9a869ba",
+   "declaredLicense": "BSL-1.0",
+   "scope": "runtime",
+   "optional": false,
+   "integrity": "sha512-LeO+CRdfipmLjSBszws6FC2KIjyjOpqDlNgLIrC5LtdV/ab0YXCt4cioIMYFaIVGT3saQQ51ejdHhWw28Rmdjw==",
+   "resolved": "https://registry.npmjs.org/@countertype/clipper2-ts/-/clipper2-ts-1.5.4-3.9a869ba.tgz"
   },
   {
    "path": "node_modules/lightningcss",

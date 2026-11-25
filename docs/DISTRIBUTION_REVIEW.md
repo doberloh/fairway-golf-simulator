@@ -2283,3 +2283,20 @@ owner, passed tools/relay-check.mjs and the Node rounds of every format.
 Nobody has played a round online yet; TODO, *Play the current build by
 hand*, says what to try.
 
+## Branch note, 24 November 2026: builder-outlines (not released)
+
+**One dependency in the builder's page only:** Clipper2 in its TypeScript
+port, @countertype/clipper2-ts 1.5.4-3.9a869ba (Boost Software License 1.0;
+notices in THIRD_PARTY_NOTICES.txt and ATTRIBUTION.md, DEPENDENCY_INVENTORY
+runtime), the polygon geometry that keeps the builder's layers as outlines
+(COURSE_BUILDER.md, *No squares in the builder*). **The builder's page grows
+about 89 KB** (56,356,602 bytes against 56,267,660 before the branch, the
+cell code it replaced taken out); the game's page does not import it and
+grows only by the licence text it shows under Help (60,721,469 bytes
+against 60,719,600).
+It makes no network request and needs nothing a file page lacks. A draft
+the builder saves is now version 4 (the trace as outlines); an older
+builder refuses it in plain words, and this builder opens every older
+draft. Generator, schema and built versions are unchanged. Not released;
+not used by a person.
+

@@ -25,7 +25,67 @@ kept whole: *The open list before the 11 November 2026 prune* and *The open
 list before the 16 October prune*, each with a table of what became of every
 entry.
 
-## The grass toned down (branch `builder-big-zips`, 24 November 2026; not merged)
+## The slopes' colouring on the darker grass (branch `builder-outlines`, 25 November 2026; merged the same day)
+
+The owner, after the darker grass: the effects that help read the ground
+"might also need to be adjusted ... take a pass at that color grading".
+Pictures of the Alpine draft and five generated landscapes, each cue turned
+off in turn, found one fault: the slope's drying (RESEARCH *Slope tint*,
+*Turned, not coloured*).
+
+- [x] Drying turns the hue and adds no colour (ground.js `dryTurf`): the
+  plain multiply took a fairway from saturation 25 to 41, lime on every
+  slope and round every bunker lip. The drier patches go through it too.
+- [x] The mown curve widened to tan 0.025-0.18 (was 0.015-0.10, which held
+  41% of Alpine's fairway at full strength), a fairway at 0.75 of it, the
+  tint a little warmer (1.22, 1, .45) with a 4% lift. All PLACED by eye.
+- [x] The raking light, the baked relief and the sheen looked at and left:
+  brightness only, they read right on the darker turf.
+- Not seen by the owner (TODO, *The slopes' colouring on the darker grass*).
+
+## No squares in the builder (branch `builder-outlines`, 24 November 2026; merged 25 November 2026)
+
+The owner: "I want these pixellated views gone from the builder entirely.
+No 're processing on a 1m square' or anything like that ... The game doesnt
+render in blocks, why does the builder." Built, in five commits
+(COURSE_BUILDER.md, *No squares in the builder*; RESEARCH, *The builder on
+outlines*):
+
+- [x] The picture and the LIDAR smoothed at every zoom; the review drawn
+  from the course file's own outlines.
+- [x] A layer is a set of outlines (shapes.js, on Clipper2 -- chosen over
+  Clipper 1, polygon-clipping and an older Clipper2 port by timing on the
+  owner's Alpine Lake): door 2's trace and every tool exact on them, a
+  stroke laid when it ends, drafts version 4, Back to 2D, OpenStreetMap,
+  the course made from them untraced.
+- [x] The 3D editor on the same model, its view drawing the outlines, its
+  Save untraced.
+- [x] Smooth edge on release kept to the stroke (and a Smooth that
+  "settled", replaced the next day: it stopped smoothing small things).
+- [x] The cell code nothing used taken out.
+- [x] No waves, no facets (25 November; the owner's waves along Alpine's
+  straight turf and cart paths in the game, OpenStreetMap's facets, a
+  faceted pen fill, "Make sure this applies to all traced. Painted. and
+  imported surfaces"): squares become a smooth line through their steps;
+  the pen's curve laid finely (no point turning more than about 5 degrees);
+  OpenStreetMap curved through its points, corners kept; Smooth rebuilt to
+  curve through the points that shape an edge (waves and facets go, nothing
+  shrinks); Normalize width's middle lines smoothed; a course file saved
+  before outlines smoothed once as it opens. Seen in the game on two copies
+  of the Alpine course.
+
+Dead ends: Taubin's easing for Smooth (barely rounded a corner); opening and
+closing (deletes thin paths); laying each dab as it came in door 2 (8 to 30
+ms a dab on the biggest layer); a drawn-edges memory kept over the cells
+(built and taken out the same day: still squares underneath); Smooth as a
+bell-weighted average, then made to settle (it shrank shapes; settled, it
+moved nothing under an eighth of its size -- no wave, no facet); following
+the squares within half a square (0.8 m crest-to-trough waves); a curve
+with free handles through a map's points (a road bowed 5 m). Tested: every
+Node test, all ten builder journeys, timings and real drags on Alpine.
+Still owed (TODO): the owner's own use.
+
+## The grass toned down (branch `builder-big-zips`, 24 November 2026; merged 24 November, not released)
 
 The owner: "our grasses are almost too neon and too light colored on all of
 our biomes ... It tends to also get washed out on the projector screens."
@@ -42,7 +102,7 @@ landscapes at five views each ("These Grass color changes are perfect").
 Numbers, and what was rejected, in RESEARCH *The turf as the landscape paints
 it*. Fingerprints unchanged; no version moves. Not seen on the projector.
 
-## Large courses in the builder: the outline, the half-metre ground, the memory (branch `builder-big-zips`, 22-23 November 2026; not merged)
+## Large courses in the builder: the outline, the half-metre ground, the memory (branch `builder-big-zips`, 22-23 November 2026; merged 24 November, not released)
 
 The owner, the builder hanging on a 3 km square: "I think we have
 optimizations that need to happen on large courses maybe", then the rough
@@ -67,7 +127,7 @@ draft Node tests; every builder journey; Alpine Lake measured in Node
 (RESEARCH, *Full detail inside the course, less outside*); the frame rate
 with patches on every tier (no cost). Still owed: the owner's own look (TODO).
 
-## A big LIDAR ZIP in the builder (branch `builder-big-zips`, 22 November 2026; not merged)
+## A big LIDAR ZIP in the builder (branch `builder-big-zips`, 22 November 2026; merged 24 November, not released)
 
 The owner, trying the builder: "Im getting these errors trying to load
 downloaded LAZ files in a zip" -- three uncaught NotReadableErrors, nothing

@@ -52,6 +52,15 @@ Fairway Tour and computer golfers*).
 
 ## Known wrong
 
+- [ ] **The `online` smoke journey's "the host flies the guest's ball" step
+  timed out** (25 November 2026, branch `builder-outlines`): 30 s waiting
+  for the guest's stroke on the host's card, once in the full run and once
+  alone, then passed 3 of 3 (once on the code before that day's ground
+  colour change, twice after it). The failing runs were the quick ones (78 s
+  against 117-132 s passing). A colour formula in the ground shader cannot
+  reach the relay, so most likely a race in the step or the game's hand-off
+  of a guest's monitor shot; not looked into.
+
 - [ ] **An online screen's connection lost with no close seen at the relay**
   (three smoke runs on 20 November 2026, Chromium; RESEARCH, *Once, both
   screens lost the relay together*). It reconnects and carries on (and since
@@ -277,6 +286,16 @@ here is a claim of support until it is done.
   passed it on the before-and-after pictures; the reason for it was the
   projector washing the grass out. Look at a round there: is the rough still
   too light, and do the slopes and mowing read better than before?
+
+- [ ] **The slopes' colouring on the darker grass: not seen by the owner**
+  (branch `builder-outlines`, 25 November 2026; RESEARCH *Slope tint*,
+  *Turned, not coloured*). Sloping turf turns toward straw without the lime
+  it had; seen only in before-and-after pictures (Alpine, Mountain, Classic
+  Parkland, Desert Resort, Seaside Links). Play the Alpine draft and a
+  generated hilly course: do banks and sloping fairways read as drier grass,
+  not as olive or khaki, and is the slope still easy to see? The strength
+  and range are PLACED by eye and easy to move (ground.js, `parched`, the
+  mown curve, `dryGain`).
 
 - [ ] **The pull-and-push swing, on the owner's iPhone** (branch
   `pull-push-swing`, 15-17 November 2026; RESEARCH *The pull-and-push
@@ -572,16 +591,30 @@ here is a claim of support until it is done.
   layer, a few seconds expected, none measured). The 3D editor has none of
   the four.
 
-- [ ] **Fitted edges, square bends and the tiled trace: not seen by the
-  owner** (branch `builder-big-zips`, 23 November 2026 evening;
-  COURSE_BUILDER.md, *Edges fitted, sharp bends, a trace step that keeps up*;
-  RESEARCH *Outlines fitted*). Measured on shapes and on the owner's two
-  drafts in the built builder (a stroke now holds the page about 0.1 s, was
-  1.2 s); Alpine Lake Resort saved and a tee shot played in the game. Owed:
-  the owner's look at tee and green edges in the game on a course saved
-  again (a course saved before keeps its old outlines), a square-ended Line
-  with bends, and painting on Alpine. Not checked: the 3D editor's redraw
-  after a stroke with its margin now 32 cells (Node tests only).
+- [ ] **Fitted edges and square bends: not seen by the owner** (branch
+  `builder-big-zips`, 23 November 2026 evening; COURSE_BUILDER.md, *Edges
+  fitted, sharp bends, a trace step that keeps up*; RESEARCH *Outlines
+  fitted*). The tiled trace it also built is gone (*No squares in the
+  builder*, below); fitting now only turns what comes in as cells into
+  outlines, and the 3D editor's saves. Owed: the owner's look at tee and
+  green edges in the game on a course saved again (a course saved before
+  keeps its old outlines). Not checked: the 3D editor's redraw after a
+  stroke with its margin now 32 cells (Node tests only).
+- [ ] **No squares in the builder: not seen by the owner** (branch
+  `builder-outlines`, 24 November 2026; COURSE_BUILDER.md, *No squares in
+  the builder*; what was built in DONE.md). Owed: the owner painting in
+  both editors -- a box with Auto curve, strokes and Smooth on Alpine --
+  and looking at the review; their Alpine draft (version 3) opened (6.8 s
+  in the built builder here); a course saved from either editor played.
+  Since 25 November also owed (*Fourth step*): the Alpine draft reopened
+  from the file and its straight turf and cart paths looked at low in the
+  game (seen here only in capture pictures); a fresh OpenStreetMap download
+  looked at; Smooth brushed over a wave and a facet; an old course file
+  (Lake Point) opened in the 3D editor to see its once-over smoothing and
+  its note; Normalize width on the 3D editor's and door 2's paths. Known:
+  brushing every edge of Alpine's old-fit cart paths over and over left one
+  49-degree bend in a 5 m wedge where two paths meet (RESEARCH, *Curves
+  through points*); a single stroke has not been seen to -- look for it.
 - [ ] **The fringe only where painted: not seen by the owner** (24 November
   2026; COURSE_BUILDER.md, *A fringe only where it is painted*). Seen: the
   Fringe layer offered, Add layer around Green with Fringe at 2 m on a copy

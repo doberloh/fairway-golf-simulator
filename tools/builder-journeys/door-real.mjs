@@ -210,7 +210,7 @@ export default function ({journey, SHOTS}) {
   // The auto trace, then corrected by hand.
   await page.getByRole('button', {name: 'Auto trace'}).click();
   await page.waitForFunction(() => window.fairwayBuilder.door2.model, null, {timeout: 60000}); await idle();
-  const greens = await page.evaluate(() => { const st = window.fairwayBuilder.door2, c = st.model.state.codes, L = st.land; let n = 0; for (let k = 0; k < c.length; k++) if (c[k] === 4) n++; return n * L.cell * L.cell; });
+  const greens = await page.evaluate(() => window.fairwayBuilder.door2.model.area('green'));
   await t.shot('traced');
   const kindAt = (x, z) => page.evaluate(([x, z]) => window.fairwayBuilder.door2.model.kindAt(x, z), [x, z]);
   // Every layer the landscape offers is listed in order, rough last, the
@@ -253,7 +253,7 @@ export default function ({journey, SHOTS}) {
    await page.mouse.up();
   };
   await shaky(-30, 0); await shaky(-70, 90);
-  const spread = z0 => page.evaluate(z0 => { const st = window.fairwayBuilder.door2, L = st.land, m = st.model.state.layers.masks.get('tee'); let lo = 1e9, hi = -1e9; for (let x = -130; x <= -100; x++) { const i = Math.round((x + L.halfX) / L.cell); for (let z = z0 - 15; z <= z0 + 15; z += .5) { const j = Math.round((z + L.halfZ) / L.cell); if (m[j * L.nx + i]) { lo = Math.min(lo, z); hi = Math.max(hi, z); } } } return hi - lo; }, z0);
+  const spread = z0 => page.evaluate(z0 => { const st = window.fairwayBuilder.door2, L = st.land, m = st.model.lookup().mask('tee'); let lo = 1e9, hi = -1e9; for (let x = -130; x <= -100; x++) { const i = Math.round((x + L.halfX) / L.cell); for (let z = z0 - 15; z <= z0 + 15; z += .5) { const j = Math.round((z + L.halfZ) / L.cell); if (m[j * L.nx + i]) { lo = Math.min(lo, z); hi = Math.max(hi, z); } } } return hi - lo; }, z0);
   const [wild, calm] = [await spread(-30), await spread(-70)];
   if (!(calm < wild - 2)) throw Error(`the steadied stroke should be narrower than the shaky one: ${calm} m against ${wild} m`);
   console.log(`       steadied brush: a shaky stroke ${wild.toFixed(1)} m wide plain, ${calm.toFixed(1)} m at Steadiness 90`);
@@ -261,7 +261,8 @@ export default function ({journey, SHOTS}) {
   for (let k = 0; k < 2; k++) await page.getByRole('button', {name: 'Undo', exact: true}).click();
   await page.locator('.cb-steady').fill('50'); await page.locator('.cb-kind').selectOption('sand');
   // Select shape: the bunker clicked, then dragged 12 m south, then back by Undo.
-  const sandCells = () => page.evaluate(() => window.fairwayBuilder.door2.model.state.layers.mask('sand').reduce((t, v) => t + v, 0));
+  // The sand layer's area, m² to a tenth (outlines since 24 November 2026).
+  const sandCells = () => page.evaluate(() => Math.round(window.fairwayBuilder.door2.model.area('sand') * 10) / 10);
   const sand0 = await sandCells();
   await page.locator('[data-tool="select"]').click();
   [x0, y0] = await at(-55, 40); [x1, y1] = await at(-55, 52);
@@ -302,9 +303,9 @@ export default function ({journey, SHOTS}) {
   if (await sandCells() !== sandA) throw Error('Delete should take the copy away');
   { const last = await page.evaluate(() => window.fairwayBuilder.door2.names.undo.at(-1)); if (last !== 'Delete') throw Error(`Delete should be named in History, not ${last}`); }
   await page.locator('[data-tool="brush"]').click();
-  // The smooth view: a moment after the stroke, the trace is drawn as outlines
-  // -- since 23 November 2026 in tiles, every one traced again (`smoothDrawn`).
-  await page.waitForFunction(() => { const st = window.fairwayBuilder.door2; return st.smoothDrawn?.() && !st.plan.view.show.codes; }, null, {timeout: 30000});
+  // No squares (24 November 2026): the plan never shows the trace's cells --
+  // every layer is drawn from its outlines, and no cell layer is ever made.
+  await page.waitForFunction(() => { const st = window.fairwayBuilder.door2; return st.smoothDrawn?.() && !st.plan.view.layers.codes && st.model.state.shapes.size > 0; }, null, {timeout: 30000});
   // Layers: a fairway painted over the bunker leaves the bunker on top; the
   // sand layer hidden shows the fairway under it in the view, not the course.
   await page.locator('.cb-kind').selectOption('fairway');
@@ -312,11 +313,11 @@ export default function ({journey, SHOTS}) {
   await page.mouse.move(x0, y0); await page.mouse.down(); await page.mouse.move(x1, y1, {steps: 5}); await page.mouse.up();
   if (await kindAt(-55, 40) !== 'sand') throw Error('painting the fairway layer should not cover the bunker');
   await page.locator('[data-eye="sand"]').click();
-  const shown = await page.evaluate(() => { const st = window.fairwayBuilder.door2, L = st.land, k = Math.round((40 + L.halfZ) / L.cell) * L.nx + Math.round((-55 + L.halfX) / L.cell); return [st.model.state.layers.palette[st.model.state.layers.view[k]], st.model.kindAt(-55, 40)]; });
+  const shown = await page.evaluate(() => { const m = window.fairwayBuilder.door2.model; return [m.kindAt(-55, 40, true), m.kindAt(-55, 40)]; });
   if (shown[0] !== 'fairway' || shown[1] !== 'sand') throw Error(`hiding the sand layer should show the fairway in the view and keep the bunker in the course: ${shown}`);
   await page.locator('[data-eye="sand"]').click();
   // Extrapolate: semi-rough laid 4 m round the fairway.
-  const semiCells = () => page.evaluate(() => window.fairwayBuilder.door2.model.state.layers.mask('semi')?.reduce((t, v) => t + v, 0) ?? 0);
+  const semiCells = () => page.evaluate(() => window.fairwayBuilder.door2.model.area('semi'));
   const semi0 = await semiCells();
   await page.locator('.cb-exfrom').selectOption('fairway'); await page.locator('.cb-exto').selectOption('semi'); await page.locator('.cb-exwidth').fill('4');
   await page.getByRole('button', {name: 'Add layer around', exact: true}).click();
@@ -359,10 +360,15 @@ export default function ({journey, SHOTS}) {
   const undos = async n => { for (let i = 0; i < n; i++) await page.getByRole('button', {name: 'Undo', exact: true}).click(); };
   await page.locator('.cb-curveon').uncheck();
   if (!await page.locator('.cb-curve').isDisabled()) throw Error('Curve strength should wait while Auto curve is off');
+  // The view on the square first: at the whole land its lower corners sit on
+  // the tool's preview panel's top edge, and a click there missed the plan
+  // as the panel's height came out (24 November 2026). Whole land after.
+  await page.evaluate(() => window.fairwayBuilder.door2.plan.look(165, 70));
   for (const [x, z] of [[150, 60], [180, 60], [180, 80], [150, 80]]) { const [px, py] = await at(x, z); await page.mouse.click(px, py); }
   await page.keyboard.press('Enter');
   if (await kindAt(165, 70) !== 'sand' || await kindAt(148, 70) === 'sand') throw Error(`with Auto curve off the outline should be straight: ${await kindAt(165, 70)} inside, ${await kindAt(148, 70)} past a side`);
   await page.locator('.cb-curveon').check();
+  await page.getByRole('button', {name: 'Whole land'}).click();
   // The Line tool: a 3 m cart path with square ends.
   await page.locator('[data-tool="line"]').click(); await page.locator('.cb-kind').selectOption('path');
   await page.locator('.cb-linewidth').fill('3'); await page.locator('.cb-linecaps').selectOption('square');
@@ -421,7 +427,7 @@ export default function ({journey, SHOTS}) {
   if (await page.evaluate(() => window.fairwayBuilder.door2.model.state.trees.length) !== treesBefore) throw Error('Ctrl+Z should undo it again');
   // Clear trees from tees and greens: no crown left over a traced green.
   await page.getByRole('button', {name: 'Clear trees from tees and greens'}).click();
-  const over = await page.evaluate(() => { const st = window.fairwayBuilder.door2, L = st.land, g = st.model.state.layers.masks.get('green'); if (!g) return 0; let n = 0; for (const t of st.model.state.trees) { const r = Math.ceil(t.crown / L.cell); const i0 = Math.round((t.x + L.halfX) / L.cell), j0 = Math.round((t.z + L.halfZ) / L.cell); for (let j = j0 - r; j <= j0 + r; j++) for (let i = i0 - r; i <= i0 + r; i++) if (i >= 0 && j >= 0 && i < L.nx && j < L.nz && g[j * L.nx + i] && Math.hypot((i - i0) * L.cell, (j - j0) * L.cell) < t.crown - L.cell) { n++; j = 1e9; break; } } return n; });
+  const over = await page.evaluate(() => { const st = window.fairwayBuilder.door2, L = st.land, g = st.model.lookup().mask('green'); if (g.indexOf(1) < 0) return 0; let n = 0; for (const t of st.model.state.trees) { const r = Math.ceil(t.crown / L.cell); const i0 = Math.round((t.x + L.halfX) / L.cell), j0 = Math.round((t.z + L.halfZ) / L.cell); for (let j = j0 - r; j <= j0 + r; j++) for (let i = i0 - r; i <= i0 + r; i++) if (i >= 0 && j >= 0 && i < L.nx && j < L.nz && g[j * L.nx + i] && Math.hypot((i - i0) * L.cell, (j - j0) * L.cell) < t.crown - L.cell) { n++; j = 1e9; break; } } return n; });
   if (over) throw Error(`no tree's crown should reach over a green after clearing: ${over}`);
   await page.locator('[data-clean="smooth"]').click();
   await t.shot('corrected');
@@ -489,12 +495,12 @@ export default function ({journey, SHOTS}) {
   if (await page.evaluate(() => window.__picks) !== 2) throw Error('the renamed course should have asked for a new file');
   // The draft opened again, from the start page, back at this step.
   const b64 = await page.evaluate(() => { const b = window.fairwayBuilder.lastSaved; let s = ''; for (let i = 0; i < b.length; i += 32768) s += String.fromCharCode(...b.subarray(i, i + 32768)); return btoa(s); });
-  const saved = await page.evaluate(() => { const st = window.fairwayBuilder.door2; return {sand: st.model.state.layers.mask('sand').reduce((a, v) => a + v, 0), trees: st.model.state.trees.length, holes: st.holes.filter(h => h?.green).length}; });
+  const saved = await page.evaluate(() => { const st = window.fairwayBuilder.door2; return {sand: Math.round(st.model.area('sand') * 10) / 10, trees: st.model.state.trees.length, holes: st.holes.filter(h => h?.green).length}; });
   await page.getByRole('button', {name: 'Back', exact: true}).click();
   const [draftChooser] = await Promise.all([page.waitForEvent('filechooser'), page.getByRole('button', {name: /Open a course file/}).click()]);
   await draftChooser.setFiles({name: 'Door-2-test.fairway-draft', mimeType: 'application/zip', buffer: Buffer.from(b64, 'base64')});
   await page.waitForFunction(() => window.fairwayBuilder.door2?.step === 4 && window.fairwayBuilder.door2.model, null, {timeout: 60000}); await idle();
-  const opened = await page.evaluate(() => { const st = window.fairwayBuilder.door2; return {sand: st.model.state.layers.mask('sand').reduce((a, v) => a + v, 0), trees: st.model.state.trees.length, holes: st.holes.filter(h => h?.green).length, name: st.name}; });
+  const opened = await page.evaluate(() => { const st = window.fairwayBuilder.door2; return {sand: Math.round(st.model.area('sand') * 10) / 10, trees: st.model.state.trees.length, holes: st.holes.filter(h => h?.green).length, name: st.name}; });
   if (opened.sand !== saved.sand || opened.trees !== saved.trees || opened.holes !== saved.holes || opened.name !== 'Door 2 test') throw Error(`the draft should open as saved: ${JSON.stringify(saved)} -> ${JSON.stringify(opened)}`);
   await t.shot('draft-reopened');
   await page.evaluate(() => { window.showSaveFilePicker = undefined; });   // downloads again, as the harness set it
@@ -596,7 +602,7 @@ export default function ({journey, SHOTS}) {
   await page.getByRole('button', {name: 'Back to 2D'}).click();
   await page.waitForFunction(() => document.querySelector('.cb-door2') && window.fairwayBuilder.door2.step === 5 && window.fairwayBuilder.door2.doc, null, {timeout: 120000}); await idle();
   if (asked.length !== asked0) throw Error('going back to 2D should not ask: the work goes with it');
-  const in2d = await page.evaluate(([x, z]) => { const st = window.fairwayBuilder.door2, L = st.land, k = Math.round((z + L.halfZ) / L.cell) * L.nx + Math.round((x + L.halfX) / L.cell); return {sand: st.model.state.layers.masks.get('sand')?.[k], edit: st.landEdits?.[k] ?? 0}; }, [mid.x, mid.z]);
+  const in2d = await page.evaluate(([x, z]) => { const st = window.fairwayBuilder.door2, L = st.land, k = Math.round((z + L.halfZ) / L.cell) * L.nx + Math.round((x + L.halfX) / L.cell); return {sand: st.model.lookup().mask('sand')[k], edit: st.landEdits?.[k] ?? 0}; }, [mid.x, mid.z]);
   if (in2d.sand !== 1 || !(in2d.edit > .05)) throw Error(`the 3D sand and hill should come back to the trace: ${JSON.stringify(in2d)}`);
   if (!/Back from the 3D editor with .*layer/.test(await page.locator('.cb-note').textContent())) throw Error('door 2 should say what came back');
   const planFit = await page.evaluate(() => { const c = document.querySelector('canvas.cb-plan'); return [c.width, Math.round(c.getBoundingClientRect().width * devicePixelRatio)]; });

@@ -140,7 +140,19 @@ export function smoothRing(ring, times = 2) {
 // worst. What is saved is always traced whole. Fitting each point alone (the
 // best line through the straight run centred on it) agreed exactly but left
 // steps on a side 6 degrees off the grid and 14-29 degree kinks: rejected.
-export function fitRing(ring, cell, {tol = .55, cornerAngle = 70, bend = 1, minCorner = 2, area = null} = {}) {
+// LOOSENED, ROUNDED ALONG BOTH EDGES (25 November 2026; the owner, on the
+// Alpine draft in the game: "wavy-ness on what should be straight pieces of
+// turf ... (also on cart paths)"): within 0.55 of a cell, uneven steps along
+// a straight side came back as 0.4-0.5 m bends every 5 to 10 m. Now `tol` is
+// a cell and, with `spline` (the default), each joint is rounded from the
+// middle of the edge before to the middle of the edge after -- the turn
+// spread along both, no short round between straights -- drawn in only
+// where it would pull more than `bend` cells inside. A corner then also
+// needs the cells themselves to turn one (`CELL_CORNER`), the lines to cross
+// near the cells, and -- alone among round neighbours -- sides of six cells.
+// `spline: false, tol: .55` is the first version. RESEARCH, *Curves
+// through points*.
+export function fitRing(ring, cell, {tol = 1, cornerAngle = 70, bend = 1, minCorner = 2, area = null, spline = true, sag = .01} = {}) {
  const n = ring.length;
  if (n < 8) return smoothRing(ring, 2);
  const T = tol * cell, REACH = Math.min(n - 2, 6000), far = new Int32Array(n);
@@ -188,6 +200,53 @@ export function fitRing(ring, cell, {tol = .55, cornerAngle = 70, bend = 1, minC
   const p1 = on(L1), p2 = on(L2); return [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2];
  });
  const out = [], push = q => { const l = out.at(-1); if (!l || Math.hypot(q[0] - l[0], q[1] - l[1]) > 1e-6) out.push(q); };
+ if (spline) {
+  // How far the cells themselves turn at ring point i, over four points
+  // (about four cells) either side: a corner only where they do -- a small
+  // blob's fitted lines can cross at a steep angle out past its cells.
+  // (The most within two points of the ring point nearest the fitted vertex,
+  // looked for six points either side of the walk's: the walk's vertex can
+  // sit a few points off the cells' own corner.)
+  const turnAt = i => {
+   const a = ring[((i - 4) % n + n) % n], b = ring[(i % n + n) % n], c = ring[(i + 4) % n], ux = b[0] - a[0], uz = b[1] - a[1], vx = c[0] - b[0], vz = c[1] - b[1];
+   return Math.abs(Math.atan2(ux * vz - uz * vx, ux * vx + uz * vz));
+  };
+  // And none where the fitted lines cross more than 0.75 of a cell off the
+  // cells' edge (a 6-degree tee's corner sits 0.68 off on 1 m land): a
+  // blob's lines can meet out in the open (PLACED).
+  const segDist = (a, b, x, z) => { const dx = b[0] - a[0], dz = b[1] - a[1], L = dx * dx + dz * dz, t = L ? Math.max(0, Math.min(1, ((x - a[0]) * dx + (z - a[1]) * dz) / L)) : 0; return Math.hypot(a[0] + t * dx - x, a[1] + t * dz - z); };
+  const cellTurn = (i, [x, z]) => {
+   let at = i, d0 = Infinity, off = Infinity;
+   for (let k = -6; k <= 6; k++) { const q = ring[((i + k) % n + n) % n], d = Math.hypot(q[0] - x, q[1] - z); off = Math.min(off, segDist(q, ring[((i + k + 1) % n + n) % n], x, z)); if (d < d0) { d0 = d; at = i + k; } }
+   if (off > .75 * cell) return 0;
+   return Math.max(turnAt(at - 2), turnAt(at - 1), turnAt(at), turnAt(at + 1), turnAt(at + 2));
+  };
+  const sharp = P.map((B, m) => {
+   const A = P[(m - 1 + M) % M], C = P[(m + 1) % M], ax = B[0] - A[0], az = B[1] - A[1], bx = C[0] - B[0], bz = C[1] - B[1], la = Math.hypot(ax, az), lb = Math.hypot(bx, bz);
+   if (la < 1e-9 || lb < 1e-9) return true;
+   const th = Math.abs(Math.atan2(ax * bz - az * bx, ax * bx + az * bz));
+   return Math.min(la, lb) >= minCorner * cell && th >= cornerAngle * Math.PI / 180 && cellTurn(V[m], B) >= CELL_CORNER;
+  });
+  // A LONE corner -- both neighbours rounded -- with a side under six cells is
+  // rounded too: a small blob's cells can make one L-shaped step that its
+  // lines turn into a spike (PLACED). A square tee's corners have sharp
+  // neighbours; a long straight side's corner is kept.
+  const len = (a, b) => Math.hypot(P[b][0] - P[a][0], P[b][1] - P[a][1]);
+  const lone = sharp.map((s, m) => s && !sharp[(m - 1 + M) % M] && !sharp[(m + 1) % M] && Math.min(len((m - 1 + M) % M, m), len(m, (m + 1) % M)) < 6 * cell);
+  lone.forEach((l, m) => { if (l) sharp[m] = false; });
+  for (let m = 0; m < M; m++) {
+   const A = P[(m - 1 + M) % M], B = P[m], C = P[(m + 1) % M];
+   if (sharp[m]) { push(B); continue; }
+   // From the middle of the edge before to the middle of the edge after, so
+   // the turn spreads along both; drawn in tighter when that would pull the
+   // curve more than `bend` cells inside the corner.
+   const dev = Math.hypot(A[0] - 2 * B[0] + C[0], A[1] - 2 * B[1] + C[1]) / 8, f = .5 * Math.min(1, bend * cell / Math.max(dev, 1e-9));
+   quadTo([B[0] + (A[0] - B[0]) * f, B[1] + (A[1] - B[1]) * f], B, [B[0] + (C[0] - B[0]) * f, B[1] + (C[1] - B[1]) * f], sag, push);
+  }
+  if (out.length > 1 && Math.hypot(out[0][0] - out.at(-1)[0], out[0][1] - out.at(-1)[1]) < 1e-6) out.pop();
+  if (out.length < 3) return smoothRing(ring, 2);
+  return area == null ? out : grownTo(out, area, .5 * cell);
+ }
  for (let m = 0; m < M; m++) {
   const A = P[(m - 1 + M) % M], B = P[m], C = P[(m + 1) % M];
   const ax = B[0] - A[0], az = B[1] - A[1], bx = C[0] - B[0], bz = C[1] - B[1], la = Math.hypot(ax, az), lb = Math.hypot(bx, bz);
@@ -200,6 +259,22 @@ export function fitRing(ring, cell, {tol = .55, cornerAngle = 70, bend = 1, minC
  if (out.length > 1 && Math.hypot(out[0][0] - out.at(-1)[0], out[0][1] - out.at(-1)[1]) < 1e-6) out.pop();
  if (out.length < 3) return smoothRing(ring, 2);
  return area == null ? out : grownTo(out, area, .5 * cell);
+}
+
+// How far the cells must turn for a fitted corner to stay sharp (PLACED,
+// 25 November 2026): a 6-degree tee's corner reads 63 on 1 m land, the
+// stairs blurring it; a round blob four cells across reads about 50.
+const CELL_CORNER = 55 * Math.PI / 180;
+
+// A quadratic curve from s0 to s2 drawn toward B, pushed as points no more
+// than `sag` metres off the true curve and turning no more than 6 degrees a
+// point (s0 included, s2 left for whatever follows).
+function quadTo(s0, B, s2, sag, push) {
+ const ax = B[0] - s0[0], az = B[1] - s0[1], bx = s2[0] - B[0], bz = s2[1] - B[1];
+ const th = Math.abs(Math.atan2(ax * bz - az * bx, ax * bx + az * bz)), dev = Math.hypot(s0[0] - 2 * B[0] + s2[0], s0[1] - 2 * B[1] + s2[1]) / 4;
+ // A quadratic's sag with n pieces is its whole sag over n squared.
+ const k = Math.max(1, Math.min(64, Math.ceil(Math.max(Math.sqrt(dev / Math.max(sag, 1e-4)), th / (Math.PI / 30)))));
+ for (let q = 0; q < k; q++) { const t = q / k, u = 1 - t; push([u * u * s0[0] + 2 * u * t * B[0] + t * t * s2[0], u * u * s0[1] + 2 * u * t * B[1] + t * t * s2[1]]); }
 }
 
 // A ring moved out (or in) along its normals so it encloses `area` m² -- by

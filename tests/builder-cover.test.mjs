@@ -13,6 +13,7 @@ import {BIOMES} from '../src/biomes.js';
 import {BIOME_KEYS, BUILT_VERSION} from '../src/settings-schema.js';
 import {GROUND_PLANTS} from '../src/species.js';
 import {createTrace} from '../src/builder/trace-edit.js';
+import * as S from '../src/builder/shapes.js';
 
 const box = (x0, z0, x1, z1) => [[[x0, z0], [x1, z0], [x1, z1], [x0, z1]]];
 function doc() {
@@ -92,7 +93,7 @@ test('the 2D editor paints the same cover, undoes a drag at once, and the course
  assert.ok(plants.every(t => t.role === 3 && bushes.plants.some(p => p[0] === t.kind)));
  // Nothing on the fairway.
  assert.equal(m.paintCover({cover: rocks, x: 0, z: 0, radius: 20, min: .5, max: 2, density: 1, rng}), 0);
- const doc = validateDoc(docFromLand({land, traced: {layers: m.state.layers}, holes: Array.from({length: 9}, (_, i) => ({number: i + 1, tees: [{x: -5, z: -80, set: 'back'}], green: {x: 0, z: 80}})), trees: m.state.trees, homes: [], rocks: m.state.rocks, name: 'Two', landscape: 'calcoast'}));
+ const doc = validateDoc(docFromLand({land, traced: {shapes: m.state.shapes}, holes: Array.from({length: 9}, (_, i) => ({number: i + 1, tees: [{x: -5, z: -80, set: 'back'}], green: {x: 0, z: 80}})), trees: m.state.trees, homes: [], rocks: m.state.rocks, name: 'Two', landscape: 'calcoast'}));
  assert.equal(doc.rocks.length, nRocks); assert.equal(doc.trees.length / 7, plants.length);
  assert.ok(doc.treeKinds.length >= 1);
  m.undo();
@@ -136,7 +137,7 @@ test('a course\'s ground does not soften going to 2D and back, however often', (
  for (let z = 70; z <= 90; z++) for (let x = -10; x <= 10; x++) heights[(z + 100) * nx + x + 100] = 100 + Math.sin(x * 1.2) * .25;
  heights[100 * nx + 100] = 100.6;
  const start = {...doc(), water: [], land: {x0: -100, z0: -100, cell: 1, cellZ: 1, nx, nz: nx, heights}};
- const trip = d => { const t = draftFromDoc(d), L = {masks: t.trace.masks}; return validateDoc(docFromLand({land: t.land, traced: {layers: L}, holes: t.holes, trees: t.trace.trees, homes: t.trace.homes, name: t.name, landscape: t.landscape, rocks: t.rocks, creeks: t.creeks})); };
+ const trip = d => { const t = draftFromDoc(d); return validateDoc(docFromLand({land: t.land, traced: {shapes: t.trace.shapes}, holes: t.holes, trees: t.trace.trees, homes: t.trace.homes, name: t.name, landscape: t.landscape, rocks: t.rocks, creeks: t.creeks})); };
  const first = trip(start), second = trip(first), third = trip(second);
  const at = (d, x, z) => d.land.heights[Math.round((z - d.land.z0) / d.land.cell) * d.land.nx + Math.round((x - d.land.x0) / d.land.cell)];
  for (const [x, z] of [[1, 80], [4, 80], [-3, 75], [0, 0]]) {
@@ -144,7 +145,7 @@ test('a course\'s ground does not soften going to 2D and back, however often', (
   assert.equal(at(second, x, z), at(first, x, z)); assert.equal(at(third, x, z), at(first, x, z));
  }
  // A survey's land still gets its smoothing.
- const t = draftFromDoc(start), surveyed = validateDoc(docFromLand({land: {...t.land, method: 'classified'}, traced: {layers: {masks: t.trace.masks}}, holes: t.holes, trees: [], homes: [], name: 'S', landscape: 'pacnw'}));
+ const t = draftFromDoc(start), surveyed = validateDoc(docFromLand({land: {...t.land, method: 'classified'}, traced: {shapes: t.trace.shapes}, holes: t.holes, trees: [], homes: [], name: 'S', landscape: 'pacnw'}));
  assert.ok(Math.abs(at(surveyed, 1, 80) - 100) < Math.abs(at(first, 1, 80) - 100), 'a survey is smoothed');
 });
 
@@ -164,7 +165,8 @@ test('held, a shape comes off the course at once and is put down in one undo', (
  const got = hold.drop(30, 10);
  assert.equal(e.surfaceAt(53, 13), 'sand'); assert.equal(e.surfaceAt(23, 3), 'rough');
  assert.equal(e.state.undo.length, u + 1);
- assert.equal(got.pick.cells.length, pick.cells.length);
+ // The same outline, moved (outlines since 24 November 2026).
+ assert.ok(Math.abs(S.areaOf(got.pick.set) - S.areaOf(pick.set)) < .01);
  assert.ok(e.onPick(got.pick, 53, 13), 'still selected where it lies');
  e.undo();
  assert.equal(e.surfaceAt(23, 3), 'sand'); assert.equal(e.surfaceAt(53, 13), 'rough');
@@ -213,10 +215,9 @@ test('any course goes to 2D: a course file becomes door 2\'s draft, and back', (
  const d = draftFromDoc(source), {land, trace} = d;
  assert.equal(d.step, 5); assert.equal(d.holes.length, 9); assert.equal(d.holes[0].aims.length, 1);
  assert.equal(land.ground.length, land.nx * land.nz);
- const i = Math.round((0 + land.halfX) / land.cell), j = Math.round((80 + land.halfZ) / land.cell);
- assert.equal(trace.masks.get('green')[j * land.nx + i], 1);
- assert.ok(trace.masks.get('water').some(v => v), 'the water is a layer');
- const back = validateDoc(docFromLand({land, traced: {layers: {masks: trace.masks}, codes: null}, holes: d.holes, trees: trace.trees, homes: trace.homes, name: d.name, landscape: d.landscape, rocks: d.rocks, creeks: d.creeks}));
+ assert.ok(S.contains(trace.shapes.get('green'), 0, 80), 'the green, its own outline');
+ assert.ok(trace.shapes.get('water')?.length, 'the water is a layer');
+ const back = validateDoc(docFromLand({land, traced: {shapes: trace.shapes}, holes: d.holes, trees: trace.trees, homes: trace.homes, name: d.name, landscape: d.landscape, rocks: d.rocks, creeks: d.creeks}));
  assert.equal(back.holes.length, 9); assert.equal(back.water.length, 1);
  assert.deepEqual(back.rocks, [[5, 5, 2, 1, .5]]);
  assert.deepEqual(back.treeKinds, ['chaparral'], 'the painted plant keeps its species');

@@ -45,14 +45,18 @@ const label = k => GROUNDS[k]?.label ?? (k[0].toUpperCase() + k.slice(1));
 // work added (round-trip.js `withEditorWork`), and Back to 2D opens it, so a
 // course reopened from a file has everything it had. None on a generated course
 // or a file from before 5 November 2026.
-export function openEditor(doc, {from = 'file', back = null, work = null} = {}) {
+const SMOOTHED_NOTE = 'Saved by an older builder: its surfaces\' edges were smoothed as it opened, corners kept (Undo puts them back).';
+export function openEditor(doc, {from = 'file', back = null, work = null, smoothOld = false} = {}) {
  current?.view.dispose();
  // A course from outside the builder (no door 2 session behind it) keeps the
  // fringe the game gave it, as painted fringe (editing.js `fringeBand`); a
  // builder course has only the fringe painted on it.
  const editor = createEditor(doc, {fringeBand: work ? 0 : doc.fringe ?? DEFAULT_COURSE.fringe}), s = editor.state;
+ // `smoothOld`: a course the builder saved before outlines, its surfaces
+ // smoothed once as it opens (builder.js `openOne`), one undo.
+ if (smoothOld) editor.smoothEdges({radius: 1.5});
  setTitle(s.name);
- const wrap = el('div', {class: 'cb-view'}), status = el('div', {class: 'cb-status'}, 'Right-drag to turn, wheel to zoom, left-drag to move. Pick a tool on the left.');
+ const wrap = el('div', {class: 'cb-view'}), status = el('div', {class: 'cb-status'}, smoothOld ? SMOOTHED_NOTE : 'Right-drag to turn, wheel to zoom, left-drag to move. Pick a tool on the left.');
  const tools = el('div', {class: 'cb-tools cb-tools3d'}), side = el('div', {class: 'cb-side'});
  // THE TOOL PALETTE (the builder-ux goal, item 8): every tool an icon with its
  // key down the left edge, as on door 2's plan; the column beside it holds the
@@ -146,12 +150,11 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
  // keeps it); Erase takes one off under the brush.
  const layerList = el('ul', {style: 'list-style:none;padding:0;margin:0;font-size:12px'});
  function refreshLayers() {
-  const a = s.raster.cell ** 2;
   underLine.replaceChildren(...underWords());
-  layerList.replaceChildren(...editor.layersPresent().map(k => { const m = s.raster.layers.masks.get(k), n = m.reduce((t, v) => t + v, 0), hid = editor.isHidden(k);
+  layerList.replaceChildren(...editor.layersPresent().map(k => { const n = editor.area(k), hid = editor.isHidden(k);
    return el('li', {'data-layer': k, class: k === layer ? 'cb-chosen' : '', title: `Click to paint ${label(k).toLowerCase()}`, style: 'display:flex;gap:4px;align-items:center;margin:2px 0;cursor:pointer', onclick: () => chooseLayer(k)},
     eyeButton(document, k, label(k), hid, () => { editor.setHidden(k, !hid); view.refreshLayers(); refreshLayers(); }),
-    el('span', {style: 'flex:1'}, `${label(k)} ${(n * a / 1e4).toFixed(2)} ha`),
+    el('span', {style: 'flex:1'}, `${label(k)} ${(n / 1e4).toFixed(2)} ha`),
     el('button', {class: 'cb-btn', type: 'button', style: 'padding:2px 5px;font-size:11px', title: `Erase the ${label(k).toLowerCase()} layer under the brush`, onclick: () => { layer = k; layerPick.value = k; setTool({kind: 'erase'}); }}, 'Erase')); }));
  }
  // The tree height scale, as the slider is dragged (editing.js treeScale).
@@ -601,9 +604,9 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
  function after(step) {
   if (!step) return;
   if (step.parts) view.refreshLand(step.box);
-  if (step.cells) { view.refreshSurface(step.box); refreshLayers(); }
+  if (step.shapes) { view.refreshSurface(step.box); refreshLayers(); }
   if (step.snapshot) { landscape.value = s.landscape; view.refreshAll(); refreshHoles(); }
-  else if (step.parts && step.cells) view.refreshSurface(step.box);
+  else if (step.parts && step.shapes) view.refreshSurface(step.box);
   else if (step.parts) { view.refreshHoles(selected); view.refreshTrees(); }
  }
  function undo() { unpick(); showPicked(); choose(null); after(editor.undo()); }
@@ -685,6 +688,6 @@ export function openEditor(doc, {from = 'file', back = null, work = null} = {}) 
   status.textContent = `${what} deleted${type === 'creek' || kind === 'water' ? ': its channel or bed stays in the land -- Fill to surrounding raises it' : ''}. Undo puts it back.`;
  }
  function sizeBrush(d) { radius = Math.max(1, Math.min(60, Math.round(radius * (d > 0 ? 1.25 : .8)) + (d > 0 ? 1 : 0))); const r = tools.querySelector('.cb-group input[type=range]'); if (r) r.value = radius; status.textContent = `Brush ${radius} m round.`; }
- status.textContent = from === 'generated' ? 'Taken over: everything here is yours to change. Save keeps it as a .fairway file Fairway plays.' : HINT.navigate();
+ status.textContent = from === 'generated' ? 'Taken over: everything here is yours to change. Save keeps it as a .fairway file Fairway plays.' : smoothOld ? SMOOTHED_NOTE : HINT.navigate();
  return current;
 }

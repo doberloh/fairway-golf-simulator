@@ -1084,7 +1084,9 @@ the builder has been played by a person (TODO lists what to check).
   while editing (half a metre, coarser past 4096 cells a side), painted and
   filled, traced back into outlines on save -- untouched, a document keeps its
   own outlines; the land changed in place on its grid and patches; undo for
-  every tool (a drag is one step).
+  every tool (a drag is one step). **Since 24 November 2026 the surfaces are
+  outlines while editing too** (*No squares in the builder*); the grid is
+  only a hidden lookup.
 - **Measured**: the `builder-door-1` smoke journey grows a nine, takes it
   over, raises the ground with a drag, paints sand, undoes and redoes, saves
   the file (a ZIP over 100 KB), opens it in the built game and plays a tee
@@ -1691,7 +1693,9 @@ out automatically?" With screenshots from the game and the review.
   the "jaggy" edges -- and cut every corner by 0.7 m (1.4 m on 1 m land). Now
   a 6-degree tee's sides are within 9 cm (23 cm on 1 m land) and its corners
   within 23 cm (46 cm). Figures, and what was tried and turned down, in
-  RESEARCH *Outlines fitted*. Smooth edges was never the cure: it moves
+  RESEARCH *Outlines fitted*. (Loosened on 25 November 2026: following each
+  step within half a square turned uneven steps into waves -- *No squares in
+  the builder*, *Fourth step*.) Smooth edges was never the cure: it moves
   cells, and the steps are the cells'. A course already saved keeps its old
   outlines until it is saved again; nothing the game reads changed, so no
   `BUILT_VERSION`.
@@ -1707,6 +1711,8 @@ out automatically?" With screenshots from the game and the review.
   first. It threw the whole smooth trace away at every change and traced the
   whole land again (3-4 s, frozen, on the owner's 2.8 x 3.3 km draft), cells
   everywhere meanwhile. The cells are repainted only where they changed.
+  **Gone since 24 November 2026** with the cells themselves (*No squares in
+  the builder*, below): every layer is outlines, drawn as it is.
 - **Three counts done a cell at a time through a callback** ran after every
   stroke over all nine million cells: the hectares under the plan (a Map),
   each layer's area in the Layers list (`reduce`), and which layers are
@@ -1806,6 +1812,145 @@ game's paler collar (`tools/builder-look.mjs`, mended the same day: with the
 courses folder, its Open button never reached the file chooser). A
 generated course taken over has not been looked at with its collar painted
 on (Node tests only). **Not yet seen by the owner.**
+
+### No squares in the builder (branch `builder-outlines`, from 24 November 2026)
+
+The owner, after a box drawn with Auto curve came back with two square
+corners: "I dont understand why things are so boxy in the editor, why cant i
+just paint and draw smooth lines like what shows up when i lift off the click
+after painting. Also in the final review step ... the pixellated image is
+still showing", and then "I want these pixellated views gone from the builder
+entirely. No 're processing on a 1m square' or anything like that ... The
+game doesnt render in blocks, why does the builder."
+
+**The rule from here on: outlines are what a surface is.** Squares may only
+be a hidden lookup (what is under a point, the land's grid for smoothing the
+ground under a green), never drawn and never traced back into outlines. What
+starts as a grid -- the LIDAR's auto trace, Paint rock on slopes, a draft
+saved before -- is turned into outlines once, as it comes in. The work goes
+in steps, each leaving a working builder.
+
+- **First step (24 November 2026):** the picture, the LIDAR and its
+  coverage are drawn smoothed at every zoom (plan-view.js; until then a
+  layer went pixel-sharp past two screen pixels a cell -- a 1 m land showed
+  as 1 m blocks); and the review (door-real.js `paintCourse`,
+  `drawReview`) fills each surface from the course file's own outlines, in
+  the game's order, the water over them, with the land's shading multiplied
+  over all of it -- until then it coloured each land cell by the surface at
+  its middle. Checked: builder-door-2 and builder-door-2-worthington pass,
+  the review picture looked at. Not seen by the owner.
+- **Second step (24 November 2026): the trace step is outlines.** Every
+  layer of door 2's trace is a set of outlines (shapes.js, on Clipper2 --
+  RESEARCH, *The builder on outlines*, for why it and the numbers) and every
+  tool works on them exactly:
+  - a **brush stroke** shows as the band it sweeps while the button is held,
+    in its layer's place among the others (an eraser's band cut out of the
+    layers it takes), and is added to or cut from the layer when the button
+    comes up -- what was seen is what is laid, round ends and all;
+  - **Outline fill**, the **Line** (round or square ends, square bends
+    mitred), **Add layer around** (the layer grown, round), **Fill outside
+    boundary** (the ring cuts every layer) and **Move, Copy, Turn, Delete**
+    of one shape (its own outline and holes, moved or turned exactly) are
+    the shapes themselves;
+  - **Smooth** works on the edge itself (rebuilt the next day: *Fourth
+    step*), a thin path keeping its width; **Remove
+    specks** drops shapes and holes by their area;
+  - **Normalize width** lays each thin part's middle line again as a band;
+    only finding that middle line uses a grid, hidden, never drawn;
+  - the plan draws every layer from its outlines each frame -- the **Smooth
+    trace (as it will play)** item in the View menu is gone, as there is
+    nothing else to show;
+  - what starts as a grid (the LIDAR's **Auto trace**, **Paint rock on
+    slopes**, OpenStreetMap lined up to the picture or the LIDAR) is turned
+    into outlines once, as it comes in;
+  - the course is made from the outlines as drawn (real-course.js
+    `docFromLand`); a hidden grid of the land's cells serves only what still
+    asks by cell (the ground smoothed under greens, the holes found on the
+    greens, trees kept off surfaces);
+  - **drafts are version 4**: the trace and OpenStreetMap's trace saved as
+    outlines (draft.js); a version 3 draft's cells are turned into outlines
+    once as it opens (3.9 s for the owner's Alpine Lake), and an older
+    builder refuses a version 4 draft in plain words; **Back to 2D** brings
+    the 3D editor's changed layers as their outlines.
+  Checked: every builder Node test and all ten builder
+  journeys pass; on the owner's Alpine Lake draft a stroke is laid in 7 ms
+  at the median, 14 ms at worst, a Smooth dab 16 ms, and the plan drawn in
+  4.8 ms a frame at the whole land, about 1 ms zoomed in. **Not seen by the
+  owner.**
+- **Third step (24 November 2026): the 3D editor is outlines.** Its
+  surfaces are door 2's own model (editing.js holds a trace-edit.js trace
+  on the course's outlines): each brush dab is added to or cut from the
+  outlines at once, and Outline fill, Smooth, Remove specks, Add layer
+  around, Paint rock on slopes, a pond, a bunker, and picking, carrying,
+  turning and deleting one shape all work on them exactly (a shape moved
+  by any distance, not by whole cells). Its undo keeps the layers as they
+  were (each layer's set by reference). The view draws the surfaces from
+  the outlines into its texture and its close-up sheet, always -- until
+  then a brush showed its cells and the outlines were traced from them a
+  moment after it lifted. **Save writes the outlines as they are**: nothing
+  is traced. A course from outside the builder opens with its collar as the
+  greens grown by the collar's width. A grid of half-metre cells remains
+  only as a hidden lookup (what lies at a point, for the checks and the
+  tools). Checked: every Node test, all ten builder journeys; on Alpine
+  Lake's 36,000-point road layer a dab took 3.6 ms (worst 6.2) and the view
+  after it 0.7 ms. **Not seen by the owner.**
+- **Smooth edge on release keeps to the stroke** (24 November 2026, on
+  review): the release smoothing moves only the stroke's own edges, so a box
+  or tee beside it keeps its corners. (The same day Smooth was made to
+  "settle" -- leave alone what it would move under an eighth of its size --
+  so smoothing again would not shrink a shape; that stopped it smoothing
+  anything small, and the fourth step replaced it.)
+- **Fourth step (25 November 2026): no waves, no facets.** The owner, on the
+  Alpine draft in the game: "wavy-ness on what should be straight pieces of
+  turf ... (also on cart paths)"; "how do we smooth out these facets that
+  still show up from the OSM traces ... smoothing button doesn't take them
+  out. Theres even facets when i outline fill something with auto curve. I
+  think we need 'higher resolution' ... on the lines between points"; and
+  "Make sure this applies to all traced. Painted. and imported surfaces in
+  the builder!" One kind of curve throughout -- the pen's (pen.js), laid
+  finely, through the points that matter -- and each way a surface comes in:
+  - **Traced** (a draft from before outlines, the auto trace, OpenStreetMap
+    lined up, Paint rock on slopes): the squares become a smooth line
+    through their steps -- straight runs within a square of them, each joint
+    rounded along both its edges -- instead of following each step within
+    half a square, which turned uneven steps into waves (contour.js
+    `fitRing`). A corner stays sharp only where the squares themselves turn
+    one.
+  - **Painted**: a brush stroke is its exact band, as before; the pen's
+    curve (Outline fill, Line, the boundary, zones, creeks, both editors) is
+    laid finely enough that no point turns more than about 5 degrees from
+    the last, where a point a metre faceted a small green; its preview is
+    the same points.
+  - **Imported**: OpenStreetMap's outlines and lines are laid as curves
+    through the map's own points, a point turning 75 degrees or more kept as
+    a corner (a tee's, a car park's), its paths and roads as one band each
+    rather than a row of painted discs (osm.js `curveOutline`). A **course
+    file** the builder saved before outlines has its surfaces smoothed once
+    as it opens (Smooth edges on every layer, corners kept, one undo, a note
+    in the status line; it then counts as changed -- PLACED, the owner's to
+    overrule, as are the 75-degree corner rule and the brush rounding
+    corners); one saved since opens exactly as saved, and a file
+    with no builder section (a generated course taken over) is left alone.
+  - **Smooth** keeps an edge only at the points that shape it -- wiggles
+    within 0.7 of the brush's radius dropped, a node every 10 m at the
+    average of the edge round it -- and draws the curve through them: waves
+    and facets go, and nothing shrinks, as the curve runs through the edge.
+    The brush eases in toward the edge of its reach, and a thin shape's
+    wiggles count as its shape (held under a third of its width), so a cart
+    path keeps its ends and width.
+    Smooth edges on a layer and Smooth edge on release keep corners (75
+    degrees or more within a short way); the brush rounds a corner it is put
+    on.
+  - **Normalize width** lays each middle line through the same smoothing.
+  Checked: every Node test, all ten builder journeys; two copies of the
+  Alpine course, old and new, looked at in the game from 1.7 m along an
+  edge. Numbers, and what was tried and turned down: RESEARCH, *Curves
+  through points*. **Not seen by the owner.**
+- **What still reads cells:** lining OpenStreetMap up with the picture or
+  the LIDAR reads the photograph's and the survey's own cells (as the auto
+  trace does) and its result becomes outlines once; **Keep map as is**
+  keeps the map's own shapes exactly. Everything else is outlines, with
+  hidden lookups of cells only where a whole grid is asked at once.
 
 ### Houses of any size, Normalize width, the Line tool, the pen's curve (23 November 2026)
 

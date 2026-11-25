@@ -72,26 +72,29 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
  tex.magFilter = T.LinearFilter; tex.minFilter = T.LinearFilter; tex.colorSpace = T.SRGBColorSpace;
  tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
  const rgb = c => `rgb(${c[0]},${c[1]},${c[2]})`;
- // Cells [i0, i1] x [j0, j1] to the sheet: as cells, or as outlines.
- function drawCells(i0, i1, j0, j1) {
-  for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { g2.fillStyle = rgb(colours[r.layers.view[j * r.nx + i]]); g2.fillRect(i * F, j * F, F + .5, F + .5); }
- }
- // Cells round a redrawn part, so outlines there close outside it and are
- // fitted as the whole is (contour.js `fitRing`; 8 until the fit, 23
- // November 2026, whose straight runs reach farther than the relaxing did).
- const MARGIN = 32;
- // Cells [i0, i1] x [j0, j1] as outlines onto a sheet, `scale` texels a metre
- // from (ox, oz) -- the whole course's sheet or the close-up one.
+ // THE SURFACES FROM THEIR OUTLINES, ALWAYS (branch builder-outlines, 24
+ // November 2026; the owner: "I want these pixellated views gone from the
+ // builder entirely"): every layer is outlines (editing.js), drawn as they
+ // are, bottom layer first, the hidden ones left out -- a brush's dab too, at
+ // once. Until then a brush showed its cells while it was down and the
+ // outlines were traced from them 300 ms after it lifted. Each outline keeps
+ // its own Path2D, in metres, and a layer's is put together from them, so a
+ // stroke walks only the paths it changed (as door 2's plan, door-real.js).
+ const PATH1 = new WeakMap(), PATHS = new WeakMap();
+ const onePath = p => { let q = PATH1.get(p); if (!q) { q = new Path2D(); for (let i = 0; i < p.length; i++) { const x = p[i].x / 100, z = p[i].y / 100; if (i) q.lineTo(x, z); else q.moveTo(x, z); } q.closePath(); PATH1.set(p, q); } return q; };
+ const pathOf = set => { let p = PATHS.get(set); if (!p) { p = new Path2D(); for (const one of set) p.addPath(onePath(one)); PATHS.set(set, p); } return p; };
+ // Cells [i0, i1] x [j0, j1] of the course (the part to redraw) from the
+ // outlines onto a sheet, `scale` texels a metre from (ox, oz) -- the whole
+ // course's sheet or the close-up one.
  function drawOutlines(g, i0, i1, j0, j1, ox, oz, scale) {
-  const px = x => (x - ox) * scale, pz = z => (z - oz) * scale, ax = px(r.x0 + i0 * r.cell), az = pz(r.z0 + j0 * r.cell), w = (i1 - i0 + 1) * r.cell * scale, h = (j1 - j0 + 1) * r.cell * scale;
+  const ax = (r.x0 + i0 * r.cell - ox) * scale, az = (r.z0 + j0 * r.cell - oz) * scale, w = (i1 - i0 + 1) * r.cell * scale, h = (j1 - j0 + 1) * r.cell * scale;
   g.save(); g.beginPath(); g.rect(ax, az, w, h); g.clip();
   g.fillStyle = rgb(colours[0]); g.fillRect(ax, az, w, h);
+  g.setTransform(scale, 0, 0, scale, -ox * scale, -oz * scale);
   for (const kind of [...LAYER_ORDER].reverse()) {
-   if (!r.layers.masks.has(kind) || r.layers.hidden.has(kind)) continue;
-   const rings = editor.outlines(kind, [i0, i1, j0, j1], MARGIN); if (!rings.length) continue;
-   g.fillStyle = rgb(colours[PAINT.indexOf(kind)] ?? colours[0]); g.beginPath();
-   for (const ring of rings) { ring.forEach(([x, z], q) => q ? g.lineTo(px(x), pz(z)) : g.moveTo(px(x), pz(z))); g.closePath(); }
-   g.fill('evenodd');
+   if (editor.isHidden(kind)) continue;
+   const set = editor.shapesOf(kind); if (!set.length) continue;
+   g.fillStyle = rgb(colours[PAINT.indexOf(kind)] ?? colours[0]); g.fill(pathOf(set));
   }
   g.restore();
  }
@@ -109,14 +112,6 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
   src.dispose();
  }
  drawSmooth(0, r.nx - 1, 0, r.nz - 1); upload(0, r.nx - 1, 0, r.nz - 1, true);
- // The part painted since the last smooth redraw, redrawn a moment after the
- // strokes stop (PLACED: 300 ms).
- let dirty = null, smoothTimer = 0;
- function smoothLater(i0, i1, j0, j1) {
-  dirty = dirty ? [Math.min(dirty[0], i0), Math.max(dirty[1], i1), Math.min(dirty[2], j0), Math.max(dirty[3], j1)] : [i0, i1, j0, j1];
-  clearTimeout(smoothTimer);
-  smoothTimer = setTimeout(() => { const d = dirty; dirty = null; if (!running || !d) return; drawSmooth(...d); upload(...d); closeUp.redraw(d); }, 300);
- }
  const material = new T.MeshLambertMaterial({map: tex});
 
  // THE CLOSE-UP SHEET (the owner, 1 November 2026: "the traces i see in the
@@ -145,13 +140,12 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
   // The cells under the square (and the margin round it).
   const cellsOf = (x0, x1, z0, z1) => [Math.max(0, Math.floor((x0 - r.x0) / r.cell)), Math.min(r.nx - 1, Math.ceil((x1 - r.x0) / r.cell)), Math.max(0, Math.floor((z0 - r.z0) / r.cell)), Math.min(r.nz - 1, Math.ceil((z1 - r.z0) / r.cell))];
   const scale = () => CLOSE / box.z;
-  // Cells [i0, i1] x [j0, j1] of the course onto the sheet; `smooth` as
-  // outlines, else as cells (a brush stroke); the part sent to the card.
-  function draw(c, smooth) {
+  // Cells [i0, i1] x [j0, j1] of the course onto the sheet from the
+  // outlines; the part sent to the card.
+  function draw(c) {
    const [i0, i1, j0, j1] = c; if (i1 < i0 || j1 < j0) return;
    const k = scale();
-   if (smooth) drawOutlines(g, i0, i1, j0, j1, box.x, box.y, k);
-   else for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { g.fillStyle = rgb(colours[r.layers.view[j * r.nx + i]]); g.fillRect((r.x0 + i * r.cell - box.x) * k, (r.z0 + j * r.cell - box.y) * k, r.cell * k + .5, r.cell * k + .5); }
+   drawOutlines(g, i0, i1, j0, j1, box.x, box.y, k);
    const x = Math.max(0, Math.floor((r.x0 + i0 * r.cell - box.x) * k)), y = Math.max(0, Math.floor((r.z0 + j0 * r.cell - box.y) * k));
    const w = Math.min(CLOSE, Math.ceil((r.x0 + (i1 + 1) * r.cell - box.x) * k)) - x, h = Math.min(CLOSE, Math.ceil((r.z0 + (j1 + 1) * r.cell - box.y) * k)) - y;
    if (w <= 0 || h <= 0) return;
@@ -168,7 +162,7 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
    const t0 = performance.now();
    box.set(wantX - wantSide / 2, wantZ - wantSide / 2, wantSide, 1);
    g.fillStyle = rgb(colours[0]); g.fillRect(0, 0, CLOSE, CLOSE);
-   draw(cellsOf(box.x, box.x + box.z, box.y, box.y + box.z), true); t.needsUpdate = true;
+   draw(cellsOf(box.x, box.x + box.z, box.y, box.y + box.z)); t.needsUpdate = true;
    ms = performance.now() - t0;
   }
   return {
@@ -185,8 +179,7 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
     wantX = mx; wantZ = mz; wantSide = side;
     clearTimeout(timer); timer = setTimeout(() => { timer = 0; if (running) place(); }, 150);
    },
-   cells: c => { if (box.w) draw(inside(c), false); },
-   redraw: c => { if (box.w) draw(inside(c), true); },
+   redraw: c => { if (box.w) draw(inside(c)); },
    all: () => { if (box.w) place(); },
    // Off for comparing (tools/builder-look.mjs --compare); back on, it places itself.
    setOn(v) { on = v; if (!v) { clearTimeout(timer); timer = 0; box.w = 0; } },
@@ -555,13 +548,12 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
   // An outline being drawn, point by point.
   draft(points) { draft.geometry.dispose(); draft.geometry = new T.BufferGeometry().setFromPoints(points.map(([x, z]) => new T.Vector3(x, editor.height(x, z) + .4, z))); },
   refreshLand([x0, x1, z0, z1]) { for (const m of chunks) { const u = m.userData; if (u.x1 >= x0 && u.x0 <= x1 && u.z1 >= z0 && u.z0 <= z1) heightChunk(m); } },
-  // A painted box (metres): its cells at once, its outlines a moment later.
+  // A painted box (metres): its outlines, at once.
   refreshSurface([x0, x1, z0, z1]) {
    const i0 = Math.max(0, Math.floor((x0 - r.x0) / r.cell)), i1 = Math.min(r.nx - 1, Math.ceil((x1 - r.x0) / r.cell));
    const j0 = Math.max(0, Math.floor((z0 - r.z0) / r.cell)), j1 = Math.min(r.nz - 1, Math.ceil((z1 - r.z0) / r.cell));
    if (i1 < i0 || j1 < j0) return;
-   drawCells(i0, i1, j0, j1); upload(i0, i1, j0, j1); closeUp.cells([i0, i1, j0, j1]);
-   smoothLater(i0, i1, j0, j1);
+   drawSmooth(i0, i1, j0, j1); upload(i0, i1, j0, j1); closeUp.redraw([i0, i1, j0, j1]);
   },
   // Every surface redrawn smooth (a layer hidden or shown, the landscape changed).
   refreshLayers() { drawSmooth(0, r.nx - 1, 0, r.nz - 1); upload(0, r.nx - 1, 0, r.nz - 1, true); closeUp.all(); },
@@ -569,6 +561,6 @@ export function createView(parent, editor, {onReady = () => {}, onWindowChange =
   texels: () => ({width: W, height: H, perCell: F, close: closeUp.box.w ? {side: closeUp.box.z, cm: closeUp.box.z / CLOSE * 100, ms: closeUp.ms()} : null}),
   refreshWater, refreshTrees, refreshRocks, refreshHomes, refreshHoles, frameHole, planView,
   held, fly,
-  dispose() { stopWatching?.(); running = false; clearTimeout(smoothTimer); window.removeEventListener('keydown', onDown); window.removeEventListener('keyup', onUp); window.removeEventListener('blur', onBlur); controls.dispose(); closeUp.dispose(); renderer.dispose(); renderer.domElement.remove(); tex.dispose(); material.dispose(); clearSelection(); lineMat.dispose(); anchorMat.dispose(); for (const m of chunks) m.geometry.dispose(); },
+  dispose() { stopWatching?.(); running = false; window.removeEventListener('keydown', onDown); window.removeEventListener('keyup', onUp); window.removeEventListener('blur', onBlur); controls.dispose(); closeUp.dispose(); renderer.dispose(); renderer.domElement.remove(); tex.dispose(); material.dispose(); clearSelection(); lineMat.dispose(); anchorMat.dispose(); for (const m of chunks) m.geometry.dispose(); },
  };
 }

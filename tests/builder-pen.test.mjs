@@ -45,12 +45,13 @@ test('the points are about a step apart, and close nodes do not loop', () => {
 test('the curve\'s strength: off is the polygon, half bulges half as far, all through the nodes', () => {
  const off = penCurve(square, {closed: true, curve: 0});
  for (const p of off) assert.ok(Math.min(Math.abs(p[0]), Math.abs(p[0] - 20), Math.abs(p[1]), Math.abs(p[1] - 20)) < 1e-9, `${p} lies on the square's edge`);
- const full = penCurve(square, {closed: true}), half = penCurve(square, {closed: true, curve: .5});
- assert.equal(full.length, half.length);
+ // (Each laid as finely as its own bend asks, so their points differ; the
+ // bulge is read off points a few centimetres apart.)
+ const full = penCurve(square, {closed: true, step: .05}), half = penCurve(square, {closed: true, curve: .5, step: .05});
  const bulge = c => Math.min(...c.map(p => p[1]));
- assert.ok(Math.abs(bulge(half) - bulge(full) / 2) < 1e-9, `half the bulge: ${bulge(half)} against ${bulge(full)}`);
+ assert.ok(Math.abs(bulge(half) - bulge(full) / 2) < 1e-3, `half the bulge: ${bulge(half)} against ${bulge(full)}`);
  for (const c of [off, half]) for (const n of square) assert.ok(c.some(p => near(p, n)), `through ${n}`);
- assert.deepEqual(penCurve(square, {closed: true, curve: 1}), full, 'full strength is the default');
+ assert.deepEqual(penCurve(square, {closed: true, curve: 1, step: .05}), full, 'full strength is the default');
 });
 
 // 24 November 2026: part strength once blended the curve toward the straight
@@ -80,9 +81,22 @@ test('full strength is the centripetal spline, as it always was', () => {
   return L(b1, b2, t1, t2);
  };
  const nodes = [[0, 0], [12, 3], [20, 15], [4, 22]], c = penCurve(nodes, {closed: true, step: 1});
- // The second segment starts after the first's points.
- const n0 = Math.max(2, Math.min(64, Math.ceil(Math.hypot(12, 3)))), n1 = Math.max(2, Math.min(64, Math.ceil(Math.hypot(8, 12))));
- for (let i = 0; i < n1; i++) assert.ok(near(c[n0 + i], ref(nodes[0], nodes[1], nodes[2], nodes[3], i / n1), 1e-9), `point ${i}`);
+ // The second segment: from node 1 to node 2, every point on the reference
+ // curve (laid more finely where it bends, so not evenly along it).
+ const n0 = c.findIndex(p => near(p, nodes[1])), n1 = c.findIndex(p => near(p, nodes[2])) - n0;
+ assert.ok(n0 > 0 && n1 >= Math.ceil(Math.hypot(8, 12)), 'at least a point a metre');
+ const fine = Array.from({length: 20001}, (_, k) => ref(nodes[0], nodes[1], nodes[2], nodes[3], k / 20000));
+ for (let i = 0; i < n1; i++) assert.ok(Math.min(...fine.map(q => Math.hypot(q[0] - c[n0 + i][0], q[1] - c[n0 + i][1]))) < 2e-3, `point ${i}`);
+});
+
+// 25 November 2026 (the owner: facets on an outline filled with Auto curve):
+// a small shape is laid finely enough that no point turns more than about 5
+// degrees from the last -- a metre a point turned 17 round a 12 m green.
+test('a small curved outline has no facets', () => {
+ const c = penCurve([[0, 0], [8, 1], [12, 8], [6, 14], [-2, 10]], {closed: true, step: 1});
+ const turn = i => { const a = c[(i - 1 + c.length) % c.length], b = c[i], d = c[(i + 1) % c.length], u = [b[0] - a[0], b[1] - a[1]], v = [d[0] - b[0], d[1] - b[1]]; return Math.abs(Math.atan2(u[0] * v[1] - u[1] * v[0], u[0] * v[0] + u[1] * v[1])) * 180 / Math.PI; };
+ const worst = Math.max(...c.map((_, i) => turn(i)));
+ assert.ok(worst < 6, `turns ${worst.toFixed(1)} degrees at one point`);
 });
 
 test('the first node closes the shape once there are three; a node is found under the pointer', () => {

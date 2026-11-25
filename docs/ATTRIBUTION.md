@@ -6,7 +6,9 @@ sprite or sound ships. What does come from elsewhere is code and one
 typeface -- three.js, Lucide, ws, Saira Condensed and a few short algorithms,
 @noble/ciphers and @noble/hashes (MIT; the sealing of online play's
 messages, since 19 November 2026), and in the course builder's page laz-perf
-(the LAZ decoder, Apache-2.0)
+(the LAZ decoder, Apache-2.0) and Clipper2 in its TypeScript port
+@countertype/clipper2-ts (the builder's layers as outlines, Boost Software
+License, since 24 November 2026)
 -- and their licences are in `docs/THIRD_PARTY_NOTICES.txt`, which travels
 with every distribution and is shown in the game under Help.
 

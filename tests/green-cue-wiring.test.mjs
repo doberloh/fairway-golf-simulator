@@ -100,3 +100,14 @@ test('slope tinting only dries turf that is green', () => {
  assert.ok(/float green=clamp\(\(turf\.g-max\(turf\.r,turf\.b\)\)/.test(body), 'greenness gate missing');
  assert.ok(/dry\*dryGain\*green\*cueSlope/.test(body), 'slope tint is not scaled by greenness');
 });
+
+test('drying turns the hue and adds no colour', () => {
+ // 25 November 2026: a plain multiply took a darker fairway from 25 to 41
+ // saturation -- lime on every slope. Slope drying and the drier patches both
+ // go through dryTurf, which keeps the turf's brightness and holds its chroma
+ // to what the turf had.
+ assert.ok(/turf=dryTurf\(turf,parched,dry\*dryGain\*green\*cueSlope\)/.test(body), 'slope drying is not dryTurf');
+ assert.ok(/turf=dryTurf\(turf,vec3\(1\.1,1\.02,\.76\)/.test(body), 'the drier patches are not dryTurf');
+ assert.ok(/d=l\+\(d-l\)\*min\(1\.,c0\/max\(c1,1e-4\)\)/.test(body), 'dryTurf no longer holds the chroma');
+ assert.ok(!/turf\*parched/.test(body), 'a plain multiply by the tint is back');
+});

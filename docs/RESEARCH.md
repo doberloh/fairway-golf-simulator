@@ -2598,13 +2598,33 @@ Greens stay untinted at any threshold, and that is correct — they are graded t
 
 **And even with the range right, it was still invisible — because the strength was too.** Reported again, measured again. The mean colour change on a fairway pixel was **1.3, 0.7, 1.8 out of 255** — under one percent, with a worst case of 6. A hue shift that small does not survive a toon ramp, or anything else.
 
-The tint is now `vec3(1.16, 1.00, 0.50)` against `vec3(1.10, 1.03, 0.80)`, the mown range starts at tan 0.015 instead of 0.035, and the fairway's own gain went from 0.55 to 1.0 — it was halving an effect already too small to see. Mean blue change on a fairway pixel: **15 to 20 of 255**, about ten times the first attempt.
+The tint then became `vec3(1.16, 1.00, 0.50)` against `vec3(1.10, 1.03, 0.80)`, the mown range started at tan 0.015 instead of 0.035, and the fairway's own gain went from 0.55 to 1.0 — it was halving an effect already too small to see. Mean blue change on a fairway pixel: **15 to 20 of 255**, about ten times the first attempt. (All three REPLACED on 25 November 2026: *Turned, not coloured*, below.)
 
 Blue carries it. Grass drying loses blue first and gains a little red, while the green channel barely moves — holding green at exactly 1.0 is what keeps turf recognisably turf rather than turning it brown. Checked at full dryness across biomes: pnw fairway `83,134,55` goes to `96,134,28`; links rough `168,157,101` to `195,157,51`, which is fescue rather than damage; desert rough `185,153,103` to `215,153,52`. A stronger setting was tested and rejected — at `0.38` blue, desert rough reaches `226,156,39`, which is orange.
 
 **The lesson, three times over in this file:** every failure here was a magnitude guessed rather than measured. The Laplacian was too fine for a fairway roll, the slope threshold too coarse for a fairway slope, and the tint itself too weak to see. Each took a minute to measure and each had shipped without being measured. The rule this earns: before tuning a visual effect, sample the field it runs over and print the number it will actually produce.
 
-The shift is applied as a multiplier on whatever the biome's turf already is (`vec3(1.10, 1.03, 0.80)`), so a links course goes further into its own fescue and a desert course into its own sandstone, rather than every biome converging on one straw colour. Gain by surface, which is irrigation in effect: green 0.15, fringe 0.35, fairway 0.55, rough 1.0. Sand and water are excluded.
+The shift is applied as a multiplier on whatever the biome's turf already is (`vec3(1.10, 1.03, 0.80)` then; the first build), so a links course goes further into its own fescue and a desert course into its own sandstone, rather than every biome converging on one straw colour. Gain by surface, which is irrigation in effect: green 0.15, fringe 0.35, fairway 0.55, rough 1.0 then; green 0.25, fringe 0.5, fairway 0.75, rough and semi-rough 1.0 since 25 November 2026. Sand and water are excluded.
+
+**Turned, not coloured (25 November 2026).** The owner, after the darker grass (*The turf as the landscape paints it*): the effects that show the slopes "might also need to be adjusted". Pictures of the owner's Alpine draft and five generated landscapes, each view taken with every cue on and with each cue off in turn (local `bench/shots/grade/`), found one fault, and it was this cue. **The multiply added colour.** Taking half the blue out of a mid green does not only turn its hue: it raises its saturation and darkens it. On the darker turf a fairway's drawn colour went from saturation 25 to 41 (Mountain's fairway #648a52 to #6b8a3a, HSL) -- the lime `turfGrade` had just taken out -- and on screen the dried pixels went from 53-62 to 68-89 saturation (HSV, against the same pose with the tint off), a band of lime-yellow across every sloping fairway and round every bunker lip.
+
+**And on real ground it ran at full strength.** Measured in the game (`world.height` and `world.surface` every 3 m, local `bench/shots/grade/slope-share.mjs`), the mown curve's top, tan 0.10 (5.7 degrees), is below the median of a course built from LIDAR:
+
+| fairway | median tan | p90 | at full dryness (old curve) | mean dryness (old) |
+|---|---:|---:|---:|---:|
+| Alpine (the owner's draft, LIDAR) | 0.079 | 0.150 | 41% | 0.70 |
+| Mountain, seed FAIRWAY | 0.051 | 0.145 | 23% | 0.44 |
+| Classic Parkland, seed FAIRWAY | 0.022 | 0.067 | 7% | 0.18 |
+
+So Alpine's fairways went one even olive from tee to green -- a different grass, not a slope. (Alpine's semi-rough: 54% full; its rough, on the rough's own curve, 13%, which is fine.)
+
+**What changed** (ground.js `dryTurf`, used by the slope's drying and by the drier patches of *Turf colour variation*):
+- The dried colour is put back to the turf's own brightness times 1.04, then its chroma (largest channel less the smallest) held to the turf's own. Only the hue moves, toward straw; it can never be more colourful than the grass it dries. On screen the dried pixels now gain 0 to 2 points of saturation (were 15 to 27).
+- The tint is `vec3(1.22, 1.00, 0.45)`: a little further toward straw than before, since it no longer brings saturation with it. Tried at (1.16, 1, .5) with no lift, which held the colour but read muddy olive close up, and at (1.3, 1, .4) with 1.05, which read as dry grass from above but went khaki-brown beside Mountain's pond -- the khaki that sank mixing toward straw (*Why desert and links looked odd*).
+- The mown curve runs tan 0.025 to 0.18 (1.4 to 10.2 degrees), was 0.015 to 0.10; the rough's 0.07 to 0.30 is unchanged.
+- A fairway takes 0.75 of it, was 1.0: with the drying visible, Alpine's steep approaches went one dull olive close up.
+
+All three numbers and the 1.04 PLACED by eye on before-and-after pictures (Alpine, Mountain, Classic Parkland, Desert Resort, Seaside Links). Level turf is unchanged to the pixel (nothing dries on the flat), so the grass colours the owner passed on 24 November stand. Desert and links rough, already straw, still barely move: the greenness gate is untouched. Checked and left alone: the raking light, the baked relief and the grass sheen work in brightness; with each turned off in turn they add shape and no colour, and on the darker turf none of them read wrong. Not seen by the owner in a round, nor on the projector.
 
 **A measurement caution recorded honestly.** The frame times taken earlier in this work (8.3–8.5 ms) and those taken after it (14.5–16.9 ms) are the SAME code at different machine states. An A/B on the spot — the shader with the tint against the checkpointed one without, built and measured minutes apart — gave 14.5–15.6 ms with and 15.7–16.9 ms without, which is to say no measurable cost. Only same-sitting comparisons in this file mean anything; the absolute numbers across sections do not.
 
@@ -3921,9 +3941,11 @@ as a multiple of brightness either way, and the scale of a patch:
 The Graphics panel's *Turf colour variation* scales all of it; 60% is the
 default the report was judged at, so a green varies about +-2.7%. Greens are
 kept faint on purpose: every green-reading cue works in brightness, and a
-patch at the scale of a break would compete with it. Dry drifts use the same
-parched multiplier the slope tint uses (blue shed, a little red gained), so
-they read as fescue rather than damage. Patches smaller than a few pixels are
+patch at the scale of a break would compete with it. Dry drifts use a
+parched multiplier like the slope tint's (blue shed, a little red gained), so
+they read as fescue rather than damage -- since 25 November 2026 through the
+same `dryTurf`, which turns the hue and adds no colour (*Turned, not
+coloured*). Patches smaller than a few pixels are
 held back (`fwidth`), so nothing shimmers at distance. No new texture, no
 extra pass: a few noise lookups per ground fragment.
 
@@ -4289,6 +4311,10 @@ dry grass has nowhere left to go.
    rough was fine, but a sloping FAIRWAY washed out to a pale grey smear where
    it fell toward a pond: irrigated turf on a bank should yellow a little, not
    bleach. That is what sent it back to the original multiply.
+
+(The multiply itself was found to add colour on the darker turf of 24
+November 2026, and is now held to the turf's own brightness and chroma: *Turned,
+not coloured*, under *Slope tint*.)
 
 ### Ground shading comes from the sun's side
 
@@ -9599,7 +9625,9 @@ leaves, water and sand that were all chosen under it; a per-landscape palette
 pass (forty colours to retune, and the next landscape would bring the lift
 back). Darker turf also keeps the ground's slopes, stripes and shade in the
 middle of the tone curve rather than its top, where ACES squeezes them
-together; that is reasoning, not a measurement. Not yet seen on the
+together; that is reasoning, not a measurement. One cue did not follow: the
+slope tint's multiply put the lime back on every slope, fixed the next day
+(*Slope tint*, *Turned, not coloured*). Not yet seen on the
 projector. Generation untouched (fingerprints unchanged): no version moves. Sources: Barla, Thollot and Markosian,
 *X-Toon* (rims and tone by view); the stylised-foliage tutorials already in
 REFERENCES (Inasa Fujio); *Belt of Venus*.
@@ -10888,6 +10916,11 @@ looks at, its side 2.2 times the camera's distance, because centred on the
 target the near ground sat in the fade.
 
 ## Outlines fitted (23 November 2026)
+
+**Loosened and rounded along both edges on 25 November 2026** (*Curves
+through points*, under *The builder on outlines*): the 0.55-cell tolerance
+and the short rounds below followed uneven steps as waves on the owner's
+Alpine draft; the numbers below are the first version's.
 
 **Replaces the relaxing below** (kept for its history). The owner, on Alpine
 Lake Resort (2233 x 3066 m, so 1 m cells: `cellFor` above 2.25 km²): "jaggy
@@ -17767,3 +17800,282 @@ width, the Line tool, the pen's curve*). The owner asked for cart paths
   came out 1.5 to 2.5 m across at every point measured, end to end, its branch
   still joined; on 1 m land exactly 2 cells across; the builder journey's 3 m
   line normalized to between 1 and 2.6 m (its check).
+- **Since 24 November 2026 the width is laid as an outline** (*The builder
+  on outlines*, below): the bands are exact, so the whole-cells rounding
+  above no longer applies; only the middle line is still found on a hidden
+  grid.
+
+## The builder on outlines (24 November 2026, the builder-outlines branch)
+
+The owner, 24 November 2026: "I want these pixellated views gone from the
+builder entirely. No 're processing on a 1m square' or anything like that ...
+The game doesnt render in blocks, why does the builder." Until then every
+trace layer was a mask of the land's cells (1 m on most courses), painted
+cell by cell and traced back into fitted outlines after each change; a box
+drawn with Auto curve came back with two square corners and two round
+(the fit guessing corners from cells). Now a layer is a set of outlines and
+every tool is a polygon operation (src/builder/shapes.js).
+
+**The library, measured on the owner's Alpine Lake (a built file: 2,233 x
+3,066 land cells; its biggest layer, road, 41 outlines and 36,291 points).**
+300 brush strokes, each 30 m of 15 dabs at 3 m radius near the layer's edge,
+alternately added and cut, through the whole layer:
+
+| Library | Licence | A stroke, median / worst | Notes |
+|---|---|---|---|
+| Clipper2, TypeScript port @countertype/clipper2-ts 1.5.4-3.9a869ba (https://github.com/countertype/clipper2-ts) | BSL-1.0 | 32 / 40 ms whole layer; 7.6 / 24 ms with only the paths near the stroke | **taken**: booleans, offsets with round and mitred joins, open-line bands, a polygon tree for holes; 97 KB in the builder's page |
+| Clipper 1 v6.4.2, `clipper-lib` (https://www.npmjs.com/package/clipper-lib) | BSL-1.0 | 48 / 91 ms whole layer | rejected: half again slower, the old engine (2014) |
+| polygon-clipping 0.15.7 (https://github.com/mfogel/polygon-clipping) | MIT | 16 / 29 ms whole layer (60 strokes) | rejected: no offsetting (a brush band, Add layer around, a line's width would need another library) |
+| clipper2-js 1.2.4 (https://www.npmjs.com/package/clipper2-js) | BSL-1.0 | not timed | rejected unmeasured: a port of Clipper2 1.2 (January 2024), the countertype port follows Clipper2's 2025 sources and passes its reference tests (README: 194 of 195, the one failure shared with C#) |
+
+Offsetting the whole road layer 4 m took 173 ms; the worst ground (the land
+with every surface 30 m round cut out: 73 outlines, 33,658 points) took a
+stroke's union in 27 ms whole. The port's version string is a pre-release
+of 1.5.4 tracking upstream commit 9a869ba; it is npm's `latest` and was
+pinned exactly.
+
+**Decisions.**
+- **Whole centimetres** (Clipper's 64-bit integer paths): a 3 km course is
+  300,000 units, far inside the range.
+- **Round ends and bends within 5 cm of a true arc** (`ARC`, PLACED): about
+  70 points round a 3 m brush. A round band comes out a little inside its
+  true area (a 20 m stroke of 2 m radius: 92.15 m² against 92.57).
+- **A stroke is laid when the button comes up**, one boolean however long
+  the drag; while it is held its dabs show as the band they sweep. Laying
+  each dab as it came was rejected: 8 to 30 ms a dab on the biggest layer.
+- **Only the paths near the other shape go through Clipper** (`split`): a
+  layer's paths never overlap, so the rest are carried as they are. On the
+  owner's Alpine Lake draft (2,780 x 3,280 cells, road 43,557 points) a stroke
+  laid in 7.4 ms at the median, 14.1 ms at worst.
+- **A pen outline that crosses itself is read even-odd**, as its cell fill
+  was.
+- **Smooth** (REPLACED 25 November 2026 -- *Curves through points* below;
+  this was the first version, kept for its numbers) eased the edge itself: points set a tenth of the radius apart,
+  each moved to the average of the edge round it under a bell half the
+  radius wide (so a 20 m square's corner is cut 0.58 m along its diagonal at
+  a 2 m radius -- a corner rounded to about 1.4 m -- and its area kept within
+  0.5%), then shapes smaller than the circle dropped. A thin path keeps its
+  width (each edge eased along itself). Rejected: Taubin's two-step easing
+  (toward the neighbours and back), which kept the area but cut the same
+  corner by only 0.21 m after 32 rounds; and growing and shrinking the
+  shape (opening and closing), which deletes every path thinner than the
+  circle -- what the owner asked on 23 November never to happen.
+  A Smooth brush dab took 16 ms at the median, 30 ms at worst on Alpine;
+  Smooth edges on the whole road layer 220 ms.
+  **It settles** (the same day, on review): a point the bell would move
+  less than an eighth of the radius stays put, one it would move a quarter
+  or more moves all the way (PLACED). The bell moves a point on an edge
+  curving round a radius r by about radius² / (8 r), so an edge already
+  rounder than the radius never moves again. Without it every pass shrank
+  a shape (a 12 m green about 2 cm a dab) and Smooth edge on release, on by
+  default, rounded a box's corners further at every stroke beside it.
+  Measured: 50 dabs on one spot of a 6 m green change its area by under
+  0.05 m² after the first five; a 20 m box smoothed twice keeps its area to
+  0.5 m² of once. Smooth edge on release moves only the stroke's own edges
+  (its band and 1.5 m round it), and holes under the circle's area fill as
+  specks go; the clean-up counts only ground inside an outline more than
+  inside its holes ("positive"), so a hole eased past its outline's edge
+  does not fill it. **The settling was the wrong cure** (25 November): it
+  left alone exactly what needed smoothing -- on the Alpine draft no radius
+  from 1.5 to 10 m moved a wave of the old squares or a mapped green's facet
+  at all (0.00 m² changed within 12 m of the brush).
+- **Tidy** is exact: shapes under SPECK and holes under POCK by their area
+  (58 ms for every layer on Alpine).
+- **Normalize width** finds each thin part's middle line on a hidden grid a
+  quarter of the width across (at least 25 cm, at most 1 m; PLACED), then
+  lays it as a band; the wide areas are the layer's own outline grown and cut.
+  The grid is never drawn and nothing is traced from it. 0.34 s for Alpine's
+  paths, 1.05 s for its roads (7.3 s before the bands were joined in one go).
+- **A hidden lookup** (each land cell's topmost layer, rasterised from the
+  outlines in 16 ms on Alpine) serves what still asks by cell: the hole
+  finder, Fill outside's trees, Paint rock on slopes' clear ground, the
+  ground smoothed under greens in the course. It is never drawn.
+- **A draft saved before** (version 3, cells) is turned into outlines as it
+  opens: 3.9 s for Alpine's eight layers, once.
+- **Add layer around** on the fairway at 4 m: 20 ms.
+- **The plan draws every layer from its outlines every frame** (door-real.js
+  `drawTrace`; measured in the built builder on the owner's Alpine Lake
+  draft, Chrome with the graphics card): 4.8 ms a frame at the whole land
+  (0.22 px/m), 1.1 ms at 2 px/m, 0.8 ms at 8 px/m; the frame after a stroke
+  on the road layer about 5 ms; the first frame after opening 175 ms, once,
+  as each outline's Path2D is made. Each outline keeps its own Path2D and a
+  layer's is put together from them: building the whole layer's afresh
+  after every stroke would have held that frame about as long as the first.
+- **The 3D editor on the same outlines** (editing.js, view.js): each brush
+  dab laid at once (the 3D view follows the brush, so a stroke is not
+  saved for the end as in door 2). On Alpine Lake's road layer (35,665
+  points, the built file) a dab took 3.6 ms at the median, 6.2 ms at worst,
+  and the view's texture redrawn after it 0.7 ms (73 ms the first time,
+  making the layer's Path2D). Undo restores the layers by reference: 0.1 ms.
+  Until then the editor painted a half-metre grid and drew the cells while
+  a brush was down; "a polygon boolean every frame" was its reason, never
+  measured. What lies under the pointer (the status line, every move) asks
+  the outlines, not a grid made again after each dab (12 million cells).
+- **Real drags with the mouse**, in the built builder on Alpine (40 moves
+  along the road, the browser's long tasks watched): door 2's first brush
+  stroke after opening held two frames, 116 and 61 ms (Path2Ds and the
+  picture made the first time); a second brush stroke and an eraser stroke
+  none past 50 ms; the 3D editor's Paint brush none. Letting go of a stroke
+  in Node: the stroke and Smooth edge on release 14 to 25 ms, the hidden
+  lookup 11 to 22 ms, the areas 1 to 2 ms.
+- **What still reads cells, and why.** Lining OpenStreetMap up with the
+  picture or the LIDAR (`refineTrace`, Build automatically too) compares
+  the map with the photograph's and the survey's own cells -- it moves the
+  map and re-reads a 3 m band of every edge from them, like the auto trace
+  -- so it runs on the land's cells and what it gives back becomes outlines
+  once. Keep map as is keeps OpenStreetMap's own shapes exactly.
+
+### Curves through points: no waves, no facets (25 November 2026)
+
+The owner, on the Alpine draft in the game: "seeing this wavy-ness on what
+should be straight pieces of turf ... (also on cart paths)"; then "how do we
+smooth out these facets that still show up from the OSM traces ... They look
+terrible in game and smoothing button doesn't take them out. Theres even
+facets when i outline fill something with auto curve. I think we need
+'higher resolution' ... on the lines between points"; and "Make sure this
+applies to all traced. Painted. and imported surfaces in the builder!"
+
+**What each was.** Measured on the owner's draft (saved 23 November, version
+3, 1 m cells) with local scripts in bench/shots/outlines/ (`wavy-crops`,
+`fit-variants`, `osm-curve`, `pen-facets`, `smooth-time`, `game-edge`):
+- *Waves*: the draft's squares step unevenly along a near-straight edge
+  (runs of 8, 6, 3, 6 cells, sometimes back a cell). `fitRing` followed them
+  within 0.55 of a cell and rounded each joint over half its shorter edge, so
+  every uneven step came back as a bend: on one point in ten of the
+  fairway, semi-rough and path edges 0.4 to 0.5 m off a gentle line, every 5
+  to 10 m. Seen low along an edge the game squashes them into the owner's
+  picture. The old builder's courses carry the same.
+- *Facets*: OpenStreetMap joins a mapper's points straight (a green 12 to 30
+  points, a fairway's points 10 to 30 m apart), and the pen laid its curve
+  a point a metre: 17.5 degrees a point round a 12 m green.
+- *Smooth* could not touch either (the settling above).
+
+**The fixes, one kind of curve throughout** (pen.js `penCurve`, the
+centripetal spline the pen already drew):
+- **Laid finely.** Each piece halved while its halves turn more than 2.5
+  degrees from each other or sag more than 1 cm off their chord (at most 8
+  halvings): no point turns more than about 5 degrees from the last (the 12 m
+  green: 4.8, was 17.5; 113 points, was 47). The pen's preview and its fill
+  are the same call (the preview had used a 1 m step, the fill the land's).
+- **Tamed for someone else's points** (`tame`: OpenStreetMap's, Smooth's,
+  Normalize width's). Each handle lengthened by how far the line turns at its
+  node, 4 tan(t/4) / sin(t) of the spline's, so points on a circle give that
+  circle back (the plain spline: 4 points 87% of the circle's area, 5 94%, 6
+  97%; tamed 99.9% for each); then no longer than 1.2 times the shorter piece
+  at that node, nor than `TAME`, 10 m (PLACED). Free, a road's 150 m straights
+  either side of a gentle bend bowed 5 m off the map, and at 25 m Smooth
+  edges pulled a straight road edge 2 m in beside a 30-degree bend.
+- **The grid's lines** (contour.js `fitRing`, defaults now `tol` 1 cell and
+  `spline`): straight runs within a cell of the steps (was 0.55), and each
+  joint rounded from the middle of the edge before to the middle of the edge
+  after (a quadratic, laid by the same 1 cm / 6 degree rule), drawn in only
+  where that would pull more than a cell inside; so a turn spreads along both
+  edges and no short round sits between straights. A corner is kept sharp
+  only where the cells themselves turn 55 degrees or more within four points
+  of it (PLACED: a tee turned 6 degrees reads 63 on 1 m land), where the
+  fitted lines cross within 0.75 of a cell of the cells' edge (that tee's
+  corner sits 0.68 off), and -- when both its neighbours are round -- its
+  sides are six cells or longer (PLACED: a 10 m blob of a tee made one
+  L-shaped step that became a spike a metre out). On the Alpine draft:
+
+| layer | turning per 100 m of edge (corners left out), before / now | off the cells, before / now | points, before / now |
+| --- | --- | --- | --- |
+| fairway | 174 / 120 degrees | 0.17 / 0.25 m | 5165 / 4452 |
+| semi | 166 / 120 | 0.17 / 0.25 | 5160 / 4492 |
+| path | 130 / 83 | 0.17 / 0.26 | 6939 / 5871 |
+| green | 527 / 522 | 0.12 / 0.14 | 1262 / 1518 |
+| tee | 724 / 486 | 0.13 / 0.18 | 2039 / 1545 |
+
+  ("Turning": how much the edge bends, a smooth one least; a green's is
+  mostly its own roundness. "Off the cells": ground in one and not the other
+  per metre of edge; the cells themselves are a metre's steps, so any smooth
+  line through them is about a quarter metre off. Tolerances 0.8 and 1.3
+  were tried: 0.8 bent 5 to 15% more, 1.3 took every layer 0.3 m off.)
+  Every grid that becomes outlines goes this way: a draft from before
+  outlines, the auto trace, Lining OpenStreetMap up, Paint rock on slopes.
+- **OpenStreetMap laid curved** (osm.js `curveOutline`): each outline and
+  line through the map's own points, a point turning 75 degrees or more kept
+  sharp (PLACED: a tee's, a car park's). Lines are one band each where they
+  were a disc every 1 or 2 m (whose edge scalloped 10 to 17 cm). On Alpine's
+  map, 95% of the curve within these of the mapper's straight lines (the
+  most in brackets): fairway 0.31 m (0.69), tee 0.27 (0.42), green 0.16
+  (0.27), bunker 0.14 (0.24), water 0.65 (1.05), roads 0.52 (1.04), paths
+  0.41 (0.79) -- which is the curve the points lie on, outside the chords
+  between them; the sharpest bend left at a point 5 to 7 degrees, was 37 to
+  75. Laid in 2.8 s; road points 24,466 (35,761 painted).
+- **Smooth, rebuilt** (shapes.js `smoothEdges`): where the brush reaches,
+  the edge is kept only at its points that shape it -- Douglas-Peucker,
+  every wiggle within 0.7 of the radius dropped (PLACED: at 0.35 it kept the
+  crests of the Alpine waves, 0.8 m crest to trough) -- with a node every 10
+  m on a longer piece set at the AVERAGE of the edge round it (a node on
+  the edge could sit on a wave's crest; a piece left long turned its bend
+  into a facet), and the tamed curve drawn through them. Where the reach
+  ends the curve leaves the untouched edge in the direction of the next
+  fixed point at least a piece away (the very next, 30 cm off, held the
+  handle short: 3% off a green). The brush EASES IN: each point of the
+  stretch moves toward its nearest point on the curve, all the way within
+  60% of the reach and less beyond (PLACED; laid straight in, a brush drawn
+  along Alpine's edges left bends of 20 to 56 degrees at one point where
+  each dab's reach ended). A THIN SHAPE'S WIGGLES ARE ITS SHAPE: what is
+  dropped is held under a third of the shape's width, read as twice its
+  area over its edge (a path's width, a green's radius; PLACED) -- without
+  it the 3D editor's brush (wiggles to 1.9 m) cut a 1.8 m path's end off and
+  release smoothing lost a 1 m stroke's ends. Corners -- turning 75 degrees
+  within a third of the radius, and 70% of that within a ninth, so a round
+  end is not one (PLACED) -- are kept sharp by Smooth edges on a layer
+  and by Smooth edge on release; the brush rounds one it is put on, its node
+  split into two a radius either side. Measured: a wave of 0.4 m every 8 m
+  on a straight edge, smoothed whole at 1.5 m, within 12 cm of straight;
+  a green mapped as 12 points becomes the circle they lie on (within 2%);
+  50 dabs on one spot of a 6 m green: the first take it out to its true
+  circle (the outline's points lie 5 cm inside), the next 45 move its edge
+  about 2 cm in all; a 2.5 m cart path keeps its width. On Alpine as it now
+  opens: a brush dab 0.3 ms at the median, 2.8 at worst; Smooth edges on
+  each whole layer 1 to 91 ms (roads), every layer's area within 0.5% but
+  the tees (+1.6%, their blobs rounded out).
+  **On the owner's real edges, at the sizes the builder passes** (local
+  `smooth-real`; turning per 100 m of edge with corners left out, the
+  sharpest bend at one point under 60 degrees):
+
+| edge | as it was | Smooth edges (whole layer, 1.5 m) | door 2's brush along it (size 4) | the 3D editor's brush (size 8) |
+| --- | --- | --- | --- | --- |
+| Alpine fairway, squares fitted the old way | 174, 23 deg | 143, 14 deg | 149 -> 129, 9 -> 21 deg | 149 -> 106, 9 -> 17 deg |
+| Alpine cart paths, the same | 130, 17 deg | 99, 16 deg | 130 -> 113, 17 -> 49 deg | 130 -> 96, 17 -> 30 deg |
+| the map's fairways as drawn | 124, 58 deg | 139, 15 deg | 89 -> 127, 49 -> 22 deg | 89 -> 118, 49 -> 14 deg |
+| the map's greens as drawn | 529, 37 deg | 523, 11 deg | 536 -> 527, 28 -> 10 deg | 536 -> 582, 28 -> 11 deg |
+
+  (A mapped outline's "turning" rises as its facets' bends are spread
+  round as curve; the sharpest bend is the facet.) Every layer's area moved
+  under 0.5% but a brushed green's (0.3%, measured whole). What is left: on
+  the paths, brushing every 1.5 m along every edge -- 2,286 dabs, each place
+  under about five -- left one bend of 49 degrees where two paths meet in a
+  5 m wedge, which drifted about a metre; a single brush stroke has not been
+  seen to. A 1.8 m path smoothed whole or brushed at its end keeps both
+  ends and 1.76 m of width at its narrowest; a 1 m wavy stroke smoothed on
+  release keeps its round ends and its waves (10% of its area, its band's
+  own facets, goes).
+  Rejected on the way: easing points under a bell (above: it shrinks, and
+  stopping the shrink stopped the smoothing); smoothing by growing and
+  shrinking the shape (it deletes paths thinner than the circle).
+- **Normalize width's middle lines** are laid through the same line
+  smoothing (`smoothLine`, wiggles within a grid cell or half a metre
+  dropped): the sharpest bend at a point on a stretch of Alpine's paths 37
+  degrees where two paths meet, the rest smooth (the averaged line had
+  zigzagged a few centimetres a cell).
+- **A course file saved by the builder before outlines** (its builder
+  section a draft of version 3 or older) has its surfaces smoothed once as
+  it opens in the 3D editor -- Smooth edges on every layer, corners kept, one
+  undo. Lake Point: 53 ms, every layer within 0.5% of its area but the tees
+  (+2.1%) and bunkers (+1.4%); in the built builder it opened in 0.8 s with
+  the note, Undo put every layer back to the square metre, no page error.
+  Opened so, the course counts as changed. One saved since opens exactly as saved; a file
+  with no builder section (a generated course taken over) is left alone --
+  smoothing it at every opening would round a Line laid with Auto curve off.
+
+**In the game** (`game-edge`: two copies of the Alpine course, as the
+builder makes them, opened in the capture build and looked at from 1.7 m
+along an edge): the cart path and semi-rough band beside the wavy fairway
+edge run smooth; a mapped green's edge and the bands round it lose their
+corners. The game draws surfaces from a distance field 1.5 m a texel on a
+course this size (built-field.js), so detail finer than that never shows and
+the extra points cost nothing there.

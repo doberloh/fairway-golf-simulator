@@ -8,8 +8,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {docFromLand} from '../src/builder/real-course.js';
 import {createEditor} from '../src/builder/editing.js';
-import {createLayers} from '../src/builder/layers.js';
-import {PALETTE} from '../src/builder/trace-edit.js';
+import {cellLayers} from './fixtures/cell-layers.mjs';
+import {PALETTE, codesToShapes} from '../src/builder/trace-edit.js';
+import * as S from '../src/builder/shapes.js';
 import {validateDoc, writeBuiltFile, readBuiltFile, playableFile, builderPart, BUILDER_PART, MAX_PLAYABLE, TREE_STRIDE} from '../src/course-doc.js';
 import {writeDraft, readDraft, isDraft} from '../src/builder/draft.js';
 import {withEditorWork} from '../src/builder/round-trip.js';
@@ -23,7 +24,7 @@ import {saveHow} from '../src/builder/saving.js';
 
 function session() {
  const cell = 1, halfX = 80, halfZ = 90, nx = 161, nz = 181, N = nx * nz;
- const ground = new Float32Array(N).fill(100), layers = createLayers(nx, nz, PALETTE);
+ const ground = new Float32Array(N).fill(100), layers = cellLayers(nx, nz);
  const at = (x, z) => Math.round((z + halfZ) / cell) * nx + Math.round((x + halfX) / cell);
  const fairway = layers.mask('fairway', true), green = layers.mask('green', true), tee = layers.mask('tee', true), holes = [];
  for (let n = 0; n < 9; n++) {
@@ -37,15 +38,17 @@ function session() {
  const land = {nx, nz, cell, halfX, halfZ, center: {x: 415000, y: 3722000}, unit: {h: 1, v: 1}, method: 'classified', points: 99, rgb: null, ground, surface: ground,
   canopy: new Float32Array(N).fill(3), intensity: new Float32Array(N).fill(.5), water: new Uint8Array(N), building: new Uint8Array(N), multi: new Uint8Array(N), noReturns: new Uint8Array(N), filled: new Uint8Array(N)};
  const trees = [{x: 24, z: 0, h: 12, crown: 4}], crs = {epsg: 6341, units: {h: 'metre', v: 'metre'}, wkt: null, geographic: false};
- const doc = validateDoc(docFromLand({land, traced: {layers}, holes: holes.map((h, i) => ({number: i + 1, par: null, index: null, tees: h.tees, green: h.green, line: [[h.tees[0].x, 55], [h.green.x, -50]]})), trees, homes: [], name: 'Reopen', landscape: 'palms', credits: [], landEdits: null, creeks: [], rocks: [],
+ // The fixture drawn in cells, turned into the trace's outlines once.
+ const shapes = new Map([...layers.masks].map(([k, m]) => [k, S.fromMask(m, land)]));
+ const doc = validateDoc(docFromLand({land, traced: {shapes}, holes: holes.map((h, i) => ({number: i + 1, par: null, index: null, tees: h.tees, green: h.green, line: [[h.tees[0].x, 55], [h.green.x, -50]]})), trees, homes: [], name: 'Reopen', landscape: 'palms', credits: [], landEdits: null, creeks: [], rocks: [],
   source: {files: ['a.laz'], epsg: 6341, crs, geo: null, origin: {...land.center}, trace: 'openstreetmap'}}));
  const raw = JSON.stringify({elements: [{type: 'node', id: 1, lat: 33.6, lon: -111.9, tags: {natural: 'tree'}}]});
  const draft = {step: 5, name: 'Reopen', landscape: 'palms', credits: ['x'], holes, holesN: 9, hole: 0, boundary: [[0, 0], [9, 0], [9, 9]], traceMode: 'openstreetmap', box: {x0: 1, x1: 2, y0: 3, y1: 4},
   sources: [{name: 'a.laz', crs}], view: {lidarView: 'relief', treeScale: 1, treesFrom: 'osm'}, picOffsets: {naip: {x: 3, z: -2}}, geo: {lat: 33.6, lon: -111.9}, picShow: 'naip',
-  osm: {said: 'Laid', trees, homes: [], osmTrees: [{x: 1, z: 2, h: 9, crown: 3}], course: 'c1', shift: {x: 1, z: 0}, laid: {green: 9}, codes: Uint8Array.from(layers.codes), raw},
+  osm: {said: 'Laid', trees, homes: [], osmTrees: [{x: 1, z: 2, h: 9, crown: 3}], course: 'c1', shift: {x: 1, z: 0}, laid: {green: 9}, shapes: codesToShapes(layers.codes, land), raw},
   pics: [{group: 'naip', label: 'NAIP', provider: 'naip', file: null, width: 4, height: 3, credit: 'USDA', place: {kind: 'tiles', z: 16, x0: 12000, y0: 26000}, pack: {type: 'jpeg', image: new Uint8Array([255, 216, 1, 2, 3, 255, 217]), nir: null}},
    {group: 'files', label: 'Picture files', provider: null, file: 'a.tif', width: 2, height: 2, credit: null, place: {kind: 'map', x0: 1, y0: 2, dx: .5, dy: -.5, crs: null}, pack: {type: 'rgb', image: new Uint8Array(12).fill(7), nir: new Uint8Array(4).fill(9)}}],
-  trees: [...trees, {x: 30, z: 30, h: 8, crown: 3}], land, landEdits: null, creeks: [], rocks: [], trace: {masks: layers.masks, hidden: [], trees, homes: [], bunkers: [], creekLines: []}};
+  trees: [...trees, {x: 30, z: 30, h: 8, crown: 3}], land, landEdits: null, creeks: [], rocks: [], trace: {shapes, hidden: [], trees, homes: [], bunkers: [], creekLines: []}};
  return {land, layers, doc, draft};
 }
 
@@ -94,7 +97,7 @@ test('a ZIP without a part: the rest unchanged, wherever the part stood', async 
 test('a draft keeps the pictures, the map download and its place, and which picture showed', async () => {
  const {draft} = session(), bytes = await writeDraft(draft), d = await readDraft(bytes);
  assert.ok(await isDraft(bytes));
- assert.equal(d.version, 3);
+ assert.equal(d.version, 4);
  assert.deepEqual(d.geo, {lat: 33.6, lon: -111.9});
  assert.equal(d.picShow, 'naip');
  assert.equal(d.view.treesFrom, 'osm');
@@ -118,6 +121,21 @@ test('a version 2 draft still opens, with no pictures and nothing behind its map
  assert.equal(d.osm.osmTrees, undefined, 'door 2 hides the Trees choice on this');
 });
 
+test('a version 3 draft\'s cells open as outlines, once (24 November 2026)', async () => {
+ const {draft, land, layers} = session(), parts = await readZip(await writeDraft(draft));
+ const j = JSON.parse(new TextDecoder().decode(parts.get('draft.json')));
+ j.version = 3; j.trace.layers = [...layers.masks.keys()];
+ const keep = [...parts].filter(([k]) => k !== 'draft.json' && k !== 'trace/shapes.json' && k !== 'osm/shapes.json').map(([name, data]) => ({name, data}));
+ const cells = [...layers.masks].map(([k, m]) => ({name: `trace/${k}.bin`, data: m}));
+ const old = await writeZip([{name: 'draft.json', data: JSON.stringify(j)}, ...keep, ...cells, {name: 'osm/codes.bin', data: layers.codes}]);
+ const d = await readDraft(old);
+ assert.deepEqual([...d.trace.shapes.keys()].sort(), ['fairway', 'green', 'tee']);
+ assert.ok(S.contains(d.trace.shapes.get('green'), -64, -50) && S.contains(d.trace.shapes.get('fairway'), -64, 0));
+ assert.ok(S.contains(d.osm.shapes.get('green'), -64, -50), 'the map\'s laid trace too');
+ assert.ok(Math.abs(S.areaOf(d.trace.shapes.get('tee')) - 9 * 5 * 7) < 9 * 6, `tees ${S.areaOf(d.trace.shapes.get('tee'))} m²`);
+ assert.equal(land.nx, d.land.nx);
+});
+
 test('the Trees choice would drop the map\'s trees with nothing behind it, which is why door 2 hides it', () => {
  assert.equal(mergeTrees([{x: 0, z: 0, h: 9, crown: 3}], [], 'osm').length, 0);
 });
@@ -130,13 +148,13 @@ test('the file\'s section has the editor\'s work in it, and a second save starts
  e.addTree([40, 30, 14, 5, .4, 2, -1]);
  const args = {base: doc, now: e.toDoc(), changed: e.changedLayers(), hidden: e.hiddenLayers()}, d = withEditorWork(draft, args), again = withEditorWork(draft, args);
  assert.equal(d.step, 5);
- assert.ok(d.trace.masks.get('sand').some(Boolean), 'the bunker painted');
- assert.equal(d.trace.masks.get('fairway'), draft.trace.masks.get('fairway'), 'a layer left alone stays as the trace has it');
+ assert.ok(S.contains(d.trace.shapes.get('sand'), 6, 0), 'the bunker painted');
+ assert.equal(d.trace.shapes.get('fairway'), draft.trace.shapes.get('fairway'), 'a layer left alone stays as the trace has it');
  assert.ok(d.landEdits.some(v => v > .1), 'the hill');
  assert.equal(d.holes[4].par, 5); assert.deepEqual(d.holes[4].tees[0], {x: 0, z: 56, set: 'back'});
  assert.ok(d.trace.trees.some(t => t.kept && t.x === 40), 'the tree planted');
  assert.equal(draft.landEdits, null, 'the session it came from is untouched');
- assert.equal(draft.trace.masks.get('sand')?.some(Boolean) ?? false, false);
+ assert.equal(draft.trace.shapes.has('sand'), false);
  assert.deepEqual(d.pics, draft.pics, 'the pictures come along');
  assert.equal(d.osm, draft.osm, 'and the map data');
  assert.deepEqual([...again.landEdits], [...d.landEdits], 'saving twice does not add the hill twice');

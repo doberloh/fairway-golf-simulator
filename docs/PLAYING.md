@@ -218,7 +218,7 @@ Water and out-of-bounds still incur one penalty stroke and replay from the previ
 
 **Simulator bay** turns the field of view from a look into a measurement. Tell it your screen's **width and height** in inches, measured on the wall, and how far back you stand, and it works out the one vertical angle that makes the course line up with the room: the screen is a window, and there is exactly one angle that makes what is on it match what would be there if the wall were not. With it on, the camera stands where you stand — directly behind the ball with no sideways offset at all, at your eye height, with the ball a real distance in front of you. The ball can sit below the bottom of the frame; it is below your eyeline in the room too. If your mat is not in front of the middle of the screen, set **Your mat, left or right of the screen centre** (in feet, negative for left): the camera keeps looking straight down your target line, and the picture slides sideways the way a projector's lens shift does, so the line lands on the screen exactly where it is in the room. The panel shows the angle your bay gives and the screen's shape, worked out from the two sides (16:9, 4:3, or a ratio when it is neither), and for a hand-set angle it tells you how far back you would have to stand to justify it. The picture is drawn in your screen's shape, not the game window's, because the projector stretches the window onto the screen; resizing the window does not change it, and the panel warns you when the window on your own display is a different shape (so it looks stretched there, and lines up full screen on the projector). The mat setting moves in tenths of a foot. A bay saved as a diagonal before 5 October is converted to its two sides automatically.
 
-**Reading the ground** is one choice in Graphics -- **Natural**, **Clear** (the default) or **Map lines** -- because a cast shadow only tells you anything when the sun is low. Each choice sets all of the cues below together. *Natural* keeps them gentle on greens; *Clear* shows a green's tilt and its mowing bands plainly enough to read a putt from; *Map lines* is Clear with contour lines: one every metre of height across the course, and one every 5 cm on the greens and their fringes, where a putt is read. Until 26 October these were five switches and two sliders; a choice made with them becomes Clear, or Map lines if contour lines were on. The cues themselves: **Ground shading** lifts slopes facing the sun and darkens slopes facing away, as if the sun were always low, plus a lift on crowns and a shade in hollows worked out when the course is built — it comes from the same side as the real shadows, and it is what makes a fairway read as a surface rather than a sheet at noon. **Slope tinting** dries turf on slopes and keeps hollows lush, the way water actually runs off; it works in colour rather than brightness, and turf that is already dry — desert scrub, links fescue — has nothing left to lose and barely changes. **Grass sheen** makes mown turf lighter where it tips away from you and darker where it tips toward you, which is how real turf shows its slopes at any hour; strongest on fairways, and only a gentle hint on greens. **Contour lines** (Map lines only) draw a topographic line every metre of height across the course and every 5 cm on the greens — frankly artificial, and the easiest thing here to read, because it turns a slope into a spacing you can count. **Mowing stripes** are the cut bands that bend over a roll -- on a green, two sets crossing in diamonds -- and the one continuous clean-up lap the mower makes round the edge of every green and tee. None of it costs a measurable frame.
+**Reading the ground** is one choice in Graphics -- **Natural**, **Clear** (the default) or **Map lines** -- because a cast shadow only tells you anything when the sun is low. Each choice sets all of the cues below together. *Natural* keeps them gentle on greens; *Clear* shows a green's tilt and its mowing bands plainly enough to read a putt from; *Map lines* is Clear with contour lines: one every metre of height across the course, and one every 5 cm on the greens and their fringes, where a putt is read. Until 26 October these were five switches and two sliders; a choice made with them becomes Clear, or Map lines if contour lines were on. The cues themselves: **Ground shading** lifts slopes facing the sun and darkens slopes facing away, as if the sun were always low, plus a lift on crowns and a shade in hollows worked out when the course is built — it comes from the same side as the real shadows, and it is what makes a fairway read as a surface rather than a sheet at noon. **Slope tinting** dries turf on slopes and keeps hollows lush, the way water actually runs off; it works in colour rather than brightness -- the grass turns toward straw without getting brighter or more colourful, and a fairway turns less than the rough, being watered -- and turf that is already dry — desert scrub, links fescue — has nothing left to lose and barely changes. **Grass sheen** makes mown turf lighter where it tips away from you and darker where it tips toward you, which is how real turf shows its slopes at any hour; strongest on fairways, and only a gentle hint on greens. **Contour lines** (Map lines only) draw a topographic line every metre of height across the course and every 5 cm on the greens — frankly artificial, and the easiest thing here to read, because it turns a slope into a spacing you can count. **Mowing stripes** are the cut bands that bend over a roll -- on a green, two sets crossing in diamonds -- and the one continuous clean-up lap the mower makes round the edge of every green and tee. None of it costs a measurable frame.
 
 **The look of the course** is two sliders in Graphics, on every tier, and neither costs a measurable frame. Every surface runs in patches the way a real course has them -- broad drifts in the rough, worn and watered patches on a fairway, damp sand in a bunker, the faintest change of tone on a green -- and there is a soft darkening at the foot of every trunk and boulder, deeper under a forest; both were sliders until 26 October and are now fixed at the 60% they were judged at. **Distance haze** (50%) fades far land toward the sky's colour, warmer toward the sun, and much less when you look down from above. **Wind in the trees and grass** (100%) is how far trees, leaves and grass move; gusts sweep across the course as fronts you can watch travel downwind -- a crosswind gust bends the trees on one side of a fairway before the other -- and each tree bends as a whole, more at the top, swaying slower the taller it is (a cactus not at all). It changes the picture only, never the ball.
 
@@ -727,7 +727,9 @@ changes, newest first, each with **Undo to here**.
      answer you saved; if it cannot -- no land built yet, the land still
      building, the survey not placed on the globe -- the line at the foot
      says why) lays its greens, fairways, tees, bunkers, water, cart
-     paths, woods and buildings (as houses) as layers and sets its numbered
+     paths, woods and buildings (as houses) as layers -- each outline and
+     path curved smoothly through the map's own points, a sharp corner such
+     as a tee's kept -- and sets its numbered
      holes as step 4's markers -- with the map's par, each green mark put on
      its green and each hole given the tee boxes along it as its back, middle
      and front tees -- and its course boundary when it has one. A club with
@@ -816,9 +818,9 @@ changes, newest first, each with **Undo to here**.
      it draws, **Line width, metres** wide, its **Ends** round or square (cut
      straight across at the first and last point, and square at every bend
      too; round ends bend round); the band it will lay shows faintly as you
-     draw. Every edge you paint goes into the course straight where you
-     painted it straight, with its corners kept and its curves smooth -- the
-     plan shows it so a moment after you paint, only round what you changed. **Smooth edges** rounds edges under it, **Skin from the
+     draw. What you paint is the edge itself: a stroke shows as the band it
+     sweeps while you hold the button and is laid exactly so when you let go,
+     and the course gets that edge -- nothing is laid on squares. **Smooth edges** rounds edges under it, **Skin from the
      land** paints the steep ground the landscape's rock, **Draw a creek** cuts a
      channel along a line and **Dig a bunker** lays sand in a hollow, both made
      when the course is built; **Place tree** stands one tree, the kind you pick by name, at the height set,
@@ -840,9 +842,12 @@ changes, newest first, each with **Undo to here**.
      drag inside to move it and drag an anchor to turn it. Each tool's own
      options show while you hold it.
      **Clean up** has three boxes. **Smooth edges** and **Remove specks**
-     each have a **Layer** (every layer, or one). Smoothing keeps thin
-     shapes such as cart paths whole and rounds the edges of wide ones; a
-     speck smaller than the smoothing still goes. **Normalize width** lays
+     each have a **Layer** (every layer, or one). Smoothing takes out waves
+     and the straight facets of a mapped outline and curves the edge
+     through what is left, keeping its size; a whole layer smoothed keeps
+     sharp corners such as a tee's, while the Smooth brush rounds a corner
+     you put it on. It keeps thin shapes such as cart paths whole; a speck
+     smaller than the smoothing still goes. **Normalize width** lays
      every cart path (**Normalize cart paths**, 1.8 m to start: about one
      and a half carts) or every street (**Normalize streets**, 6 m) again at
      one width along its middle; where two meet they still meet in the same
@@ -858,9 +863,8 @@ changes, newest first, each with **Undo to here**.
      builder, opens in the 3D editor with the fringe it had, painted on; a
      course file saved before 24 November 2026 keeps its fringe in the game
      until it is saved again.) The trace is drawn **as the
-     course will have it** -- each layer's outline smoothed and its specks
-     gone -- a moment after each stroke; while you paint, its cells show.
-     **Smooth / cell view** switches to the cells. **Outside the course**:
+     course will have it**: each layer's own outlines, as you paint them (the
+     course drops specks smaller than a pot bunker). **Outside the course**:
      draw the course boundary (OpenStreetMap's comes with it when it has
      one), then choose in the **Fill outside boundary** box -- **Surfaces
      and houses** (Keep them, or Remove them: OpenStreetMap's roads, ponds
@@ -1049,9 +1053,11 @@ the camera's. Left-drag moves round the course,
 right-drag turns, the wheel zooms; **W A S D** fly forward, left, back and
 right, **Q** and **E** down and up, Shift three times as fast (faster the
 higher you are); **View from above** and **View this hole** jump the view. The surfaces
-are drawn as the course will have them -- each one's outline smoothed --
-not in the editing grid's squares; while you paint, the squares show for a
-moment. **Shape the ground** with Raise, Lower, Smooth, Flatten, Ramp,
+are drawn from their outlines, as the course will have them, while you
+paint too -- never in squares. A course file the builder saved before it
+kept outlines (before 25 November 2026) has its surfaces' edges smoothed
+once as it opens, corners kept, and the line at the foot says so; **Undo**
+puts them back. **Shape the ground** with Raise, Lower, Smooth, Flatten, Ramp,
 Roughen and Restore (the brush's size and strength above them); paint any
 surface or ground type -- **Road** among them in every landscape, and the
 **Pen** on Road draws a parking lot by its edge; **Paint rock on slopes** (under Surfaces) paints, in one

@@ -1003,3 +1003,16 @@ Read for RESEARCH.md, *Normalize width: a cart path's and a street's width*.
 - Club Car, Onward 6 Passenger specifications -- https://www.clubcar.com/en/personal/golf-carts/onward-6-passenger/specifications -- search summary. Taken: 48.8 in, 51.3 in lifted.
 - Golf Cart Garage, *Golf cart dimensions and their importance* -- https://www.golfcartgarage.com/blog/golf-cart-dimensions-and-their-importance -- search summary only. Taken: E-Z-GO RXV about 47 in wide (E-Z-GO's own page gives no width). A third-party guide's 47.5 in for the Onward 2 Passenger was set aside for Club Car's figure.
 - Zhang, T. Y. and Suen, C. Y., *A fast parallel algorithm for thinning digital patterns*, Communications of the ACM 27(3), 1984 -- from memory, not fetched. Taken: the two-pass thinning rule `skeleton` uses. Yokoi's connectivity number (8-connected) for the stair-step corners, also from memory.
+
+## The builder on outlines (24 November 2026, the builder-outlines branch)
+
+Read for RESEARCH.md, *The builder on outlines*. The packages were installed
+in a scratch folder and timed on the owner's Alpine Lake course file; npm's
+registry gave the versions, licences and dates.
+
+- Clipper2, Angus Johnson -- https://github.com/AngusJohnson/Clipper2 -- the library's own header comments (in the port, dated 5 March 2025); its documentation (https://www.angusj.com/clipper2/Docs/Overview.htm) not fetched. Taken: booleans, offsetting with round and mitred joins and open-line ends, polygon trees.
+- @countertype/clipper2-ts 1.5.4-3.9a869ba -- https://github.com/countertype/clipper2-ts and its npm README -- read installed. Taken: the TypeScript port used (BSL-1.0), its claim of 194 of 195 reference polygon tests passed, the one failure shared with Clipper2's C#; timed (RESEARCH).
+- clipper-lib 6.4.2 -- https://www.npmjs.com/package/clipper-lib -- installed and timed; rejected (RESEARCH).
+- polygon-clipping 0.15.7 -- https://github.com/mfogel/polygon-clipping -- installed and timed; rejected: no offsetting.
+- clipper2-js 1.2.4 -- https://www.npmjs.com/package/clipper2-js -- registry metadata only; rejected unmeasured (an older Clipper2).
+- Taubin, G., *A signal processing approach to fair surface design*, SIGGRAPH 1995 -- from memory, not fetched. Taken: the two-step easing (0.5 and -0.53) tried for Smooth and rejected on its measured corner (RESEARCH).

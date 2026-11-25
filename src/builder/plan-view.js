@@ -76,14 +76,18 @@ export function createPlanView(canvas, {onTool = null, overlay = null, onWindowC
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#0b1f1c'; ctx.fillRect(0, 0, canvas.width, canvas.height);
   if (!v.land) return;
   const {cell, halfX, halfZ} = v.land;
-  ctx.imageSmoothingEnabled = v.scale * cell < 2;
   for (const name of v.order) {
    const c = v.layers[name], a = v.alpha[name] ?? 1; if (!c || !v.show[name] || a <= 0) continue;
    const own = v.cells?.[name] ?? cell, s = v.shift[name] ?? {x: 0, z: 0}, [x0, y0] = api.toScreen(-halfX - own / 2 + s.x, -halfZ - own / 2 + s.z);
    // A layer's look (the picture's brightness and contrast, builder-ux item
    // 20): a canvas filter while it is drawn, the layer itself unchanged.
    ctx.filter = v.filter?.[name] ?? 'none';
-   ctx.imageSmoothingEnabled = v.scale * own < 2;
+   // SMOOTHED AT ANY ZOOM (the owner, 24 November 2026: "I want these
+   // pixellated views gone from the builder entirely"): the picture and the
+   // LIDAR are drawn as smooth as the browser draws a photograph, never as
+   // blocks. Until then a layer went pixel-sharp past two screen pixels a
+   // cell. Only the trace's own cells while a stroke is painted stay sharp.
+   ctx.imageSmoothingEnabled = name !== 'codes';
    ctx.globalAlpha = a; ctx.setTransform(v.scale * own, 0, 0, v.scale * own, x0, y0); ctx.drawImage(c, 0, 0);
    ctx.filter = 'none';
   }

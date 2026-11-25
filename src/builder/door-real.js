@@ -49,10 +49,11 @@ import {fetchOsm, osmFeatures, layOsm, osmBoundary, mergeTrees, OSM_CREDIT, cour
 import {ringPress, ringHectares} from './outline-ring.js';
 import {osmCourses, osmHoles, shiftHoles, fitHoles, osmTeeSets, insideRing} from './osm-course.js';
 import {TEE_ORDER, TEE_COLOURS, GENERATED_TEES, courseSets, backTee, colourOf, teeName} from '../tees.js';
-import {sourceBox, sourcesBox, crsOfSources, landFromSources, pictureOnLand, affineFromPairs, docFromLand, layerRings, lidarTexels, coverage, parFor, LIDAR_VIEWS, MAX_PROPERTY, cellFor} from './real-course.js';
+import {sourceBox, sourcesBox, crsOfSources, landFromSources, pictureOnLand, affineFromPairs, docFromLand, lidarTexels, coverage, parFor, LIDAR_VIEWS, MAX_PROPERTY, cellFor} from './real-course.js';
 import {DETAIL} from '../lidar/detail.js';
 import {createTrace, PALETTE, SPECK, POCK} from './trace-edit.js';
-import {LAYER_ORDER, layersFor, tidyMask} from './layers.js';
+import {LAYER_ORDER, layersFor} from './layers.js';
+import * as S from './shapes.js';
 import {PROVIDERS, providersAt, mosaic, tilePixel, metresPerPixel, mapFrame, boxDegrees, boxLocal} from './imagery.js';
 import {packPictures, unpackPictures} from './picture-file.js';
 import {treePlanControls} from './tree-plan.js';
@@ -313,140 +314,62 @@ export function open(draft = null) {
   plan.shiftLayer('picture', 0, 0);
  }
  const countWhere = (a, v) => { let n = 0; for (let k = 0; k < a.length; k++) if (a[k] === v) n++; return n; };
- const codeTexel = (d, o, c) => { const col = COLOUR[PALETTE[c]]; if (col) { d[o] = col[0]; d[o + 1] = col[1]; d[o + 2] = col[2]; d[o + 3] = 255; } else d[o + 3] = 0; };
- // The cells as shown: painted whole when the trace, the land, the hidden
- // layers or Hold to show before change; otherwise only the box the trace's
- // cells changed in (trace-edit.js `takeTouched`) -- a whole repaint of a
- // 2.8 x 3.3 km course at 1 m is nine million cells.
- let codesOf = {};
- function paintCodes() {
-  if (!st.land || !st.model) { plan.clearLayer('codes'); codesOf = {}; return; }
-  const pre = !!(st.compareSkin && st.preSkin), c = pre ? st.preSkin : st.model.state.layers.view, box = st.model.takeTouched?.() ?? null;
-  const hidden = [...st.model.state.layers.hidden].sort().join(), newModel = codesOf.model !== st.model || codesOf.land !== st.land;
-  if (newModel || codesOf.pre !== pre || codesOf.hidden !== hidden || !plan.view.layers.codes) {
-   plan.setLayer('codes', (d, nx, nz) => { for (let k = 0; k < nx * nz; k++) codeTexel(d, k * 4, c[k]); });
-   codesOf = {model: st.model, land: st.land, pre, hidden};
-   if (newModel) dirtyVec(null); else if (box) dirtyVec(box); else showCodes();
-   return;
-  }
-  if (box) patchBox(box, c);
-  if (box) dirtyVec(box); else showCodes();
- }
- function patchBox([i0, i1, j0, j1], c) {
-  const nx = st.land.nx;
-  plan.patchLayer('codes', i0, j0, i1 - i0 + 1, j1 - j0 + 1, (d, a, b, W, H) => { for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) codeTexel(d, (j * W + i) * 4, c[(b + j) * nx + a + i]); });
- }
- function patchCodes() {
-  const box = st.model.takeTouched?.();
-  if (box) { patchBox(box, st.model.state.layers.view); dirtyVec(box); }
- }
- // THE TRACE AS IT WILL PLAY (the owner, 1 November 2026: "It gets really
- // pixellated in the tracer. will the game smooth those lines out?"). It
- // does: each layer goes into the course as smoothed outlines (layerRings,
- // after the specks and pocks are tidied), so the trace is drawn that way
- // too, a moment after each change. While a stroke is being painted its cells
- // show; Smooth view off shows the cells always.
- //
- // IN TILES (the owner, 23 November 2026: "when i start painting everything
- // gets really pixellated and then goes back crisp ... causes hangs"): every
- // change threw the whole smooth trace away -- cells everywhere -- and traced
- // every layer of the whole land again a moment later, 3 to 4 seconds with the
- // page frozen on a 2.8 x 3.3 km course at 1 m. Now the land is traced in
- // tiles of TILE cells, each with MARGIN cells round it (so its outlines come
- // out as the whole's: contour.js `fitRing`), and kept; a change marks the
- // tiles it reaches, shows its own cells only where they changed, and those
- // tiles are traced again a few at a time between frames once the stroke is
- // done, the ones in view first. The course itself is always traced whole.
- const TILE = 128, MARGIN = 32;
- let vt = null, vecTimer = 0;
+ // THE TRACE AS OUTLINES (branch builder-outlines, 24 November 2026; the
+ // owner: "I want these pixellated views gone from the builder entirely ...
+ // The game doesnt render in blocks, why does the builder"). Every layer is
+ // drawn from its own outlines (trace-edit.js, shapes.js), bottom to top in
+ // the game's order, every frame: nothing is laid on cells, so nothing waits
+ // to be traced, and what is painted is what plays. A stroke being painted
+ // shows as the band it sweeps, in its layer's place in the order (an
+ // eraser's band cut out of the layers it takes), and is laid when the
+ // button comes up. Until then the plan showed the trace's cells and traced
+ // them into outlines in tiles a moment after each change (COURSE_BUILDER.md,
+ // *Edges fitted, sharp bends, a trace step that keeps up*).
+ // Each outline's Path2D is kept with the outline, and a layer's is put
+ // together from them: a stroke makes a new set but keeps every path it did
+ // not reach, so only those it changed are walked point by point again (a
+ // whole layer of 43,000 points built afresh held a frame 175 ms).
+ const PATH1 = new WeakMap(), PATHS = new WeakMap();
+ const onePath = p => { let q = PATH1.get(p); if (!q) { q = new Path2D(); for (let i = 0; i < p.length; i++) { const x = p[i].x / S.CM, z = p[i].y / S.CM; if (i) q.lineTo(x, z); else q.moveTo(x, z); } q.closePath(); PATH1.set(p, q); } return q; };
+ const pathOf = set => { let p = PATHS.get(set); if (!p) { p = new Path2D(); for (const one of set) p.addPath(onePath(one)); PATHS.set(set, p); } return p; };
+ // The plan's layers are drawn every frame; these keep the old calls' names.
+ function paintCodes() { plan.draw(); }
+ function patchCodes() { plan.draw(); }
+ function showCodes() { plan.draw(); }
  const vecCanvas = document.createElement('canvas');
- function resetVec() {
-  const cols = Math.ceil(st.land.nx / TILE), rows = Math.ceil(st.land.nz / TILE);
-  vt = {model: st.model, land: st.land, cols, rows, tiles: new Array(cols * rows).fill(null), dirty: new Set(Array.from({length: cols * rows}, (_, k) => k)), marks: new Map()};
- }
- // `box`: the cells [i0, i1, j0, j1] changed, or null for all of them.
- function dirtyVec(box = null) {
-  if (!st.land || !st.model) return;
-  if (!vt || vt.model !== st.model || vt.land !== st.land) resetVec();
-  else if (!box) for (let k = 0; k < vt.tiles.length; k++) { vt.dirty.add(k); vt.marks.set(k, [0, st.land.nx, 0, st.land.nz]); }
-  else {
-   const span = (a, b, n) => [Math.max(0, Math.floor(a / TILE)), Math.min(n - 1, Math.floor(b / TILE))];
-   const [t0, t1] = span(box[0] - MARGIN, box[1] + MARGIN, vt.cols), [u0, u1] = span(box[2] - MARGIN, box[3] + MARGIN, vt.rows);
-   for (let u = u0; u <= u1; u++) for (let t = t0; t <= t1; t++) {
-    const k = u * vt.cols + t; vt.dirty.add(k);
-    const i0 = Math.max(box[0], t * TILE), i1 = Math.min(box[1], (t + 1) * TILE - 1), j0 = Math.max(box[2], u * TILE), j1 = Math.min(box[3], (u + 1) * TILE - 1);
-    if (i0 > i1 || j0 > j1) continue;
-    const m = vt.marks.get(k); vt.marks.set(k, m ? [Math.min(m[0], i0), Math.max(m[1], i1), Math.min(m[2], j0), Math.max(m[3], j1)] : [i0, i1, j0, j1]);
-   }
-  }
-  scheduleVec(); showCodes();
- }
- function scheduleVec(wait = 250) { clearTimeout(vecTimer); if (st.smoothView && vt?.dirty.size) vecTimer = setTimeout(buildVec, wait); }
- // The dirty tile to trace next: one in view if there is one.
- function nextTile() {
-  const {cell, halfX, halfZ} = st.land, a = plan.toWorld(0, 0), b = plan.toWorld(canvas.width, canvas.height);
-  const ti0 = Math.floor(((a.x + halfX) / cell) / TILE), ti1 = Math.floor(((b.x + halfX) / cell) / TILE), tj0 = Math.floor(((a.z + halfZ) / cell) / TILE), tj1 = Math.floor(((b.z + halfZ) / cell) / TILE);
-  let first = -1;
-  for (const k of vt.dirty) { if (first < 0) first = k; const t = k % vt.cols, u = (k - t) / vt.cols; if (t >= ti0 && t <= ti1 && u >= tj0 && u <= tj1) return k; }
-  return first;
- }
- function buildVec() {
-  if (!st.model || !st.land || !st.smoothView || !vt) return;
-  if (vt.model !== st.model || vt.land !== st.land) { resetVec(); }
-  if (st.model.state.stroke) { scheduleVec(); return; }
-  const t0 = performance.now();
-  while (vt.dirty.size && performance.now() - t0 < 24) { const k = nextTile(); vt.dirty.delete(k); vt.tiles[k] = traceTile(k); vt.marks.delete(k); }
-  plan.draw();
-  if (vt.dirty.size) scheduleVec(0);
- }
- // One tile's outlines, layer by layer, as Path2Ds in metres.
- function traceTile(k) {
-  const {nx, nz, cell, halfX, halfZ} = st.land, t = k % vt.cols, u = (k - t) / vt.cols, speck = Math.round(SPECK / (cell * cell)), pock = Math.round(POCK / (cell * cell));
-  const i0 = Math.max(0, t * TILE - MARGIN), i1 = Math.min(nx - 1, (t + 1) * TILE - 1 + MARGIN), j0 = Math.max(0, u * TILE - MARGIN), j1 = Math.min(nz - 1, (u + 1) * TILE - 1 + MARGIN), W = i1 - i0 + 1, H = j1 - j0 + 1;
-  const paths = new Map();
-  for (const [kind, m] of st.model.state.layers.masks) {
-   const sub = new Uint8Array(W * H);
-   for (let j = 0; j < H; j++) sub.set(m.subarray((j + j0) * nx + i0, (j + j0) * nx + i0 + W), j * W);
-   if (sub.indexOf(1) < 0) continue;
-   tidyMask(sub, W, H, speck, pock, undefined, true);
-   const rings = layerRings(sub, {nx: W, nz: H, cell, x0: -halfX + i0 * cell, z0: -halfZ + j0 * cell});
-   if (!rings.length) continue;
-   const path = new Path2D();
-   for (const r of rings) { r.forEach(([x, z], q) => q ? path.lineTo(x, z) : path.moveTo(x, z)); path.closePath(); }
-   paths.set(kind, path);
-  }
-  return {paths};
- }
- function showCodes() { plan.view.show.codes = st.traceOn && st.step !== 5 && (!st.smoothView || !!st.compareSkin); plan.draw(); }
- // Every tile of the trace traced as it stands (for the builder journeys).
- st.smoothDrawn = () => !!(vt && st.model && vt.model === st.model && vt.land === st.land && !vt.dirty.size && !vt.marks.size);
- // The tiles in view: each its outlines, clipped to it, and its changed cells
- // over them until it is traced again (a tile never traced: all its cells).
- function drawVec(ctx, p) {
+ // Drawn opaque on a canvas of its own, then laid over the picture at the
+ // trace's opacity (so a fairway does not show the semi-rough under it).
+ function drawTrace(ctx, p) {
   const W = ctx.canvas.width, H = ctx.canvas.height;
   if (vecCanvas.width !== W || vecCanvas.height !== H) { vecCanvas.width = W; vecCanvas.height = H; }
   const v = vecCanvas.getContext('2d'); v.setTransform(1, 0, 0, 1, 0, 0); v.clearRect(0, 0, W, H);
-  const {nx, nz, cell, halfX, halfZ} = st.land, s = p.view.scale, [ox, oy] = p.toScreen(0, 0), a = p.toWorld(0, 0), b = p.toWorld(W, H), codes = plan.view.layers.codes;
-  const order = LAYER_ORDER.filter(k => !st.model.state.layers.hidden.has(k)).reverse();
-  const tile = (w, half, n) => Math.max(0, Math.min(n - 1, Math.floor(((w + half) / cell + .5) / TILE)));
-  const ti0 = tile(a.x, halfX, vt.cols), ti1 = tile(b.x, halfX, vt.cols), tj0 = tile(a.z, halfZ, vt.rows), tj1 = tile(b.z, halfZ, vt.rows);
-  v.imageSmoothingEnabled = false; v.lineWidth = p.px / s; v.strokeStyle = 'rgba(0,0,0,.45)';
-  const ex = i => -halfX + (i - .5) * cell, ez = j => -halfZ + (j - .5) * cell;
-  for (let u = tj0; u <= tj1; u++) for (let t = ti0; t <= ti1; t++) {
-   const k = u * vt.cols + t, tl = vt.tiles[k], ci0 = t * TILE, ci1 = Math.min(nx, (t + 1) * TILE) - 1, cj0 = u * TILE, cj1 = Math.min(nz, (u + 1) * TILE) - 1;
-   // Clipped a screen pixel past its own edge, so two tiles' softened edges
-   // overlap rather than leave a faint seam between them (the fills are solid).
-   const px = 1 / s;
-   v.save(); v.setTransform(s, 0, 0, s, ox, oy); v.beginPath(); v.rect(ex(ci0) - px, ez(cj0) - px, (ci1 - ci0 + 1) * cell + 2 * px, (cj1 - cj0 + 1) * cell + 2 * px); v.clip();
-   if (tl) for (const kind of order) { const path = tl.paths.get(kind), col = COLOUR[kind]; if (!path || !col) continue; v.fillStyle = `rgb(${col.join(',')})`; v.fill(path, 'evenodd'); v.stroke(path); }
-   const m = tl ? vt.marks.get(k) : [ci0, ci1, cj0, cj1];
-   if (m && codes) {
-    const i0 = Math.max(ci0, m[0]), i1 = Math.min(ci1, m[1]), j0 = Math.max(cj0, m[2]), j1 = Math.min(cj1, m[3]);
-    if (i0 <= i1 && j0 <= j1) { v.clearRect(ex(i0), ez(j0), (i1 - i0 + 1) * cell, (j1 - j0 + 1) * cell); v.drawImage(codes, i0, j0, i1 - i0 + 1, j1 - j0 + 1, ex(i0), ez(j0), (i1 - i0 + 1) * cell, (j1 - j0 + 1) * cell); }
-   }
+  const s = p.view.scale, [ox, oy] = p.toScreen(0, 0), before = !!(st.compareSkin && st.preSkin), layers = before ? st.preSkin : st.model.state.shapes;
+  const runs = before ? [] : st.model.pending().map(r => ({...r, set: S.band(r.points, r.radius)}));
+  const {halfX, halfZ, cell} = st.land, x0 = -halfX - 2 * cell, z0 = -halfZ - 2 * cell, w = 2 * halfX + 4 * cell, h = 2 * halfZ + 4 * cell;
+  v.setTransform(s, 0, 0, s, ox, oy); v.lineWidth = p.px / s; v.strokeStyle = 'rgba(0,0,0,.45)';
+  for (const kind of [...LAYER_ORDER].reverse()) {
+   const col = COLOUR[kind]; if (!col || st.model.isHidden(kind)) continue;
+   const set = layers.get(kind), adds = runs.filter(r => r.op === 'paint' && r.kind === kind), cuts = runs.filter(r => r.op === 'erase' && (!r.kind || r.kind === kind));
+   if (!set?.length && !adds.length) continue;
+   v.fillStyle = `rgb(${col.join(',')})`; v.save();
+   if (cuts.length && set?.length) { const c = new Path2D(); c.rect(x0, z0, w, h); c.addPath(pathOf(S.clean(cuts.flatMap(r => r.set)))); v.clip(c, 'evenodd'); }
+   if (set?.length) { const path = pathOf(set); v.fill(path); v.stroke(path); }
+   for (const r of adds) v.fill(pathOf(r.set));
    v.restore();
   }
-  ctx.globalAlpha = st.traceAlpha; ctx.drawImage(vecCanvas, 0, 0); ctx.globalAlpha = 1;
+  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = st.traceAlpha; ctx.drawImage(vecCanvas, 0, 0); ctx.restore();
+ }
+ // For the builder journeys (until 24 November 2026 they waited for the tiles).
+ st.smoothDrawn = () => true;
+ // The review (paintCourse): the rough over the land, each surface's
+ // outlines, then the land's shading multiplied over them, smoothed.
+ function drawReview(ctx, p) {
+  const r = st.review, {nx, nz, cell, halfX, halfZ} = st.land, s = p.view.scale, [ox, oy] = p.toScreen(0, 0), x0 = -halfX - cell / 2, z0 = -halfZ - cell / 2;
+  ctx.save(); ctx.setTransform(s, 0, 0, s, ox, oy);
+  ctx.fillStyle = r.rough; ctx.fillRect(x0, z0, nx * cell, nz * cell);
+  for (const [path, fill] of r.paths) { ctx.fillStyle = fill; ctx.fill(path, 'evenodd'); }
+  ctx.globalCompositeOperation = 'multiply'; ctx.imageSmoothingEnabled = true; ctx.drawImage(r.shade, x0, z0, nx * cell, nz * cell);
+  ctx.restore();
  }
  // WHAT THE TOOL DOES, top middle of the view for as long as it is held (the
  // owner, 1 November 2026: "It needs to be more clear what you are doing").
@@ -515,7 +438,8 @@ export function open(draft = null) {
    drawRing(ctx, p, px);
    return;
   }
-  if (vt && st.model && vt.model === st.model && vt.land === st.land && st.smoothView && st.traceOn && st.step < 5 && !st.compareSkin) drawVec(ctx, p);
+  if (st.step === 5 && st.review?.land === st.land) drawReview(ctx, p);
+  if (st.model && st.land && st.traceOn && st.step < 5) drawTrace(ctx, p);
   if (st.step === 0 && (st.preview || st.land)) {
    // Each file's box in yellow with its name, the property in white.
    const g = st.land ? st.gridder : st.preview.gridder, rect = b => { const a = g.local(b.x0, b.y1), c = g.local(b.x1, b.y0), [ax, ay] = p.toScreen(a.x, a.z), [cx, cy] = p.toScreen(c.x, c.z); return [ax, ay, cx - ax, cy - ay]; };
@@ -583,7 +507,7 @@ export function open(draft = null) {
    const closedTool = !OPEN_PEN.includes(st.tool), reach = PEN_REACH * px / p.view.scale, hov = st.hover ? [st.hover.x, st.hover.z] : null;
    const closing = closedTool && hov && closesOn(st.outline, hov, reach);
    const nodes = closing || !hov ? st.outline : [...st.outline, hov];
-   const pts = penCurve(nodes, {closed: closedTool && closing, sharp: [...st.sharp], curve: penStrength()});
+   const pts = penCurve(nodes, {closed: closedTool && closing, sharp: [...st.sharp], step: Math.max(.5, st.land.cell), curve: penStrength()});
    const path = () => { ctx.beginPath(); pts.forEach(([x, z], q) => { const [sx, sy] = p.toScreen(x, z); q ? ctx.lineTo(sx, sy) : ctx.moveTo(sx, sy); }); };
    if (closedTool && closing) { path(); ctx.closePath(); ctx.fillStyle = 'rgba(255,107,214,.18)'; ctx.fill(); }
    // The line tool: the band it will lay, at its width and with its ends.
@@ -699,7 +623,9 @@ export function open(draft = null) {
     }
     if (type === 'up' && steadied && st.strokeBox && st.smoothStroke && t !== 'eraseAll' && st.kind !== 'rough') {
      const b = st.strokeBox, cx = (b.x0 + b.x1) / 2, cz = (b.z0 + b.z1) / 2, reach = Math.hypot(b.x1 - b.x0, b.z1 - b.z0) / 2 + st.size + 2;
-     m.smooth({x: cx, z: cz, radius: 1.5, area: reach, kind: st.kind});
+     // Only the stroke's own edges (its band and a little round it), so a
+     // box or a tee beside it keeps its corners (24 November 2026).
+     m.smooth({x: cx, z: cz, radius: 1.5, area: reach, kind: st.kind, within: S.grow(S.band(st.strokeDabs.map(q => [q.x, q.z]), st.size), 1.5)});
      patchCodes(cx, cz, reach + 2);
     }
     if (type === 'up' && t === 'brush') underNote(st.strokeBox);
@@ -841,11 +767,10 @@ export function open(draft = null) {
  // says which layer stayed on top -- the first time with the rule in words.
  function underNote(box) {
   if (!box || st.kind === 'rough') return;
-  const {cell, halfX, halfZ, nx, nz} = st.land, Ls = st.model.state.layers, m = Ls.masks.get(st.kind), v = Ls.view, code = PALETTE.indexOf(st.kind), r = st.size + 1;
-  if (!m || code < 0) return;
-  const i0 = Math.max(0, Math.floor((box.x0 - r + halfX) / cell)), i1 = Math.min(nx - 1, Math.ceil((box.x1 + r + halfX) / cell)), j0 = Math.max(0, Math.floor((box.z0 - r + halfZ) / cell)), j1 = Math.min(nz - 1, Math.ceil((box.z1 + r + halfZ) / cell));
-  const over = new Map();
-  for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { const k = j * nx + i; if (m[k] && v[k] !== code && PALETTE[v[k]]) over.set(PALETTE[v[k]], (over.get(PALETTE[v[k]]) ?? 0) + 1); }
+  // The stroke's band against each shown layer above it (outlines, exact).
+  const top = LAYER_ORDER.indexOf(st.kind); if (top < 0 || !st.strokeDabs?.length) return;
+  const band = S.band(st.strokeDabs.map(q => [q.x, q.z]), st.size), over = new Map();
+  for (const k of LAYER_ORDER.slice(0, top)) { if (st.model.isHidden(k)) continue; const a = S.areaOf(S.intersect(band, st.model.shapesOf(k))); if (a > .5) over.set(k, a); }
   if (!over.size) return;
   const tops = [...over.keys()].map(k => LABEL(k).toLowerCase()), what = LABEL(st.kind).toLowerCase();
   say(`The ${what} went in under the ${tops.join(' and ')}, which ${tops.length > 1 ? 'stay' : 'stays'} on top: the ${what} is there underneath.${st.toldUnder ? '' : ' Each layer paints under the ones above it in the Layers list.'}`);
@@ -950,7 +875,7 @@ export function open(draft = null) {
   // The map before the LIDAR is step 1's alone: past it, the plan is the land.
   if (n !== 0 && st.map) leaveMap();
   st.step = n; dropPen();
-  if (n !== 5) { plan.clearLayer('course'); st.doc = null; }
+  if (n !== 5) { plan.clearLayer('course'); st.doc = null; st.review = null; }
   plan.showLayer('picture', !!st.map || (n !== 5 && st.picOn !== false)); plan.showLayer('coverage', n === 0); showCodes();
   stepBar();
   palette.hidden = true;
@@ -1053,7 +978,6 @@ export function open(draft = null) {
     {label: 'Previous hole', key: ',', enabled: () => st.step >= 2 && st.holes.some(h => h?.tees?.length), run: () => goHole(st.hole - 1)}, {sep: true},
     {label: 'Photo', checked: () => st.picOn !== false, run: () => { st.picOn = st.picOn === false; plan.showLayer('picture', st.picOn); }},
     {label: 'Trace', checked: () => !!st.traceOn, run: () => { st.traceOn = !st.traceOn; showCodes(); }},
-    {label: 'Smooth trace (as it will play)', checked: () => !!st.smoothView, run: () => { st.smoothView = !st.smoothView; if (st.smoothView) { if (!vt || vt.model !== st.model || vt.land !== st.land) dirtyVec(null); scheduleVec(0); } showCodes(); }},
     {label: 'LIDAR over photo', checked: () => !!st.lidarOnTop, run: () => { st.lidarOnTop = !st.lidarOnTop; viewLayers(); go(st.step); }}],
    tools: [...toolItems, {sep: true}, {label: 'Smaller brush', key: '[', enabled: tracing, run: () => brushSize(-1)}, {label: 'Larger brush', key: ']', enabled: tracing, run: () => brushSize(1)},
     {sep: true}, {heading: 'Experimental'}, {label: 'Auto trace (a rough start to fix by hand)', enabled: () => st.step === 2 && !!st.land, run: () => autoTrace()}],
@@ -1091,12 +1015,12 @@ export function open(draft = null) {
  }
  function chooseShapeOnly(pick) {
   if (!pick) { st.chosen = null; return; }
-  const {nx, nz, cell, halfX, halfZ} = st.land, m = st.model.state;
+  const m = st.model.state;
   let rings, mid, what;
   if (pick.type === 'shape') {
-   const mask = new Uint8Array(nx * nz); let sx = 0, sz = 0;
-   for (const k of pick.cells) { mask[k] = 1; sx += -halfX + (k % nx) * cell; sz += -halfZ + Math.floor(k / nx) * cell; }
-   rings = layerRings(mask, st.land).sort((a, b) => b.length - a.length); mid = {x: sx / pick.cells.length, z: sz / pick.cells.length}; what = LABEL(pick.kind).toLowerCase();
+   // The shape's own outline (its holes after it), and where its area balances.
+   const [x, z] = S.middleOf(pick.set);
+   rings = S.toRings(pick.set).sort((a, b) => b.length - a.length); mid = {x, z}; what = LABEL(pick.kind).toLowerCase();
   } else if (pick.type === 'creek') {
    const c = m.creekLines[pick.index].points; rings = [[...c, ...c.slice().reverse()]]; mid = {x: c[Math.floor(c.length / 2)][0], z: c[Math.floor(c.length / 2)][1]}; what = 'creek';
   } else if (pick.type === 'home') {
@@ -1107,11 +1031,11 @@ export function open(draft = null) {
    rings = [Array.from({length: 24}, (_, k) => [t.x + Math.cos(k / 24 * Math.PI * 2) * r, t.z + Math.sin(k / 24 * Math.PI * 2) * r])]; mid = {x: t.x, z: t.z}; what = 'tree';
   }
   if (!rings.length) { st.chosen = null; return; }
-  st.chosen = {pick, rings, mid, what, corners: pick.type === 'tree' || pick.type === 'creek' ? [] : cornersOf(rings[0]), cells: pick.type === 'shape' ? new Set(pick.cells) : null};
+  st.chosen = {pick, rings, mid, what, corners: pick.type === 'tree' || pick.type === 'creek' ? [] : cornersOf(rings[0]), set: pick.type === 'shape' ? pick.set : null};
  }
  function onChosen(p) {
-  const c = st.chosen, {nx, nz, cell, halfX, halfZ} = st.land;
-  if (c.cells) { const i = Math.round((p.x + halfX) / cell), j = Math.round((p.z + halfZ) / cell); return i >= 0 && j >= 0 && i < nx && j < nz && c.cells.has(j * nx + i); }
+  const c = st.chosen;
+  if (c.set) return S.contains(c.set, p.x, p.z);
   const g = st.model.pickAt({x: p.x, z: p.z}); return g?.type === c.pick.type && g.index === c.pick.index;
  }
  // SKIN FROM THE LAND, as the 3D editor's (trace-edit.js skin): the ground as it
@@ -1119,7 +1043,7 @@ export function open(draft = null) {
  function skinLand() {
   say('Reading the land…');
   setTimeout(() => {
-   const before = Uint8Array.from(st.model.state.layers.view);
+   const before = new Map(st.model.state.shapes);
    const g = st.landEdits ? Float32Array.from(st.land.ground, (v, k) => v + st.landEdits[k]) : st.land.ground, got = st.model.skin({bio: BIOMES[st.landscape], ground: g}), name = k => LABEL(k).toLowerCase();
    const ha = n => `${(n * st.land.cell ** 2 / 1e4).toFixed(1)} ha`;
    if (got.cells.face || got.cells.apron) { st.preSkin = before; st.compareSkin = false; }
@@ -1891,20 +1815,20 @@ export function open(draft = null) {
  function underWords() {
   const all = kindsShown(), i = all.indexOf(st.kind);
   if (st.kind === 'rough') return ['Rough takes every layer off where you paint it.'];
-  const Ls = st.model.state.layers, above = all.slice(0, Math.max(0, i)).filter(k => k !== 'rough' && (Ls.masks.get(k)?.indexOf(1) ?? -1) >= 0);
+  const above = all.slice(0, Math.max(0, i)).filter(k => k !== 'rough' && st.model.shapesOf(k).length);
   return above.length ? [`${LABEL(st.kind)} goes under `, el('b', {}, above.map(k => LABEL(k)).join(', ')), ', which stay on top where they are painted.'] : [`${LABEL(st.kind)} is the top layer painted here: it shows wherever you paint it.`];
  }
  function layersList() {
   if (!st.model) return;
   underLine.replaceChildren(...underWords());
-  const L = st.model.state.layers, a = st.land.cell ** 2, own = layersFor(BIOMES[st.landscape]);
+  const own = layersFor(BIOMES[st.landscape]), m = st.model;
   layerBox.replaceChildren(...kindsShown().map(k => {
-   // Counted by a plain loop: reduce() a cell at a time was half a second
-   // after every stroke on a 9-million-cell course.
-   const rough = k === 'rough', m = L.masks.get(k), n = rough ? countWhere(L.codes, 0) : m ? m.length - countWhere(m, 0) : 0;
-   const col = rough ? hex(BIOMES[st.landscape].rough ?? '#5f7f3f') : COLOUR[k] ?? [128, 128, 128], ha = `${(n * a / 1e4).toFixed(2)} ha`;
+   // Each layer's own area from its outlines; the rough's, the land under no
+   // layer, from the hidden lookup.
+   const rough = k === 'rough', n = rough ? countWhere(m.lookup().codes, 0) * st.land.cell ** 2 : m.area(k);
+   const col = rough ? hex(BIOMES[st.landscape].rough ?? '#5f7f3f') : COLOUR[k] ?? [128, 128, 128], ha = `${(n / 1e4).toFixed(2)} ha`;
    return el('li', {class: (k === st.kind ? 'cb-cur cb-chosen' : '') + (n ? '' : ' cb-empty'), 'data-layer': k, style: 'display:flex;gap:6px;align-items:center;cursor:pointer;padding:2px 0', onclick: () => { st.kind = k; const sel = panel.querySelector('.cb-kind'); if (sel) sel.value = k; layersList(); showHint(); showModel(); }},
-    rough ? el('span', {style: 'width:28px;flex:none'}) : eyeButton(document, k, LABEL(k), L.hidden.has(k), () => { st.model.setHidden(k, !L.hidden.has(k)); paintCodes(); layersList(); }),
+    rough ? el('span', {style: 'width:28px;flex:none'}) : eyeButton(document, k, LABEL(k), m.isHidden(k), () => { m.setHidden(k, !m.isHidden(k)); paintCodes(); layersList(); }),
     el('span', {class: 'cb-swatch', style: `background:rgb(${col.join(',')})`}), el('span', {style: 'flex:1'}, LABEL(k) + (rough || own.includes(k) ? '' : ' (not this landscape\'s)')),
     el('small', {}, rough ? `${ha}, under no layer` : n ? ha : 'empty'));
   }));
@@ -1954,8 +1878,9 @@ export function open(draft = null) {
  // CLEAR TREES FROM TEES AND GREENS (tree-clear.js): every crown reaching
  // over one drawn in, a tree with no room taken out; one undo step.
  function clearTurfTreesNow() {
-  const {nx, nz, cell, halfX, halfZ} = st.land, N = nx * nz, mask = new Uint8Array(N), M = st.model.state.layers.masks;
-  for (const k of ['green', 'tee']) { const m = M.get(k); if (m) for (let q = 0; q < N; q++) if (m[q]) mask[q] = 1; }
+  // The greens and tees on a hidden grid of the land's cells (tree-clear.js asks by cell).
+  const {nx, nz, cell, halfX, halfZ} = st.land, mask = new Uint8Array(nx * nz);
+  for (const k of ['green', 'tee']) S.rasterize(st.model.shapesOf(k), st.land, mask);
   if (mask.indexOf(1) < 0) return say('No greens or tees traced yet to clear trees from.', true);
   const got = clearTrees(st.model.state.trees, {nx, nz, cell, x0: -halfX, z0: -halfZ}, mask);
   if (got.shrunk || got.removed) st.model.setTrees(got.trees);
@@ -1964,15 +1889,16 @@ export function open(draft = null) {
  }
  function extrapolateNow() {
   const from = st.exFrom ?? 'fairway', to = st.exTo;
-  if (from === 'rough' || (st.model.state.layers.masks.get(from)?.indexOf(1) ?? -1) < 0) return say(`Pick a layer under Around that has something on it; ${LABEL(from).toLowerCase()} has nothing.`, true);
+  if (from === 'rough' || !st.model.shapesOf(from).length) return say(`Pick a layer under Around that has something on it; ${LABEL(from).toLowerCase()} has nothing.`, true);
   if (to === from) return say('Pick another layer to lay round it.', true);
   st.model.extrapolate({from, to, width: st.exWidth}); paintCodes(); refreshCount();
   say(`${LABEL(to)} laid ${st.exWidth} m round the ${LABEL(from).toLowerCase()}. Undo takes it back.`);
  }
- // The hectares of each surface under the plan: counted into a plain table (a
- // Map a cell was most of a second after every stroke on a 2.8 x 3.3 km course
- // at 1 m; the owner, 23 November 2026).
- const refreshCount = () => { if (!st.model) return; layersList(); const codes = st.model.state.codes, tab = new Uint32Array(256); for (let k = 0; k < codes.length; k++) tab[codes[k]]++; const n = [...tab].map((v, c) => [c, v]).filter(([, v]) => v); const a = st.land.cell ** 2; countText.textContent = n.filter(([c]) => c).sort((p, q) => q[1] - p[1]).slice(0, 6).map(([c, v]) => `${LABEL(PALETTE[c])} ${(v * a / 1e4).toFixed(2)} ha`).join(' · ') + ` · ${st.model.state.trees.length.toLocaleString()} trees · ${st.model.state.homes.length} house${st.model.state.homes.length === 1 ? '' : 's'}`; };
+ // The hectares of each surface under the plan, as it shows on top: counted
+ // from the hidden lookup into a plain table (a Map a cell was most of a
+ // second after every stroke on a 2.8 x 3.3 km course at 1 m; the owner,
+ // 23 November 2026).
+ const refreshCount = () => { if (!st.model) return; layersList(); const codes = st.model.lookup().codes, tab = new Uint32Array(256); for (let k = 0; k < codes.length; k++) tab[codes[k]]++; const n = [...tab].map((v, c) => [c, v]).filter(([, v]) => v); const a = st.land.cell ** 2; countText.textContent = n.filter(([c]) => c).sort((p, q) => q[1] - p[1]).slice(0, 6).map(([c, v]) => `${LABEL(PALETTE[c])} ${(v * a / 1e4).toFixed(2)} ha`).join(' · ') + ` · ${st.model.state.trees.length.toLocaleString()} trees · ${st.model.state.homes.length} house${st.model.state.homes.length === 1 ? '' : 's'}`; };
  // Local metres to degrees: by the survey's map grid, or round a place the
  // player searched for when the survey states none.
  const lonLatOfLocal = () => {
@@ -2213,7 +2139,7 @@ export function open(draft = null) {
  }
  function evenNow(kind, width) {
   const what = kind === 'path' ? 'cart paths' : 'streets';
-  if ((st.model.state.layers.mask(kind)?.indexOf(1) ?? -1) < 0) return say(`There are no ${what} on the course to normalize.`, true);
+  if (!st.model.shapesOf(kind).length) return say(`There are no ${what} on the course to normalize.`, true);
   say(`Normalizing the ${what}…`);
   setTimeout(() => { const n = st.model.evenWidth({kind, width}); paintCodes(); refreshCount(); plan.draw(); say(n ? `The ${what} are ${width} m wide now, where they meet as before. Undo takes it back.` : `The ${what} were already ${width} m wide.`); }, 0);
  }
@@ -2372,7 +2298,7 @@ export function open(draft = null) {
    st.model.state.trees = mergeTrees(st.trees, osmTrees, st.treesFrom ?? 'merge');
    st.model.state.undo.length = 0;
    if (!st.credits.includes(OSM_CREDIT)) st.credits.push(OSM_CREDIT);
-   st.osm = {raw: json, codes: Uint8Array.from(st.model.state.codes), osmTrees, trees: st.model.state.trees.map(t => ({...t})), homes: st.model.state.homes.map(h => ({...h})), feats, edge,
+   st.osm = {raw: json, shapes: new Map(st.model.state.shapes), osmTrees, trees: st.model.state.trees.map(t => ({...t})), homes: st.model.state.homes.map(h => ({...h})), feats, edge,
     courses: courses.map(c => ({id: c.id, name: c.name, only: c.only ?? null, holes: c.holes, rings: c.rings})), course: courses[0]?.id ?? null, shift: {x: 0, z: 0}, laid};
    await stage('Finding the holes…', .85);
    const n = osmCourseHoles();
@@ -2406,7 +2332,7 @@ export function open(draft = null) {
   const raw = osmHoles(o.feats, {within: c?.rings ?? null, only: c?.only ?? null, codes: o.codes, land: st.land});
   // The tee sets the map names (tees.js; osm-course.js osmTeeSets), moved with the map.
   const teeTags = osmTeeSets(o.feats, {within: c?.rings ?? null});
-  const holes = fitHoles(shiftHoles(raw, sh), st.model.state.codes, st.land, {tagged: teeTags.tagged.map(t => ({...t, x: t.x + sh.x, z: t.z + sh.z})), sets: teeTags.sets}), n = holes.filter(Boolean).length;
+  const holes = fitHoles(shiftHoles(raw, sh), st.model.lookup().codes, st.land, {tagged: teeTags.tagged.map(t => ({...t, x: t.x + sh.x, z: t.z + sh.z})), sets: teeTags.sets}), n = holes.filter(Boolean).length;
   // Eighteen when all eighteen are numbered; nine when 1 to 9 are and the
   // back nine is not (a club's nine with a stray number beside it).
   if (n) { st.holes = holes.map(h => h ? {tees: h.tees, aims: h.aims, green: h.green, par: h.par ?? null} : undefined); st.holesN = holes.slice(0, 18).filter(Boolean).length < 18 && holes.slice(0, 9).filter(Boolean).length === 9 ? 9 : holes.length > 9 ? 18 : 9; }
@@ -2417,13 +2343,17 @@ export function open(draft = null) {
   st.osm.course = id; const n = osmCourseHoles(), c = st.osm.courses.find(q => q.id === id);
   go(2); say(`${c?.name ?? 'The course'}: ${n} holes numbered, and its boundary.`);
  }
- function keepOsm() { if (!st.osm) return; st.model = createTrace(st.land, {rocks: st.model?.state.rocks ?? st.rocks, bunkers: st.model?.state.bunkers ?? [], creekLines: st.model?.state.creekLines ?? [], codes: st.osm.codes, trees: st.osm.trees, homes: st.osm.homes}); st.traceMode = 'openstreetmap'; st.osm.shift = {x: 0, z: 0}; osmCourseHoles(); paintCodes(); go(2); refreshCount(); say('OpenStreetMap\'s trace, as drawn: correct it with the tools, then the holes.'); }
+ // OpenStreetMap's trace as laid, on a hidden grid of the land's cells: what
+ // lining it up with the picture or the LIDAR reads (lidar/trace.js
+ // refineTrace works on cells; what it gives back is turned into outlines once).
+ const osmCodes = () => { const codes = new Uint8Array(st.land.nx * st.land.nz); for (const k of [...LAYER_ORDER].reverse()) { const set = st.osm.shapes.get(k); if (set) S.rasterize(set, st.land, codes, PALETTE.indexOf(k)); } return codes; };
+ function keepOsm() { if (!st.osm) return; st.model = createTrace(st.land, {rocks: st.model?.state.rocks ?? st.rocks, bunkers: st.model?.state.bunkers ?? [], creekLines: st.model?.state.creekLines ?? [], shapes: st.osm.shapes, trees: st.osm.trees, homes: st.osm.homes}); st.traceMode = 'openstreetmap'; st.osm.shift = {x: 0, z: 0}; osmCourseHoles(); paintCodes(); go(2); refreshCount(); say('OpenStreetMap\'s trace, as drawn: correct it with the tools, then the holes.'); }
  async function refineOsm(mode) {
   if (!st.osm) return;
   if (mode === 'picture' && !st.picture) return say('Bring a picture first.', true);
   setBusy(`Lining the map up with the ${mode === 'picture' ? 'picture' : 'LIDAR'}…`); await frame();
   try {
-   const codes = refineTrace(st.land, st.osm.codes, {picture: st.picture, mode});
+   const codes = refineTrace(st.land, osmCodes(), {picture: st.picture, mode});
    st.model = createTrace(st.land, {rocks: st.model?.state.rocks ?? st.rocks, bunkers: st.model?.state.bunkers ?? [], creekLines: st.model?.state.creekLines ?? [], codes, trees: st.osm.trees, homes: st.osm.homes}); st.traceMode = 'openstreetmap+' + mode;
    // The holes and the boundary were drawn on the same map: they move with it
    // (until 1 November 2026 they stayed where the map lay).
@@ -2513,8 +2443,8 @@ export function open(draft = null) {
  // against the greens and tees traced under them and the boundary.
  function mapDoubts() {
   if (!st.model || !st.land) return [];
-  const Ls = st.model.state.layers, none = new Uint8Array(st.land.nx * st.land.nz);
-  const greens = blobs(Ls.masks.get('green') ?? none, st.land), tees = blobs(Ls.masks.get('tee') ?? none, st.land);
+  // (The greens and tees found as blobs on the hidden lookup's grid.)
+  const L = st.model.lookup(), greens = blobs(L.mask('green'), st.land), tees = blobs(L.mask('tee'), st.land);
   const played = playedFn(), doubts = checkHoles(st.holes.slice(0, st.holesN), {greens, tees, boundary: st.boundary, played, card: st.card ?? null});
   // A line off the fairway is offered a bend down it -- for a dogleg mapped
   // as a straight line, when its green is the right one. (A wrong green is
@@ -2524,7 +2454,7 @@ export function open(draft = null) {
  }
  // Fairway or semi-rough under a spot, as traced (the line down the fairway).
  function playedFn() {
-  const {nx, nz, cell, halfX, halfZ} = st.land, codes = st.model.state.codes, fair = new Set(['fairway', 'semi'].map(k => PALETTE.indexOf(k)));
+  const {nx, nz, cell, halfX, halfZ} = st.land, codes = st.model.lookup().codes, fair = new Set(['fairway', 'semi'].map(k => PALETTE.indexOf(k)));
   return (x, z) => { const i = Math.round((x + halfX) / cell), j = Math.round((z + halfZ) / cell); return i >= 0 && j >= 0 && i < nx && j < nz && fair.has(codes[j * nx + i]); };
  }
  // THE DOGLEGS (item 10; map-checks.js bendFor): each hole with no aim point
@@ -2569,7 +2499,7 @@ export function open(draft = null) {
  function fitToTrace() {
   if (!st.model) return;
   const want = st.holes.slice(0, st.holesN), sh = st.osm?.shift ?? {x: 0, z: 0}, teeTags = st.osm?.feats ? osmTeeSets(st.osm.feats) : {tagged: [], sets: null};
-  const fit = fitHoles(want.map(h => h?.green && h.tees.length ? h : null), st.model.state.codes, st.land, {tagged: teeTags.tagged.map(t => ({...t, x: t.x + sh.x, z: t.z + sh.z})), sets: teeTags.sets});
+  const fit = fitHoles(want.map(h => h?.green && h.tees.length ? h : null), st.model.lookup().codes, st.land, {tagged: teeTags.tagged.map(t => ({...t, x: t.x + sh.x, z: t.z + sh.z})), sets: teeTags.sets});
   let greens = 0, tees = 0;
   fit.forEach((h, n) => { if (!h) return; if (h.fit.green === 'moved') greens++; tees += h.fit.tees; st.holes[n] = {tees: h.tees, aims: h.aims, green: h.green, par: h.par ?? null, index: want[n].index ?? null}; });
   go(3); say(`Snapped: ${greens} green mark${greens === 1 ? '' : 's'} moved onto a green; ${tees} tee boxes given to holes. Drag any mark to move it.`);
@@ -2640,18 +2570,30 @@ export function open(draft = null) {
   const holes = st.holes.slice(0, st.holesN).map((h, n) => ({number: n + 1, par: h.par ?? null, index: h.index ?? null, tees: h.tees, green: h.green, line: holeLine(h)}));
   setBusy('Painting the course…'); await frame();
   try {
-   const doc = st.doc = validateDoc(docFromLand({treePlan: st.treePlan, surround: st.surround, land: st.land, traced: {layers: st.model.state.layers}, holes, trees: st.model.state.trees.map(t => st.treeScale === 1 ? t : {...t, h: t.h * st.treeScale, crown: t.crown * st.treeScale, ...(t.trunk ? {trunk: t.trunk * st.treeScale} : {})}), homes: st.model.state.homes, bunkers: st.model.state.bunkers, creekLines: st.model.state.creekLines, name: st.name.trim() || 'My real course', landscape: st.landscape, credits: st.credits, landEdits: st.landEdits, creeks: st.creeks, rocks: st.model?.state.rocks ?? st.rocks,
+   const doc = st.doc = validateDoc(docFromLand({treePlan: st.treePlan, surround: st.surround, land: st.land, traced: {shapes: new Map(st.model.layersPresent().map(k => [k, st.model.shapesOf(k)]))}, holes, trees: st.model.state.trees.map(t => st.treeScale === 1 ? t : {...t, h: t.h * st.treeScale, crown: t.crown * st.treeScale, ...(t.trunk ? {trunk: t.trunk * st.treeScale} : {})}), homes: st.model.state.homes, bunkers: st.model.state.bunkers, creekLines: st.model.state.creekLines, name: st.name.trim() || 'My real course', landscape: st.landscape, credits: st.credits, landEdits: st.landEdits, creeks: st.creeks, rocks: st.model?.state.rocks ?? st.rocks,
     source: {files: st.sources.map(s => s.name), epsg: crsOfSources(st.sources)?.epsg ?? null, crs: crsOfSources(st.sources) ?? null, geo: st.geo, origin: {x: st.gridder.center.x, y: st.gridder.center.y}, trace: st.traceMode, picture: st.picShow === 'lidar' ? 'lidar' : st.picture ? 'placed' : 'none'}}));
    const w = worldFromDoc(doc), bio = BIOMES[st.landscape], mt = bio.mapTurf || {};
    const col = {green: hex(mt.green ?? bio.green), fringe: hex(bio.fringe ?? mt.green ?? bio.green), fairway: hex(mt.fairway ?? bio.fairway), tee: hex(mt.fairway ?? bio.fairway), semi: hex(mt.semi ?? bio.semi), rough: hex(bio.rough), sand: hex(bio.sand), water: [52, 104, 160], path: [75, 77, 81]};
-   const {nx, nz, cell, halfX, halfZ, ground: g} = st.land, N = nx * nz;
-   plan.setLayer('course', d => {
-    for (let k = 0; k < N; k++) {
-     const x = -halfX + (k % nx) * cell, z = -halfZ + Math.floor(k / nx) * cell, s = w.surface(x, z), c = col[s] ?? hex(GROUNDS[s]?.map ?? bio.rough);
-     const a = g[Math.min(N - 1, k + 1)] - g[Math.max(0, k - 1)], b = g[Math.min(N - 1, k + nx)] - g[Math.max(0, k - nx)], sh = Math.max(.55, Math.min(1.15, .9 - (a * .7 - b * .7) / (2 * cell) * 1.2));
-     d[k * 4] = c[0] * sh; d[k * 4 + 1] = c[1] * sh; d[k * 4 + 2] = c[2] * sh; d[k * 4 + 3] = 255;
-    }
-   });
+   // THE REVIEW FROM THE COURSE'S OWN OUTLINES (the owner, 24 November 2026:
+   // "in the final review step before going into the editor, the pixellated
+   // image is still showing. Why does this exist at all"): each surface the
+   // course file holds filled from its outlines, bottom to top in the game's
+   // own order, the water over them, and the land's shading laid over all of
+   // it, drawn smooth. Until then the review coloured each land cell by the
+   // surface at its middle -- the course drawn in 1 m squares.
+   const {nx, nz, cell, ground: g} = st.land, N = nx * nz, lift = c => `rgb(${c.map(v => Math.min(255, Math.round(v * 1.15))).join(',')})`;
+   const shade = document.createElement('canvas'); shade.width = nx; shade.height = nz;
+   const sx = shade.getContext('2d'), img = sx.createImageData(nx, nz);
+   for (let k = 0; k < N; k++) {
+    const a = g[Math.min(N - 1, k + 1)] - g[Math.max(0, k - 1)], b = g[Math.min(N - 1, k + nx)] - g[Math.max(0, k - nx)], sh = Math.max(.55, Math.min(1.15, .9 - (a * .7 - b * .7) / (2 * cell) * 1.2));
+    const v = Math.round(255 * sh / 1.15); img.data[k * 4] = img.data[k * 4 + 1] = img.data[k * 4 + 2] = v; img.data[k * 4 + 3] = 255;
+   }
+   sx.putImageData(img, 0, 0);
+   const pathOf = polys => { const p = new Path2D(); for (const poly of polys) for (const r of poly) { r.forEach(([x, z], q) => q ? p.lineTo(x, z) : p.moveTo(x, z)); p.closePath(); } return p; };
+   const paths = [...LAYER_ORDER].reverse().filter(k => k !== 'water' && doc.surfaces[k]?.length).map(k => [pathOf(doc.surfaces[k]), lift(col[k] ?? hex(GROUNDS[k]?.map ?? bio.rough))]);
+   if (doc.water.length) paths.push([pathOf(doc.water.map(b => b.rings)), lift(col.water)]);
+   st.review = {land: st.land, rough: lift(col.rough), paths, shade};
+   plan.clearLayer('course'); plan.draw();
    // From the course's longest set (black when it has one; it was always
    // blue, from before the six sets).
    const longest = sets()[0], backYd = h => h.tees[longest]?.yards ?? Object.values(h.tees)[0]?.yards ?? 0;
@@ -2671,7 +2613,7 @@ export function open(draft = null) {
   view: {lidarView: st.lidarView, lidarAlpha: st.lidarAlpha, picAlpha: st.picAlpha, traceAlpha: st.traceAlpha, lidarOnTop: st.lidarOnTop, smoothView: st.smoothView, treeScale: st.treeScale, treesFrom: st.treesFrom},
   geo: st.geo, picShow: st.picShow, treePlan: st.treePlan, surround: st.surround,
   picOffsets: {...st.picOffsets, ...(st.picShow && st.picShow !== 'lidar' ? {[st.picShow]: st.offset} : {})}, osm: st.osm, trees: st.trees, land: st.land, landEdits: st.landEdits, creeks: st.creeks, rocks: st.model?.state.rocks ?? st.rocks,
-  trace: st.model ? {masks: st.model.state.layers.masks, hidden: [...st.model.state.layers.hidden], trees: st.model.state.trees, homes: st.model.state.homes, bunkers: st.model.state.bunkers, creekLines: st.model.state.creekLines} : null});
+  trace: st.model ? {shapes: new Map(st.model.layersPresent().map(k => [k, st.model.shapesOf(k)])), hidden: [...st.model.state.hidden], trees: st.model.state.trees, homes: st.model.state.homes, bunkers: st.model.state.bunkers, creekLines: st.model.state.creekLines} : null});
  // Everything, the pictures packed as a file holds them (picture-file.js).
  const whole = async () => ({...snapshot(), pics: await packPictures(st.pics, {onStep: label => setBusy(`Saving the pictures… ${label}`)})});
  // NAMED FIRST (the owner, 23 November 2026: "ask the user to name the course
@@ -2715,18 +2657,15 @@ export function open(draft = null) {
   show(section); preview().mount(section.querySelector('.cb-planbox')); setTitle('Real life course'); topTools(backButton()); setSaver(saver);
   let told = 'the trace as you left it';
   if (editor && st.doc && st.model) {
-   const got = fromEditor({base: st.doc, now: editor.toDoc(), grid: st.land, changed: editor.changedLayers(), holesBefore: st.holes, ownCreeks: st.creeks.length}), L = st.model.state.layers;
+   const got = fromEditor({base: st.doc, now: editor.toDoc(), grid: st.land, changed: editor.changedLayers(), holesBefore: st.holes, ownCreeks: st.creeks.length});
    st.treeScale = 1;
-   for (const [kind, m] of got.masks) L.masks.set(kind, m);
-   L.hidden = new Set(editor.hiddenLayers()); L.recompose(); st.model.state.codes = L.codes;
+   st.model.load({shapes: got.shapes, hidden: editor.hiddenLayers()});
    if (got.landEdits) { if (st.landEdits) for (let k = 0; k < got.landEdits.length; k++) st.landEdits[k] += got.landEdits[k]; else st.landEdits = got.landEdits; }
    st.holes.splice(0, got.holes.length, ...got.holes); st.holesN = got.holes.length;
    st.model.setTrees(got.trees); st.model.state.homes = got.homes; st.model.state.rocks = got.rocks;
    Object.assign(st, {creeks: got.creeks, rocks: got.rocks, name: got.name, landscape: got.landscape, treePlan: editor.state.treePlan ?? null, surround: editor.state.surround ?? null});
-   told = [got.masks.size ? `${got.masks.size} layer${got.masks.size === 1 ? '' : 's'} as painted there` : '', got.landEdits ? 'the ground as shaped' : '', 'the holes, trees and houses'].filter(Boolean).join(', ');
-   // The layers were swapped in whole, past the trace's own record of what
-   // changed: the cells and the smooth trace painted again from scratch.
-   codesOf = {}; paintCodes(); refreshSave();
+   told = [got.shapes.size ? `${got.shapes.size} layer${got.shapes.size === 1 ? '' : 's'} as painted there` : '', got.landEdits ? 'the ground as shaped' : '', 'the holes, trees and houses'].filter(Boolean).join(', ');
+   paintCodes(); refreshSave();
   }
   // Said now, and again by the review once it has painted (paintCourse).
   st.cameBack = `Back from the 3D editor with ${told}. Change anything in the steps; Open in 3D editor builds the course from both.`;
@@ -2747,14 +2686,11 @@ export function open(draft = null) {
    const L = d.land, u = L.unit ?? {h: 1, v: 1};
    st.land = L;
    st.gridder = createGridder({box: {x0: L.center.x - L.halfX / u.h, x1: L.center.x + L.halfX / u.h, y0: L.center.y - L.halfZ / u.h, y1: L.center.y + L.halfZ / u.h}, cell: L.cell, unit: u});
-   if (d.osm?.codes) { st.osm = d.osm; backOsm(); }
+   if (d.osm?.shapes) { st.osm = d.osm; backOsm(); }
    for (const p of d.pics ?? []) { const live = !p.failed && livePicture(p); if (live) st.pics.push(live); else lostPics++; }
    if (d.trace) {
-    st.model = createTrace(st.land, {rocks: st.rocks, bunkers: d.trace.bunkers ?? [], creekLines: d.trace.creekLines ?? [], trees: d.trace.trees, homes: d.trace.homes});
-    const Ls = st.model.state.layers;
-    for (const [k, m] of d.trace.masks) Ls.mask(k, true).set(m);
-    for (const k of d.trace.hidden ?? []) Ls.hidden.add(k);
-    Ls.recompose();
+    st.model = createTrace(st.land, {rocks: st.rocks, bunkers: d.trace.bunkers ?? [], creekLines: d.trace.creekLines ?? [], trees: d.trace.trees, homes: d.trace.homes, shapes: d.trace.shapes});
+    for (const k of d.trace.hidden ?? []) st.model.setHidden(k, true);
    }
    paintRelief();
    if (d.picShow === 'lidar' || st.pics.some(p => p.group === d.picShow)) { st.picShow = d.picShow; st.offset = st.picOffsets[d.picShow] ?? {x: 0, z: 0}; relay(); }
