@@ -184,10 +184,19 @@ export function middleOf(set) {
 // when nothing was within reach). Rejected: easing each point toward its two
 // neighbours and back (Taubin's two steps): 32 rounds of it cut a square's
 // corner by 0.2 m at a 2 m radius -- a radius barely seen.
-export function smoothEdges(set, {radius = 1.5, x = null, z = null, reach = radius * 4} = {}) {
+// IT SETTLES (24 November 2026): a point the bell would move less than an
+// eighth of the radius stays where it is, and one it would move a quarter or
+// more moves all the way (in between, part of it). A bell this wide moves a
+// point on an edge curving round a radius of r by about radius² / (8 r), so
+// an edge already rounder than the radius never moves: smoothing the same
+// place again changes nothing, where an untouched bell shrank every shape a
+// little at each pass (a green 2 cm a dab) and rounded a box's corners
+// further with every stroke beside it. `within`: a set; only points inside
+// it move (a stroke's own band, for Smooth edge on release).
+export function smoothEdges(set, {radius = 1.5, x = null, z = null, reach = radius * 4, within = null} = {}) {
  if (!set.length) return set;
- const R = radius * CM, step = Math.max(5, R / 10), X = x == null ? null : x * CM, Y = z == null ? null : z * CM, RE = reach * CM;
- const weight = q => X == null ? 1 : Math.max(0, 1 - Math.hypot(q.x - X, q.y - Y) / RE);
+ const R = radius * CM, step = Math.max(5, R / 10), X = x == null ? null : x * CM, Y = z == null ? null : z * CM, RE = reach * CM, SETTLE = R / 8;
+ const weight = q => (X == null ? 1 : Math.max(0, 1 - Math.hypot(q.x - X, q.y - Y) / RE)) * (within && !contains(within, q.x / CM, q.y / CM) ? 0 : 1);
  const sigma = R / 2 / step, half = Math.ceil(3 * sigma), bell = Array.from({length: 2 * half + 1}, (_, k) => Math.exp(-((k - half) ** 2) / (2 * sigma * sigma)));
  let touched = false;
  // Only the paths near the brush are worked on (and cleaned together); the
@@ -212,14 +221,19 @@ export function smoothEdges(set, {radius = 1.5, x = null, z = null, reach = radi
    if (!w[i]) { q.push(pts[i]); continue; }
    let sx = 0, sy = 0, sw = 0;
    for (let k = -half; k <= half; k++) { const o = pts[((i + k) % n + n) % n], g = bell[k + half]; sx += o.x * g; sy += o.y * g; sw += g; }
-   q.push({x: Math.round(pts[i].x + w[i] * (sx / sw - pts[i].x)), y: Math.round(pts[i].y + w[i] * (sy / sw - pts[i].y))});
+   const dx = sx / sw - pts[i].x, dy = sy / sw - pts[i].y, f = w[i] * Math.max(0, Math.min(1, (Math.hypot(dx, dy) - SETTLE) / SETTLE));
+   q.push({x: Math.round(pts[i].x + f * dx), y: Math.round(pts[i].y + f * dy)});
   }
   return Clipper.simplifyPath(q, 1, true);
  });
  if (!touched) return set;
- // Cleaned (an eased thin shape may cross itself), and the specks dropped.
- const speck = Math.PI * radius * radius, cleaned = Clipper.union(out.filter(p => p.length >= 3), NZ);
- const kept = join(parts(cleaned).filter(p => Clipper.area(p.outer) / (CM * CM) >= speck || (X != null && !inReach(p.outer, X, Y, RE))));
+ // Cleaned (an eased thin shape may cross itself) counting only the ground
+ // inside an outline more than inside its holes ("positive"), so a hole eased
+ // out past its outline's edge does not fill; and the specks dropped.
+ const speck = Math.PI * radius * radius, cleaned = Clipper.union(out.filter(p => p.length >= 3), FillRule.Positive);
+ // (Holes under the circle's area -- pocks -- fill, as specks go.)
+ const reached = path => X == null || inReach(path, X, Y, RE), small = path => Math.abs(Clipper.area(path)) / (CM * CM) < speck;
+ const kept = join(parts(cleaned).filter(p => !small(p.outer) || !reached(p.outer)).map(p => ({outer: p.outer, holes: p.holes.filter(h => !small(h) || !reached(h))})));
  return far.length ? far.concat(kept) : kept;
 }
 const inReach = (path, X, Y, RE) => path.some(q => Math.hypot(q.x - X, q.y - Y) <= RE);

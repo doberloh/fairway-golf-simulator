@@ -581,17 +581,12 @@ here is a claim of support until it is done.
   green edges in the game on a course saved again (a course saved before
   keeps its old outlines). Not checked: the 3D editor's redraw after a
   stroke with its margin now 32 cells (Node tests only).
-- [ ] **No squares in the builder: under way** (branch `builder-outlines`,
-  from 24 November 2026; COURSE_BUILDER.md, *No squares in the builder*).
-  Done: the picture and LIDAR smoothed at every zoom, the review drawn from
-  the course's outlines, door 2's trace step on outlines (its tools, drafts
-  version 4, Back to 2D, OpenStreetMap, the course made from them), and the
-  3D editor on outlines (its tools, its view, Save untraced). Cells remain
-  only as hidden lookups. Owed: the owner's look at painting (a box with
-  Auto curve; a stroke on Alpine), the review and the editor; a version 3
-  draft opened by the owner (Alpine's took 3.9 s in Node, 6.8 s to open in
-  the built builder). The plan's frame on Alpine: 4.8 ms at the whole land,
-  about 1 ms zoomed in (RESEARCH, *The builder on outlines*).
+- [ ] **No squares in the builder: not seen by the owner** (branch
+  `builder-outlines`, 24 November 2026; COURSE_BUILDER.md, *No squares in
+  the builder*; what was built in DONE.md). Owed: the owner painting in
+  both editors -- a box with Auto curve, strokes and Smooth on Alpine --
+  and looking at the review; their Alpine draft (version 3) opened (6.8 s
+  in the built builder here); a course saved from either editor played.
 - [ ] **The fringe only where painted: not seen by the owner** (24 November
   2026; COURSE_BUILDER.md, *A fringe only where it is painted*). Seen: the
   Fringe layer offered, Add layer around Green with Fringe at 2 m on a copy

@@ -25,6 +25,33 @@ kept whole: *The open list before the 11 November 2026 prune* and *The open
 list before the 16 October prune*, each with a table of what became of every
 entry.
 
+## No squares in the builder (branch `builder-outlines`, 24 November 2026; not merged)
+
+The owner: "I want these pixellated views gone from the builder entirely.
+No 're processing on a 1m square' or anything like that ... The game doesnt
+render in blocks, why does the builder." Built, in five commits
+(COURSE_BUILDER.md, *No squares in the builder*; RESEARCH, *The builder on
+outlines*):
+
+- [x] The picture and the LIDAR smoothed at every zoom; the review drawn
+  from the course file's own outlines.
+- [x] A layer is a set of outlines (shapes.js, on Clipper2 -- chosen over
+  Clipper 1, polygon-clipping and an older Clipper2 port by timing on the
+  owner's Alpine Lake): door 2's trace and every tool exact on them, a
+  stroke laid when it ends, drafts version 4, Back to 2D, OpenStreetMap,
+  the course made from them untraced.
+- [x] The 3D editor on the same model, its view drawing the outlines, its
+  Save untraced.
+- [x] Smooth that settles, and Smooth edge on release kept to the stroke.
+- [x] The cell code nothing used taken out.
+
+Dead ends: Taubin's easing for Smooth (barely rounded a corner); opening and
+closing (deletes thin paths); laying each dab as it came in door 2 (8 to 30
+ms a dab on the biggest layer); a drawn-edges memory kept over the cells
+(built and taken out the same day: still squares underneath). Tested: every
+Node test, all ten builder journeys, timings and real drags on Alpine.
+Still owed (TODO): the owner's own use.
+
 ## The grass toned down (branch `builder-big-zips`, 24 November 2026; merged 24 November, not released)
 
 The owner: "our grasses are almost too neon and too light colored on all of

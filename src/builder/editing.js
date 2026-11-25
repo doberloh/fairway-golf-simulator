@@ -80,14 +80,14 @@ export function createEditor(doc, {fringeBand = 0} = {}) {
  let fringeLaid = false;
  if (fringeBand > 0 && !T.shapesOf('fringe').length && T.shapesOf('green').length) { T.load({shapes: new Map([['fringe', S.grow(T.shapesOf('green'), fringeBand)]])}); fringeLaid = true; }
  // THE HIDDEN LOOKUP: each cell's topmost layer, as the editor's codes
- // (PAINT), every layer (`codes`) or the shown ones; made again only after a
- // change. Never drawn.
+ // (PAINT), for what asks a whole grid at once; made again only when asked
+ // after a change. Never drawn. (A single point asks the outlines: `codeAt`.)
  let look = null;
  const lookup = () => {
   if (look?.version === T.version()) return look;
-  const all = new Uint8Array(r.nx * r.nz), seen = new Uint8Array(r.nx * r.nz);
-  for (const kind of [...LAYER_ORDER].reverse()) { const set = T.shapesOf(kind); if (!set.length) continue; S.rasterize(set, grid, all, CODE[kind]); if (!T.isHidden(kind)) S.rasterize(set, grid, seen, CODE[kind]); }
-  return (look = {version: T.version(), codes: all, view: seen});
+  const all = new Uint8Array(r.nx * r.nz);
+  for (const kind of [...LAYER_ORDER].reverse()) { const set = T.shapesOf(kind); if (set.length) S.rasterize(set, grid, all, CODE[kind]); }
+  return (look = {version: T.version(), codes: all});
  };
  Object.defineProperty(r, 'codes', {get: () => lookup().codes});
  r.trace = T;
@@ -181,7 +181,10 @@ export function createEditor(doc, {fringeBand = 0} = {}) {
   },
   hiddenLayers: () => LAYER_ORDER.filter(k => T.isHidden(k)),
   height: (x, z) => sample(x, z),
-  codeAt(x, z) { const i = Math.floor((x - r.x0) / r.cell), j = Math.floor((z - r.z0) / r.cell); return i < 0 || j < 0 || i >= r.nx || j >= r.nz ? 0 : r.codes[j * r.nx + i]; },
+  // What lies at a point, asked of the outlines themselves (a point's winding,
+  // shapes.js): the status line asks it as the pointer moves, so a hidden
+  // grid made again after every dab of a drag would cost the frame.
+  codeAt(x, z) { const k = T.kindAt(x, z); return k ? CODE[k] : 0; },
   surfaceAt(x, z) { return PAINT[api.codeAt(x, z)]; },
   // The layers: those holding anything (top first), and hiding one from view.
   layersPresent: () => T.layersPresent(),

@@ -623,7 +623,9 @@ export function open(draft = null) {
     }
     if (type === 'up' && steadied && st.strokeBox && st.smoothStroke && t !== 'eraseAll' && st.kind !== 'rough') {
      const b = st.strokeBox, cx = (b.x0 + b.x1) / 2, cz = (b.z0 + b.z1) / 2, reach = Math.hypot(b.x1 - b.x0, b.z1 - b.z0) / 2 + st.size + 2;
-     m.smooth({x: cx, z: cz, radius: 1.5, area: reach, kind: st.kind});
+     // Only the stroke's own edges (its band and a little round it), so a
+     // box or a tee beside it keeps its corners (24 November 2026).
+     m.smooth({x: cx, z: cz, radius: 1.5, area: reach, kind: st.kind, within: S.grow(S.band(st.strokeDabs.map(q => [q.x, q.z]), st.size), 1.5)});
      patchCodes(cx, cz, reach + 2);
     }
     if (type === 'up' && t === 'brush') underNote(st.strokeBox);

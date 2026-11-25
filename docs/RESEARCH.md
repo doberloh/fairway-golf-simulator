@@ -17828,6 +17828,20 @@ pinned exactly.
   circle -- what the owner asked on 23 November never to happen.
   A Smooth brush dab took 16 ms at the median, 30 ms at worst on Alpine;
   Smooth edges on the whole road layer 220 ms.
+  **It settles** (the same day, on review): a point the bell would move
+  less than an eighth of the radius stays put, one it would move a quarter
+  or more moves all the way (PLACED). The bell moves a point on an edge
+  curving round a radius r by about radius² / (8 r), so an edge already
+  rounder than the radius never moves again. Without it every pass shrank
+  a shape (a 12 m green about 2 cm a dab) and Smooth edge on release, on by
+  default, rounded a box's corners further at every stroke beside it.
+  Measured: 50 dabs on one spot of a 6 m green change its area by under
+  0.05 m² after the first five; a 20 m box smoothed twice keeps its area to
+  0.5 m² of once. Smooth edge on release moves only the stroke's own edges
+  (its band and 1.5 m round it), and holes under the circle's area fill as
+  specks go; the clean-up counts only ground inside an outline more than
+  inside its holes ("positive"), so a hole eased past its outline's edge
+  does not fill it.
 - **Tidy** is exact: shapes under SPECK and holes under POCK by their area
   (58 ms for every layer on Alpine).
 - **Normalize width** finds each thin part's middle line on a hidden grid a
@@ -17858,4 +17872,18 @@ pinned exactly.
   making the layer's Path2D). Undo restores the layers by reference: 0.1 ms.
   Until then the editor painted a half-metre grid and drew the cells while
   a brush was down; "a polygon boolean every frame" was its reason, never
-  measured.
+  measured. What lies under the pointer (the status line, every move) asks
+  the outlines, not a grid made again after each dab (12 million cells).
+- **Real drags with the mouse**, in the built builder on Alpine (40 moves
+  along the road, the browser's long tasks watched): door 2's first brush
+  stroke after opening held two frames, 116 and 61 ms (Path2Ds and the
+  picture made the first time); a second brush stroke and an eraser stroke
+  none past 50 ms; the 3D editor's Paint brush none. Letting go of a stroke
+  in Node: the stroke and Smooth edge on release 14 to 25 ms, the hidden
+  lookup 11 to 22 ms, the areas 1 to 2 ms.
+- **What still reads cells, and why.** Lining OpenStreetMap up with the
+  picture or the LIDAR (`refineTrace`, Build automatically too) compares
+  the map with the photograph's and the survey's own cells -- it moves the
+  map and re-reads a 3 m band of every edge from them, like the auto trace
+  -- so it runs on the land's cells and what it gives back becomes outlines
+  once. Keep map as is keeps OpenStreetMap's own shapes exactly.

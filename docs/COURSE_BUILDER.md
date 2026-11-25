@@ -1892,6 +1892,17 @@ in steps, each leaving a working builder.
   tools). Checked: every Node test, all ten builder journeys; on Alpine
   Lake's 36,000-point road layer a dab took 3.6 ms (worst 6.2) and the view
   after it 0.7 ms. **Not seen by the owner.**
+- **Smooth settles, and Smooth edge on release keeps to the stroke** (24
+  November 2026, on review): a place already as round as the brush is left
+  alone, so smoothing again changes nothing (it shrank shapes a little at
+  every pass), and the release smoothing moves only the stroke's own edges,
+  so a box or tee beside it keeps its corners. Numbers: RESEARCH, *The
+  builder on outlines*.
+- **What still reads cells:** lining OpenStreetMap up with the picture or
+  the LIDAR reads the photograph's and the survey's own cells (as the auto
+  trace does) and its result becomes outlines once; **Keep map as is**
+  keeps the map's own shapes exactly. Everything else is outlines, with
+  hidden lookups of cells only where a whole grid is asked at once.
 
 ### Houses of any size, Normalize width, the Line tool, the pen's curve (23 November 2026)
 

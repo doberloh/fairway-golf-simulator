@@ -77,6 +77,25 @@ test('smoothing rounds a corner, keeps the size, and keeps a thin path', () => {
  assert.equal(S.smoothEdges(square(0, 0, 1), {radius: 1.5}).length, 0);
 });
 
+test('smoothing settles: the same place again changes nothing, a hole near an edge stays a hole', () => {
+ // Fifty dabs on one spot of a small green: it stops changing.
+ let g = S.disc(0, 0, 6); const a0 = S.areaOf(g);
+ for (let n = 0; n < 5; n++) g = S.smoothEdges(g, {radius: 1.5, x: 5, z: 0, reach: 6});
+ const a5 = S.areaOf(g);
+ for (let n = 0; n < 45; n++) g = S.smoothEdges(g, {radius: 1.5, x: 5, z: 0, reach: 6});
+ assert.ok(Math.abs(S.areaOf(g) - a5) < .05 && Math.abs(a5 - a0) < a0 * .02, `${a0.toFixed(2)} -> ${a5.toFixed(2)} -> ${S.areaOf(g).toFixed(2)} m²`);
+ // A box smoothed once rounds its corners; again, it stays as it is.
+ const once = S.smoothEdges(square(0, 0, 20), {radius: 2}), twice = S.smoothEdges(once, {radius: 2});
+ assert.ok(Math.abs(S.areaOf(twice) - S.areaOf(once)) < .5, `${S.areaOf(once)} then ${S.areaOf(twice)}`);
+ // Only inside `within`: a box beside the stroke keeps its corner.
+ const box = square(0, 0, 10), stroke = S.band([[12, -5], [12, 15]], 1.5), lay = S.union(box, stroke);
+ const sm = S.smoothEdges(lay, {radius: 1.5, x: 12, z: 5, reach: 14, within: S.grow(stroke, 1.5)});
+ assert.ok(S.contains(sm, .1, .1), 'the box\'s far corner untouched');
+ // A hole 30 cm inside its outline's edge: still a hole, the outline whole.
+ const ring = S.difference(square(0, 0, 10), square(.3, 3, 3)), r2 = S.smoothEdges(ring, {radius: 1.5});
+ assert.ok(!S.contains(r2, 1.8, 4.5), 'the hole stays open'); assert.ok(S.contains(r2, 5, 5));
+});
+
 test('grown and shrunk round, turned and moved exactly', () => {
  const g = S.grow(square(0, 0, 10), 2);
  near(S.areaOf(g), 100 + 4 * 10 * 2 + Math.PI * 4, .6, 'grown 2 m round');

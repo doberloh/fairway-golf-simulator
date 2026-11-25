@@ -187,9 +187,11 @@ export function createTrace(grid, {codes = null, shapes = null, trees = [], home
   // to about the radius, notches narrower fill, thin paths keep their
   // width), over the land or round a point within `area` metres; shapes
   // smaller than the circle go. With no `kind`, every layer is smoothed.
-  smooth({radius = 1.5, x = null, z = null, area = null, kind = null} = {}) {
+  // `within`: only edges inside this set move (Smooth edge on release: the
+  // stroke's own band, so the shapes beside it keep their corners).
+  smooth({radius = 1.5, x = null, z = null, area = null, kind = null, within = null} = {}) {
    const kinds = kind ? [layerOf(kind)] : every(), reach = area ?? radius * 4;
-   step(() => { for (const L of kinds) put(L, S.smoothEdges(cur(L), {radius, x, z, reach})); });
+   step(() => { for (const L of kinds) put(L, S.smoothEdges(cur(L), {radius, x, z, reach, within})); });
   },
   // EXTRAPOLATE (the owner, 1 November 2026: "semi rough to fairways ...
   // Allow the user to extrapolate any layers"): `to`'s layer laid `width`
