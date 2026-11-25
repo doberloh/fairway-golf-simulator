@@ -106,6 +106,25 @@ test('smoothing takes out the old squares\' waves and a mapped outline\'s facets
  assert.ok(S.contains(one, -11.5, 0) === S.contains(gon, -11.5, 0) && S.areaOf(one) > S.areaOf(gon) - 1, 'the far side as it was');
 });
 
+// Thin shapes under the sizes the builder passes: a 1.8 m path (Normalize's
+// width) under the whole-layer Smooth (1.5 m) and the 3D editor's brush
+// (radius 2.7 m, reach 8 m) at its end; a 1 m stroke smoothed on release.
+// Before the wiggles dropped were held to a third of a shape's width, the
+// editor's brush cut such a path's end off and release smoothing lost a thin
+// stroke's ends.
+test('smoothing keeps a thin path\'s end and width, and a thin stroke\'s round ends', () => {
+ const wig = Array.from({length: 61}, (_, q) => [q, 6 * Math.sin(q / 9)]), path = S.band(wig, .9);
+ for (const out of [S.smoothEdges(path, {radius: 1.5}), S.smoothEdges(path, {radius: 8 / 3, x: 60, z: wig[60][1], reach: 8})]) {
+  assert.ok(S.contains(out, .2, wig[0][1]) && S.contains(out, 59.8, wig[60][1]), 'both ends there');
+  near(S.areaOf(out), S.areaOf(path), S.areaOf(path) * .03, 'its area');
+  for (let x = 3; x <= 57; x += 3) { const z = 6 * Math.sin(x / 9); assert.ok(S.contains(out, x, z + .7) && S.contains(out, x, z - .7), `at ${x} m it is still about 1.8 m wide`); }
+ }
+ const stroke = S.band(Array.from({length: 31}, (_, q) => [q * .5, .4 * Math.sin(q)]), .5);
+ const rel = S.smoothEdges(stroke, {radius: 1.5, x: 7.5, z: 0, reach: 12, within: S.grow(stroke, 1.5)});
+ assert.equal(S.parts(rel).length, 1);
+ assert.ok(S.contains(rel, .05, 0) && S.contains(rel, -.35, 0) && S.contains(rel, 14.95, .4 * Math.sin(29)), 'its round ends there');
+});
+
 test('smoothing settles: the same place again changes nothing, a hole near an edge stays a hole', () => {
  // Fifty dabs on one spot of a small green: it keeps its size. (Since 25
  // November 2026 the curve goes through points of the edge, so nothing

@@ -592,7 +592,10 @@ here is a claim of support until it is done.
   game (seen here only in capture pictures); a fresh OpenStreetMap download
   looked at; Smooth brushed over a wave and a facet; an old course file
   (Lake Point) opened in the 3D editor to see its once-over smoothing and
-  its note; Normalize width on the 3D editor's and door 2's paths.
+  its note; Normalize width on the 3D editor's and door 2's paths. Known:
+  brushing every edge of Alpine's old-fit cart paths over and over left one
+  49-degree bend in a 5 m wedge where two paths meet (RESEARCH, *Curves
+  through points*); a single stroke has not been seen to -- look for it.
 - [ ] **The fringe only where painted: not seen by the owner** (24 November
   2026; COURSE_BUILDER.md, *A fringe only where it is painted*). Seen: the
   Fringe layer offered, Add layer around Green with Fringe at 2 m on a copy

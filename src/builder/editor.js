@@ -45,6 +45,7 @@ const label = k => GROUNDS[k]?.label ?? (k[0].toUpperCase() + k.slice(1));
 // work added (round-trip.js `withEditorWork`), and Back to 2D opens it, so a
 // course reopened from a file has everything it had. None on a generated course
 // or a file from before 5 November 2026.
+const SMOOTHED_NOTE = 'Saved by an older builder: its surfaces\' edges were smoothed as it opened, corners kept (Undo puts them back).';
 export function openEditor(doc, {from = 'file', back = null, work = null, smoothOld = false} = {}) {
  current?.view.dispose();
  // A course from outside the builder (no door 2 session behind it) keeps the
@@ -55,7 +56,7 @@ export function openEditor(doc, {from = 'file', back = null, work = null, smooth
  // smoothed once as it opens (builder.js `openOne`), one undo.
  if (smoothOld) editor.smoothEdges({radius: 1.5});
  setTitle(s.name);
- const wrap = el('div', {class: 'cb-view'}), status = el('div', {class: 'cb-status'}, smoothOld ? 'Saved before the builder kept smooth outlines: its surfaces\' edges were smoothed as it opened (Undo puts them back). Right-drag to turn, wheel to zoom.' : 'Right-drag to turn, wheel to zoom, left-drag to move. Pick a tool on the left.');
+ const wrap = el('div', {class: 'cb-view'}), status = el('div', {class: 'cb-status'}, smoothOld ? SMOOTHED_NOTE : 'Right-drag to turn, wheel to zoom, left-drag to move. Pick a tool on the left.');
  const tools = el('div', {class: 'cb-tools cb-tools3d'}), side = el('div', {class: 'cb-side'});
  // THE TOOL PALETTE (the builder-ux goal, item 8): every tool an icon with its
  // key down the left edge, as on door 2's plan; the column beside it holds the
@@ -687,6 +688,6 @@ export function openEditor(doc, {from = 'file', back = null, work = null, smooth
   status.textContent = `${what} deleted${type === 'creek' || kind === 'water' ? ': its channel or bed stays in the land -- Fill to surrounding raises it' : ''}. Undo puts it back.`;
  }
  function sizeBrush(d) { radius = Math.max(1, Math.min(60, Math.round(radius * (d > 0 ? 1.25 : .8)) + (d > 0 ? 1 : 0))); const r = tools.querySelector('.cb-group input[type=range]'); if (r) r.value = radius; status.textContent = `Brush ${radius} m round.`; }
- status.textContent = from === 'generated' ? 'Taken over: everything here is yours to change. Save keeps it as a .fairway file Fairway plays.' : HINT.navigate();
+ status.textContent = from === 'generated' ? 'Taken over: everything here is yours to change. Save keeps it as a .fairway file Fairway plays.' : smoothOld ? SMOOTHED_NOTE : HINT.navigate();
  return current;
 }

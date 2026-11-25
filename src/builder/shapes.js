@@ -206,7 +206,7 @@ export const SMOOTH_TOL = .7;
 export function smoothEdges(set, {radius = 1.5, x = null, z = null, reach = radius * 4, within = null} = {}) {
  if (!set.length) return set;
  const R = radius * CM, X = x == null ? null : x * CM, Y = z == null ? null : z * CM, RE = reach * CM;
- const tol = SMOOTH_TOL * radius, step = Math.max(.05, radius / 5), keepCorners = X == null || !!within;
+ const tolAll = SMOOTH_TOL * radius, step = Math.max(.05, radius / 5), keepCorners = X == null || !!within;
  const free = q => (X == null || Math.hypot(q[0] * CM - X, q[1] * CM - Y) <= RE) && (!within || contains(within, q[0], q[1]));
  let touched = false;
  // Only the paths near the brush are worked on (and cleaned together); the
@@ -226,6 +226,13 @@ export function smoothEdges(set, {radius = 1.5, x = null, z = null, reach = radi
   const N = pts.length, isFree = pts.map(free);
   if (N < 4 || !isFree.some(Boolean)) return p;
   touched = true;
+  // A THIN SHAPE'S WIGGLES ARE ITS SHAPE: what is dropped is held under a
+  // third of its width (twice its area over its edge: a path's width, a
+  // green's radius). At 0.7 of the radius alone the 3D editor's brush (1.9 m)
+  // turned a 1.8 m path's round end to a point and cut it off, and release
+  // smoothing swelled a 1 m stroke 8% and lost its ends.
+  let edge = 0; for (let k = 0; k < p.length; k++) { const a = p[k], b = p[(k + 1) % p.length]; edge += Math.hypot(b.x - a.x, b.y - a.y); }
+  const tol = Math.min(tolAll, edge ? .35 * 2 * Math.abs(Clipper.area(p)) / edge / CM : tolAll);
   // Corners: kept sharp (a whole layer, or `within`) or, under the brush,
   // rounded -- outward ones and, under the brush, inward ones too.
   const corner = cornerPoints(pts, Clipper.area(p) > 0, Math.max(.3, radius / 3), !keepCorners);
@@ -260,9 +267,23 @@ export function smoothEdges(set, {radius = 1.5, x = null, z = null, reach = radi
     // curve passes through both exactly).
     const from = curve.findIndex(q => q[0] === pts2[0][0] && q[1] === pts2[0][1]);
     let to = -1; for (let q = curve.length - 1; q >= 0; q--) if (curve[q][0] === pts2.at(-1)[0] && curve[q][1] === pts2.at(-1)[1]) { to = q; break; }
-    ring.pop();   // the fixed point before the run comes back as the curve's first
-    ring.push(...(from >= 0 && to > from ? curve.slice(from, to + 1) : idx.map(at)));
-    i = e + 1;   // the fixed point after it is the curve's last
+    // EASED IN AT THE REACH'S EDGE: each point of the run moved toward the
+    // curve (its nearest point on it), all the way within 60% of the reach
+    // and less and less beyond, so the smoothed stretch meets the untouched
+    // edge without a kink (laid straight in, a brush drawn along Alpine's
+    // edges left bends of 20 to 56 degrees at one point where each dab's
+    // reach ended, and changed a small green's size 6%).
+    const C = from >= 0 && to > from ? curve.slice(from, to + 1) : null;
+    for (let k = i; k < e; k++) {
+     const P = at(k);
+     if (!C) { ring.push(P); continue; }
+     const w = X == null ? 1 : Math.max(0, Math.min(1, (1 - Math.hypot(P[0] * CM - X, P[1] * CM - Y) / RE) / .4));
+     if (!w) { ring.push(P); continue; }
+     let best = null, d0 = Infinity;
+     for (let c = 0; c + 1 < C.length; c++) { const a = C[c], b = C[c + 1], dx = b[0] - a[0], dz = b[1] - a[1], L = dx * dx + dz * dz, t = L ? Math.max(0, Math.min(1, ((P[0] - a[0]) * dx + (P[1] - a[1]) * dz) / L)) : 0, qx = a[0] + t * dx, qz = a[1] + t * dz, d = (qx - P[0]) ** 2 + (qz - P[1]) ** 2; if (d < d0) { d0 = d; best = [qx, qz]; } }
+     ring.push([P[0] + w * (best[0] - P[0]), P[1] + w * (best[1] - P[1])]);
+    }
+    i = e;   // the fixed point after the run is pushed as it is
    }
   }
   const q = []; for (const [mx, mz] of ring) { const c = {x: Math.round(mx * CM), y: Math.round(mz * CM)}, l = q.at(-1); if (!l || l.x !== c.x || l.y !== c.y) q.push(c); }
@@ -283,14 +304,21 @@ const turnOf = (a, b, c) => { const ux = b[0] - a[0], uz = b[1] - a[1], vx = c[0
 // A shape's corners among an edge's points (metres): where the edge, looked
 // at `arm` metres either way, turns 75 degrees or more outward (PLACED) -- the
 // sharpest point of each such place.
+// And sharp AT the point: looked at a third as far either way it turns
+// nearly as much (70%) -- a round end turns as far over the arm, but
+// gradually (a 1 m stroke's ends were taken for corners and cut flat).
 function cornerPoints(pts, positive, arm, both = false) {
  const N = pts.length, turn = new Float64Array(N), lim = 75 * Math.PI / 180;
- for (let i = 0; i < N; i++) {
+ const turnOver = (i, len) => {
   let a = i, b = i, d = 0;
-  for (let k = 1; k < N && d < arm; k++) { const p = pts[(i - k + N) % N]; d = Math.hypot(p[0] - pts[i][0], p[1] - pts[i][1]); a = (i - k + N) % N; }
-  d = 0; for (let k = 1; k < N && d < arm; k++) { const p = pts[(i + k) % N]; d = Math.hypot(p[0] - pts[i][0], p[1] - pts[i][1]); b = (i + k) % N; }
-  if (a === i || b === i || a === b) continue;
-  const t = turnOf(pts[a], pts[i], pts[b]); turn[i] = both || (t > 0) === positive ? Math.abs(t) : 0;
+  for (let k = 1; k < N && d < len; k++) { const p = pts[(i - k + N) % N]; d = Math.hypot(p[0] - pts[i][0], p[1] - pts[i][1]); a = (i - k + N) % N; }
+  d = 0; for (let k = 1; k < N && d < len; k++) { const p = pts[(i + k) % N]; d = Math.hypot(p[0] - pts[i][0], p[1] - pts[i][1]); b = (i + k) % N; }
+  return a === i || b === i || a === b ? 0 : turnOf(pts[a], pts[i], pts[b]);
+ };
+ for (let i = 0; i < N; i++) {
+  const t = turnOver(i, arm);
+  if (!(both || (t > 0) === positive) || Math.abs(t) < lim) continue;
+  if (Math.abs(turnOver(i, arm / 3)) >= .7 * Math.abs(t)) turn[i] = Math.abs(t);
  }
  const out = new Set();
  for (let i = 0; i < N; i++) if (turn[i] >= lim && turn[i] >= turn[(i - 1 + N) % N] && turn[i] > turn[(i + 1) % N]) out.add(i);

@@ -17984,8 +17984,17 @@ centripetal spline the pen already drew):
   into a facet), and the tamed curve drawn through them. Where the reach
   ends the curve leaves the untouched edge in the direction of the next
   fixed point at least a piece away (the very next, 30 cm off, held the
-  handle short: 3% off a green). Corners -- turning 75 degrees within a
-  third of the radius (PLACED) -- are kept sharp by Smooth edges on a layer
+  handle short: 3% off a green). The brush EASES IN: each point of the
+  stretch moves toward its nearest point on the curve, all the way within
+  60% of the reach and less beyond (PLACED; laid straight in, a brush drawn
+  along Alpine's edges left bends of 20 to 56 degrees at one point where
+  each dab's reach ended). A THIN SHAPE'S WIGGLES ARE ITS SHAPE: what is
+  dropped is held under a third of the shape's width, read as twice its
+  area over its edge (a path's width, a green's radius; PLACED) -- without
+  it the 3D editor's brush (wiggles to 1.9 m) cut a 1.8 m path's end off and
+  release smoothing lost a 1 m stroke's ends. Corners -- turning 75 degrees
+  within a third of the radius, and 70% of that within a ninth, so a round
+  end is not one (PLACED) -- are kept sharp by Smooth edges on a layer
   and by Smooth edge on release; the brush rounds one it is put on, its node
   split into two a radius either side. Measured: a wave of 0.4 m every 8 m
   on a straight edge, smoothed whole at 1.5 m, within 12 cm of straight;
@@ -17996,6 +18005,27 @@ centripetal spline the pen already drew):
   opens: a brush dab 0.3 ms at the median, 2.8 at worst; Smooth edges on
   each whole layer 1 to 91 ms (roads), every layer's area within 0.5% but
   the tees (+1.6%, their blobs rounded out).
+  **On the owner's real edges, at the sizes the builder passes** (local
+  `smooth-real`; turning per 100 m of edge with corners left out, the
+  sharpest bend at one point under 60 degrees):
+
+| edge | as it was | Smooth edges (whole layer, 1.5 m) | door 2's brush along it (size 4) | the 3D editor's brush (size 8) |
+| --- | --- | --- | --- | --- |
+| Alpine fairway, squares fitted the old way | 174, 23 deg | 143, 14 deg | 149 -> 129, 9 -> 21 deg | 149 -> 106, 9 -> 17 deg |
+| Alpine cart paths, the same | 130, 17 deg | 99, 16 deg | 130 -> 113, 17 -> 49 deg | 130 -> 96, 17 -> 30 deg |
+| the map's fairways as drawn | 124, 58 deg | 139, 15 deg | 89 -> 127, 49 -> 22 deg | 89 -> 118, 49 -> 14 deg |
+| the map's greens as drawn | 529, 37 deg | 523, 11 deg | 536 -> 527, 28 -> 10 deg | 536 -> 582, 28 -> 11 deg |
+
+  (A mapped outline's "turning" rises as its facets' bends are spread
+  round as curve; the sharpest bend is the facet.) Every layer's area moved
+  under 0.5% but a brushed green's (0.3%, measured whole). What is left: on
+  the paths, brushing every 1.5 m along every edge -- 2,286 dabs, each place
+  under about five -- left one bend of 49 degrees where two paths meet in a
+  5 m wedge, which drifted about a metre; a single brush stroke has not been
+  seen to. A 1.8 m path smoothed whole or brushed at its end keeps both
+  ends and 1.76 m of width at its narrowest; a 1 m wavy stroke smoothed on
+  release keeps its round ends and its waves (10% of its area, its band's
+  own facets, goes).
   Rejected on the way: easing points under a bell (above: it shrinks, and
   stopping the shrink stopped the smoothing); smoothing by growing and
   shrinking the shape (it deletes paths thinner than the circle).
@@ -18008,7 +18038,9 @@ centripetal spline the pen already drew):
   section a draft of version 3 or older) has its surfaces smoothed once as
   it opens in the 3D editor -- Smooth edges on every layer, corners kept, one
   undo. Lake Point: 53 ms, every layer within 0.5% of its area but the tees
-  (+2.1%) and bunkers (+1.4%). One saved since opens exactly as saved; a file
+  (+2.1%) and bunkers (+1.4%); in the built builder it opened in 0.8 s with
+  the note, Undo put every layer back to the square metre, no page error.
+  Opened so, the course counts as changed. One saved since opens exactly as saved; a file
   with no builder section (a generated course taken over) is left alone --
   smoothing it at every opening would round a Line laid with Auto curve off.
 

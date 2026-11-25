@@ -3,7 +3,7 @@
 // markers -- against a hand-made answer, never the network.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {osmFeatures, layOsm, overpassQuery, fetchOsm, osmBoundary, homeOfFootprint, mergeTrees, courseOutline} from '../src/builder/osm.js';
+import {osmFeatures, layOsm, overpassQuery, fetchOsm, osmBoundary, homeOfFootprint, mergeTrees, courseOutline, curveOutline} from '../src/builder/osm.js';
 import {osmHoles} from '../src/builder/osm-course.js';
 import {createTrace} from '../src/builder/trace-edit.js';
 
@@ -41,6 +41,28 @@ test('an Overpass answer becomes layers, trees and a numbered hole', () => {
  assert.equal(holes.length, 1);
  assert.ok(Math.abs(holes[0].tees[0].z - 80) < 1 && Math.abs(holes[0].green.z + 75) < 1);
  assert.equal(holes[0].aims.length, 1); assert.equal(holes[0].par, 4);
+});
+
+// 25 November 2026 (the owner: "these facets that still show up from the OSM
+// traces"): a mapped outline is laid as a curve through the map's own points,
+// a rectangle's corners kept, and a long straight beside a bend kept straight.
+test('the map is laid curved through its points, corners and long straights kept', () => {
+ const turnAt = (r, q) => { const a = r[(q - 1 + r.length) % r.length], b = r[q], c = r[(q + 1) % r.length], ux = b[0] - a[0], uz = b[1] - a[1], vx = c[0] - b[0], vz = c[1] - b[1]; return Math.abs(Math.atan2(ux * vz - uz * vx, ux * vx + uz * vz)) * 180 / Math.PI; };
+ // A green mapped as 12 points (and closed, the first repeated): curved.
+ const gon = Array.from({length: 13}, (_, q) => [10 * Math.cos(q / 12 * 2 * Math.PI), 10 * Math.sin(q / 12 * 2 * Math.PI)]);
+ const g = curveOutline(gon);
+ assert.ok(g.length > 40 && Math.max(...g.map((_, q) => turnAt(g, q))) < 6.5, 'no facet left');
+ assert.ok(g.every(([x, z]) => Math.abs(Math.hypot(x, z) - 10) < .1), 'on the circle the points lie on');
+ // A tee: its four corners kept.
+ const tee = curveOutline([[0, 0], [20, 0], [20, 8], [0, 8], [0, 0]]);
+ for (const c of [[0, 0], [20, 0], [20, 8], [0, 8]]) assert.ok(tee.some(p => Math.hypot(p[0] - c[0], p[1] - c[1]) < 1e-9), `corner ${c} kept`);
+ assert.ok(tee.every(([x, z]) => x >= -1e-9 && x <= 20 + 1e-9 && z >= -1e-9 && z <= 8 + 1e-9), 'the sides straight');
+ // A road: 150 m straights either side of a 20-degree bend, a short piece at
+ // its end -- the straights within half a metre of the map.
+ const road = [[0, 0], [150, 0], [150 + 150 * Math.cos(.35), 150 * Math.sin(.35)], [152 + 150 * Math.cos(.35), 150 * Math.sin(.35) + 4]];
+ const r = curveOutline(road, {closed: false}), seg = (p, a, b) => { const dx = b[0] - a[0], dz = b[1] - a[1], t = Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dz) / (dx * dx + dz * dz))); return Math.hypot(a[0] + t * dx - p[0], a[1] + t * dz - p[1]); };
+ const off = Math.max(...r.map(p => Math.min(...road.slice(1).map((b, q) => seg(p, road[q], b)))));
+ assert.ok(off < .5, `the road strays ${off.toFixed(2)} m off the map`);
 });
 
 test('the query asks for the golf features in the box; a busy server is said so', async () => {

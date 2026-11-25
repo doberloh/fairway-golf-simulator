@@ -1927,12 +1927,17 @@ in steps, each leaving a working builder.
     rather than a row of painted discs (osm.js `curveOutline`). A **course
     file** the builder saved before outlines has its surfaces smoothed once
     as it opens (Smooth edges on every layer, corners kept, one undo, a note
-    in the status line); one saved since opens exactly as saved, and a file
+    in the status line; it then counts as changed -- PLACED, the owner's to
+    overrule, as are the 75-degree corner rule and the brush rounding
+    corners); one saved since opens exactly as saved, and a file
     with no builder section (a generated course taken over) is left alone.
   - **Smooth** keeps an edge only at the points that shape it -- wiggles
     within 0.7 of the brush's radius dropped, a node every 10 m at the
     average of the edge round it -- and draws the curve through them: waves
     and facets go, and nothing shrinks, as the curve runs through the edge.
+    The brush eases in toward the edge of its reach, and a thin shape's
+    wiggles count as its shape (held under a third of its width), so a cart
+    path keeps its ends and width.
     Smooth edges on a layer and Smooth edge on release keep corners (75
     degrees or more within a short way); the brush rounds a corner it is put
     on.
