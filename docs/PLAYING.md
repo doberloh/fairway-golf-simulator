@@ -727,7 +727,9 @@ changes, newest first, each with **Undo to here**.
      answer you saved; if it cannot -- no land built yet, the land still
      building, the survey not placed on the globe -- the line at the foot
      says why) lays its greens, fairways, tees, bunkers, water, cart
-     paths, woods and buildings (as houses) as layers and sets its numbered
+     paths, woods and buildings (as houses) as layers -- each outline and
+     path curved smoothly through the map's own points, a sharp corner such
+     as a tee's kept -- and sets its numbered
      holes as step 4's markers -- with the map's par, each green mark put on
      its green and each hole given the tee boxes along it as its back, middle
      and front tees -- and its course boundary when it has one. A club with
@@ -840,9 +842,12 @@ changes, newest first, each with **Undo to here**.
      drag inside to move it and drag an anchor to turn it. Each tool's own
      options show while you hold it.
      **Clean up** has three boxes. **Smooth edges** and **Remove specks**
-     each have a **Layer** (every layer, or one). Smoothing keeps thin
-     shapes such as cart paths whole and rounds the edges of wide ones; a
-     speck smaller than the smoothing still goes. **Normalize width** lays
+     each have a **Layer** (every layer, or one). Smoothing takes out waves
+     and the straight facets of a mapped outline and curves the edge
+     through what is left, keeping its size; a whole layer smoothed keeps
+     sharp corners such as a tee's, while the Smooth brush rounds a corner
+     you put it on. It keeps thin shapes such as cart paths whole; a speck
+     smaller than the smoothing still goes. **Normalize width** lays
      every cart path (**Normalize cart paths**, 1.8 m to start: about one
      and a half carts) or every street (**Normalize streets**, 6 m) again at
      one width along its middle; where two meet they still meet in the same
@@ -1048,9 +1053,11 @@ the camera's. Left-drag moves round the course,
 right-drag turns, the wheel zooms; **W A S D** fly forward, left, back and
 right, **Q** and **E** down and up, Shift three times as fast (faster the
 higher you are); **View from above** and **View this hole** jump the view. The surfaces
-are drawn as the course will have them -- each one's outline smoothed --
-not in the editing grid's squares; while you paint, the squares show for a
-moment. **Shape the ground** with Raise, Lower, Smooth, Flatten, Ramp,
+are drawn from their outlines, as the course will have them, while you
+paint too -- never in squares. A course file the builder saved before it
+kept outlines (before 25 November 2026) has its surfaces' edges smoothed
+once as it opens, corners kept, and the line at the foot says so; **Undo**
+puts them back. **Shape the ground** with Raise, Lower, Smooth, Flatten, Ramp,
 Roughen and Restore (the brush's size and strength above them); paint any
 surface or ground type -- **Road** among them in every landscape, and the
 **Pen** on Road draws a parking lot by its edge; **Paint rock on slopes** (under Surfaces) paints, in one

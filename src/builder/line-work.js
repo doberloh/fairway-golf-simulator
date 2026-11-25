@@ -70,7 +70,11 @@ export function evenWidthSet(set, width) {
    for (let d = -k; d <= k; d++) { const p = P[ch.closed ? (q + d + n) % n : q + d]; sx += p[0]; sz += p[1]; }
    Q[q] = [sx / (2 * k + 1), sz / (2 * k + 1)];
   }
-  out.push(...S.band(ch.closed ? [...Q, Q[0]] : Q, width / 2));
+  // Then laid smooth (25 November 2026): the averaged line still stepped a
+  // few centimetres a grid cell, and kinked where two chains met -- Smooth's
+  // own line smoothing (shapes.js `smoothLine`), wiggles within a cell gone.
+  const R = S.smoothLine(Q, Math.max(cell, .5), ch.closed);
+  out.push(...S.band(ch.closed ? [...R, R[0]] : R, width / 2));
  }
  return S.clean(out);
 }

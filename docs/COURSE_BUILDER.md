@@ -1693,7 +1693,9 @@ out automatically?" With screenshots from the game and the review.
   the "jaggy" edges -- and cut every corner by 0.7 m (1.4 m on 1 m land). Now
   a 6-degree tee's sides are within 9 cm (23 cm on 1 m land) and its corners
   within 23 cm (46 cm). Figures, and what was tried and turned down, in
-  RESEARCH *Outlines fitted*. Smooth edges was never the cure: it moves
+  RESEARCH *Outlines fitted*. (Loosened on 25 November 2026: following each
+  step within half a square turned uneven steps into waves -- *No squares in
+  the builder*, *Fourth step*.) Smooth edges was never the cure: it moves
   cells, and the steps are the cells'. A course already saved keeps its old
   outlines until it is saved again; nothing the game reads changed, so no
   `BUILT_VERSION`.
@@ -1850,8 +1852,8 @@ in steps, each leaving a working builder.
     boundary** (the ring cuts every layer) and **Move, Copy, Turn, Delete**
     of one shape (its own outline and holes, moved or turned exactly) are
     the shapes themselves;
-  - **Smooth** eases the edge itself, rounding corners to about the radius
-    and filling notches narrower, a thin path keeping its width; **Remove
+  - **Smooth** works on the edge itself (rebuilt the next day: *Fourth
+    step*), a thin path keeping its width; **Remove
     specks** drops shapes and holes by their area;
   - **Normalize width** lays each thin part's middle line again as a band;
     only finding that middle line uses a grid, hidden, never drawn;
@@ -1892,12 +1894,53 @@ in steps, each leaving a working builder.
   tools). Checked: every Node test, all ten builder journeys; on Alpine
   Lake's 36,000-point road layer a dab took 3.6 ms (worst 6.2) and the view
   after it 0.7 ms. **Not seen by the owner.**
-- **Smooth settles, and Smooth edge on release keeps to the stroke** (24
-  November 2026, on review): a place already as round as the brush is left
-  alone, so smoothing again changes nothing (it shrank shapes a little at
-  every pass), and the release smoothing moves only the stroke's own edges,
-  so a box or tee beside it keeps its corners. Numbers: RESEARCH, *The
-  builder on outlines*.
+- **Smooth edge on release keeps to the stroke** (24 November 2026, on
+  review): the release smoothing moves only the stroke's own edges, so a box
+  or tee beside it keeps its corners. (The same day Smooth was made to
+  "settle" -- leave alone what it would move under an eighth of its size --
+  so smoothing again would not shrink a shape; that stopped it smoothing
+  anything small, and the fourth step replaced it.)
+- **Fourth step (25 November 2026): no waves, no facets.** The owner, on the
+  Alpine draft in the game: "wavy-ness on what should be straight pieces of
+  turf ... (also on cart paths)"; "how do we smooth out these facets that
+  still show up from the OSM traces ... smoothing button doesn't take them
+  out. Theres even facets when i outline fill something with auto curve. I
+  think we need 'higher resolution' ... on the lines between points"; and
+  "Make sure this applies to all traced. Painted. and imported surfaces in
+  the builder!" One kind of curve throughout -- the pen's (pen.js), laid
+  finely, through the points that matter -- and each way a surface comes in:
+  - **Traced** (a draft from before outlines, the auto trace, OpenStreetMap
+    lined up, Paint rock on slopes): the squares become a smooth line
+    through their steps -- straight runs within a square of them, each joint
+    rounded along both its edges -- instead of following each step within
+    half a square, which turned uneven steps into waves (contour.js
+    `fitRing`). A corner stays sharp only where the squares themselves turn
+    one.
+  - **Painted**: a brush stroke is its exact band, as before; the pen's
+    curve (Outline fill, Line, the boundary, zones, creeks, both editors) is
+    laid finely enough that no point turns more than about 5 degrees from
+    the last, where a point a metre faceted a small green; its preview is
+    the same points.
+  - **Imported**: OpenStreetMap's outlines and lines are laid as curves
+    through the map's own points, a point turning 75 degrees or more kept as
+    a corner (a tee's, a car park's), its paths and roads as one band each
+    rather than a row of painted discs (osm.js `curveOutline`). A **course
+    file** the builder saved before outlines has its surfaces smoothed once
+    as it opens (Smooth edges on every layer, corners kept, one undo, a note
+    in the status line); one saved since opens exactly as saved, and a file
+    with no builder section (a generated course taken over) is left alone.
+  - **Smooth** keeps an edge only at the points that shape it -- wiggles
+    within 0.7 of the brush's radius dropped, a node every 10 m at the
+    average of the edge round it -- and draws the curve through them: waves
+    and facets go, and nothing shrinks, as the curve runs through the edge.
+    Smooth edges on a layer and Smooth edge on release keep corners (75
+    degrees or more within a short way); the brush rounds a corner it is put
+    on.
+  - **Normalize width** lays each middle line through the same smoothing.
+  Checked: every Node test, all ten builder journeys; two copies of the
+  Alpine course, old and new, looked at in the game from 1.7 m along an
+  edge. Numbers, and what was tried and turned down: RESEARCH, *Curves
+  through points*. **Not seen by the owner.**
 - **What still reads cells:** lining OpenStreetMap up with the picture or
   the LIDAR reads the photograph's and the survey's own cells (as the auto
   trace does) and its result becomes outlines once; **Keep map as is**

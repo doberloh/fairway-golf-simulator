@@ -184,7 +184,9 @@ What you paint is the edge itself: a brush stroke shows as the band it
 sweeps while you hold the button and is laid exactly so when you let go,
 an outline is the curve you drew, and the course gets those edges as they
 are. Nothing is laid on squares. **Smooth edges** is for edges you want
-rounder than you painted them.
+rounder than you painted them: it takes out wobbles and the straight facets
+of a mapped outline without shrinking the shape. OpenStreetMap's outlines
+come in already curved through the map's points, a tee's corners kept.
 
 **The house** (O): a click stands a house of the **Width** and **Depth** set in
 its options; drag corner to corner to stand one the size of the box. Its front
@@ -201,7 +203,9 @@ the landscape's rock on the steep ground in one go; press and hold **Hold to
 show before** to compare.
 
 **Clean up**: **Smooth edges** rounds ragged edges (thin shapes such as cart
-paths are kept whole) and **Remove specks** takes off tiny patches; each has a
+paths are kept whole, and a whole layer smoothed keeps sharp corners such as
+a tee's; the Smooth brush rounds a corner you put it on) and **Remove
+specks** takes off tiny patches; each has a
 **Layer** picker (every layer, or one). **Normalize width** lays every cart path
 (1.8 m to start) or every street (6 m) again at one width; paths that meet still
 meet where they did, and wide areas such as parking lots are kept as drawn.

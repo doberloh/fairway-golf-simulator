@@ -16,6 +16,7 @@
 // on outlines*. Pure (no DOM); tests/builder-shapes.test.mjs.
 import {Clipper, FillRule, JoinType, EndType, ClipType, PolyTree64} from '@countertype/clipper2-ts';
 import {maskRings, fitRing, cellArea, ringArea} from '../contour.js';
+import {penCurve, TAME} from './pen.js';
 
 // Centimetres a metre: a set's points are whole centimetres.
 export const CM = 100;
@@ -171,59 +172,100 @@ export function middleOf(set) {
  return a ? [cx / (3 * a) / CM, cz / (3 * a) / CM] : [0, 0];
 }
 
-// SMOOTHING AN EDGE (the Smooth tool). Each outline is set out in points
-// about a tenth of the radius apart along its edge, and each point near
-// (x, z) -- or every point, with no (x, z) -- takes the average of the edge
-// round it, weighted as a bell half the radius wide (so a corner rounds to
-// about the radius, a notch narrower than that fills, a wobble goes), eased
-// to nothing at the reach's edge. A thin path keeps its width: each edge is
-// smoothed along itself, never across to the other (the owner, 23 November
-// 2026: "smooth edges on thin shapes like cart paths will completely delete
-// large sections of it"). Shapes the circle would swallow -- under the
-// circle's own area -- go, as specks did. Returns the new set (the same one
-// when nothing was within reach). Rejected: easing each point toward its two
-// neighbours and back (Taubin's two steps): 32 rounds of it cut a square's
-// corner by 0.2 m at a 2 m radius -- a radius barely seen.
-// IT SETTLES (24 November 2026): a point the bell would move less than an
-// eighth of the radius stays where it is, and one it would move a quarter or
-// more moves all the way (in between, part of it). A bell this wide moves a
-// point on an edge curving round a radius of r by about radius² / (8 r), so
-// an edge already rounder than the radius never moves: smoothing the same
-// place again changes nothing, where an untouched bell shrank every shape a
-// little at each pass (a green 2 cm a dab) and rounded a box's corners
-// further with every stroke beside it. `within`: a set; only points inside
-// it move (a stroke's own band, for Smooth edge on release).
+// SMOOTHING AN EDGE (the Smooth tool; rebuilt 25 November 2026). Where the
+// brush reaches (x, z) -- or everywhere, with no (x, z) -- the edge is kept
+// only at the points that shape it, any wiggle within `SMOOTH_TOL` of the
+// radius dropped (Douglas-Peucker), and the pen's curve drawn through what is
+// left (pen.js `penCurve`, tamed as for the map: through every point kept,
+// its bends near them). So a wave of the old 1 m squares, a facet of a mapped
+// outline and the scallops of a brush stroke all go, and nothing shrinks:
+// the curve runs through points of the edge itself, so smoothing again moves
+// nothing. Where the brush's reach ends the curve leaves the untouched edge
+// in its own direction (its neighbour outside is the curve's).
+// CORNERS: with no (x, z) -- Smooth edges on a whole layer -- or a `within`
+// (Smooth edge on release: only edges inside that set move, the stroke's own
+// band), a corner of the shape -- turning 75 degrees or more within a short
+// way, outward -- is kept sharp: a tee's or a box's beside the stroke. The
+// brush itself rounds what it is put on, a corner to about its radius.
+// A thin path keeps its width: each edge is smoothed along itself, never
+// across to the other (the owner, 23 November 2026: "smooth edges on thin
+// shapes like cart paths will completely delete large sections of it").
+// Shapes the circle would swallow -- under the circle's own area -- go, as
+// specks did, and holes as small fill. Returns the new set (the same one when
+// nothing was within reach).
+// REJECTED: averaging each point with the edge round it, weighted as a bell
+// half the radius wide (24 November 2026): it shrank every shape a little at
+// each pass, and the cure for that -- leaving alone a point it would move
+// under an eighth of the radius -- left alone exactly what needed smoothing:
+// on the Alpine draft no size from 1.5 to 10 m changed a wave of the old
+// squares (0.4 m every 5 to 10 m) or a mapped green's 10 m facets. Before it,
+// Taubin's two steps: 32 rounds cut a square's corner by 0.2 m at a 2 m radius.
+// (PLACED: 0.7 of the radius. At 0.35 it kept the crests of the Alpine
+// draft's waves, 0.8 m from crest to trough, as points to curve through.)
+export const SMOOTH_TOL = .7;
 export function smoothEdges(set, {radius = 1.5, x = null, z = null, reach = radius * 4, within = null} = {}) {
  if (!set.length) return set;
- const R = radius * CM, step = Math.max(5, R / 10), X = x == null ? null : x * CM, Y = z == null ? null : z * CM, RE = reach * CM, SETTLE = R / 8;
- const weight = q => (X == null ? 1 : Math.max(0, 1 - Math.hypot(q.x - X, q.y - Y) / RE)) * (within && !contains(within, q.x / CM, q.y / CM) ? 0 : 1);
- const sigma = R / 2 / step, half = Math.ceil(3 * sigma), bell = Array.from({length: 2 * half + 1}, (_, k) => Math.exp(-((k - half) ** 2) / (2 * sigma * sigma)));
+ const R = radius * CM, X = x == null ? null : x * CM, Y = z == null ? null : z * CM, RE = reach * CM;
+ const tol = SMOOTH_TOL * radius, step = Math.max(.05, radius / 5), keepCorners = X == null || !!within;
+ const free = q => (X == null || Math.hypot(q[0] * CM - X, q[1] * CM - Y) <= RE) && (!within || contains(within, q[0], q[1]));
  let touched = false;
  // Only the paths near the brush are worked on (and cleaned together); the
  // rest are carried over, as the booleans do.
- // (Set out evenly two radii past the reach, so no point the brush moves
- // averages over a far corner: the bell reaches a radius and a half.)
  const [near, far] = X == null ? [set, []] : split(set, [X - RE - 2 * R, Y - RE - 2 * R, X + RE + 2 * R, Y + RE + 2 * R]);
  const close = (a, b) => { if (X == null) return true; const dx = b.x - a.x, dy = b.y - a.y, L = dx * dx + dy * dy, t = L ? Math.max(0, Math.min(1, ((X - a.x) * dx + (Y - a.y) * dy) / L)) : 0; return Math.hypot(a.x + t * dx - X, a.y + t * dy - Y) <= RE + 2 * R; };
  const out = near.map(p => {
-  // Points set about `step` apart along the edge where the brush reaches.
+  // In metres, points set about `step` apart along the edge where the brush
+  // reaches (so a long straight piece crossing it can bend there).
   const pts = [];
   for (let i = 0; i < p.length; i++) {
-   const a = p[i], b = p[(i + 1) % p.length]; pts.push({x: a.x, y: a.y});
+   const a = p[i], b = p[(i + 1) % p.length]; pts.push([a.x / CM, a.y / CM]);
    if (!close(a, b)) continue;
-   const n = Math.floor(Math.hypot(b.x - a.x, b.y - a.y) / step);
-   for (let k = 1; k < n; k++) pts.push({x: a.x + (b.x - a.x) * k / n, y: a.y + (b.y - a.y) * k / n});
+   const n = Math.floor(Math.hypot(b.x - a.x, b.y - a.y) / CM / step);
+   for (let k = 1; k < n; k++) pts.push([(a.x + (b.x - a.x) * k / n) / CM, (a.y + (b.y - a.y) * k / n) / CM]);
   }
-  const w = pts.map(weight); if (!w.some(v => v > 0)) return p;
+  const N = pts.length, isFree = pts.map(free);
+  if (N < 4 || !isFree.some(Boolean)) return p;
   touched = true;
-  const n = pts.length, q = [];
-  for (let i = 0; i < n; i++) {
-   if (!w[i]) { q.push(pts[i]); continue; }
-   let sx = 0, sy = 0, sw = 0;
-   for (let k = -half; k <= half; k++) { const o = pts[((i + k) % n + n) % n], g = bell[k + half]; sx += o.x * g; sy += o.y * g; sw += g; }
-   const dx = sx / sw - pts[i].x, dy = sy / sw - pts[i].y, f = w[i] * Math.max(0, Math.min(1, (Math.hypot(dx, dy) - SETTLE) / SETTLE));
-   q.push({x: Math.round(pts[i].x + f * dx), y: Math.round(pts[i].y + f * dy)});
+  // Corners: kept sharp (a whole layer, or `within`) or, under the brush,
+  // rounded -- outward ones and, under the brush, inward ones too.
+  const corner = cornerPoints(pts, Clipper.area(p) > 0, Math.max(.3, radius / 3), !keepCorners);
+  let ring;
+  if (isFree.every(Boolean)) ring = curveRing(pts, [...corner], tol, radius, keepCorners);
+  else {
+   // Each run of free points between two fixed ones, curved from the fixed
+   // point before it to the one after (the fixed points beyond those give the
+   // curve its direction in and out).
+   const s0 = isFree.findIndex(f => !f), at = i => pts[((i % N) + N) % N];
+   ring = [];
+   for (let i = s0; i < s0 + N;) {
+    if (!isFree[i % N]) { ring.push(at(i)); i++; continue; }
+    let e = i; while (e < s0 + N && isFree[e % N]) e++;
+    // Points i-1 .. e: the run with its fixed ends; i-2 and e+1 beyond.
+    const idx = []; for (let k = i - 1; k <= e; k++) idx.push(k);
+    const keep = new Set([0, idx.length - 1]), cl = new Set();
+    idx.forEach((k, q) => { if (corner.has(((k % N) + N) % N)) { keep.add(q); cl.add(q); } });
+    const nodes = simplifyOpen(idx.map(at), tol, keep, cl);
+    const sharpAt = nodes.map((nd, q) => q > 0 && q < nodes.length - 1 && nd.corner);
+    const pts2 = keepCorners ? nodes.map(nd => nd.p) : cutCorners(nodes, radius).map(nd => nd.p);
+    const sharp2 = keepCorners ? sharpAt : [];
+    // (Beyond each end, the first fixed point as far from it as the curve's
+    // first piece is long: the very next one, a step away, held the handle
+    // at the end short and flattened the curve there -- 3% off a green.)
+    const reachOut = (from, dir, want) => { let k = from + dir; for (let g = 0; g < N && Math.hypot(at(k)[0] - at(from)[0], at(k)[1] - at(from)[1]) < want; g++) k += dir; return at(k); };
+    const L0 = Math.hypot(pts2[1][0] - pts2[0][0], pts2[1][1] - pts2[0][1]), L1 = Math.hypot(pts2.at(-1)[0] - pts2.at(-2)[0], pts2.at(-1)[1] - pts2.at(-2)[1]);
+    const full = [reachOut(i - 1, -1, L0), ...pts2, reachOut(e, 1, L1)];
+    const sh = []; sharp2.forEach((s, q) => { if (s) sh.push(q + 1); });
+    const curve = penCurve(full, {closed: false, sharp: sh, step: Infinity, tame: true});
+    // The part from the fixed point before the run to the one after it (the
+    // curve passes through both exactly).
+    const from = curve.findIndex(q => q[0] === pts2[0][0] && q[1] === pts2[0][1]);
+    let to = -1; for (let q = curve.length - 1; q >= 0; q--) if (curve[q][0] === pts2.at(-1)[0] && curve[q][1] === pts2.at(-1)[1]) { to = q; break; }
+    ring.pop();   // the fixed point before the run comes back as the curve's first
+    ring.push(...(from >= 0 && to > from ? curve.slice(from, to + 1) : idx.map(at)));
+    i = e + 1;   // the fixed point after it is the curve's last
+   }
   }
+  const q = []; for (const [mx, mz] of ring) { const c = {x: Math.round(mx * CM), y: Math.round(mz * CM)}, l = q.at(-1); if (!l || l.x !== c.x || l.y !== c.y) q.push(c); }
   return Clipper.simplifyPath(q, 1, true);
  });
  if (!touched) return set;
@@ -237,6 +279,102 @@ export function smoothEdges(set, {radius = 1.5, x = null, z = null, reach = radi
  return far.length ? far.concat(kept) : kept;
 }
 const inReach = (path, X, Y, RE) => path.some(q => Math.hypot(q.x - X, q.y - Y) <= RE);
+const turnOf = (a, b, c) => { const ux = b[0] - a[0], uz = b[1] - a[1], vx = c[0] - b[0], vz = c[1] - b[1]; return Math.atan2(ux * vz - uz * vx, ux * vx + uz * vz); };
+// A shape's corners among an edge's points (metres): where the edge, looked
+// at `arm` metres either way, turns 75 degrees or more outward (PLACED) -- the
+// sharpest point of each such place.
+function cornerPoints(pts, positive, arm, both = false) {
+ const N = pts.length, turn = new Float64Array(N), lim = 75 * Math.PI / 180;
+ for (let i = 0; i < N; i++) {
+  let a = i, b = i, d = 0;
+  for (let k = 1; k < N && d < arm; k++) { const p = pts[(i - k + N) % N]; d = Math.hypot(p[0] - pts[i][0], p[1] - pts[i][1]); a = (i - k + N) % N; }
+  d = 0; for (let k = 1; k < N && d < arm; k++) { const p = pts[(i + k) % N]; d = Math.hypot(p[0] - pts[i][0], p[1] - pts[i][1]); b = (i + k) % N; }
+  if (a === i || b === i || a === b) continue;
+  const t = turnOf(pts[a], pts[i], pts[b]); turn[i] = both || (t > 0) === positive ? Math.abs(t) : 0;
+ }
+ const out = new Set();
+ for (let i = 0; i < N; i++) if (turn[i] >= lim && turn[i] >= turn[(i - 1 + N) % N] && turn[i] > turn[(i + 1) % N]) out.add(i);
+ return out;
+}
+// Douglas-Peucker on an open run of points, `keep` (indices) always kept;
+// each node kept as {p, corner} (`corners`: indices that are corners).
+// Pieces longer than `TAME` (the curve's longest handle) are given nodes
+// every TAME metres or so, each the AVERAGE of the edge round it (TAME
+// along): a gentle bend kept as one long piece would come out as a straight
+// with its turn bunched at the ends, a facet again, and a node on the edge
+// itself could sit on a wave's crest. The average of a curve as wide as a
+// fairway's sits a few centimetres inside it.
+function simplifyOpen(points, tol, keep, corners = new Set()) {
+ const nodes = simplifyBare(points, tol, keep, corners), out = [];
+ const arc = [0]; for (let i = 1; i < points.length; i++) arc.push(arc[i - 1] + Math.hypot(points[i][0] - points[i - 1][0], points[i][1] - points[i - 1][1]));
+ for (let q = 0; q < nodes.length; q++) {
+  out.push(nodes[q]);
+  if (q + 1 === nodes.length) break;
+  const s = nodes[q].i, e = nodes[q + 1].i, L = arc[e] - arc[s], k = Math.ceil(L / TAME) - 1;
+  for (let m = 1; m <= k; m++) {
+   const at = arc[s] + L * m / (k + 1), lo = Math.max(arc[s], at - TAME / 2), hi = Math.min(arc[e], at + TAME / 2);
+   let sx = 0, sz = 0, n = 0; for (let i = s; i <= e; i++) if (arc[i] >= lo && arc[i] <= hi) { sx += points[i][0]; sz += points[i][1]; n++; }
+   if (n) out.push({p: [sx / n, sz / n], corner: false, i: -1});
+  }
+ }
+ return out;
+}
+function simplifyBare(points, tol, keep, corners) {
+ const ks = [...keep].sort((a, b) => a - b), on = new Uint8Array(points.length);
+ for (const k of ks) on[k] = 1;
+ for (let q = 0; q + 1 < ks.length; q++) {
+  const stack = [[ks[q], ks[q + 1]]];
+  while (stack.length) {
+   const [s, e] = stack.pop(), [ax, az] = points[s], [bx, bz] = points[e], dx = bx - ax, dz = bz - az, L = Math.hypot(dx, dz);
+   let worst = -1, at = -1;
+   for (let i = s + 1; i < e; i++) { const d = L ? Math.abs((points[i][0] - ax) * dz - (points[i][1] - az) * dx) / L : Math.hypot(points[i][0] - ax, points[i][1] - az); if (d > worst) { worst = d; at = i; } }
+   if (worst > tol) { on[at] = 1; stack.push([s, at], [at, e]); }
+  }
+ }
+ const out = []; for (let i = 0; i < points.length; i++) if (on[i]) out.push({p: points[i], corner: corners.has(i), i});
+ return out;
+}
+// The brush rounds a corner it is put on: a corner node (`cornerPoints`)
+// becomes two, `radius` back and on along its edges (at most 45% of each), so
+// the curve through them turns round it instead of through its tip. (Only a
+// corner: the points kept round a green are 60 degrees apart, and cutting
+// those took 11% off it in five dabs.)
+function cutCorners(nodes, radius, closed = false) {
+ const out = [], M = nodes.length;
+ for (let q = 0; q < M; q++) {
+  const inner = closed || (q > 0 && q < M - 1);
+  const a = nodes[(q - 1 + M) % M].p, b = nodes[q].p, c = nodes[(q + 1) % M].p;
+  if (!inner || !nodes[q].corner) { out.push(nodes[q]); continue; }
+  const la = Math.hypot(b[0] - a[0], b[1] - a[1]), lb = Math.hypot(c[0] - b[0], c[1] - b[1]), da = Math.min(radius, .45 * la), db = Math.min(radius, .45 * lb);
+  out.push({p: [b[0] + (a[0] - b[0]) * da / la, b[1] + (a[1] - b[1]) * da / la], corner: false}, {p: [b[0] + (c[0] - b[0]) * db / lb, b[1] + (c[1] - b[1]) * db / lb], corner: false});
+ }
+ return out;
+}
+// A LINE SMOOTHED ([[x, z], ...] metres): its wiggles within `tol` dropped and
+// the curve drawn through what is left, as Smooth does to an edge; its ends
+// kept where they are (closed: round to its start). Normalize width's middle
+// lines, found on a hidden grid (line-work.js), laid smooth.
+export function smoothLine(points, tol, closed = false) {
+ if (points.length < 3) return points;
+ if (closed) return curveRing(points, [], tol, tol, true);
+ const nodes = simplifyOpen(points, tol, new Set([0, points.length - 1]));
+ return nodes.length < 3 ? nodes.map(nd => nd.p) : penCurve(nodes.map(nd => nd.p), {step: Infinity, tame: true});
+}
+// A whole outline smoothed (every point within reach): thinned to the points
+// that shape it, corners kept, and curved through them closed.
+function curveRing(pts, corners, tol, radius, keepCorners) {
+ const N = pts.length;
+ let ks = [...corners].sort((a, b) => a - b);
+ if (ks.length < 2) { let far = 0, d0 = -1; const s = ks[0] ?? 0; for (let i = 0; i < N; i++) { const d = Math.hypot(pts[i][0] - pts[s][0], pts[i][1] - pts[s][1]); if (d > d0) { d0 = d; far = i; } } ks = [...new Set([s, far])].sort((a, b) => a - b); }
+ // Rotated to start on the first kept point, closed by repeating it.
+ const r = [...pts.slice(ks[0]), ...pts.slice(0, ks[0]), pts[ks[0]]], cs = new Set(corners.map(k => (k - ks[0] + N) % N));
+ const keep = new Set([0, N, ...ks.map(k => (k - ks[0] + N) % N)]);
+ let nodes = simplifyOpen(r, tol, keep, cs).slice(0, -1);
+ if (nodes.length < 3) return pts;
+ if (!keepCorners) nodes = cutCorners(nodes, radius, true);
+ const sharp = []; if (keepCorners) nodes.forEach((nd, q) => { if (nd.corner) sharp.push(q); });
+ return penCurve(nodes.map(nd => nd.p), {closed: true, sharp, step: Infinity, tame: true});
+}
 
 // A GRID TURNED INTO OUTLINES, ONCE, AS IT COMES IN: the LIDAR's auto trace,
 // Paint rock on slopes, a draft saved before outlines. Traced round its

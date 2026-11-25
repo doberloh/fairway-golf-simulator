@@ -82,6 +82,11 @@ export async function writeDraft(d) {
 
 // Whether a file's bytes are a draft (a ZIP holding draft.json).
 export async function isDraft(bytes) { return isZip(bytes) && (await readZip(bytes, {only: name => name === 'draft.json'})).has('draft.json'); }
+// A draft's version, read from draft.json alone (0 when it has none).
+export async function draftVersion(bytes) {
+ const raw = (await readZip(bytes, {only: name => name === 'draft.json'})).get('draft.json');
+ try { return raw ? JSON.parse(text.decode(raw)).version ?? 0 : 0; } catch { return 0; }
+}
 
 export async function readDraft(bytes) {
  const parts = await readZip(bytes), raw = parts.get('draft.json');

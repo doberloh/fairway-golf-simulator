@@ -45,14 +45,17 @@ const label = k => GROUNDS[k]?.label ?? (k[0].toUpperCase() + k.slice(1));
 // work added (round-trip.js `withEditorWork`), and Back to 2D opens it, so a
 // course reopened from a file has everything it had. None on a generated course
 // or a file from before 5 November 2026.
-export function openEditor(doc, {from = 'file', back = null, work = null} = {}) {
+export function openEditor(doc, {from = 'file', back = null, work = null, smoothOld = false} = {}) {
  current?.view.dispose();
  // A course from outside the builder (no door 2 session behind it) keeps the
  // fringe the game gave it, as painted fringe (editing.js `fringeBand`); a
  // builder course has only the fringe painted on it.
  const editor = createEditor(doc, {fringeBand: work ? 0 : doc.fringe ?? DEFAULT_COURSE.fringe}), s = editor.state;
+ // `smoothOld`: a course the builder saved before outlines, its surfaces
+ // smoothed once as it opens (builder.js `openOne`), one undo.
+ if (smoothOld) editor.smoothEdges({radius: 1.5});
  setTitle(s.name);
- const wrap = el('div', {class: 'cb-view'}), status = el('div', {class: 'cb-status'}, 'Right-drag to turn, wheel to zoom, left-drag to move. Pick a tool on the left.');
+ const wrap = el('div', {class: 'cb-view'}), status = el('div', {class: 'cb-status'}, smoothOld ? 'Saved before the builder kept smooth outlines: its surfaces\' edges were smoothed as it opened (Undo puts them back). Right-drag to turn, wheel to zoom.' : 'Right-drag to turn, wheel to zoom, left-drag to move. Pick a tool on the left.');
  const tools = el('div', {class: 'cb-tools cb-tools3d'}), side = el('div', {class: 'cb-side'});
  // THE TOOL PALETTE (the builder-ux goal, item 8): every tool an icon with its
  // key down the left edge, as on door 2's plan; the column beside it holds the

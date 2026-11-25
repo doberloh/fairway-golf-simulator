@@ -15,6 +15,8 @@
 //
 // The parsing and the laying are pure (no DOM); tests/osm.test.mjs.
 
+import {penCurve, cornersOf} from './pen.js';
+
 export const OSM_CREDIT = 'Course outlines © OpenStreetMap contributors (ODbL)';
 // OpenStreetMap's tags to door 2's layers. Lower in the list is painted later,
 // but layers do not cover one another (layers.js), so the order only matters
@@ -158,24 +160,39 @@ export function homeOfFootprint(ring, facing = () => 0, {least = 40, most = 1500
 }
 
 // The features laid on a trace (trace-edit.js): each area filled onto its
-// layer, a cart path's line painted 2.5 m wide; woods become a tree zone,
+// layer, a cart path's line laid 2.5 m wide; woods become a tree zone,
 // single trees placed. Returns what was laid, by layer.
+// CURVED THROUGH THE MAP'S POINTS (25 November 2026; the owner: "how do we
+// smooth out these facets that still show up from the OSM traces ... They look
+// terrible in game"): a mapper clicks points along an edge and the map joins
+// them straight, so a green is a polygon of a dozen sides. Each outline and
+// each line is laid as the pen's curve through those same points (pen.js
+// `penCurve`, the centripetal spline: through every point, no loops), a
+// point that turns `corner` degrees or more kept sharp -- a tee's or a car
+// park's corners (PLACED: 75). Lines are laid as one band each (shapes.js
+// `band`) where they were a row of painted discs, which scalloped their edges
+// 10 to 17 cm.
+export function curveOutline(points, {closed = true, corner = 75} = {}) {
+ // (A closed way repeats its first point at its end; a point repeated is one.)
+ points = points.filter((p, i, a) => !i || Math.hypot(p[0] - a[i - 1][0], p[1] - a[i - 1][1]) > 1e-3);
+ if (closed && points.length > 1 && Math.hypot(points[0][0] - points.at(-1)[0], points[0][1] - points.at(-1)[1]) <= 1e-3) points = points.slice(0, -1);
+ const n = points.length;
+ if (n < (closed ? 3 : 2)) return points;
+ // (Points only where it bends: a straight piece needs none between its ends.)
+ return penCurve(points, {closed, sharp: cornersOf(points, corner, closed), step: Infinity, tame: true});
+}
 export function layOsm(model, feats, {pathWidth = 2.5, woodDensity = 150} = {}) {
  const laid = {};
  for (const [kind, is] of Object.entries(OSM_LAYERS)) {
-  for (const a of feats.areas) if (is(a.tags)) { model.fill(a.rings, kind); laid[kind] = (laid[kind] || 0) + 1; }
+  for (const a of feats.areas) if (is(a.tags)) { model.fill(a.rings.map(r => curveOutline(r)), kind); laid[kind] = (laid[kind] || 0) + 1; }
  }
- for (const l of feats.lines) if (OSM_LAYERS.path(l.tags)) {
-  model.beginStroke();
-  for (let i = 1; i < l.points.length; i++) { const [ax, az] = l.points[i - 1], [bx, bz] = l.points[i], n = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / 1)); for (let s = 0; s <= n; s++) model.paint({x: ax + (bx - ax) * s / n, z: az + (bz - az) * s / n, radius: pathWidth / 2, kind: 'path'}); }
-  model.endStroke(); laid.path = (laid.path || 0) + 1;
+ for (const l of feats.lines) if (OSM_LAYERS.path(l.tags) && l.points.length >= 2) {
+  model.line(curveOutline(l.points, {closed: false}), {kind: 'path', width: pathWidth, caps: 'round'}); laid.path = (laid.path || 0) + 1;
  }
- // Roads as lines, painted their width (roadWidth).
+ // Roads as lines, laid their width (roadWidth).
  for (const l of feats.lines) {
-  const w = roadWidth(l.tags); if (!w) continue;
-  model.beginStroke();
-  for (let i = 1; i < l.points.length; i++) { const [ax, az] = l.points[i - 1], [bx, bz] = l.points[i], n = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / 2)); for (let s = 0; s <= n; s++) model.paint({x: ax + (bx - ax) * s / n, z: az + (bz - az) * s / n, radius: w / 2, kind: 'road'}); }
-  model.endStroke(); laid.road = (laid.road || 0) + 1;
+  const w = roadWidth(l.tags); if (!w || l.points.length < 2) continue;
+  model.line(curveOutline(l.points, {closed: false}), {kind: 'road', width: w, caps: 'round'}); laid.road = (laid.road || 0) + 1;
  }
  for (const a of feats.areas) if (a.tags.natural === 'wood' || a.tags.landuse === 'forest') { model.treeZone(a.rings[0], {density: woodDensity, seed: (laid.woods = (laid.woods || 0) + 1)}); }
  for (const t of feats.trees) model.addTree({x: t.x, z: t.z, h: 14, crown: 4});

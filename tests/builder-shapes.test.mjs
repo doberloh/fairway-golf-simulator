@@ -61,14 +61,15 @@ test('tidy: specks go, pocks fill, the rest stays', () => {
  assert.ok(!S.contains(t, 41, 1)); assert.ok(S.contains(t, 6, 6)); assert.ok(!S.contains(t, 12, 12));
 });
 
-test('smoothing rounds a corner, keeps the size, and keeps a thin path', () => {
+test('smoothing: the brush rounds a corner, a whole layer keeps it; a thin path kept', () => {
+ // A whole layer smoothed keeps a box's corners (a tee's), its sides straight.
  const box = square(0, 0, 20), sm = S.smoothEdges(box, {radius: 2});
- near(S.areaOf(sm), 400, 400 * .06, 'area kept within 6%');
- assert.ok(!S.contains(sm, .3, .3), 'the corner rounded off');
- assert.ok(S.contains(sm, 10, .3), 'the side stays');
- // Only near the point: the far corner is untouched.
+ near(S.areaOf(sm), 400, .5, 'a box smoothed whole is the box');
+ assert.ok(S.contains(sm, .1, .1), 'its corner kept');
+ // The brush on a corner rounds it; the far corner is untouched.
  const one = S.smoothEdges(box, {radius: 2, x: 0, z: 0, reach: 6});
- assert.ok(!S.contains(one, .3, .3)); assert.ok(S.contains(one, 19.8, 19.8));
+ assert.ok(!S.contains(one, .3, .3), 'the corner rounded off'); assert.ok(S.contains(one, 19.8, 19.8));
+ assert.ok(S.contains(one, 10, .1) && S.contains(one, .1, 10), 'the sides stay');
  // A 2.5 m cart path smoothed at 1.5 m keeps its length and most of its width.
  const path = S.band([[0, 0], [15, 3], [30, 0], [45, 4]], 1.25), ps = S.smoothEdges(path, {radius: 1.5});
  assert.ok(S.areaOf(ps) > .8 * S.areaOf(path), `path kept: ${S.areaOf(ps)} of ${S.areaOf(path)}`);
@@ -77,13 +78,44 @@ test('smoothing rounds a corner, keeps the size, and keeps a thin path', () => {
  assert.equal(S.smoothEdges(square(0, 0, 1), {radius: 1.5}).length, 0);
 });
 
+// 25 November 2026 (the owner: waves on the Alpine draft's straight turf, and
+// "these facets that still show up from the OSM traces ... smoothing button
+// doesn't take them out"): Smooth takes out a wave smaller than about a third
+// of its size, and curves a mapped outline's facets.
+test('smoothing takes out the old squares\' waves and a mapped outline\'s facets', () => {
+ // A straight edge 60 m long waving 0.4 m every 8 m (as the Alpine draft's),
+ // square at its corners.
+ const top = Array.from({length: 121}, (_, q) => [q / 2, 10 + (q > 8 && q < 112 ? .4 * Math.sin(q / 2 / 8 * 2 * Math.PI) : 0)]);
+ const wavy = S.fromRings([[[0, 0], [60, 0], ...top.reverse()]]);
+ const flat = S.smoothEdges(wavy, {radius: 1.5});
+ for (let x = 5; x <= 55; x += .5) {
+  let z = 9; while (S.contains(flat, x, z + .01) && z < 11) z += .01;
+  assert.ok(Math.abs(z - 10) < .12, `at ${x} m the edge is ${(z - 10).toFixed(2)} m off straight`);
+ }
+ // A green mapped as twelve points: its facets curved, its size kept.
+ const gon = S.fromRings([Array.from({length: 12}, (_, q) => [12 * Math.cos(q / 12 * 2 * Math.PI), 12 * Math.sin(q / 12 * 2 * Math.PI)])]);
+ const round = S.smoothEdges(gon, {radius: 1.5}), ring = S.toRings(round)[0];
+ const worst = Math.max(...ring.map((b, q) => { const a = ring[(q - 1 + ring.length) % ring.length], c = ring[(q + 1) % ring.length], ux = b[0] - a[0], uz = b[1] - a[1], vx = c[0] - b[0], vz = c[1] - b[1]; return Math.abs(Math.atan2(ux * vz - uz * vx, ux * vx + uz * vz)) * 180 / Math.PI; }));
+ assert.ok(worst < 8, `a facet left: ${worst.toFixed(1)} degrees at one point (30 before)`);
+ // (The curve through twelve points of a circle is that circle, 4.5% more
+ // than the polygon the map drew.)
+ near(S.areaOf(round), Math.PI * 144, Math.PI * 144 * .02, 'the circle its points lie on');
+ // The brush does the same where it is put.
+ const one = S.smoothEdges(gon, {radius: 1.5, x: 12, z: 0, reach: 6}), r1 = S.toRings(one)[0];
+ assert.ok(r1.length > 20, 'the facet under the brush curved');
+ assert.ok(S.contains(one, -11.5, 0) === S.contains(gon, -11.5, 0) && S.areaOf(one) > S.areaOf(gon) - 1, 'the far side as it was');
+});
+
 test('smoothing settles: the same place again changes nothing, a hole near an edge stays a hole', () => {
- // Fifty dabs on one spot of a small green: it stops changing.
+ // Fifty dabs on one spot of a small green: it keeps its size. (Since 25
+ // November 2026 the curve goes through points of the edge, so nothing
+ // shrinks; the first dabs take it out to the true circle the outline's
+ // points lie just inside, and 45 more move its edge about 2 cm in all.)
  let g = S.disc(0, 0, 6); const a0 = S.areaOf(g);
  for (let n = 0; n < 5; n++) g = S.smoothEdges(g, {radius: 1.5, x: 5, z: 0, reach: 6});
  const a5 = S.areaOf(g);
  for (let n = 0; n < 45; n++) g = S.smoothEdges(g, {radius: 1.5, x: 5, z: 0, reach: 6});
- assert.ok(Math.abs(S.areaOf(g) - a5) < .05 && Math.abs(a5 - a0) < a0 * .02, `${a0.toFixed(2)} -> ${a5.toFixed(2)} -> ${S.areaOf(g).toFixed(2)} m²`);
+ assert.ok(Math.abs(S.areaOf(g) - a5) < a0 * .01 && Math.abs(a5 - a0) < a0 * .02, `${a0.toFixed(2)} -> ${a5.toFixed(2)} -> ${S.areaOf(g).toFixed(2)} m²`);
  // A box smoothed once rounds its corners; again, it stays as it is.
  const once = S.smoothEdges(square(0, 0, 20), {radius: 2}), twice = S.smoothEdges(once, {radius: 2});
  assert.ok(Math.abs(S.areaOf(twice) - S.areaOf(once)) < .5, `${S.areaOf(once)} then ${S.areaOf(twice)}`);

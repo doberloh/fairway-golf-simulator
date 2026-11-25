@@ -587,6 +587,12 @@ here is a claim of support until it is done.
   both editors -- a box with Auto curve, strokes and Smooth on Alpine --
   and looking at the review; their Alpine draft (version 3) opened (6.8 s
   in the built builder here); a course saved from either editor played.
+  Since 25 November also owed (*Fourth step*): the Alpine draft reopened
+  from the file and its straight turf and cart paths looked at low in the
+  game (seen here only in capture pictures); a fresh OpenStreetMap download
+  looked at; Smooth brushed over a wave and a facet; an old course file
+  (Lake Point) opened in the 3D editor to see its once-over smoothing and
+  its note; Normalize width on the 3D editor's and door 2's paths.
 - [ ] **The fringe only where painted: not seen by the owner** (24 November
   2026; COURSE_BUILDER.md, *A fringe only where it is painted*). Seen: the
   Fringe layer offered, Add layer around Green with Fringe at 2 m on a copy

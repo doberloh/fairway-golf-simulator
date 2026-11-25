@@ -55,8 +55,10 @@ test('an outline fills its inside, an island stays out', () => {
 
 test('smoothing rounds a jagged edge and takes away specks and pocks', () => {
  const t = createTrace(grid);
- // A green with a sawtooth edge, a pock in it and a speck of sand beside it.
- t.fill([Array.from({length: 40}, (_, q) => { const a = q / 40 * Math.PI * 2, r = 12 + (q % 2 ? 2 : -2); return [r * Math.cos(a), r * Math.sin(a)]; })], 'green');
+ // A green with a ragged edge (30 cm in and out, as a painted or traced edge
+ // is; teeth deeper than the radius are shapes, kept since 25 November 2026),
+ // a pock in it and a speck of sand beside it.
+ t.fill([Array.from({length: 80}, (_, q) => { const a = q / 80 * Math.PI * 2, r = 12 + (q % 2 ? .3 : -.3); return [r * Math.cos(a), r * Math.sin(a)]; })], 'green');
  t.paint({x: 3, z: 3, radius: .4, kind: 'rough'});
  t.paint({x: 25, z: 0, radius: .4, kind: 'sand'});
  const edge = () => perimeter(t.shapesOf('green'));

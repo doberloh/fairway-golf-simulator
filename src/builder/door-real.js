@@ -507,7 +507,7 @@ export function open(draft = null) {
    const closedTool = !OPEN_PEN.includes(st.tool), reach = PEN_REACH * px / p.view.scale, hov = st.hover ? [st.hover.x, st.hover.z] : null;
    const closing = closedTool && hov && closesOn(st.outline, hov, reach);
    const nodes = closing || !hov ? st.outline : [...st.outline, hov];
-   const pts = penCurve(nodes, {closed: closedTool && closing, sharp: [...st.sharp], curve: penStrength()});
+   const pts = penCurve(nodes, {closed: closedTool && closing, sharp: [...st.sharp], step: Math.max(.5, st.land.cell), curve: penStrength()});
    const path = () => { ctx.beginPath(); pts.forEach(([x, z], q) => { const [sx, sy] = p.toScreen(x, z); q ? ctx.lineTo(sx, sy) : ctx.moveTo(sx, sy); }); };
    if (closedTool && closing) { path(); ctx.closePath(); ctx.fillStyle = 'rgba(255,107,214,.18)'; ctx.fill(); }
    // The line tool: the band it will lay, at its width and with its ends.

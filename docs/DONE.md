@@ -42,13 +42,28 @@ outlines*):
   the course made from them untraced.
 - [x] The 3D editor on the same model, its view drawing the outlines, its
   Save untraced.
-- [x] Smooth that settles, and Smooth edge on release kept to the stroke.
+- [x] Smooth edge on release kept to the stroke (and a Smooth that
+  "settled", replaced the next day: it stopped smoothing small things).
 - [x] The cell code nothing used taken out.
+- [x] No waves, no facets (25 November; the owner's waves along Alpine's
+  straight turf and cart paths in the game, OpenStreetMap's facets, a
+  faceted pen fill, "Make sure this applies to all traced. Painted. and
+  imported surfaces"): squares become a smooth line through their steps;
+  the pen's curve laid finely (no point turning more than about 5 degrees);
+  OpenStreetMap curved through its points, corners kept; Smooth rebuilt to
+  curve through the points that shape an edge (waves and facets go, nothing
+  shrinks); Normalize width's middle lines smoothed; a course file saved
+  before outlines smoothed once as it opens. Seen in the game on two copies
+  of the Alpine course.
 
 Dead ends: Taubin's easing for Smooth (barely rounded a corner); opening and
 closing (deletes thin paths); laying each dab as it came in door 2 (8 to 30
 ms a dab on the biggest layer); a drawn-edges memory kept over the cells
-(built and taken out the same day: still squares underneath). Tested: every
+(built and taken out the same day: still squares underneath); Smooth as a
+bell-weighted average, then made to settle (it shrank shapes; settled, it
+moved nothing under an eighth of its size -- no wave, no facet); following
+the squares within half a square (0.8 m crest-to-trough waves); a curve
+with free handles through a map's points (a road bowed 5 m). Tested: every
 Node test, all ten builder journeys, timings and real drags on Alpine.
 Still owed (TODO): the owner's own use.
 

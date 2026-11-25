@@ -10889,6 +10889,11 @@ target the near ground sat in the fade.
 
 ## Outlines fitted (23 November 2026)
 
+**Loosened and rounded along both edges on 25 November 2026** (*Curves
+through points*, under *The builder on outlines*): the 0.55-cell tolerance
+and the short rounds below followed uneven steps as waves on the owner's
+Alpine draft; the numbers below are the first version's.
+
 **Replaces the relaxing below** (kept for its history). The owner, on Alpine
 Lake Resort (2233 x 3066 m, so 1 m cells: `cellFor` above 2.25 km²): "jaggy
 edges on things like greens and tee boxes ... I did click smooth edges on
@@ -17816,7 +17821,8 @@ pinned exactly.
   laid in 7.4 ms at the median, 14.1 ms at worst.
 - **A pen outline that crosses itself is read even-odd**, as its cell fill
   was.
-- **Smooth** eases the edge itself: points set a tenth of the radius apart,
+- **Smooth** (REPLACED 25 November 2026 -- *Curves through points* below;
+  this was the first version, kept for its numbers) eased the edge itself: points set a tenth of the radius apart,
   each moved to the average of the edge round it under a bell half the
   radius wide (so a 20 m square's corner is cut 0.58 m along its diagonal at
   a 2 m radius -- a corner rounded to about 1.4 m -- and its area kept within
@@ -17841,7 +17847,10 @@ pinned exactly.
   (its band and 1.5 m round it), and holes under the circle's area fill as
   specks go; the clean-up counts only ground inside an outline more than
   inside its holes ("positive"), so a hole eased past its outline's edge
-  does not fill it.
+  does not fill it. **The settling was the wrong cure** (25 November): it
+  left alone exactly what needed smoothing -- on the Alpine draft no radius
+  from 1.5 to 10 m moved a wave of the old squares or a mapped green's facet
+  at all (0.00 m² changed within 12 m of the brush).
 - **Tidy** is exact: shapes under SPECK and holes under POCK by their area
   (58 ms for every layer on Alpine).
 - **Normalize width** finds each thin part's middle line on a hidden grid a
@@ -17887,3 +17896,126 @@ pinned exactly.
   map and re-reads a 3 m band of every edge from them, like the auto trace
   -- so it runs on the land's cells and what it gives back becomes outlines
   once. Keep map as is keeps OpenStreetMap's own shapes exactly.
+
+### Curves through points: no waves, no facets (25 November 2026)
+
+The owner, on the Alpine draft in the game: "seeing this wavy-ness on what
+should be straight pieces of turf ... (also on cart paths)"; then "how do we
+smooth out these facets that still show up from the OSM traces ... They look
+terrible in game and smoothing button doesn't take them out. Theres even
+facets when i outline fill something with auto curve. I think we need
+'higher resolution' ... on the lines between points"; and "Make sure this
+applies to all traced. Painted. and imported surfaces in the builder!"
+
+**What each was.** Measured on the owner's draft (saved 23 November, version
+3, 1 m cells) with local scripts in bench/shots/outlines/ (`wavy-crops`,
+`fit-variants`, `osm-curve`, `pen-facets`, `smooth-time`, `game-edge`):
+- *Waves*: the draft's squares step unevenly along a near-straight edge
+  (runs of 8, 6, 3, 6 cells, sometimes back a cell). `fitRing` followed them
+  within 0.55 of a cell and rounded each joint over half its shorter edge, so
+  every uneven step came back as a bend: on one point in ten of the
+  fairway, semi-rough and path edges 0.4 to 0.5 m off a gentle line, every 5
+  to 10 m. Seen low along an edge the game squashes them into the owner's
+  picture. The old builder's courses carry the same.
+- *Facets*: OpenStreetMap joins a mapper's points straight (a green 12 to 30
+  points, a fairway's points 10 to 30 m apart), and the pen laid its curve
+  a point a metre: 17.5 degrees a point round a 12 m green.
+- *Smooth* could not touch either (the settling above).
+
+**The fixes, one kind of curve throughout** (pen.js `penCurve`, the
+centripetal spline the pen already drew):
+- **Laid finely.** Each piece halved while its halves turn more than 2.5
+  degrees from each other or sag more than 1 cm off their chord (at most 8
+  halvings): no point turns more than about 5 degrees from the last (the 12 m
+  green: 4.8, was 17.5; 113 points, was 47). The pen's preview and its fill
+  are the same call (the preview had used a 1 m step, the fill the land's).
+- **Tamed for someone else's points** (`tame`: OpenStreetMap's, Smooth's,
+  Normalize width's). Each handle lengthened by how far the line turns at its
+  node, 4 tan(t/4) / sin(t) of the spline's, so points on a circle give that
+  circle back (the plain spline: 4 points 87% of the circle's area, 5 94%, 6
+  97%; tamed 99.9% for each); then no longer than 1.2 times the shorter piece
+  at that node, nor than `TAME`, 10 m (PLACED). Free, a road's 150 m straights
+  either side of a gentle bend bowed 5 m off the map, and at 25 m Smooth
+  edges pulled a straight road edge 2 m in beside a 30-degree bend.
+- **The grid's lines** (contour.js `fitRing`, defaults now `tol` 1 cell and
+  `spline`): straight runs within a cell of the steps (was 0.55), and each
+  joint rounded from the middle of the edge before to the middle of the edge
+  after (a quadratic, laid by the same 1 cm / 6 degree rule), drawn in only
+  where that would pull more than a cell inside; so a turn spreads along both
+  edges and no short round sits between straights. A corner is kept sharp
+  only where the cells themselves turn 55 degrees or more within four points
+  of it (PLACED: a tee turned 6 degrees reads 63 on 1 m land), where the
+  fitted lines cross within 0.75 of a cell of the cells' edge (that tee's
+  corner sits 0.68 off), and -- when both its neighbours are round -- its
+  sides are six cells or longer (PLACED: a 10 m blob of a tee made one
+  L-shaped step that became a spike a metre out). On the Alpine draft:
+
+| layer | turning per 100 m of edge (corners left out), before / now | off the cells, before / now | points, before / now |
+| --- | --- | --- | --- |
+| fairway | 174 / 120 degrees | 0.17 / 0.25 m | 5165 / 4452 |
+| semi | 166 / 120 | 0.17 / 0.25 | 5160 / 4492 |
+| path | 130 / 83 | 0.17 / 0.26 | 6939 / 5871 |
+| green | 527 / 522 | 0.12 / 0.14 | 1262 / 1518 |
+| tee | 724 / 486 | 0.13 / 0.18 | 2039 / 1545 |
+
+  ("Turning": how much the edge bends, a smooth one least; a green's is
+  mostly its own roundness. "Off the cells": ground in one and not the other
+  per metre of edge; the cells themselves are a metre's steps, so any smooth
+  line through them is about a quarter metre off. Tolerances 0.8 and 1.3
+  were tried: 0.8 bent 5 to 15% more, 1.3 took every layer 0.3 m off.)
+  Every grid that becomes outlines goes this way: a draft from before
+  outlines, the auto trace, Lining OpenStreetMap up, Paint rock on slopes.
+- **OpenStreetMap laid curved** (osm.js `curveOutline`): each outline and
+  line through the map's own points, a point turning 75 degrees or more kept
+  sharp (PLACED: a tee's, a car park's). Lines are one band each where they
+  were a disc every 1 or 2 m (whose edge scalloped 10 to 17 cm). On Alpine's
+  map, 95% of the curve within these of the mapper's straight lines (the
+  most in brackets): fairway 0.31 m (0.69), tee 0.27 (0.42), green 0.16
+  (0.27), bunker 0.14 (0.24), water 0.65 (1.05), roads 0.52 (1.04), paths
+  0.41 (0.79) -- which is the curve the points lie on, outside the chords
+  between them; the sharpest bend left at a point 5 to 7 degrees, was 37 to
+  75. Laid in 2.8 s; road points 24,466 (35,761 painted).
+- **Smooth, rebuilt** (shapes.js `smoothEdges`): where the brush reaches,
+  the edge is kept only at its points that shape it -- Douglas-Peucker,
+  every wiggle within 0.7 of the radius dropped (PLACED: at 0.35 it kept the
+  crests of the Alpine waves, 0.8 m crest to trough) -- with a node every 10
+  m on a longer piece set at the AVERAGE of the edge round it (a node on
+  the edge could sit on a wave's crest; a piece left long turned its bend
+  into a facet), and the tamed curve drawn through them. Where the reach
+  ends the curve leaves the untouched edge in the direction of the next
+  fixed point at least a piece away (the very next, 30 cm off, held the
+  handle short: 3% off a green). Corners -- turning 75 degrees within a
+  third of the radius (PLACED) -- are kept sharp by Smooth edges on a layer
+  and by Smooth edge on release; the brush rounds one it is put on, its node
+  split into two a radius either side. Measured: a wave of 0.4 m every 8 m
+  on a straight edge, smoothed whole at 1.5 m, within 12 cm of straight;
+  a green mapped as 12 points becomes the circle they lie on (within 2%);
+  50 dabs on one spot of a 6 m green: the first take it out to its true
+  circle (the outline's points lie 5 cm inside), the next 45 move its edge
+  about 2 cm in all; a 2.5 m cart path keeps its width. On Alpine as it now
+  opens: a brush dab 0.3 ms at the median, 2.8 at worst; Smooth edges on
+  each whole layer 1 to 91 ms (roads), every layer's area within 0.5% but
+  the tees (+1.6%, their blobs rounded out).
+  Rejected on the way: easing points under a bell (above: it shrinks, and
+  stopping the shrink stopped the smoothing); smoothing by growing and
+  shrinking the shape (it deletes paths thinner than the circle).
+- **Normalize width's middle lines** are laid through the same line
+  smoothing (`smoothLine`, wiggles within a grid cell or half a metre
+  dropped): the sharpest bend at a point on a stretch of Alpine's paths 37
+  degrees where two paths meet, the rest smooth (the averaged line had
+  zigzagged a few centimetres a cell).
+- **A course file saved by the builder before outlines** (its builder
+  section a draft of version 3 or older) has its surfaces smoothed once as
+  it opens in the 3D editor -- Smooth edges on every layer, corners kept, one
+  undo. Lake Point: 53 ms, every layer within 0.5% of its area but the tees
+  (+2.1%) and bunkers (+1.4%). One saved since opens exactly as saved; a file
+  with no builder section (a generated course taken over) is left alone --
+  smoothing it at every opening would round a Line laid with Auto curve off.
+
+**In the game** (`game-edge`: two copies of the Alpine course, as the
+builder makes them, opened in the capture build and looked at from 1.7 m
+along an edge): the cart path and semi-rough band beside the wavy fairway
+edge run smooth; a mapped green's edge and the bands round it lose their
+corners. The game draws surfaces from a distance field 1.5 m a texel on a
+course this size (built-field.js), so detail finer than that never shows and
+the extra points cost nothing there.

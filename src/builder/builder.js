@@ -12,7 +12,7 @@ import {readCourseFile} from '../course-file.js';
 import {saveBytes, saveHow, lastSave, coursesFolder, useFolder, setClashAsk, openedFrom, forgetOpened} from './saving.js';
 import {recallCourses, pickCourses, listCourses} from './courses-folder.js';
 import {allowed, canPick} from './lidar-folder.js';
-import {isDraft, readDraft, DRAFT_EXT} from './draft.js';
+import {isDraft, readDraft, draftVersion, DRAFT_EXT} from './draft.js';
 import {tipFor} from './tips.js';
 import {menuBarEl, keySheetEl, setMenus, showKeys} from './menu.js';
 
@@ -243,7 +243,15 @@ async function openOne(file, handle = null) {
   // A course saved from the editor brings its builder's section (course-doc.js),
   // unpacked only when Back to 2D or Save wants it.
   let draft = null;
-  if (got.kind === 'built') (await import('./editor.js')).openEditor(got.doc, {work: got.builder ? {draft: () => draft ??= readDraft(got.builder)} : null});
+  // SMOOTHED ONCE (the owner, 25 November 2026: "Make sure this applies to
+  // all traced. Painted. and imported surfaces in the builder!"): a course
+  // the builder saved before outlines (its section a draft of version 3 or
+  // older) holds outlines traced round squares, waves and all; they are
+  // smoothed as it opens (Smooth edges on every layer, corners kept; Undo
+  // takes it back). One saved since opens exactly as saved, and a file with
+  // no builder section (a generated course taken over) is left as it is.
+  const old = got.kind === 'built' && got.builder ? (await draftVersion(got.builder)) < 4 : false;
+  if (got.kind === 'built') (await import('./editor.js')).openEditor(got.doc, {work: got.builder ? {draft: () => draft ??= readDraft(got.builder)} : null, smoothOld: old});
   else (await import('./door-generate.js')).open(got.course);
  } finally { setBusy(''); refreshSave(); }
 }
