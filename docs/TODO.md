@@ -52,6 +52,15 @@ Fairway Tour and computer golfers*).
 
 ## Known wrong
 
+- [ ] **The `online` smoke journey's "the host flies the guest's ball" step
+  timed out** (25 November 2026, branch `builder-outlines`): 30 s waiting
+  for the guest's stroke on the host's card, once in the full run and once
+  alone, then passed 3 of 3 (once on the code before that day's ground
+  colour change, twice after it). The failing runs were the quick ones (78 s
+  against 117-132 s passing). A colour formula in the ground shader cannot
+  reach the relay, so most likely a race in the step or the game's hand-off
+  of a guest's monitor shot; not looked into.
+
 - [ ] **An online screen's connection lost with no close seen at the relay**
   (three smoke runs on 20 November 2026, Chromium; RESEARCH, *Once, both
   screens lost the relay together*). It reconnects and carries on (and since
@@ -277,6 +286,16 @@ here is a claim of support until it is done.
   passed it on the before-and-after pictures; the reason for it was the
   projector washing the grass out. Look at a round there: is the rough still
   too light, and do the slopes and mowing read better than before?
+
+- [ ] **The slopes' colouring on the darker grass: not seen by the owner**
+  (branch `builder-outlines`, 25 November 2026; RESEARCH *Slope tint*,
+  *Turned, not coloured*). Sloping turf turns toward straw without the lime
+  it had; seen only in before-and-after pictures (Alpine, Mountain, Classic
+  Parkland, Desert Resort, Seaside Links). Play the Alpine draft and a
+  generated hilly course: do banks and sloping fairways read as drier grass,
+  not as olive or khaki, and is the slope still easy to see? The strength
+  and range are PLACED by eye and easy to move (ground.js, `parched`, the
+  mown curve, `dryGain`).
 
 - [ ] **The pull-and-push swing, on the owner's iPhone** (branch
   `pull-push-swing`, 15-17 November 2026; RESEARCH *The pull-and-push

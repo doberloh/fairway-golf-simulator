@@ -447,6 +447,21 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  float edgeShare(vec2 p){vec2 q=abs(p)-farProp;float sx=edgeAlong(p.x>0.?0:1,clamp((p.y+farProp.y)/(2.*farProp.y),0.,1.)),sz=edgeAlong(p.y>0.?2:3,clamp((p.x+farProp.x)/(2.*farProp.x),0.,1.));return mix(sz,sx,smoothstep(-30.,30.,q.x-q.y));}
  float edgeFade(vec2 p,float d){vec2 c=floor(p/${EDGE_WOODS.cell}.),f=fract(p/${EDGE_WOODS.cell}.);f=f*f*(3.-2.*f);float a=coverHash(c+vec2(17.,5.)),b=coverHash(c+vec2(18.,5.)),e=coverHash(c+vec2(17.,6.)),g=coverHash(c+vec2(18.,6.));float n=mix(mix(a,b,f.x),mix(e,g,f.x),f.y);return smoothstep(0.,1.,(d-${(EDGE_WOODS.band * .15).toFixed(2)}+${EDGE_WOODS.ragged * 2}.*(n-.5))/${EDGE_WOODS.band}.);}
  float patchNoise(vec2 x){vec2 i=floor(x),f=fract(x);f=f*f*(3.-2.*f);return mix(mix(hashGround(i),hashGround(i+vec2(1.,0.)),f.x),mix(hashGround(i+vec2(0.,1.)),hashGround(i+vec2(1.,1.)),f.x),f.y);}
+ // TURF DRYING, TURNED NOT COLOURED (25 November 2026). Drying multiplies the
+ // turf by a tint that takes blue out and adds a little red -- the hue turns
+ // from green toward straw. On its own that multiply also ADDED colour: a
+ // fairway went from 25 to 41 saturation, the lime the darker turf had just
+ // taken out (textures.js turfGrade), and it darkened. So the dried colour is
+ // put back to the turf's own brightness, then held to no more colour than
+ // the turf had (chroma, the largest channel less the smallest): only the hue
+ // moves. a is how far, 0..1.
+ vec3 dryTurf(vec3 c,vec3 tint,float a){
+  const vec3 W=vec3(.3,.59,.11);
+  vec3 d=c*tint;float l=dot(c,W)*1.04;d*=l/max(dot(d,W),1e-4);
+  float c0=max(c.r,max(c.g,c.b))-min(c.r,min(c.g,c.b)),c1=max(d.r,max(d.g,d.b))-min(d.r,min(d.g,d.b));
+  d=l+(d-l)*min(1.,c0/max(c1,1e-4));
+  return mix(c,max(d,0.),a);
+ }
  // The bed a height lies in (strataUniforms): level, a little warped so a
  // bed is not ruled, its colour by a hash of its number.
  // How many beds a pixel crosses, set before groundPaint is called.
@@ -1445,9 +1460,16 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
    // MOWN GROUND AND ROUGH GET THEIR OWN RANGE. Mown ground is graded and rough
    // is not, so one curve either does nothing on a fairway or saturates the
    // rough into a single flat tone. Two curves put both in their own middle.
-   float dry=smoothstep(kind==0.?.07:.015,kind==0.?.30:.10,slope);
-   // DRYING TAKES OUT BLUE: (1.16, 1.00, 0.50), which on green grass reads as
-   // turf burning off. But ONLY AS FAR AS THE TURF IS GREEN. Applied to turf
+   //
+   // THE MOWN RANGE WIDENED FOR REAL GROUND (25 November 2026): .025 to .18,
+   // was .015 to .10. Measured in the game (bench/shots/grade/slope-share.mjs,
+   // local): on the owner's Alpine course, built from LIDAR, the fairway's
+   // median is .079 and 41% of it sat at full dryness -- one even olive from
+   // tee to green, a different grass rather than a slope. PLACED.
+   float dry=smoothstep(kind==0.?.07:.025,kind==0.?.30:.18,slope);
+   // DRYING TAKES OUT BLUE: (1.22, 1.00, 0.45) since 25 November 2026, was
+   // (1.16, 1.00, 0.50), which on green grass reads as turf burning off --
+   // the hue only, through dryTurf, which adds no colour. But ONLY AS FAR AS THE TURF IS GREEN. Applied to turf
    // that is already straw -- desert scrub, links fescue, a sandy bank -- the
    // same step pushed it toward orange (desert rough at full dryness went to
    // 215, 153, 52), and the banks and dunes of those courses came out banded in
@@ -1463,11 +1485,14 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
    // bank should yellow a little, not bleach.
    float lum=dot(turf,vec3(.3,.59,.11));
    float green=clamp((turf.g-max(turf.r,turf.b))/max(lum,1e-3)*2.5,0.,1.);
-   const vec3 parched=vec3(1.16,1.,.50);
+   // The hue only (dryTurf, 25 November 2026): no more colour and no darker.
+   const vec3 parched=vec3(1.22,1.,.45);
    // Irrigation, in effect. A green is watered to within an inch of its life and
-   // a fringe most of the way; fairway and rough take what falls on them.
-   float dryGain=kind==4.?.25:kind==3.?.5:1.;
-   turf=mix(turf,turf*parched,dry*dryGain*green*cueSlope);
+   // a fringe most of the way; a fairway a quarter less than the rough
+   // (25 November 2026, was all of it: once the drying could be seen, Alpine's
+   // steep approaches went one dull olive close up; PLACED).
+   float dryGain=kind==4.?.25:kind==3.?.5:kind==2.?.75:1.;
+   turf=dryTurf(turf,parched,dry*dryGain*green*cueSlope);
   }
  }
  // PATCHES (U3 in TODO). A real course is never one colour: the rough runs in
@@ -1494,7 +1519,8 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
    // parched turf does; lusher ones go a touch deeper green. Greens are left
    // their colour: tone only.
    float dryAmt=kind==0.?.5:kind==1.?.38:kind==2.?.32:kind==3.?.18:0.;
-   turf=mix(turf,turf*vec3(1.1,1.02,.76),smoothstep(.55,.85,n3)*dryAmt*cuePatches);
+   // (Turned, not coloured, as the slope's drying: dryTurf.)
+   turf=dryTurf(turf,vec3(1.1,1.02,.76),smoothstep(.55,.85,n3)*dryAmt*cuePatches);
    turf=mix(turf,turf*vec3(.9,1.04,.94),smoothstep(.58,.88,1.-n3)*dryAmt*.8*cuePatches);
   }
   if(kind==5.)turf=mix(turf,turf*vec3(.86,.84,.8),smoothstep(.55,.85,n3)*.8*cuePatches);

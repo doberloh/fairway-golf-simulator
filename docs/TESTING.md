@@ -362,7 +362,10 @@ the courses several suites share, and builds many at once on worker threads
 - **The ground a ball plays from** -- `grounds` (the overhaul's ground types: a row in every table -- bounce, roll, skid, lie, relief rank, roll hop, sound, map colour, HUD label -- no restitution a dropped ball could gain height from, the orderings that make each one itself, what may stand on each, a pitch running further on rock than in heather, the shot card naming the ground).
 - **Drawing, by structure only** (no test loads `renderer.js`) --
   `ground-shader-structure` (also: how many times the ground painter is called), `green-cue-wiring` (also: the ground-reading
-  choice writes every cue, and an old record adopts it once), `glsl-reserved`,
+  choice writes every cue, and an old record adopts it once; since 25 November
+  2026, the slope's drying and the drier patches go through `dryTurf`, which
+  holds the turf's colour, and no plain multiply by the tint is back -- what it
+  looks like is seen in captures, `bench/shots/grade/grade-shots.mjs`, local), `glsl-reserved`,
   `three-namespace`, `flood-shadows` (five samplers since the tables were packed), `instance-cull` (also: a mesh with a reach drops
   whole squares past it and only those; a near-shadow plant casts into the nearest map alone; the Phone tier's shorter near ring drops the squares behind the camera, and the next cull has 60 m again; its own thinning figures set by its cull and cleared by the next), `occlusion`, `clouds`,
   `mist`, `daylight`, `floodlights` (also, since 8 November 2026, no more live lamps than a card's

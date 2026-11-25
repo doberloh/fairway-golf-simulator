@@ -2598,13 +2598,33 @@ Greens stay untinted at any threshold, and that is correct — they are graded t
 
 **And even with the range right, it was still invisible — because the strength was too.** Reported again, measured again. The mean colour change on a fairway pixel was **1.3, 0.7, 1.8 out of 255** — under one percent, with a worst case of 6. A hue shift that small does not survive a toon ramp, or anything else.
 
-The tint is now `vec3(1.16, 1.00, 0.50)` against `vec3(1.10, 1.03, 0.80)`, the mown range starts at tan 0.015 instead of 0.035, and the fairway's own gain went from 0.55 to 1.0 — it was halving an effect already too small to see. Mean blue change on a fairway pixel: **15 to 20 of 255**, about ten times the first attempt.
+The tint then became `vec3(1.16, 1.00, 0.50)` against `vec3(1.10, 1.03, 0.80)`, the mown range started at tan 0.015 instead of 0.035, and the fairway's own gain went from 0.55 to 1.0 — it was halving an effect already too small to see. Mean blue change on a fairway pixel: **15 to 20 of 255**, about ten times the first attempt. (All three REPLACED on 25 November 2026: *Turned, not coloured*, below.)
 
 Blue carries it. Grass drying loses blue first and gains a little red, while the green channel barely moves — holding green at exactly 1.0 is what keeps turf recognisably turf rather than turning it brown. Checked at full dryness across biomes: pnw fairway `83,134,55` goes to `96,134,28`; links rough `168,157,101` to `195,157,51`, which is fescue rather than damage; desert rough `185,153,103` to `215,153,52`. A stronger setting was tested and rejected — at `0.38` blue, desert rough reaches `226,156,39`, which is orange.
 
 **The lesson, three times over in this file:** every failure here was a magnitude guessed rather than measured. The Laplacian was too fine for a fairway roll, the slope threshold too coarse for a fairway slope, and the tint itself too weak to see. Each took a minute to measure and each had shipped without being measured. The rule this earns: before tuning a visual effect, sample the field it runs over and print the number it will actually produce.
 
-The shift is applied as a multiplier on whatever the biome's turf already is (`vec3(1.10, 1.03, 0.80)`), so a links course goes further into its own fescue and a desert course into its own sandstone, rather than every biome converging on one straw colour. Gain by surface, which is irrigation in effect: green 0.15, fringe 0.35, fairway 0.55, rough 1.0. Sand and water are excluded.
+The shift is applied as a multiplier on whatever the biome's turf already is (`vec3(1.10, 1.03, 0.80)` then; the first build), so a links course goes further into its own fescue and a desert course into its own sandstone, rather than every biome converging on one straw colour. Gain by surface, which is irrigation in effect: green 0.15, fringe 0.35, fairway 0.55, rough 1.0 then; green 0.25, fringe 0.5, fairway 0.75, rough and semi-rough 1.0 since 25 November 2026. Sand and water are excluded.
+
+**Turned, not coloured (25 November 2026).** The owner, after the darker grass (*The turf as the landscape paints it*): the effects that show the slopes "might also need to be adjusted". Pictures of the owner's Alpine draft and five generated landscapes, each view taken with every cue on and with each cue off in turn (local `bench/shots/grade/`), found one fault, and it was this cue. **The multiply added colour.** Taking half the blue out of a mid green does not only turn its hue: it raises its saturation and darkens it. On the darker turf a fairway's drawn colour went from saturation 25 to 41 (Mountain's fairway #648a52 to #6b8a3a, HSL) -- the lime `turfGrade` had just taken out -- and on screen the dried pixels went from 53-62 to 68-89 saturation (HSV, against the same pose with the tint off), a band of lime-yellow across every sloping fairway and round every bunker lip.
+
+**And on real ground it ran at full strength.** Measured in the game (`world.height` and `world.surface` every 3 m, local `bench/shots/grade/slope-share.mjs`), the mown curve's top, tan 0.10 (5.7 degrees), is below the median of a course built from LIDAR:
+
+| fairway | median tan | p90 | at full dryness (old curve) | mean dryness (old) |
+|---|---:|---:|---:|---:|
+| Alpine (the owner's draft, LIDAR) | 0.079 | 0.150 | 41% | 0.70 |
+| Mountain, seed FAIRWAY | 0.051 | 0.145 | 23% | 0.44 |
+| Classic Parkland, seed FAIRWAY | 0.022 | 0.067 | 7% | 0.18 |
+
+So Alpine's fairways went one even olive from tee to green -- a different grass, not a slope. (Alpine's semi-rough: 54% full; its rough, on the rough's own curve, 13%, which is fine.)
+
+**What changed** (ground.js `dryTurf`, used by the slope's drying and by the drier patches of *Turf colour variation*):
+- The dried colour is put back to the turf's own brightness times 1.04, then its chroma (largest channel less the smallest) held to the turf's own. Only the hue moves, toward straw; it can never be more colourful than the grass it dries. On screen the dried pixels now gain 0 to 2 points of saturation (were 15 to 27).
+- The tint is `vec3(1.22, 1.00, 0.45)`: a little further toward straw than before, since it no longer brings saturation with it. Tried at (1.16, 1, .5) with no lift, which held the colour but read muddy olive close up, and at (1.3, 1, .4) with 1.05, which read as dry grass from above but went khaki-brown beside Mountain's pond -- the khaki that sank mixing toward straw (*Why desert and links looked odd*).
+- The mown curve runs tan 0.025 to 0.18 (1.4 to 10.2 degrees), was 0.015 to 0.10; the rough's 0.07 to 0.30 is unchanged.
+- A fairway takes 0.75 of it, was 1.0: with the drying visible, Alpine's steep approaches went one dull olive close up.
+
+All three numbers and the 1.04 PLACED by eye on before-and-after pictures (Alpine, Mountain, Classic Parkland, Desert Resort, Seaside Links). Level turf is unchanged to the pixel (nothing dries on the flat), so the grass colours the owner passed on 24 November stand. Desert and links rough, already straw, still barely move: the greenness gate is untouched. Checked and left alone: the raking light, the baked relief and the grass sheen work in brightness; with each turned off in turn they add shape and no colour, and on the darker turf none of them read wrong. Not seen by the owner in a round, nor on the projector.
 
 **A measurement caution recorded honestly.** The frame times taken earlier in this work (8.3–8.5 ms) and those taken after it (14.5–16.9 ms) are the SAME code at different machine states. An A/B on the spot — the shader with the tint against the checkpointed one without, built and measured minutes apart — gave 14.5–15.6 ms with and 15.7–16.9 ms without, which is to say no measurable cost. Only same-sitting comparisons in this file mean anything; the absolute numbers across sections do not.
 
@@ -3921,9 +3941,11 @@ as a multiple of brightness either way, and the scale of a patch:
 The Graphics panel's *Turf colour variation* scales all of it; 60% is the
 default the report was judged at, so a green varies about +-2.7%. Greens are
 kept faint on purpose: every green-reading cue works in brightness, and a
-patch at the scale of a break would compete with it. Dry drifts use the same
-parched multiplier the slope tint uses (blue shed, a little red gained), so
-they read as fescue rather than damage. Patches smaller than a few pixels are
+patch at the scale of a break would compete with it. Dry drifts use a
+parched multiplier like the slope tint's (blue shed, a little red gained), so
+they read as fescue rather than damage -- since 25 November 2026 through the
+same `dryTurf`, which turns the hue and adds no colour (*Turned, not
+coloured*). Patches smaller than a few pixels are
 held back (`fwidth`), so nothing shimmers at distance. No new texture, no
 extra pass: a few noise lookups per ground fragment.
 
@@ -4289,6 +4311,10 @@ dry grass has nowhere left to go.
    rough was fine, but a sloping FAIRWAY washed out to a pale grey smear where
    it fell toward a pond: irrigated turf on a bank should yellow a little, not
    bleach. That is what sent it back to the original multiply.
+
+(The multiply itself was found to add colour on the darker turf of 24
+November 2026, and is now held to the turf's own brightness and chroma: *Turned,
+not coloured*, under *Slope tint*.)
 
 ### Ground shading comes from the sun's side
 
@@ -9599,7 +9625,9 @@ leaves, water and sand that were all chosen under it; a per-landscape palette
 pass (forty colours to retune, and the next landscape would bring the lift
 back). Darker turf also keeps the ground's slopes, stripes and shade in the
 middle of the tone curve rather than its top, where ACES squeezes them
-together; that is reasoning, not a measurement. Not yet seen on the
+together; that is reasoning, not a measurement. One cue did not follow: the
+slope tint's multiply put the lime back on every slope, fixed the next day
+(*Slope tint*, *Turned, not coloured*). Not yet seen on the
 projector. Generation untouched (fingerprints unchanged): no version moves. Sources: Barla, Thollot and Markosian,
 *X-Toon* (rims and tone by view); the stylised-foliage tutorials already in
 REFERENCES (Inasa Fujio); *Belt of Venus*.

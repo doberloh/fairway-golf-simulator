@@ -25,6 +25,24 @@ kept whole: *The open list before the 11 November 2026 prune* and *The open
 list before the 16 October prune*, each with a table of what became of every
 entry.
 
+## The slopes' colouring on the darker grass (branch `builder-outlines`, 25 November 2026; not merged)
+
+The owner, after the darker grass: the effects that help read the ground
+"might also need to be adjusted ... take a pass at that color grading".
+Pictures of the Alpine draft and five generated landscapes, each cue turned
+off in turn, found one fault: the slope's drying (RESEARCH *Slope tint*,
+*Turned, not coloured*).
+
+- [x] Drying turns the hue and adds no colour (ground.js `dryTurf`): the
+  plain multiply took a fairway from saturation 25 to 41, lime on every
+  slope and round every bunker lip. The drier patches go through it too.
+- [x] The mown curve widened to tan 0.025-0.18 (was 0.015-0.10, which held
+  41% of Alpine's fairway at full strength), a fairway at 0.75 of it, the
+  tint a little warmer (1.22, 1, .45) with a 4% lift. All PLACED by eye.
+- [x] The raking light, the baked relief and the sheen looked at and left:
+  brightness only, they read right on the darker turf.
+- Not seen by the owner (TODO, *The slopes' colouring on the darker grass*).
+
 ## No squares in the builder (branch `builder-outlines`, 24 November 2026; not merged)
 
 The owner: "I want these pixellated views gone from the builder entirely.
