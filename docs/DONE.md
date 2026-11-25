@@ -25,6 +25,22 @@ kept whole: *The open list before the 11 November 2026 prune* and *The open
 list before the 16 October prune*, each with a table of what became of every
 entry.
 
+## Release 0.9.21 (25 November 2026)
+
+The owner: "Go ahead and build a new patch release. Push to github and also
+update the live website demo." Version 0.9.21, the next patch number (no
+version had moved since 0.9.20). It carries `builder-big-zips` and
+`builder-outlines` (the sections below, through *A big LIDAR ZIP in the
+builder*); notes in docs/releases/v0.9.21.md, checks in DISTRIBUTION_REVIEW's
+addendum. The release's line in TODO's *Play the current build by hand*
+replaced 0.9.20's, which was:
+
+- **Release 0.9.20** (21 November 2026: online play merged, marked BETA).
+  Every smoke journey on the release build is in DISTRIBUTION_REVIEW's
+  addendum. The owner looked round the online screens on the branch
+  the evening before (three changes came of it, below); nobody has played
+  a round online.
+
 ## The slopes' colouring on the darker grass (branch `builder-outlines`, 25 November 2026; merged the same day)
 
 The owner, after the darker grass: the effects that help read the ground

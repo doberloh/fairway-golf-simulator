@@ -2298,5 +2298,33 @@ It makes no network request and needs nothing a file page lacks. A draft
 the builder saves is now version 4 (the trace as outlines); an older
 builder refuses it in plain words, and this builder opens every older
 draft. Generator, schema and built versions are unchanged. Not released;
-not used by a person.
+not used by a person. (Released in 0.9.21, below.)
+
+## Addendum, 25 November 2026: v0.9.21
+
+**v0.9.21** is published at the owner's request ("Go ahead and build a new
+patch release. Push to github and also update the live website demo"; a
+patch release, so the next number), as "Fairway 0.9.21 (beta)", tag
+`v0.9.21`, not a pre-release, the same six files, from the merge of
+`release-0.9.21` into `main`, notes in `docs/releases/v0.9.21.md`. Content:
+`builder-big-zips` (a LIDAR ZIP of any size, the course's outline with full
+detail inside, half-metre ground, Fill outside sized from the survey, the
+Fringe layer, the builder reworded, built fairways mown one way, the darker
+grass) and `builder-outlines` (the builder on outlines, no waves or facets,
+the slopes' colouring). **Generator 103, schema 47 and built 3 are
+unchanged** and the landscape fingerprints are silent: every seed and
+course file plays as in 0.9.20. **Still one offline file**, no request of
+its own (every smoke journey checks). The game's page is 60,723,135 bytes
+against 0.9.20's 60,717,053 (6 KB: Clipper2's licence under Help, the
+ground shader); the builder's 56,365,625 (Clipper2, branch note above).
+`DEPENDENCY_INVENTORY.json` follows the lockfile (69 packages, Clipper2
+added). Checked on the released code: the whole Node suite (1,854 tests,
+1,853 pass, one skipped, none failing); the game's 51 smoke journeys on the
+release build, 50 of 51 in the full run with `look` failing once (the known
+flake, TODO) and passing 2 of 2 alone after; the builder's 10 of 10; the
+quality tiers profiled no slower than the baseline. The `online` journey
+failed twice and passed three times on this code the same day (TODO,
+*Known wrong*). Nobody has used the builder's outlines, big ZIPs or Fringe
+layer, and the slopes' colouring is seen only in pictures; TODO, *Play the
+current build by hand*.
 
