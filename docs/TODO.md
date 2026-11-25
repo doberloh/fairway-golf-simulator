@@ -44,11 +44,12 @@ wrong, unfinished, or owed a check.
 
 ## Next feature
 
-None chosen. Online play merged and was released as 0.9.20 (21 November
-2026; DONE.md, *Online play with friends in other houses*; docs/ONLINE_PLAY.md);
-what it left is under *Play the current build by hand*, *Known wrong* and
-*The owner's calls*. The Fairway Tour before it, 0.9.19 (DONE.md, *The
-Fairway Tour and computer golfers*).
+None chosen. The builder on outlines and its big ZIPs, with the darker
+grass, were released as 0.9.21 (25 November 2026; DONE.md, *No squares in
+the builder* and the sections below it); what they left is under *Play the
+current build by hand*, *Only the owner can check* and *Course Builder*.
+Online play before them, 0.9.20 (DONE.md, *Online play with friends in
+other houses*; docs/ONLINE_PLAY.md).
 
 ## Known wrong
 
@@ -240,7 +241,10 @@ Fairway Tour and computer golfers*).
   plays a flourish over the cup*. **Again 24 November 2026** (builder-big-zips,
   the darker grass; 50 of 51 in the full run), on seed DRIFT-1078-2, hole 2;
   passed 3 of 3 alone straight after, once on that very seed -- so not the
-  green alone. The grass change touches no ball code.
+  green alone. The grass change touches no ball code. **And 25 November
+  2026** on the 0.9.21 release build, 50 of 51 in the full run (the failing
+  step not kept: only the run's last lines were saved); passed 2 of 2 alone
+  straight after.
 - [ ] **The `no-late-shaders` smoke journey failed once** on round F3's build
   (Ultra, a drawn Lowcountry nine, seed HOLLOW-1812: one lit shader built 142
   ms after the course appeared), passed ten times alone, and passed in the
@@ -320,14 +324,16 @@ here is a claim of support until it is done.
     flight's end waited on something.
   - `lab.state().lastStroke` holds the last reading, with its sample count.
 
-- [ ] **Play the current build by hand** (0.9.20, 21 November 2026). What has
+- [ ] **Play the current build by hand** (0.9.21, 25 November 2026). What has
   been built and seen only in captures, measurements or smoke runs, and still
   exists in the game. The archive has each item's full list.
-  - **Release 0.9.20** (21 November 2026: online play merged, marked BETA).
-    Every smoke journey on the release build is in DISTRIBUTION_REVIEW's
-    addendum. The owner looked round the online screens on the branch
-    the evening before (three changes came of it, below); nobody has played
-    a round online.
+  - **Release 0.9.21** (25 November 2026: the builder on outlines and its
+    big ZIPs, the darker grass, the slopes' colouring). Every smoke journey
+    on the release build is in DISTRIBUTION_REVIEW's addendum. The owner
+    passed the darker grass on pictures and has seen the slopes only on
+    pictures; nobody has used the builder's outlines, big ZIPs or Fringe
+    layer (Course Builder entries below, and *The slopes' colouring on the
+    darker grass*). Online play (0.9.20) still unplayed, below.
   - **Online play, by hand** (0.9.20, BETA; docs/ONLINE_PLAY.md). A round
     with a friend in another house over the built-in relay: host and guest
     each way round; a phone that opened the game from `run_fairway_server`
