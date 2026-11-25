@@ -25,7 +25,7 @@ kept whole: *The open list before the 11 November 2026 prune* and *The open
 list before the 16 October prune*, each with a table of what became of every
 entry.
 
-## The slopes' colouring on the darker grass (branch `builder-outlines`, 25 November 2026; not merged)
+## The slopes' colouring on the darker grass (branch `builder-outlines`, 25 November 2026; merged the same day)
 
 The owner, after the darker grass: the effects that help read the ground
 "might also need to be adjusted ... take a pass at that color grading".
@@ -43,7 +43,7 @@ off in turn, found one fault: the slope's drying (RESEARCH *Slope tint*,
   brightness only, they read right on the darker turf.
 - Not seen by the owner (TODO, *The slopes' colouring on the darker grass*).
 
-## No squares in the builder (branch `builder-outlines`, 24 November 2026; not merged)
+## No squares in the builder (branch `builder-outlines`, 24 November 2026; merged 25 November 2026)
 
 The owner: "I want these pixellated views gone from the builder entirely.
 No 're processing on a 1m square' or anything like that ... The game doesnt
