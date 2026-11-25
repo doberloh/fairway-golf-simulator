@@ -470,23 +470,6 @@ function shapeMoved(pick, dx, dz, angle) {
  if (angle) { const [cx, cz] = S.middleOf(set); set = S.clean(S.turned(set, angle, cx, cz)); }
  return dx || dz ? S.moved(set, dx, dz) : set;
 }
-// A patch's cells (indices into an nx x nz grid) turned `angle` radians about
-// their middle: every cell in the turned box that turns back onto one of
-// them. Returns the new cells. The 3D editor's (editing.js turnShape), until
-// it is on outlines too.
-export function turnedCells(cells, angle, nx, nz) {
- let ci = 0, cj = 0; for (const k of cells) { ci += k % nx; cj += Math.floor(k / nx); } ci /= cells.length; cj /= cells.length;
- const c = Math.cos(angle), s = Math.sin(angle), had = new Set(cells);
- let i0 = Infinity, i1 = -Infinity, j0 = Infinity, j1 = -Infinity;
- for (const k of cells) { const di = k % nx - ci, dj = Math.floor(k / nx) - cj, ti = ci + di * c - dj * s, tj = cj + di * s + dj * c; i0 = Math.min(i0, ti); i1 = Math.max(i1, ti); j0 = Math.min(j0, tj); j1 = Math.max(j1, tj); }
- const out = [];
- for (let j = Math.max(0, Math.floor(j0) - 1); j <= Math.min(nz - 1, Math.ceil(j1) + 1); j++) for (let i = Math.max(0, Math.floor(i0) - 1); i <= Math.min(nx - 1, Math.ceil(i1) + 1); i++) {
-  const di = i - ci, dj = j - cj, si = Math.round(ci + di * c + dj * s), sj = Math.round(cj - di * s + dj * c);
-  if (si >= 0 && sj >= 0 && si < nx && sj < nz && had.has(sj * nx + si)) out.push(j * nx + i);
- }
- return out;
-}
-
 // Which way a house's front faces: toward the nearest fairway, green or tee
 // (32 bearings, out to 150 m). Shared with the editor (editing.js addHome).
 export function facingFrom(kindAt) {

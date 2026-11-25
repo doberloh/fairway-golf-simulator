@@ -42,27 +42,6 @@ export function withEditorWork(d, {base, now, changed, hidden}) {
   trace: {...d.trace, shapes, hidden: [...hidden], trees: got.trees, homes: got.homes}};
 }
 
-// Every grid point inside `rings` (even-odd) set to 1 on `mask`. The grid's
-// points are its cells' middles at x0 + (i + 0.5) * cell.
-export function fillRings(rings, {nx, nz, cell, x0, z0}, mask) {
- let zmin = Infinity, zmax = -Infinity;
- for (const ring of rings) for (const [, z] of ring) { zmin = Math.min(zmin, z); zmax = Math.max(zmax, z); }
- const j0 = Math.max(0, Math.ceil((zmin - z0) / cell - .5)), j1 = Math.min(nz - 1, Math.floor((zmax - z0) / cell - .5));
- for (let j = j0; j <= j1; j++) {
-  const z = z0 + (j + .5) * cell, xs = [];
-  for (const ring of rings) for (let a = 0, b = ring.length - 1; a < ring.length; b = a++) {
-   const [ax, az] = ring[b], [bx, bz] = ring[a];
-   if ((az > z) !== (bz > z)) xs.push(ax + (z - az) / (bz - az) * (bx - ax));
-  }
-  xs.sort((p, q) => p - q);
-  for (let k = 0; k + 1 < xs.length; k += 2) {
-   const i0 = Math.max(0, Math.ceil((xs[k] - x0) / cell - .5)), i1 = Math.min(nx - 1, Math.floor((xs[k + 1] - x0) / cell - .5));
-   if (i1 >= i0) mask.fill(1, j * nx + i0, j * nx + i1 + 1);
-  }
- }
- return mask;
-}
-
 // A tree as a key: where it stands and its size, to the centimetre.
 const treeKey = (x, z, h, crown) => [x, z, h, crown].map(v => Math.round(v * 100)).join(',');
 

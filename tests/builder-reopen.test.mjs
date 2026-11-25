@@ -8,7 +8,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {docFromLand} from '../src/builder/real-course.js';
 import {createEditor} from '../src/builder/editing.js';
-import {createLayers} from '../src/builder/layers.js';
+import {cellLayers} from './fixtures/cell-layers.mjs';
 import {PALETTE, codesToShapes} from '../src/builder/trace-edit.js';
 import * as S from '../src/builder/shapes.js';
 import {validateDoc, writeBuiltFile, readBuiltFile, playableFile, builderPart, BUILDER_PART, MAX_PLAYABLE, TREE_STRIDE} from '../src/course-doc.js';
@@ -24,7 +24,7 @@ import {saveHow} from '../src/builder/saving.js';
 
 function session() {
  const cell = 1, halfX = 80, halfZ = 90, nx = 161, nz = 181, N = nx * nz;
- const ground = new Float32Array(N).fill(100), layers = createLayers(nx, nz, PALETTE);
+ const ground = new Float32Array(N).fill(100), layers = cellLayers(nx, nz);
  const at = (x, z) => Math.round((z + halfZ) / cell) * nx + Math.round((x + halfX) / cell);
  const fairway = layers.mask('fairway', true), green = layers.mask('green', true), tee = layers.mask('tee', true), holes = [];
  for (let n = 0; n < 9; n++) {

@@ -7,21 +7,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {docFromLand} from '../src/builder/real-course.js';
 import {createEditor} from '../src/builder/editing.js';
-import {createLayers} from '../src/builder/layers.js';
+import {cellLayers} from './fixtures/cell-layers.mjs';
 import {PALETTE} from '../src/builder/trace-edit.js';
 import {validateDoc, TREE_STRIDE} from '../src/course-doc.js';
-import {fromEditor, fillRings} from '../src/builder/round-trip.js';
+import {fromEditor} from '../src/builder/round-trip.js';
 import * as S from '../src/builder/shapes.js';
-
-test('outlines filled onto a grid: every point inside, none outside', () => {
- const g = {nx: 10, nz: 10, cell: 1, x0: 0, z0: 0}, m = fillRings([[[2, 2], [6, 2], [6, 5], [2, 5]]], g, new Uint8Array(100));
- const on = [...m].map((v, k) => v ? `${k % 10},${Math.floor(k / 10)}` : null).filter(Boolean);
- assert.deepEqual(on, ['2,2', '3,2', '4,2', '5,2', '2,3', '3,3', '4,3', '5,3', '2,4', '3,4', '4,4', '5,4'], 'the points whose middles are inside');
-});
 
 function course() {
  const cell = .5, halfX = 80, halfZ = 100, nx = 321, nz = 401, N = nx * nz;
- const ground = new Float32Array(N).fill(100), layers = createLayers(nx, nz, PALETTE);
+ const ground = new Float32Array(N).fill(100), layers = cellLayers(nx, nz);
  const at = (x, z) => Math.round((z + halfZ) / cell) * nx + Math.round((x + halfX) / cell);
  const fairway = layers.mask('fairway', true), green = layers.mask('green', true), tee = layers.mask('tee', true);
  // Nine holes side by side, 16 m apart; the fifth down the middle.

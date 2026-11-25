@@ -3,9 +3,9 @@
 // only; a composite split back into layers; a mask tidied.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createLayers, LAYER_ORDER, tidyMask, layersFor} from '../src/builder/layers.js';
+import {LAYER_ORDER, layersFor} from '../src/builder/layers.js';
 import {BIOMES} from '../src/biomes.js';
-import {PALETTE} from '../src/builder/trace-edit.js';
+import {PALETTE, createTrace} from '../src/builder/trace-edit.js';
 
 test('the order is the game\'s: water over sand over green over fringe over tee over path over fairway over semi over ground', () => {
  assert.deepEqual(LAYER_ORDER.slice(0, 8), ['water', 'sand', 'green', 'fringe', 'tee', 'path', 'fairway', 'semi']);
@@ -19,29 +19,18 @@ test('the fringe is the palette\'s last code', () => {
  assert.deepEqual(PALETTE.slice(0, 8), ['rough', 'fairway', 'semi', 'tee', 'green', 'sand', 'water', 'path']);
 });
 
+// The layers as outlines since 24 November 2026 (trace-edit.js on shapes.js;
+// a composite turned into layers, and tidying, are tested there).
 test('the topmost layer shows; a lower one runs on under it; hiding shows what is under', () => {
- const L = createLayers(10, 1, PALETTE), fair = L.mask('fairway', true), sand = L.mask('sand', true);
- fair.fill(1); sand[4] = sand[5] = 1; L.recompose();
- assert.equal(L.kindAt(4), 'sand'); assert.equal(L.kindAt(3), 'fairway');
- L.setHidden('sand', true);
- assert.equal(PALETTE[L.view[4]], 'fairway', 'the view shows the fairway under a hidden bunker');
- assert.equal(L.kindAt(4), 'sand', 'the course still has the bunker');
- sand.fill(0); L.recompose();
- assert.equal(L.kindAt(4), 'fairway', 'the fairway was there all along');
- assert.deepEqual(L.present(), ['fairway']);
-});
-
-test('a composite comes apart into its layers', () => {
- const L = createLayers(4, 1, PALETTE).fromCodes(Uint8Array.from([0, PALETTE.indexOf('green'), PALETTE.indexOf('heather'), 0]));
- assert.deepEqual(L.present(), ['green', 'heather']);
- assert.equal(L.kindAt(2), 'heather');
-});
-
-test('a mask is tidied: small patches go, small holes fill', () => {
- const m = new Uint8Array(100); for (let k = 0; k < 100; k++) m[k] = (k % 10 > 1 && k % 10 < 8 && k > 20 && k < 80) ? 1 : 0;
- m[44] = 0; m[91] = 1;
- tidyMask(m, 10, 10, 3, 3);
- assert.equal(m[44], 1, 'the hole is filled'); assert.equal(m[91], 0, 'the speck is gone');
+ const t = createTrace({nx: 21, nz: 21, cell: 1, halfX: 10, halfZ: 10});
+ t.fill([[[-10, -3], [10, -3], [10, 3], [-10, 3]]], 'fairway'); t.paint({x: 0, z: 0, radius: 1.5, kind: 'sand'});
+ assert.equal(t.kindAt(0, 0), 'sand'); assert.equal(t.kindAt(5, 0), 'fairway');
+ t.setHidden('sand', true);
+ assert.equal(t.kindAt(0, 0, true), 'fairway', 'the view shows the fairway under a hidden bunker');
+ assert.equal(t.kindAt(0, 0), 'sand', 'the course still has the bunker');
+ t.erase({x: 0, z: 0, radius: 2, kind: 'sand'});
+ assert.equal(t.kindAt(0, 0), 'fairway', 'the fairway was there all along');
+ assert.deepEqual(t.layersPresent(), ['fairway']);
 });
 
 test('a landscape offers every turf layer, its own ground types, and rough last', () => {

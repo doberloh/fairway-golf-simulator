@@ -212,7 +212,6 @@ test('moving one shape: a green lifted off the fairway, a bunker beside it untou
 });
 
 test('turning one shape: a long bunker turned a quarter keeps its area and lies the other way; a house turns its facing; one undo step', async () => {
- const {turnedCells} = await import('../src/builder/trace-edit.js');
  const t = createTrace(grid);
  t.fill([[[-10, -2], [10, -2], [10, 2], [-10, 2]]], 'sand');   // 20 x 4 m, east-west
  const n = count(t, 'sand'), pick = t.pickAt({x: 0, z: 0});
@@ -222,9 +221,9 @@ test('turning one shape: a long bunker turned a quarter keeps its area and lies 
  t.undo(); assert.equal(t.kindAt(8, 0), 'sand'); assert.equal(t.kindAt(0, 8), 'rough');
  t.addHome({x: 40, z: 40, rotation: 0, width: 10, depth: 8});
  t.turn(t.pickAt({x: 40, z: 40}), 1); assert.ok(Math.abs(t.state.homes[0].rotation + 1) < 1e-9, 'a facing turns the other way round');
- // A full turn gives the same cells back.
- const cells = [0, 1, 2, 201, 202, 203].map(k => k + 201 * 50 + 50);
- assert.deepEqual(turnedCells(cells, 2 * Math.PI, 201, 201).sort((a, b) => a - b), cells.sort((a, b) => a - b));
+ // A full turn gives the same outline back, to the centimetre.
+ const b = t.pickAt({x: 0, z: 0}), was = count(t, 'sand');
+ t.turn(b, 2 * Math.PI); assert.ok(Math.abs(count(t, 'sand') - was) < .05); assert.equal(t.kindAt(8, 0), 'sand');
 });
 
 test('copying and deleting one shape, a tree and a house, each one undo step (builder-ux)', () => {
