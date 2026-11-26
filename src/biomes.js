@@ -1,4 +1,5 @@
 import {LANDSCAPES, REGIONS, currentKey} from './regions.js';
+import {turfLadder, FAIRWAY_LIGHT} from './turf-ladder.js';
 
 // EVERY BIOME IS ONE RECORD.
 //
@@ -1139,7 +1140,16 @@ export const BIOMES = Object.fromEntries(Object.entries(LAND).map(([key, own]) =
   Object.assign(rest, t);
   if (groundTints) rest.groundTints = {...(merged.groundTints || {}), ...groundTints};
  }
- return [key, {...DEFAULTS, ...PALETTES[region], ...(TRAITS[region] || {}), ...rest,
+ const rec = {...DEFAULTS, ...PALETTES[region], ...(TRAITS[region] || {}), ...rest};
+ return [key, {...rec,
+  // ONE HUE FOR THE PLAYING TURF (turf-ladder.js; 26 November 2026): the
+  // semi-rough, fairway, fringe and green from the fairway's hue and
+  // saturation, the fairway at FAIRWAY_LIGHT and the rest stepped off it.
+  // What the records above write for them is the hue's source and history.
+  ...turfLadder(rec.fairway, {light: FAIRWAY_LIGHT}),
+  // The colours as the records write them, before the ladder: its hue's
+  // source, and what the game drew until 26 November 2026.
+  turfAsWritten: {semi: rec.semi, fairway: rec.fairway, fringe: rec.fringe, green: rec.green},
   name: place.name, region, regionName: REGIONS[region], where: place.where, tropical: place.tropical,
   ui: {...INTERFACE[region], ...(ui || {})}, key, world: worldOf(key)}];
 }));

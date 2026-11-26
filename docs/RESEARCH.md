@@ -11003,7 +11003,10 @@ apart. Three causes, three changes:
   outline, at the trace's opacity over the picture: a lighter fairway. Now
   **teal, (40, 185, 175)** (PLACED: off the four greens, and off water's blue
   (60, 120, 220)).
-- **The colour on eight landscapes.** Measured as the share of the way from
+- **The colour on eight landscapes** (REPLACED the same evening by *One hue
+  for the playing turf*: every landscape's fringe is now a step of its
+  fairway's own hue; what follows is the record of the first fix, whose
+  `LAND` fringe values the ladder no longer reads). Measured as the share of the way from
   the fairway colour to the green (projection on fairway-to-green), the
   landscapes that always read apart sit at .49 to .62 (Badlands, Prairie,
   Northwoods .49; Mountains .55; Classic Parkland .62), and the eight that did
@@ -11077,6 +11080,64 @@ own. What the game draws, all PLACED:
 Rejected: a colour of its own in the game (the owner's picture of
 fringe-as-approach read as a pale apron, not turf), and mowing it across
 the line of play.
+
+## One hue for the playing turf (26 November 2026)
+
+The owner, after trying the green colour lab: "the green and fringe
+brightness on almost all the landscapes is bad ... I want the playing
+surface grass (fairway, semi, approach, fringe, green) in each biome to not
+be different hues ... the thing that I'm noticing matters the most is the
+lightness slider. And im finding that i like what i see around 40-45."
+
+**What was there.** Base colours (HSL, before the turf grade), per landscape:
+the four playing surfaces spread 12 to 50 degrees of hue, greens always the
+yellowest (81-90 degrees against fairways' 99-106; Desert Mountain's
+emerald fairway at 135), greens 48-66% lightness, fairways 36-48. The
+yellower hue, more than the lightness, made the greens read pale.
+
+**What the game does now** (src/turf-ladder.js, laid on every landscape by
+biomes.js; the records' own colours kept as `turfAsWritten`): one hue, the
+fairway's as written; the fairway at **34%** lightness and each surface a
+step off it -- semi-rough **-3**, fringe **+5** (saturation -2), green
+**+10** (saturation -3), so the green is **44%**. The approach and tee take
+the fairway's colour as before. The rough is the landscape's own. Seasons
+move the fairway and the semi-rough, fringe and green are stepped off it
+again (seasons.js `seasonPalette`), so spring no longer moves the fairway
+and fringe and leaves the green; snow lying on the semi-rough stays.
+tests/turf-ladder.test.mjs.
+
+**How it was chosen.** Three ladders photographed on all 15 landscapes from
+the approach and from above (bench/shots/fringe/ladder-shots.mjs, local; a
+report page for the owner): A, green 44 over fairway 38 -- the green nearly
+vanished into the fairway from 150 yards, six points being less than the
+fairway bands' own swing (about 11%); B, green 44 over fairway 34 -- room for
+the green, the whole course darker; C, green 51 over fairway 42 at full
+saturation -- today's brightness, the green clearly lighter. Claude
+recommended C (the hue, not the lightness, had made greens pale); **the
+owner picked B**. PLACED, the owner's taste.
+
+**Slopes and patches in the turf's own hue** (ground.js `inHue`): on the mown
+turf, slope dryness and the drier and lusher patches change only lightness
+and greyness -- drier: 22% toward grey and 8% lighter at full strength;
+lusher: 15% richer and 7% darker -- and the slope's at 0.55 of its old
+strength. Its turn toward straw (`dryTurf`, *Turned, not coloured* above)
+drew an orange-brown band round every raised green on the one-hue turf; the
+owner: "Its way too pronounced in these color changes." The rough keeps
+dryTurf. PLACED.
+
+**Soft edges between all turf** (ground.js `edgeIn`; the owner: "the same
+blend lines that we have with the approach between all turf types (and a
+special case for sand to all turf as well.)", "also blend semi rough to
+rough"): rough to semi-rough, semi-rough to fairway, fairway to fringe,
+fringe to green, the tees, on generated and built courses, each colour eased
+in over 15 cm across its edge (0.075 m each side), or a pixel and a half
+where that is less. Sand, the special case: eased the same way, its sandy
+lip 0.35 m out kept (20% sand) and eased at its outer edge. The kind -- the
+lie, the mowing -- still changes at the edge itself.
+
+**The frame**, profiled against the build before all of this (RTX 4090,
+real GPU arm): tiers Low +0.02 ms of graphics time, Medium +0.04, High
+-0.03, Ultra +0.02; built courses -0.01 to +0.02 -- within run-to-run noise.
 
 ## Mowing styles (26 November 2026)
 

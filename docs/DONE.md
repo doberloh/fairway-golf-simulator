@@ -25,6 +25,22 @@ kept whole: *The open list before the 11 November 2026 prune* and *The open
 list before the 16 October prune*, each with a table of what became of every
 entry.
 
+## One hue for the playing turf, soft turf edges, slopes in the grass's colour (branch `green-colour-picker`, 26 November 2026)
+
+The owner, after the colour lab: "Im realizing that im not good at this ...
+the green and fringe brightness on almost all the landscapes is bad", then
+the soft edges ("the same blend lines that we have with the approach between
+all turf types ... also blend semi rough to rough"), one hue for the playing
+turf, and the slope shading ("way too pronounced in these color changes").
+Built: turf-ladder.js laid on every landscape and season; ground.js
+`edgeIn` at every turf and sand edge; `inHue` for slopes and patches on
+mown turf. Three ladders photographed on all 15 landscapes and put to the
+owner as a report page; Claude recommended C (green 51, fairway 42), the
+owner picked B (green 44, fairway 34). Dead ends: A (green 44, fairway 38)
+lost the green into the fairway; the slope's turn toward straw drew orange
+bands round raised greens. The eight fringe colours set earlier the same day
+are no longer read (RESEARCH, *Telling the fringe from the fairway*).
+
 ## The green colour lab (branch `green-colour-picker`, 26 November 2026)
 
 The owner: "I feel like the greens in parkland are way too pale. Can you

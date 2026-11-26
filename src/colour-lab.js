@@ -60,5 +60,7 @@ export function labText(picks, biomes, version = '') {
   for (const s of LAB_SURFACES) if (one[s] && one[s].toLowerCase() !== String(biomes[k][s]).toLowerCase()) rows.push(`- ${biomes[k].name} (${k}): ${s} ${one[s]} (was ${String(biomes[k][s]).toLowerCase()})`);
  }
  if (!rows.length) return '';
- return [`Fairway green colour lab${version ? ` (${version})` : ''}: base turf colours, before the turf grade, to set in biomes.js`, ...rows].join('\n');
+ // (Since the one-hue turf, turf-ladder.js, a green or fringe here is read
+ // as a wish for that landscape's ladder, not a colour to write in.)
+ return [`Fairway green colour lab${version ? ` (${version})` : ''}: base turf colours, before the turf grade, as tried in the game`, ...rows].join('\n');
 }

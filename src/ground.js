@@ -427,6 +427,14 @@ export function groundMaterial(view,palette){
  // The same rounded box course.js uses, so paint and lie cannot disagree
 // about where a tee is.
 float teeBox(vec2 d,vec2 h,float r){vec2 q=abs(d)-h+r;return length(max(q,vec2(0.)))+min(max(q.x,q.y),0.)-r;}
+// SOFT TURF EDGES (the owner, 26 November 2026: "Give me the same blend lines
+// that we have with the approach between all turf types (and a special case
+// for sand to all turf as well.)"): how far into a surface a point is, from 0
+// outside to 1 inside, over 15 cm across its edge (d, metres, negative
+// inside) -- or a pixel and a half where that is less, so a far edge never
+// shimmers. A colour only: what is played, and how it is mown, still changes
+// at the edge itself.
+float edgeIn(float d){float a=max(.075,fwidth(d)*.75);return 1.-smoothstep(-a,a,d);}
 varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cover,tables,detail,field,builtB;uniform float tableRows,fieldOn,rows,builtFringe;uniform vec3 gt_path,gt_road,mowStyle;
 // A built course's approach, its own distance (built-field.js, the field's c):
 // the last of the two freed samplers, declared on a built course's program only.
@@ -484,6 +492,17 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   float c0=max(c.r,max(c.g,c.b))-min(c.r,min(c.g,c.b)),c1=max(d.r,max(d.g,d.b))-min(d.r,min(d.g,d.b));
   d=l+(d-l)*min(1.,c0/max(c1,1e-4));
   return mix(c,max(d,0.),a);
+ }
+ // DRIER OR LUSHER IN THE TURF'S OWN HUE (26 November 2026; the owner, of the
+ // slope shading on the one-hue turf: "Its way too pronounced in these color
+ // changes. It would need to follow the same colors as the new grass colors
+ // right?"). On the mown turf a slope or a patch changes only how light and
+ // how grey the grass is, never its hue (turf-ladder.js): a > 0 drier,
+ // lighter and greyer; a < 0 lusher, darker and a touch richer. The rough
+ // keeps dryTurf's turn toward straw. Amounts PLACED.
+ vec3 inHue(vec3 c,float a){
+  float l=dot(c,vec3(.3,.59,.11));
+  return a>=0.?mix(c,mix(vec3(l),c,.78)*1.08,a):mix(c,mix(vec3(l),c,1.15)*.93,-a);
  }
  // The bed a height lies in (strataUniforms): level, a little warped so a
  // bed is not ruled, its colour by a hash of its number.
@@ -824,9 +843,15 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   }
  }
  vec3 roughTint=turf;
- if((p.y>start&&p.y<end&&abs(p.x-curve.x)<outerWidth)||greenD<info.z+info.w){turf=tint_semi;kind=1.;}
- if(p.y>mowStart&&p.y<info.x+8.&&fw<0.){turf=tint_fairway;kind=2.;}
- if(greenD<info.z){turf=tint_fringe;kind=3.;}if(greenD<=0.){turf=tint_green;kind=4.;}
+ // Each layer over the one below, eased in across its edge (edgeIn); the
+ // kind as before, at the edge itself. The semi-rough's and the fairway's
+ // edges as signed distances: inside every bound, the furthest out of them.
+ float semiD=min(max(max(start-p.y,p.y-end),abs(p.x-curve.x)-outerWidth),greenD-(info.z+info.w));
+ float fwD=max(max(mowStart-p.y,p.y-(info.x+8.)),fw);
+ turf=mix(turf,tint_semi,edgeIn(semiD));if(semiD<0.)kind=1.;
+ turf=mix(turf,tint_fairway,edgeIn(fwD));if(fwD<0.)kind=2.;
+ turf=mix(turf,tint_fringe,edgeIn(greenD-info.z));if(greenD<info.z)kind=3.;
+ turf=mix(turf,tint_green,edgeIn(greenD));if(greenD<=0.)kind=4.;
 
  // The pad and its mown collar, sized from TEE_PAD/TEE_APRON in course.js so
  // this paints exactly what localSurface classifies. The collar only claims
@@ -853,9 +878,10 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   // Into the pad's own frame: across the line of play, then along it.
   vec2 td=p-tee.xy,tf=vec2(td.x*teeDir.y-td.y*teeDir.x,td.x*teeDir.x+td.y*teeDir.y);
   float apronD=tee.z>.5?teeBox(tf,vec2(${TEE_APRON.x.toFixed(2)},tee.w*${TEE_APRON_SCALE.toFixed(4)}),${(TEE_ROUND*TEE_APRON_SCALE).toFixed(3)}):1e3;
-  if(kind<.5&&apronD<0.){turf=teeTurf;kind=1.;teeGround=1.;}
+  // (Eased in over the rough as every turf edge is, edgeIn; 26 November 2026.)
+  if(kind<.5){turf=mix(turf,teeTurf,edgeIn(apronD));if(apronD<0.){kind=1.;teeGround=1.;}}
   float padD=tee.z>.5?teeBox(tf,vec2(${TEE_PAD.x.toFixed(2)},tee.w),${TEE_ROUND.toFixed(2)}):1e3;
-  if(padD<0.){turf=teeTurf;kind=1.;teeGround=1.;}
+  turf=mix(turf,teeTurf,edgeIn(padD));if(padD<0.){kind=1.;teeGround=1.;}
   // The mowing reads the whole mown tee -- the pad and its collar, one colour
   // and one mown shape on screen (round 2: striping the pad alone stopped the
   // bands partway in and drew the lap as a frame inside the green).
@@ -934,8 +960,10 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   // puts the whole of the hole's semi-rough width where it can be seen.
   if(kind==2.&&hd>0.&&smax(fairD,pb.z+margin-hd,${BAND_ROUND.toFixed(1)})>=0.){turf=tint_semi;kind=1.;}
   turf=shoreTint(turf,hd,ps,pb);if(hd<pb.y)kind=6.;}
- else if(hd<0.){turf=tint_sand;kind=5.;}
- else if(hd<.35){turf=mix(turf,tint_sand,.20);}}}
+ // SAND, THE SPECIAL CASE (the owner, 26 November 2026): eased in over 15 cm
+ // as every turf edge is, and the sandy lip 0.35 m out kept, its own outer
+ // edge eased the same way.
+ else{turf=mix(turf,tint_sand,max(edgeIn(hd),.2*edgeIn(hd-.35)));if(hd<0.)kind=5.;}}}
  // THE SURFACE FIELD'S SAND (surface-field.js): a hole's bunkers
  // past the twelve slots, painted as a slot bunker is -- sand inside, a
  // sandy lip 0.35 m out -- over the rough, semi-rough and fairway, which is
@@ -945,8 +973,7 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  // whatever adds one again must keep it off the tees, or the lie meets it.
  if(fieldOn>.5&&kind<2.5&&teeGround<.5&&abs(wp.x)<extent.x&&abs(wp.y)<extent.y){
   float fd=(.5-texture2D(field,(wp/extent+1.)*.5).r)*${(2*FIELD_RANGE).toFixed(1)};
-  if(fd<=0.){turf=tint_sand;kind=5.;}
-  else if(fd<.35)turf=mix(turf,tint_sand,.20);
+  turf=mix(turf,tint_sand,max(edgeIn(fd),.2*edgeIn(fd-.35)));if(fd<=0.)kind=5.;
  }
  // A BUILT COURSE (built-world.js; the course builder, docs/COURSE_BUILDER.md):
  // every surface from its baked field -- the same bytes, read the same way, in
@@ -978,8 +1005,10 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   turf=roughTint;kind=0.;teeGround=0.;teePadD=1e3;
   bedFine=fwidth(groundPoint.y)/max(strataSpacing,.001);
   if(dGround<=0.&&gcode>.5&&gcode<9.5){turf=groundPaint(gcode,wp,groundPoint.y,normalize(groundNormal),roughTint);wildTop=gcode;}
-  if(dSemi<=0.){turf=tint_semi;kind=1.;wildTop=0.;}
-  if(dFair<=0.){turf=tint_fairway;kind=2.;wildTop=0.;}
+  // Every turf layer eased in across its edge (edgeIn; 26 November 2026),
+  // the kind changing at the edge itself.
+  turf=mix(turf,tint_semi,edgeIn(dSemi));if(dSemi<=0.){kind=1.;wildTop=0.;}
+  turf=mix(turf,tint_fairway,edgeIn(dFair));if(dFair<=0.){kind=2.;wildTop=0.;}
   // A PAINTED APPROACH (the owner, 26 November 2026: "Approach should blend
   // into the layers around it nicely so its not a hard line between ... the
   // blend needs to be over like 6 inches not multiple yards ... the approach
@@ -990,29 +1019,34 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   // 15 cm across its edge, or a pixel and a half where that is less, so the
   // edge never shimmers; the lie switches at the edge itself (built-world.js
   // builtSurface: fairway).
-  float dAppr=(.5-texture2D(builtC,bu).r)*bR,aBand=max(.075,fwidth(dAppr)*.75);
-  if(dAppr<aBand){
-   float aw=1.-smoothstep(-aBand,aBand,dAppr);
-   turf=mix(turf,tint_fairway,aw);
-   if(aw>.5){kind=2.;wildTop=0.;}
-   approachFade=aw;
-  }
+  float dAppr=(.5-texture2D(builtC,bu).r)*bR,aw=edgeIn(dAppr);
+  turf=mix(turf,tint_fairway,aw);
+  if(aw>.5){kind=2.;wildTop=0.;}
+  approachFade=aw;
   if(dGround<=0.&&gcode>9.5&&gcode<11.5){turf=gcode>10.5?gt_road:gt_path;kind=1.;wildTop=0.;}
   // A BUILT TEE IS MOWN TOO (the owner, 8 November 2026: "tee boxes have no mow
   // lines in builder"). Its edge is the built tee's own (dTee); its bands run
   // with the hole's line of play (the hole frame, p), and its clean-up lap
   // follows its outline (teeBuilt, in the mowing below). It had teePadD left
   // at 1e3 above, so no tee on a built course was ever mown.
-  if(dTee<=0.){turf=teeTurf;kind=1.;teeGround=1.;wildTop=0.;teePadD=dTee;teeF=p;teeAxis=vec2(0.,1.);teeBuilt=1.;}
+  turf=mix(turf,teeTurf,edgeIn(dTee));
+  if(dTee<=0.){kind=1.;teeGround=1.;wildTop=0.;teePadD=dTee;teeF=p;teeAxis=vec2(0.,1.);teeBuilt=1.;}
   // A PAINTED FRINGE (code 12; the owner, 24 November 2026: only where it is
   // painted). builtFringe is 0 on a course from the builder, so this is its
   // only collar; a file from before keeps its 2 m one.
-  if(dGreen<=builtFringe||(dGround<=0.&&gcode>11.5&&gcode<12.5)){turf=tint_fringe;kind=3.;wildTop=0.;approachFade=0.;}
+  // The fringe's edge: the collar's (builtFringe out from the green) or a
+  // painted one's (code 12, its distance in the ground layer).
+  float dFringe=min(dGreen-builtFringe,gcode>11.5&&gcode<12.5?dGround:1e3);
+  turf=mix(turf,tint_fringe,edgeIn(dFringe));
+  if(dFringe<=0.){kind=3.;wildTop=0.;approachFade=0.;}
   if(dGround<=0.&&gcode>11.5&&gcode<12.5)fringeLap=dGround;
-  if(dGreen<=0.){turf=tint_green;kind=4.;}
-  if(dSand<=0.){turf=tint_sand;kind=5.;wildTop=0.;}
+  turf=mix(turf,tint_green,edgeIn(dGreen));if(dGreen<=0.)kind=4.;
+  // Sand, the special case: eased in as the turf is, and its sandy lip 0.35 m
+  // out over the rough, semi-rough and fairway, eased at its outer edge.
+  float sandIn=edgeIn(dSand);
+  turf=mix(turf,tint_sand,max(sandIn,kind<2.5?.2*edgeIn(dSand-.35):0.));
+  if(dSand<=0.){kind=5.;wildTop=0.;}
   if(kind>2.5)teePadD=1e3;
-  else if(dSand<.35&&kind<2.5)turf=mix(turf,tint_sand,.20);
   // A pond's or lake's shore, as a generated pond's: a cut edge, the soil a
   // lip at the waterline, the mown turf brought down to it.
   waterNear=min(waterNear,dWater);
@@ -1575,7 +1609,11 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
    // (25 November 2026, was all of it: once the drying could be seen, Alpine's
    // steep approaches went one dull olive close up; PLACED).
    float dryGain=kind==4.?.25:kind==3.?.5:kind==2.?.75:1.;
-   turf=dryTurf(turf,parched,dry*dryGain*green*cueSlope);
+   // The mown turf in its own hue, and at a little over half the strength
+   // (26 November 2026: the turn toward straw drew an orange band round every
+   // raised green on the one-hue turf); the rough as before.
+   if(kind>.5&&kind<4.5)turf=inHue(turf,dry*dryGain*cueSlope*.55);
+   else turf=dryTurf(turf,parched,dry*dryGain*green*cueSlope);
   }
  }
  // PATCHES (U3 in TODO). A real course is never one colour: the rough runs in
@@ -1602,9 +1640,15 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
    // parched turf does; lusher ones go a touch deeper green. Greens are left
    // their colour: tone only.
    float dryAmt=kind==0.?.5:kind==1.?.38:kind==2.?.32:kind==3.?.18:0.;
-   // (Turned, not coloured, as the slope's drying: dryTurf.)
+   // (Turned, not coloured, as the slope's drying: dryTurf.) On the mown
+   // turf in its own hue (inHue; 26 November 2026), the rough as before.
+   if(kind>.5){
+    turf=inHue(turf,smoothstep(.55,.85,n3)*dryAmt*cuePatches);
+    turf=inHue(turf,-smoothstep(.58,.88,1.-n3)*dryAmt*.8*cuePatches);
+   }else{
    turf=dryTurf(turf,vec3(1.1,1.02,.76),smoothstep(.55,.85,n3)*dryAmt*cuePatches);
    turf=mix(turf,turf*vec3(.9,1.04,.94),smoothstep(.58,.88,1.-n3)*dryAmt*.8*cuePatches);
+   }
   }
   if(kind==5.)turf=mix(turf,turf*vec3(.86,.84,.8),smoothstep(.55,.85,n3)*.8*cuePatches);
  }
