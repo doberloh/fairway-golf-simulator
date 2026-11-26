@@ -5,6 +5,6 @@ self.onmessage = e => {
  const {id, doc, ex, ez, r0, r1} = e.data;
  try {
   const f = bakeBuiltField(doc, ex, ez, [r0, r1]);
-  self.postMessage({id, ok: true, a: f.a, b: f.b}, [f.a.buffer, f.b.buffer]);
+  self.postMessage({id, ok: true, a: f.a, b: f.b, c: f.c}, [f.a.buffer, f.b.buffer, ...(f.c ? [f.c.buffer] : [])]);
  } catch (err) { self.postMessage({id, ok: false, error: String(err?.message || err)}); }
 };

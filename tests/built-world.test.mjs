@@ -76,6 +76,28 @@ test('a builder course has the fringe it was painted with and no other', () => {
  assert.equal(overHeather.settings.fringe, 0);
 });
 
+// The owner, 26 November 2026: "Add approach please." Painted before a green,
+// it plays as fairway wherever it lies; the fringe and the green over it.
+test('a painted approach plays as fairway, under the fringe and over the semi-rough', () => {
+ const ring = r => disc(0, 90, r, 96)[0];
+ const w = worldFromDoc(doc({fringe: 0, surfaces: {...doc().surfaces, fringe: [[ring(14), ring(12).reverse()]], approach: [box(-20, 50, 20, 80)], heather: [box(60, -100, 110, 100)]}}));
+ assert.equal(w.surface(0, 60), 'fairway', 'over the fairway');
+ assert.equal(w.surface(18, 60), 'fairway', 'over the semi-rough beside it: fairway');
+ assert.equal(w.surface(-19.5, 79), 'fairway', 'at its corner');
+ assert.equal(w.surface(20, 79), 'sand', 'a bunker over it is sand');
+ assert.equal(w.surface(0, 90 - 13), 'fringe', 'the fringe over it');
+ assert.equal(w.surface(0, 90), 'green');
+ assert.equal(w.surface(21, 60), 'semi', 'past it, what lies under');
+ // Its own channel, not a code in the ground layer: where it meets the
+ // fringe each keeps its own smooth edge (the owner's "weird wobbles").
+ assert.ok(builtFieldAt(w.builtField, 18, 60, 8) < 0 && builtFieldAt(w.builtField, 21, 60, 8) > 0, 'its own distance, channel 8');
+ assert.equal(builtGroundAt(w.builtField, 0, 90 - 13), 'fringe', 'the fringe keeps its code over it');
+ assert.notEqual(builtGroundAt(w.builtField, 0, 60), 'fringe');
+ const none = worldFromDoc(doc());
+ assert.equal(none.surface(18, 60), 'semi', 'no approach painted: none');
+ assert.equal(none.builtField.c, null, 'and no third texture');
+});
+
 test('a field edge is where the outline is, to a few centimetres', () => {
  for (const x of [-15.1, -14.9, 14.9, 15.1]) assert.equal(at(x, 0), Math.abs(x) < 15 ? 'fairway' : 'semi', `x ${x}`);
  const d = builtFieldAt(world.builtField, 0, 90, 1);

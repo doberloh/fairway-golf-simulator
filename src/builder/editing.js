@@ -34,7 +34,7 @@ import {zoneTrees, zoneHomes} from './layer-ops.js';
 
 // The codes a surface cell can hold, in the order the field paints them
 // lowest first: a later one wins where a document's outlines overlap.
-export const PAINT = ['rough', ...GROUND_KINDS.filter(k => k !== 'path'), 'semi', 'fairway', 'path', 'tee', 'fringe', 'green', 'sand', 'water'];
+export const PAINT = ['rough', ...GROUND_KINDS.filter(k => k !== 'path'), 'semi', 'fairway', 'approach', 'path', 'tee', 'fringe', 'green', 'sand', 'water'];
 export const CODE = Object.fromEntries(PAINT.map((k, i) => [k, i]));
 export const RASTER = {cell: .5, maxSide: 4096};
 // A brush's weight at a share `t` of its radius: 1 at the centre, 0 at the edge.
@@ -331,7 +331,7 @@ export function createEditor(doc, {fringeBand = 0} = {}) {
    const nx = r.nx, nz = r.nz, ground = new Float32Array(nx * nz);
    for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) ground[j * nx + i] = sample(r.x0 + (i + .5) * r.cell, r.z0 + (j + .5) * r.cell);
    const land = {nx, nz, cell: r.cell, halfX: -r.x0, halfZ: -r.z0, ground};
-   const PLAYED = new Set(['fairway', 'green', 'fringe', 'tee', 'sand', 'water', 'path', 'semi']), c = SKIN.clear;
+   const PLAYED = new Set(['fairway', 'approach', 'green', 'fringe', 'tee', 'sand', 'water', 'path', 'semi']), c = SKIN.clear;
    const keepOut = (x, z) => [[0, 0], [c, 0], [-c, 0], [0, c], [0, -c]].some(([dx, dz]) => PLAYED.has(api.surfaceAt(x + dx, z + dz)));
    const skin = skinFromHeights(land, bio, keepOut);
    // What it found on the land's grid turned into outlines once, as it comes in.
@@ -461,7 +461,7 @@ export function createEditor(doc, {fringeBand = 0} = {}) {
    remember('records', 0, 0, 0, 0); state.homes.push(home); return true;
   },
   homeFits({x, z, rotation, width, depth}) {
-   const c = Math.cos(rotation), sn = Math.sin(rotation), MOWN = new Set(['fairway', 'green', 'fringe', 'tee', 'sand', 'water', 'path', 'semi']);
+   const c = Math.cos(rotation), sn = Math.sin(rotation), MOWN = new Set(['fairway', 'approach', 'green', 'fringe', 'tee', 'sand', 'water', 'path', 'semi']);
    return ![[-1, -1], [1, -1], [1, 1], [-1, 1], [0, 0]].some(([a, b]) => { const lx = a * (width / 2 + 2), lz = b * (depth / 2 + 2); return MOWN.has(api.surfaceAt(x + lx * c + lz * sn, z - lx * sn + lz * c)); });
   },
   // GROUND COVER (cover.js; the owner, 4 November 2026: "a paint brush for

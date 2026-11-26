@@ -25,6 +25,28 @@ kept whole: *The open list before the 11 November 2026 prune* and *The open
 list before the 16 October prune*, each with a table of what became of every
 entry.
 
+## An approach layer; the layer drop-downs gone (branch `fringe-colour`, 26 November 2026)
+
+The owner, remaking Worthington with Fringe painted as each approach, asked
+whether the fringe should be the fairway's colour unstriped or an approach
+added; Claude advised the approach (the fringe is a putting cue and the
+generated collars share its colour; an approach is fairway), and the owner:
+"Add approach please. Approach should blend into the layers around it
+nicely so its not a hard line between. Also, somehow the layer selection
+became a drop down? WTF happened there? i didnt ask for that." Built: the
+Approach layer through the file, the bake (a texture of its own), the lie
+(fairway), the mowing (bands half the fairway's) and the paint, its edge
+softened over 15 cm (COURSE_BUILDER.md, *An approach layer*; RESEARCH, *The
+approach*); fringe and approach coloured in the plan, the review and the 3D
+editor; both editors' layer drop-downs removed, the Layers list the only
+picker, and door 2's list filled as the trace step opens. The owner's
+corrections the same day, each a first try replaced: a blend of 1.5 m and
+3 m ("over like 6 inches not multiple yards"), no bands ("stripes half the
+size of the fairway"), and the approach as ground code 13, whose meeting
+with the fringe drew "weird wobbles" (PROJECT_HANDOFF, *A BUILT GROUND CODE
+IS ONE NUMBER*). The idea's IDEAS entry (added the same day) left when
+picked.
+
 ## The fringe told from the fairway (branch `fringe-colour`, 26 November 2026)
 
 The owner, remaking a course: a fringe and a fairway on the same hole "merged
@@ -40,8 +62,9 @@ fairway up to the fringe's edge. Built:
 - Eight landscapes' fringe colours set 60% of the way from fairway to green
   (biomes.js `LAND`; RESEARCH, *Telling the fringe from the fairway*); a
   record change, fingerprints re-saved.
-- A painted fringe mown in 0.9 m laps along its edge (ground.js), and the
-  collar's view-shaded lap kept to within 5.9 m of a green.
+- A painted fringe mown as one lap along its own outline (ground.js). Laps
+  of 0.9 m, light and dark by turns, came first; the owner: "I want fringe
+  to act as one stripe. I dont want multiple."
 - tests/fringe-look.test.mjs; pictures with bench/shots/fringe/fringe-shots.mjs
   (local).
 

@@ -37,6 +37,7 @@ function surface(kind, bio) {
  if (kind === 'green') return {...fine, title: 'Green', ground: bio.green, flag: true, caption: 'Cut short. The cup goes here.'};
  if (kind === 'fringe') return {...fine, title: 'Fringe', ground: bio.fringe ?? bio.green, caption: 'The collar round a green. Only where you paint it.'};
  if (kind === 'fairway') return {...fine, title: 'Fairway', ground: bio.fairway, stripes: bio.semi, caption: 'Mown in stripes in the game.'};
+ if (kind === 'approach') return {...fine, title: 'Approach', ground: bio.fairway, stripes: bio.semi, caption: 'Fairway before a green, in stripes half as wide. Plays as fairway.'};
  if (kind === 'semi') return {...fine, title: 'Semi-rough', ground: bio.semi, caption: 'The first cut, round the fairway.'};
  if (kind === 'tee') return {...fine, title: 'Tee', ground: bio.fairway, tee: true, caption: 'Where the hole starts.'};
  if (kind === 'sand') return {...fine, title: 'Bunker', ground: bio.rough, bowl: bio.sand, caption: 'Sand. Dig a bunker lowers the ground too.'};

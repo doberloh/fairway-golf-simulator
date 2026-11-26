@@ -20,7 +20,7 @@ export default function ({journey, SHOTS}) {
   const s0 = await state();
   // An outline of semi-rough: four corners, Enter.
   // The layer chosen, then the Pen (builder-ux: one pen, not an Outline button per surface).
-  await page.locator('.cb-layerpick').selectOption('semi');
+  await page.locator('.cb-layers [data-layer="semi"]').click();
   await page.getByRole('button', {name: 'Pen', exact: true}).click();
   for (const [fx, fy] of [[.30, .30], [.36, .30], [.36, .36], [.30, .36]]) await click(fx, fy);
   await page.keyboard.press('Enter');

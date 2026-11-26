@@ -281,8 +281,10 @@ export function groundMaterial(view,palette){
  // fairway is mown in one direction (owner-atlas.js builtMowOwners: why).
  if(w.built&&w.builtField){
   const f=w.builtField,fr=w.settings.fringe??2,C=k=>BUILT_CHANNELS.indexOf(k),cg=C('green'),ct=C('tee'),cf=C('fairway');
-  const cgd=C('ground'),fringeAt=(x,z)=>builtFieldAt(f,x,z,cgd)<=0&&builtGroundAt(f,x,z)==='fringe';
-  const kindAt=(x,z)=>Math.abs(x)>=f.ex||Math.abs(z)>=f.ez?0:builtFieldAt(f,x,z,cg)<=fr||fringeAt(x,z)?2:builtFieldAt(f,x,z,ct)<=0?3:builtFieldAt(f,x,z,cf)<=0?1:0;
+  const cgd=C('ground'),paintedAt=(x,z,k)=>builtFieldAt(f,x,z,cgd)<=0&&builtGroundAt(f,x,z)===k;
+  // A painted approach is fairway here too: one piece with the fairway it
+  // joins, mown (where its bands still show) in the same direction.
+  const kindAt=(x,z)=>Math.abs(x)>=f.ex||Math.abs(z)>=f.ez?0:builtFieldAt(f,x,z,cg)<=fr||paintedAt(x,z,'fringe')?2:builtFieldAt(f,x,z,ct)<=0?3:builtFieldAt(f,x,z,cf)<=0||builtFieldAt(f,x,z,C('approach'))<=0?1:0;
   const anchors=w.holes.flatMap(h=>[{hole:h.hole,...h.worldPin,kind:2},...Object.values(h.tees).map(t=>({hole:h.hole,...h.toWorld(t),kind:3}))]);
   builtMowOwners(owners,Sx,Sz,extent.x,extent.y,kindAt,anchors);
  }
@@ -373,6 +375,10 @@ export function groundMaterial(view,palette){
  fieldTex.minFilter=fieldTex.magFilter=T.LinearFilter;fieldTex.needsUpdate=true;view.resources.push(fieldTex);
  const builtBTex=new T.DataTexture(built?built.b:new Uint8Array(4),built?built.Sx:1,built?built.Sz:1,T.RGBAFormat,T.UnsignedByteType);
  builtBTex.minFilter=builtBTex.magFilter=T.LinearFilter;builtBTex.needsUpdate=true;view.resources.push(builtBTex);
+ // The approach's own distance, one byte a texel (a single texel, outside,
+ // when none is painted: about 4 MB less on a big course with none).
+ const builtCTex=new T.DataTexture(built?.c??new Uint8Array(1),built?.c?built.Sx:1,built?.c?built.Sz:1,T.RedFormat,T.UnsignedByteType);
+ builtCTex.unpackAlignment=1;builtCTex.minFilter=builtCTex.magFilter=T.LinearFilter;builtCTex.needsUpdate=true;view.resources.push(builtCTex);
  // A built course's branch is in a built course's program only: the one more
  // call of groundPaint it holds (see groundPaint IS CALLED TWICE) cost every
  // generated course a second on every program.
@@ -394,7 +400,7 @@ export function groundMaterial(view,palette){
    speckleRock:{value:bio.speckleRock?1:0},altitudeRock:{value:bio.altitudeRock?1:0},litterAmount:{value:bio.litter?1:0},litterVary:{value:bio.litterVary??1},seaBeach:{value:bio.sea?1:0},seaAt:{value:bio.sea?w.waterLevel??0:0},beachOwn:{value:bio.beachTint?1:0},beachTint:{value:new T.Color(bio.beachTint||"#000000")},blowoutOn:{value:blow?1:0},
    // The overhaul's ground types: which type each channel holds (GROUND_CODE),
    // the gate each starts at, and the colours they paint with.
-   ...wildUniforms(w,!!wild,!!fallen),field:{value:fieldTex},fieldOn:{value:sandField&&!built?1:0},builtB:{value:builtBTex},builtFringe:{value:w.settings.fringe??2},gt_path:{value:new T.Color(w.bio.mapTurf?.path??GROUNDS.path.map)},gt_road:{value:new T.Color(GROUNDS.road.map)},...farForestUniforms(bio,view.quality?.surround?.reach??5000,w.surround?.cover),farProp:{value:new T.Vector2(w.halfX,w.halfZ)},
+   ...wildUniforms(w,!!wild,!!fallen),field:{value:fieldTex},fieldOn:{value:sandField&&!built?1:0},builtB:{value:builtBTex},builtC:{value:builtCTex},builtFringe:{value:w.settings.fringe??2},gt_path:{value:new T.Color(w.bio.mapTurf?.path??GROUNDS.path.map)},gt_road:{value:new T.Color(GROUNDS.road.map)},...farForestUniforms(bio,view.quality?.surround?.reach??5000,w.surround?.cover),farProp:{value:new T.Vector2(w.halfX,w.halfZ)},
    // How wooded the course is along each side of its line (edge-woods.js): the
    // floor past the line carries the course's woods out as surround.js plants them.
    farEdge:{value:edgeUniform(courseEdge(w)).map(v=>new T.Vector4(...v))}});
@@ -410,6 +416,11 @@ export function groundMaterial(view,palette){
 // about where a tee is.
 float teeBox(vec2 d,vec2 h,float r){vec2 q=abs(d)-h+r;return length(max(q,vec2(0.)))+min(max(q.x,q.y),0.)-r;}
 varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cover,tables,detail,field,builtB;uniform float tableRows,fieldOn,rows,builtFringe;uniform vec3 gt_path,gt_road;
+// A built course's approach, its own distance (built-field.js, the field's c):
+// the last of the two freed samplers, declared on a built course's program only.
+#ifdef BUILT_COURSE
+uniform sampler2D builtC;
+#endif
 // THE ROUTE CURVES AND THE SEMI-ROUGH EDGES SHARE ONE TEXTURE (the cartoon
 // overhaul): curves in texels 0-511 of a hole's row, the semi-rough's two
 // widths in 512-1023. They were two textures of the same grid, and the
@@ -812,8 +823,10 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  // The pad a fragment lies on, for its mowing (the polish goal): its signed
  // edge distance (negative inside) and the point in the pad's own frame.
  float teePadD=1e3,teeBuilt=0.;vec2 teeF=vec2(0.),teeAxis=vec2(0.,1.),teeHalf=vec2(1.);
- // A painted fringe's signed edge distance (negative inside), for its laps.
- float fringeLap=1e3;
+ // A painted fringe's signed edge distance (negative inside), for its lap;
+ // how far into a painted approach a point is (0 to 1, over 15 cm), for its
+ // narrower bands.
+ float fringeLap=1e3,approachFade=0.;
  // THE TEE'S OWN TURF (the far-landscape goal; TODO: "the tee pad reads as
  // one flat, very saturated green"). It wore the semi-rough's colour; a tee is
  // mown nearly as close as a fairway and kept like a green's surround, so its
@@ -955,6 +968,23 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   if(dGround<=0.&&gcode>.5&&gcode<9.5){turf=groundPaint(gcode,wp,groundPoint.y,normalize(groundNormal),roughTint);wildTop=gcode;}
   if(dSemi<=0.){turf=tint_semi;kind=1.;wildTop=0.;}
   if(dFair<=0.){turf=tint_fairway;kind=2.;wildTop=0.;}
+  // A PAINTED APPROACH (the owner, 26 November 2026: "Approach should blend
+  // into the layers around it nicely so its not a hard line between ... the
+  // blend needs to be over like 6 inches not multiple yards ... the approach
+  // should get stripes half the size of the fairway"). Its own distance (the
+  // third texture: as a code beside the fringe's it drew their meeting as a
+  // staircase). Fairway turf, its bands half the fairway's (in the mowing
+  // below), over the fairway and under a cart path. Its colour comes in over
+  // 15 cm across its edge, or a pixel and a half where that is less, so the
+  // edge never shimmers; the lie switches at the edge itself (built-world.js
+  // builtSurface: fairway).
+  float dAppr=(.5-texture2D(builtC,bu).r)*bR,aBand=max(.075,fwidth(dAppr)*.75);
+  if(dAppr<aBand){
+   float aw=1.-smoothstep(-aBand,aBand,dAppr);
+   turf=mix(turf,tint_fairway,aw);
+   if(aw>.5){kind=2.;wildTop=0.;}
+   approachFade=aw;
+  }
   if(dGround<=0.&&gcode>9.5&&gcode<11.5){turf=gcode>10.5?gt_road:gt_path;kind=1.;wildTop=0.;}
   // A BUILT TEE IS MOWN TOO (the owner, 8 November 2026: "tee boxes have no mow
   // lines in builder"). Its edge is the built tee's own (dTee); its bands run
@@ -965,8 +995,8 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   // A PAINTED FRINGE (code 12; the owner, 24 November 2026: only where it is
   // painted). builtFringe is 0 on a course from the builder, so this is its
   // only collar; a file from before keeps its 2 m one.
-  if(dGreen<=builtFringe||(dGround<=0.&&gcode>11.5)){turf=tint_fringe;kind=3.;wildTop=0.;}
-  if(dGround<=0.&&gcode>11.5)fringeLap=dGround;
+  if(dGreen<=builtFringe||(dGround<=0.&&gcode>11.5&&gcode<12.5)){turf=tint_fringe;kind=3.;wildTop=0.;approachFade=0.;}
+  if(dGround<=0.&&gcode>11.5&&gcode<12.5)fringeLap=dGround;
   if(dGreen<=0.){turf=tint_green;kind=4.;}
   if(dSand<=0.){turf=tint_sand;kind=5.;wildTop=0.;}
   if(kind>2.5)teePadD=1e3;
@@ -1169,7 +1199,9 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  // (GROUND_NO_MOWING: Measure this device's what-if, through to the tee's
  // divots below; the stripes, the diamonds, the laps -- what they cost.)
  if(kind==2.||kind==4.){
-  float period=kind==4.?3.2:12.;
+  // A painted approach's bands half the fairway's, from the same line, so
+  // every other edge carries on across (the owner, 26 November 2026).
+  float period=kind==4.?3.2:approachFade>.5?6.:12.;
   vec2 mow=normalize(vec2(.48,.88));
   float bend=kind==4.?.9:1.6;
   // THE ANTI-ALIAS FADE IS MEASURED ON THE PLAN COORDINATE, NOT THE BENT ONE.
@@ -1197,7 +1229,10 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   // being read for a putt and its bands are already long enough to wander.
   float bendMul=kind==4.?greenBend:1.;
   float coord=plan+groundPoint.y*bend*bendMul/period;
-  float aa=max(fwidth(plan),.001);
+  // (Measured on plan times period, which runs on smoothly where an
+  // approach's half-width bands meet the fairway's: the plan itself jumps
+  // there, and its fwidth drew a dashed line along the edge.)
+  float aa=max(fwidth(plan*period)/period,.001);
   float stripe=smoothstep(-aa*6.283,aa*6.283,sin(coord*6.283));
   stripe=mix(stripe,.5,smoothstep(.12,.45,aa));
   // DIAMOND-MOWED GREENS (the far-landscape goal; the owner: "I want greens
@@ -1278,29 +1313,23 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  // shades as that pass does -- grass laid away from you light, toward you
  // dark, turning smoothly round the green -- gentler than the green's own,
  // and gone where the collar is under a pixel or two across.
- // (Only within reach of a green: past the built field's 6 m its distance is
- // flat, and a painted fringe away from any green took one constant tone.)
- if(kind==3.&&greenD<5.9){
+ // A PAINTED FRINGE IS ONE LAP TOO (26 November 2026; the owner: "I want
+ // fringe to act as one stripe. I dont want multiple"). Its way round is its
+ // own outline (fringeLap), not the green's: a fringe away from a green had
+ // a flat distance to the green past the built field's 6 m and took one
+ // constant tone. (Laps 0.9 m a pass, light and dark by turns, were tried
+ // the same day and read as rings.)
+ float collarD=fringeLap<0.?fringeLap:greenD;
+ if(kind==3.&&(fringeLap<0.||greenD<5.9)){
   vec2 cx=dFdx(groundPoint.xz),cy=dFdy(groundPoint.xz);float cdet=cx.x*cy.y-cx.y*cy.x;
-  vec2 cg=abs(cdet)>1e-8?vec2(cy.y*dFdx(greenD)-cx.y*dFdy(greenD),cx.x*dFdy(greenD)-cy.x*dFdx(greenD))/cdet:vec2(0.,1.);
+  vec2 cg=abs(cdet)>1e-8?vec2(cy.y*dFdx(collarD)-cx.y*dFdy(collarD),cx.x*dFdy(collarD)-cy.x*dFdx(collarD))/cdet:vec2(0.,1.);
   float collarLean=dot(normalize(vec2(-cg.y,cg.x)+1e-5),normalize(groundPoint.xz-cameraPosition.xz+1e-4));
-  float collarFar=smoothstep(.25,.6,max(fwidth(greenD),1e-4));
-  turf*=mix(1.,1.+.06*collarLean,(1.-collarFar)*stripeFade*cueStripes);
- }
- // A PAINTED FRINGE IS CUT IN LAPS (26 November 2026; the owner, a fringe
- // painted beside a fairway: "fairway and fringe looking exactly the same").
- // Flat and unstriped, it read as one more of the fairway's light bands. A
- // collar is cut round and round its outline with a walk-behind or triplex
- // mower, so its bands follow the edge: 0.9 m a pass (PLACED: wider than a
- // greens mower's 0.55-0.65 m, to read at a hole's distance), light and dark by turns, gentler than the
- // fairway's (.07 against about .115). The built field's distance stops at
- // 6 m in, so the laps fade out from 4.6 m: a fringe is two or three metres
- // wide, and a wider one is plain in its middle.
- if(kind==3.&&fringeLap<0.){
-  float lc=fringeLap/1.8,law=max(fwidth(lc),.001);
-  float ls=smoothstep(-law*6.283,law*6.283,sin(lc*6.283));
-  ls=mix(ls,.5,smoothstep(.12,.45,law));
-  turf*=mix(1.,1.+.07*(ls*2.-1.),smoothstep(-5.8,-4.6,fringeLap)*stripeFade*cueStripes);
+  float collarFar=smoothstep(.25,.6,max(fwidth(collarD),1e-4));
+  // More than about 5 m inside a painted fringe the field's distance is flat
+  // (it stops at 6 m) and the lap has no way round: it fades out, as a wide
+  // fringe's middle is plain.
+  float collarIn=fringeLap<0.?smoothstep(-5.8,-4.6,fringeLap):1.;
+  turf*=mix(1.,1.+.06*collarLean,(1.-collarFar)*collarIn*stripeFade*cueStripes);
  }
  // THE TEE PAD'S MOWING (the polish goal; the owner: "tee boxes need smaller
  // mow stripes and a cleanup mow line"). A tee is cut with a walk-behind

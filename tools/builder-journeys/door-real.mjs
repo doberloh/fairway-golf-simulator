@@ -217,7 +217,7 @@ export default function ({journey, SHOTS}) {
   // empty ones said so; the tool says what it does at the top of the view.
   const rows = await page.locator('.cb-layers li').evaluateAll(ls => ls.map(l => [l.dataset.layer, l.classList.contains('cb-empty')]));
   if (rows.at(-1)?.[0] !== 'rough' || rows[0]?.[0] !== 'water' || !rows.some(r => r[1])) throw Error(`the layer list should run water to rough with empty ones marked: ${JSON.stringify(rows)}`);
-  await page.locator('[data-tool="brush"]').click(); await page.locator('.cb-kind').selectOption('sand');
+  await page.locator('[data-tool="brush"]').click(); await page.locator('.cb-layers [data-layer="sand"]').click();
   const hint = await page.locator('.cb-toolhint').textContent();
   if (!/Paint brush/.test(hint) || !/sand/.test(hint)) throw Error(`the banner should say the brush paints sand: ${hint}`);
   [x0, y0] = await at(-60, 40); [x1, y1] = await at(-50, 40);
@@ -229,10 +229,10 @@ export default function ({journey, SHOTS}) {
   const measured = await page.locator('.cb-note').textContent();
   if (!/^109 yd [(]100[.][0-9] m[)]/.test(measured)) throw Error(`the measure should say 109 yd (100 m): ${measured}`);
   await t.shot('measure');
-  await page.locator('[data-tool="brush"]').click(); await page.locator('.cb-kind').selectOption('sand');
+  await page.locator('[data-tool="brush"]').click(); await page.locator('.cb-layers [data-layer="sand"]').click();
   // PAINTED UNDER (builder-ux, item 1): semi-rough brushed across that sand
   // goes in under it, and the status bar says so.
-  await page.locator('.cb-kind').selectOption('semi');
+  await page.locator('.cb-layers [data-layer="semi"]').click();
   if (!/Semi-rough goes under .*Sand/.test(await page.locator('.cb-under').textContent())) throw Error(`the layers panel should say semi goes under sand: ${await page.locator('.cb-under').textContent()}`);
   [x0, y0] = await at(-62, 40); [x1, y1] = await at(-48, 40);
   await page.mouse.move(x0, y0); await page.mouse.down(); await page.mouse.move(x1, y1, {steps: 6}); await page.mouse.up();
@@ -244,7 +244,7 @@ export default function ({journey, SHOTS}) {
   // THE STEADIED BRUSH (builder-ux, item 2): the same shaky zig-zag, 3 m
   // either side of a line, drawn with Steadiness 0 and 90 on the tee layer;
   // the steadied stroke comes out narrower.
-  await page.locator('.cb-kind').selectOption('tee');
+  await page.locator('.cb-layers [data-layer="tee"]').click();
   const shaky = async (z0, steady) => {
    await page.locator('.cb-steady').fill(String(steady));
    const pts = Array.from({length: 40}, (_, i) => [-150 + i * 2, z0 + (i % 2 ? 3 : -3)]);
@@ -259,7 +259,7 @@ export default function ({journey, SHOTS}) {
   console.log(`       steadied brush: a shaky stroke ${wild.toFixed(1)} m wide plain, ${calm.toFixed(1)} m at Steadiness 90`);
   await t.shot('steadied');
   for (let k = 0; k < 2; k++) await page.getByRole('button', {name: 'Undo', exact: true}).click();
-  await page.locator('.cb-steady').fill('50'); await page.locator('.cb-kind').selectOption('sand');
+  await page.locator('.cb-steady').fill('50'); await page.locator('.cb-layers [data-layer="sand"]').click();
   // Select shape: the bunker clicked, then dragged 12 m south, then back by Undo.
   // The sand layer's area, m² to a tenth (outlines since 24 November 2026).
   const sandCells = () => page.evaluate(() => Math.round(window.fairwayBuilder.door2.model.area('sand') * 10) / 10);
@@ -308,7 +308,7 @@ export default function ({journey, SHOTS}) {
   await page.waitForFunction(() => { const st = window.fairwayBuilder.door2; return st.smoothDrawn?.() && !st.plan.view.layers.codes && st.model.state.shapes.size > 0; }, null, {timeout: 30000});
   // Layers: a fairway painted over the bunker leaves the bunker on top; the
   // sand layer hidden shows the fairway under it in the view, not the course.
-  await page.locator('.cb-kind').selectOption('fairway');
+  await page.locator('.cb-layers [data-layer="fairway"]').click();
   [x0, y0] = await at(-62, 40); [x1, y1] = await at(-48, 40);
   await page.mouse.move(x0, y0); await page.mouse.down(); await page.mouse.move(x1, y1, {steps: 5}); await page.mouse.up();
   if (await kindAt(-55, 40) !== 'sand') throw Error('painting the fairway layer should not cover the bunker');
@@ -323,9 +323,9 @@ export default function ({journey, SHOTS}) {
   await page.getByRole('button', {name: 'Add layer around', exact: true}).click();
   if (!(await semiCells() > semi0)) throw Error('Extrapolate should lay semi-rough round the fairway');
   // The landscape decides the ground types offered: heather is a links' own.
-  if (await page.locator('.cb-kind option[value="heather"]').count()) throw Error('the Midwest should not offer heather');
+  if (await page.locator('.cb-layers [data-layer="heather"]').count()) throw Error('the Midwest should not offer heather');
   await page.locator('.cb-landscape').selectOption('seaside');
-  await page.locator('[data-tool="outline"]').click(); await page.locator('.cb-kind').selectOption('heather');
+  await page.locator('[data-tool="outline"]').click(); await page.locator('.cb-layers [data-layer="heather"]').click();
   for (const [x, z] of [[100, 80], [130, 80], [130, 100], [100, 100]]) { const [px, py] = await at(x, z); await page.mouse.click(px, py); }
   await page.keyboard.press('Enter');
   if (await kindAt(115, 90) !== 'heather') throw Error('the outline should have filled heather');
@@ -334,7 +334,7 @@ export default function ({journey, SHOTS}) {
   // at once (the owner, 10 November 2026: no Apply button) -- the curve that
   // was shown, rounded, so the middle of a side bows out past the straight
   // line between its nodes. (Enter closing and filling is the heather above.)
-  await page.locator('.cb-kind').selectOption('sand');
+  await page.locator('.cb-layers [data-layer="sand"]').click();
   const pen = [[150, 20], [180, 20], [180, 50], [150, 50]];
   for (const [x, z] of pen) { const [px, py] = await at(x, z); await page.mouse.click(px, py); }
   if (await page.evaluate(() => window.fairwayBuilder.door2.outline.length) !== 4) throw Error('the pen should hold a node a click');
@@ -370,7 +370,7 @@ export default function ({journey, SHOTS}) {
   await page.locator('.cb-curveon').check();
   await page.getByRole('button', {name: 'Whole land'}).click();
   // The Line tool: a 3 m cart path with square ends.
-  await page.locator('[data-tool="line"]').click(); await page.locator('.cb-kind').selectOption('path');
+  await page.locator('[data-tool="line"]').click(); await page.locator('.cb-layers [data-layer="path"]').click();
   await page.locator('.cb-linewidth').fill('3'); await page.locator('.cb-linecaps').selectOption('square');
   for (const [x, z] of [[-100, 120], [-40, 120]]) { const [px, py] = await at(x, z); await page.mouse.click(px, py); }
   await page.keyboard.press('Enter');
@@ -545,7 +545,7 @@ export default function ({journey, SHOTS}) {
   // round shrubs until the builder-ux goal (10 November 2026). Only meshes
   // that hold trees count: an empty bushes mesh is always there.
   // The layers the brush and pen offer (builder-ux: one brush and pen, the layer chosen).
-  const paints = await page.locator('.cb-layerpick option').evaluateAll(o => o.map(x => x.value));
+  const paints = await page.locator('.cb-layers [data-layer]').evaluateAll(o => o.map(x => x.dataset.layer));
   if (!paints.includes('heather') || paints.includes('pinestraw') || paints.includes('litter')) throw Error(`a links should offer its own ground types only: ${paints}`);
   const look = await page.evaluate(() => { const v = window.fairwayBuilder.editor.view; let shape = null; v.scene.traverse(o => { if (o.isInstancedMesh && o.count && o.geometry.type === 'ConeGeometry') shape = 'cone'; }); return {sky: '#' + v.scene.background.getHexString(), shape}; });
   if (look.sky !== '#c8d7df' || look.shape !== 'cone') throw Error(`the editor should look like Seaside Links: ${JSON.stringify(look)}`);
@@ -587,7 +587,7 @@ export default function ({journey, SHOTS}) {
   const mid = await page.evaluate(() => { const v = window.fairwayBuilder.editor.view, b = v.canvas.getBoundingClientRect(), p = v.pick({clientX: b.left + b.width / 2, clientY: b.top + b.height / 2}); return {sx: b.left + b.width / 2, sy: b.top + b.height / 2, ...p}; });
   const heightAt = () => page.evaluate(([x, z]) => window.fairwayBuilder.editor.editor.height(x, z), [mid.x, mid.z]);
   const h3d0 = await heightAt();
-  await page.locator('.cb-layerpick').selectOption('sand');
+  await page.locator('.cb-layers [data-layer="sand"]').click();
   for (const tool of ['brush', 'shape:raise']) {
    await page.locator(`[data-tool="${tool}"]`).click();
    await page.mouse.move(mid.sx - 20, mid.sy); await page.mouse.down(); await page.mouse.move(mid.sx + 20, mid.sy, {steps: 6}); await page.mouse.up(); await page.waitForTimeout(150);

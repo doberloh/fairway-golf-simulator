@@ -76,7 +76,11 @@ export const BUILT_FILE_VERSION = 2;
 // its hardpan and a hand-painted heather plays as heather.
 // `fringe` (24 November 2026): the collar painted in the builder, played only
 // where it is drawn; a file with `fringe: 0` has no other (built-world.js).
-export const SURFACE_KINDS = ['green', 'fringe', 'fairway', 'tee', 'sand', 'semi', ...GROUND_KINDS];
+// `approach` (26 November 2026): the mown ground before a green, painted in
+// the builder; it plays as fairway and is mown in bands half the fairway's
+// (built-world.js, ground.js). An older game drops it, and shows what lies
+// under it.
+export const SURFACE_KINDS = ['green', 'fringe', 'approach', 'fairway', 'tee', 'sand', 'semi', ...GROUND_KINDS];
 // `kind` is an index into the document's `treeKinds` (the species it was
 // drawn as where it came from, a frozen generated course), or -1: drawn as
 // that species while the landscape grows it, else picked by role.

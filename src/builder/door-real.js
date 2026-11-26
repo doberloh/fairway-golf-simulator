@@ -85,9 +85,11 @@ const hex = h => { const n = parseInt(String(h).slice(1, 7), 16); return [n >> 1
 // The fringe teal (26 November 2026; the owner painted a whole fairway as
 // fringe without seeing it: at [105, 205, 120] it was a lighter fairway on
 // the plan, its outline the same dark line). Kept off the four greens above.
-const OWN = {fairway: [70, 170, 60], semi: [150, 200, 100], tee: [120, 220, 150], green: [150, 245, 150], fringe: [40, 185, 175], sand: [245, 228, 175], water: [60, 120, 220], path: [75, 77, 81]};
+// The approach (26 November 2026) yellow-lime: fairway in the game, but on
+// the plan it must not pass for the fairway it is painted over.
+const OWN = {fairway: [70, 170, 60], approach: [190, 215, 60], semi: [150, 200, 100], tee: [120, 220, 150], green: [150, 245, 150], fringe: [40, 185, 175], sand: [245, 228, 175], water: [60, 120, 220], path: [75, 77, 81]};
 const COLOUR = Object.fromEntries(PALETTE.map(k => [k, k === 'rough' ? null : OWN[k] ?? hex(GROUNDS[k]?.map ?? '#888888')]));
-const LABEL = k => ({rough: 'Rough', fairway: 'Fairway', semi: 'Semi-rough', tee: 'Tee', green: 'Green', fringe: 'Fringe', sand: 'Sand', water: 'Water', path: 'Cart path'})[k] ?? GROUNDS[k]?.label ?? k;
+const LABEL = k => ({rough: 'Rough', fairway: 'Fairway', approach: 'Approach', semi: 'Semi-rough', tee: 'Tee', green: 'Green', fringe: 'Fringe', sand: 'Sand', water: 'Water', path: 'Cart path'})[k] ?? GROUNDS[k]?.label ?? k;
 // What a ZIP may hold that door 2 reads (a portal's notes and READMEs left out).
 const LIDAR_IN_ZIP = /\.(las|laz|e57|ply|pts|ptx|xyz|tif|tiff|asc|flt|bil|hgt|prj|hdr)$/i;
 const IMAGE = /\.(png|jpe?g|webp|gif|bmp)$/i, WORLD = /\.(pgw|jgw|tfw|wld|j2w|bpw|gfw)$/i;
@@ -727,7 +729,7 @@ export function open(draft = null) {
    }
    if (t === 'tree' && type === 'down') {
     const here = m.kindAt(p.x, p.z);
-    if (['fairway', 'green', 'fringe', 'tee', 'water', 'sand', 'path'].includes(here)) say(`A tree cannot stand on ${LABEL(here).toLowerCase()}.`, true);
+    if (['fairway', 'approach', 'green', 'fringe', 'tee', 'water', 'sand', 'path'].includes(here)) say(`A tree cannot stand on ${LABEL(here).toLowerCase()}.`, true);
     else { m.addTree({x: p.x, z: p.z, h: st.treeH, crown: st.treeH * .28, species: st.treeKind || null}); refreshCount(); }
     plan.draw(); return;
    }
@@ -1830,7 +1832,7 @@ export function open(draft = null) {
    // layer, from the hidden lookup.
    const rough = k === 'rough', n = rough ? countWhere(m.lookup().codes, 0) * st.land.cell ** 2 : m.area(k);
    const col = rough ? hex(BIOMES[st.landscape].rough ?? '#5f7f3f') : COLOUR[k] ?? [128, 128, 128], ha = `${(n / 1e4).toFixed(2)} ha`;
-   return el('li', {class: (k === st.kind ? 'cb-cur cb-chosen' : '') + (n ? '' : ' cb-empty'), 'data-layer': k, style: 'display:flex;gap:6px;align-items:center;cursor:pointer;padding:2px 0', onclick: () => { st.kind = k; const sel = panel.querySelector('.cb-kind'); if (sel) sel.value = k; layersList(); showHint(); showModel(); }},
+   return el('li', {class: (k === st.kind ? 'cb-cur cb-chosen' : '') + (n ? '' : ' cb-empty'), 'data-layer': k, style: 'display:flex;gap:6px;align-items:center;cursor:pointer;padding:2px 0', title: `Click to paint ${LABEL(k).toLowerCase()}`, onclick: () => { st.kind = k; layersList(); showHint(); showModel(); }},
     rough ? el('span', {style: 'width:28px;flex:none'}) : eyeButton(document, k, LABEL(k), m.isHidden(k), () => { m.setHidden(k, !m.isHidden(k)); paintCodes(); layersList(); }),
     el('span', {class: 'cb-swatch', style: `background:rgb(${col.join(',')})`}), el('span', {style: 'flex:1'}, LABEL(k) + (rough || own.includes(k) ? '' : ' (not this landscape\'s)')),
     el('small', {}, rough ? `${ha}, under no layer` : n ? ha : 'empty'));
@@ -2062,10 +2064,15 @@ export function open(draft = null) {
   // bleeding through to the one on top of it is great. Its just not clear thats
   // how it works"): the list top first, the chosen one marked, and in words what
   // a stroke on it goes under.
+  // The list is the only way to choose (the owner, 26 November 2026: "somehow
+  // the layer selection became a drop down? ... i didnt ask for that"): the
+  // Painting drop-down that sat over it from 10 November is gone.
   const layers = el('div', {class: 'cb-field cb-layerpanel'}, el('div', {class: 'cb-panehead'}, 'Layers', el('small', {}, 'top of list draws on top')),
-   el('label', {class: 'cb-opt'}, 'Painting', el('select', {class: 'cb-kind', title: 'The layer the brush, the outline, the eraser and smoothing work on -- or click a layer below', onchange: e => { st.kind = e.target.value; layersList(); showHint(); showModel(); }}, kindsShown().map(k => el('option', {value: k, selected: k === st.kind}, LABEL(k))))),
-   underLine, layerBox,
-   el('small', {}, 'Click a layer to paint on it. The eye hides it in this view only; the course keeps it.'), countText);
+   el('small', {}, 'Click a layer to paint on it. The eye hides it in this view only; the course keeps it.'),
+   underLine, layerBox, countText);
+  // Filled as the step opens: a draft opened from a file came to the trace
+  // with the list empty until the first stroke, which the drop-down hid.
+  layersList();
   // SKIN FROM THE LAND (the owner: "amazing, sets it apart"): its own place.
   const skin = el('div', {class: 'cb-field cb-skin'}, el('div', {class: 'cb-panehead'}, 'Rock on slopes', el('small', {}, 'from the land\'s heights')),
    el('small', {}, 'Paints the landscape\'s rock on steep ground and its apron below it. Paint over it or Undo.'),
@@ -2457,7 +2464,7 @@ export function open(draft = null) {
  }
  // Fairway or semi-rough under a spot, as traced (the line down the fairway).
  function playedFn() {
-  const {nx, nz, cell, halfX, halfZ} = st.land, codes = st.model.lookup().codes, fair = new Set(['fairway', 'semi'].map(k => PALETTE.indexOf(k)));
+  const {nx, nz, cell, halfX, halfZ} = st.land, codes = st.model.lookup().codes, fair = new Set(['fairway', 'approach', 'semi'].map(k => PALETTE.indexOf(k)));
   return (x, z) => { const i = Math.round((x + halfX) / cell), j = Math.round((z + halfZ) / cell); return i >= 0 && j >= 0 && i < nx && j < nz && fair.has(codes[j * nx + i]); };
  }
  // THE DOGLEGS (item 10; map-checks.js bendFor): each hole with no aim point
@@ -2576,7 +2583,12 @@ export function open(draft = null) {
    const doc = st.doc = validateDoc(docFromLand({treePlan: st.treePlan, surround: st.surround, land: st.land, traced: {shapes: new Map(st.model.layersPresent().map(k => [k, st.model.shapesOf(k)]))}, holes, trees: st.model.state.trees.map(t => st.treeScale === 1 ? t : {...t, h: t.h * st.treeScale, crown: t.crown * st.treeScale, ...(t.trunk ? {trunk: t.trunk * st.treeScale} : {})}), homes: st.model.state.homes, bunkers: st.model.state.bunkers, creekLines: st.model.state.creekLines, name: st.name.trim() || 'My real course', landscape: st.landscape, credits: st.credits, landEdits: st.landEdits, creeks: st.creeks, rocks: st.model?.state.rocks ?? st.rocks,
     source: {files: st.sources.map(s => s.name), epsg: crsOfSources(st.sources)?.epsg ?? null, crs: crsOfSources(st.sources) ?? null, geo: st.geo, origin: {x: st.gridder.center.x, y: st.gridder.center.y}, trace: st.traceMode, picture: st.picShow === 'lidar' ? 'lidar' : st.picture ? 'placed' : 'none'}}));
    const w = worldFromDoc(doc), bio = BIOMES[st.landscape], mt = bio.mapTurf || {};
-   const col = {green: hex(mt.green ?? bio.green), fringe: hex(bio.fringe ?? mt.green ?? bio.green), fairway: hex(mt.fairway ?? bio.fairway), tee: hex(mt.fairway ?? bio.fairway), semi: hex(mt.semi ?? bio.semi), rough: hex(bio.rough), sand: hex(bio.sand), water: [52, 104, 160], path: [75, 77, 81]};
+   // Fringe and approach half way to their plan colours (the owner, 26
+   // November 2026: "Colors need to be added for fringe and approach in the
+   // 2d trace, the 2d review and the 3d view"): in the landscape's own
+   // colours they passed for green and fairway.
+   const half = (p, q) => p.map((v, i) => Math.round((v + q[i]) / 2));
+   const col = {green: hex(mt.green ?? bio.green), fringe: half(hex(bio.fringe ?? mt.green ?? bio.green), OWN.fringe), fairway: hex(mt.fairway ?? bio.fairway), approach: half(hex(mt.fairway ?? bio.fairway), OWN.approach), tee: hex(mt.fairway ?? bio.fairway), semi: hex(mt.semi ?? bio.semi), rough: hex(bio.rough), sand: hex(bio.sand), water: [52, 104, 160], path: [75, 77, 81]};
    // THE REVIEW FROM THE COURSE'S OWN OUTLINES (the owner, 24 November 2026:
    // "in the final review step before going into the editor, the pixellated
    // image is still showing. Why does this exist at all"): each surface the

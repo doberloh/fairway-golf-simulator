@@ -34,7 +34,8 @@ import * as S from './shapes.js';
 
 // The fringe last (24 November 2026): a draft keeps OpenStreetMap's cells as
 // these codes (draft.js osm/codes.bin), so a new kind goes on the end.
-export const PALETTE = [...TRACE, ...GROUND_KINDS.filter(k => !TRACE.includes(k)), 'fringe'];
+// The approach after it (26 November 2026), for the same reason.
+export const PALETTE = [...TRACE, ...GROUND_KINDS.filter(k => !TRACE.includes(k)), 'fringe', 'approach'];
 export const CODE = Object.fromEntries(PALETTE.map((k, i) => [k, i]));
 // Patches smaller than this are specks and holes smaller than this are pocks
 // (PLACED: 10 m², the smallest pot bunker; at 4 m² the imagery iterations
@@ -277,7 +278,7 @@ export function createTrace(grid, {codes = null, shapes = null, trees = [], home
   // they stand -- the land's own grid, so what it finds is turned into
   // outlines once, as it comes in. One undo. Returns {kinds, cells}.
   skin({bio, ground}) {
-   const c = SKIN.clear, PLAYED = new Set(['fairway', 'green', 'fringe', 'tee', 'sand', 'water', 'path', 'semi'].map(k => CODE[k])), L = lookup();
+   const c = SKIN.clear, PLAYED = new Set(['fairway', 'approach', 'green', 'fringe', 'tee', 'sand', 'water', 'path', 'semi'].map(k => CODE[k])), L = lookup();
    const keepOut = (x, z) => [[0, 0], [c, 0], [-c, 0], [0, c], [0, -c]].some(([dx, dz]) => PLAYED.has(L.at(x + dx, z + dz)));
    const skin = skinFromHeights({nx, nz, cell, halfX: halfX + cell / 2, halfZ: halfZ + cell / 2, ground}, bio, keepOut);
    step(() => { for (const [kind, m] of Object.entries(skin.masks)) { const add = S.fromMask(m, grid); if (add.length) put(kind, S.union(cur(kind), add)); } });
@@ -478,7 +479,7 @@ export function facingFrom(kindAt) {
  return (x, z) => {
   for (let r = 3; r <= 150; r += 3) for (let a = 0; a < 32; a++) {
    const t = a / 32 * 2 * Math.PI, k = kindAt(x + Math.sin(t) * r, z + Math.cos(t) * r);
-   if (k === 'fairway' || k === 'green' || k === 'tee') return t;
+   if (k === 'fairway' || k === 'approach' || k === 'green' || k === 'tee') return t;
   }
   return 0;
  };
@@ -486,7 +487,7 @@ export function facingFrom(kindAt) {
 // Where a tree may stand: rough and the wild ground types, not mown turf,
 // sand, water or path.
 const SHRUB = TREE_ROLES.indexOf('shrub');
-const OPEN = new Set(PALETTE.filter(k => !['fairway', 'tee', 'green', 'fringe', 'sand', 'water', 'path'].includes(k)));
+const OPEN = new Set(PALETTE.filter(k => !['fairway', 'approach', 'tee', 'green', 'fringe', 'sand', 'water', 'path'].includes(k)));
 const inside = (ring, x, z) => { let c = false; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) { const [ax, az] = ring[j], [bx, bz] = ring[i]; if ((bz > z) !== (az > z) && x < (ax - bx) * (z - bz) / (az - bz) + bx) c = !c; } return c; };
 
 // Specks merged into their surroundings and pocks filled, in place (`put(k,

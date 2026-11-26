@@ -8,7 +8,7 @@
 // only -- a fairway painted through a bunker leaves the bunker, and the
 // fairway runs on unbroken under it. The order is the game's own: a built
 // course's field is read water, sand, green, a painted fringe, tee, path,
-// fairway, semi, then a ground type (built-world.js), so overlapping outlines in a course file
+// approach, fairway, semi, then a ground type (built-world.js), so overlapping outlines in a course file
 // resolve exactly as the layers show them. Hiding a layer hides it from the
 // view only; a course is made from every layer.
 //
@@ -20,7 +20,9 @@ import {GROUND_KINDS} from '../grounds.js';
 // The fringe (24 November 2026) just under the green, so a collar painted up
 // to and over a green's edge leaves no gap; in the game it is a code in the
 // ground layer that wins inside it (built-field.js).
-export const LAYER_ORDER = ['water', 'sand', 'green', 'fringe', 'tee', 'path', 'fairway', 'semi', ...GROUND_KINDS.filter(k => k !== 'path')];
+// The approach (26 November 2026) just over the fairway: painted over a
+// fairway's end it takes that ground, and a cart path still crosses it.
+export const LAYER_ORDER = ['water', 'sand', 'green', 'fringe', 'tee', 'path', 'approach', 'fairway', 'semi', ...GROUND_KINDS.filter(k => k !== 'path')];
 
 // The layers a landscape offers, top first, ending with rough (the owner, 1
 // November 2026: "all types available to that biome ... i dont see rough,

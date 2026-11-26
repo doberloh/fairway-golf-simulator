@@ -124,7 +124,7 @@ Every command is in COMMAND_CHEAT_SHEET.md.
 - `src/textures.js`, `src/mesh-assets.js`, `src/asset-meshes.js` (generated; never edit) -- textures, wind, imported models
 - `src/instance-cull.js`, `src/occlusion.js`, `src/owner-atlas.js` -- drawing only what is seen, soft shade, ground ownership
 - `src/low-trees.js` -- Low's rule for drawing fewer trees, never the hole's (pure; tests/low-trees.test.mjs)
-- `src/built-field.js`, `src/bake-pool.js`, `src/bake-worker.js` -- a built course's field of distances to its outlines, baked in bands of rows on other cores (tests/built-field.test.mjs); a painted fringe is ground code 12, read in three places (PROJECT_HANDOFF *The codes are ground.js's GROUND_CODE*)
+- `src/built-field.js`, `src/bake-pool.js`, `src/bake-worker.js` -- a built course's field of distances to its outlines, baked in bands of rows on other cores (tests/built-field.test.mjs); a painted fringe is ground code 12, read in three places (PROJECT_HANDOFF *The codes are ground.js's GROUND_CODE*); a painted approach is a third texture of its own, `c` (one byte a texel, null when none)
 - `src/ground-lod.js` -- the ground drawn as squares, coarser with distance, within a pixel or two of the ground the ball meets (pure; tests/ground-lod.test.mjs)
 - `src/ground-bake.js` -- the Phone tier's ground painted into nested pictures round the camera and drawn from them by a small program (renderer.js `buildGroundBake`; pure; tests/ground-bake.test.mjs) -- PROJECT_HANDOFF *THE PHONE TIER*
 - `src/clouds.js`, `src/cloud-shadows.js`, `src/mist.js`, `src/godrays.js`, `src/bloom.js`, `src/daylight.js`, `src/floodlights.js` -- sky, light and atmosphere
@@ -345,6 +345,7 @@ Each has cost real time. Search PROJECT_HANDOFF for the phrase in brackets.
 - A tint that dries turf goes through ground.js `dryTurf`, never a plain multiply: taking blue out of a green adds saturation and darkens it. [A TINT THAT TAKES BLUE OUT ADDS COLOUR]
 - A uniform can be fully plumbed and still dead; keep cue uniforms on the wiring test. [A UNIFORM CAN BE FULLY PLUMBED]
 - On a built course, anything in ground.js after the `BUILT_COURSE` block that reads a hole row's shapes (greenD, the tee pad) must read the baked field instead. [A BUILT COURSE'S MOWING READS THE BUILT EDGES]
+- Two built ground codes side by side meet in a staircase of the field's cells; a surface painted beside another needs its own distance (the approach's `c`), and a code is tested by a range with both ends. [A BUILT GROUND CODE IS ONE NUMBER]
 - Live floodlamps are room in every lit shader: past the card's budget the lit ground draws as nothing (floodlights.js `lampBudget`, at most 96). [A LIVE LAMP IS ROOM IN EVERY LIT SHADER]
 - The toon ramp flattens lighting at midday; a shape cue must change colour, not the lighting normal. [THE TOON RAMP]
 - textures.js patches three's ramp and tone-mapping chunks at import (coloured ramp, `GRADE`). [THE RAMP IS COLOURED] Every turf colour the ground and the grass tufts draw goes through `turfGrade` (`turfPalette`); never lift one on its own. [THE TURF AS THE LANDSCAPE PAINTS IT]

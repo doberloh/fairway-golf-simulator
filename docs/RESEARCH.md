@@ -11020,19 +11020,16 @@ apart. Three causes, three changes:
 - **The mowing.** A painted fringe away from a green was one flat tone with
   no bands, which beside a striped fairway read as one more light band --
   Redwood's green sits only 42 from its fairway, so 60% is a gap of 25,
-  about the fairway bands' own swing (.115). A collar is mown round and round
-  its outline with a walk-behind or triplex greens mower (this file's own
-  figure for a greens mower, *THE CLEAN-UP LAP* in ground.js: about
-  0.55-0.65 m; no new source was looked up), so a painted fringe now takes
-  **laps along its edge, 0.9 m a pass** (PLACED: wide enough to read at a
-  hole's distance, wider than a real pass), light
-  and dark by turns at **.07** (PLACED, gentler than the fairway's bands).
-  The built field's distances stop at 6 m, so the laps fade out between 4.6
-  and 5.8 m inside: a wider fringe is plain in its middle. The collar's
-  view-shaded lap, which reads its direction from the distance to the green,
-  now runs only within 5.9 m of a green: past the field's 6 m that distance
-  is flat, and a painted fringe away from a green took one constant tone
-  from it.
+  about the fairway bands' own swing (.115). A painted fringe is now mown as
+  **one lap along its own outline**: the generated collar's view-shaded pass
+  (grass laid away from you light, toward you dark, ±6%), turned by the
+  fringe's own edge distance instead of the green's, so it reads as one band
+  unlike the fairway's straight ones. Before, that lap took its way from the
+  distance to the green, which the built field holds flat past 6 m, so a
+  fringe away from a green took one constant tone. The first try the same
+  day was **laps 0.9 m a pass**, light and dark by turns at .07, which read
+  as rings; the owner: "I want fringe to act as one stripe. I dont want
+  multiple."
 
 Rejected: lifting Redwood's fringe past its own green (a collar paler than
 the green it rings is wrong on the course and turns the generated collars
@@ -11040,6 +11037,42 @@ too), and colour alone (on Redwood the light bands still matched it).
 Pictures: bench/shots/fringe/ (local), the owner's Alpine draft with fringe
 discs laid over holes 1 and 3, on Redwood, Pacific Northwest, Hawaiian
 Resort, Desert Resort and Mountains.
+
+### The approach (26 November 2026)
+
+A builder layer for the mown ground before a green (COURSE_BUILDER.md, *An
+approach layer*). It plays as fairway: no lie, bounce or roll figure of its
+own. What the game draws, all PLACED:
+
+- **The fairway's colour**, no colour of its own: a real approach is the
+  fairway's grass at about the fairway's height, mown on its own.
+- **Bands half the fairway's: 6 m against 12 m** (the owner: "the
+  approach should get stripes half the size of the fairway"), along the
+  same line and from the same origin, so every other edge of the fairway's
+  carries on across. The stripes' anti-alias measures the plan coordinate
+  times its period, which runs on smoothly across the change: measured on
+  the plan alone it jumped there and drew a dashed line along the edge. (A
+  first try the same day had no bands at all, the stripe tone held at its
+  middle, .965 -- on the owner's own reading, fairway "but not striped".)
+- **A soft edge, 15 cm across** (the owner: "so its not a hard line
+  between", then, seeing the first try: "the blend needs to be over like 6
+  inches not multiple yards"): its colour and the end of the fairway's bands
+  both come in over 0.075 m each side of the outline, or over a pixel and a
+  half where 15 cm is smaller than that on screen (`fwidth`), so a far edge
+  does not shimmer. The first try eased the colour over 1.5 m and faded the
+  bands over 3 m: on the owner's course it read as a smear several metres
+  wide (the field's cells are up to a couple of metres on a big course, so
+  the distance was already soft). The lie changes at the outline itself.
+- **Under the fringe, green, tee and sand**, which keep their own edges.
+- **Its own texture**, one byte a texel (its signed distance, as every
+  field channel: 12 m over 255 steps, 4.7 cm each). Up to 4 MB on a course
+  baked at the 2048-texel limit, and one texel when none is painted. As a
+  code in the ground layer beside the fringe it made a staircase where the
+  two met (COURSE_BUILDER.md, *An approach layer*).
+
+Rejected: a colour of its own in the game (the owner's picture of
+fringe-as-approach read as a pale apron, not turf), and mowing it across
+the line of play.
 
 ## A built green's fringe, only where painted (24 November 2026)
 

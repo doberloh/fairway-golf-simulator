@@ -149,13 +149,20 @@ export function openEditor(doc, {from = 'file', back = null, work = null, smooth
  // to date as it is painted; the eye hides one from the view (the course
  // keeps it); Erase takes one off under the brush.
  const layerList = el('ul', {style: 'list-style:none;padding:0;margin:0;font-size:12px'});
+ // THE LIST IS WHERE A LAYER IS CHOSEN (the owner, 26 November 2026:
+ // "somehow the layer selection became a drop down? ... i didnt ask for
+ // that"): every layer the landscape offers and every one the course holds,
+ // in the layers' order, empty ones marked, Rough last (painting it takes
+ // every layer off) -- as door 2's list. The Layer drop-down that stood in
+ // Surfaces from 10 November is gone.
+ const listed = () => { const have = new Set([...landscapeKinds(), ...editor.layersPresent()]); return [...LAYER_ORDER.filter(k => have.has(k)), 'rough']; };
  function refreshLayers() {
   underLine.replaceChildren(...underWords());
-  layerList.replaceChildren(...editor.layersPresent().map(k => { const n = editor.area(k), hid = editor.isHidden(k);
-   return el('li', {'data-layer': k, class: k === layer ? 'cb-chosen' : '', title: `Click to paint ${label(k).toLowerCase()}`, style: 'display:flex;gap:4px;align-items:center;margin:2px 0;cursor:pointer', onclick: () => chooseLayer(k)},
-    eyeButton(document, k, label(k), hid, () => { editor.setHidden(k, !hid); view.refreshLayers(); refreshLayers(); }),
-    el('span', {style: 'flex:1'}, `${label(k)} ${(n / 1e4).toFixed(2)} ha`),
-    el('button', {class: 'cb-btn', type: 'button', style: 'padding:2px 5px;font-size:11px', title: `Erase the ${label(k).toLowerCase()} layer under the brush`, onclick: () => { layer = k; layerPick.value = k; setTool({kind: 'erase'}); }}, 'Erase')); }));
+  layerList.replaceChildren(...listed().map(k => { const rough = k === 'rough', n = rough ? 0 : editor.area(k), hid = !rough && editor.isHidden(k);
+   return el('li', {'data-layer': k, class: (k === layer ? 'cb-chosen' : '') + (n || rough ? '' : ' cb-empty'), title: `Click to paint ${label(k).toLowerCase()}`, style: 'display:flex;gap:4px;align-items:center;margin:2px 0;cursor:pointer', onclick: () => chooseLayer(k)},
+    rough ? el('span', {style: 'width:28px;flex:none'}) : eyeButton(document, k, label(k), hid, () => { editor.setHidden(k, !hid); view.refreshLayers(); refreshLayers(); }),
+    el('span', {style: 'flex:1'}, rough ? 'Rough (takes every layer off)' : `${label(k)} ${n ? `${(n / 1e4).toFixed(2)} ha` : 'empty'}`),
+    n ? el('button', {class: 'cb-btn', type: 'button', style: 'padding:2px 5px;font-size:11px', title: `Erase the ${label(k).toLowerCase()} layer under the brush`, onclick: e => { e.stopPropagation(); layer = k; setTool({kind: 'erase'}); refreshLayers(); }}, 'Erase') : null); }));
  }
  // The tree height scale, as the slider is dragged (editing.js treeScale).
  const scaleText = el('span', {}, `${s.treeScale.toFixed(2)}x`);
@@ -224,10 +231,10 @@ export function openEditor(doc, {from = 'file', back = null, work = null, smooth
  const coverButtons = () => el('div', {class: 'cb-btns'}, coverOptions(BIOMES[s.landscape]).map(c => button(c.label, {kind: 'cover', cover: c.key})), button('Clear cover', {kind: 'clearCover'}));
  // THE CLEAN-UP, as door 2's. Whole-course ones redraw the whole sheet.
  const layerNow = () => layer === 'rough' ? null : layer;
- const layerPick = el('select', {class: 'cb-layerpick', style: 'width:100%', title: 'The layer the brush, the pen, Erase, Smooth edges, Tidy and Extrapolate work on (Rough: every layer)', onchange: e => chooseLayer(e.target.value)});
- // The layer chosen: the brush and the pen in hand go on painting it.
+ // The layer chosen (a click in Layers): the brush and the pen in hand go on
+ // painting it.
  function chooseLayer(k) {
-  layer = k; layerPick.value = k;
+  layer = k;
   if (tool.kind === 'paint' || tool.kind === 'outline') setTool({...tool, surface: k}); else status.textContent = HINT[tool.kind]?.(tool) ?? '';
   refreshLayers();
  }
@@ -239,7 +246,6 @@ export function openEditor(doc, {from = 'file', back = null, work = null, smooth
   const order = editor.layersPresent(), i = order.indexOf(layer), above = (i < 0 ? order.filter(k => LAYER_ORDER.indexOf(k) < LAYER_ORDER.indexOf(layer)) : order.slice(0, i)).filter(k => k !== 'rough');
   return above.length ? [`${label(layer)} goes under `, el('b', {}, above.map(k => label(k)).join(', ')), ', which stay on top where they are painted.'] : [`${label(layer)} is the top layer painted here: it shows wherever you paint it.`];
  }
- const fillLayerPick = () => { layerPick.replaceChildren(...[...new Set([...landscapeKinds(), ...editor.layersPresent()])].map(k => el('option', {value: k, selected: k === layer}, label(k)))); };
  function cleaned() { const w = editor.settleWater(); if (w) view.refreshLand(w); view.refreshWater(); view.refreshLayers(); refreshLayers(); refreshSave(); }
  function clearTurfTrees() {
   unpick(); showPicked();
@@ -263,7 +269,7 @@ export function openEditor(doc, {from = 'file', back = null, work = null, smooth
   });
   palette.replaceChildren(...buttons.flatMap((b, i) => i && list[i][4] !== list[i - 1][4] ? [el('hr'), b] : [b]));
  }
- const buildTools = () => { fillLayerPick(); buildPalette(); tools.replaceChildren(
+ const buildTools = () => { buildPalette(); refreshLayers(); tools.replaceChildren(
   el('div', {class: 'cb-group'}, el('b', {}, 'View'), el('div', {class: 'cb-btns'},
    el('button', {class: 'cb-btn', type: 'button', onclick: () => view.planView()}, 'View from above'),
    el('button', {class: 'cb-btn', type: 'button', onclick: () => view.frameHole(selected)}, 'View this hole'),
@@ -279,11 +285,12 @@ export function openEditor(doc, {from = 'file', back = null, work = null, smooth
    el('label', {}, 'Smallest ', coverMinText, coverMin), el('label', {}, 'Largest ', coverMaxText, coverMax),
    range('Density', .05, 1, .05, coverThick, v => { coverThick = v; })),
   // ONE BRUSH AND ONE PEN, ON THE LAYER CHOSEN (the builder-ux goal, 10
-  // November 2026): the layer is the paint program's colour, chosen here or by
-  // clicking it in Layers. Replaced a Paint and an Outline button for each of
-  // the landscape's surfaces -- 22 buttons that were really two tools.
+  // November 2026): the layer is the paint program's colour, chosen by
+  // clicking it in Layers (since 26 November 2026 only there). Replaced a
+  // Paint and an Outline button for each of the landscape's surfaces -- 22
+  // buttons that were really two tools.
   el('div', {class: 'cb-group cb-surfaces'}, el('b', {}, 'Surfaces'),
-   el('label', {}, 'Layer ', layerPick),
+   el('small', {}, 'Click a layer in Layers to paint on it.'),
    underLine,
    el('button', {class: 'cb-btn', type: 'button', style: 'width:100%;margin-top:4px', onclick: skinLand,
     title: "Paint the steep ground the landscape's rock and the ground below it its apron, read from the land's heights -- a best effort; paint over it, or Undo"}, 'Paint rock on slopes')),
@@ -295,7 +302,7 @@ export function openEditor(doc, {from = 'file', back = null, work = null, smooth
     el('input', {type: 'number', class: 'cb-exwidth', min: .5, max: 40, step: .5, value: exWidth, title: 'metres', oninput: e => { exWidth = +e.target.value || 4; }})),
    el('button', {class: 'cb-btn', type: 'button', onclick: () => { if (editor.extrapolate({from: layer, to: exTo, width: exWidth})) cleaned(); else status.textContent = 'Pick a layer that holds something, and another to lay round it.'; }}, 'Add layer around')),
   el('div', {class: 'cb-group'}, el('b', {}, 'Ground cover'), coverButtons()),
-  el('div', {class: 'cb-group cb-layers'}, el('b', {}, 'Layers'), el('small', {}, 'Top of list draws on top. The eye shows or hides a layer; Erase removes it under the brush.'), layerList),
+  el('div', {class: 'cb-group cb-layers'}, el('b', {}, 'Layers'), el('small', {}, 'Click a layer to paint on it. Top of list draws on top. The eye shows or hides a layer; Erase removes it under the brush.'), layerList),
   el('div', {class: 'cb-group'}, el('b', {}, 'Trees'),
    el('label', {'data-for': 'placeTree'}, 'Which tree ', el('select', {class: 'cb-treekind', style: 'width:100%', title: 'The tree to place, from those this landscape grows', onchange: e => { treeKind = e.target.value; showModel(); }}, el('option', {value: ''}, 'Any of the landscape\'s'), ...treeChoices(BIOMES[s.landscape]).map(([k, name]) => el('option', {value: k, selected: k === treeKind}, name)))),
    el('label', {'data-for': 'placeTree'}, 'Tree height, metres ', el('input', {type: 'number', class: 'cb-treeh', min: 3, max: 60, value: treeH, oninput: e => { treeH = +e.target.value || 15; showModel(); }})),

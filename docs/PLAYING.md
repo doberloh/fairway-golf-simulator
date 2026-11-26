@@ -863,8 +863,13 @@ changes, newest first, each with **Undo to here**.
      builder, opens in the 3D editor with the fringe it had, painted on; a
      course file saved before 24 November 2026 keeps its fringe in the game
      until it is saved again.) The fringe is teal on the plan; in the game
-     it is paler than the fairway and mown in narrow laps round its edge
-     (26 November 2026). The trace is drawn **as the
+     it is paler than the fairway and mown as one pass round its edge
+     (26 November 2026). **Approach** is a layer for the mown ground in
+     front of a green: it plays exactly as fairway, and in the game it is
+     the fairway's colour mown in stripes half the fairway's width, its edge
+     softened over a few centimetres (yellow-lime on the plan, a yellower
+     fairway in the review and the 3D editor, where the fringe is tinted
+     teal). The trace is drawn **as the
      course will have it**: each layer's own outlines, as you paint them (the
      course drops specks smaller than a pot bunker). **Outside the course**:
      draw the course boundary (OpenStreetMap's comes with it when it has
@@ -1036,10 +1041,13 @@ cover's sizes, and on door 2's trace step the brush size, tree height and trees
 a hectare, each named. **Clean up** works on the layer picked there: **Erase brush**, **Erase all
 layers**, **Smooth edges**, **Smooth all edges**, **Remove specks** and
 **Add layer around**, as in door 2's trace. It has the same **Layers**: every
-surface the course holds, top first, its area kept up to date as you paint,
-with **shown/hidden** and an **Erase** brush for each; **click a layer to
-paint it**. **Surfaces** has one **Paint brush** (B) and one **Pen** (P)
-for the layer chosen there or in Layers -- the brush steadied as in door 2
+layer the landscape offers and every one the course holds, top first, empty
+ones marked, Rough last, its area kept up to date as you paint, with
+**shown/hidden** and an **Erase** brush for each painted one; **click a layer
+to paint it** -- the list is the only place a layer is chosen, in both
+editors (26 November 2026; the drop-downs are gone). **Surfaces** has one
+**Paint brush** (B) and one **Pen** (P) for the layer chosen in Layers -- the
+brush steadied as in door 2
 (Steadiness, and Smooth the edge when I let go), the pen drawing its curve
 through the nodes you click (the first node, a double-click or Enter fills
 it; Shift-click a sharp corner; Backspace takes the last node off) -- with

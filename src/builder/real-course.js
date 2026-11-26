@@ -244,7 +244,7 @@ export function docFromLand({land, traced = null, holes, trees = [], homes = [],
  const smoothR = new Uint8Array(nx * nz);
  if (surveyed) for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) {
   const k = j * nx + i, t = codes ? PALETTE[codes[k]] : greenAt(-halfX + i * cell, -halfZ + j * cell) ? 'green' : 'rough';
-  smoothR[k] = t === 'green' || t === 'tee' ? 2 : t === 'fairway' ? 1 : 0;
+  smoothR[k] = t === 'green' || t === 'tee' ? 2 : t === 'fairway' || t === 'approach' ? 1 : 0;
  }
  if (surveyed) for (const r of [1, 2]) {
   const m = boxMean(land.ground, nx, nz, Math.max(1, Math.round(r * 1.25 / cell / 2)));
@@ -327,7 +327,7 @@ export function docFromLand({land, traced = null, holes, trees = [], homes = [],
  // wherever it stands, with its own trunk and role.
  for (const t of trees) {
   const lie = codeAt(t.x, t.z);
-  if (!t.kept && ['green', 'fringe', 'tee', 'water', 'sand', 'fairway'].includes(lie)) continue;
+  if (!t.kept && ['green', 'fringe', 'tee', 'water', 'sand', 'fairway', 'approach'].includes(lie)) continue;
   // A plant the editor painted keeps its species (cover.js).
   let ki = -1; if (t.kind) { ki = treeKinds.indexOf(t.kind); if (ki < 0) ki = treeKinds.push(t.kind) - 1; }
   treeData.push(t.x, t.z, t.h, t.crown, t.trunk ?? Math.min(3.6, Math.max(.14, t.h * .027)), (t.role ?? (t.crown / t.h < .2 ? 1 : 2)) | (t.placed ? TREE_HAND : 0), ki);

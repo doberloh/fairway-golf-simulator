@@ -144,20 +144,6 @@ open list before the 11 November 2026 prune*.
   would suit real taper and limbs. Rough cost: 30 credits a tree, plus joining two
   models in tools/blender/meshy_game.py. Noticed by Claude, 6 November 2026.
 
-- **An Approach layer in the Course Builder** (built courses only). The mown
-  ground in front of a green, painted as its own layer: it plays exactly as
-  fairway (lie, bounce, roll, the HUD says Fairway) and is drawn in the
-  fairway's colour without the fairway's bands. Today an approach can only be
-  painted as Fringe, which plays as fringe 30 m out from the green, or as
-  Fairway, which is striped to the green's edge. The fringe's own route: a
-  code in the built field's ground layer (built-field.js, 13 after the
-  fringe's 12), a layer under Fringe in layers.js, `surfaces.approach` in
-  course-doc.js, builtSurface answering 'fairway', ground.js painting it,
-  the plan's colour. A file without one plays as before (no
-  `BUILT_VERSION`); an older copy of the game shows whatever lies under it.
-  Medium. (The owner and Claude, 26 November 2026, remaking Worthington with
-  Fringe painted as its approaches)
-
 ## Under the hood
 
 - **Near shadows cast by a tree's middle version.** In the nearest shadow

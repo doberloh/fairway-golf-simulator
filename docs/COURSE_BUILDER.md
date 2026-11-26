@@ -1517,7 +1517,10 @@ working**; the model is tested in Node, the page has not been opened.
   its name and shows only while its tool is held (`data-for`): brush size, tree
   height, trees a hectare, the cover's sizes; in 3D the whole Brush group too.
   Left always on show in 2D: the layer picker, because a stroke's layer can be
-  changed with any tool in hand and the journeys do, and Extrapolate. The 3D
+  changed with any tool in hand and the journeys do, and Extrapolate. (The
+  picker drop-down went on 26 November 2026 -- the owner had not asked for
+  it; the Layers list is the picker: *An approach layer, and the list as the
+  only layer picker*, below.) The 3D
   **Tree height** slider is now named **Every tree's size**, as it is. Not seen.
 
 ### Place tree picks the tree (5 November 2026)
@@ -1800,7 +1803,7 @@ outside the builder".
   ground shader's built branch and the mowing's one-hole-a-piece
   (ground.js, `builtMowOwners`'s `kindAt`) read it the same way. It is
   painted as the generator's fringe is, and since 26 November 2026 mown in
-  laps along its own outline (ground.js, A PAINTED FRINGE IS CUT IN LAPS).
+  one lap along its own outline (ground.js, A PAINTED FRINGE IS ONE LAP TOO).
 - **Told apart from the fairway** (26 November 2026; the owner painted a
   whole fairway as fringe and saw "fringe and fairway looking exactly the
   same", in the plan and in the game view): the plan draws Fringe teal
@@ -1819,6 +1822,63 @@ game's paler collar (`tools/builder-look.mjs`, mended the same day: with the
 courses folder, its Open button never reached the file chooser). A
 generated course taken over has not been looked at with its collar painted
 on (Node tests only). **Not yet seen by the owner.**
+
+### An approach layer, and the list as the only layer picker (branch `fringe-colour`, 26 November 2026)
+
+The owner, remaking Worthington with Fringe painted as each green's approach
+(a picture of a pale apron 30 m out): "I think that the fringe should just be
+fairway base color but not striped ... should we do that or add an
+'approach' type as well for the builder? we dont need to add in procedural
+courses." Claude's answer, taken: the fringe stays a collar that reads
+apart (it is a putting cue, and the generated collars share its colour),
+and that look belongs to an approach, which plays as fairway -- painted as
+fringe, every ball 30 m short of a green was on the fringe. Then: "Add
+approach please. Approach should blend into the layers around it nicely so
+its not a hard line between."
+
+- **A layer, between path and fairway** (layers.js `LAYER_ORDER`), the
+  palette's last code after the fringe (trace-edit.js `PALETTE`; a draft's
+  codes never move), `surfaces.approach` in the file (course-doc.js
+  `SURFACE_KINDS`), yellow-lime (190, 215, 60) on the plan. Played and
+  planted like fairway everywhere the builder asks (no trees, no cover, a
+  house faces it, the line down the fairway runs on it, its ground smoothed
+  as a fairway's).
+- **Coloured in every view** (the owner: "Colors need to be added for
+  fringe and approach in the 2d trace, the 2d review and the 3d view
+  also"): the plan's teal and yellow-lime, and in the review (door-real.js
+  `paintCourse`) and the 3D editor (view.js `surfaceColours`) the
+  landscape's fringe and fairway colours taken half way to them -- in the
+  landscape's own colours alone they passed for green and fairway.
+- **In the game, a texture of its own** (built-field.js: the field's `c`,
+  one byte a texel, only when one is painted; `builtC` in the ground
+  shader, a built course's program only, the seventh sampler). It was first
+  code 13 of the ground layer, beside the fringe's 12: where the two met --
+  an approach painted under a green with a fringe -- the code chosen texel
+  by texel drew the fringe's edge as a staircase of the field's cells (the
+  owner: "these weird wobbles where i painted the approach beneath the
+  green"; PROJECT_HANDOFF, *A BUILT GROUND CODE IS ONE NUMBER*). The lie is
+  fairway (built-world.js `builtSurface`); mowing pieces count it as
+  fairway (ground.js `kindAt`); the shader paints the fairway's colour in
+  bands half the fairway's width (the owner: "the approach should get
+  stripes half the size of the fairway"), its edge softened over 15 cm (a
+  first try over 1.5 m and 3 m read on the owner's course as a smear yards
+  wide; RESEARCH, *The approach*).
+- **No `BUILT_VERSION`**: a file without one plays as before. An older game
+  drops `surfaces.approach` and shows what lies under it -- an online room
+  already needs one version.
+- **The layer drop-downs are gone** (the owner: "somehow the layer selection
+  became a drop down? WTF happened there? i didnt ask for that"). Claude
+  put them in on 10 November (door 2's Painting, the 3D editor's Layer, in
+  the builder-ux goal); the Layers list already chose a layer by a click. The
+  list is now the only picker in both editors; the 3D editor's lists every
+  layer the landscape offers and every one the course holds, empty ones
+  marked and Rough last, as door 2's always did.
+
+Checked: Node tests (built-world: the lie under fringe and over semi;
+builder-editing: painted, saved, read back, played; layers: the order and the
+palette); pictures of an approach laid before two of the Alpine draft's
+greens on Classic Parkland (bench/shots/fringe/approach-shots.mjs, local);
+the builder journeys pick layers by the list. **Not seen by the owner.**
 
 ### No squares in the builder (branch `builder-outlines`, from 24 November 2026)
 
@@ -2605,7 +2665,8 @@ node, a dragged node, the bowed fill; a shaky stroke 12.5 m wide plain and
 The editor's Paint and Outline groups listed every surface of the landscape
 as a button each -- 22 buttons that were two tools. Now **Surfaces** holds
 one **Paint brush** and one **Pen** for the layer chosen in its list or by
-clicking a row of Layers (the chosen row marked), with the line saying what
+clicking a row of Layers (the chosen row marked; since 26 November 2026 only
+by the row), with the line saying what
 it goes under, Erase, Erase all, Smooth edges and Skin from the land. The
 brush is steadied (steady.js, as door 2's: the string measured in metres
 where the stroke starts, from the camera); the pen draws pen.js's curve
