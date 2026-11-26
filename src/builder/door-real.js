@@ -82,7 +82,10 @@ import {landscapeMap} from '../ui-map.js';
 const {el} = ui;
 const frame = () => new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
 const hex = h => { const n = parseInt(String(h).slice(1, 7), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
-const OWN = {fairway: [70, 170, 60], semi: [150, 200, 100], tee: [120, 220, 150], green: [150, 245, 150], fringe: [105, 205, 120], sand: [245, 228, 175], water: [60, 120, 220], path: [75, 77, 81]};
+// The fringe teal (26 November 2026; the owner painted a whole fairway as
+// fringe without seeing it: at [105, 205, 120] it was a lighter fairway on
+// the plan, its outline the same dark line). Kept off the four greens above.
+const OWN = {fairway: [70, 170, 60], semi: [150, 200, 100], tee: [120, 220, 150], green: [150, 245, 150], fringe: [40, 185, 175], sand: [245, 228, 175], water: [60, 120, 220], path: [75, 77, 81]};
 const COLOUR = Object.fromEntries(PALETTE.map(k => [k, k === 'rough' ? null : OWN[k] ?? hex(GROUNDS[k]?.map ?? '#888888')]));
 const LABEL = k => ({rough: 'Rough', fairway: 'Fairway', semi: 'Semi-rough', tee: 'Tee', green: 'Green', fringe: 'Fringe', sand: 'Sand', water: 'Water', path: 'Cart path'})[k] ?? GROUNDS[k]?.label ?? k;
 // What a ZIP may hold that door 2 reads (a portal's notes and READMEs left out).

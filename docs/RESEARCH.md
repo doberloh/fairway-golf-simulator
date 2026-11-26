@@ -10990,6 +10990,57 @@ half-metre land is within 25 cm of the cells' corner. Nothing a saved file
 holds changed, so no `BUILT_VERSION`; a course saved again gets the fitted
 outlines.
 
+## Telling the fringe from the fairway (26 November 2026)
+
+The owner painted a fairway's whole area as Fringe in the builder's plan and
+read the result as the fringe and fairway merged, in the plan and in the
+builder's game view. Nothing had merged -- every tool, the save and the lie
+were checked and keep the layers apart -- but the two could not be told
+apart. Three causes, three changes:
+
+- **The plan.** Fringe was drawn rgb(105, 205, 120) beside fairway (70, 170,
+  60), tee (120, 220, 150) and green (150, 245, 150), all with the same dark
+  outline, at the trace's opacity over the picture: a lighter fairway. Now
+  **teal, (40, 185, 175)** (PLACED: off the four greens, and off water's blue
+  (60, 120, 220)).
+- **The colour on eight landscapes.** Measured as the share of the way from
+  the fairway colour to the green (projection on fairway-to-green), the
+  landscapes that always read apart sit at .49 to .62 (Badlands, Prairie,
+  Northwoods .49; Mountains .55; Classic Parkland .62), and the eight that did
+  not at .31 to .32: Redwood (gap 13 of 0-441), Pacific Northwest (20),
+  Desert Resort (21), Southern Pines, Lowcountry and Gulf, Hawaiian Resort and
+  Florida Palms (23). Each is now set **60% of the way** (PLACED, the middle
+  of the others): Redwood #62964a to #6e9a4d, Pacific Northwest #638e40 to
+  #6e9a44, Desert Resort #76a055 to #7eab60, Southern Pines and Lowcountry
+  #7aa462 to #8ab063, Hawaiian Resort and Florida Palms #7aa462 to #8cb973
+  (biomes.js `LAND`). A record change: the fingerprints' ground is unchanged,
+  so no `GENERATOR_VERSION`. The generated collar round every green on those
+  landscapes and the tee's turf (`teeTurf`, a third fringe) move with it.
+  tests/fringe-look.test.mjs holds every landscape at 45% or more.
+- **The mowing.** A painted fringe away from a green was one flat tone with
+  no bands, which beside a striped fairway read as one more light band --
+  Redwood's green sits only 42 from its fairway, so 60% is a gap of 25,
+  about the fairway bands' own swing (.115). A collar is mown round and round
+  its outline with a walk-behind or triplex greens mower (this file's own
+  figure for a greens mower, *THE CLEAN-UP LAP* in ground.js: about
+  0.55-0.65 m; no new source was looked up), so a painted fringe now takes
+  **laps along its edge, 0.9 m a pass** (PLACED: wide enough to read at a
+  hole's distance, wider than a real pass), light
+  and dark by turns at **.07** (PLACED, gentler than the fairway's bands).
+  The built field's distances stop at 6 m, so the laps fade out between 4.6
+  and 5.8 m inside: a wider fringe is plain in its middle. The collar's
+  view-shaded lap, which reads its direction from the distance to the green,
+  now runs only within 5.9 m of a green: past the field's 6 m that distance
+  is flat, and a painted fringe away from a green took one constant tone
+  from it.
+
+Rejected: lifting Redwood's fringe past its own green (a collar paler than
+the green it rings is wrong on the course and turns the generated collars
+too), and colour alone (on Redwood the light bands still matched it).
+Pictures: bench/shots/fringe/ (local), the owner's Alpine draft with fringe
+discs laid over holes 1 and 3, on Redwood, Pacific Northwest, Hawaiian
+Resort, Desert Resort and Mountains.
+
 ## A built green's fringe, only where painted (24 November 2026)
 
 The game's fringe is a collar the course's fringe width (`fringe`, 2 m by

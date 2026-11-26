@@ -862,7 +862,9 @@ changes, newest first, each with **Undo to here**.
      course you take over from a seed, or a course file from outside the
      builder, opens in the 3D editor with the fringe it had, painted on; a
      course file saved before 24 November 2026 keeps its fringe in the game
-     until it is saved again.) The trace is drawn **as the
+     until it is saved again.) The fringe is teal on the plan; in the game
+     it is paler than the fairway and mown in narrow laps round its edge
+     (26 November 2026). The trace is drawn **as the
      course will have it**: each layer's own outlines, as you paint them (the
      course drops specks smaller than a pot bunker). **Outside the course**:
      draw the course boundary (OpenStreetMap's comes with it when it has

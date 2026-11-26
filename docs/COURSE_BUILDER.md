@@ -1799,7 +1799,14 @@ outside the builder".
   The lie (built-world.js `builtSurface`: right after the green), the
   ground shader's built branch and the mowing's one-hole-a-piece
   (ground.js, `builtMowOwners`'s `kindAt`) read it the same way. It is
-  painted and mown as the generator's fringe is.
+  painted as the generator's fringe is, and since 26 November 2026 mown in
+  laps along its own outline (ground.js, A PAINTED FRINGE IS CUT IN LAPS).
+- **Told apart from the fairway** (26 November 2026; the owner painted a
+  whole fairway as fringe and saw "fringe and fairway looking exactly the
+  same", in the plan and in the game view): the plan draws Fringe teal
+  (door-real.js `OWN`, was a lighter fairway green with the same outline),
+  and eight landscapes' fringe colours moved toward their greens (RESEARCH,
+  *Telling the fringe from the fairway*).
 
 Checked: Node tests (built-world: painted, none and an old file's collar;
 builder-editing: none unless painted, the collar from outside kept as

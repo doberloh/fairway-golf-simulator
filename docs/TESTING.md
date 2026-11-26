@@ -365,7 +365,11 @@ the courses several suites share, and builds many at once on worker threads
   choice writes every cue, and an old record adopts it once; since 25 November
   2026, the slope's drying and the drier patches go through `dryTurf`, which
   holds the turf's colour, and no plain multiply by the tint is back -- what it
-  looks like is seen in captures, `bench/shots/grade/grade-shots.mjs`, local), `glsl-reserved`,
+  looks like is seen in captures, `bench/shots/grade/grade-shots.mjs`, local),
+  `fringe-look` (since 26 November 2026: every landscape's fringe colour at
+  least 45% of the way from its fairway to its green, and a painted fringe
+  mown in laps along its edge; seen in `bench/shots/fringe/fringe-shots.mjs`,
+  local), `glsl-reserved`,
   `three-namespace`, `flood-shadows` (five samplers since the tables were packed), `instance-cull` (also: a mesh with a reach drops
   whole squares past it and only those; a near-shadow plant casts into the nearest map alone; the Phone tier's shorter near ring drops the squares behind the camera, and the next cull has 60 m again; its own thinning figures set by its cull and cleared by the next), `occlusion`, `clouds`,
   `mist`, `daylight`, `floodlights` (also, since 8 November 2026, no more live lamps than a card's

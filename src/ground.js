@@ -812,6 +812,8 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  // The pad a fragment lies on, for its mowing (the polish goal): its signed
  // edge distance (negative inside) and the point in the pad's own frame.
  float teePadD=1e3,teeBuilt=0.;vec2 teeF=vec2(0.),teeAxis=vec2(0.,1.),teeHalf=vec2(1.);
+ // A painted fringe's signed edge distance (negative inside), for its laps.
+ float fringeLap=1e3;
  // THE TEE'S OWN TURF (the far-landscape goal; TODO: "the tee pad reads as
  // one flat, very saturated green"). It wore the semi-rough's colour; a tee is
  // mown nearly as close as a fairway and kept like a green's surround, so its
@@ -964,6 +966,7 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   // painted). builtFringe is 0 on a course from the builder, so this is its
   // only collar; a file from before keeps its 2 m one.
   if(dGreen<=builtFringe||(dGround<=0.&&gcode>11.5)){turf=tint_fringe;kind=3.;wildTop=0.;}
+  if(dGround<=0.&&gcode>11.5)fringeLap=dGround;
   if(dGreen<=0.){turf=tint_green;kind=4.;}
   if(dSand<=0.){turf=tint_sand;kind=5.;wildTop=0.;}
   if(kind>2.5)teePadD=1e3;
@@ -1275,12 +1278,29 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  // shades as that pass does -- grass laid away from you light, toward you
  // dark, turning smoothly round the green -- gentler than the green's own,
  // and gone where the collar is under a pixel or two across.
- if(kind==3.){
+ // (Only within reach of a green: past the built field's 6 m its distance is
+ // flat, and a painted fringe away from any green took one constant tone.)
+ if(kind==3.&&greenD<5.9){
   vec2 cx=dFdx(groundPoint.xz),cy=dFdy(groundPoint.xz);float cdet=cx.x*cy.y-cx.y*cy.x;
   vec2 cg=abs(cdet)>1e-8?vec2(cy.y*dFdx(greenD)-cx.y*dFdy(greenD),cx.x*dFdy(greenD)-cy.x*dFdx(greenD))/cdet:vec2(0.,1.);
   float collarLean=dot(normalize(vec2(-cg.y,cg.x)+1e-5),normalize(groundPoint.xz-cameraPosition.xz+1e-4));
   float collarFar=smoothstep(.25,.6,max(fwidth(greenD),1e-4));
   turf*=mix(1.,1.+.06*collarLean,(1.-collarFar)*stripeFade*cueStripes);
+ }
+ // A PAINTED FRINGE IS CUT IN LAPS (26 November 2026; the owner, a fringe
+ // painted beside a fairway: "fairway and fringe looking exactly the same").
+ // Flat and unstriped, it read as one more of the fairway's light bands. A
+ // collar is cut round and round its outline with a walk-behind or triplex
+ // mower, so its bands follow the edge: 0.9 m a pass (PLACED: wider than a
+ // greens mower's 0.55-0.65 m, to read at a hole's distance), light and dark by turns, gentler than the
+ // fairway's (.07 against about .115). The built field's distance stops at
+ // 6 m in, so the laps fade out from 4.6 m: a fringe is two or three metres
+ // wide, and a wider one is plain in its middle.
+ if(kind==3.&&fringeLap<0.){
+  float lc=fringeLap/1.8,law=max(fwidth(lc),.001);
+  float ls=smoothstep(-law*6.283,law*6.283,sin(lc*6.283));
+  ls=mix(ls,.5,smoothstep(.12,.45,law));
+  turf*=mix(1.,1.+.07*(ls*2.-1.),smoothstep(-5.8,-4.6,fringeLap)*stripeFade*cueStripes);
  }
  // THE TEE PAD'S MOWING (the polish goal; the owner: "tee boxes need smaller
  // mow stripes and a cleanup mow line"). A tee is cut with a walk-behind

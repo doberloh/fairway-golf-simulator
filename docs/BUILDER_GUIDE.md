@@ -218,7 +218,9 @@ only if you paint it: **Add layer around** with Around **Green**, Lay
 **Fringe** and about **2** metres gives every green its collar at once, and the
 brush touches it up. A course you take over from a seed, or a course file made
 outside the builder, opens in the 3D editor with the fringe it had, already
-painted.
+painted. On the plan the fringe is **teal**, so it cannot pass for fairway;
+in the game it is a lighter green than the fairway, mown in narrow laps
+round its edge.
 
 **Outside the course**: draw the course boundary, then in the **Fill outside
 boundary** box choose what happens outside it -- surfaces and houses kept or

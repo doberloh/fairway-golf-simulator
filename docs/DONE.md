@@ -25,6 +25,30 @@ kept whole: *The open list before the 11 November 2026 prune* and *The open
 list before the 16 October prune*, each with a table of what became of every
 entry.
 
+## The fringe told from the fairway (branch `fringe-colour`, 26 November 2026)
+
+The owner, remaking a course: a fringe and a fairway on the same hole "merged
+into one shape" in the builder and looked "exactly the same" in its game view;
+then: "maybe im stupid and just painted fringe for the whole thing... thats
+exactly what i did... but still fix the fringe colors please where necessary."
+Nothing had merged: fill, brush, the pen, Line, Smooth, Tidy, Add layer
+around, the 3D editor's save, the file and Back to 2D were each run in Node
+with a fringe against a fairway and kept the two apart, and the lie read
+fairway up to the fringe's edge. Built:
+
+- The plan draws Fringe teal, (40, 185, 175) (door-real.js `OWN`).
+- Eight landscapes' fringe colours set 60% of the way from fairway to green
+  (biomes.js `LAND`; RESEARCH, *Telling the fringe from the fairway*); a
+  record change, fingerprints re-saved.
+- A painted fringe mown in 0.9 m laps along its edge (ground.js), and the
+  collar's view-shaded lap kept to within 5.9 m of a green.
+- tests/fringe-look.test.mjs; pictures with bench/shots/fringe/fringe-shots.mjs
+  (local).
+
+Dead end: colour alone. On Redwood, 60% toward the green left the fringe the
+tone of the fairway's light bands; past the green was rejected (a collar
+paler than its green).
+
 ## Release 0.9.21 (25 November 2026)
 
 The owner: "Go ahead and build a new patch release. Push to github and also
