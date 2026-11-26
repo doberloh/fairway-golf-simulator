@@ -12,7 +12,7 @@
 //                     rather than applied behind their back.
 //   (ARCHITECT_VERSION, the Architect designer's own number, went with the
 //   designer on 2 November 2026: the owner. Its history is kept below.)
-export const SCHEMA_VERSION=47;
+export const SCHEMA_VERSION=48;
 // 17: the landscapes renamed for the regions of the USA (the owner, 2 November
 //     2026: "Lets change all of the base biomes names to match what they would
 //     be called under this new plan"). `biome`'s options take their new keys
@@ -709,6 +709,11 @@ export const BIOME_KEYS=['redwood',
  // Prairie and Sand Hills, 8 November 2026 (SCHEMA 45).
  'prairie'];
 export const FOOTPRINT_KEYS=['organic','oval','crescent','ribbon','square','figure8','butterfly','clover','spiral','horseshoe','triangle','diamond','coast','archipelago'];
+// How turf is mown (26 November 2026): one pass in stripes, or two passes
+// crossing -- square to the line (checkerboard) or at 45 degrees (diamonds).
+// Their order is the shader's code (ground.js `mowStyle`): 0, 1, 2.
+export const MOW_STYLES=['stripes','checker','diamonds'];
+export const MOW_NAMES={stripes:'Stripes',checker:'Checkerboard',diamonds:'Diamonds'};
 
 // Third entry is a note for the group, used where the context belongs to the
 // whole category rather than to any one control.
@@ -748,6 +753,14 @@ export const SETTINGS=[
  {key:'doglegPosition',category:'landscape',kind:'range',min:30,max:75,step:1,unit:'% along hole',def:55,label:'Dogleg turning point',tip:'Where the bend sits along the hole. Each hole varies up to 22 points either side of this.'},
 
  {key:'width',category:'turf',kind:'range',min:20,max:92,step:1,unit:' m',def:38,label:'Typical fairway width',tip:'A guideline, not a constant. Each side is generated independently, so the fairway widens into landing areas and pinches at approaches. The top of the range is a hundred yards, which is links territory rather than a normal fairway.'},
+ // MOWING STYLES (the owner, 26 November 2026: "let's make it a setting for
+ // the courses in the generator as well as the builder ... add settings for
+ // the mowing style for greens, approaches, and fairways"). Looks only: the
+ // ball plays the same (ground.js). A built course carries its own in its
+ // file, an approach's among them (course-doc.js `mowing`); a generated
+ // course has no approaches.
+ {key:'mowFairway',category:'turf',kind:'choice',options:MOW_STYLES,names:MOW_NAMES,def:'stripes',label:'Fairway mowing',tip:'How the fairways are cut: in straight stripes along the hole, a checkerboard of two passes across each other, or diamonds of two passes at an angle. Looks only; the ball plays the same.'},
+ {key:'mowGreen',category:'turf',kind:'choice',options:MOW_STYLES,names:MOW_NAMES,def:'diamonds',label:'Green mowing',tip:'How the greens are cut: straight stripes, a checkerboard or diamonds. Looks only; the ball rolls the same.'},
  {key:'fringe',category:'turf',kind:'range',min:0,max:6,step:.25,unit:' m',def:2,label:'Green fringe width',tip:'The closely mown collar around each green.'},
  {key:'semiRough',category:'turf',kind:'range',min:0,max:15,step:.5,unit:' m',def:6,label:'Semi-rough width',tip:'The intermediate cut between fairway and rough.'},
  {key:'greenShape',category:'turf',kind:'range',min:0,max:100,step:5,unit:'%',def:30,label:'Green shape',short:'Irregularity',tip:'How far a green departs from an oval. Low is the rounded shape a green has always had here; high gives lobes, a pinched waist and an irregular edge. Raising it also EVENS OUT the waves that make the outline, so no single one takes over — letting one dominate is what turns a green into a clean three-lobed flower rather than a golf green.'},
@@ -1020,6 +1033,11 @@ const MIGRATIONS={
  // 46 -> 47: the Sand Hills, High Plains, Bluebonnet Prairie and Hill Country leave for Prairie &
  // Sand Hills (regions.js OLD_KEYS; the owner signed it off, 8 November 2026).
  46:s=>{const to={sandhills: 'prairie', highplains: 'prairie', bluebonnet: 'prairie', hillcountry: 'prairie'}[s.biome];return to?{...s,biome:to}:s;},
+ // 47 -> 48: the mowing styles, `mowFairway` and `mowGreen` (26 November
+ // 2026). Nothing to write: an old save takes the defaults, stripes and
+ // diamonds, which is how every course was mown before
+ // (tests/settings-schema.test.mjs loads one to prove it).
+ 47:s=>s,
 };
 
 // Play-scope keys (turf, club yardages, art style) ride along in

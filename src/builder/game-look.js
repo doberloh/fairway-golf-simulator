@@ -8,7 +8,8 @@
 // by identity, so an undo and a different edit, which leave the list the same
 // length, still count. `touched` is a one-tree slider's drag after its first
 // step (editing.js sizeTree).
-export const changeMark = s => [s.undo.length, s.undo.at(-1) ?? null, s.redo.length, s.treeScale, s.treePlan, s.surround, s.landscape, s.name, s.touched ?? 0];
+// (`mowing` since 26 November 2026: a new object on every change, editing.js setMowing.)
+export const changeMark = s => [s.undo.length, s.undo.at(-1) ?? null, s.redo.length, s.treeScale, s.treePlan, s.surround, s.mowing, s.landscape, s.name, s.touched ?? 0];
 export const sameMark = (a, b) => !!a && !!b && a.length === b.length && a.every((v, i) => v === b[i]);
 
 // The game's free camera is an eye, a turn and a tilt (renderer.js placeCamera:

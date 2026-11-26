@@ -175,5 +175,12 @@ export function freezeWorld(w, {name = 'Frozen course', onStep = () => {}} = {})
  return {type: 'built', name, landscape: s.biome, designer: 'classic', halfX: w.halfX, halfZ: w.halfZ,
   fringe: s.fringe, semiRough: s.semiRough, sea: w.bio.sea ? {level: w.waterLevel} : null,
   land, patches, surfaces, water, creeks, holes, trees: new Float32Array(trees), treeKinds: kindsOf,
-  credits: [], source: {kind: 'generated'}, from: {seed: s.seed, settings: {...s}, generator: w.settings.generator ?? null}, picture: null};
+  credits: [], source: {kind: 'generated'}, from: {seed: s.seed, settings: {...s}, generator: w.settings.generator ?? null}, picture: null,
+  // Its mowing (26 November 2026), only where it is not every course's:
+  // a course mown as the defaults is the file it was before.
+  ...(mownAs(s) ? {mowing: mownAs(s)} : {})};
 }
+const mownAs = s => {
+ const m = {...(s.mowFairway && s.mowFairway !== 'stripes' ? {fairway: s.mowFairway} : {}), ...(s.mowGreen && s.mowGreen !== 'diamonds' ? {green: s.mowGreen} : {})};
+ return Object.keys(m).length ? m : null;
+};

@@ -14,7 +14,14 @@ export const BUILT_FIELD = {range: 6, maxSide: 2048, minCell: .5};
 // lays several types side by side across most of its ground (Desert's hardpan
 // floor round its rock) and there are not channels or samplers for ten.
 // ground.js reads them by these positions.
-export const BUILT_CHANNELS = ['sand', 'green', 'fairway', 'tee', 'water', 'semi', 'groundCode', 'ground'];
+// A painted APPROACH (26 November 2026) has a third texture of its own, one
+// byte a texel, `c`: its signed distance alone (null, and a 1-texel texture
+// in the game, when none is painted). It was first a code in the ground
+// layer, like the fringe -- and where the two met, the code chosen texel by
+// texel drew the fringe's edge as a staircase of the field's cells (a metre
+// or two on a big course; the owner: "these weird wobbles where i painted
+// the approach beneath the green"). Its own distance has its own smooth edge.
+export const BUILT_CHANNELS = ['sand', 'green', 'fairway', 'tee', 'water', 'semi', 'groundCode', 'ground', 'approach'];
 // The ground types' codes in the field: ground.js GROUND_CODE (which
 // groundPaint draws; tests/built-world.test.mjs holds the two the same), and
 // a cart path, which a generated course draws as its own strips instead, and
@@ -107,6 +114,12 @@ export function bakeBuiltField(doc, ex, ez, rows = null) {
   for (let c = 0; c < 4; c++) a[k * 4 + c] = byteOf(turf[c][k]);
   b[k * 4] = byteOf(water[k]); b[k * 4 + 1] = byteOf(semi[k]); b[k * 4 + 2] = best[k] < BUILT_FIELD.range ? code[k] : 0; b[k * 4 + 3] = byteOf(best[k]);
  }
- return {Sx, Sz, ex, ez, cell, a, b};
+ // The approach's own (null when none is painted).
+ let c = null;
+ if (doc.surfaces?.approach?.length) {
+  const d = bakeDistance(doc.surfaces.approach, Sx, Sz, ex, ez, r0, r1);
+  c = new Uint8Array(N); for (let k = 0; k < N; k++) c[k] = byteOf(d[k]);
+ }
+ return {Sx, Sz, ex, ez, cell, a, b, c};
 }
 

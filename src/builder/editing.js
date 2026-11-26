@@ -34,7 +34,7 @@ import {zoneTrees, zoneHomes} from './layer-ops.js';
 
 // The codes a surface cell can hold, in the order the field paints them
 // lowest first: a later one wins where a document's outlines overlap.
-export const PAINT = ['rough', ...GROUND_KINDS.filter(k => k !== 'path'), 'semi', 'fairway', 'path', 'tee', 'fringe', 'green', 'sand', 'water'];
+export const PAINT = ['rough', ...GROUND_KINDS.filter(k => k !== 'path'), 'semi', 'fairway', 'approach', 'path', 'tee', 'fringe', 'green', 'sand', 'water'];
 export const CODE = Object.fromEntries(PAINT.map((k, i) => [k, i]));
 export const RASTER = {cell: .5, maxSide: 4096};
 // A brush's weight at a share `t` of its radius: 1 at the centre, 0 at the edge.
@@ -120,6 +120,9 @@ export function createEditor(doc, {fringeBand = 0} = {}) {
   // What stands past the property line on each side (surround-sides.js; the
   // surroundings rework): scenery, so no undo step, as the tree plan.
   surround: doc.surround ?? null,
+  // How the fairways, greens and approaches are mown (course-doc.js
+  // `mowing`; 26 November 2026): a look, so no undo step, as the tree plan.
+  mowing: doc.mowing ?? null,
   surfacesEdited: false, changed: false, undo: [], redo: [],
   // Where the land has been shaped, merged into boxes: the game refines its
   // mesh to the land there (built-world.js), so a hill plays as drawn.
@@ -331,7 +334,7 @@ export function createEditor(doc, {fringeBand = 0} = {}) {
    const nx = r.nx, nz = r.nz, ground = new Float32Array(nx * nz);
    for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) ground[j * nx + i] = sample(r.x0 + (i + .5) * r.cell, r.z0 + (j + .5) * r.cell);
    const land = {nx, nz, cell: r.cell, halfX: -r.x0, halfZ: -r.z0, ground};
-   const PLAYED = new Set(['fairway', 'green', 'fringe', 'tee', 'sand', 'water', 'path', 'semi']), c = SKIN.clear;
+   const PLAYED = new Set(['fairway', 'approach', 'green', 'fringe', 'tee', 'sand', 'water', 'path', 'semi']), c = SKIN.clear;
    const keepOut = (x, z) => [[0, 0], [c, 0], [-c, 0], [0, c], [0, -c]].some(([dx, dz]) => PLAYED.has(api.surfaceAt(x + dx, z + dz)));
    const skin = skinFromHeights(land, bio, keepOut);
    // What it found on the land's grid turned into outlines once, as it comes in.
@@ -461,7 +464,7 @@ export function createEditor(doc, {fringeBand = 0} = {}) {
    remember('records', 0, 0, 0, 0); state.homes.push(home); return true;
   },
   homeFits({x, z, rotation, width, depth}) {
-   const c = Math.cos(rotation), sn = Math.sin(rotation), MOWN = new Set(['fairway', 'green', 'fringe', 'tee', 'sand', 'water', 'path', 'semi']);
+   const c = Math.cos(rotation), sn = Math.sin(rotation), MOWN = new Set(['fairway', 'approach', 'green', 'fringe', 'tee', 'sand', 'water', 'path', 'semi']);
    return ![[-1, -1], [1, -1], [1, 1], [-1, 1], [0, 0]].some(([a, b]) => { const lx = a * (width / 2 + 2), lz = b * (depth / 2 + 2); return MOWN.has(api.surfaceAt(x + lx * c + lz * sn, z - lx * sn + lz * c)); });
   },
   // GROUND COVER (cover.js; the owner, 4 November 2026: "a paint brush for
@@ -647,6 +650,9 @@ export function createEditor(doc, {fringeBand = 0} = {}) {
    return S.contains(pick.set, x, z);
   },
   setLandscape(key) { remember('records', 0, 0, 0, 0); state.landscape = key; },
+  // One surface's mowing style ('fairway', 'green' or 'approach'): a new
+  // object each time, so the game view sees the change (game-look.js).
+  setMowing(kind, style) { state.mowing = {...(state.mowing ?? {}), [kind]: style}; state.changed = true; },
 
   // A BUNKER DUG at a click: sand painted in a disc and the ground lowered
   // under it (water-bed.js digBowl) -- one undo.
@@ -706,8 +712,8 @@ export function createEditor(doc, {fringeBand = 0} = {}) {
    for (const w of water) digInto(grids, w.rings, w.level);
    const trees = new Float32Array(state.trees.length * TREE_STRIDE), f = state.treeScale;
    state.trees.forEach((t, i) => trees.set(f === 1 ? t : [t[0], t[1], t[2] * f, t[3] * f, t[4] * f, ...t.slice(5)], i * TREE_STRIDE));
-   const {treePlan: _old, surround: _was, ...rest} = doc;
-   return {...rest, ...(state.treePlan ? {treePlan: state.treePlan} : {}), ...(state.surround ? {surround: state.surround} : {}), name: state.name, landscape: state.landscape, land: grids[0], patches: grids.slice(1),
+   const {treePlan: _old, surround: _was, mowing: _mown, ...rest} = doc;
+   return {...rest, ...(state.treePlan ? {treePlan: state.treePlan} : {}), ...(state.surround ? {surround: state.surround} : {}), ...(state.mowing ? {mowing: state.mowing} : {}), name: state.name, landscape: state.landscape, land: grids[0], patches: grids.slice(1),
     surfaces, water, creeks: structuredClone(state.creeks), holes: structuredClone(state.holes), trees, treeKinds: [...state.treeKinds], rocks: structuredClone(state.rocks), homes: structuredClone(state.homes), landEdits: state.landEdits.map(b => [...b]),
     // No fringe but the painted one (real-course.js, the same rule).
     fringe: 0};

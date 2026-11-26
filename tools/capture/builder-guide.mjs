@@ -90,7 +90,7 @@ await shot('holes-checks');
 // The trace step: the palette, the tool's options, the layers.
 await page.locator('.cb-stepchip', {hasText: 'Trace'}).click(); await idle();
 await page.locator('[data-tool="brush"]').click();
-await page.locator('.cb-kind').selectOption('semi');
+await page.locator('.cb-layers [data-layer="semi"]').click();
 await page.keyboard.press('F');
 await shot('trace');
 await shot('layers', {x: 1080, y: 96, width: 360, height: 600});

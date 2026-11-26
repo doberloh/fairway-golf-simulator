@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createEditor, PAINT, CODE, falloff} from '../src/builder/editing.js';
 import {worldFromDoc} from '../src/built-world.js';
-import {validateDoc, TREE_STRIDE} from '../src/course-doc.js';
+import {validateDoc, TREE_STRIDE, writeBuiltFile, readBuiltFile} from '../src/course-doc.js';
 
 const box = (x0, z0, x1, z1) => [[[x0, z0], [x1, z0], [x1, z1], [x0, z1]]];
 function doc() {
@@ -153,6 +153,25 @@ test('the fringe is a layer: none unless painted, or the collar a course from ou
  assert.equal(kept.fringe, 0); assert.ok(kept.surfaces.fringe.length, 'saved as painted fringe');
  assert.equal(w.surface(0, 68.5), 'fringe'); assert.equal(w.surface(11.5, 80), 'fringe');
  assert.deepEqual(kept.surfaces.green, doc().surfaces.green, 'the rest of its outlines untouched');
+});
+
+// The owner, 26 November 2026: "Add approach please." A layer like the
+// fringe, kept in the file, played as fairway.
+test('the approach is a layer, saved in the file and played as fairway', async () => {
+ const e = createEditor(doc());
+ assert.equal(PAINT[CODE.approach], 'approach');
+ e.paint({kind: 'approach', x: 0, z: 64, radius: 4});
+ assert.equal(e.surfaceAt(0, 64), 'approach');
+ assert.equal(e.surfaceAt(0, 61), 'approach', 'over the fairway: the approach shows');
+ const saved = validateDoc(e.toDoc());
+ assert.ok(saved.surfaces.approach.length, 'saved as its own outlines');
+ const read = await readBuiltFile(await writeBuiltFile(saved, 3));
+ assert.ok(read.surfaces.approach.length, 'and read back from the file');
+ const w = worldFromDoc(read);
+ assert.equal(w.surface(0, 64), 'fairway', 'in rough, painted approach plays as fairway');
+ assert.equal(w.surface(0, 67.5), 'fairway', 'to its edge');
+ assert.equal(w.surface(0, 75), 'green');
+ assert.equal(w.surface(6, 64), 'semi', 'past it, what lies under');
 });
 
 test('layers: painting a fairway through a bunker keeps the bunker; erasing one layer shows what is under; hiding is the view only', () => {

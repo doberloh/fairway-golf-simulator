@@ -205,7 +205,7 @@ export const parFor = yards => yards <= 250 ? 3 : yards <= 470 ? 4 : 5;
 // editor's raster, a part of it).
 export const layerRings = (m, grid) => S.maskOutlines(m, grid, SPECK);
 
-export function docFromLand({land, traced = null, holes, trees = [], homes = [], name = 'Real course', landscape = 'heartland', credits = [], source = {}, landEdits = null, creeks = [], rocks = [], bunkers = [], creekLines = [], treePlan = null, surround = null}) {
+export function docFromLand({land, traced = null, holes, trees = [], homes = [], name = 'Real course', landscape = 'heartland', credits = [], source = {}, landEdits = null, creeks = [], rocks = [], bunkers = [], creekLines = [], treePlan = null, surround = null, mowing = null}) {
  const {nx, nz, cell, halfX, halfZ} = land, ground = Float32Array.from(land.ground);
  // THE LAYERS, TIDIED (the owner, 31 October 2026: "features should not have
  // jagged or pock marked edges"): on each layer, shapes under SPECK go and
@@ -244,7 +244,7 @@ export function docFromLand({land, traced = null, holes, trees = [], homes = [],
  const smoothR = new Uint8Array(nx * nz);
  if (surveyed) for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) {
   const k = j * nx + i, t = codes ? PALETTE[codes[k]] : greenAt(-halfX + i * cell, -halfZ + j * cell) ? 'green' : 'rough';
-  smoothR[k] = t === 'green' || t === 'tee' ? 2 : t === 'fairway' ? 1 : 0;
+  smoothR[k] = t === 'green' || t === 'tee' ? 2 : t === 'fairway' || t === 'approach' ? 1 : 0;
  }
  if (surveyed) for (const r of [1, 2]) {
   const m = boxMean(land.ground, nx, nz, Math.max(1, Math.round(r * 1.25 / cell / 2)));
@@ -327,14 +327,14 @@ export function docFromLand({land, traced = null, holes, trees = [], homes = [],
  // wherever it stands, with its own trunk and role.
  for (const t of trees) {
   const lie = codeAt(t.x, t.z);
-  if (!t.kept && ['green', 'fringe', 'tee', 'water', 'sand', 'fairway'].includes(lie)) continue;
+  if (!t.kept && ['green', 'fringe', 'tee', 'water', 'sand', 'fairway', 'approach'].includes(lie)) continue;
   // A plant the editor painted keeps its species (cover.js).
   let ki = -1; if (t.kind) { ki = treeKinds.indexOf(t.kind); if (ki < 0) ki = treeKinds.push(t.kind) - 1; }
   treeData.push(t.x, t.z, t.h, t.crown, t.trunk ?? Math.min(3.6, Math.max(.14, t.h * .027)), (t.role ?? (t.crown / t.h < .2 ? 1 : 2)) | (t.placed ? TREE_HAND : 0), ki);
  }
  return {type: 'built', name, landscape, designer: null, halfX: halfX - GRID_MARGIN, halfZ: halfZ - GRID_MARGIN,
   land: {x0: -halfX, z0: -halfZ, cell, nx, nz, heights: ground}, patches, surfaces, water, creeks: [...structuredClone(creeks), ...drawnCreeks], holes: recs,
-  trees: new Float32Array(treeData), treeKinds, rocks: structuredClone(rocks), homes, credits, source: {kind: 'lidar', ...source}, from: null, picture: null, landEdits: [], ...(treePlan ? {treePlan} : {}), ...(surround ? {surround} : {}),
+  trees: new Float32Array(treeData), treeKinds, rocks: structuredClone(rocks), homes, credits, source: {kind: 'lidar', ...source}, from: null, picture: null, landEdits: [], ...(treePlan ? {treePlan} : {}), ...(surround ? {surround} : {}), ...(mowing ? {mowing} : {}),
   // NO FRINGE BUT THE PAINTED ONE (the owner, 24 November 2026: "make sure
   // its added as a paintable type, but then only add it if the user paints
   // it"): the game's own collar round every green is off on a course from the

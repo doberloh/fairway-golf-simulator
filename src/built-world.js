@@ -117,11 +117,14 @@ export const polygonArea = poly => poly.reduce((s, ring, r) => {
 
 // One channel read the way a linear texture filter reads it (surface-field.js
 // fieldAt), as a signed distance in metres (negative inside).
+// Channel 8, the approach, is the third texture's one byte a texel; with none
+// painted it is outside everywhere.
 export function builtFieldAt(field, x, z, channel) {
- const {Sx, Sz, ex, ez} = field, data = channel < 4 ? field.a : field.b, c = channel & 3;
+ if (channel === 8 && !field.c) return BUILT_FIELD.range;
+ const {Sx, Sz, ex, ez} = field, data = channel === 8 ? field.c : channel < 4 ? field.a : field.b, c = channel & 3, stride = channel === 8 ? 1 : 4;
  const u = (x / ex + 1) * .5 * Sx - .5, v = (z / ez + 1) * .5 * Sz - .5;
  const i = Math.floor(u), j = Math.floor(v), fu = u - i, fv = v - j;
- const at = (p, q) => data[(Math.min(Sz - 1, Math.max(0, q)) * Sx + Math.min(Sx - 1, Math.max(0, p))) * 4 + c];
+ const at = (p, q) => data[(Math.min(Sz - 1, Math.max(0, q)) * Sx + Math.min(Sx - 1, Math.max(0, p))) * stride + (stride === 4 ? c : 0)];
  const top = at(i, j) + (at(i + 1, j) - at(i, j)) * fu, bottom = at(i, j + 1) + (at(i + 1, j + 1) - at(i, j + 1)) * fu;
  return (.5 - (top + (bottom - top) * fv) / 255) * 2 * BUILT_FIELD.range;
 }
@@ -163,7 +166,9 @@ export function builtSurface(field, x, z, fringe = DEFAULT_COURSE.fringe) {
  if (ground === 'fringe') return 'fringe';
  if (builtFieldAt(field, x, z, CH.tee) <= 0) return 'tee';
  if (ground === 'path') return 'path';
- if (builtFieldAt(field, x, z, CH.fairway) <= 0) return 'fairway';
+ // A painted approach (its own channel) is fairway to the ball: the same
+ // grass at the same height, only mown in narrower bands.
+ if (builtFieldAt(field, x, z, CH.approach) <= 0 || builtFieldAt(field, x, z, CH.fairway) <= 0) return 'fairway';
  if (builtFieldAt(field, x, z, CH.semi) <= 0) return 'semi';
  return ground || 'rough';
 }
@@ -445,7 +450,11 @@ export function worldFromDoc(doc, settings = {}, {field: baked = null} = {}) {
  const farSea = waterSides && !doc.sea ? seaLevelUnder(doc.land.heights) : null;
  const bio = {...bio0, sea: !!doc.sea || waterSides, inlandWater: true};
  const s = {...DEFAULT_COURSE, ...settings, biome: doc.landscape, holes: doc.holes.length, built: settings.built ?? null,
-  fringe: doc.fringe ?? DEFAULT_COURSE.fringe, semiRough: doc.semiRough ?? DEFAULT_COURSE.semiRough, seed: settings.seed ?? `built:${doc.name}`};
+  fringe: doc.fringe ?? DEFAULT_COURSE.fringe, semiRough: doc.semiRough ?? DEFAULT_COURSE.semiRough, seed: settings.seed ?? `built:${doc.name}`,
+  // The file's own mowing (course-doc.js `mowing`), never the player's last
+  // generated course's: absent, as every course was mown before 26 November
+  // 2026. `mowApproach` is a built course's alone (no generated approaches).
+  mowFairway: doc.mowing?.fairway ?? DEFAULT_COURSE.mowFairway, mowGreen: doc.mowing?.green ?? DEFAULT_COURSE.mowGreen, mowApproach: doc.mowing?.approach ?? 'diamonds'};
  const halfX = doc.halfX, halfZ = doc.halfZ, ex = halfX + GRID_MARGIN, ez = halfZ + GRID_MARGIN;
  const field = baked && baked.ex === ex && baked.ez === ez ? baked : bakeBuiltField(doc, ex, ez);
  const sample = landSampler(doc);

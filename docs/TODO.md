@@ -60,7 +60,11 @@ other houses*; docs/ONLINE_PLAY.md).
   colour change, twice after it). The failing runs were the quick ones (78 s
   against 117-132 s passing). A colour formula in the ground shader cannot
   reach the relay, so most likely a race in the step or the game's hand-off
-  of a guest's monitor shot; not looked into.
+  of a guest's monitor shot; not looked into. **And `online-again`**
+  (26 November 2026, branch `fringe-colour`): failed in three full runs,
+  two of them beside the builder journeys and the Node tests, and once
+  alone straight after one; passed 3 of 3 alone each time after, and twice
+  on main's code. The branch touched only the ground's look and the builder.
 
 - [ ] **An online screen's connection lost with no close seen at the relay**
   (three smoke runs on 20 November 2026, Chromium; RESEARCH, *Once, both
@@ -621,6 +625,27 @@ here is a claim of support until it is done.
   brushing every edge of Alpine's old-fit cart paths over and over left one
   49-degree bend in a 5 m wedge where two paths meet (RESEARCH, *Curves
   through points*); a single stroke has not been seen to -- look for it.
+- [ ] **Mowing styles: not seen by the owner** (26 November 2026, branch
+  `fringe-colour`; RESEARCH, *Mowing styles*). Seen: pictures of every
+  style on Classic Parkland, a shared Links fairway in diamonds, the Alpine
+  draft with each surface in its own style; profiled. Owed: choosing them
+  in the course settings and in both builders by hand; the checkerboard
+  and diamonds on a phone; a Worthington file saved with mowing opened
+  in 0.9.21 (it should look as before).
+- [ ] **The Approach layer and the Layers list as the only picker: not seen
+  by the owner** (26 November 2026, branch `fringe-colour`;
+  COURSE_BUILDER.md, *An approach layer*). Seen: pictures of an approach in
+  the game (bench/shots/fringe/approach/, local); the builder journeys
+  picking layers by the list. Owed: painting an approach by hand on the
+  plan and in the 3D editor; how its blended edge reads against rough in a
+  round; picking an empty layer from the 3D editor's list; a course file
+  with an approach opened in 0.9.21 (it should show what lies under it).
+- [ ] **The fringe told from the fairway: not seen by the owner** (26 November
+  2026, branch `fringe-colour`; RESEARCH, *Telling the fringe from the
+  fairway*). Seen in pictures only (bench/shots/fringe/, local). Owed: the
+  plan's teal Fringe while painting; a painted collar's one lap round a
+  green in a round; the generated collars on Redwood, Pacific Northwest, Desert
+  Resort and the South's four, which moved with the colour.
 - [ ] **The fringe only where painted: not seen by the owner** (24 November
   2026; COURSE_BUILDER.md, *A fringe only where it is painted*). Seen: the
   Fringe layer offered, Add layer around Green with Fringe at 2 m on a copy

@@ -79,7 +79,7 @@ export default function ({journey, ROOT, SHOTS}) {
   await page.mouse.up();
   // Paint sand where the view is centred.
   // The layer chosen, then the one Paint brush (builder-ux: no button per surface).
-  await page.locator('.cb-layerpick').selectOption('sand');
+  await page.locator('.cb-layers [data-layer="sand"]').click();
   await page.getByRole('button', {name: 'Paint brush', exact: true}).click();
   await page.mouse.move(cx, cy + 40); await page.mouse.down(); await page.mouse.move(cx + 20, cy + 40); await page.mouse.up();
   const after = await page.evaluate(() => window.fairwayBuilder.editor.editor.state.undo.length);

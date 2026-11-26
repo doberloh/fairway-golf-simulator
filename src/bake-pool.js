@@ -31,9 +31,9 @@ export async function bakeBuiltFieldPooled(doc, ex, ez, {count} = {}) {
    w.onerror = e => { clearTimeout(timer); no(new Error(e.message || 'bake worker failed')); };
    w.postMessage({id: k, doc: slim, ex, ez, r0: edges[k], r1: edges[k + 1]});
   })));
-  const a = new Uint8Array(Sx * Sz * 4), b = new Uint8Array(Sx * Sz * 4);
-  parts.forEach((p, k) => { a.set(p.a, edges[k] * Sx * 4); b.set(p.b, edges[k] * Sx * 4); });
-  return {Sx, Sz, ex, ez, cell, a, b};
+  const a = new Uint8Array(Sx * Sz * 4), b = new Uint8Array(Sx * Sz * 4), c = parts[0].c ? new Uint8Array(Sx * Sz) : null;
+  parts.forEach((p, k) => { a.set(p.a, edges[k] * Sx * 4); b.set(p.b, edges[k] * Sx * 4); if (c) c.set(p.c, edges[k] * Sx); });
+  return {Sx, Sz, ex, ez, cell, a, b, c};
  } catch (err) {
   console.warn('Fairway: field workers unavailable, baking here', err);
   return null;

@@ -23,7 +23,7 @@ export const ROCK_SHAPES = 4;
 // Cover stands on open ground only, in both editors. A tree may stand in the
 // semi-rough too, as door 2 always let it (the 3D editor refused a tree nothing
 // until 4 November 2026: one could be planted on a green).
-export const COVER_REFUSED = new Set(['fairway', 'green', 'fringe', 'tee', 'sand', 'water', 'path', 'road', 'semi']);
+export const COVER_REFUSED = new Set(['fairway', 'approach', 'green', 'fringe', 'tee', 'sand', 'water', 'path', 'road', 'semi']);
 export const TREE_REFUSED = new Set(['fairway', 'green', 'tee', 'sand', 'water', 'path', 'road']);
 export const refusedBy = key => key === 'trees' ? TREE_REFUSED : COVER_REFUSED;
 

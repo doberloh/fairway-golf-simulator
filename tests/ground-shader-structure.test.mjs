@@ -74,8 +74,10 @@ test('the ground painter is copied in twice, and three times on a built course',
  const calls = name => SRC.split(name + '(').length - 2; // Less its definition.
  assert.equal(calls('groundPaint'), 2, 'one in paintLayer, one in the built branch');
  assert.equal(calls('paintLayer'), 2);
- const built = SRC.slice(SRC.indexOf('#ifdef BUILT_COURSE'), SRC.indexOf('#endif', SRC.indexOf('#ifdef BUILT_COURSE')));
- assert.ok(built.includes('groundPaint('), 'the built call belongs to a built course\'s program');
+ // Every BUILT_COURSE block (since 26 November 2026 there is a second, the
+ // approach's sampler at global scope): the call is in one of them.
+ const blocks = SRC.split('#ifdef BUILT_COURSE').slice(1).map(s => s.slice(0, s.indexOf('#endif')));
+ assert.ok(blocks.some(b => b.includes('groundPaint(')), 'the built call belongs to a built course\'s program');
 });
 
 test('the program cache key changes when the shader does', () => {

@@ -10990,6 +10990,126 @@ half-metre land is within 25 cm of the cells' corner. Nothing a saved file
 holds changed, so no `BUILT_VERSION`; a course saved again gets the fitted
 outlines.
 
+## Telling the fringe from the fairway (26 November 2026)
+
+The owner painted a fairway's whole area as Fringe in the builder's plan and
+read the result as the fringe and fairway merged, in the plan and in the
+builder's game view. Nothing had merged -- every tool, the save and the lie
+were checked and keep the layers apart -- but the two could not be told
+apart. Three causes, three changes:
+
+- **The plan.** Fringe was drawn rgb(105, 205, 120) beside fairway (70, 170,
+  60), tee (120, 220, 150) and green (150, 245, 150), all with the same dark
+  outline, at the trace's opacity over the picture: a lighter fairway. Now
+  **teal, (40, 185, 175)** (PLACED: off the four greens, and off water's blue
+  (60, 120, 220)).
+- **The colour on eight landscapes.** Measured as the share of the way from
+  the fairway colour to the green (projection on fairway-to-green), the
+  landscapes that always read apart sit at .49 to .62 (Badlands, Prairie,
+  Northwoods .49; Mountains .55; Classic Parkland .62), and the eight that did
+  not at .31 to .32: Redwood (gap 13 of 0-441), Pacific Northwest (20),
+  Desert Resort (21), Southern Pines, Lowcountry and Gulf, Hawaiian Resort and
+  Florida Palms (23). Each is now set **60% of the way** (PLACED, the middle
+  of the others): Redwood #62964a to #6e9a4d, Pacific Northwest #638e40 to
+  #6e9a44, Desert Resort #76a055 to #7eab60, Southern Pines and Lowcountry
+  #7aa462 to #8ab063, Hawaiian Resort and Florida Palms #7aa462 to #8cb973
+  (biomes.js `LAND`). A record change: the fingerprints' ground is unchanged,
+  so no `GENERATOR_VERSION`. The generated collar round every green on those
+  landscapes and the tee's turf (`teeTurf`, a third fringe) move with it.
+  tests/fringe-look.test.mjs holds every landscape at 45% or more.
+- **The mowing.** A painted fringe away from a green was one flat tone with
+  no bands, which beside a striped fairway read as one more light band --
+  Redwood's green sits only 42 from its fairway, so 60% is a gap of 25,
+  about the fairway bands' own swing (.115). A painted fringe is now mown as
+  **one lap along its own outline**: the generated collar's view-shaded pass
+  (grass laid away from you light, toward you dark, ±6%), turned by the
+  fringe's own edge distance instead of the green's, so it reads as one band
+  unlike the fairway's straight ones. Before, that lap took its way from the
+  distance to the green, which the built field holds flat past 6 m, so a
+  fringe away from a green took one constant tone. The first try the same
+  day was **laps 0.9 m a pass**, light and dark by turns at .07, which read
+  as rings; the owner: "I want fringe to act as one stripe. I dont want
+  multiple."
+
+Rejected: lifting Redwood's fringe past its own green (a collar paler than
+the green it rings is wrong on the course and turns the generated collars
+too), and colour alone (on Redwood the light bands still matched it).
+Pictures: bench/shots/fringe/ (local), the owner's Alpine draft with fringe
+discs laid over holes 1 and 3, on Redwood, Pacific Northwest, Hawaiian
+Resort, Desert Resort and Mountains.
+
+### The approach (26 November 2026)
+
+A builder layer for the mown ground before a green (COURSE_BUILDER.md, *An
+approach layer*). It plays as fairway: no lie, bounce or roll figure of its
+own. What the game draws, all PLACED:
+
+- **The fairway's colour**, no colour of its own: a real approach is the
+  fairway's grass at about the fairway's height, mown on its own.
+- **Diamonds, 6 m a pass** (the owner: "the approach should get stripes
+  half the size of the fairway", then "can you make the approach diamond
+  stripes instead of the single stripes like the fairway?"): the green's
+  diamond mowing -- two passes crossing at right angles, 45 degrees off the
+  line, each shading with the view -- in the hole's frame, at half the
+  fairway's 12 m band (PLACED; a green's is 3.2 m; the style a choice since
+  the same evening, *Mowing styles*). Bands of 6 m along the
+  fairway's line came first, for an hour. The stripes' anti-alias measures the plan coordinate
+  times its period, which runs on smoothly across the change: measured on
+  the plan alone it jumped there and drew a dashed line along the edge. (A
+  first try the same day had no bands at all, the stripe tone held at its
+  middle, .965 -- on the owner's own reading, fairway "but not striped".)
+- **A soft edge, 15 cm across** (the owner: "so its not a hard line
+  between", then, seeing the first try: "the blend needs to be over like 6
+  inches not multiple yards"): its colour and the end of the fairway's bands
+  both come in over 0.075 m each side of the outline, or over a pixel and a
+  half where 15 cm is smaller than that on screen (`fwidth`), so a far edge
+  does not shimmer. The first try eased the colour over 1.5 m and faded the
+  bands over 3 m: on the owner's course it read as a smear several metres
+  wide (the field's cells are up to a couple of metres on a big course, so
+  the distance was already soft). The lie changes at the outline itself.
+- **Under the fringe, green, tee and sand**, which keep their own edges.
+- **Its own texture**, one byte a texel (its signed distance, as every
+  field channel: 12 m over 255 steps, 4.7 cm each). Up to 4 MB on a course
+  baked at the 2048-texel limit, and one texel when none is painted. As a
+  code in the ground layer beside the fringe it made a staircase where the
+  two met (COURSE_BUILDER.md, *An approach layer*).
+
+Rejected: a colour of its own in the game (the owner's picture of
+fringe-as-approach read as a pale apron, not turf), and mowing it across
+the line of play.
+
+## Mowing styles (26 November 2026)
+
+The owner, after diamond fairways in a preview: "let's make it a setting for
+the courses in the generator as well as the builder ... add settings for the
+mowing style for greens, approaches, and fairways", with shared fairways and
+the frame rate sorted. Settings `mowFairway`, `mowGreen` (schema 48), a
+built course's `mowing: {fairway, green, approach}`; looks only. All PLACED:
+
+- **Three styles.** Stripes: one pass, the bands as before (12 m a fairway
+  band, 3.2 m a green's, 6 m an approach's). Diamonds: two passes at 45
+  degrees either side of the mow line, each shading with the view (laid away
+  from you light), as the greens have been since the far-landscape goal.
+  Checkerboard: two passes along and across the line, its squares a FIXED
+  light, middle and dark tone (`.5 + .3 x (pass 1 + pass 2)`): shaded with
+  the view like the diamonds, the pass running across the view all but
+  vanished from down the hole and it read as stripes (the first pictures).
+- **Defaults are how every course was**: fairway stripes, green diamonds,
+  approach diamonds. An old save, course code or file looks the same.
+- **Shared fairways**: a fairway's or approach's two passes are laid in the
+  world, from the hole's mow line folded to one sense, as the bands are
+  (RESEARCH, *A fairway's bands in the world*), so holes running either way
+  along a shared fairway cut it as one. A green's stay in its hole's frame.
+  Seen on Seaside Links, seed LINKS-C, holes 9-10 (diamonds, no seam).
+- **The frame**: profiled with every fairway and green in diamonds against
+  today's defaults, both builds of the branch, RTX 4090 (real GPU arm):
+  tiers Low -0.01 ms, Medium -0.02, High +0.02, Ultra +0.07 of graphics
+  time; built courses (parkland, Pacific Northwest, seaside, generated and
+  frozen) -0.03 to +0.02 -- all within run-to-run noise. The second pass is
+  a few more arithmetic steps on mown turf only.
+
+Pictures: bench/shots/fringe/mowing-shots.mjs (local).
+
 ## A built green's fringe, only where painted (24 November 2026)
 
 The game's fringe is a collar the course's fringe width (`fringe`, 2 m by

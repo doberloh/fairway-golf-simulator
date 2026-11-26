@@ -14,15 +14,19 @@ import {BUILT_VERSION} from '../src/settings-schema.js';
 test('bands of rows put together are the whole field, byte for byte', async () => {
  const w = generateWorld({...DEFAULT_COURSE, seed: 'FIELD-BANDS', biome: 'dmountain', holes: 9, creeks: 1, lakes: 1});
  const doc = await readBuiltFile(await writeBuiltFile(freezeWorld(w, {name: 'Bands'}), BUILT_VERSION));
+ // An approach painted, so its own texture is banded too (26 November 2026).
+ doc.surfaces.approach = [[[[-40, -40], [40, -40], [40, 40], [-40, 40]]]];
  const {ex, ez} = builtExtent(doc), whole = bakeBuiltField(doc, ex, ez), {Sx, Sz} = fieldSize(ex, ez);
+ assert.equal(whole.c.length, Sx * Sz, 'the approach: one byte a texel');
  for (const n of [3, 7]) {
-  const a = new Uint8Array(Sx * Sz * 4), b = new Uint8Array(Sx * Sz * 4);
+  const a = new Uint8Array(Sx * Sz * 4), b = new Uint8Array(Sx * Sz * 4), c = new Uint8Array(Sx * Sz);
   for (let k = 0; k < n; k++) {
    const r0 = Math.round(Sz * k / n), r1 = Math.round(Sz * (k + 1) / n), part = bakeBuiltField(doc, ex, ez, [r0, r1]);
-   a.set(part.a, r0 * Sx * 4); b.set(part.b, r0 * Sx * 4);
+   a.set(part.a, r0 * Sx * 4); b.set(part.b, r0 * Sx * 4); c.set(part.c, r0 * Sx);
   }
   assert.ok(Buffer.compare(Buffer.from(a), Buffer.from(whole.a)) === 0, `${n} bands: the turf texture differs`);
   assert.ok(Buffer.compare(Buffer.from(b), Buffer.from(whole.b)) === 0, `${n} bands: the water and ground texture differs`);
+  assert.ok(Buffer.compare(Buffer.from(c), Buffer.from(whole.c)) === 0, `${n} bands: the approach texture differs`);
  }
  // And a world made with a field handed in is the world made without.
  const given = worldFromDoc(doc, {}, {field: whole}), own = worldFromDoc(doc, {});

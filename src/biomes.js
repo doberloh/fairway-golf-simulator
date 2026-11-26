@@ -747,7 +747,14 @@ WORLD.california = {...WORLD.midwest, clubhouse: 'adobe', path: 'asphalt', bridg
  story: {walls: null, ruins: ['chapel']}, life: {grazers: ['deer', 3], heron: true},
  colours: {...WORLD.midwest.colours, clubhouse: {stone: '#efe6d4', bark: '#6a5040', accent: '#b4553a', dirt: '#3a2c24', leaf: '#3a2c24'}}};
 const LAND = {
- redwood: {},
+ // THE FRINGE TELLS FROM THE FAIRWAY (26 November 2026; the owner, a fringe
+ // painted over a whole fairway in the builder: "fringe and fairway looking
+ // exactly the same"). Where a landscape's fringe sat within about 20 of its
+ // fairway colour (Redwood 13, Pacific Northwest 20, Desert Resort 21, the
+ // South's four 23) it is set 60% of the way from its fairway to its green,
+ // where the other landscapes already have theirs (Prairie .59, Mountains
+ // .55, Classic Parkland .62). A record change: no ground moves.
+ redwood: {fringe: '#6e9a4d'},
  // The Badlands (the owner, 3 November 2026; the study's plains.badlands):
  // South Dakota's White River badlands and North Dakota's Little Missouri --
  // mixed-grass prairie tables broken into banded clay. Western wheatgrass and
@@ -818,7 +825,7 @@ const LAND = {
  // Meshy, with Classic Parkland's lessons: crowns kept apart, woods set back, a
  // mown green rough. The default rough tint is a pale yellow that blotched it, and the
  // South's fairway read neon close up, so both are set here. Density and colours PLACED.
- southpines: {groundTints: {pinestraw: '#73683e'}, crownShare: .9, treeDensity: 2.4, rough: '#6d8a46', semi: '#5a8c48', fairway: '#689a58', fringe: '#7aa462', roughTint: '#8aa45a', sand: '#ece2c8', temperature: 24,
+ southpines: {groundTints: {pinestraw: '#73683e'}, crownShare: .9, treeDensity: 2.4, rough: '#6d8a46', semi: '#5a8c48', fairway: '#689a58', fringe: '#8ab063', roughTint: '#8aa45a', sand: '#ece2c8', temperature: 24,
   title: 'Long Shadows', tag: 'Tall pines, pine straw and white sand.',
   fallen: {from: ['southloblolly', 'southlongleaf', 'southwhitepine'], kind: 'pinestraw'},
   longGrass: {...TRAITS.south.longGrass, count: 1200},
@@ -832,7 +839,7 @@ const LAND = {
  // the Bayou. No hanging moss, the owner's call (7 November 2026). Southern Pines' mown
  // greens, for the same reasons. Density and colours PLACED.
  lowgulf: {landform: {...TRAITS.south.landform, cover: .68, kinds: {a: 'native'}}, groundTints: {native: '#c4b468', pinestraw: '#73683e'}, water: '#4e6a5e', inWater: ['lowcypress'],
-  crownShare: .9, treeDensity: 2.2, rough: '#6d8a46', semi: '#5a8c48', fairway: '#689a58', fringe: '#7aa462', roughTint: '#8aa45a', sky: '#c8d8de', temperature: 28,
+  crownShare: .9, treeDensity: 2.2, rough: '#6d8a46', semi: '#5a8c48', fairway: '#689a58', fringe: '#8ab063', roughTint: '#8aa45a', sky: '#c8d8de', temperature: 28,
   title: 'Tidewater', tag: 'Live oaks, salt marsh and tidal creeks.',
   fallen: {from: ['southloblolly', 'lowliveoak'], kind: 'pinestraw'},
   stands: {...TRAITS.south.stands, edge: 80, wobble: 28, patch: .1, near: 55, spacing: 13, share: .7, under: {spacing: 9, plants: [['sawpalmetto', .5], ['waxmyrtle', .3], ['yaupon', .2]]},
@@ -843,7 +850,7 @@ const LAND = {
  // and belts (the owner's photographs), ironwood windbreaks, monkeypods as specimens and
  // coconut palms by the sea. No lava: the old Hawaii's black flows read as the Big Island,
  // not a resort. Planted only from Meshy. Density and colours PLACED.
- hiresort: {crownShare: .9, treeDensity: 1.2, rough: '#6d8a46', semi: '#5a8c48', fairway: '#689a58', fringe: '#7aa462', roughTint: '#8aa45a',
+ hiresort: {crownShare: .9, treeDensity: 1.2, rough: '#6d8a46', semi: '#5a8c48', fairway: '#689a58', fringe: '#8cb973', roughTint: '#8aa45a',
   title: 'Plantation Point', tag: 'Cook pines in lines, green slopes and the Pacific.',
   stands: {...TRAITS.hawaii.stands, edge: 80, near: 55, patch: .25, spacing: 14, share: .5, under: {spacing: 12, plants: [['naupaka', .5], ['tiplant', .3], ['hibiscus', .2]]},
    plants: [['hicookpine', .42], ['hiironwood', .3], ['himonkeypod', .14], ['flcoconut', .14]]},
@@ -865,7 +872,7 @@ const LAND = {
  // holes (the owner's Shadow Creek photographs), willows by the ponds, olives, date and very tall
  // thin fan palms (Palm Desert), velvet mesquite, past the edge the open desert. No cypress, the
  // owner's rule (5 November). Planted from Meshy. Density and colours PLACED.
- dresort: {rough: '#6a9448', semi: '#659546', fairway: '#629b50', sand: '#efe6d6', rock: '#a9a59c', sky: '#bcd4ea', water: '#3e7fa0',
+ dresort: {rough: '#6a9448', semi: '#659546', fairway: '#629b50', fringe: '#7eab60', sand: '#efe6d6', rock: '#a9a59c', sky: '#bcd4ea', water: '#3e7fa0',
   altitude: 700, temperature: 33, rockStyle: 'angular', treeDensity: 2, crownShare: .9, arid: false, sandLand: false, dust: false, speckleRock: false,
   title: 'Desert Oasis', tag: 'Tall pines, willows and palms on watered green.',
   longGrass: {...TRAITS.desert.longGrass, count: 300},
@@ -879,7 +886,7 @@ const LAND = {
  // red cedar and hemlock lining every hole, bigleaf maple and red alder at the edges, ferns and
  // huckleberry under them (the owner's Sahalee photographs). Puget Sound's ground and air. Planted
  // only from Meshy, the understorey hand-built. Density and colours PLACED.
- pacnw: {crownShare: .9, treeDensity: 4.4, title: 'Cedar Hollow', tag: 'Holes cut through tall fir, cedar and hemlock.',
+ pacnw: {crownShare: .9, treeDensity: 4.4, fringe: '#6e9a44', title: 'Cedar Hollow', tag: 'Holes cut through tall fir, cedar and hemlock.',
   stands: {edge: 46, wobble: 20, ramp: 18, patch: .2, scale: 260, near: 34, spacing: 9, share: .7,
    under: {spacing: 8, plants: [['fern', .55], ['huckleberry', .45]]},
    plants: [['nwfir', .34], ['nwcedar', .24], ['nwhemlock', .22], ['nwmaple', .1], ['nwalder', .1]]},
@@ -949,7 +956,7 @@ const LAND = {
  // Mainland, not an island: the Atlantic along one side with its beach (Seminole), flat
  // ground and lakes inland (TPC Sawgrass). The first capture took the Keys' ring island,
  // which read as the Keys.
- flpalms: {sea: true, coastal: false, edgeCoast: true, inlandWater: true, shoreSand: true, ringIslands: 0, crownShare: .9, treeDensity: .7, rough: '#6d8a46', semi: '#5a8c48', fairway: '#689a58', fringe: '#7aa462', roughTint: '#8aa45a',
+ flpalms: {sea: true, coastal: false, edgeCoast: true, inlandWater: true, shoreSand: true, ringIslands: 0, crownShare: .9, treeDensity: .7, rough: '#6d8a46', semi: '#5a8c48', fairway: '#689a58', fringe: '#8cb973', roughTint: '#8aa45a',
   title: 'Palm Coast', tag: 'Tall palms, live oaks, white sand and blue water.',
   stands: {...TRAITS.florida.stands, edge: 90, near: 60, patch: .3, spacing: 16, share: .3, under: {spacing: 14, plants: [['sawpalmetto', .5], ['seagrape', .3], ['hibiscus', .2]]},
    plants: [['lowsabal', .32], ['lowliveoak', .26], ['flcoconut', .2], ['flroyal', .1], ['southloblolly', .12]]},

@@ -25,6 +25,69 @@ kept whole: *The open list before the 11 November 2026 prune* and *The open
 list before the 16 October prune*, each with a table of what became of every
 entry.
 
+## Mowing styles (branch `fringe-colour`, 26 November 2026; merged the same day, not released)
+
+The owner, after a preview of diamond fairways ("I really like it"): "Sort
+out everything it Will need to wire into like the shared fairways and
+figure out the framerate. and let's make it a setting for the courses in the
+generator as well as the builder ... add settings for the mowing style for
+greens, approaches, and fairways." Built: `mowFairway` and `mowGreen`
+(schema 48, migration 47 -> 48 writes nothing), a built file's `mowing`
+with the approach's, the shader's `mowStyle` and its two-pass cut for any
+surface (fairways and approaches in the world frame), the choices in both
+editors (builder/mowing.js), drafts and the round trip, a generated course
+taken over keeping its own. Dead end: the checkerboard shaded with the view
+like the diamonds -- it read as stripes. Profiled: no cost beyond noise
+(RESEARCH, *Mowing styles*).
+
+## An approach layer; the layer drop-downs gone (branch `fringe-colour`, 26 November 2026; merged the same day, not released)
+
+The owner, remaking Worthington with Fringe painted as each approach, asked
+whether the fringe should be the fairway's colour unstriped or an approach
+added; Claude advised the approach (the fringe is a putting cue and the
+generated collars share its colour; an approach is fairway), and the owner:
+"Add approach please. Approach should blend into the layers around it
+nicely so its not a hard line between. Also, somehow the layer selection
+became a drop down? WTF happened there? i didnt ask for that." Built: the
+Approach layer through the file, the bake (a texture of its own), the lie
+(fairway), the mowing (diamonds as a green's, 6 m a pass) and the paint, its edge
+softened over 15 cm (COURSE_BUILDER.md, *An approach layer*; RESEARCH, *The
+approach*); fringe and approach coloured in the plan, the review and the 3D
+editor; both editors' layer drop-downs removed, the Layers list the only
+picker, and door 2's list filled as the trace step opens. The owner's
+corrections the same day, each a first try replaced: a blend of 1.5 m and
+3 m ("over like 6 inches not multiple yards"), no bands ("stripes half the
+size of the fairway"), half-width bands ("make the approach diamond
+stripes"), and the approach as ground code 13, whose meeting
+with the fringe drew "weird wobbles" (PROJECT_HANDOFF, *A BUILT GROUND CODE
+IS ONE NUMBER*). The idea's IDEAS entry (added the same day) left when
+picked.
+
+## The fringe told from the fairway (branch `fringe-colour`, 26 November 2026; merged the same day, not released)
+
+The owner, remaking a course: a fringe and a fairway on the same hole "merged
+into one shape" in the builder and looked "exactly the same" in its game view;
+then: "maybe im stupid and just painted fringe for the whole thing... thats
+exactly what i did... but still fix the fringe colors please where necessary."
+Nothing had merged: fill, brush, the pen, Line, Smooth, Tidy, Add layer
+around, the 3D editor's save, the file and Back to 2D were each run in Node
+with a fringe against a fairway and kept the two apart, and the lie read
+fairway up to the fringe's edge. Built:
+
+- The plan draws Fringe teal, (40, 185, 175) (door-real.js `OWN`).
+- Eight landscapes' fringe colours set 60% of the way from fairway to green
+  (biomes.js `LAND`; RESEARCH, *Telling the fringe from the fairway*); a
+  record change, fingerprints re-saved.
+- A painted fringe mown as one lap along its own outline (ground.js). Laps
+  of 0.9 m, light and dark by turns, came first; the owner: "I want fringe
+  to act as one stripe. I dont want multiple."
+- tests/fringe-look.test.mjs; pictures with bench/shots/fringe/fringe-shots.mjs
+  (local).
+
+Dead end: colour alone. On Redwood, 60% toward the green left the fringe the
+tone of the fairway's light bands; past the green was rejected (a collar
+paler than its green).
+
 ## Release 0.9.21 (25 November 2026)
 
 The owner: "Go ahead and build a new patch release. Push to github and also
