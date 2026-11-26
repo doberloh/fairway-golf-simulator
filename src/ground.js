@@ -12,6 +12,7 @@ import {TURF_DETAIL} from './turf-detail.js';
 import {FIELD_RANGE} from './surface-field.js';
 import {BUILT_FIELD,BUILT_CHANNELS,builtFieldAt,builtGroundAt} from './built-world.js';
 import {GROUNDS,GROUND_TINT} from './grounds.js';
+import {MOW_STYLES} from './settings-schema.js';
 import {courseEdge} from './surround.js';
 import {edgeUniform,EDGE_WOODS} from './edge-woods.js';
 
@@ -239,6 +240,14 @@ export function farForestUniforms(bio,reach=5000,cover){
 // texel centres, where linear filtering returns the texel itself, so what
 // they were read nearest gives the same numbers. Three samplers freed: the
 // surface field takes one, and two are left for more.
+// THE MOWING STYLES (the owner, 26 November 2026; settings-schema.js
+// MOW_STYLES): the fairway's, the green's and an approach's as the shader's
+// codes, 0 stripes, 1 checkerboard, 2 diamonds. A setting the course lacks is
+// how every course was mown before: fairway stripes, green and approach diamonds.
+export function mowStyleOf(s={}){
+ const at=(v,d)=>{const i=MOW_STYLES.indexOf(v);return i<0?d:i;};
+ return new T.Vector3(at(s.mowFairway,0),at(s.mowGreen,2),at(s.mowApproach,2));
+}
 export const TABLE_WIDTH=1024;
 export function packTables({curves,holes,banks,streams,rows:N,streamCount}){
  const HW=HOLE_ATLAS.width,rows=4*N+Math.ceil(streamCount*2/TABLE_WIDTH),data=new Float32Array(TABLE_WIDTH*rows*4);
@@ -400,7 +409,7 @@ export function groundMaterial(view,palette){
    speckleRock:{value:bio.speckleRock?1:0},altitudeRock:{value:bio.altitudeRock?1:0},litterAmount:{value:bio.litter?1:0},litterVary:{value:bio.litterVary??1},seaBeach:{value:bio.sea?1:0},seaAt:{value:bio.sea?w.waterLevel??0:0},beachOwn:{value:bio.beachTint?1:0},beachTint:{value:new T.Color(bio.beachTint||"#000000")},blowoutOn:{value:blow?1:0},
    // The overhaul's ground types: which type each channel holds (GROUND_CODE),
    // the gate each starts at, and the colours they paint with.
-   ...wildUniforms(w,!!wild,!!fallen),field:{value:fieldTex},fieldOn:{value:sandField&&!built?1:0},builtB:{value:builtBTex},builtC:{value:builtCTex},builtFringe:{value:w.settings.fringe??2},gt_path:{value:new T.Color(w.bio.mapTurf?.path??GROUNDS.path.map)},gt_road:{value:new T.Color(GROUNDS.road.map)},...farForestUniforms(bio,view.quality?.surround?.reach??5000,w.surround?.cover),farProp:{value:new T.Vector2(w.halfX,w.halfZ)},
+   ...wildUniforms(w,!!wild,!!fallen),field:{value:fieldTex},fieldOn:{value:sandField&&!built?1:0},builtB:{value:builtBTex},builtC:{value:builtCTex},mowStyle:{value:mowStyleOf(w.settings)},builtFringe:{value:w.settings.fringe??2},gt_path:{value:new T.Color(w.bio.mapTurf?.path??GROUNDS.path.map)},gt_road:{value:new T.Color(GROUNDS.road.map)},...farForestUniforms(bio,view.quality?.surround?.reach??5000,w.surround?.cover),farProp:{value:new T.Vector2(w.halfX,w.halfZ)},
    // How wooded the course is along each side of its line (edge-woods.js): the
    // floor past the line carries the course's woods out as surround.js plants them.
    farEdge:{value:edgeUniform(courseEdge(w)).map(v=>new T.Vector4(...v))}});
@@ -415,7 +424,7 @@ export function groundMaterial(view,palette){
  // The same rounded box course.js uses, so paint and lie cannot disagree
 // about where a tee is.
 float teeBox(vec2 d,vec2 h,float r){vec2 q=abs(d)-h+r;return length(max(q,vec2(0.)))+min(max(q.x,q.y),0.)-r;}
-varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cover,tables,detail,field,builtB;uniform float tableRows,fieldOn,rows,builtFringe;uniform vec3 gt_path,gt_road;
+varying vec3 groundPoint;varying vec3 groundNormal;uniform sampler2D owners,cover,tables,detail,field,builtB;uniform float tableRows,fieldOn,rows,builtFringe;uniform vec3 gt_path,gt_road,mowStyle;
 // A built course's approach, its own distance (built-field.js, the field's c):
 // the last of the two freed samplers, declared on a built course's program only.
 #ifdef BUILT_COURSE
@@ -1199,12 +1208,15 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  // (GROUND_NO_MOWING: Measure this device's what-if, through to the tee's
  // divots below; the stripes, the diamonds, the laps -- what they cost.)
  if(kind==2.||kind==4.){
-  // A PAINTED APPROACH IS DIAMOND-MOWED, as a green is, its passes 6 m apart
-  // -- half the fairway's bands (the owner, 26 November 2026: "stripes half
-  // the size of the fairway", then "can you make the approach diamond stripes
-  // instead of the single stripes like the fairway?").
-  bool apDiamond=kind==2.&&approachFade>.5;
-  float period=kind==4.?3.2:apDiamond?6.:12.;
+  // THE MOWING STYLES (the owner, 26 November 2026: "add settings for the
+  // mowing style for greens, approaches, and fairways"): each surface's own,
+  // mowStyle (x fairway, y green, z approach; 0 stripes, 1 checkerboard, 2
+  // diamonds). A painted approach is cut at 6 m a pass, half the fairway's
+  // band ("stripes half the size of the fairway"; diamonds by default:
+  // "can you make the approach diamond stripes ...").
+  bool appr=kind==2.&&approachFade>.5;
+  float mowAs=kind==4.?mowStyle.y:appr?mowStyle.z:mowStyle.x;
+  float period=kind==4.?3.2:appr?6.:12.;
   vec2 mow=normalize(vec2(.48,.88));
   float bend=kind==4.?.9:1.6;
   // THE ANTI-ALIAS FADE IS MEASURED ON THE PLAN COORDINATE, NOT THE BENT ONE.
@@ -1225,7 +1237,8 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   // fairway is mown as one. The same bands, measured from the world's origin
   // along the hole's direction folded to one sense: for a lone hole only their
   // phase moves; holes running either way along each other mow as one.
-  if(kind==2.){vec2 wm=vec2(mow.x*tr.z+mow.y*tr.w,-mow.x*tr.w+mow.y*tr.z);if(wm.x<0.)wm=-wm;plan=dot(wp,wm)/period;}
+  vec2 wm=vec2(mow.x*tr.z+mow.y*tr.w,-mow.x*tr.w+mow.y*tr.z);if(wm.x<0.)wm=-wm;
+  if(kind==2.)plan=dot(wp,wm)/period;
   // BANDS THAT FOLLOW THE SURFACE READ AS CONTOUR LINES. Straight bands over a
   // rolling green say nothing about it; bands that bend with the ground trace
   // its shape the way a contour map does. Greens only -- a fairway is not
@@ -1243,11 +1256,19 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   // right angles (each 45 degrees off the old line), so each spot carries both
   // passes' tones: light where both lean away, dark where both lean toward
   // you, a middle tone where they differ -- diamonds. Round 1. PLACED.
-  // (A painted approach too, in the hole's frame as a green.)
-  if(kind==4.||apDiamond){
-   vec2 m1=normalize(vec2(mow.x-mow.y,mow.y+mow.x)),m2=normalize(vec2(mow.x+mow.y,mow.y-mow.x));
-   float p1=(p.y*m1.y+p.x*m1.x)/period,p2=(p.y*m2.y+p.x*m2.x)/period,hb=groundPoint.y*bend*bendMul/period;
-   float a1=max(fwidth(p1),.001),a2=max(fwidth(p2),.001);
+  // TWO PASSES FOR ANY SURFACE (26 November 2026): diamonds (style 2) at 45
+  // degrees either side of the mow line, a checkerboard (1) along and across
+  // it. A green's in the hole's frame; a fairway's and an approach's in the
+  // world, from the line folded to one sense as the fairway's bands are, so
+  // holes sharing a fairway mow it as one, whichever way each runs.
+  vec2 dv=normalize(groundPoint.xz-cameraPosition.xz+1e-4),vh=vec2(dv.x*tr.z-dv.y*tr.w,dv.x*tr.w+dv.y*tr.z);
+  if(mowAs>.5){
+   bool inHole=kind==4.;
+   vec2 base=inHole?mow:wm,q=inHole?p:wp,vq=inHole?vh:dv;
+   vec2 m1=mowAs>1.5?normalize(vec2(base.x-base.y,base.y+base.x)):base,m2=mowAs>1.5?normalize(vec2(base.x+base.y,base.y-base.x)):vec2(-base.y,base.x);
+   float p1=dot(q,m1)/period,p2=dot(q,m2)/period,hb=groundPoint.y*bend*bendMul/period;
+   // (Its fades measured where the period changes smoothly, as the bands'.)
+   float a1=max(fwidth(p1*period)/period,.001),a2=max(fwidth(p2*period)/period,.001);
    // Round 2: soft edges -- hard-edged, the diamonds read as tiles; grass
    // laid one way shades into grass laid the other over a hand's width.
    float s1=smoothstep(-.15-a1*6.283,.15+a1*6.283,sin((p1+hb)*6.283)),s2=smoothstep(-.15-a2*6.283,.15+a2*6.283,sin((p2+hb)*6.283));
@@ -1258,9 +1279,14 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
    // from you light, toward you dark -- so a diamond turns from light to dark
    // as you walk round the green. A pass travels along its bands, across its
    // own normal: pass 1 along m2, pass 2 along m1; its strength is how
-   // squarely that line runs with the view (the hole's frame, as p).
-   vec2 dv=normalize(groundPoint.xz-cameraPosition.xz+1e-4),vh=vec2(dv.x*tr.z-dv.y*tr.w,dv.x*tr.w+dv.y*tr.z);
-   stripe=clamp(.5+.33*((s1*2.-1.)*dot(m2,vh)+(s2*2.-1.)*dot(m1,vh)),0.,1.);
+   // squarely that line runs with the view (in the passes' own frame).
+   stripe=clamp(.5+.33*((s1*2.-1.)*dot(m2,vq)+(s2*2.-1.)*dot(m1,vq)),0.,1.);
+   // A CHECKERBOARD'S SQUARES DO NOT TURN WITH THE VIEW: one pass along the
+   // line and one across it, shaded as the diamonds are, left one of them
+   // all but gone from down the hole -- stripes again (the first pictures,
+   // 26 November 2026). Light where both passes are, dark where neither, a
+   // middle tone between, from wherever you stand.
+   if(mowAs<1.5)stripe=clamp(.5+.3*((s1*2.-1.)+(s2*2.-1.)),0.,1.);
   }
   vec3 gs=normalize(groundNormal);if(gs.y<0.)gs=-gs;
   vec2 gl=vec2(gs.x*tr.z-gs.z*tr.w,gs.x*tr.w+gs.z*tr.z);
@@ -1269,7 +1295,8 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   // the old single mow line -- its passes now shade with the view (round 7),
   // so it is ground falling away from the eye that should widen their
   // contrast, and the green's tilt reads through them from wherever you stand.
-  if(kind==4.){vec2 dv2=normalize(groundPoint.xz-cameraPosition.xz+1e-4);along=dot(gl,vec2(dv2.x*tr.z-dv2.y*tr.w,dv2.x*tr.w+dv2.y*tr.z));}
+  // (Any surface cut in two passes, since 26 November 2026.)
+  if(mowAs>.5)along=dot(gl,vh);
   // Contrast widens on ground falling away along the mow line and narrows on
   // ground rising into it, which is what makes a roll show up in the bands.
   //

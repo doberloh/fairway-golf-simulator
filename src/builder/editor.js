@@ -22,6 +22,7 @@ import {GROUNDS} from '../grounds.js';
 import {checkCourse} from './checks.js';
 import {testRound} from './test-round.js';
 import {layersFor, LAYER_ORDER} from './layers.js';
+import {mowingControls} from './mowing.js';
 import {coverOptions, coverByKey, COVER_RANGE, treeChoices} from './cover.js';
 import {preview} from './preview.js';
 import {treePlanControls} from './tree-plan.js';
@@ -383,6 +384,8 @@ export function openEditor(doc, {from = 'file', back = null, work = null, smooth
  side.replaceChildren(
   el('h4', {}, 'The course'), el('div', {class: 'cb-field'}, el('label', {}, 'Name'), nameInput),
   el('div', {class: 'cb-field'}, el('label', {}, 'Landscape (changes the look only)'), landscape),
+  // How it is mown (mowing.js): looks only, kept in the file.
+  el('div', {class: 'cb-field cb-mowing'}, ...mowingControls(el, s.mowing, (kind, style) => { editor.setMowing(kind, style); refreshSave(); })),
   el('h4', {style: 'margin-top:10px'}, 'Surroundings'), surroundBox,
   el('h4', {style: 'margin-top:10px'}, 'Holes'), holeList, holeTools,
   el('h4', {style: 'margin-top:10px'}, 'Checks'), el('button', {class: 'cb-btn', type: 'button', onclick: runChecks}, 'Check course'), checkList,

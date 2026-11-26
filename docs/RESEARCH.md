@@ -11051,7 +11051,8 @@ own. What the game draws, all PLACED:
   stripes instead of the single stripes like the fairway?"): the green's
   diamond mowing -- two passes crossing at right angles, 45 degrees off the
   line, each shading with the view -- in the hole's frame, at half the
-  fairway's 12 m band (PLACED; a green's is 3.2 m). Bands of 6 m along the
+  fairway's 12 m band (PLACED; a green's is 3.2 m; the style a choice since
+  the same evening, *Mowing styles*). Bands of 6 m along the
   fairway's line came first, for an hour. The stripes' anti-alias measures the plan coordinate
   times its period, which runs on smoothly across the change: measured on
   the plan alone it jumped there and drew a dashed line along the edge. (A
@@ -11076,6 +11077,38 @@ own. What the game draws, all PLACED:
 Rejected: a colour of its own in the game (the owner's picture of
 fringe-as-approach read as a pale apron, not turf), and mowing it across
 the line of play.
+
+## Mowing styles (26 November 2026)
+
+The owner, after diamond fairways in a preview: "let's make it a setting for
+the courses in the generator as well as the builder ... add settings for the
+mowing style for greens, approaches, and fairways", with shared fairways and
+the frame rate sorted. Settings `mowFairway`, `mowGreen` (schema 48), a
+built course's `mowing: {fairway, green, approach}`; looks only. All PLACED:
+
+- **Three styles.** Stripes: one pass, the bands as before (12 m a fairway
+  band, 3.2 m a green's, 6 m an approach's). Diamonds: two passes at 45
+  degrees either side of the mow line, each shading with the view (laid away
+  from you light), as the greens have been since the far-landscape goal.
+  Checkerboard: two passes along and across the line, its squares a FIXED
+  light, middle and dark tone (`.5 + .3 x (pass 1 + pass 2)`): shaded with
+  the view like the diamonds, the pass running across the view all but
+  vanished from down the hole and it read as stripes (the first pictures).
+- **Defaults are how every course was**: fairway stripes, green diamonds,
+  approach diamonds. An old save, course code or file looks the same.
+- **Shared fairways**: a fairway's or approach's two passes are laid in the
+  world, from the hole's mow line folded to one sense, as the bands are
+  (RESEARCH, *A fairway's bands in the world*), so holes running either way
+  along a shared fairway cut it as one. A green's stay in its hole's frame.
+  Seen on Seaside Links, seed LINKS-C, holes 9-10 (diamonds, no seam).
+- **The frame**: profiled with every fairway and green in diamonds against
+  today's defaults, both builds of the branch, RTX 4090 (real GPU arm):
+  tiers Low -0.01 ms, Medium -0.02, High +0.02, Ultra +0.07 of graphics
+  time; built courses (parkland, Pacific Northwest, seaside, generated and
+  frozen) -0.03 to +0.02 -- all within run-to-run noise. The second pass is
+  a few more arithmetic steps on mown turf only.
+
+Pictures: bench/shots/fringe/mowing-shots.mjs (local).
 
 ## A built green's fringe, only where painted (24 November 2026)
 

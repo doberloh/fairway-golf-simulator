@@ -1882,6 +1882,20 @@ palette); pictures of an approach laid before two of the Alpine draft's
 greens on Classic Parkland (bench/shots/fringe/approach-shots.mjs, local);
 the builder journeys pick layers by the list. **Not seen by the owner.**
 
+### Mowing styles in the file (branch `fringe-colour`, 26 November 2026)
+
+The owner: "let's make it a setting for the courses in the generator as well
+as the builder ... add settings for the mowing style for greens, approaches,
+and fairways." A built course's file carries `mowing: {fairway, green,
+approach}` (course-doc.js `normaliseMowing`; each one of stripes, checker,
+diamonds; absent, the defaults), chosen under Landscape in door 2's Name
+step and the 3D editor (builder/mowing.js, one module for both), carried by
+drafts, Back to 2D and a generated course taken over (freeze.js writes the
+generator's settings when they are not the defaults). The game takes the
+file's, never the player's last generated course's (built-world.js
+`worldFromDoc`). No `BUILT_VERSION`: a file without it looks as it did; an
+older game ignores it. RESEARCH, *Mowing styles*.
+
 ### No squares in the builder (branch `builder-outlines`, from 24 November 2026)
 
 The owner, after a box drawn with Auto curve came back with two square

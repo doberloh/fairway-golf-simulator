@@ -53,6 +53,7 @@ import {sourceBox, sourcesBox, crsOfSources, landFromSources, pictureOnLand, aff
 import {DETAIL} from '../lidar/detail.js';
 import {createTrace, PALETTE, SPECK, POCK} from './trace-edit.js';
 import {LAYER_ORDER, layersFor} from './layers.js';
+import {mowingControls} from './mowing.js';
 import * as S from './shapes.js';
 import {PROVIDERS, providersAt, mosaic, tilePixel, metresPerPixel, mapFrame, boxDegrees, boxLocal} from './imagery.js';
 import {packPictures, unpackPictures} from './picture-file.js';
@@ -2540,6 +2541,8 @@ export function open(draft = null) {
   return [el('div', {class: 'cb-field'}, el('label', {}, 'The course'),
    el('small', {}, 'Name'), el('input', {class: 'cb-name', value: st.name, maxlength: 60, oninput: e => { st.name = e.target.value; st.named = true; refreshSave(); }}),
    el('small', {}, 'Landscape (changes the look only)'), el('select', {onchange: e => { st.landscape = e.target.value; }}, BIOME_KEYS.map(k => el('option', {value: k, selected: k === st.landscape}, BIOMES[k].name))),
+   // How it is mown (mowing.js): looks only, kept in the file and the draft.
+   ...mowingControls(el, st.mowing, (kind, style) => { st.mowing = {...(st.mowing ?? {}), [kind]: style}; refreshSave(); }),
    el('small', {}, 'Data credits (one per line)'), el('textarea', {class: 'cb-credits', rows: 4, style: 'background:#03100e;border:1px solid var(--line);color:inherit', oninput: e => { st.credits = e.target.value.split('\n').map(s => s.trim()).filter(Boolean); }}, st.credits.join('\n'))),
   next(5)];
  }
@@ -2580,7 +2583,7 @@ export function open(draft = null) {
   const holes = st.holes.slice(0, st.holesN).map((h, n) => ({number: n + 1, par: h.par ?? null, index: h.index ?? null, tees: h.tees, green: h.green, line: holeLine(h)}));
   setBusy('Painting the course…'); await frame();
   try {
-   const doc = st.doc = validateDoc(docFromLand({treePlan: st.treePlan, surround: st.surround, land: st.land, traced: {shapes: new Map(st.model.layersPresent().map(k => [k, st.model.shapesOf(k)]))}, holes, trees: st.model.state.trees.map(t => st.treeScale === 1 ? t : {...t, h: t.h * st.treeScale, crown: t.crown * st.treeScale, ...(t.trunk ? {trunk: t.trunk * st.treeScale} : {})}), homes: st.model.state.homes, bunkers: st.model.state.bunkers, creekLines: st.model.state.creekLines, name: st.name.trim() || 'My real course', landscape: st.landscape, credits: st.credits, landEdits: st.landEdits, creeks: st.creeks, rocks: st.model?.state.rocks ?? st.rocks,
+   const doc = st.doc = validateDoc(docFromLand({treePlan: st.treePlan, surround: st.surround, mowing: st.mowing ?? null, land: st.land, traced: {shapes: new Map(st.model.layersPresent().map(k => [k, st.model.shapesOf(k)]))}, holes, trees: st.model.state.trees.map(t => st.treeScale === 1 ? t : {...t, h: t.h * st.treeScale, crown: t.crown * st.treeScale, ...(t.trunk ? {trunk: t.trunk * st.treeScale} : {})}), homes: st.model.state.homes, bunkers: st.model.state.bunkers, creekLines: st.model.state.creekLines, name: st.name.trim() || 'My real course', landscape: st.landscape, credits: st.credits, landEdits: st.landEdits, creeks: st.creeks, rocks: st.model?.state.rocks ?? st.rocks,
     source: {files: st.sources.map(s => s.name), epsg: crsOfSources(st.sources)?.epsg ?? null, crs: crsOfSources(st.sources) ?? null, geo: st.geo, origin: {x: st.gridder.center.x, y: st.gridder.center.y}, trace: st.traceMode, picture: st.picShow === 'lidar' ? 'lidar' : st.picture ? 'placed' : 'none'}}));
    const w = worldFromDoc(doc), bio = BIOMES[st.landscape], mt = bio.mapTurf || {};
    // Fringe and approach half way to their plan colours (the owner, 26
@@ -2626,7 +2629,7 @@ export function open(draft = null) {
  const snapshot = () => ({step: st.step, name: st.name, named: !!st.named, landscape: st.landscape, credits: st.credits, holes: st.holes, holesN: st.holesN, hole: st.hole, boundary: st.boundary, traceMode: st.traceMode, box: st.box, detailRing: st.detailRing ?? null, detailMap: !!st.detailMap,
   sources: st.sources.map(s => ({name: s.name, crs: s.kind === 'points' ? s.crs : s.raster?.crs ?? s.crs ?? null})),
   view: {lidarView: st.lidarView, lidarAlpha: st.lidarAlpha, picAlpha: st.picAlpha, traceAlpha: st.traceAlpha, lidarOnTop: st.lidarOnTop, smoothView: st.smoothView, treeScale: st.treeScale, treesFrom: st.treesFrom},
-  geo: st.geo, picShow: st.picShow, treePlan: st.treePlan, surround: st.surround,
+  geo: st.geo, picShow: st.picShow, treePlan: st.treePlan, surround: st.surround, mowing: st.mowing ?? null,
   picOffsets: {...st.picOffsets, ...(st.picShow && st.picShow !== 'lidar' ? {[st.picShow]: st.offset} : {})}, osm: st.osm, trees: st.trees, land: st.land, landEdits: st.landEdits, creeks: st.creeks, rocks: st.model?.state.rocks ?? st.rocks,
   trace: st.model ? {shapes: new Map(st.model.layersPresent().map(k => [k, st.model.shapesOf(k)])), hidden: [...st.model.state.hidden], trees: st.model.state.trees, homes: st.model.state.homes, bunkers: st.model.state.bunkers, creekLines: st.model.state.creekLines} : null});
  // Everything, the pictures packed as a file holds them (picture-file.js).
@@ -2678,7 +2681,7 @@ export function open(draft = null) {
    if (got.landEdits) { if (st.landEdits) for (let k = 0; k < got.landEdits.length; k++) st.landEdits[k] += got.landEdits[k]; else st.landEdits = got.landEdits; }
    st.holes.splice(0, got.holes.length, ...got.holes); st.holesN = got.holes.length;
    st.model.setTrees(got.trees); st.model.state.homes = got.homes; st.model.state.rocks = got.rocks;
-   Object.assign(st, {creeks: got.creeks, rocks: got.rocks, name: got.name, landscape: got.landscape, treePlan: editor.state.treePlan ?? null, surround: editor.state.surround ?? null});
+   Object.assign(st, {creeks: got.creeks, rocks: got.rocks, name: got.name, landscape: got.landscape, treePlan: editor.state.treePlan ?? null, surround: editor.state.surround ?? null, mowing: editor.state.mowing ?? null});
    told = [got.shapes.size ? `${got.shapes.size} layer${got.shapes.size === 1 ? '' : 's'} as painted there` : '', got.landEdits ? 'the ground as shaped' : '', 'the holes, trees and houses'].filter(Boolean).join(', ');
    paintCodes(); refreshSave();
   }
@@ -2695,7 +2698,7 @@ export function open(draft = null) {
   // grid, so the place is known (imagery, OpenStreetMap); building the land
   // anew needs the files again. Everything else comes back as it was left.
   Object.assign(st, {name: d.name, named: !!d.named, landscape: d.landscape, credits: d.credits ?? [], holes: (d.holes ?? []).map(h => h && {...h, tees: (h.tees ?? []).map(t => ({...t, set: colourOf(t.set) ?? 'blue'}))}), holesN: d.holesN ?? 18, hole: d.hole ?? 0, boundary: d.boundary, traceMode: d.traceMode, box: d.box, detailRing: d.detailRing ?? null, detailMap: !!d.detailMap,
-   sources: (d.sources ?? []).map(s => ({name: s.name, kind: 'points', crs: s.crs, restored: true})), picOffsets: d.picOffsets ?? {}, trees: d.trees ?? [], landEdits: d.landEdits ?? null, creeks: d.creeks ?? [], rocks: d.rocks ?? [], geo: d.geo ?? null, treePlan: d.treePlan ?? null, surround: d.surround ?? null, ...(d.view ?? {})});
+   sources: (d.sources ?? []).map(s => ({name: s.name, kind: 'points', crs: s.crs, restored: true})), picOffsets: d.picOffsets ?? {}, trees: d.trees ?? [], landEdits: d.landEdits ?? null, creeks: d.creeks ?? [], rocks: d.rocks ?? [], geo: d.geo ?? null, treePlan: d.treePlan ?? null, surround: d.surround ?? null, mowing: d.mowing ?? null, ...(d.view ?? {})});
   let lostPics = 0;
   if (d.land) {
    const L = d.land, u = L.unit ?? {h: 1, v: 1};

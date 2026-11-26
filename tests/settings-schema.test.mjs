@@ -115,6 +115,17 @@ test('a save from before raised greens, punchbowls and false fronts keeps none o
  assert.ok(DEFAULT_COURSE.raisedGreens>0&&DEFAULT_COURSE.falseFronts>0);
 });
 
+// 47 -> 48 (26 November 2026): the mowing styles. A save from before was
+// mown in stripes on the fairways and diamonds on the greens; it still is.
+test('a save from before the mowing styles keeps stripes and diamonds',()=>{
+ const old={...DEFAULT_COURSE,seed:'OLDMOWING'};
+ delete old.mowFairway;delete old.mowGreen;
+ const s=validateSettings(migrateSettings(old,47));
+ assert.equal(s.mowFairway,'stripes');assert.equal(s.mowGreen,'diamonds');
+ assert.deepEqual(FIELD.mowFairway.options,['stripes','checker','diamonds']);
+ assert.throws(()=>validateSettings({...DEFAULT_COURSE,mowGreen:'plaid'}));
+});
+
 test('the green slope slider warns past 75%, and says 100% is extreme',()=>{
  // The studio turns the slider red and shows this note past `above`; the owner
  // asked for the top of the range to be called out. A warning is not a setting,

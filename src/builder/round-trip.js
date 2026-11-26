@@ -38,7 +38,7 @@ export function withEditorWork(d, {base, now, changed, hidden}) {
  for (const [kind, set] of got.shapes) { if (set.length) shapes.set(kind, set); else shapes.delete(kind); }
  holes.splice(0, got.holes.length, ...got.holes);
  const landEdits = got.landEdits && d.landEdits ? got.landEdits.map((v, k) => v + d.landEdits[k]) : got.landEdits ?? d.landEdits;
- return {...d, step: 5, holes, holesN: got.holes.length, name: got.name, landscape: got.landscape, creeks: got.creeks, rocks: got.rocks, landEdits, treePlan: now.treePlan ?? null, surround: now.surround ?? null, view: {...d.view, treeScale: 1},
+ return {...d, step: 5, holes, holesN: got.holes.length, name: got.name, landscape: got.landscape, creeks: got.creeks, rocks: got.rocks, landEdits, treePlan: now.treePlan ?? null, surround: now.surround ?? null, mowing: now.mowing ?? null, view: {...d.view, treeScale: 1},
   trace: {...d.trace, shapes, hidden: [...hidden], trees: got.trees, homes: got.homes}};
 }
 

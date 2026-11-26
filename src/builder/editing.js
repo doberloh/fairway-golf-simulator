@@ -120,6 +120,9 @@ export function createEditor(doc, {fringeBand = 0} = {}) {
   // What stands past the property line on each side (surround-sides.js; the
   // surroundings rework): scenery, so no undo step, as the tree plan.
   surround: doc.surround ?? null,
+  // How the fairways, greens and approaches are mown (course-doc.js
+  // `mowing`; 26 November 2026): a look, so no undo step, as the tree plan.
+  mowing: doc.mowing ?? null,
   surfacesEdited: false, changed: false, undo: [], redo: [],
   // Where the land has been shaped, merged into boxes: the game refines its
   // mesh to the land there (built-world.js), so a hill plays as drawn.
@@ -647,6 +650,9 @@ export function createEditor(doc, {fringeBand = 0} = {}) {
    return S.contains(pick.set, x, z);
   },
   setLandscape(key) { remember('records', 0, 0, 0, 0); state.landscape = key; },
+  // One surface's mowing style ('fairway', 'green' or 'approach'): a new
+  // object each time, so the game view sees the change (game-look.js).
+  setMowing(kind, style) { state.mowing = {...(state.mowing ?? {}), [kind]: style}; state.changed = true; },
 
   // A BUNKER DUG at a click: sand painted in a disc and the ground lowered
   // under it (water-bed.js digBowl) -- one undo.
@@ -706,8 +712,8 @@ export function createEditor(doc, {fringeBand = 0} = {}) {
    for (const w of water) digInto(grids, w.rings, w.level);
    const trees = new Float32Array(state.trees.length * TREE_STRIDE), f = state.treeScale;
    state.trees.forEach((t, i) => trees.set(f === 1 ? t : [t[0], t[1], t[2] * f, t[3] * f, t[4] * f, ...t.slice(5)], i * TREE_STRIDE));
-   const {treePlan: _old, surround: _was, ...rest} = doc;
-   return {...rest, ...(state.treePlan ? {treePlan: state.treePlan} : {}), ...(state.surround ? {surround: state.surround} : {}), name: state.name, landscape: state.landscape, land: grids[0], patches: grids.slice(1),
+   const {treePlan: _old, surround: _was, mowing: _mown, ...rest} = doc;
+   return {...rest, ...(state.treePlan ? {treePlan: state.treePlan} : {}), ...(state.surround ? {surround: state.surround} : {}), ...(state.mowing ? {mowing: state.mowing} : {}), name: state.name, landscape: state.landscape, land: grids[0], patches: grids.slice(1),
     surfaces, water, creeks: structuredClone(state.creeks), holes: structuredClone(state.holes), trees, treeKinds: [...state.treeKinds], rocks: structuredClone(state.rocks), homes: structuredClone(state.homes), landEdits: state.landEdits.map(b => [...b]),
     // No fringe but the painted one (real-course.js, the same rule).
     fringe: 0};

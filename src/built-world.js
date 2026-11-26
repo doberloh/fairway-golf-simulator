@@ -450,7 +450,11 @@ export function worldFromDoc(doc, settings = {}, {field: baked = null} = {}) {
  const farSea = waterSides && !doc.sea ? seaLevelUnder(doc.land.heights) : null;
  const bio = {...bio0, sea: !!doc.sea || waterSides, inlandWater: true};
  const s = {...DEFAULT_COURSE, ...settings, biome: doc.landscape, holes: doc.holes.length, built: settings.built ?? null,
-  fringe: doc.fringe ?? DEFAULT_COURSE.fringe, semiRough: doc.semiRough ?? DEFAULT_COURSE.semiRough, seed: settings.seed ?? `built:${doc.name}`};
+  fringe: doc.fringe ?? DEFAULT_COURSE.fringe, semiRough: doc.semiRough ?? DEFAULT_COURSE.semiRough, seed: settings.seed ?? `built:${doc.name}`,
+  // The file's own mowing (course-doc.js `mowing`), never the player's last
+  // generated course's: absent, as every course was mown before 26 November
+  // 2026. `mowApproach` is a built course's alone (no generated approaches).
+  mowFairway: doc.mowing?.fairway ?? DEFAULT_COURSE.mowFairway, mowGreen: doc.mowing?.green ?? DEFAULT_COURSE.mowGreen, mowApproach: doc.mowing?.approach ?? 'diamonds'};
  const halfX = doc.halfX, halfZ = doc.halfZ, ex = halfX + GRID_MARGIN, ez = halfZ + GRID_MARGIN;
  const field = baked && baked.ex === ex && baked.ez === ez ? baked : bakeBuiltField(doc, ex, ez);
  const sample = landSampler(doc);

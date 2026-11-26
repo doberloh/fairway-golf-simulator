@@ -39,6 +39,10 @@
 //    treePlan: {sizes: 'landscape', species: [kind]} | absent   the trees placed
 //      for the player (builder/tree-plan.js): the landscape's sizes rather than
 //      the survey's, and which species; a course without one plays as it did,
+//    mowing: {fairway, green, approach} | absent   how each is mown, one of
+//      settings-schema.js MOW_STYLES ('stripes', 'checker', 'diamonds'); a
+//      course without it is mown as before every course was (fairway
+//      stripes, green and approach diamonds; 26 November 2026),
 //    surround: {sides: {n, e, s, w}, height, cover?} | absent   what stands past
 //      the property line on each side (surround-sides.js: 'auto' the landscape's
 //      own, 'flat', 'hills', 'range', 'mountain', 'mesas', 'sea', 'islands',
@@ -61,7 +65,7 @@
 // (built-store.js `playableFile`), so the course is the same course, with the
 // same hash, with it or without.
 import {writeZip, readZip, zipWithout, isZip} from './zip.js';
-import {BIOME_KEYS} from './settings-schema.js';
+import {BIOME_KEYS, MOW_STYLES} from './settings-schema.js';
 import {currentKey} from './regions.js';
 import {GROUND_KINDS} from './grounds.js';
 import {normaliseSurround} from './surround-sides.js';
@@ -151,6 +155,15 @@ const cleanRing = r => r.map(([x, z]) => [Math.round(x * 100) / 100, Math.round(
 
 // Checks a document and returns it with only the fields the format knows,
 // rounded as the file stores them. Throws in plain words.
+// A course's mowing styles: {fairway, green, approach}, each a MOW_STYLES
+// name or left out; null when none is given.
+export function normaliseMowing(m) {
+ if (!m || typeof m !== 'object') return null;
+ const out = {};
+ for (const k of ['fairway', 'green', 'approach']) if (MOW_STYLES.includes(m[k])) out[k] = m[k];
+ return Object.keys(out).length ? out : null;
+}
+
 export function validateDoc(doc) {
  if (!doc || doc.type !== 'built') plainError('This is not a built Fairway course.');
  const name = String(doc.name ?? '').trim();
@@ -215,7 +228,10 @@ export function validateDoc(doc) {
   ...(doc.treePlan ? {treePlan: {...(doc.treePlan.sizes === 'landscape' ? {sizes: 'landscape'} : {}), ...(Array.isArray(doc.treePlan.species) ? {species: doc.treePlan.species.map(String).slice(0, 64)} : {})}} : {}),
   // The surroundings the course chose (surround-sides.js); absent when it is
   // all the landscape's own, so an old file and an untouched one are the same.
-  ...(normaliseSurround(doc.surround) ? {surround: normaliseSurround(doc.surround)} : {})};
+  ...(normaliseSurround(doc.surround) ? {surround: normaliseSurround(doc.surround)} : {}),
+  // The mowing styles, each kept only when it is one the game draws; absent
+  // when none is, so a file without them is the file it was.
+  ...(normaliseMowing(doc.mowing) ? {mowing: normaliseMowing(doc.mowing)} : {})};
 }
 
 // The file's bytes for a document. `builtVersion` is the game's, stamped on.
@@ -231,7 +247,7 @@ export async function writeBuiltFile(doc, builtVersion, {builder = null} = {}) {
  const json = {kind: FILE_KIND, version: BUILT_FILE_VERSION, type: 'built', builtVersion, name: d.name, landscape: d.landscape, designer: d.designer,
   halfX: d.halfX, halfZ: d.halfZ, fringe: d.fringe, semiRough: d.semiRough, sea: d.sea, landEdits: d.landEdits, land: {x0: d.land.x0, z0: d.land.z0, cell: d.land.cell, cellZ: d.land.cellZ, nx: d.land.nx, nz: d.land.nz, base: land.base, step: land.step},
   patches, surfaces: d.surfaces, water: d.water, creeks: d.creeks, holes: d.holes, trees: d.trees.length / TREE_STRIDE, treeKinds: d.treeKinds, rocks: d.rocks, homes: d.homes,
-  credits: d.credits, source: d.source, from: d.from, picture: d.picture, ...(d.treePlan ? {treePlan: d.treePlan} : {}), ...(d.surround ? {surround: d.surround} : {})};
+  credits: d.credits, source: d.source, from: d.from, picture: d.picture, ...(d.treePlan ? {treePlan: d.treePlan} : {}), ...(d.surround ? {surround: d.surround} : {}), ...(d.mowing ? {mowing: d.mowing} : {})};
  return writeZip([
   {name: 'course.json', data: JSON.stringify(json)},
   {name: 'land.bin', data: land.bytes},

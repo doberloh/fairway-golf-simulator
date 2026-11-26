@@ -25,6 +25,21 @@ kept whole: *The open list before the 11 November 2026 prune* and *The open
 list before the 16 October prune*, each with a table of what became of every
 entry.
 
+## Mowing styles (branch `fringe-colour`, 26 November 2026)
+
+The owner, after a preview of diamond fairways ("I really like it"): "Sort
+out everything it Will need to wire into like the shared fairways and
+figure out the framerate. and let's make it a setting for the courses in the
+generator as well as the builder ... add settings for the mowing style for
+greens, approaches, and fairways." Built: `mowFairway` and `mowGreen`
+(schema 48, migration 47 -> 48 writes nothing), a built file's `mowing`
+with the approach's, the shader's `mowStyle` and its two-pass cut for any
+surface (fairways and approaches in the world frame), the choices in both
+editors (builder/mowing.js), drafts and the round trip, a generated course
+taken over keeping its own. Dead end: the checkerboard shaded with the view
+like the diamonds -- it read as stripes. Profiled: no cost beyond noise
+(RESEARCH, *Mowing styles*).
+
 ## An approach layer; the layer drop-downs gone (branch `fringe-colour`, 26 November 2026)
 
 The owner, remaking Worthington with Fringe painted as each approach, asked

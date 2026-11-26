@@ -227,8 +227,8 @@ its edge. Keep it to a collar of a metre or two.
 fairway. Paint it with the **Approach** layer (yellow-lime on the plan), over
 the end of the fairway and out to the sides as wide as you want, and under
 the green and its fringe if you like. It plays exactly as fairway; in the
-game it is the fairway's colour diamond-mown like a green, its passes half
-as far apart as the fairway's stripes,
+game it is the fairway's colour, mown in passes half as far apart as the
+fairway's stripes,
 its edge softened over a few centimetres. In the review and the 3D editor
 the approach is a yellower fairway and the fringe a teal-tinted green, so
 neither passes for the layer beside it.
@@ -259,6 +259,14 @@ dig bunkers, draw ponds and creeks, plant trees and houses; select anything and
 press Delete to take it away. W A S D fly, Q and E go down and up, **G** shows
 the course in the game's own picture. **Back to 2D** takes your 3D work back to
 the plan.
+
+### Mowing
+
+Under **Landscape**, here and in the 2D builder's Name step, **Fairway
+mowing**, **Approach mowing** and **Green mowing** choose how each is cut in
+the game: **Stripes**, a **Checkerboard** or **Diamonds**. Fairways start in
+stripes, approaches and greens in diamonds. It changes the look only; the
+ball plays the same. Press **G** to see it.
 
 ### Surroundings
 

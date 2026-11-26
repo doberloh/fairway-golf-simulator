@@ -32,10 +32,11 @@ test('a painted fringe is mown as one lap along its own edge', () => {
 
 // The owner, 26 November 2026: "can you make the approach diamond stripes
 // instead of the single stripes like the fairway?"
-test('a painted approach is diamond-mown, 6 m a pass, with no dashed edge', () => {
+// (Since the same day its style is a setting: tests/mowing-styles.test.mjs.)
+test('a painted approach is cut 6 m a pass in its own style, with no dashed edge', () => {
  const src = fs.readFileSync(new URL('../src/ground.js', import.meta.url), 'utf8');
- assert.match(src, /bool apDiamond=kind==2\.&&approachFade>\.5;/);
- assert.match(src, /float period=kind==4\.\?3\.2:apDiamond\?6\.:12\.;/, 'half the fairway\'s 12 m');
- assert.match(src, /if\(kind==4\.\|\|apDiamond\)\{/, 'the green\'s diamonds');
+ assert.match(src, /bool appr=kind==2\.&&approachFade>\.5;/);
+ assert.match(src, /float period=kind==4\.\?3\.2:appr\?6\.:12\.;/, 'half the fairway\'s 12 m');
+ assert.match(src, /float mowAs=kind==4\.\?mowStyle\.y:appr\?mowStyle\.z:mowStyle\.x;/, 'its own style');
  assert.match(src, /float aa=max\(fwidth\(plan\*period\)\/period,\.001\);/, 'the fade measured where the period changes smoothly');
 });
