@@ -25,7 +25,7 @@ kept whole: *The open list before the 11 November 2026 prune* and *The open
 list before the 16 October prune*, each with a table of what became of every
 entry.
 
-## Mowing styles (branch `fringe-colour`, 26 November 2026)
+## Mowing styles (branch `fringe-colour`, 26 November 2026; merged the same day, not released)
 
 The owner, after a preview of diamond fairways ("I really like it"): "Sort
 out everything it Will need to wire into like the shared fairways and
@@ -40,7 +40,7 @@ taken over keeping its own. Dead end: the checkerboard shaded with the view
 like the diamonds -- it read as stripes. Profiled: no cost beyond noise
 (RESEARCH, *Mowing styles*).
 
-## An approach layer; the layer drop-downs gone (branch `fringe-colour`, 26 November 2026)
+## An approach layer; the layer drop-downs gone (branch `fringe-colour`, 26 November 2026; merged the same day, not released)
 
 The owner, remaking Worthington with Fringe painted as each approach, asked
 whether the fringe should be the fairway's colour unstriped or an approach
@@ -63,7 +63,7 @@ with the fringe drew "weird wobbles" (PROJECT_HANDOFF, *A BUILT GROUND CODE
 IS ONE NUMBER*). The idea's IDEAS entry (added the same day) left when
 picked.
 
-## The fringe told from the fairway (branch `fringe-colour`, 26 November 2026)
+## The fringe told from the fairway (branch `fringe-colour`, 26 November 2026; merged the same day, not released)
 
 The owner, remaking a course: a fringe and a fairway on the same hole "merged
 into one shape" in the builder and looked "exactly the same" in its game view;
