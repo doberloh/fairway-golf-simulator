@@ -973,7 +973,7 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   // blend needs to be over like 6 inches not multiple yards ... the approach
   // should get stripes half the size of the fairway"). Its own distance (the
   // third texture: as a code beside the fringe's it drew their meeting as a
-  // staircase). Fairway turf, its bands half the fairway's (in the mowing
+  // staircase). Fairway turf, diamond-mown as a green (in the mowing
   // below), over the fairway and under a cart path. Its colour comes in over
   // 15 cm across its edge, or a pixel and a half where that is less, so the
   // edge never shimmers; the lie switches at the edge itself (built-world.js
@@ -1199,9 +1199,12 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
  // (GROUND_NO_MOWING: Measure this device's what-if, through to the tee's
  // divots below; the stripes, the diamonds, the laps -- what they cost.)
  if(kind==2.||kind==4.){
-  // A painted approach's bands half the fairway's, from the same line, so
-  // every other edge carries on across (the owner, 26 November 2026).
-  float period=kind==4.?3.2:approachFade>.5?6.:12.;
+  // A PAINTED APPROACH IS DIAMOND-MOWED, as a green is, its passes 6 m apart
+  // -- half the fairway's bands (the owner, 26 November 2026: "stripes half
+  // the size of the fairway", then "can you make the approach diamond stripes
+  // instead of the single stripes like the fairway?").
+  bool apDiamond=kind==2.&&approachFade>.5;
+  float period=kind==4.?3.2:apDiamond?6.:12.;
   vec2 mow=normalize(vec2(.48,.88));
   float bend=kind==4.?.9:1.6;
   // THE ANTI-ALIAS FADE IS MEASURED ON THE PLAN COORDINATE, NOT THE BENT ONE.
@@ -1240,7 +1243,8 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   // right angles (each 45 degrees off the old line), so each spot carries both
   // passes' tones: light where both lean away, dark where both lean toward
   // you, a middle tone where they differ -- diamonds. Round 1. PLACED.
-  if(kind==4.){
+  // (A painted approach too, in the hole's frame as a green.)
+  if(kind==4.||apDiamond){
    vec2 m1=normalize(vec2(mow.x-mow.y,mow.y+mow.x)),m2=normalize(vec2(mow.x+mow.y,mow.y-mow.x));
    float p1=(p.y*m1.y+p.x*m1.x)/period,p2=(p.y*m2.y+p.x*m2.x)/period,hb=groundPoint.y*bend*bendMul/period;
    float a1=max(fwidth(p1),.001),a2=max(fwidth(p2),.001);

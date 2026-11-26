@@ -1859,8 +1859,10 @@ its not a hard line between."
   green"; PROJECT_HANDOFF, *A BUILT GROUND CODE IS ONE NUMBER*). The lie is
   fairway (built-world.js `builtSurface`); mowing pieces count it as
   fairway (ground.js `kindAt`); the shader paints the fairway's colour in
-  bands half the fairway's width (the owner: "the approach should get
-  stripes half the size of the fairway"), its edge softened over 15 cm (a
+  diamonds as a green's, 6 m a pass, half the fairway's bands (the owner:
+  "the approach should get stripes half the size of the fairway", then
+  "can you make the approach diamond stripes instead of the single stripes
+  like the fairway?"), its edge softened over 15 cm (a
   first try over 1.5 m and 3 m read on the owner's course as a smear yards
   wide; RESEARCH, *The approach*).
 - **No `BUILT_VERSION`**: a file without one plays as before. An older game

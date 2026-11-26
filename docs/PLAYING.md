@@ -866,7 +866,7 @@ changes, newest first, each with **Undo to here**.
      it is paler than the fairway and mown as one pass round its edge
      (26 November 2026). **Approach** is a layer for the mown ground in
      front of a green: it plays exactly as fairway, and in the game it is
-     the fairway's colour mown in stripes half the fairway's width, its edge
+     the fairway's colour diamond-mown like a green, 6 m a pass, its edge
      softened over a few centimetres (yellow-lime on the plan, a yellower
      fairway in the review and the 3D editor, where the fringe is tinted
      teal). The trace is drawn **as the

@@ -35,14 +35,15 @@ generated collars share its colour; an approach is fairway), and the owner:
 nicely so its not a hard line between. Also, somehow the layer selection
 became a drop down? WTF happened there? i didnt ask for that." Built: the
 Approach layer through the file, the bake (a texture of its own), the lie
-(fairway), the mowing (bands half the fairway's) and the paint, its edge
+(fairway), the mowing (diamonds as a green's, 6 m a pass) and the paint, its edge
 softened over 15 cm (COURSE_BUILDER.md, *An approach layer*; RESEARCH, *The
 approach*); fringe and approach coloured in the plan, the review and the 3D
 editor; both editors' layer drop-downs removed, the Layers list the only
 picker, and door 2's list filled as the trace step opens. The owner's
 corrections the same day, each a first try replaced: a blend of 1.5 m and
 3 m ("over like 6 inches not multiple yards"), no bands ("stripes half the
-size of the fairway"), and the approach as ground code 13, whose meeting
+size of the fairway"), half-width bands ("make the approach diamond
+stripes"), and the approach as ground code 13, whose meeting
 with the fringe drew "weird wobbles" (PROJECT_HANDOFF, *A BUILT GROUND CODE
 IS ONE NUMBER*). The idea's IDEAS entry (added the same day) left when
 picked.

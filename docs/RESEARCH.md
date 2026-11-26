@@ -11046,10 +11046,13 @@ own. What the game draws, all PLACED:
 
 - **The fairway's colour**, no colour of its own: a real approach is the
   fairway's grass at about the fairway's height, mown on its own.
-- **Bands half the fairway's: 6 m against 12 m** (the owner: "the
-  approach should get stripes half the size of the fairway"), along the
-  same line and from the same origin, so every other edge of the fairway's
-  carries on across. The stripes' anti-alias measures the plan coordinate
+- **Diamonds, 6 m a pass** (the owner: "the approach should get stripes
+  half the size of the fairway", then "can you make the approach diamond
+  stripes instead of the single stripes like the fairway?"): the green's
+  diamond mowing -- two passes crossing at right angles, 45 degrees off the
+  line, each shading with the view -- in the hole's frame, at half the
+  fairway's 12 m band (PLACED; a green's is 3.2 m). Bands of 6 m along the
+  fairway's line came first, for an hour. The stripes' anti-alias measures the plan coordinate
   times its period, which runs on smoothly across the change: measured on
   the plan alone it jumped there and drew a dashed line along the edge. (A
   first try the same day had no bands at all, the stripe tone held at its

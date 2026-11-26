@@ -227,7 +227,8 @@ its edge. Keep it to a collar of a metre or two.
 fairway. Paint it with the **Approach** layer (yellow-lime on the plan), over
 the end of the fairway and out to the sides as wide as you want, and under
 the green and its fringe if you like. It plays exactly as fairway; in the
-game it is the fairway's colour mown in stripes half the fairway's width,
+game it is the fairway's colour diamond-mown like a green, its passes half
+as far apart as the fairway's stripes,
 its edge softened over a few centimetres. In the review and the 3D editor
 the approach is a yellower fairway and the fringe a teal-tinted green, so
 neither passes for the layer beside it.

@@ -29,3 +29,13 @@ test('a painted fringe is mown as one lap along its own edge', () => {
  assert.match(src, /if\(kind==3\.&&\(fringeLap<0\.\|\|greenD<5\.9\)\)\{/, 'the one lap is drawn on a painted fringe');
  assert.doesNotMatch(src, /sin\(lc\*6\.283\)/, 'no rings of laps');
 });
+
+// The owner, 26 November 2026: "can you make the approach diamond stripes
+// instead of the single stripes like the fairway?"
+test('a painted approach is diamond-mown, 6 m a pass, with no dashed edge', () => {
+ const src = fs.readFileSync(new URL('../src/ground.js', import.meta.url), 'utf8');
+ assert.match(src, /bool apDiamond=kind==2\.&&approachFade>\.5;/);
+ assert.match(src, /float period=kind==4\.\?3\.2:apDiamond\?6\.:12\.;/, 'half the fairway\'s 12 m');
+ assert.match(src, /if\(kind==4\.\|\|apDiamond\)\{/, 'the green\'s diamonds');
+ assert.match(src, /float aa=max\(fwidth\(plan\*period\)\/period,\.001\);/, 'the fade measured where the period changes smoothly');
+});
