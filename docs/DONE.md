@@ -25,6 +25,21 @@ kept whole: *The open list before the 11 November 2026 prune* and *The open
 list before the 16 October prune*, each with a table of what became of every
 entry.
 
+## The green colour lab (branch `green-colour-picker`, 26 November 2026)
+
+The owner: "I feel like the greens in parkland are way too pale. Can you
+give me an in game interactive picker with sliders that lets me tune the
+colors of the greens in each biome with the ability to copy settings back
+out to you to implement?" Built: Settings > Graphics > The look of the
+course > Green colour lab…, a window over the course (ui-colour-lab.js) with
+a landscape's green or fringe as hue, saturation and lightness, live on the
+course (renderer.js `setTurfTint`, graded as the game's own), a look at the
+green, another landscape to try, Put back and Copy for Claude; picks kept on
+the device per landscape, shown only while the window is open. The fringe
+was added after the first pictures: a darker green left its collar
+reading pale. A tuning tool: nothing it picks is in the game until copied
+back and set in biomes.js.
+
 ## Mowing styles (branch `fringe-colour`, 26 November 2026; merged the same day, not released)
 
 The owner, after a preview of diamond fairways ("I really like it"): "Sort

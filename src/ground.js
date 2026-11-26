@@ -341,6 +341,9 @@ export function groundMaterial(view,palette){
   greenLift:{value:0},greenBend:{value:1},greenBandSoft:{value:1},
   sunDir:{value:new T.Vector3(-.6,.7,-.5).normalize()}};
  m.userData.cues=cues;
+ // The turf colours as uniforms, for the green colour lab to change on the
+ // next frame (renderer.js setTurfTint; ui-colour-lab.js).
+ m.userData.tints=colors;
  // For the Phone tier's painting (ground-bake.js; renderer.js
  // paintGroundSquare): the player's camera the painter is told it is looked at
  // from, and the rough's colour, which the pictures are cleared to so their

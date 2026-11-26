@@ -366,6 +366,10 @@ the courses several suites share, and builds many at once on worker threads
   2026, the slope's drying and the drier patches go through `dryTurf`, which
   holds the turf's colour, and no plain multiply by the tint is back -- what it
   looks like is seen in captures, `bench/shots/grade/grade-shots.mjs`, local),
+  `colour-lab` (since 26 November 2026: every landscape's green to the
+  sliders and back, a damaged store read as far as it is sound, the Copy for
+  Claude text naming each changed landscape and surface; the window itself
+  driven by `bench/shots/fringe/colour-lab-check.mjs`, local),
   `mowing-styles` (since 26 November 2026: the styles' defaults are how
   every course was, a built file carries and wins with its own, the shader
   cuts each surface in its own style with a fairway's passes in the world;

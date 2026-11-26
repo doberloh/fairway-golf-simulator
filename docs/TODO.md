@@ -625,6 +625,13 @@ here is a claim of support until it is done.
   brushing every edge of Alpine's old-fit cart paths over and over left one
   49-degree bend in a 5 m wedge where two paths meet (RESEARCH, *Curves
   through points*); a single stroke has not been seen to -- look for it.
+- [ ] **The green colour lab: the owner's picks, then build them in**
+  (26 November 2026, branch `green-colour-picker`; PLAYING, *Green colour
+  lab*). The owner: "I feel like the greens in parkland are way too pale."
+  Seen: driven in a browser on Classic Parkland (green and fringe changed
+  on the course, copied, put back on close). Owed: the owner's own picks
+  pasted back and set in biomes.js (a palette record: no
+  `GENERATOR_VERSION`); the window by hand on the owner's screen and phone.
 - [ ] **Mowing styles: not seen by the owner** (26 November 2026, branch
   `fringe-colour`; RESEARCH, *Mowing styles*). Seen: pictures of every
   style on Classic Parkland, a shared Links fairway in diamonds, the Alpine
