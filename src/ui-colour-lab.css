@@ -1,0 +1,27 @@
+/* THE GREEN COLOUR LAB (ui-colour-lab.js; 26 November 2026): a small window
+   over the course, square like every window since 28 October 2026, solid so
+   the HUD behind it does not show through. */
+.colour-lab{position:fixed;top:72px;right:16px;z-index:60;width:min(310px,calc(100vw - 32px));max-height:calc(100vh - 96px);overflow:auto;
+ padding:12px 14px;background:#13241b;color:var(--ink);border:1px solid var(--glass-line);box-shadow:0 10px 30px rgba(0,0,0,.5);
+ font:13px/1.35 var(--font-ui);display:flex;flex-direction:column;gap:8px}
+.colour-lab[hidden]{display:none}
+.colour-lab-head{display:flex;align-items:center;justify-content:space-between;cursor:move;user-select:none;font-size:14px;letter-spacing:.04em;text-transform:uppercase}
+.colour-lab-x{background:none;border:0;color:var(--ink);font-size:22px;line-height:1;cursor:pointer;padding:0 4px}
+.colour-lab-land{margin:0;color:var(--ink-dim)}
+.colour-lab-swatches{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;font-size:11px;color:var(--ink-dim)}
+.colour-lab-swatches span{display:flex;flex-direction:column;gap:3px}
+.colour-lab-swatches i{display:block;height:34px;border:1px solid var(--glass-line)}
+.colour-lab-row{display:flex;flex-direction:column;gap:3px;color:var(--ink-dim)}
+.colour-lab-row>span{display:flex;justify-content:space-between}
+.colour-lab-row output{color:var(--ink)}
+.colour-lab-row input[type=range]{width:100%;accent-color:#8fd19e}
+.colour-lab-row input[type=text],.colour-lab-row select{background:#0a150f;color:var(--ink);border:1px solid var(--glass-line);padding:5px 7px;font:inherit}
+.colour-lab-pair{display:flex;gap:6px}.colour-lab-pair select{flex:1;min-width:0}
+.colour-lab-btns,.colour-lab-pick{display:flex;flex-wrap:wrap;gap:6px}
+.colour-lab-btn{background:#24402f;color:var(--ink);border:1px solid var(--glass-line);padding:6px 10px;font:inherit;cursor:pointer}
+.colour-lab-btn:hover{background:#2f5540}
+.colour-lab-btn[aria-pressed=true]{background:#8fd19e;color:#0b1f14;border-color:#8fd19e}
+.colour-lab-btn.hot{background:#e8d27a;color:#231c06;border-color:#e8d27a;font-weight:600}
+.colour-lab-pick .colour-lab-btn{flex:1}
+.colour-lab-note{margin:0;font-size:11.5px;color:var(--ink-faint)}
+.colour-lab textarea{width:100%;background:#0a150f;color:var(--ink);border:1px solid var(--glass-line);font:11.5px/1.4 ui-monospace,Consolas,monospace;padding:6px}

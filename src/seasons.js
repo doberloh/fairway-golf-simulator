@@ -20,6 +20,7 @@
 // (`seasonPalette`, below). Looks only: a season never changes a ball.
 
 import {GROUND_TINT} from './grounds.js';
+import {turfLadder} from './turf-ladder.js';
 export const SEASONS = ['spring', 'summer', 'autumn', 'winter'];
 // The seasons the game can draw so far. Step 9 lists all four.
 export const DRAWN = SEASONS;
@@ -130,7 +131,26 @@ function realSummer(bio) {
  if (bio.farForest?.colors) out.farForest = {...bio.farForest, colors: ['#3f6a30', '#4a7436', '#56803a', '#3f5a34']};
  return out;
 }
+// ONE HUE FOR THE PLAYING TURF THE YEAR ROUND (turf-ladder.js; the owner, 26
+// November 2026): whatever a season does to the fairway, the semi-rough,
+// fringe and green are stepped off it again, so they never part from it --
+// before, spring moved the fairway and fringe and never the green, and the
+// semi-rough went greener with the rough. Snow lying on the semi-rough is
+// weather, not grass, and stays.
+// Only a landscape the ladder made (biomes.js, `turfAsWritten`), and only
+// what changes: a season that leaves the fairway alone hands back no fringe
+// or green, and the semi-rough is always the ladder's -- never the rough's
+// greener step it used to take.
 export function seasonPalette(bio, season, region) {
+ const out = seasonColours(bio, season, region);
+ if (!bio?.turfAsWritten) return out;
+ const snow = season === 'winter' && (WINTER_OF[bio.key] ?? WINTER[region] ?? 'frost') === 'snow';
+ const res = {...out};
+ if (!snow) delete res.semi;
+ if (out.fairway) { const ladder = turfLadder(out.fairway); res.fringe = ladder.fringe; res.green = ladder.green; if (!snow) res.semi = ladder.semi; }
+ return res;
+}
+function seasonColours(bio, season, region) {
  if (!bio) return {};
  const green = season === 'winter' ? 0 : roughGreen(bio.key, season);
  // The rough and the pale tint the ground lays over it (renderer.js) as green

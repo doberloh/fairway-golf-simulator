@@ -1809,7 +1809,9 @@ outside the builder".
   same", in the plan and in the game view): the plan draws Fringe teal
   (door-real.js `OWN`, was a lighter fairway green with the same outline),
   and eight landscapes' fringe colours moved toward their greens (RESEARCH,
-  *Telling the fringe from the fairway*).
+  *Telling the fringe from the fairway*) -- replaced the same evening by
+  one hue for all the playing turf, the fringe a step lighter than the
+  fairway on every landscape (RESEARCH, *One hue for the playing turf*).
 
 Checked: Node tests (built-world: painted, none and an old file's collar;
 builder-editing: none unless painted, the collar from outside kept as

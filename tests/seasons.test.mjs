@@ -132,7 +132,10 @@ test('the wild ground takes the bloom in spring, and no other season, and not th
  const blue = h => parseInt(h.slice(5, 7), 16) - parseInt(h.slice(1, 3), 16);
  const bio = biomeOf('prairie'), spring = seasonPalette(bio, 'spring', 'texas');
  assert.ok(blue(spring.groundTints.native) > blue(bio.groundTints?.native ?? '#b3a35a'), 'bluebonnets blue the native ground');
- assert.ok(!('green' in spring));
+ // Not the greens' bloom: since 26 November 2026 a green follows the
+ // fairway's spring in its one hue (turf-ladder.js), never a flower colour.
+ const hue = h => { const [r, g, b] = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255), mx = Math.max(r, g, b), d = mx - Math.min(r, g, b); return d ? (60 * (mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4) + 360) % 360 : 0; };
+ assert.ok(!('green' in spring) || Math.abs(hue(spring.green) - hue(spring.fairway)) <= 2, 'a spring green in the fairway\'s hue');
  assert.equal(seasonPalette(biomeOf('mountains'), 'spring', 'mountain').groundTints, undefined, 'no bloom, no tint');
  assert.equal(seasonPalette(bio, 'autumn', 'texas').groundTints, undefined);
  const summer = seasonPalette(bio, 'summer', 'texas');

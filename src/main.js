@@ -86,6 +86,8 @@ import {isBuiltFile} from './course-doc.js';
 import {dropdown,dropdownEverywhere} from './ui-dropdown.js';
 import './ui-dropdown.css';
 import {makeWindow} from './ui-windows.js';
+import {createColourLab} from './ui-colour-lab.js';
+import './ui-colour-lab.css';
 import {settingsChanges,studioHud,paintStudioHud,buildStudioSheet} from './ui-studio.js';
 import {nextFocus,dirOfKey,dirOfPad} from './ui-focus.js';
 import {framedForBall,shotBearing} from './camera.js';
@@ -468,6 +470,17 @@ const restoreCourse=()=>{
 // circling it, rather than a real round the player has not asked for yet. Any
 // saved round waits in pendingRound until they choose to continue it.
 let menuBackdrop=false,pendingRound=null,backdropRun=null,playerClock=null;
+// THE GREEN COLOUR LAB (ui-colour-lab.js; the owner, 26 November 2026): made
+// the first time Settings > Graphics opens it. It follows whatever course is
+// drawn -- generated, built, the range -- and colours only its greens.
+let colourLabUi=null;
+const colourLab=()=>colourLabUi||(colourLabUi=createColourLab({
+ biomes:Object.fromEntries(BIOME_KEYS.map(k=>[k,{name:BIOMES[k].name,green:BIOMES[k].green,fringe:BIOMES[k].fringe}])),
+ keyNow:()=>world?.settings?.biome??null,paintNow:()=>view?.terrain?.material??null,
+ apply:(surface,hex)=>view?.setTurfTint(surface,hex),
+ lookAt:m=>{if(appMode!=='play'||!world?.holes?.[round.hole])return;placePose(m==='above'?{hole:round.hole,fromPin:40,height:30,pitch:-45}:{hole:round.hole,fromPin:18,height:1.6,pitch:-9});},
+ tryLandscape:k=>startRoundOn({...DEFAULT_COURSE,biome:k,seed:'FAIRWAY',holes:9,season:'summer'}),
+ version:GAME_VERSION??''}));
 // Every generation setting, at its schema default. This used to be a hand-written
 // partial copy holding eleven of the thirty-eight, which was fine until something
 // read it before a course had been loaded: Course studio renders each control
@@ -8287,6 +8300,8 @@ function renderPanel(name,content){
   <p class="note">Far land fades toward the colour of the sky, a little warmer toward the sun, the way air thickens with distance. Much weaker looking down, so the view from above stays clear. Not weather: it stays on with the weather switched off.</p>
   ${slider('gfxWind','Wind in the trees and grass',graphics.wind,0,100,'%',5)}
   <p class="note">How far trees and grass move in the course's wind. Gusts sweep across as fronts, and each tree bends as a whole, the taller ones swaying slower. It moves the picture only: a trunk bends from the top, never where a ball can reach it, and the ball feels the wind the same whatever this is set to.</p>
+  <button class="btn" type="button" id="gfxColourLab">Green colour lab…</button>
+  <p class="note">A window over the course for trying another green colour on each landscape, with Copy for Claude to send the picks back to be built in. Your picks show only while it is open.</p>
   <h3>Costs a frame</h3>
   <p>Unlike everything above, these are real work. If the picture is uneven or pauses, start here.</p>
   <label class="check"><input id="gfxTerrainShadows" type="checkbox" ${graphics.terrainShadows?'checked':''}> Terrain casts shadows</label>
@@ -8319,6 +8334,7 @@ function renderPanel(name,content){
   // One choice writes every ground cue (graphics.js READINGS): uniforms the
   // ground material already holds, so it shows on the next frame.
   $('gfxReading').value=graphics.groundReading;
+  $('gfxColourLab').onclick=()=>{popups?.close('settings');closePanel();colourLab().show();};
   $('gfxReading').onchange=()=>{const r=$('gfxReading').value;graphics=saveGraphics({...graphics,groundReading:r,...readingCues(r)});view.setGroundCues(graphics);};
   // Live uniform writes, same as the toggles above: no rebuild, no recompile.
   // THE READOUT IS NOT THIS FUNCTION'S JOB. `wireSliders` already updates an

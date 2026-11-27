@@ -295,15 +295,15 @@ here is a claim of support until it is done.
   projector washing the grass out. Look at a round there: is the rough still
   too light, and do the slopes and mowing read better than before?
 
-- [ ] **The slopes' colouring on the darker grass: not seen by the owner**
-  (branch `builder-outlines`, 25 November 2026; RESEARCH *Slope tint*,
-  *Turned, not coloured*). Sloping turf turns toward straw without the lime
-  it had; seen only in before-and-after pictures (Alpine, Mountain, Classic
-  Parkland, Desert Resort, Seaside Links). Play the Alpine draft and a
-  generated hilly course: do banks and sloping fairways read as drier grass,
-  not as olive or khaki, and is the slope still easy to see? The strength
-  and range are PLACED by eye and easy to move (ground.js, `parched`, the
-  mown curve, `dryGain`).
+- [ ] **One hue for the playing turf, soft turf edges, slopes in the grass's
+  own colour: not seen by the owner in a round** (26 November 2026, branch
+  `green-colour-picker`; RESEARCH *One hue for the playing turf*). The
+  owner picked ladder B (green 44, fairway 34) from pictures of all 15
+  landscapes. Owed: a round on a few landscapes -- is the course too dark,
+  do greens read from the approach, is the slope still easy to see on
+  mown ground (`inHue` at .55 of the old strength), and do the 15 cm edges
+  look soft and not smeared, on the PC and a phone. The ladder is two
+  numbers and four steps in turf-ladder.js.
 
 - [ ] **The pull-and-push swing, on the owner's iPhone** (branch
   `pull-push-swing`, 15-17 November 2026; RESEARCH *The pull-and-push
@@ -625,6 +625,11 @@ here is a claim of support until it is done.
   brushing every edge of Alpine's old-fit cart paths over and over left one
   49-degree bend in a 5 m wedge where two paths meet (RESEARCH, *Curves
   through points*); a single stroke has not been seen to -- look for it.
+- [ ] **The green colour lab: not seen by the owner on a phone** (26
+  November 2026, branch `green-colour-picker`; PLAYING, *Green colour lab*).
+  The owner tried it on the PC and chose a one-hue ladder instead of picks
+  ("Im realizing that im not good at this"), so no picks are owed. Seen:
+  driven in a browser on Classic Parkland. Owed: the window on a phone.
 - [ ] **Mowing styles: not seen by the owner** (26 November 2026, branch
   `fringe-colour`; RESEARCH, *Mowing styles*). Seen: pictures of every
   style on Classic Parkland, a shared Links fairway in diamonds, the Alpine

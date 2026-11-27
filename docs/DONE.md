@@ -25,6 +25,48 @@ kept whole: *The open list before the 11 November 2026 prune* and *The open
 list before the 16 October prune*, each with a table of what became of every
 entry.
 
+## No clean-up lap round the greens (branch `green-colour-picker`, 26 November 2026)
+
+The owner: "lets get rid of the cleanup mowing stripe pass on all greens."
+The band 0.65 m inside every green's edge, one tone of its own shaded by the
+way round (ground.js, since the cartoon overhaul), is gone on every course,
+generated and built: the green's own pattern now runs to the edge and the
+collar's (or a painted fringe's) one lap marks it. The tee keeps its lap.
+Seen before and after from above and from the approach on Parkland's 1st and
+5th and Seaside's 2nd (`bench/shots/fringe/green-edge-shots.mjs`, local);
+`tests/mowing-styles.test.mjs` holds it out. Not seen by the owner in a round.
+
+## One hue for the playing turf, soft turf edges, slopes in the grass's colour (branch `green-colour-picker`, 26 November 2026)
+
+The owner, after the colour lab: "Im realizing that im not good at this ...
+the green and fringe brightness on almost all the landscapes is bad", then
+the soft edges ("the same blend lines that we have with the approach between
+all turf types ... also blend semi rough to rough"), one hue for the playing
+turf, and the slope shading ("way too pronounced in these color changes").
+Built: turf-ladder.js laid on every landscape and season; ground.js
+`edgeIn` at every turf and sand edge; `inHue` for slopes and patches on
+mown turf. Three ladders photographed on all 15 landscapes and put to the
+owner as a report page; Claude recommended C (green 51, fairway 42), the
+owner picked B (green 44, fairway 34). Dead ends: A (green 44, fairway 38)
+lost the green into the fairway; the slope's turn toward straw drew orange
+bands round raised greens. The eight fringe colours set earlier the same day
+are no longer read (RESEARCH, *Telling the fringe from the fairway*).
+
+## The green colour lab (branch `green-colour-picker`, 26 November 2026)
+
+The owner: "I feel like the greens in parkland are way too pale. Can you
+give me an in game interactive picker with sliders that lets me tune the
+colors of the greens in each biome with the ability to copy settings back
+out to you to implement?" Built: Settings > Graphics > The look of the
+course > Green colour lab…, a window over the course (ui-colour-lab.js) with
+a landscape's green or fringe as hue, saturation and lightness, live on the
+course (renderer.js `setTurfTint`, graded as the game's own), a look at the
+green, another landscape to try, Put back and Copy for Claude; picks kept on
+the device per landscape, shown only while the window is open. The fringe
+was added after the first pictures: a darker green left its collar
+reading pale. A tuning tool: nothing it picks is in the game until copied
+back and set in biomes.js.
+
 ## Mowing styles (branch `fringe-colour`, 26 November 2026; merged the same day, not released)
 
 The owner, after a preview of diamond fairways ("I really like it"): "Sort

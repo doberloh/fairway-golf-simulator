@@ -50,7 +50,7 @@ import {finishTexels,finishSurface,finishAverage} from './ball-finishes.js';
 // OFF by default since 14 October 2026); the range boards are not under that
 // switch.
 const FLAG_MIN_PX=36,FLAG_MAX_SCALE=10,FLAG_CLOTH_PX=14,POLE_MIN_PX=2;
-import {toonRamp,turfPalette} from './textures.js';
+import {toonRamp,turfPalette,turfGrade} from './textures.js';
 import {modelParts} from './mesh-assets.js';
 import {MESH_MODELS} from './asset-meshes.js';
 // THE SUN AND THE SKY'S SHARE OF THE LIGHT (the cartoon overhaul's lighting,
@@ -939,6 +939,16 @@ export class GolfView{
  //
  // Re-applied on every course build as well as on every change, because the
  // material is rebuilt with the world and comes back at its own defaults.
+ // A TURF COLOUR CHANGED ON THE NEXT FRAME (the green colour lab,
+ // ui-colour-lab.js; 26 November 2026): `kind` 'green' (or any turf), `hex`
+ // a landscape's base colour, graded as the course's own are (textures.js
+ // turfGrade); null puts back the colour the course was built with. Only the
+ // cartoon ground's uniform: a phone's baked ground keeps its picture.
+ setTurfTint(kind,hex){
+  const m=this.terrain?.material,t=m?.userData?.tints?.['tint_'+kind];if(!t)return false;
+  const base=m.userData.tintBase||(m.userData.tintBase={});if(!base[kind])base[kind]=t.value.clone();
+  t.value.copy(hex?turfGrade(hex):base[kind]);return true;
+ }
  setGroundCues(cues){
   this.groundCues={...(this.groundCues||{relief:true,slopeTint:true,contours:false,stripes:true,sheen:true}),...(cues||{})};
   const u=this.terrain?.material?.userData?.cues;
