@@ -25,6 +25,28 @@ kept whole: *The open list before the 11 November 2026 prune* and *The open
 list before the 16 October prune*, each with a table of what became of every
 entry.
 
+## Release 0.9.22 (26 November 2026)
+
+The owner: "awesome merge this back in and build a new patch version the
+release to github and update the live website with this new version."
+Version 0.9.22, the next patch number. It carries `fringe-colour` (merged
+into main 26 November as 84c4c13b, not released until now: the fringe told
+from the fairway, the Approach layer, mowing styles) and
+`green-colour-picker` (the colour lab, one hue for the playing turf, soft
+turf edges, mown slopes in the grass's colour, no clean-up lap round the
+greens); the sections below, through *The fringe told from the fairway*.
+Notes in docs/releases/v0.9.22.md, checks in DISTRIBUTION_REVIEW's addendum.
+The release's line in TODO's *Play the current build by hand* replaced
+0.9.21's, which was:
+
+- **Release 0.9.21** (25 November 2026: the builder on outlines and its
+  big ZIPs, the darker grass, the slopes' colouring). Every smoke journey
+  on the release build is in DISTRIBUTION_REVIEW's addendum. The owner
+  passed the darker grass on pictures and has seen the slopes only on
+  pictures; nobody has used the builder's outlines, big ZIPs or Fringe
+  layer (Course Builder entries below, and *The slopes' colouring on the
+  darker grass*). Online play (0.9.20) still unplayed, below.
+
 ## No clean-up lap round the greens (branch `green-colour-picker`, 26 November 2026)
 
 The owner: "lets get rid of the cleanup mowing stripe pass on all greens."

@@ -2328,3 +2328,31 @@ failed twice and passed three times on this code the same day (TODO,
 layer, and the slopes' colouring is seen only in pictures; TODO, *Play the
 current build by hand*.
 
+## Addendum, 26 November 2026: v0.9.22
+
+**v0.9.22** is published at the owner's request ("awesome merge this back
+in and build a new patch version the release to github and update the live
+website with this new version"; a patch release, so the next number), as
+"Fairway 0.9.22 (beta)", tag `v0.9.22`, not a pre-release, the same six
+files, from the merge of `release-0.9.22` into `main`, notes in
+`docs/releases/v0.9.22.md`. Content: `fringe-colour` (the fringe told from
+the fairway, the builder's Approach layer, the Layers list as the only
+picker, mowing styles for fairways, approaches and greens) and
+`green-colour-picker` (the green colour lab, one hue for the playing turf
+on ladder B, soft turf edges, mown slopes in the grass's colour, no
+clean-up lap round the greens). **Generator 103 and built 3 are unchanged**
+and the landscape fingerprints are silent: every seed and course file
+plays as in 0.9.21. **Schema 47 to 48** (the mowing settings), migrated
+silently; a 0.9.21 save loads (`settings-schema` test). A course file with
+an Approach layer or its own mowing is read by 0.9.21 without them.
+**Still one offline file**, no request of its own (every smoke journey
+checks). The game's page is 60,743,172 bytes against 0.9.21's 60,723,135
+(20 KB: the colour lab, the ground shader); the builder's 56,376,268. No
+dependency changed. Checked on the released code: the whole Node suite
+(1,871 tests, 1,870 pass, one skipped, none failing); the game's 51 smoke
+journeys on the release build, 51 of 51 in one run; the builder's 10 of 10.
+The tiers and built courses were profiled on the branches against the
+build before each change (within 0.04 ms). Nobody has played a round on
+the new turf or tried the mowing styles; TODO, *Play the current build by
+hand*.
+

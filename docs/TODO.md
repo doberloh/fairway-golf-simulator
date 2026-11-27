@@ -44,12 +44,13 @@ wrong, unfinished, or owed a check.
 
 ## Next feature
 
-None chosen. The builder on outlines and its big ZIPs, with the darker
-grass, were released as 0.9.21 (25 November 2026; DONE.md, *No squares in
-the builder* and the sections below it); what they left is under *Play the
-current build by hand*, *Only the owner can check* and *Course Builder*.
-Online play before them, 0.9.20 (DONE.md, *Online play with friends in
-other houses*; docs/ONLINE_PLAY.md).
+None chosen. The turf (one hue, soft edges, mowing styles, the Approach
+layer, no green clean-up lap) was released as 0.9.22 (26 November 2026;
+DONE.md, *No clean-up lap round the greens* and the sections below it);
+what it left is under *Play the current build by hand*. The builder on
+outlines and its big ZIPs, with the darker grass, before it, 0.9.21 (DONE.md,
+*No squares in the builder*); online play, 0.9.20 (DONE.md, *Online play
+with friends in other houses*; docs/ONLINE_PLAY.md).
 
 ## Known wrong
 
@@ -328,16 +329,19 @@ here is a claim of support until it is done.
     flight's end waited on something.
   - `lab.state().lastStroke` holds the last reading, with its sample count.
 
-- [ ] **Play the current build by hand** (0.9.21, 25 November 2026). What has
+- [ ] **Play the current build by hand** (0.9.22, 26 November 2026). What has
   been built and seen only in captures, measurements or smoke runs, and still
   exists in the game. The archive has each item's full list.
-  - **Release 0.9.21** (25 November 2026: the builder on outlines and its
-    big ZIPs, the darker grass, the slopes' colouring). Every smoke journey
-    on the release build is in DISTRIBUTION_REVIEW's addendum. The owner
-    passed the darker grass on pictures and has seen the slopes only on
-    pictures; nobody has used the builder's outlines, big ZIPs or Fringe
-    layer (Course Builder entries below, and *The slopes' colouring on the
-    darker grass*). Online play (0.9.20) still unplayed, below.
+  - **Release 0.9.22** (26 November 2026: one hue for the playing turf,
+    ladder B; soft turf edges; mown slopes in the grass's colour; no clean-up
+    lap round the greens; mowing styles; the builder's Approach layer and
+    teal fringe; the green colour lab). Every smoke journey on the release
+    build is in DISTRIBUTION_REVIEW's addendum. The owner picked ladder B
+    from pictures and used the colour lab and the Approach layer on the
+    branches; nobody has played a round on ladder B (is it too dark? do the
+    greens stand out from the approach?) or tried the mowing styles. The
+    builder's outlines and big ZIPs (0.9.21) and online play (0.9.20) are
+    still unplayed (Course Builder entries and below).
   - **Online play, by hand** (0.9.20, BETA; docs/ONLINE_PLAY.md). A round
     with a friend in another house over the built-in relay: host and guest
     each way round; a phone that opened the game from `run_fairway_server`
