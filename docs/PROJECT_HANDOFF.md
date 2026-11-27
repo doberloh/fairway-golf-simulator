@@ -2470,7 +2470,7 @@ THE TRAP: `.main-menu` is `position:fixed; z-index:80` and the drawer is 21, so 
 **A BUILT COURSE'S MOWING READS THE BUILT EDGES, NOT THE HOLE ROW'S** (8 November 2026, the owner:
 "the green mowing does not fully fill the whole green surface", and "tee boxes have no mow lines in
 builder"). ground.js's `BUILT_COURSE` block classifies every surface from the baked field, but the
-mowing after it read the hole row's analytic shapes: the green's clean-up lap and collar shading
+mowing after it read the hole row's analytic shapes: the green's clean-up lap (removed 26 November 2026) and collar shading
 measured `greenD` from the row's green, which on a built hole is a skeleton, so a band between that
 and the traced green took the lap's plain tone; and the block set `teePadD` to 1e3, so no built tee
 was ever mown. Now `greenD=dGreen` and a built tee sets `teePadD=dTee`, its frame the hole's

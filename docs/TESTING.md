@@ -377,8 +377,10 @@ the courses several suites share, and builds many at once on worker threads
   driven by `bench/shots/fringe/colour-lab-check.mjs`, local),
   `mowing-styles` (since 26 November 2026: the styles' defaults are how
   every course was, a built file carries and wins with its own, the shader
-  cuts each surface in its own style with a fairway's passes in the world;
-  pictures with `bench/shots/fringe/mowing-shots.mjs`, local; the schema 47
+  cuts each surface in its own style with a fairway's passes in the world,
+  and no green has a clean-up lap while a tee keeps its own;
+  pictures with `bench/shots/fringe/mowing-shots.mjs` and, before and after
+  the green's lap went, `green-edge-shots.mjs`, local; the schema 47
   save in `settings-schema`),
   `fringe-look` (since 26 November 2026: every landscape's fringe colour at
   least 45% of the way from its fairway to its green, and a painted fringe

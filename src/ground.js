@@ -990,7 +990,8 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   float dSand=(.5-ba.r)*bR,dGreen=(.5-ba.g)*bR,dFair=(.5-ba.b)*bR,dTee=(.5-ba.a)*bR,dWater=(.5-bb.r)*bR,dSemi=(.5-bb.g)*bR,dGround=(.5-bb.a)*bR;
   // THE GREEN'S EDGE IS THE BUILT GREEN'S (the owner, 8 November 2026: "the green
   // mowing does not fully fill the whole green surface"). Everything below that
-  // reads greenD -- the clean-up lap round the edge, the collar's lap -- measured
+  // reads greenD -- the collar's lap (and, until 26 November 2026, the green's
+  // clean-up lap round its edge) -- measured
   // it from the hole row's own green, which on a built hole is only a skeleton:
   // between that green and the course's traced one, the lap's plain tone took a
   // wide band of the green where the diamonds should be.
@@ -1350,34 +1351,15 @@ vec2 outerAt(float z,float row){return texture2D(tables,vec2((clamp((z+32.)/curv
   // anchors with it, and the slider went on reporting a value nothing read.
   if(kind==4.)spread*=greenBandSoft;
   float tone=clamp(.965+(stripe*2.-1.)*spread,.72,1.24);
-  // THE CLEAN-UP LAP. A green is cut in passes and then once round its edge,
-  // one mower's width (a greens mower cuts about 0.55-0.65 m) -- a band that
-  // traces the outline and, following the ground, shows the green's edge
-  // rising and falling. It runs from 0.65 m inside the edge TO the edge (the
-  // owner: a first cut 0.95 to 0.4 m in left a strip of plain green no mower
-  // would leave). The far-landscape goal: it took the passes' tone turned over
-  // and was laid on top of them, so it alternated light and dark round the
-  // green (a checker at its edge); it now REPLACES the passes' tone with one
-  // of its own, a single continuous pass. Round 1. Part of the mowing
-  // pattern, so it goes with the stripes switch.
-  if(kind==4.){
-   float lapW=max(fwidth(greenD),1e-4);
-   float lap=smoothstep(-.65-lapW,-.65+lapW,greenD)*(1.-smoothstep(.25,.6,lapW));
-   // Round 3 of the diamonds (as the tee's lap, round 2): that one pass shades
-   // as a pass does -- laid away from you light, toward you dark -- turning
-   // smoothly as the mower goes round. Its way of travel is along the outline:
-   // the edge distance's slope over the ground, from the screen's own
-   // derivatives (world position against greenD), turned a right angle.
-   vec2 gx=dFdx(groundPoint.xz),gy=dFdy(groundPoint.xz);float gdet=gx.x*gy.y-gx.y*gy.x;
-   vec2 gg=abs(gdet)>1e-8?vec2(gy.y*dFdx(greenD)-gx.y*dFdy(greenD),gx.x*dFdy(greenD)-gy.x*dFdx(greenD))/gdet:vec2(0.,1.);
-   vec2 lv=normalize(groundPoint.xz-cameraPosition.xz+1e-4);
-   float lapLean=dot(normalize(vec2(-gg.y,gg.x)+1e-5),lv);
-   tone=mix(tone,.965+spread*(.75*lapLean-.25),lap);
-  }
+  // NO CLEAN-UP LAP ON THE GREEN (removed 26 November 2026; the owner: "lets
+  // get rid of the cleanup mowing stripe pass on all greens"). A band 0.65 m
+  // inside every green's edge took one tone of its own, shaded by the way
+  // round; the green's own pattern now runs out to its edge, and the collar's
+  // lap below is what marks it. The tee keeps its lap.
   turf*=mix(1.,tone,stripeFade*cueStripes);
  }
  // THE COLLAR'S LAP (round 6 of the diamond greens). A green's collar is cut
- // round it in one lap, as its clean-up pass is; it was one flat tone. It
+ // round it in one lap; it was one flat tone. It
  // shades as that pass does -- grass laid away from you light, toward you
  // dark, turning smoothly round the green -- gentler than the green's own,
  // and gone where the collar is under a pixel or two across.

@@ -25,6 +25,17 @@ kept whole: *The open list before the 11 November 2026 prune* and *The open
 list before the 16 October prune*, each with a table of what became of every
 entry.
 
+## No clean-up lap round the greens (branch `green-colour-picker`, 26 November 2026)
+
+The owner: "lets get rid of the cleanup mowing stripe pass on all greens."
+The band 0.65 m inside every green's edge, one tone of its own shaded by the
+way round (ground.js, since the cartoon overhaul), is gone on every course,
+generated and built: the green's own pattern now runs to the edge and the
+collar's (or a painted fringe's) one lap marks it. The tee keeps its lap.
+Seen before and after from above and from the approach on Parkland's 1st and
+5th and Seaside's 2nd (`bench/shots/fringe/green-edge-shots.mjs`, local);
+`tests/mowing-styles.test.mjs` holds it out. Not seen by the owner in a round.
+
 ## One hue for the playing turf, soft turf edges, slopes in the grass's colour (branch `green-colour-picker`, 26 November 2026)
 
 The owner, after the colour lab: "Im realizing that im not good at this ...

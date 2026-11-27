@@ -4364,7 +4364,10 @@ surfaces are commonly built at 1-3% with hole locations kept under about 3%
   looked like a graphical bug: the sheen depends on where you stand, so whole
   regions of a green changed tone as the camera moved. A still screenshot
   cannot show that, which is why the first tuning got it wrong.
-- **The clean-up lap.** A green is cut in straight passes and then once round
+- **The clean-up lap (REMOVED 26 November 2026).** The owner: "lets get rid of
+  the cleanup mowing stripe pass on all greens." The green's pattern now runs
+  out to its edge and the collar's lap marks it; the tee keeps its lap. Kept
+  below for what it was. A green is cut in straight passes and then once round
   its edge, one mower's width, the other way from the passes it crosses; a band
   of different tone runs round every real green out to the collar. Drawn from
   0.65 m inside the edge to the edge (a greens mower cuts roughly 0.55-0.65 m;

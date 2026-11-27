@@ -56,3 +56,12 @@ test('the shader cuts each surface in its own style, fairways in the world frame
  assert.match(src, /vec2 base=inHole\?mow:wm,q=inHole\?p:wp,vq=inHole\?vh:dv;/);
  assert.match(src, /vec2 wm=vec2\(mow\.x\*tr\.z\+mow\.y\*tr\.w,-mow\.x\*tr\.w\+mow\.y\*tr\.z\);if\(wm\.x<0\.\)wm=-wm;/);
 });
+
+// The owner, 26 November 2026: "lets get rid of the cleanup mowing stripe pass
+// on all greens." The green's pattern runs to its edge; the tee keeps its lap.
+test('a green has no clean-up lap round its edge; a tee still does', () => {
+ const src = fs.readFileSync(new URL('../src/ground.js', import.meta.url), 'utf8');
+ assert.doesNotMatch(src, /lapLean/, 'the green lap is gone');
+ assert.doesNotMatch(src, /smoothstep\(-\.65-lapW/, 'no band 0.65 m inside the green');
+ assert.match(src, /tlap=smoothstep\(-\.55-tlapE,-\.55\+tlapE,teePadD\)/, 'the tee keeps its lap');
+});
